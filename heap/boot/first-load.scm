@@ -1,0 +1,37 @@
+;;; Ypsilon Scheme System
+;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
+;;; See license.txt for terms and conditions of use.
+
+;; subr forward references
+(begin
+  (set-top-level-value! '.list? list?)
+  (set-top-level-value! '.null? null?)
+  (set-top-level-value! '.pair? pair?)
+  (set-top-level-value! '.car car)
+  (set-top-level-value! '.cdr cdr)
+  (set-top-level-value! '.caar caar)
+  (set-top-level-value! '.cadr cadr)
+  (set-top-level-value! '.cdar cdar)
+  (set-top-level-value! '.cddr cddr)
+  (set-top-level-value! '.caaar caaar)
+  (set-top-level-value! '.caadr caadr)
+  (set-top-level-value! '.cadar cadar)
+  (set-top-level-value! '.caddr caddr)
+  (set-top-level-value! '.cdaar cdaar)
+  (set-top-level-value! '.cdadr cdadr)
+  (set-top-level-value! '.cddar cddar)
+  (set-top-level-value! '.cdddr cdddr)
+  (set-top-level-value! '.cdddar cdddar)
+  (set-top-level-value! '.caddar caddar)
+  (set-top-level-value! '.cddadr cddadr)
+  (set-top-level-value! '.cadadr cadadr)
+  (set-top-level-value! '.caaadr caaadr)
+  (set-top-level-value! '.cddddr cddddr)
+  (set-top-level-value! '.cadddr cadddr)
+  (set-top-level-value! '.cdaadr cdaadr)
+  (set-top-level-value! '.cdaddr cdaddr)
+  (set-top-level-value! '.caaddr caaddr)
+  (set-top-level-value! '.list list)
+  (set-top-level-value! '.cons* cons*)
+  (set-top-level-value! '.memq memq)
+  (set-top-level-value! '.append append))

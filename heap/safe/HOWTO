@@ -1,0 +1,5 @@
+To remove subr:
+  edit libraries.scm
+  edit core.scm
+  skip build-compound.scm in Makefile
+
