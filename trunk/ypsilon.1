@@ -1,0 +1,145 @@
+.TH YPSILON 1 "version 0.9.5"
+.SH NAME
+Ypsilon \- The implementation of Scheme Programming Language for real-time applications
+.SH SYNOPSIS
+.B ypsilon
+[
+.I options
+] 
+[--]
+[
+.I file
+]
+[
+.I arguments
+]
+.SH DESCRIPTION
+.TP
+Ypsilon implements full features of R6RS and R6RS standard libraries including:
+.IP
+arbitrary precision integer arithmetic
+.br
+rational number
+.br
+exact and inexact complex number
+.br
+implicitly phased library
+.br
+top-level program
+.br
+proper tail recursion
+.br
+call/cc and dynamic wind
+.br
+unicode
+.br
+bytevectors
+.br
+records
+.br
+exceptions and conditions
+.br
+i/o
+.br
+syntax-case
+.br
+hashtables
+.br
+enumerations
+.P
+More libraries are included to support a wide variety of software development.
+.P
+Ypsilon reads scheme scripts from files, streams, or prompts.
+.br
+Then, it compiles the scripts to intermediate codes for evaluation. 
+.br
+Compiled codes will be cached automaticaly to speeding up the edit/run cycle. 
+.P
+Ypsilon implements "mostly concurrent mark and sweep garbage collector".
+.br
+It is optimized to achieve a remarkably short pause time which is essential for the best quality real-time video games.
+.SH OPTIONS
+.TP
+\fB--mute\fP, \fB-m\fP
+Suppresses greeting.
+.TP
+\fB--quiet\fP, \fB-q\fP
+Suppresses greeting, repl prompt, and repl output.
+.TP
+\fB--verbose\fP, \fB-v\fP
+Prints load and compile activities.
+.TP
+\fB--interactive\fP, \fB-i\fP
+Enters repl after running the script file.
+.TP
+\fB--r6rs\fP, \fB-6\fP
+Conforms R6RS lexical syntax.
+This is the default setting.
+.br
+#!r6rs directive is available to be used in the script files for the precise control.
+.TP
+\fB--compatible\fP, \fB-c\fP
+Extends the lexical syntax for the compatibility of the existing scripts.
+.br
+For example, the reader reads '1+', '@1', '.n', and '|u v|' as identifiers.
+.br
+#!compatible directive is available to be used in the script files for the precise control.
+.TP
+\fB--sitelib\fP=\fIpath\fP
+Adds sitelib \fIpath\fP.
+.br
+The \fIpath\fP is a colon-separated list of directories.
+.br
+See also YPSILON_SITELIB in the ENVIRONMENT section.
+.TP
+\fB--loadpath\fP=\fIpath\fP
+Adds load search \fIpath\fP.
+.br
+The \fIpath\fP is a colon-separated list of directories.
+.br
+See also YPSILON_LOADPATH in the ENVIRONMENT section.
+.TP
+\fB--acc\fP=\fIdir\fP
+Sets a auto-compile-cache directory.
+.br
+See also YPSILON_ACC in the ENVIRONMENT section.
+.TP
+\fB--disable-acc\fP
+Disables the auto-compile-cache.
+.TP
+\fB--clean-acc\fP
+Cleans up the auto-compile-cache.
+.TP
+\fB--version\fP
+Prints the version and exits.
+.TP
+\fB--help\fP
+Prints help and exit.
+.TP
+\fB--\fP
+Indicates no more option to proceed.
+.SH ENVIRONMENT
+.TP
+.B YPSILON_SITELIB
+A colon-separated list of the sitelib directories.
+Ypsilon traverses the sitelib directories to find a library before looking up the system default directory.
+.TP
+.B YPSILON_LOADPATH
+A colon-separated list of the script file directories.
+Ypsilon traverses directories to find a script file to be loaded.
+.TP
+.B YPSILON_ACC
+This is a auto-compile-cache directory.
+The directory must be created in advance as Ypsilon saves compiled codes in it.
+.SH AUTHOR
+Yoshikatsu Fujita
+.br
+LittleWing Company Limited
+.SH SEE ALSO
+.PP
+.br
+http://www.littlewing.co.jp/ypsilon/en/
+.br
+http://www.littlewing.co.jp/ypsilon/ja/
+.br
+http://www.LittleWingPinball.com/
