@@ -12,68 +12,68 @@
 int
 list_length(scm_obj_t list)
 {
-	int n = 0;
-	while (list != scm_nil) {
-		list = CDR(list);
-		n++;
-	}
-	return n;
+    int n = 0;
+    while (list != scm_nil) {
+        list = CDR(list);
+        n++;
+    }
+    return n;
 }
 
 scm_obj_t
 list_ref(scm_obj_t list, int n)
 {
-	scm_obj_t obj = list;
-	while (--n >= 0) {
-		if (PAIRP(obj)) obj = CDR(obj);
-		else return NULL;
-	}
-	if (PAIRP(obj)) return CAR(obj);
-	return NULL;
+    scm_obj_t obj = list;
+    while (--n >= 0) {
+        if (PAIRP(obj)) obj = CDR(obj);
+        else return NULL;
+    }
+    if (PAIRP(obj)) return CAR(obj);
+    return NULL;
 }
 
 scm_obj_t
 list_tail(scm_obj_t list, int n)
 {
-	if (n < 0) return NULL;
-	scm_obj_t obj = list;
-	while (--n >= 0) {
-		if (PAIRP(obj)) obj = CDR(obj);
-		else return NULL;
-	}
-	return obj;
+    if (n < 0) return NULL;
+    scm_obj_t obj = list;
+    while (--n >= 0) {
+        if (PAIRP(obj)) obj = CDR(obj);
+        else return NULL;
+    }
+    return obj;
 }
 
 bool
 circular_listp(scm_obj_t maybe_list)
 {
-	if (maybe_list == scm_nil) return false;
-	scm_obj_t fast = maybe_list;
-	scm_obj_t slow = fast;
-	while (PAIRP(fast)) {
-		fast = CDR(fast);
-		if (!PAIRP(fast)) return false;
-		fast = CDR(fast);
-		slow = CDR(slow);
-		if (slow == fast) return true;
-	}
-	return false;
+    if (maybe_list == scm_nil) return false;
+    scm_obj_t fast = maybe_list;
+    scm_obj_t slow = fast;
+    while (PAIRP(fast)) {
+        fast = CDR(fast);
+        if (!PAIRP(fast)) return false;
+        fast = CDR(fast);
+        slow = CDR(slow);
+        if (slow == fast) return true;
+    }
+    return false;
 }
 
 bool
 listp(scm_obj_t maybe_list)
 {
-	if (maybe_list == scm_nil) return true;
-	scm_obj_t fast = maybe_list;
-	scm_obj_t slow = fast;
-	while (PAIRP(fast)) {
-		fast = CDR(fast);
-		if (!PAIRP(fast)) return fast == scm_nil;
-		fast = CDR(fast);
-		slow = CDR(slow);
-		if (slow == fast) return false;
-	}
-	return fast == scm_nil;
+    if (maybe_list == scm_nil) return true;
+    scm_obj_t fast = maybe_list;
+    scm_obj_t slow = fast;
+    while (PAIRP(fast)) {
+        fast = CDR(fast);
+        if (!PAIRP(fast)) return fast == scm_nil;
+        fast = CDR(fast);
+        slow = CDR(slow);
+        if (slow == fast) return false;
+    }
+    return fast == scm_nil;
 }
 
 static bool

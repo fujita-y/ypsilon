@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	UCS4_H_INCLUDED
-#define	UCS4_H_INCLUDED
+#ifndef UCS4_H_INCLUDED
+#define UCS4_H_INCLUDED
 
 #include "core.h"
 

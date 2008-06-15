@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	PORT_H_INCLUDED
-#define	PORT_H_INCLUDED
+#ifndef PORT_H_INCLUDED
+#define PORT_H_INCLUDED
 
 #include "core.h"
 #include "object.h"
@@ -37,7 +37,7 @@
 #if _MSC_VER
   #define SCM_PORT_CODEC_CP932                  4
 #endif
-  
+
 #define SCM_PORT_EOL_STYLE_NONE                 1
 #define SCM_PORT_EOL_STYLE_LF                   2
 #define SCM_PORT_EOL_STYLE_CR                   3
@@ -45,7 +45,7 @@
 #define SCM_PORT_EOL_STYLE_NEL                  5
 #define SCM_PORT_EOL_STYLE_CRNEL                6
 #define SCM_PORT_EOL_STYLE_LS                   7
-  
+
 #define SCM_PORT_ERROR_HANDLING_MODE_IGNORE     1
 #define SCM_PORT_ERROR_HANDLING_MODE_RAISE      2
 #define SCM_PORT_ERROR_HANDLING_MODE_REPLACE    3

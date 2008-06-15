@@ -27,28 +27,28 @@ void
 fasl_printer_t::scan(scm_obj_t obj)
 {
 loop:
-	if (obj == scm_nil) return;
+    if (obj == scm_nil) return;
     if (SYMBOLP(obj) || STRINGP(obj)) {
         if (get_hashtable(m_lites, obj) != scm_undef) return;
-		m_vm->m_heap->write_barrier(obj);	
-		int nsize = put_hashtable(m_lites, obj, MAKEFIXNUM(m_lites->datum->live));
-		if (nsize) rehash_hashtable(m_vm->m_heap, m_lites, nsize);
+        m_vm->m_heap->write_barrier(obj);
+        int nsize = put_hashtable(m_lites, obj, MAKEFIXNUM(m_lites->datum->live));
+        if (nsize) rehash_hashtable(m_vm->m_heap, m_lites, nsize);
         return;
     }
-	if (PAIRP(obj)) {
-		scan(CAR(obj));
+    if (PAIRP(obj)) {
+        scan(CAR(obj));
         obj = CDR(obj);
         goto loop;
-	}
-	if (VECTORP(obj)) {
-		scm_vector_t vector = (scm_vector_t)obj;
-		int count = HDR_VECTOR_COUNT(vector->hdr);
-		if (count == 0) return;		
-		scm_obj_t* elts = vector->elts;
+    }
+    if (VECTORP(obj)) {
+        scm_vector_t vector = (scm_vector_t)obj;
+        int count = HDR_VECTOR_COUNT(vector->hdr);
+        if (count == 0) return;
+        scm_obj_t* elts = vector->elts;
         for (int i = 0; i < count; i++) scan(elts[i]);
-		return;
-	}
-	if (CHARP(obj) || BVECTORP(obj) || BOOLP(obj) || FIXNUMP(obj) || FLONUMP(obj) || BIGNUMP(obj) || RATIONALP(obj) || COMPLEXP(obj)) return;
+        return;
+    }
+    if (CHARP(obj) || BVECTORP(obj) || BOOLP(obj) || FIXNUMP(obj) || FLONUMP(obj) || BIGNUMP(obj) || RATIONALP(obj) || COMPLEXP(obj)) return;
     fatal("%s:%u datum not supported in fasl", __FILE__, __LINE__);
 }
 
@@ -79,15 +79,15 @@ fasl_printer_t::put_list(scm_obj_t obj)
 void
 fasl_printer_t::put_datum(scm_obj_t obj)
 {
-	if (obj == scm_nil) {
+    if (obj == scm_nil) {
         emit_u8(FASL_TAG_NIL);
         return;
     }
-	if (obj == scm_true) {
+    if (obj == scm_true) {
         emit_u8(FASL_TAG_T);
         return;
     }
-	if (obj == scm_false) {
+    if (obj == scm_false) {
         emit_u8(FASL_TAG_F);
         return;
     }
@@ -103,28 +103,28 @@ fasl_printer_t::put_datum(scm_obj_t obj)
         emit_u32((uint32_t)FIXNUM(obj));
         return;
     }
-	if (PAIRP(obj)) {
-		put_list(obj);
-        return;
-	}
-	if (VECTORP(obj)) {
-		scm_vector_t vector = (scm_vector_t)obj;
-		int count = HDR_VECTOR_COUNT(vector->hdr);
-        emit_u8(FASL_TAG_VECTOR);
-        emit_u32(count);
-		scm_obj_t* elts = vector->elts;
-        for (int i = 0; i < count; i++) put_datum(elts[i]);
-		return;
-	}
-	if (BVECTORP(obj)) {
-        scm_bvector_t bv = (scm_bvector_t)obj;
-		int count = bv->count;
-        emit_u8(FASL_TAG_BVECTOR);
-        emit_u32(count);
-		for (int i = 0; i < count; i++) emit_u8(bv->elts[i]);
+    if (PAIRP(obj)) {
+        put_list(obj);
         return;
     }
-	if (FLONUMP(obj)) {
+    if (VECTORP(obj)) {
+        scm_vector_t vector = (scm_vector_t)obj;
+        int count = HDR_VECTOR_COUNT(vector->hdr);
+        emit_u8(FASL_TAG_VECTOR);
+        emit_u32(count);
+        scm_obj_t* elts = vector->elts;
+        for (int i = 0; i < count; i++) put_datum(elts[i]);
+        return;
+    }
+    if (BVECTORP(obj)) {
+        scm_bvector_t bv = (scm_bvector_t)obj;
+        int count = bv->count;
+        emit_u8(FASL_TAG_BVECTOR);
+        emit_u32(count);
+        for (int i = 0; i < count; i++) emit_u8(bv->elts[i]);
+        return;
+    }
+    if (FLONUMP(obj)) {
         union {
             double      f64;
             uint64_t    u64;
@@ -135,41 +135,41 @@ fasl_printer_t::put_datum(scm_obj_t obj)
         emit_u64(n.u64);
         return;
     }
-	if (CHARP(obj)) {
+    if (CHARP(obj)) {
         scm_char_t ch = (scm_char_t)obj;
         emit_u8(FASL_TAG_CHAR);
         emit_u32(CHAR(ch));
         return;
-	}
-	if (BIGNUMP(obj)) {
+    }
+    if (BIGNUMP(obj)) {
         scm_bignum_t bn = (scm_bignum_t)obj;
         assert(sizeof(bn->elts[0]) == sizeof(uint32_t));
-		int sign = bn_get_sign(bn); // 0 or 1 or -1
-		int count = bn_get_count(bn);
+        int sign = bn_get_sign(bn); // 0 or 1 or -1
+        int count = bn_get_count(bn);
         emit_u8(FASL_TAG_BIGNUM);
         emit_u32(sign);
         emit_u32(count);
-		for (int i = 0; i < count; i++) emit_u32(bn->elts[i]);
+        for (int i = 0; i < count; i++) emit_u32(bn->elts[i]);
         return;
-	}
-	if (RATIONALP(obj)) {
-		scm_rational_t rat = (scm_rational_t)obj;
+    }
+    if (RATIONALP(obj)) {
+        scm_rational_t rat = (scm_rational_t)obj;
         emit_u8(FASL_TAG_RATIONAL);
         put_datum(rat->nume);
         put_datum(rat->deno);
         return;
-	}
-	if (COMPLEXP(obj)) {
-		scm_complex_t comp = (scm_complex_t)obj;
+    }
+    if (COMPLEXP(obj)) {
+        scm_complex_t comp = (scm_complex_t)obj;
         emit_u8(FASL_TAG_COMPLEX);
         put_datum(comp->real);
         put_datum(comp->imag);
         return;
-	}
+    }
     fatal("%s:%u datum not supported in fasl", __FILE__, __LINE__);
 }
 
-void 
+void
 fasl_printer_t::put_lites()
 {
     scm_obj_t* lites = (scm_obj_t*)alloca(sizeof(scm_obj_t) * m_lites->datum->live);
@@ -177,7 +177,7 @@ fasl_printer_t::put_lites()
     int nsize = m_lites->datum->capacity;
     for (int i = 0; i < nsize; i++) {
         scm_obj_t key = ht_datum->elts[i];
-        scm_obj_t value = ht_datum->elts[i + nsize];			
+        scm_obj_t value = ht_datum->elts[i + nsize];
         if (CELLP(key)) {
             assert(FIXNUM(value) < m_lites->datum->live);
             lites[FIXNUM(value)] = key;
@@ -204,14 +204,14 @@ fasl_printer_t::put_lites()
     }
 }
 
-void 
+void
 fasl_printer_t::put(scm_obj_t obj)
 {
     scoped_lock lock(m_lites->lock);
-	scan(obj);
+    scan(obj);
     port_puts(m_port, "\n#!fasl0\n");
     put_lites();
-	put_datum(obj);
+    put_datum(obj);
 }
 
 scm_obj_t
@@ -247,17 +247,17 @@ fasl_reader_t::get_datum()
     }
     case FASL_TAG_VECTOR: {
         int count = fetch_u32();
-		scm_vector_t vector = make_vector(m_vm->m_heap, count, scm_unspecified);
-		scm_obj_t* elts = vector->elts;
-		for (int i = 0; i < count; i++) elts[i] = get_datum();
-		return vector;
+        scm_vector_t vector = make_vector(m_vm->m_heap, count, scm_unspecified);
+        scm_obj_t* elts = vector->elts;
+        for (int i = 0; i < count; i++) elts[i] = get_datum();
+        return vector;
     }
     case FASL_TAG_RATIONAL: {
         scm_obj_t nume = get_datum();
         scm_obj_t deno = get_datum();
         return make_rational(m_vm->m_heap, nume, deno);
-	}
-    
+    }
+
     case FASL_TAG_COMPLEX: {
         scm_obj_t real = get_datum();
         scm_obj_t imag = get_datum();
@@ -276,14 +276,14 @@ fasl_reader_t::get_datum()
         int count = (int)fetch_u32();
         scm_bignum_t bn = make_bignum(m_vm->m_heap, count);
         assert(sizeof(bn->elts[0]) == sizeof(uint32_t));
-		for (int i = 0; i < count; i++) bn->elts[i] = fetch_u32();
+        for (int i = 0; i < count; i++) bn->elts[i] = fetch_u32();
         bn_set_sign(bn, sign);
         return bn;
     }
     case FASL_TAG_BVECTOR: {
         uint32_t count = fetch_u32();
         scm_bvector_t bv = make_bvector(m_vm->m_heap, count);
-		for (int i = 0; i < count; i++) bv->elts[i] = fetch_u8();
+        for (int i = 0; i < count; i++) bv->elts[i] = fetch_u8();
         return bv;
     }
     case FASL_TAG_CHAR:
@@ -333,4 +333,3 @@ fasl_reader_t::get()
     if (get_lites()) return scm_eof;
     return get_datum();
 }
-

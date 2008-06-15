@@ -386,8 +386,8 @@ subr_flonum_to_float(VM* vm, int argc, scm_obj_t argv[])
 }
 
 void init_subr_ffi(object_heap_t* heap)
-{	
-    #define	DEFSUBR(SYM, FUNC)	heap->intern_system_subr(SYM, FUNC)
+{
+    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("load-shared-object", subr_load_shared_object);
     DEFSUBR("lookup-shared-object", subr_lookup_shared_object);
@@ -408,7 +408,7 @@ void init_subr_ffi(object_heap_t* heap)
     DEFSUBR("stdcall-shared-object->double", subr_call_shared_object_double);
     DEFSUBR("stdcall-shared-object->void*", subr_call_shared_object_intptr);
     DEFSUBR("stdcall-shared-object->intptr", subr_call_shared_object_intptr);
-#endif    
+#endif
     DEFSUBR("make-callback", subr_make_callback);
     DEFSUBR("flonum->float", subr_flonum_to_float);
 }

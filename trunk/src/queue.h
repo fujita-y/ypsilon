@@ -4,15 +4,15 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	QUEUE_H_INCLUDED
-#define	QUEUE_H_INCLUDED
+#ifndef QUEUE_H_INCLUDED
+#define QUEUE_H_INCLUDED
 
 #include "core.h"
 
 #if _MSC_VER
-    
+
     #if USE_CRITICAL_SECTION
-    
+
         template< typename T, int nelts >
         class queue_t {
 
@@ -31,12 +31,12 @@
             int                 n_more_get;
             int                 n_more_put;
             bool                terminating;
-            
+
         public:
 
             queue_t() { }
 
-            void init() 
+            void init()
             {
                 terminating = false;
                 n = head = tail = n_more_get = n_more_put = 0;
@@ -77,14 +77,14 @@
                         return false;
                     }
                 }
-                buf[tail++] = datum; 
+                buf[tail++] = datum;
                 n++;
                 if (tail == capacity) tail = 0;
                 if (n_more_get) MTVERIFY(SetEvent(maybe_get));
                 LeaveCriticalSection(&lock);
                 return true;
             }
-            
+
             bool get(element_t* datum)
             {
                 if (terminating) warning("warning:%s:%u queue_t::get after terminate\n", __FILE__, __LINE__);
@@ -104,7 +104,7 @@
                         return false;
                     }
                 }
-                *datum = buf[head++]; 
+                *datum = buf[head++];
                 n--;
                 if (head == capacity) head = 0;
                 if (n_more_put) MTVERIFY(SetEvent(maybe_put));
@@ -136,7 +136,7 @@
                     LeaveCriticalSection(&lock);
                     return false;
                 }
-                buf[tail++] = datum; 
+                buf[tail++] = datum;
                 n++;
                 if (tail == capacity) tail = 0;
                 if (n_more_get) MTVERIFY(SetEvent(maybe_get));
@@ -146,7 +146,7 @@
 
             bool try_get(element_t* datum)
             {
-                if (terminating) warning("warning:%s:%u queue_t::try_get after terminate\n", __FILE__, __LINE__);    
+                if (terminating) warning("warning:%s:%u queue_t::try_get after terminate\n", __FILE__, __LINE__);
                 if (n == 0 || TryEnterCriticalSection(&lock) == 0) return false;
                 if (n == 0 || terminating) {
                     LeaveCriticalSection(&lock);
@@ -159,10 +159,10 @@
                 LeaveCriticalSection(&lock);
                 return true;
             }
-            
+
             void clear()
             {
-                if (terminating) warning("warning:%s:%u queue_t::clear after terminate\n", __FILE__, __LINE__);   
+                if (terminating) warning("warning:%s:%u queue_t::clear after terminate\n", __FILE__, __LINE__);
                 if (n == 0) return;
                 EnterCriticalSection(&lock);
                 if (terminating) {
@@ -174,12 +174,12 @@
                 if (n_more_put) MTVERIFY(SetEvent(maybe_put));
                 LeaveCriticalSection(&lock);
             }
-                
+
             int count()
             {
                 return n;
             }
-            
+
             void terminate()
             {
                 terminating = true;
@@ -190,10 +190,10 @@
                     LeaveCriticalSection(&lock);
                 }
             }
-        };    
-    
+        };
+
     #else
-        
+
         template< typename T, int nelts >
         class queue_t {
 
@@ -209,15 +209,15 @@
             HANDLE          lock;       // mutex
             HANDLE          maybe_get;  // event
             HANDLE          maybe_put;  // event
-            int				n_more_get;
-            int				n_more_put;
-            bool			terminating;
-            
+            int             n_more_get;
+            int             n_more_put;
+            bool            terminating;
+
         public:
 
             queue_t() { }
 
-            void init() 
+            void init()
             {
                 terminating = false;
                 n = head = tail = n_more_get = n_more_put = 0;
@@ -254,18 +254,18 @@
                     MTVERIFY(WaitForSingleObject(lock, INFINITE) != WAIT_FAILED);
                     n_more_put--;
                     if (terminating) {
-                        MTVERIFY(ReleaseMutex(lock));            
+                        MTVERIFY(ReleaseMutex(lock));
                         return false;
                     }
                 }
-                buf[tail++] = datum; 
+                buf[tail++] = datum;
                 n++;
                 if (tail == capacity) tail = 0;
                 if (n_more_get) MTVERIFY(SetEvent(maybe_get));
                 MTVERIFY(ReleaseMutex(lock));
                 return true;
             }
-            
+
             bool get(element_t* datum)
             {
                 if (terminating) warning("warning:%s:%u queue_t::get after terminate\n", __FILE__, __LINE__);
@@ -280,15 +280,15 @@
                     MTVERIFY(WaitForSingleObject(lock, INFINITE) != WAIT_FAILED);
                     n_more_get--;
                     if (terminating) {
-                        MTVERIFY(ReleaseMutex(lock));            
+                        MTVERIFY(ReleaseMutex(lock));
                         return false;
                     }
                 }
-                *datum = buf[head++]; 
+                *datum = buf[head++];
                 n--;
                 if (head == capacity) head = 0;
                 if (n_more_put) MTVERIFY(SetEvent(maybe_put));
-                MTVERIFY(ReleaseMutex(lock));            
+                MTVERIFY(ReleaseMutex(lock));
                 return true;
             }
 
@@ -316,17 +316,17 @@
                     MTVERIFY(ReleaseMutex(lock));
                     return false;
                 }
-                buf[tail++] = datum; 
+                buf[tail++] = datum;
                 n++;
                 if (tail == capacity) tail = 0;
                 if (n_more_get) MTVERIFY(SetEvent(maybe_get));
-                MTVERIFY(ReleaseMutex(lock));            
+                MTVERIFY(ReleaseMutex(lock));
                 return true;
             }
 
             bool try_get(element_t* datum)
             {
-                if (terminating) warning("warning:%s:%u queue_t::try_get after terminate\n", __FILE__, __LINE__);    
+                if (terminating) warning("warning:%s:%u queue_t::try_get after terminate\n", __FILE__, __LINE__);
                 if (n == 0 || (WaitForSingleObject(lock, 0) != WAIT_OBJECT_0)) return false;
                 if (n == 0 || terminating) {
                     MTVERIFY(ReleaseMutex(lock));
@@ -339,11 +339,11 @@
                 MTVERIFY(ReleaseMutex(lock));
                 return true;
             }
-            
+
             // not tested
             void clear()
             {
-                if (terminating) warning("warning:%s:%u queue_t::clear after terminate\n", __FILE__, __LINE__);   
+                if (terminating) warning("warning:%s:%u queue_t::clear after terminate\n", __FILE__, __LINE__);
                 if (n == 0) return;
                 if (WaitForSingleObject(lock, INFINITE) != WAIT_OBJECT_0) return;
                 if (terminating) {
@@ -355,12 +355,12 @@
                 if (n_more_put) MTVERIFY(SetEvent(maybe_put));
                 MTVERIFY(ReleaseMutex(lock));
             }
-                
+
             int count()
             {
                 return n;
             }
-            
+
             void terminate()
             {
                 WaitForSingleObject(lock, INFINITE);
@@ -369,11 +369,11 @@
                 SetEvent(maybe_put);
                 ReleaseMutex(lock);
             }
-            
+
         };
-    
+
     #endif
-    
+
 #else
 
     template< typename T, int nelts >
@@ -391,15 +391,15 @@
         int             head;
         int             tail;
         element_t*      buf;
-        int				n_more_get;
-        int				n_more_put;
-        bool			terminating;
-        
+        int             n_more_get;
+        int             n_more_put;
+        bool            terminating;
+
     public:
 
         queue_t() { }
 
-        void init() 
+        void init()
         {
             terminating = false;
             n = head = tail = n_more_get = n_more_put = 0;
@@ -424,7 +424,7 @@
             if (terminating) warning("warning:%s:%u queue_t::put after terminate\n", __FILE__, __LINE__);
             MTVERIFY(pthread_mutex_lock(&lock));
             if (terminating) {
-                MTVERIFY(pthread_mutex_unlock(&lock));          
+                MTVERIFY(pthread_mutex_unlock(&lock));
                 return false;
             }
             while (n == capacity) {
@@ -432,36 +432,36 @@
                 MTVERIFY(pthread_cond_wait(&maybe_put, &lock));
                 n_more_put--;
                 if (terminating) {
-                    MTVERIFY(pthread_mutex_unlock(&lock));            
+                    MTVERIFY(pthread_mutex_unlock(&lock));
                     return false;
                 }
             }
-            buf[tail++] = datum; 
+            buf[tail++] = datum;
             n++;
             if (tail == capacity) tail = 0;
             if (n_more_get) MTVERIFY(pthread_cond_signal(&maybe_get));
             MTVERIFY(pthread_mutex_unlock(&lock));
             return true;
         }
-        
+
         bool get(element_t* datum)
         {
             if (terminating) warning("warning:%s:%u queue_t::get after terminate\n", __FILE__, __LINE__);
             MTVERIFY(pthread_mutex_lock(&lock));
             if (terminating) {
-                MTVERIFY(pthread_mutex_unlock(&lock));            
+                MTVERIFY(pthread_mutex_unlock(&lock));
                 return false;
             }
             while (n == 0) {
                 n_more_get++;
-                MTVERIFY(pthread_cond_wait(&maybe_get, &lock)); 
+                MTVERIFY(pthread_cond_wait(&maybe_get, &lock));
                 n_more_get--;
                 if (terminating) {
-                    MTVERIFY(pthread_mutex_unlock(&lock));            
+                    MTVERIFY(pthread_mutex_unlock(&lock));
                     return false;
                 }
             }
-            *datum = buf[head++]; 
+            *datum = buf[head++];
             n--;
             if (head == capacity) head = 0;
             if (n_more_put) MTVERIFY(pthread_cond_signal(&maybe_put));
@@ -493,7 +493,7 @@
                 MTVERIFY(pthread_mutex_unlock(&lock));
                 return false;
             }
-            buf[tail++] = datum; 
+            buf[tail++] = datum;
             n++;
             if (tail == capacity) tail = 0;
             if (n_more_get) MTVERIFY(pthread_cond_signal(&maybe_get));
@@ -503,7 +503,7 @@
 
         bool try_get(element_t* datum)
         {
-            if (terminating) warning("warning:%s:%u queue_t::try_get after terminate\n", __FILE__, __LINE__);    
+            if (terminating) warning("warning:%s:%u queue_t::try_get after terminate\n", __FILE__, __LINE__);
             if (n == 0 || pthread_mutex_trylock(&lock)) return false;
             if (n == 0 || terminating) {
                 MTVERIFY(pthread_mutex_unlock(&lock));
@@ -516,11 +516,11 @@
             MTVERIFY(pthread_mutex_unlock(&lock));
             return true;
         }
-        
+
         // not tested
         void clear()
         {
-            if (terminating) warning("warning:%s:%u queue_t::clear after terminate\n", __FILE__, __LINE__);   
+            if (terminating) warning("warning:%s:%u queue_t::clear after terminate\n", __FILE__, __LINE__);
             if (n == 0) return;
             MTVERIFY(pthread_mutex_lock(&lock));
             if (terminating) {
@@ -532,12 +532,12 @@
             if (n_more_put) MTVERIFY(pthread_cond_signal(&maybe_put));
             MTVERIFY(pthread_mutex_unlock(&lock));
         }
-            
+
         int count()
         {
             return n;
         }
-        
+
         void terminate()
         {
             MTVERIFY(pthread_mutex_lock(&lock));

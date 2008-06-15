@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	CORE_H_INCLUDED
-#define	CORE_H_INCLUDED
+#ifndef CORE_H_INCLUDED
+#define CORE_H_INCLUDED
 
 #define __STDC_LIMIT_MACROS
 
@@ -30,7 +30,7 @@
   #define USE_GCC_EXTENSION         1
 #endif
 
-#define	array_sizeof(a) ((int)(sizeof(a)/sizeof(a[0])))
+#define array_sizeof(a) ((int)(sizeof(a)/sizeof(a[0])))
 
 #ifdef NDEBUG
     #define MTDEBUG                 0
@@ -49,23 +49,23 @@
 #define PROFILE_OPCODE              0
 #define PROFILE_SUBR                0
 #define DISABLE_FASL                0
-#define	DETAILED_STATISTIC			0
+#define DETAILED_STATISTIC          0
 #define GLOC_DEBUG_INFO             0
 #define PREBIND_CLOSE               1
 #define THREAD_LOCAL_SLAB_CACHE     1
-#define LOCKFREE_ALLOC              1 
-#define CONCURRENT_COLLECT			1
+#define LOCKFREE_ALLOC              1
+#define CONCURRENT_COLLECT          1
 #define PARALLEL_COLLECT            0
-#define	BOOT_R6RS_COMPLIANT_SYNTAX	1
+#define BOOT_R6RS_COMPLIANT_SYNTAX  1
 
 #define USE_DEBUG_BOOT              0
 #define USE_DEBUG_CORE              0
 #define USE_INTERNED_CORE           1
-#define	USE_SNPRINT_FOR_FLONUM		0
+#define USE_SNPRINT_FOR_FLONUM      0
 #define USE_INLINED_CXR             0
-#define	USE_FLONUM_CONST            1
+#define USE_FLONUM_CONST            1
 #define USE_FAST_DYNAMIC_WIND       1
-#define	USE_EXTENDED_BVECTOR_SYNTAX	0
+#define USE_EXTENDED_BVECTOR_SYNTAX 0
 
 #if USE_GCC_EXTENSION
     #define USE_SYMBOL_THREAD       0

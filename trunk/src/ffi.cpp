@@ -15,27 +15,27 @@ c_stack_frame_t::push(scm_obj_t obj)
 {
     if (m_count < array_sizeof(m_frame)) {
         if (FIXNUMP(obj) || BIGNUMP(obj)) {
-        	if (n_positive_pred(obj)) {
-        		uintptr_t value;
-        		if (exact_integer_to_uintptr(obj, &value)) {
-        			m_frame[m_count++] = value;
-        			return NULL;
-        		}
+            if (n_positive_pred(obj)) {
+                uintptr_t value;
+                if (exact_integer_to_uintptr(obj, &value)) {
+                    m_frame[m_count++] = value;
+                    return NULL;
+                }
                 return "exact integer between 0 and UINTPTR_MAX";
-        	} else {
-        		intptr_t value;
-        		if (exact_integer_to_intptr(obj, &value)) {
-        			m_frame[m_count++] = value;
-        			return NULL;
-        		}
+            } else {
+                intptr_t value;
+                if (exact_integer_to_intptr(obj, &value)) {
+                    m_frame[m_count++] = value;
+                    return NULL;
+                }
                 return "exact integer between INTPTR_MIN and INTPTR_MAX";
-           	}
+            }
         }
-		if (BVECTORP(obj)) {
+        if (BVECTORP(obj)) {
             scm_bvector_t bvector = (scm_bvector_t)obj;
             m_frame[m_count++] = (intptr_t)bvector->elts;
-			return NULL;
-		}
+            return NULL;
+        }
         if (VECTORP(obj)) {
             scm_vector_t vector = (scm_vector_t)obj;
             int n = HDR_VECTOR_COUNT(vector->hdr);
@@ -54,18 +54,18 @@ c_stack_frame_t::push(scm_obj_t obj)
             while (ref) {
                 intptr_t datum = (intptr_t)bvector->elts;
                 bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t));
-                *(intptr_t*)(bvector->elts) = datum;                
+                *(intptr_t*)(bvector->elts) = datum;
                 ref--;
             }
             m_frame[m_count++] = (intptr_t)bvector->elts;
             return NULL;
-        }        
+        }
         if (FLONUMP(obj)) {
             union {
                 double f64;
                 uint64_t u64;
                 struct {
-                    uint32_t lo; 
+                    uint32_t lo;
                     uint32_t hi;
                 } u32;
             } n;
@@ -91,7 +91,7 @@ c_stack_frame_t::push(scm_obj_t obj)
     {
         int bytes = (argc * sizeof(intptr_t) + 15) & ~15;
         intptr_t retval;
-        
+
         __asm {
             mov     ecx, bytes
             mov     edx, esp
@@ -104,16 +104,16 @@ c_stack_frame_t::push(scm_obj_t obj)
             mov     esp, edi
             mov     retval, eax
         }
-        
+
         return retval;
     }
 
-    double 
+    double
     stdcall_func_stub_double(void* adrs, int argc, intptr_t argv[])
     {
         int bytes = (argc * sizeof(intptr_t) + 15) & ~15;
         double retval;
-        
+
         __asm {
             mov     ecx, bytes
             mov     edx, esp
@@ -126,22 +126,22 @@ c_stack_frame_t::push(scm_obj_t obj)
             mov     esp, edi
             fstp    retval
         }
-        
+
         return retval;
     }
 
-    intptr_t 
+    intptr_t
     c_func_stub_intptr(void* adrs, int argc, intptr_t argv[])
     {
         return stdcall_func_stub_intptr(adrs, argc, argv);
     }
 
-    double 
+    double
     c_func_stub_double(void* adrs, int argc, intptr_t argv[])
     {
         return stdcall_func_stub_double(adrs, argc, argv);
     }
-        
+
     #pragma pack(push, 1)
     struct trampoline_t {
         uint8_t     mov_ecx_imm32;  // B9           : mov ecx, imm16/32
@@ -150,11 +150,11 @@ c_stack_frame_t::push(scm_obj_t obj)
         uint32_t    imm32_stub;     // 00 00 00 00
         uint8_t     jmp_eax[2];     // FF 20        ; jmp [eax]
         uint8_t     ud2[2];         // 0F 0B
-        
+
         intptr_t    m_stub;
         uint32_t    m_uid;
         uint32_t    m_argc;
-        
+
         static uint8_t* s_pool;
         static uint8_t* s_pool_limit;
         static int s_pool_alloc_size;
@@ -185,7 +185,7 @@ c_stack_frame_t::push(scm_obj_t obj)
         return p;
     }
 
-    trampoline_t::trampoline_t(intptr_t stub, intptr_t uid, int argc) 
+    trampoline_t::trampoline_t(intptr_t stub, intptr_t uid, int argc)
     {
         m_stub = stub;
         m_uid = uid;
@@ -207,12 +207,12 @@ c_stack_frame_t::push(scm_obj_t obj)
         assert(CLOSUREP(obj));
         scm_obj_t result;
         try {
-	        VM* vm = current_vm();
-			 scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
+            VM* vm = current_vm();
+             scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
             for (int i = 0; i < argc; i++) argv[i] = intptr_to_integer(vm->m_heap, base[i]);
             result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
         } catch (vm_exit_t& e) {
-        	exit(e.m_code);
+            exit(e.m_code);
         } catch (...) {
             fatal("fatal: unhandled exception in callback\n[exit]\n");
         }
@@ -228,17 +228,17 @@ c_stack_frame_t::push(scm_obj_t obj)
     int __declspec(naked) c_callback_stub_int()
     {
         // note: uid adrs in ecx
-		uint32_t*	base;
-        uint32_t	uid;
-		uint32_t	argc;
-        intptr_t	value;
+        uint32_t*   base;
+        uint32_t    uid;
+        uint32_t    argc;
+        intptr_t    value;
         __asm {
             push    ebp
             mov     ebp, esp
             sub     esp, __LOCAL_SIZE
-			lea		eax, [ebp + 8]
-			mov		base, eax
-			mov     eax, [ecx]
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
             mov     uid, eax
             mov     eax, [ecx + 4]
             mov     argc, eax
@@ -255,18 +255,18 @@ c_stack_frame_t::push(scm_obj_t obj)
     int __declspec(naked) stdcall_callback_stub_int()
     {
         // note: uid adrs in ecx
-		uint32_t*	base;
-        uint32_t	uid;
-		uint32_t	argc;
-        intptr_t	value;
+        uint32_t*   base;
+        uint32_t    uid;
+        uint32_t    argc;
+        intptr_t    value;
         uint32_t    bytes;
         __asm {
             push    ebp
             mov     ebp, esp
             sub     esp, __LOCAL_SIZE
-			lea		eax, [ebp + 8]
-			mov		base, eax
-			mov     eax, [ecx]
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
             mov     uid, eax
             mov     eax, [ecx + 4]
             mov     argc, eax
@@ -289,10 +289,10 @@ c_stack_frame_t::push(scm_obj_t obj)
         static intptr_t uid;
         trampoline_t* thunk;
         if (type) {
-			thunk = new trampoline_t((intptr_t)stdcall_callback_stub_int, uid, argc);
+            thunk = new trampoline_t((intptr_t)stdcall_callback_stub_int, uid, argc);
         } else {
-			thunk = new trampoline_t((intptr_t)c_callback_stub_int, uid, argc);
-		}
+            thunk = new trampoline_t((intptr_t)c_callback_stub_int, uid, argc);
+        }
         vm->m_heap->write_barrier(closure);
         int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);
         if (nsize) rehash_hashtable(vm->m_heap, vm->m_heap->m_trampolines, nsize);
@@ -310,7 +310,7 @@ c_stack_frame_t::push(scm_obj_t obj)
         uint32_t    imm32_stub;     // 00 00 00 00
         uint8_t     jmp_eax[2];     // FF 20        ; jmp [eax]
         uint8_t     ud2[2];         // 0F 0B
-        
+
         intptr_t    m_stub;
         uint32_t    m_uid;
         uint32_t    m_argc;
@@ -319,9 +319,9 @@ c_stack_frame_t::push(scm_obj_t obj)
         static uint8_t* s_pool_limit;
         static int s_pool_alloc_size;
 
-        void* operator new(size_t size);        
+        void* operator new(size_t size);
         trampoline_t(intptr_t stub, intptr_t uid, int argc);
-        
+
     } __attribute__((packed));
 
     uint8_t* trampoline_t::s_pool;
@@ -346,7 +346,7 @@ c_stack_frame_t::push(scm_obj_t obj)
         return p;
     }
 
-    trampoline_t::trampoline_t(intptr_t stub, intptr_t uid, int argc) 
+    trampoline_t::trampoline_t(intptr_t stub, intptr_t uid, int argc)
     {
         m_stub = stub;
         m_uid = uid;
@@ -360,8 +360,8 @@ c_stack_frame_t::push(scm_obj_t obj)
         ud2[0] = 0x0F;
         ud2[1] = 0x0B;
         MEM_STORE_FENCE;
-    }    
-    
+    }
+
     int c_callback_int(uint32_t uid, uint32_t argc, uint32_t* base)
     {
         scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
@@ -373,7 +373,7 @@ c_stack_frame_t::push(scm_obj_t obj)
             for (int i = 0; i < argc; i++) argv[i] = intptr_to_integer(vm->m_heap, base[i]);
             result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
         } catch (vm_exit_t& e) {
-        	exit(e.m_code);
+            exit(e.m_code);
         } catch (...) {
             fatal("fatal: unhandled exception in callback\n[exit]\n");
         }
@@ -399,5 +399,3 @@ c_stack_frame_t::push(scm_obj_t obj)
     }
 
 #endif
-
-

@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	FASL_H_INCLUDED
-#define	FASL_H_INCLUDED
+#ifndef FASL_H_INCLUDED
+#define FASL_H_INCLUDED
 
 #include "core.h"
 #include "hash.h"
@@ -39,7 +39,7 @@ class fasl_printer_t {
     scm_obj_t*      m_stack;
     scm_obj_t*      m_stack_limit;
     scm_obj_t*      m_sp;
-    
+
     void scan(scm_obj_t obj);
     void put_lites();
     void put_list(scm_obj_t obj);
@@ -95,7 +95,7 @@ class fasl_printer_t {
         m_sp--;
         return m_sp[0];
     }
-    
+
 public:
     fasl_printer_t(VM* vm, scm_port_t port);
     ~fasl_printer_t();
@@ -106,7 +106,7 @@ class fasl_reader_t {
     VM*             m_vm;
     scm_port_t      m_port;
     scm_obj_t*      m_lites;
-    
+
     uint8_t fetch_u8()
     {
        return port_get_byte(m_port);
@@ -137,7 +137,7 @@ class fasl_reader_t {
 
     bool get_lites();
     scm_obj_t get_datum();
-    
+
 public:
     fasl_reader_t(VM* vm, scm_port_t port) {
         m_vm = vm;
@@ -147,8 +147,8 @@ public:
     ~fasl_reader_t() {
         if (m_lites) free(m_lites);
     }
-    
+
     scm_obj_t get();
-    
+
 };
 #endif

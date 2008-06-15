@@ -4,14 +4,14 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	SYSDEP_H_INCLUDED
-#define	SYSDEP_H_INCLUDED
+#ifndef SYSDEP_H_INCLUDED
+#define SYSDEP_H_INCLUDED
 
 #if _MSC_VER
   #define ARCH_BIG_ENDIAN           0
   #define DECLSPEC(x)               __declspec(x)
   #define ATTRIBUTE(x)
-  #define ALIGNOF(x)                (sizeof(x) > __alignof(x) ? __alignof(x) : sizeof(x))    
+  #define ALIGNOF(x)                (sizeof(x) > __alignof(x) ? __alignof(x) : sizeof(x))
   #define ARCH_LITTLE_ENDIAN        1
 #else
   #define DECLSPEC(x)
@@ -26,7 +26,7 @@
   #elif defined(__BYTE_ORDER)
     #if __BYTE_ORDER == __LITTLE_ENDIAN
       #define ARCH_LITTLE_ENDIAN    1
-	  #define ARCH_BIG_ENDIAN       0
+      #define ARCH_BIG_ENDIAN       0
     #elif __BYTE_ORDER == __BIG_ENDIAN
       #define ARCH_LITTLE_ENDIAN    0
       #define ARCH_BIG_ENDIAN       1
@@ -60,9 +60,9 @@
     #include    <sys/stat.h>
     #include    <limits>
 
-	extern "C" void __cdecl     _dosmaperr(unsigned long);
+    extern "C" void __cdecl     _dosmaperr(unsigned long);
     #define snprintf            _snprintf
-    
+
     #define VALUE_NAN           std::numeric_limits<double>::quiet_NaN()
     #define VALUE_INF           std::numeric_limits<double>::infinity()
 
@@ -86,7 +86,7 @@
     #define UINT64_MAX          _UI64_MAX
     #define UINTPTR_MIN         _UI32_MIN
     #define UINTPTR_MAX         _UI32_MAX
-            
+
     typedef signed char         int8_t;
     typedef short               int16_t;
     typedef int                 int32_t;
@@ -104,7 +104,7 @@
     #define PORT_STDIN_FD       GetStdHandle(STD_INPUT_HANDLE)
     #define PORT_STDOUT_FD      GetStdHandle(STD_OUTPUT_HANDLE)
     #define PORT_STDERR_FD      GetStdHandle(STD_ERROR_HANDLE)
-    
+
     inline int      isnan(double x) { return _isnan(x); }
     inline int      isinf(double x) { return !_finite(x); }
     inline double   round(double x) { return (x >= 0.0) ? floor(x + 0.5) : ceil(x - 0.5); }
@@ -115,18 +115,18 @@
         FILETIME ft;
         GetSystemTimeAsFileTime(&ft);
         return ((double)ft.dwLowDateTime + (double)ft.dwHighDateTime * (double)UINT32_MAX) / 10000.0;
-    } 
+    }
 
     inline int gettimeofday(struct timeval *tv, struct timezone *tz)
     {
         FILETIME ft;
         GetSystemTimeAsFileTime(&ft);
         uint64_t ft64 = ((uint64_t)ft.dwLowDateTime + (((uint64_t)ft.dwHighDateTime) << 32)) / 10 - 11644473600000000LL;
-        tv->tv_usec = ft64 % 1000000; 
+        tv->tv_usec = ft64 % 1000000;
         tv->tv_sec = ft64 / 1000000;
         return 0;
     }
-    
+
     inline int usleep(int usec)
     {
         SleepEx(usec / 1000, FALSE);
@@ -139,20 +139,20 @@
         GetSystemInfo(&si);
         return ((int)si.dwPageSize);
     }
-            
+
     #define HEAP_MAP_FAILED     0
     #define HEAP_UNMAP_FAILED   0
-    
+
     inline void* heap_map(void* adrs, size_t size)
     {
         return VirtualAlloc(adrs, size, MEM_COMMIT, PAGE_READWRITE);
     }
-    
+
     inline int heap_unmap(void* adrs, size_t size)
     {
         return VirtualFree(adrs, size, MEM_DECOMMIT);
     }
-        
+
     inline VM* current_vm()
     {
         extern VM* s_current_vm;
@@ -198,9 +198,9 @@
     #include <dlfcn.h>
     #include <netdb.h>
     #include <dirent.h>
-        
+
     typedef int     fd_t;
-    
+
     #ifndef __off64_t_defined
     typedef off_t   off64_t;
     #endif
@@ -213,18 +213,18 @@
     #define PORT_STDIN_FD       0
     #define PORT_STDOUT_FD      1
     #define PORT_STDERR_FD      2
-    
+
     #define HEAP_MAP_FAILED     MAP_FAILED
     #define HEAP_UNMAP_FAILED   (-1)
-        
+
     inline void* heap_map(void* adrs, size_t size)
     {
         return (uint8_t*)mmap(adrs, size, (PROT_READ | PROT_WRITE), (MAP_ANON | MAP_PRIVATE), -1, 0);
     }
-    
+
     inline int heap_unmap(void* adrs, size_t size)
     {
-		return munmap(adrs, size);
+        return munmap(adrs, size);
     }
 
     inline double msec()
@@ -233,7 +233,7 @@
         gettimeofday(&tv, NULL);
         return (tv.tv_sec * 1000000.0 + tv.tv_usec) / 1000.0;
     }
-    
+
     inline VM* current_vm()
     {
         extern VM* s_current_vm;
@@ -253,14 +253,14 @@
             if (__RETVAL__) throw __RETVAL__;   \
         } while(0)
   #endif
-    
+
     inline void thread_start(void* (*func)(void*), void* param)
     {
         pthread_t tid;
         MTVERIFY(pthread_create(&tid, NULL, func, param));
         MTVERIFY(pthread_detach(tid));
     }
-        
+
 #endif
 
 #endif  // SYSDEP_H_INCLUDED

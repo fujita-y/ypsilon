@@ -7,9 +7,9 @@
 #include "core.h"
 #include "vm.h"
 
-#define CONS(a, d)		make_pair(m_heap, (a), (d))
-#define LIST1(e1)		CONS((e1), scm_nil)
-#define LIST2(e1, e2)	CONS((e1), LIST1((e2)))
+#define CONS(a, d)      make_pair(m_heap, (a), (d))
+#define LIST1(e1)       CONS((e1), scm_nil)
+#define LIST2(e1, e2)   CONS((e1), LIST1((e2)))
 
 #if USE_FIXNUM_THREAD
 
@@ -72,19 +72,19 @@ void
 VM::apply_scheme(scm_obj_t proc, int argc, ...)
 {
     assert(SUBRP(proc) || CLOSUREP(proc));
-    	
-	scm_obj_t code = LIST2(CONS(INST_LOAD_CONST, proc), LIST1(INST_APPLY));
-	scm_obj_t args = scm_nil;
 
-	va_list ap;
+    scm_obj_t code = LIST2(CONS(INST_LOAD_CONST, proc), LIST1(INST_APPLY));
+    scm_obj_t args = scm_nil;
+
+    va_list ap;
     va_start(ap, argc);
-	for (int i = 0; i < argc; i++) args = CONS(va_arg(ap, scm_obj_t), args);
-	va_end(ap);	
+    for (int i = 0; i < argc; i++) args = CONS(va_arg(ap, scm_obj_t), args);
+    va_end(ap);
 
-	for (int i = 0; i < argc; i++) {
-		code = CONS(CONS(INST_PUSH_CONST, CAR(args)), code);
-		args = CDR(args);
-	}
+    for (int i = 0; i < argc; i++) {
+        code = CONS(CONS(INST_PUSH_CONST, CAR(args)), code);
+        args = CDR(args);
+    }
 
     if (CDR(m_pc) == scm_nil) {
         code = CONS(scm_unspecified, code);
@@ -103,12 +103,12 @@ void
 VM::apply_scheme_argv(scm_obj_t proc, int argc, scm_obj_t argv[])
 {
     assert(SUBRP(proc) || CLOSUREP(proc));
-	
-	scm_obj_t code = LIST2(CONS(INST_LOAD_CONST, proc), LIST1(INST_APPLY));
 
-	for (int i = 1; i <= argc; i++) {
-		code = CONS(CONS(INST_PUSH_CONST, argv[argc - i]), code);
-	}
+    scm_obj_t code = LIST2(CONS(INST_LOAD_CONST, proc), LIST1(INST_APPLY));
+
+    for (int i = 1; i <= argc; i++) {
+        code = CONS(CONS(INST_PUSH_CONST, argv[argc - i]), code);
+    }
 
     if (CDR(m_pc) == scm_nil) {
         code = CONS(scm_unspecified, code);
@@ -120,7 +120,7 @@ VM::apply_scheme_argv(scm_obj_t proc, int argc, scm_obj_t argv[])
         }
     }
 
-	m_pc = code;
+    m_pc = code;
 }
 
 /*
@@ -157,11 +157,11 @@ VM::call_scheme_stub(scm_obj_t proc, int argc, scm_obj_t argv[])
 {
     assert(SUBRP(proc) || CLOSUREP(proc));
 
-	scm_obj_t code = LIST2(CONS(INST_LOAD_CONST, proc), LIST1(INST_APPLY));
+    scm_obj_t code = LIST2(CONS(INST_LOAD_CONST, proc), LIST1(INST_APPLY));
 
-	for (int i = 1; i <= argc; i++) {
-		code = CONS(CONS(INST_PUSH_CONST, argv[argc - i]), code);
-	}
+    for (int i = 1; i <= argc; i++) {
+        code = CONS(CONS(INST_PUSH_CONST, argv[argc - i]), code);
+    }
 
     if (m_sp >= m_stack_limit) collect_stack(sizeof(scm_obj_t));
 
@@ -181,7 +181,7 @@ VM::call_scheme_stub(scm_obj_t proc, int argc, scm_obj_t argv[])
         code = CONS(scm_false, cont_pc);
     }
 
-	m_pc = code;
+    m_pc = code;
     return m_value;
 }
 
@@ -201,7 +201,7 @@ VM::call_scheme_argv(scm_obj_t proc, int argc, scm_obj_t argv[])
     } catch (vm_continue_t& e) {
         fatal("fatal in apply: unexpected exception vm_continue_t, maybe (escape) procedure in bad context");
     } catch (vm_exception_t& e) {
-		fatal("fatal in apply: unexpected exception vm_exception_t");
+        fatal("fatal in apply: unexpected exception vm_exception_t");
     } catch (reader_exception_t& e) {
         fatal("fatal in apply: unexpected exception reader_expecption_t(%s)", e.m_message);
     } catch (io_exception_t& e) {
@@ -211,9 +211,9 @@ VM::call_scheme_argv(scm_obj_t proc, int argc, scm_obj_t argv[])
     } catch (vm_exit_t& e) {
         throw;
     } catch (int code) {
-		fatal("fatal in apply: unexpected exception (errno %d, %s)", code, strerror(code));
-	} catch (...) {
-		fatal("fatal in apply: unknown exception");
+        fatal("fatal in apply: unexpected exception (errno %d, %s)", code, strerror(code));
+    } catch (...) {
+        fatal("fatal in apply: unknown exception");
     }
 }
 
@@ -225,10 +225,10 @@ VM::call_scheme(scm_obj_t proc, int argc, ...)
     scm_obj_t* param = (scm_obj_t*)alloca(sizeof(scm_obj_t) * (argc + 1));
     param[0] = proc;
 
-	va_list ap;
+    va_list ap;
     va_start(ap, argc);
-	for (int i = 0; i < argc; i++) param[i + 1] = va_arg(ap, scm_obj_t);
-	va_end(ap);	
+    for (int i = 0; i < argc; i++) param[i + 1] = va_arg(ap, scm_obj_t);
+    va_end(ap);
 
     try {
         return call_scheme_stub(assistant, argc + 1, param);
@@ -238,7 +238,7 @@ VM::call_scheme(scm_obj_t proc, int argc, ...)
     } catch (vm_continue_t& e) {
         fatal("fatal in apply: unexpected exception vm_continue_t, maybe (escape) procedure in bad context");
     } catch (vm_exception_t& e) {
-		fatal("fatal in apply: unexpected exception vm_exception_t");
+        fatal("fatal in apply: unexpected exception vm_exception_t");
     } catch (reader_exception_t& e) {
         fatal("fatal in apply: unexpected exception reader_expecption_t(%s)", e.m_message);
     } catch (io_exception_t& e) {
@@ -248,16 +248,16 @@ VM::call_scheme(scm_obj_t proc, int argc, ...)
     } catch (vm_exit_t& e) {
         throw;
     } catch (int code) {
-		fatal("fatal in apply: unexpected exception (errno %d, %s)", code, strerror(code));
-	} catch (...) {
-		fatal("fatal in apply: unknown exception");
+        fatal("fatal in apply: unexpected exception (errno %d, %s)", code, strerror(code));
+    } catch (...) {
+        fatal("fatal in apply: unknown exception");
     }
 }
 
 #if !defined(NDEBUG) || STDEBUG
 
-    #define	STACKP(p)			(((p) >= (void*)m_stack_top) && ((p) < (void*)m_stack_limit))
-    #define FORWARDP(p)			((*(intptr_t*)(p)) & 1)
+    #define STACKP(p)           (((p) >= (void*)m_stack_top) && ((p) < (void*)m_stack_limit))
+    #define FORWARDP(p)         ((*(intptr_t*)(p)) & 1)
 
     void
     VM::check_vm_env(void* lnk)
@@ -342,6 +342,3 @@ VM::call_scheme(scm_obj_t proc, int argc, ...)
     }
 
 #endif
-
-
-

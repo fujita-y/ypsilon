@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	HEAP_H_INCLUDED
-#define	HEAP_H_INCLUDED
+#ifndef HEAP_H_INCLUDED
+#define HEAP_H_INCLUDED
 
 #include "core.h"
 #include "object.h"

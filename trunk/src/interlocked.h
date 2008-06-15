@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	INTERLOCKED_H_INCLUDED
-#define	INTERLOCKED_H_INCLUDED
+#ifndef INTERLOCKED_H_INCLUDED
+#define INTERLOCKED_H_INCLUDED
 
 #include "core.h"
 
@@ -14,8 +14,8 @@ interlocked_exchange_int32(volatile int32_t* target, int32_t value)
 {
 #if _MSC_VER
 #else
-    __asm__ __volatile__ ("xchgl %0, %1" 
-                            : "+r" (value), "+m" (*target) 
+    __asm__ __volatile__ ("xchgl %0, %1"
+                            : "+r" (value), "+m" (*target)
                             :
                             : "memory");
 #endif
@@ -33,7 +33,7 @@ interlocked_compare_exchange(volatile int32_t* target, int32_t exchange, int32_t
                             : "memory");
     return value;
 }
-                     
+
 inline void
 interlocked_or_uint8(volatile uint8_t* target, uint8_t bits)
 {
@@ -91,7 +91,7 @@ i386_atomic_or(volatile uint8_t* the_value, uint8_t bits)
 {
     __asm__ __volatile__ ("lock;or %0,%1"
                             :
-                            : "r" (bits), "m" (*the_value) 
+                            : "r" (bits), "m" (*the_value)
                             : "memory");
 }
 
