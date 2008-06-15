@@ -8,20 +8,20 @@
 #include "heap.h"
 #include "list.h"
 
-#define	PLACE_FORWARD_PTR(from, to)    ((*(intptr_t*)(from)) = MAKEHEAPFORWARDPTR(to))
+#define PLACE_FORWARD_PTR(from, to)    ((*(intptr_t*)(from)) = MAKEHEAPFORWARDPTR(to))
 #define HAVE_FORWARD_PTR(p)            HEAPFORWARDPTRP(*(intptr_t*)(p))
-#define	FORWARD_PTR(p)                 ((void*)HEAPFORWARDPTR(*(intptr_t*)(p)))
+#define FORWARD_PTR(p)                 ((void*)HEAPFORWARDPTR(*(intptr_t*)(p)))
 
 struct relocate_info_t {
     uint8_t*    relocated;
     int         total;
-    
+
     relocate_info_t(int count) {
         total = count;
         relocated= new uint8_t [count];
         memset(relocated, 0, sizeof(uint8_t) * count);
     }
-    
+
     ~relocate_info_t() {
         delete [] relocated;
         relocated = NULL;
@@ -65,8 +65,8 @@ static void
 relocate_collectible(void* obj, int size, void* desc)
 {
     object_heap_t* heap = (object_heap_t*)desc;
-	assert(heap->is_collectible(obj));
-    scm_obj_t from = (scm_obj_t)obj;    
+    assert(heap->is_collectible(obj));
+    scm_obj_t from = (scm_obj_t)obj;
     scm_obj_t to;
     if (PAIRP(obj)) {
         assert(size == sizeof(scm_pair_rec_t));
@@ -81,7 +81,7 @@ relocate_collectible(void* obj, int size, void* desc)
         to = heap->allocate_collectible(size);
     }
     memcpy(to, from, size);
-	if (!PAIRP(from)) {
+    if (!PAIRP(from)) {
         int tc = HDR_TC(HDR(from));
         assert(tc >= 0);
         assert(tc <= TC_MASKBITS);
@@ -90,7 +90,7 @@ relocate_collectible(void* obj, int size, void* desc)
                 scm_bignum_t bignum_from = (scm_bignum_t)from;
                 if (bignum_from->elts == (uint32_t*)((uintptr_t)bignum_from + sizeof(scm_bignum_rec_t))) {
                     scm_bignum_t bignum_to = (scm_bignum_t)to;
-                    bignum_to->elts = (uint32_t*)((uintptr_t)bignum_to + sizeof(scm_bignum_rec_t));            
+                    bignum_to->elts = (uint32_t*)((uintptr_t)bignum_to + sizeof(scm_bignum_rec_t));
                 }
                 break;
             }
@@ -98,7 +98,7 @@ relocate_collectible(void* obj, int size, void* desc)
                 scm_symbol_t symbol_from = (scm_symbol_t)from;
                 if (symbol_from->name == (char*)((uintptr_t)symbol_from + sizeof(scm_symbol_rec_t))) {
                     scm_symbol_t symbol_to = (scm_symbol_t)to;
-                    symbol_to->name = (char*)((uintptr_t)symbol_to + sizeof(scm_symbol_rec_t));            
+                    symbol_to->name = (char*)((uintptr_t)symbol_to + sizeof(scm_symbol_rec_t));
                 }
                 break;
             }
@@ -106,7 +106,7 @@ relocate_collectible(void* obj, int size, void* desc)
                 scm_string_t string_from = (scm_string_t)from;
                 if (string_from->name == (char*)((uintptr_t)string_from + sizeof(scm_string_rec_t))) {
                     scm_string_t string_to = (scm_string_t)to;
-                    string_to->name = (char*)((uintptr_t)string_to + sizeof(scm_string_rec_t));            
+                    string_to->name = (char*)((uintptr_t)string_to + sizeof(scm_string_rec_t));
                 }
                 break;
             }
@@ -114,7 +114,7 @@ relocate_collectible(void* obj, int size, void* desc)
                 scm_vector_t vector_from = (scm_vector_t)from;
                 if (vector_from->elts == (scm_obj_t*)((uintptr_t)vector_from + sizeof(scm_vector_rec_t))) {
                     scm_vector_t vector_to = (scm_vector_t)to;
-                    vector_to->elts = (scm_obj_t*)((uintptr_t)vector_to + sizeof(scm_vector_rec_t));            
+                    vector_to->elts = (scm_obj_t*)((uintptr_t)vector_to + sizeof(scm_vector_rec_t));
                 }
                 break;
             }
@@ -122,7 +122,7 @@ relocate_collectible(void* obj, int size, void* desc)
                 scm_tuple_t tuple_from = (scm_tuple_t)from;
                 if (tuple_from->elts == (scm_obj_t*)((uintptr_t)tuple_from + sizeof(scm_tuple_rec_t))) {
                     scm_tuple_t tuple_to = (scm_tuple_t)to;
-                    tuple_to->elts = (scm_obj_t*)((uintptr_t)tuple_to + sizeof(scm_tuple_rec_t));            
+                    tuple_to->elts = (scm_obj_t*)((uintptr_t)tuple_to + sizeof(scm_tuple_rec_t));
                 }
                 break;
             }
@@ -130,7 +130,7 @@ relocate_collectible(void* obj, int size, void* desc)
                 scm_values_t values_from = (scm_values_t)from;
                 if (values_from->elts == (scm_obj_t*)((uintptr_t)values_from + sizeof(scm_values_rec_t))) {
                     scm_values_t values_to = (scm_values_t)to;
-                    values_to->elts = (scm_obj_t*)((uintptr_t)values_to + sizeof(scm_values_rec_t));            
+                    values_to->elts = (scm_obj_t*)((uintptr_t)values_to + sizeof(scm_values_rec_t));
                 }
                 break;
             }
@@ -146,156 +146,156 @@ static void
 resolve_collectible(void* obj, int size, void* desc)
 {
     object_heap_t* heap = (object_heap_t*)desc;
-	assert(heap->is_collectible(obj));	
-	if (PAIRP(obj)) {
-		scm_pair_t pair = (scm_pair_t)obj;
-		pair->car = heap->forward(pair->car);
-		pair->cdr = heap->forward(pair->cdr);
-		return;
-	}
-	int tc = HDR_TC(HDR(obj));
-	assert(tc >= 0 && tc <= TC_MASKBITS);
-	switch (tc) {
-		case TC_VECTOR: {
-			scm_vector_t vector = (scm_vector_t)obj;
-			int count = HDR_VECTOR_COUNT(vector->hdr);
-			for (int i = 0; i < count; i++) vector->elts[i] = heap->forward(vector->elts[i]);
-			break;
-		}
-		case TC_TUPLE: {
-			scm_tuple_t tuple = (scm_tuple_t)obj;
-			int count = HDR_TUPLE_COUNT(tuple->hdr);
-			for (int i = 0; i < count; i++) tuple->elts[i] = heap->forward(tuple->elts[i]);
-			break;
-		}
-		case TC_VALUES: {
-			scm_values_t values = (scm_values_t)obj;
-			int count = HDR_VALUES_COUNT(values->hdr);
-			for (int i = 0; i < count; i++) values->elts[i] = heap->forward(values->elts[i]);
-			break;
-		}
-		case TC_HASHTABLE: {
-			scm_hashtable_t ht = (scm_hashtable_t)obj;
+    assert(heap->is_collectible(obj));
+    if (PAIRP(obj)) {
+        scm_pair_t pair = (scm_pair_t)obj;
+        pair->car = heap->forward(pair->car);
+        pair->cdr = heap->forward(pair->cdr);
+        return;
+    }
+    int tc = HDR_TC(HDR(obj));
+    assert(tc >= 0 && tc <= TC_MASKBITS);
+    switch (tc) {
+        case TC_VECTOR: {
+            scm_vector_t vector = (scm_vector_t)obj;
+            int count = HDR_VECTOR_COUNT(vector->hdr);
+            for (int i = 0; i < count; i++) vector->elts[i] = heap->forward(vector->elts[i]);
+            break;
+        }
+        case TC_TUPLE: {
+            scm_tuple_t tuple = (scm_tuple_t)obj;
+            int count = HDR_TUPLE_COUNT(tuple->hdr);
+            for (int i = 0; i < count; i++) tuple->elts[i] = heap->forward(tuple->elts[i]);
+            break;
+        }
+        case TC_VALUES: {
+            scm_values_t values = (scm_values_t)obj;
+            int count = HDR_VALUES_COUNT(values->hdr);
+            for (int i = 0; i < count; i++) values->elts[i] = heap->forward(values->elts[i]);
+            break;
+        }
+        case TC_HASHTABLE: {
+            scm_hashtable_t ht = (scm_hashtable_t)obj;
             scoped_lock lock(ht->lock);
             ht->handlers = heap->forward(ht->handlers);
-			hashtable_rec_t* ht_datum = ht->datum;
+            hashtable_rec_t* ht_datum = ht->datum;
             if (ht_datum) {
                 int nsize = ht_datum->capacity;
                 bool rehash = false;
                 for (int i = 0; i < nsize; i++) {
                     scm_obj_t p = heap->forward(ht_datum->elts[i]);
                     if (ht_datum->elts[i] != p) rehash = true;
-                    ht_datum->elts[i] = p;			
+                    ht_datum->elts[i] = p;
                 }
                 for (int i = 0; i < nsize; i++) {
                     scm_obj_t p = heap->forward(ht_datum->elts[i + nsize]);
                     if (ht_datum->elts[i + nsize] != p) rehash = true;
-                    ht_datum->elts[i + nsize] = p;			
+                    ht_datum->elts[i + nsize] = p;
                 }
             }
-			break;
-		}
-		case TC_WEAKHASHTABLE: {
-			scm_weakhashtable_t ht = (scm_weakhashtable_t)obj;
+            break;
+        }
+        case TC_WEAKHASHTABLE: {
+            scm_weakhashtable_t ht = (scm_weakhashtable_t)obj;
             scoped_lock lock(ht->lock);
-			weakhashtable_rec_t* ht_datum = ht->datum;
-			int nsize = ht_datum->capacity;
+            weakhashtable_rec_t* ht_datum = ht->datum;
+            int nsize = ht_datum->capacity;
             bool rehash = false;
-			for (int i = 0; i < nsize; i++) {
+            for (int i = 0; i < nsize; i++) {
                 scm_obj_t p = heap->forward(ht_datum->elts[i]);
                 if (ht_datum->elts[i] != p) rehash = true;
-                ht_datum->elts[i] = p;			
-			}
-			break;
-		}
-		case TC_PORT: {
-			scm_port_t port = (scm_port_t)obj;
-            port->bytes = heap->forward(port->bytes);			
-            port->name = heap->forward(port->name);			
-            port->transcoder = heap->forward(port->transcoder);			
-			break;
-		}
-		case TC_COMPLEX: {
-			scm_complex_t complex = (scm_complex_t)obj;
-            complex->imag = heap->forward(complex->imag);			
-            complex->real = heap->forward(complex->real);			
-			break;
-		}
-		case TC_RATIONAL: {
-			scm_rational_t rational = (scm_rational_t)obj;
-            rational->nume = heap->forward(rational->nume);			
-            rational->deno = heap->forward(rational->deno);			
-			break;
-		}
-		case TC_CLOSURE: {
-			scm_closure_t closure = (scm_closure_t)obj;
-            closure->code = heap->forward(closure->code);			
-            closure->doc = heap->forward(closure->doc);			
-            closure->env = heap->interior_forward(closure->env);	
-			break;
-		}
-		case TC_CONT: {
-			scm_cont_t cont = (scm_cont_t)obj;
-			cont->wind_rec = heap->forward(cont->wind_rec);
-			cont->cont = heap->interior_forward(cont->cont);
-			break;
-		}
-		case TC_HEAPENV: {
-			int nbytes = HDR(obj) >> 12;
-			uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
-			vm_env_t env = (vm_env_t)(top + nbytes - sizeof(vm_env_rec_t));
+                ht_datum->elts[i] = p;
+            }
+            break;
+        }
+        case TC_PORT: {
+            scm_port_t port = (scm_port_t)obj;
+            port->bytes = heap->forward(port->bytes);
+            port->name = heap->forward(port->name);
+            port->transcoder = heap->forward(port->transcoder);
+            break;
+        }
+        case TC_COMPLEX: {
+            scm_complex_t complex = (scm_complex_t)obj;
+            complex->imag = heap->forward(complex->imag);
+            complex->real = heap->forward(complex->real);
+            break;
+        }
+        case TC_RATIONAL: {
+            scm_rational_t rational = (scm_rational_t)obj;
+            rational->nume = heap->forward(rational->nume);
+            rational->deno = heap->forward(rational->deno);
+            break;
+        }
+        case TC_CLOSURE: {
+            scm_closure_t closure = (scm_closure_t)obj;
+            closure->code = heap->forward(closure->code);
+            closure->doc = heap->forward(closure->doc);
+            closure->env = heap->interior_forward(closure->env);
+            break;
+        }
+        case TC_CONT: {
+            scm_cont_t cont = (scm_cont_t)obj;
+            cont->wind_rec = heap->forward(cont->wind_rec);
+            cont->cont = heap->interior_forward(cont->cont);
+            break;
+        }
+        case TC_HEAPENV: {
+            int nbytes = HDR(obj) >> 12;
+            uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
+            vm_env_t env = (vm_env_t)(top + nbytes - sizeof(vm_env_rec_t));
             env->up = heap->interior_forward(env->up);
-			for (scm_obj_t* vars = (scm_obj_t*)top; vars < (scm_obj_t*)env; vars++) *vars = heap->forward(*vars);
-			break;
-		}
-		case TC_HEAPCONT: {
-			int nbytes = HDR(obj) >> 12;
-			uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
-			vm_cont_t cont = (vm_cont_t)(top + nbytes - sizeof(vm_cont_rec_t));
-			cont->up = heap->interior_forward(cont->up);
-			cont->env = heap->interior_forward(cont->env);
-			cont->fp = (scm_obj_t*)top;
-			cont->pc = heap->forward(cont->pc);
-			cont->trace = heap->forward(cont->trace);
-			for (scm_obj_t* args = (scm_obj_t*)top; args < (scm_obj_t*)cont; args++) *args = heap->forward(*args);
-			break;
-		}
-		case TC_ENVIRONMENT: {
-			scm_environment_t environment = (scm_environment_t)obj;
-			environment->variable = (scm_hashtable_t)heap->forward(environment->variable);
-			environment->macro = (scm_hashtable_t)heap->forward(environment->macro);
-			environment->name = (scm_string_t)heap->forward(environment->name);
-			break;
-		}
-		case TC_GLOC: {
-			scm_gloc_t gloc = (scm_gloc_t)obj;
-			gloc->variable = heap->forward(gloc->variable);
+            for (scm_obj_t* vars = (scm_obj_t*)top; vars < (scm_obj_t*)env; vars++) *vars = heap->forward(*vars);
+            break;
+        }
+        case TC_HEAPCONT: {
+            int nbytes = HDR(obj) >> 12;
+            uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
+            vm_cont_t cont = (vm_cont_t)(top + nbytes - sizeof(vm_cont_rec_t));
+            cont->up = heap->interior_forward(cont->up);
+            cont->env = heap->interior_forward(cont->env);
+            cont->fp = (scm_obj_t*)top;
+            cont->pc = heap->forward(cont->pc);
+            cont->trace = heap->forward(cont->trace);
+            for (scm_obj_t* args = (scm_obj_t*)top; args < (scm_obj_t*)cont; args++) *args = heap->forward(*args);
+            break;
+        }
+        case TC_ENVIRONMENT: {
+            scm_environment_t environment = (scm_environment_t)obj;
+            environment->variable = (scm_hashtable_t)heap->forward(environment->variable);
+            environment->macro = (scm_hashtable_t)heap->forward(environment->macro);
+            environment->name = (scm_string_t)heap->forward(environment->name);
+            break;
+        }
+        case TC_GLOC: {
+            scm_gloc_t gloc = (scm_gloc_t)obj;
+            gloc->variable = heap->forward(gloc->variable);
   #if GLOC_DEBUG_INFO
-			gloc->environment = heap->forward(gloc->environment);
+            gloc->environment = heap->forward(gloc->environment);
   #endif
-  			gloc->value = heap->forward(gloc->value);
-			break;
-		}
-		case TC_SUBR: {
-			scm_subr_t subr = (scm_subr_t)obj;
-			subr->doc = heap->forward(subr->doc);
-			break;
-		}
-		case TC_WEAKMAPPING: {
-			scm_weakmapping_t wmap = (scm_weakmapping_t)obj;
-			wmap->key = heap->forward(wmap->key);
-			wmap->value = heap->forward(wmap->value);
-			break;
-		}
-	}
+            gloc->value = heap->forward(gloc->value);
+            break;
+        }
+        case TC_SUBR: {
+            scm_subr_t subr = (scm_subr_t)obj;
+            subr->doc = heap->forward(subr->doc);
+            break;
+        }
+        case TC_WEAKMAPPING: {
+            scm_weakmapping_t wmap = (scm_weakmapping_t)obj;
+            wmap->key = heap->forward(wmap->key);
+            wmap->value = heap->forward(wmap->value);
+            break;
+        }
+    }
 }
 
 static void
 rehash_collectible(void* obj, int size, void* desc)
 {
     object_heap_t* heap = (object_heap_t*)desc;
-	assert(heap->is_collectible(obj));	
-	if (!PAIRP(obj)) {
+    assert(heap->is_collectible(obj));
+    if (!PAIRP(obj)) {
         int tc = HDR_TC(HDR(obj));
         assert(tc >= 0);
         assert(tc <= TC_MASKBITS);
@@ -322,12 +322,12 @@ relocate_info_t*
 object_heap_t::relocate(bool pack)
 {
     relocate_info_t* info = new relocate_info_t(m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
-    
+
     object_slab_traits_t* first_traits = OBJECT_SLAB_TRAITS_OF(m_pool);
     object_slab_traits_t* traits;
     uint8_t* first_slab = m_pool;
     uint8_t* slab;
-    
+
     if (pack) {
         int used_count = 0;
         for (int i = 0; i < m_pool_watermark; i++) {
@@ -350,7 +350,7 @@ object_heap_t::relocate(bool pack)
             }
             slab += OBJECT_SLAB_SIZE;
             traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
-        }     
+        }
     } else {
         slab = first_slab;
         traits = first_traits;
@@ -361,13 +361,13 @@ object_heap_t::relocate(bool pack)
             }
             slab += OBJECT_SLAB_SIZE;
             traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
-        } 
+        }
     }
-    
+
     slab = first_slab;
     traits = first_traits;
     for (int i = 0; i < m_pool_watermark; i++) {
-        if (GCSLABP(m_pool[i]) && info->relocated[i]) traits->cache->iterate(slab, relocate_collectible, this);			
+        if (GCSLABP(m_pool[i]) && info->relocated[i]) traits->cache->iterate(slab, relocate_collectible, this);
         slab += OBJECT_SLAB_SIZE;
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
     }
@@ -381,11 +381,11 @@ object_heap_t::resolve(relocate_info_t* info)
     object_slab_traits_t* traits;
     uint8_t* first_slab = m_pool;
     uint8_t* slab;
-    
+
     slab = first_slab;
     traits = first_traits;
     for (int i = 0; i < m_pool_watermark; i++) {
-        if (GCSLABP(m_pool[i]) && info->relocated[i] == false) traits->cache->iterate(slab, resolve_collectible, this);			
+        if (GCSLABP(m_pool[i]) && info->relocated[i] == false) traits->cache->iterate(slab, resolve_collectible, this);
         slab += OBJECT_SLAB_SIZE;
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
     }
@@ -395,11 +395,11 @@ object_heap_t::resolve(relocate_info_t* info)
     slab = first_slab;
     traits = first_traits;
     for (int i = 0; i < m_pool_watermark; i++) {
-        if (GCSLABP(m_pool[i]) && info->relocated[i] == false) traits->cache->iterate(slab, rehash_collectible, this);			
+        if (GCSLABP(m_pool[i]) && info->relocated[i] == false) traits->cache->iterate(slab, rehash_collectible, this);
         slab += OBJECT_SLAB_SIZE;
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
     }
-    
+
     m_symbol.inplace_rehash();
     m_string.inplace_rehash();
 
@@ -416,9 +416,9 @@ object_heap_t::resolve(relocate_info_t* info)
         if (info->relocated[i]) deallocate(slab);
         slab += OBJECT_SLAB_SIZE;
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
-    }	
+    }
 
-    delete info;   
+    delete info;
 }
 
 typedef void* (*copy_proc_t)(object_heap_t* heap, void* datum);
@@ -468,8 +468,8 @@ relocate_private(void* obj, int size, void* desc)
     relocate_desc_t* ctx = (relocate_desc_t*)desc;
     object_heap_t* heap = ctx->heap;
     copy_proc_t copy_proc = ctx->proc;
-	assert(heap->is_collectible(obj));
-	if (!PAIRP(obj)) {
+    assert(heap->is_collectible(obj));
+    if (!PAIRP(obj)) {
         int tc = HDR_TC(HDR(obj));
         assert(tc >= 0);
         assert(tc <= TC_MASKBITS);
@@ -545,7 +545,7 @@ object_heap_t::relocate_privates(bool pack)
     object_slab_traits_t* traits;
     uint8_t* first_slab = m_pool;
     uint8_t* slab;
-    
+
     if (pack) {
         slab = first_slab;
         traits = first_traits;
@@ -569,14 +569,14 @@ object_heap_t::relocate_privates(bool pack)
             traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
         }
     }
-    
+
     relocate_desc_t desc;
     desc.heap = this;
     desc.proc = (pack ? copy_every_private : copy_slab_private);
     slab = first_slab;
     traits = first_traits;
     for (int i = 0; i < m_pool_watermark; i++) {
-        if (GCSLABP(m_pool[i])) traits->cache->iterate(slab, relocate_private, &desc);			
+        if (GCSLABP(m_pool[i])) traits->cache->iterate(slab, relocate_private, &desc);
         slab += OBJECT_SLAB_SIZE;
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
     }
@@ -589,7 +589,7 @@ object_heap_t::relocate_privates(bool pack)
         if (info->relocated[i]) deallocate(slab);
         slab += OBJECT_SLAB_SIZE;
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
-    }	
+    }
 }
 
 void
@@ -600,4 +600,3 @@ object_heap_t::compact_pool()
         else break;
     }
 }
-

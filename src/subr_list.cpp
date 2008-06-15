@@ -20,7 +20,7 @@
 #include "printer.h"
 #include "violation.h"
 
-static scm_obj_t 
+static scm_obj_t
 do_transpose(object_heap_t* heap, int each_len, int argc, scm_obj_t argv[])
 {
     scm_obj_t ans = scm_nil;
@@ -65,9 +65,9 @@ subr_list_transpose(VM* vm, int argc, scm_obj_t argv[])
         }
         wrong_type_argument_violation(vm, "list-transpose", 0, "proper list", argv[0], argc, argv);
         return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "list-transpose", 1, -1, argc, argv);
-	return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "list-transpose", 1, -1, argc, argv);
+    return scm_undef;
 }
 
 // list-transpose+
@@ -87,9 +87,9 @@ subr_list_transpose_plus(VM* vm, int argc, scm_obj_t argv[])
             return do_transpose(vm->m_heap, each_len, argc, argv);
         }
         return scm_false;
-	}
-	wrong_number_of_arguments_violation(vm, "list-transpose+", 1, -1, argc, argv);
-	return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "list-transpose+", 1, -1, argc, argv);
+    return scm_undef;
 }
 
 // list-transpose*
@@ -113,16 +113,16 @@ subr_list_transpose_ast(VM* vm, int argc, scm_obj_t argv[])
         if (finite) return do_transpose(vm->m_heap, each_len, argc, argv);
         invalid_argument_violation(vm, "list-transpose*", "expected at least one finite list as argument", NULL, -1, argc, argv);
         return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "list-transpose*", 1, -1, argc, argv);
-	return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "list-transpose*", 1, -1, argc, argv);
+    return scm_undef;
 }
 
 // cons*
 scm_obj_t
 subr_cons_ast(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc > 0) {
+    if (argc > 0) {
         if (argc == 1) return argv[0];
         scm_obj_t obj = make_pair(vm->m_heap, argv[0], scm_nil);
         scm_obj_t tail = obj;
@@ -135,7 +135,7 @@ subr_cons_ast(VM* vm, int argc, scm_obj_t argv[])
         return obj;
     }
     wrong_number_of_arguments_violation(vm, "cons*", 1, -1, argc, argv);
-	return scm_undef;
+    return scm_undef;
 
 }
 
@@ -143,9 +143,9 @@ subr_cons_ast(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_list_head(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PAIRP(argv[0])) {
-			if (FIXNUMP(argv[1])) {
+    if (argc == 2) {
+        if (PAIRP(argv[0])) {
+            if (FIXNUMP(argv[1])) {
                 int n = FIXNUM(argv[1]);
                 scm_obj_t lst = argv[0];
                 if (n >= 0) {
@@ -171,246 +171,245 @@ subr_list_head(VM* vm, int argc, scm_obj_t argv[])
                         }
                     }
                 }
-  			}
-			if (exact_non_negative_integer_pred(argv[1])) {
-				invalid_argument_violation(vm, "list-head", "index out of bounds,", argv[1], 1, argc, argv);
-				return scm_undef;
-			}
-			wrong_type_argument_violation(vm, "list-head", 1, "exact non-negative integer", argv[1], argc, argv);
-			return scm_undef;
-		}
-		if (argv[0] == scm_nil) {
-			if (FIXNUM(argv[1]) == 0) return scm_nil;
-			if (exact_non_negative_integer_pred(argv[1])) {
-				invalid_argument_violation(vm, "list-head", "index out of bounds,", argv[1], 1, argc, argv);
-				return scm_undef;
-			}
-			wrong_type_argument_violation(vm, "list-head", 1, "exact non-negative integer", argv[1], argc, argv);
-			return scm_undef;
-		}
-		wrong_type_argument_violation(vm, "list-head", 0, "list", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "list-head", 2, 2, argc, argv);
-	return scm_undef;
+            }
+            if (exact_non_negative_integer_pred(argv[1])) {
+                invalid_argument_violation(vm, "list-head", "index out of bounds,", argv[1], 1, argc, argv);
+                return scm_undef;
+            }
+            wrong_type_argument_violation(vm, "list-head", 1, "exact non-negative integer", argv[1], argc, argv);
+            return scm_undef;
+        }
+        if (argv[0] == scm_nil) {
+            if (FIXNUM(argv[1]) == 0) return scm_nil;
+            if (exact_non_negative_integer_pred(argv[1])) {
+                invalid_argument_violation(vm, "list-head", "index out of bounds,", argv[1], 1, argc, argv);
+                return scm_undef;
+            }
+            wrong_type_argument_violation(vm, "list-head", 1, "exact non-negative integer", argv[1], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "list-head", 0, "list", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "list-head", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // set-car!
 scm_obj_t
 subr_set_car(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PAIRP(argv[0])) {
-			vm->m_heap->write_barrier(argv[1]);
-			CAR(argv[0]) = argv[1];
-			return scm_unspecified;
-		}
-		wrong_type_argument_violation(vm, "set-car!", 0, "pair", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "set-car!", 2, 2, argc, argv);
-	return scm_undef;
+    if (argc == 2) {
+        if (PAIRP(argv[0])) {
+            vm->m_heap->write_barrier(argv[1]);
+            CAR(argv[0]) = argv[1];
+            return scm_unspecified;
+        }
+        wrong_type_argument_violation(vm, "set-car!", 0, "pair", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "set-car!", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // set-cdr!
 scm_obj_t
 subr_set_cdr(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PAIRP(argv[0])) {
-			vm->m_heap->write_barrier(argv[1]);
-			CDR(argv[0]) = argv[1];
-			return scm_unspecified;
-		}
-		wrong_type_argument_violation(vm, "set-cdr!", 0, "pair", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "set-cdr!", 2, 2, argc, argv);
-	return scm_undef;
+    if (argc == 2) {
+        if (PAIRP(argv[0])) {
+            vm->m_heap->write_barrier(argv[1]);
+            CDR(argv[0]) = argv[1];
+            return scm_unspecified;
+        }
+        wrong_type_argument_violation(vm, "set-cdr!", 0, "pair", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "set-cdr!", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // memq
 scm_obj_t
 subr_memq(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PAIRP(argv[1])) {
-			scm_obj_t obj = argv[0];
-			scm_obj_t lst = argv[1];
-			while (PAIRP(lst)) {
-				if (CAR(lst) != obj) lst = CDR(lst);
-				else return lst;
-			}
-			if (lst == scm_nil) return scm_false;
-			wrong_type_argument_violation(vm, "memq", 1, "list", argv[1], argc, argv);
-			return scm_undef;
-		}
-		if (argv[1] == scm_nil) return scm_false;
-		wrong_type_argument_violation(vm, "memq", 1, "list", argv[1], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "memq", 2, 2, argc, argv);
-	return scm_undef;
+    if (argc == 2) {
+        if (PAIRP(argv[1])) {
+            scm_obj_t obj = argv[0];
+            scm_obj_t lst = argv[1];
+            while (PAIRP(lst)) {
+                if (CAR(lst) != obj) lst = CDR(lst);
+                else return lst;
+            }
+            if (lst == scm_nil) return scm_false;
+            wrong_type_argument_violation(vm, "memq", 1, "list", argv[1], argc, argv);
+            return scm_undef;
+        }
+        if (argv[1] == scm_nil) return scm_false;
+        wrong_type_argument_violation(vm, "memq", 1, "list", argv[1], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "memq", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // memv
 scm_obj_t
 subr_memv(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PAIRP(argv[1])) {
-			scm_obj_t obj = argv[0];
-			scm_obj_t lst = argv[1];
-			while (PAIRP(lst)) {
-				if (eqv_pred(CAR(lst), obj)) return lst;
-				lst = CDR(lst);
-			}
-			if (lst == scm_nil) return scm_false;
-			wrong_type_argument_violation(vm, "memv", 1, "list", argv[1], argc, argv);
-			return scm_undef;
-		}
-		if (argv[1] == scm_nil) return scm_false;
-		wrong_type_argument_violation(vm, "memv", 1, "list", argv[1], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "memv", 2, 2, argc, argv);
-	return scm_undef;
+    if (argc == 2) {
+        if (PAIRP(argv[1])) {
+            scm_obj_t obj = argv[0];
+            scm_obj_t lst = argv[1];
+            while (PAIRP(lst)) {
+                if (eqv_pred(CAR(lst), obj)) return lst;
+                lst = CDR(lst);
+            }
+            if (lst == scm_nil) return scm_false;
+            wrong_type_argument_violation(vm, "memv", 1, "list", argv[1], argc, argv);
+            return scm_undef;
+        }
+        if (argv[1] == scm_nil) return scm_false;
+        wrong_type_argument_violation(vm, "memv", 1, "list", argv[1], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "memv", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // member
 scm_obj_t
 subr_member(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PAIRP(argv[1])) {
-			scm_obj_t obj = argv[0];
-			scm_obj_t lst = argv[1];
+    if (argc == 2) {
+        if (PAIRP(argv[1])) {
+            scm_obj_t obj = argv[0];
+            scm_obj_t lst = argv[1];
             scm_hashtable_t visited = make_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
             scoped_lock lock(visited->lock);
-			while (PAIRP(lst)) {
-				if (equal_pred(vm->m_heap, visited, obj, CAR(lst))) return lst;
+            while (PAIRP(lst)) {
+                if (equal_pred(vm->m_heap, visited, obj, CAR(lst))) return lst;
                 clear_volatile_hashtable(visited);
-				lst = CDR(lst);
-			}
-			if (lst == scm_nil) return scm_false;
-			wrong_type_argument_violation(vm, "member", 1, "list", argv[1], argc, argv);
-			return scm_undef;
-		}
-		if (argv[1] == scm_nil) return scm_false;
-		wrong_type_argument_violation(vm, "member", 1, "list", argv[1], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "member", 2, 2, argc, argv);
-	return scm_undef;
+                lst = CDR(lst);
+            }
+            if (lst == scm_nil) return scm_false;
+            wrong_type_argument_violation(vm, "member", 1, "list", argv[1], argc, argv);
+            return scm_undef;
+        }
+        if (argv[1] == scm_nil) return scm_false;
+        wrong_type_argument_violation(vm, "member", 1, "list", argv[1], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "member", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // assq
 scm_obj_t
 subr_assq(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PAIRP(argv[1])) {
-			scm_obj_t obj = argv[0];
-			scm_obj_t lst = argv[1];
-			while (PAIRP(lst)) {
-				if (PAIRP(CAR(lst))) {
-					if (CAAR(lst) == obj) return CAR(lst);
-					lst = CDR(lst);
-					continue;
-				}
-				wrong_type_argument_violation(vm, "assq", 1, "alist", argv[1], argc, argv);
-				return scm_undef;
-			}
-			if (lst == scm_nil) return scm_false;
-			wrong_type_argument_violation(vm, "assq", 1, "alist", argv[1], argc, argv);
-			return scm_undef;
-		}
-		if (argv[1] == scm_nil) return scm_false;
-		wrong_type_argument_violation(vm, "assq", 1, "alist", argv[1], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "assq", 2, 2, argc, argv);
-	return scm_undef;
+    if (argc == 2) {
+        if (PAIRP(argv[1])) {
+            scm_obj_t obj = argv[0];
+            scm_obj_t lst = argv[1];
+            while (PAIRP(lst)) {
+                if (PAIRP(CAR(lst))) {
+                    if (CAAR(lst) == obj) return CAR(lst);
+                    lst = CDR(lst);
+                    continue;
+                }
+                wrong_type_argument_violation(vm, "assq", 1, "alist", argv[1], argc, argv);
+                return scm_undef;
+            }
+            if (lst == scm_nil) return scm_false;
+            wrong_type_argument_violation(vm, "assq", 1, "alist", argv[1], argc, argv);
+            return scm_undef;
+        }
+        if (argv[1] == scm_nil) return scm_false;
+        wrong_type_argument_violation(vm, "assq", 1, "alist", argv[1], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "assq", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // assv
 scm_obj_t
 subr_assv(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PAIRP(argv[1])) {
-			scm_obj_t obj = argv[0];
-			scm_obj_t lst = argv[1];
-			while (PAIRP(lst)) {
-				if (PAIRP(CAR(lst))) {
-					if (eqv_pred(CAAR(lst), obj)) return CAR(lst);
-				} else {
-					wrong_type_argument_violation(vm, "assv", 1, "alist", argv[1], argc, argv);
-					return scm_undef;
-				}
-				lst = CDR(lst);
-			}
-			if (lst == scm_nil) return scm_false;
-			wrong_type_argument_violation(vm, "assv", 1, "alist", argv[1], argc, argv);
-			return scm_undef;
-		}
-		if (argv[1] == scm_nil) return scm_false;
-		wrong_type_argument_violation(vm, "assv", 1, "alist", argv[1], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "assv", 2, 2, argc, argv);
-	return scm_undef;
+    if (argc == 2) {
+        if (PAIRP(argv[1])) {
+            scm_obj_t obj = argv[0];
+            scm_obj_t lst = argv[1];
+            while (PAIRP(lst)) {
+                if (PAIRP(CAR(lst))) {
+                    if (eqv_pred(CAAR(lst), obj)) return CAR(lst);
+                } else {
+                    wrong_type_argument_violation(vm, "assv", 1, "alist", argv[1], argc, argv);
+                    return scm_undef;
+                }
+                lst = CDR(lst);
+            }
+            if (lst == scm_nil) return scm_false;
+            wrong_type_argument_violation(vm, "assv", 1, "alist", argv[1], argc, argv);
+            return scm_undef;
+        }
+        if (argv[1] == scm_nil) return scm_false;
+        wrong_type_argument_violation(vm, "assv", 1, "alist", argv[1], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "assv", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // assoc
 scm_obj_t
 subr_assoc(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PAIRP(argv[1])) {
-			scm_obj_t obj = argv[0];
-			scm_obj_t lst = argv[1];
+    if (argc == 2) {
+        if (PAIRP(argv[1])) {
+            scm_obj_t obj = argv[0];
+            scm_obj_t lst = argv[1];
             scm_hashtable_t visited = make_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
             scoped_lock lock(visited->lock);
-			while (PAIRP(lst)) {
-				if (PAIRP(CAR(lst))) {
-					if (equal_pred(vm->m_heap, visited, obj, CAAR(lst))) return CAR(lst);
+            while (PAIRP(lst)) {
+                if (PAIRP(CAR(lst))) {
+                    if (equal_pred(vm->m_heap, visited, obj, CAAR(lst))) return CAR(lst);
                     clear_volatile_hashtable(visited);
-				} else {
-					wrong_type_argument_violation(vm, "assoc", 1, "alist", argv[1], argc, argv);
-					return scm_undef;
-				}
-				lst = CDR(lst);
-			}
-			if (lst == scm_nil) return scm_false;
-			wrong_type_argument_violation(vm, "assoc", 1, "alist", argv[1], argc, argv);
-			return scm_undef;
-		}
-		if (argv[1] == scm_nil) return scm_false;
-		wrong_type_argument_violation(vm, "assoc", 1, "alist", argv[1], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "assoc", 2, 2, argc, argv);
-	return scm_undef;
+                } else {
+                    wrong_type_argument_violation(vm, "assoc", 1, "alist", argv[1], argc, argv);
+                    return scm_undef;
+                }
+                lst = CDR(lst);
+            }
+            if (lst == scm_nil) return scm_false;
+            wrong_type_argument_violation(vm, "assoc", 1, "alist", argv[1], argc, argv);
+            return scm_undef;
+        }
+        if (argv[1] == scm_nil) return scm_false;
+        wrong_type_argument_violation(vm, "assoc", 1, "alist", argv[1], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "assoc", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 void
 init_subr_list(object_heap_t* heap)
 {
-	#define	DEFSUBR(SYM, FUNC)	heap->intern_system_subr(SYM, FUNC)
+    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("list-transpose", subr_list_transpose);
     DEFSUBR("list-transpose+", subr_list_transpose_plus);
     DEFSUBR("list-transpose*", subr_list_transpose_ast);
-	DEFSUBR("list-head", subr_list_head);
-	DEFSUBR("cons*", subr_cons_ast);
-	DEFSUBR("set-car!", subr_set_car);
-	DEFSUBR("set-cdr!", subr_set_cdr);
-	DEFSUBR("memq", subr_memq);
-	DEFSUBR("memv", subr_memv);
-	DEFSUBR("member", subr_member);
-	DEFSUBR("assq", subr_assq);
-	DEFSUBR("assv", subr_assv);
-	DEFSUBR("assoc", subr_assoc);
+    DEFSUBR("list-head", subr_list_head);
+    DEFSUBR("cons*", subr_cons_ast);
+    DEFSUBR("set-car!", subr_set_car);
+    DEFSUBR("set-cdr!", subr_set_cdr);
+    DEFSUBR("memq", subr_memq);
+    DEFSUBR("memv", subr_memv);
+    DEFSUBR("member", subr_member);
+    DEFSUBR("assq", subr_assq);
+    DEFSUBR("assv", subr_assv);
+    DEFSUBR("assoc", subr_assoc);
 }
-

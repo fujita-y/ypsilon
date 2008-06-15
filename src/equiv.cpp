@@ -17,70 +17,70 @@
 bool
 eqv_pred(scm_obj_t obj1, scm_obj_t obj2)
 {
-	if (obj1 == obj2) return true;
-	if (FIXNUMP(obj1)) return false;
-	if (FIXNUMP(obj2)) return false;
-	if (number_pred(obj1)) {
-		if (number_pred(obj2)) {
-			if (n_exact_pred(obj1)) {
-				if (n_exact_pred(obj2)) {
-					return n_exact_equal_pred(obj1, obj2);
-				}
-			} else {
-				if (n_exact_pred(obj2)) return false;
-				return n_inexact_equal_pred(obj1, obj2);
-			}
-		}
-	}
-	return false;
+    if (obj1 == obj2) return true;
+    if (FIXNUMP(obj1)) return false;
+    if (FIXNUMP(obj2)) return false;
+    if (number_pred(obj1)) {
+        if (number_pred(obj2)) {
+            if (n_exact_pred(obj1)) {
+                if (n_exact_pred(obj2)) {
+                    return n_exact_equal_pred(obj1, obj2);
+                }
+            } else {
+                if (n_exact_pred(obj2)) return false;
+                return n_inexact_equal_pred(obj1, obj2);
+            }
+        }
+    }
+    return false;
 }
 
 bool
 r5rs_equal_pred(scm_obj_t lst1, scm_obj_t lst2)
 {
     if (lst1 == lst2) return true;
-	if (PAIRP(lst1)) {
-		if (PAIRP(lst2)) {
-			return r5rs_equal_pred(CAR(lst1), CAR(lst2)) && r5rs_equal_pred(CDR(lst1), CDR(lst2));
-		}
-		return false;
-	}
-	if (VECTORP(lst1)) {
-		if (VECTORP(lst2)) {
-			scm_vector_t vector1 = (scm_vector_t)lst1;
-			scm_vector_t vector2 = (scm_vector_t)lst2;
-			int n1 = HDR_VECTOR_COUNT(vector1->hdr);
-			int n2 = HDR_VECTOR_COUNT(vector2->hdr);
-			if (n1 == n2) {
-				scm_obj_t* elts1 = vector1->elts;
-				scm_obj_t* elts2 = vector2->elts;
-				for (int i = 0; i < n1; i++) {
-					if (r5rs_equal_pred(elts1[i], elts2[i])) continue;
-					return false;
-				}
-				return true;
-			}
-		}
-		return false;
-	}
-	if (TUPLEP(lst1)) {
-		if (TUPLEP(lst2)) {
-			scm_tuple_t tuple1 = (scm_tuple_t)lst1;
-			scm_tuple_t tuple2 = (scm_tuple_t)lst2;
-			int n1 = HDR_TUPLE_COUNT(tuple1->hdr);
-			int n2 = HDR_TUPLE_COUNT(tuple2->hdr);
-			if (n1 == n2) {
-				scm_obj_t* elts1 = tuple1->elts;
-				scm_obj_t* elts2 = tuple2->elts;
-				for (int i = 0; i < n1; i++) {
-					if (r5rs_equal_pred(elts1[i], elts2[i])) continue;
-					return false;
-				}
-				return true;
-			}
-		}
-		return false;
-	}
+    if (PAIRP(lst1)) {
+        if (PAIRP(lst2)) {
+            return r5rs_equal_pred(CAR(lst1), CAR(lst2)) && r5rs_equal_pred(CDR(lst1), CDR(lst2));
+        }
+        return false;
+    }
+    if (VECTORP(lst1)) {
+        if (VECTORP(lst2)) {
+            scm_vector_t vector1 = (scm_vector_t)lst1;
+            scm_vector_t vector2 = (scm_vector_t)lst2;
+            int n1 = HDR_VECTOR_COUNT(vector1->hdr);
+            int n2 = HDR_VECTOR_COUNT(vector2->hdr);
+            if (n1 == n2) {
+                scm_obj_t* elts1 = vector1->elts;
+                scm_obj_t* elts2 = vector2->elts;
+                for (int i = 0; i < n1; i++) {
+                    if (r5rs_equal_pred(elts1[i], elts2[i])) continue;
+                    return false;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+    if (TUPLEP(lst1)) {
+        if (TUPLEP(lst2)) {
+            scm_tuple_t tuple1 = (scm_tuple_t)lst1;
+            scm_tuple_t tuple2 = (scm_tuple_t)lst2;
+            int n1 = HDR_TUPLE_COUNT(tuple1->hdr);
+            int n2 = HDR_TUPLE_COUNT(tuple2->hdr);
+            if (n1 == n2) {
+                scm_obj_t* elts1 = tuple1->elts;
+                scm_obj_t* elts2 = tuple2->elts;
+                for (int i = 0; i < n1; i++) {
+                    if (r5rs_equal_pred(elts1[i], elts2[i])) continue;
+                    return false;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
     if (BVECTORP(lst1)) {
         if (BVECTORP(lst2)) {
             scm_bvector_t bvector1 = (scm_bvector_t)lst1;
@@ -91,11 +91,11 @@ r5rs_equal_pred(scm_obj_t lst1, scm_obj_t lst2)
        }
        return false;
     }
-	if (string_eq_pred(lst1, lst2)) return true;
-	return eqv_pred(lst1, lst2);
+    if (string_eq_pred(lst1, lst2)) return true;
+    return eqv_pred(lst1, lst2);
 }
 
-static bool 
+static bool
 find_and_merge_opponent(object_heap_t* heap, scm_hashtable_t visited, scm_obj_t lst1, scm_obj_t lst2)
 {
     scm_obj_t opponents = get_hashtable(visited, lst1);
@@ -120,13 +120,13 @@ find_and_merge_opponent(object_heap_t* heap, scm_hashtable_t visited, scm_obj_t 
 bool
 equal_pred(object_heap_t* heap, scm_hashtable_t visited, scm_obj_t lst1, scm_obj_t lst2)
 {
-    
+
 #if USE_R5RS_EQUAL
     return r5rs_equal_pred(lst1, lst2);
 #endif
-    
+
 top:
-    
+
     if (lst1 == lst2) return true;
     if (PAIRP(lst1)) {
         if (PAIRP(lst2)) {
@@ -143,18 +143,18 @@ top:
         if (VECTORP(lst2)) {
             if (find_and_merge_opponent(heap, visited, lst1, lst2)) return true;
             scm_vector_t vector1 = (scm_vector_t)lst1;
-			scm_vector_t vector2 = (scm_vector_t)lst2;
-			int n1 = HDR_VECTOR_COUNT(vector1->hdr);
-			int n2 = HDR_VECTOR_COUNT(vector2->hdr);
-			if (n1 == n2) {
-				scm_obj_t* elts1 = vector1->elts;
-				scm_obj_t* elts2 = vector2->elts;
-				for (int i = 0; i < n1; i++) {
-					if (equal_pred(heap, visited, elts1[i], elts2[i])) continue;
-					return false;
-				}
-				return true;
-			}
+            scm_vector_t vector2 = (scm_vector_t)lst2;
+            int n1 = HDR_VECTOR_COUNT(vector1->hdr);
+            int n2 = HDR_VECTOR_COUNT(vector2->hdr);
+            if (n1 == n2) {
+                scm_obj_t* elts1 = vector1->elts;
+                scm_obj_t* elts2 = vector2->elts;
+                for (int i = 0; i < n1; i++) {
+                    if (equal_pred(heap, visited, elts1[i], elts2[i])) continue;
+                    return false;
+                }
+                return true;
+            }
         }
         return false;
     }
@@ -162,18 +162,18 @@ top:
         if (TUPLEP(lst2)) {
             if (find_and_merge_opponent(heap, visited, lst1, lst2)) return true;
             scm_tuple_t tuple1 = (scm_tuple_t)lst1;
-			scm_tuple_t tuple2 = (scm_tuple_t)lst2;
-			int n1 = HDR_TUPLE_COUNT(tuple1->hdr);
-			int n2 = HDR_TUPLE_COUNT(tuple2->hdr);
-			if (n1 == n2) {
-				scm_obj_t* elts1 = tuple1->elts;
-				scm_obj_t* elts2 = tuple1->elts;
-				for (int i = 0; i < n1; i++) {
-					if (equal_pred(heap, visited, elts1[i], elts2[i])) continue;
-					return false;
-				}
-				return true;
-			}
+            scm_tuple_t tuple2 = (scm_tuple_t)lst2;
+            int n1 = HDR_TUPLE_COUNT(tuple1->hdr);
+            int n2 = HDR_TUPLE_COUNT(tuple2->hdr);
+            if (n1 == n2) {
+                scm_obj_t* elts1 = tuple1->elts;
+                scm_obj_t* elts2 = tuple1->elts;
+                for (int i = 0; i < n1; i++) {
+                    if (equal_pred(heap, visited, elts1[i], elts2[i])) continue;
+                    return false;
+                }
+                return true;
+            }
         }
         return false;
     }
@@ -187,14 +187,14 @@ top:
        }
        return false;
     }
-	if (string_eq_pred(lst1, lst2)) return true;
+    if (string_eq_pred(lst1, lst2)) return true;
     return eqv_pred(lst1, lst2);
 }
 
-/* 
- 
+/*
+
  R6RS
- 
+
  (define equal?
  (lambda (lst1 lst2)
  (let ((visited (make-core-hashtable)))
@@ -230,5 +230,5 @@ top:
  (and (string? lst2) (string=? lst1 lst2)))
  (else
  (eqv? lst1 lst2))))))))
-  
- */	
+
+ */

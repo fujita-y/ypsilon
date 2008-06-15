@@ -17,7 +17,7 @@ VM*             s_current_vm;
     {
         assert(isnan(VALUE_NAN));
         assert(isinf(VALUE_INF));
-    
+
         main_command_line_argc = argc;
         main_command_line_argv = argv;
         object_heap_t* heap = new object_heap_t;
@@ -27,7 +27,7 @@ VM*             s_current_vm;
         s_current_vm = &rootVM;
         rootVM.boot();
     }
-    
+
 #else
 
     void standalone_loop()
@@ -84,7 +84,7 @@ VM*             s_current_vm;
             if (sig == SIGCONT) {
                 fprintf(stderr,": SIGCONT\n");
                 continue;
-            }		
+            }
             fprintf(stderr,";; ### UNHANDLED SIGNAL %d ###\n", sig);
             exit(0);
         }
@@ -94,22 +94,22 @@ VM*             s_current_vm;
     int main(int argc, char* const argv[])
     {
         main_command_line_argc = argc;
-        main_command_line_argv = argv;        
-    #ifndef NDEBUG            
+        main_command_line_argv = argv;
+    #ifndef NDEBUG
         struct foo { char i; };
         struct bar { int i; struct foo o; };
         struct hoge { struct bar m; char k; };
         printf("sizeof(foo) %d\n", sizeof(foo)); // 1
         printf("sizeof(bar) %d\n", sizeof(bar)); // 8
-        printf("sizeof(hoge) %d\n", sizeof(hoge)); 
-        printf("sizeof(size_t) %d\n", sizeof(size_t)); 
+        printf("sizeof(hoge) %d\n", sizeof(hoge));
+        printf("sizeof(size_t) %d\n", sizeof(size_t));
         printf("__alignof__(double) %d\n", __alignof__(double)); // 8
         printf("FIXNUM_MAX %d %x\n", FIXNUM_MAX, FIXNUM_MAX);
         printf("FIXNUM_MIN %d %x\n", FIXNUM_MIN, FIXNUM_MIN);
         printf("sizeof(pthread_mutex_t) %d\n", sizeof(pthread_mutex_t));
         printf("sizeof(pthread_cond_t) %d\n", sizeof(pthread_cond_t));
     #endif
-      
+
     #if MTDEBUG
         puts(";; MTDEBUG ON");
     #endif
@@ -126,7 +126,7 @@ VM*             s_current_vm;
         sigset_t set;
         sigemptyset(&set);
         sigaddset(&set, SIGINT);
-        MTVERIFY(pthread_sigmask(SIG_BLOCK, &set, NULL));        
+        MTVERIFY(pthread_sigmask(SIG_BLOCK, &set, NULL));
         {
             pthread_t tid;
             MTVERIFY(pthread_create(&tid, NULL, signal_waiter, &set));
@@ -135,37 +135,37 @@ VM*             s_current_vm;
         scm_standalone(NULL);
         return 0;
     }
-    
+
 #endif
 
 void fatal(const char* fmt, ...)
 {
-	fflush(stdout);
-	va_list ap;
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
+    fflush(stdout);
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
     fprintf(stderr, "\n");
-	fflush(stderr);
-	exit(EXIT_FAILURE);
+    fflush(stderr);
+    exit(EXIT_FAILURE);
 }
 
 void warning(const char* fmt, ...)
 {
-	fflush(stdout);
-	va_list ap;
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	fflush(stderr);
+    fflush(stdout);
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    fflush(stderr);
 }
 
 void trace(const char* fmt, ...)
 {
-	fflush(stdout);
-	va_list ap;
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	fflush(stderr);
+    fflush(stdout);
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    fflush(stderr);
 }

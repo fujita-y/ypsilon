@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	SPINLOCK_H_INCLUDED
-#define	SPINLOCK_H_INCLUDED
+#ifndef SPINLOCK_H_INCLUDED
+#define SPINLOCK_H_INCLUDED
 
 #include "core.h"
 
@@ -13,23 +13,23 @@ class spinlock_t {
 
     spinlock_t(const spinlock_t&);
     spinlock_t& operator=(const spinlock_t&);
-    
+
   #if MTDEBUG
-  
+
     int lock_count;
-    
+
   #endif
 
   #if _MSC_VER
 
-    volatile 
+    volatile
     LONG spinlock;
-    
+
   #else
 
-    volatile 
+    volatile
     int32_t spinlock;
-  
+
     int32_t
     interlocked_compare_exchange(volatile int32_t* target, int32_t exchange, int32_t compare)
     {
@@ -42,7 +42,7 @@ class spinlock_t {
     }
 
   #endif
-    
+
 public:
 
     spinlock_t() { /* should be null */ }
@@ -55,15 +55,15 @@ public:
         lock_count = 0;
       #endif
     }
-    
-    
+
+
     void destroy() { }
 
 /*
     void lock()
     {
       #define SPINLOCK_LOOP_BEFORE_YIELD   30000
-      
+
       #if _MSC_VER
         while (_InterlockedCompareExchange(&spinlock, 1, 0) != 0) {
             int n = SPINLOCK_LOOP_BEFORE_YIELD;
@@ -91,12 +91,12 @@ public:
       #else
         if (spinlock) sched_yield();
         while (interlocked_compare_exchange(&spinlock, 1, 0) != 0) sched_yield();
-      #endif      
+      #endif
       #if MTDEBUG
         lock_count++;
       #endif
     }
-    
+
     void unlock()
     {
       #if MTDEBUG
@@ -104,11 +104,11 @@ public:
         assert(lock_count >= 0);
       #endif
       spinlock = 0;
-      
+
       MEM_STORE_FENCE;
     }
 
-    void verify_locked() 
+    void verify_locked()
     {
       #if MTDEBUG
         if (lock_count == 0) {
@@ -119,12 +119,12 @@ public:
 };
 
 class scoped_spinlock {
-	scoped_spinlock(const scoped_spinlock&);
-	scoped_spinlock& operator=(const scoped_spinlock&);
+    scoped_spinlock(const scoped_spinlock&);
+    scoped_spinlock& operator=(const scoped_spinlock&);
     spinlock_t& m_lock;
 public:
     scoped_spinlock(spinlock_t& lock) : m_lock(lock) { m_lock.lock(); }
     ~scoped_spinlock() { m_lock.unlock(); }
 };
-            
+
 #endif

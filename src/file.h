@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	FILE_H_INCLUDED
-#define	FILE_H_INCLUDED
+#ifndef FILE_H_INCLUDED
+#define FILE_H_INCLUDED
 
 #include "core.h"
 #include "object.h"

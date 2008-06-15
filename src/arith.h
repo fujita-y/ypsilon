@@ -4,20 +4,20 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	ARITH_H_INCLUDED
-#define	ARITH_H_INCLUDED
+#ifndef ARITH_H_INCLUDED
+#define ARITH_H_INCLUDED
 
 #include "core.h"
 #include "object.h"
 
 struct exact_integer_sqrt_ans_t {
-	scm_obj_t	s;		
-	scm_obj_t	r;
+    scm_obj_t   s;
+    scm_obj_t   r;
 };
 
 struct div_and_mod_ans_t {
-	scm_obj_t	div;		
-	scm_obj_t	mod;
+    scm_obj_t   div;
+    scm_obj_t   mod;
 };
 
 bool integer_pred(scm_obj_t obj);
@@ -49,15 +49,15 @@ scm_obj_t uint32_to_integer(object_heap_t* heap, uint32_t value);
 inline scm_obj_t
 int64_to_integer(object_heap_t* heap, int64_t value)
 {
-	if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM((int32_t)value);
-	return int64_to_bignum(heap, value);
+    if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM((int32_t)value);
+    return int64_to_bignum(heap, value);
 }
 
 inline scm_obj_t
 int32_to_integer(object_heap_t* heap, int32_t value)
 {
-	if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM(value);
-	return int32_to_bignum(heap, value);
+    if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM(value);
+    return int32_to_bignum(heap, value);
 }
 
 inline scm_obj_t
@@ -98,27 +98,27 @@ bool exact_integer_to_uint64(scm_obj_t obj, uint64_t* ans);
 inline bool
 exact_integer_to_uintptr(scm_obj_t obj, uintptr_t* ans)
 {
-	if (sizeof(uintptr_t) == sizeof(uint32_t)) {
-		return exact_integer_to_uint32(obj, (uint32_t*)ans);
-	}
-	if (sizeof(uintptr_t) == sizeof(uint64_t)) {
-		return exact_integer_to_uint64(obj, (uint64_t*)ans);
-	}
-	assert(false);
-	return false;
+    if (sizeof(uintptr_t) == sizeof(uint32_t)) {
+        return exact_integer_to_uint32(obj, (uint32_t*)ans);
+    }
+    if (sizeof(uintptr_t) == sizeof(uint64_t)) {
+        return exact_integer_to_uint64(obj, (uint64_t*)ans);
+    }
+    assert(false);
+    return false;
 }
 
 inline bool
 exact_integer_to_intptr(scm_obj_t obj, intptr_t* ans)
 {
-	if (sizeof(intptr_t) == sizeof(int32_t)) {
-		return exact_integer_to_int32(obj, (int32_t*)ans);
-	}
-	if (sizeof(intptr_t) == sizeof(int64_t)) {
-		return exact_integer_to_int64(obj, (int64_t*)ans);
-	}
-	assert(false);
-	return false;
+    if (sizeof(intptr_t) == sizeof(int32_t)) {
+        return exact_integer_to_int32(obj, (int32_t*)ans);
+    }
+    if (sizeof(intptr_t) == sizeof(int64_t)) {
+        return exact_integer_to_int64(obj, (int64_t*)ans);
+    }
+    assert(false);
+    return false;
 }
 
 scm_obj_t double_to_inexact(object_heap_t* heap, double value);
@@ -187,7 +187,7 @@ bn_set_zero(scm_bignum_t bn)
 inline void
 bn_set_count(scm_bignum_t bn, int count)
 {
-	assert(count >= 0);
+    assert(count >= 0);
     bn->hdr = scm_hdr_bignum | (count << HDR_BIGNUM_COUNT_SHIFT) | (bn->hdr & (0x3 << HDR_BIGNUM_SIGN_SHIFT));
 }
 

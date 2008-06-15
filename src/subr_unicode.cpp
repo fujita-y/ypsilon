@@ -35,8 +35,8 @@
 scm_obj_t
 subr_open_builtin_data_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (STRINGP(argv[0])) {
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
             const char* name = string->name;
             const uint8_t* datum;
@@ -98,36 +98,34 @@ subr_open_builtin_data_input_port(VM* vm, int argc, scm_obj_t argv[])
             }
             scm_bvector_t bv = make_bvector_mapping(vm->m_heap, (void*)datum, size);
             return make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, name), SCM_PORT_DIRECTION_IN, bv, scm_true);
-		}
-		wrong_type_argument_violation(vm, "open-builtin-data-input-port", 0, "string", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "open-builtin-data-input-port", 1, 1, argc, argv);
-	return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "open-builtin-data-input-port", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "open-builtin-data-input-port", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // char-whitespace?
 scm_obj_t
 subr_char_whitespace_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (CHARP(argv[0])) {
-			int c = CHAR(argv[0]);
-			return ucs4_whitespace(c) ? scm_true : scm_false;
-		}
-		wrong_type_argument_violation(vm, "char-whitespace?", 0, "char", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "char-whitespace?", 1, 1, argc, argv);
-	return scm_undef;
+    if (argc == 1) {
+        if (CHARP(argv[0])) {
+            int c = CHAR(argv[0]);
+            return ucs4_whitespace(c) ? scm_true : scm_false;
+        }
+        wrong_type_argument_violation(vm, "char-whitespace?", 0, "char", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "char-whitespace?", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 void init_subr_unicode(object_heap_t* heap)
 {
-    #define	DEFSUBR(SYM, FUNC)	heap->intern_system_subr(SYM, FUNC)
+    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("char-whitespace?", subr_char_whitespace_pred);
     DEFSUBR("open-builtin-data-input-port", subr_open_builtin_data_input_port);
 }
-
-

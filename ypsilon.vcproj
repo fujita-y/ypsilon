@@ -312,19 +312,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\VM0.cpp"
+				RelativePath=".\src\vm0.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\VM1.cpp"
+				RelativePath=".\src\vm1.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\VM2.cpp"
+				RelativePath=".\src\vm2.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\VM3.cpp"
+				RelativePath=".\src\vm3.cpp"
 				>
 			</File>
 		</Filter>
@@ -367,6 +367,10 @@
 			</File>
 			<File
 				RelativePath=".\src\hash.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\heap.h"
 				>
 			</File>
 			<File
@@ -426,10 +430,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\runic.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\spinlock.h"
 				>
 			</File>
@@ -454,7 +454,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\VM.h"
+				RelativePath=".\src\vm.h"
 				>
 			</File>
 		</Filter>

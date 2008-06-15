@@ -4,13 +4,13 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	LIST_H_INCLUDED
-#define	LIST_H_INCLUDED
+#ifndef LIST_H_INCLUDED
+#define LIST_H_INCLUDED
 
 #include "core.h"
 #include "object.h"
 
-int	list_length(scm_obj_t list);
+int list_length(scm_obj_t list);
 bool circular_listp(scm_obj_t maybe_list);
 bool infinite_listp(object_heap_t* heap, scm_obj_t lst);
 bool listp(scm_obj_t maybe_list);

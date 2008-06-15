@@ -52,7 +52,7 @@
         }
         return false;
     }
-    
+
     scm_obj_t file_exists(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
@@ -87,7 +87,7 @@
         snprintf(utf8, sizeof(utf8), "%s\\*", path->name);
         wchar_t ucs2[MAX_PATH];
         if (MultiByteToWideChar(CP_UTF8, 0, utf8, -1, ucs2, array_sizeof(ucs2))) {
-            WIN32_FIND_DATAW data;      
+            WIN32_FIND_DATAW data;
             HANDLE hdl = FindFirstFileW(ucs2, &data);
             if (hdl != INVALID_HANDLE_VALUE) {
                 scm_obj_t lst = scm_nil;
@@ -145,7 +145,7 @@
         raise_io_error(vm, "create-directory", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
         return scm_undef;
     }
-        
+
     scm_obj_t set_current_directory(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
@@ -161,7 +161,7 @@
         return scm_undef;
     }
 
-    void* 
+    void*
     load_shared_object(scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
@@ -171,7 +171,7 @@
         return NULL;
     }
 
-    void* 
+    void*
     lookup_shared_object(void* hdl, scm_obj_t proc)
     {
         assert(SYMBOLP(proc) || STRINGP(proc));
@@ -185,7 +185,7 @@
         }
         return GetProcAddress((HMODULE)hdl, name);
     }
-    
+
     char*
     last_shared_object_error()
     {
@@ -210,20 +210,20 @@
     {
         return (access(path->name, F_OK) == 0) ? scm_true : scm_false;
     }
-    
+
     scm_obj_t stat_mtime(VM* vm, scm_string_t path)
     {
         struct stat st;
         if (stat(path->name, &st) == 0) {
 #if __DARWIN_64_BIT_INO_T
-            return arith_add(vm->m_heap, 
-                        int32_to_integer(vm->m_heap, st.st_mtimespec.tv_nsec), 
-                        arith_mul(vm->m_heap, 
-                            MAKEFIXNUM(1000000000), 
+            return arith_add(vm->m_heap,
+                        int32_to_integer(vm->m_heap, st.st_mtimespec.tv_nsec),
+                        arith_mul(vm->m_heap,
+                            MAKEFIXNUM(1000000000),
                             int32_to_integer(vm->m_heap, st.st_mtimespec.tv_sec)));
 #else
-            return arith_mul(vm->m_heap, 
-                            MAKEFIXNUM(1000000000), 
+            return arith_mul(vm->m_heap,
+                            MAKEFIXNUM(1000000000),
                             int32_to_integer(vm->m_heap, st.st_mtime));
 #endif
         }
@@ -247,8 +247,8 @@
         }
         raise_io_error(vm, "directory-list", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
         return scm_undef;
-    }    
-        
+    }
+
     scm_obj_t delete_file(VM* vm, scm_string_t path)
     {
         if (remove(path->name) < 0) {
@@ -276,7 +276,7 @@
         }
         return scm_unspecified;
     }
-    
+
     scm_obj_t set_current_directory(VM* vm, scm_string_t path)
     {
         if (chdir(path->name) < 0) {
@@ -286,13 +286,13 @@
         return scm_unspecified;
     }
 
-    void* 
+    void*
     load_shared_object(scm_string_t path)
     {
         return dlopen(path->name, RTLD_LAZY | RTLD_GLOBAL);
     }
-    
-    void* 
+
+    void*
     lookup_shared_object(void* hdl, scm_obj_t proc)
     {
         assert(SYMBOLP(proc) || STRINGP(proc));
@@ -306,7 +306,7 @@
         }
         return dlsym(hdl, name);
     }
-    
+
     char*
     last_shared_object_error()
     {
@@ -314,5 +314,3 @@
     }
 
 #endif
-
-

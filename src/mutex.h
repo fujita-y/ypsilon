@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	MUTEX_H_INCLUDED
-#define	MUTEX_H_INCLUDED
+#ifndef MUTEX_H_INCLUDED
+#define MUTEX_H_INCLUDED
 
 #include "core.h"
 
@@ -17,15 +17,15 @@
 
             mutex_t(const mutex_t&);
             mutex_t& operator=(const mutex_t&);
-            
+
         public:
 
-            CRITICAL_SECTION mutex;   
-             
+            CRITICAL_SECTION mutex;
+
           #if MTDEBUG
             int lock_count;
           #endif
-          
+
             mutex_t() { /* should be blank */ }
 
             void init(bool recursive = false)
@@ -36,7 +36,7 @@
                 InitializeCriticalSection(&mutex);
             }
 
-            void destroy() 
+            void destroy()
             {
               #if MTDEBUG
                 if (lock_count) {
@@ -46,7 +46,7 @@
                 DeleteCriticalSection(&mutex);
             }
 
-            void lock() 
+            void lock()
             {
                 EnterCriticalSection(&mutex);
               #if MTDEBUG
@@ -54,7 +54,7 @@
               #endif
             }
 
-            void unlock() 
+            void unlock()
             {
               #if MTDEBUG
                 lock_count--;
@@ -63,7 +63,7 @@
                 LeaveCriticalSection(&mutex);
             }
 
-            void verify_locked() 
+            void verify_locked()
             {
               #if MTDEBUG
                 if (lock_count == 0) {
@@ -72,22 +72,22 @@
               #endif
             }
         };
-        
+
     #else
-    
+
         class mutex_t {
 
             mutex_t(const mutex_t&);
             mutex_t& operator=(const mutex_t&);
-            
+
         public:
 
-            HANDLE mutex;   
-             
+            HANDLE mutex;
+
           #if MTDEBUG
             int lock_count;
           #endif
-          
+
             mutex_t() { /* should be blank */ }
 
             void init(bool recursive = false)
@@ -99,7 +99,7 @@
                 MTVERIFY(mutex);
             }
 
-            void destroy() 
+            void destroy()
             {
               #if MTDEBUG
                 if (lock_count) {
@@ -109,7 +109,7 @@
                 MTVERIFY(CloseHandle(mutex));
             }
 
-            void lock() 
+            void lock()
             {
                 MTVERIFY(WaitForSingleObject(mutex, INFINITE) != WAIT_FAILED);
               #if MTDEBUG
@@ -117,7 +117,7 @@
               #endif
             }
 
-            void unlock() 
+            void unlock()
             {
               #if MTDEBUG
                 lock_count--;
@@ -126,7 +126,7 @@
                 MTVERIFY(ReleaseMutex(mutex));
             }
 
-            void verify_locked() 
+            void verify_locked()
             {
               #if MTDEBUG
                 if (lock_count == 0) {
@@ -135,24 +135,24 @@
               #endif
             }
         };
-    
+
     #endif
-    
+
 #else
 
     class mutex_t {
 
         mutex_t(const mutex_t&);
         mutex_t& operator=(const mutex_t&);
-        
+
     public:
 
-        pthread_mutex_t mutex;   
-         
+        pthread_mutex_t mutex;
+
       #if MTDEBUG
         int lock_count;
       #endif
-      
+
         mutex_t() { /* should be blank */ }
 
         void init(bool recursive = false)
@@ -175,7 +175,7 @@
             MTVERIFY(pthread_mutexattr_destroy(&attr));
         }
 
-        void destroy() 
+        void destroy()
         {
           #if MTDEBUG
             if (lock_count) {
@@ -185,7 +185,7 @@
             MTVERIFY(pthread_mutex_destroy(&mutex));
         }
 
-        void lock() 
+        void lock()
         {
             MTVERIFY(pthread_mutex_lock(&mutex));
           #if MTDEBUG
@@ -193,7 +193,7 @@
           #endif
         }
 
-        void unlock() 
+        void unlock()
         {
           #if MTDEBUG
             lock_count--;
@@ -202,7 +202,7 @@
             MTVERIFY(pthread_mutex_unlock(&mutex));
         }
 
-        void verify_locked() 
+        void verify_locked()
         {
           #if MTDEBUG
             if (lock_count == 0) {
@@ -215,8 +215,8 @@
 #endif
 
 class scoped_lock {
-	scoped_lock(const scoped_lock&);
-	scoped_lock& operator=(const scoped_lock&);
+    scoped_lock(const scoped_lock&);
+    scoped_lock& operator=(const scoped_lock&);
     mutex_t& m_lock;
 public:
     scoped_lock(mutex_t& lock) : m_lock(lock) { m_lock.lock(); }

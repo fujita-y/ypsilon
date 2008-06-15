@@ -15,18 +15,18 @@ scm_obj_t
 VM::lookup_current_environment(scm_symbol_t symbol)
 {
     scoped_lock lock(m_current_environment->variable->lock);
-	scm_obj_t obj = get_hashtable(m_current_environment->variable, symbol);
-	if (obj != scm_undef) {
-		assert(GLOCP(obj));
-		return ((scm_gloc_t)obj)->value;
-	}
-	return scm_undef;
+    scm_obj_t obj = get_hashtable(m_current_environment->variable, symbol);
+    if (obj != scm_undef) {
+        assert(GLOCP(obj));
+        return ((scm_gloc_t)obj)->value;
+    }
+    return scm_undef;
 }
 
 scm_closure_t
 VM::lookup_system_closure(const char* name)
 {
-	scm_obj_t proc = m_heap->lookup_system_environment(make_symbol(m_heap, name));
+    scm_obj_t proc = m_heap->lookup_system_environment(make_symbol(m_heap, name));
     if (CLOSUREP(proc)) return (scm_closure_t)proc;
     fatal("fatal: #<closure %s> not available in system environment", name);
 }
@@ -39,22 +39,22 @@ VM::intern_current_environment(scm_symbol_t symbol, scm_obj_t value)
     scm_obj_t obj = get_hashtable(ht, symbol);
     if (obj != scm_undef) {
         assert(GLOCP(obj));
-		m_heap->write_barrier(value);
+        m_heap->write_barrier(value);
         ((scm_gloc_t)obj)->value = value;
         return;
     }
     scm_gloc_t gloc = make_gloc(m_heap, m_current_environment, symbol);
     gloc->value = value;
-	m_heap->write_barrier(symbol);
-	m_heap->write_barrier(gloc);
+    m_heap->write_barrier(symbol);
+    m_heap->write_barrier(gloc);
     int nsize = put_hashtable(ht, symbol, gloc);
-    if (nsize) rehash_hashtable(m_heap, ht, nsize);	
+    if (nsize) rehash_hashtable(m_heap, ht, nsize);
 }
 
 bool
 VM::init(object_heap_t* heap)
 {
-	try {
+    try {
         m_heap = heap;
         m_stack_size = VM_STACK_BYTESIZE;
         m_stack_top = (scm_obj_t*)m_heap->allocate(m_stack_size, false, false);
@@ -137,8 +137,8 @@ VM::init(object_heap_t* heap)
         return true;
     } catch (io_exception_t& e) {
         fatal("fatal in init-vm: unexpected io_expecption_t(%d, %s)", e.m_err, e.m_message);
-	} catch (vm_exception_t& e) {
-		fatal("fatal in init-vm: unexpected vm_exception_t");
+    } catch (vm_exception_t& e) {
+        fatal("fatal in init-vm: unexpected vm_exception_t");
     } catch (reader_exception_t& e) {
         fatal("fatal in init-vm: unexpected reader_expecption_t(%s)", e.m_message);
     } catch (io_codec_exception_t& e) {
@@ -147,10 +147,10 @@ VM::init(object_heap_t* heap)
         fatal("fatal in init-vm: unexpected vm_escape_t, maybe <#subr escape> in bad context");
     } catch (vm_continue_t& e) {
         fatal("fatal in init-vm: unexpected vm_continue_t, maybe <#subr escape> in bad context");
-	} catch (int code) {
-		fatal("fatal in init-vm: unexpected system error (errno %d, %s)", code, strerror(code));
-	} catch (...) {
-		fatal("fatal in init-vm: unknown exception");
+    } catch (int code) {
+        fatal("fatal in init-vm: unexpected system error (errno %d, %s)", code, strerror(code));
+    } catch (...) {
+        fatal("fatal in init-vm: unknown exception");
     }
 }
 
@@ -158,152 +158,152 @@ void
 VM::scheme_warning(const char* fmt, ...)
 {
     {
-	    scoped_lock lock(m_current_output->lock);
-		port_flush_output(m_current_output);
-	}
-	va_list ap;
-	va_start(ap, fmt);
-	{
+        scoped_lock lock(m_current_output->lock);
+        port_flush_output(m_current_output);
+    }
+    va_list ap;
+    va_start(ap, fmt);
+    {
         scoped_lock lock(m_current_error->lock);
-		printer_t prt(this, m_current_error);
-		prt.format("~&~%");
-		prt.format_va_list(fmt, ap);
-		prt.format("~%");
-		prt.flush();
-	}
-	va_end(ap);
+        printer_t prt(this, m_current_error);
+        prt.format("~&~%");
+        prt.format_va_list(fmt, ap);
+        prt.format("~%");
+        prt.flush();
+    }
+    va_end(ap);
 }
 
 void
 VM::scheme_error(const char* fmt, ...)
 {
     {
-	    scoped_lock lock(m_current_output->lock);
-		port_flush_output(m_current_output);
-	}
+        scoped_lock lock(m_current_output->lock);
+        port_flush_output(m_current_output);
+    }
     {
-	    scoped_lock lock(m_current_input->lock);
-		while (port_nonblock_byte_ready(m_current_input)) port_get_byte(m_current_input);
-	}	
-	va_list ap;
-	va_start(ap, fmt);
-	{
+        scoped_lock lock(m_current_input->lock);
+        while (port_nonblock_byte_ready(m_current_input)) port_get_byte(m_current_input);
+    }
+    va_list ap;
+    va_start(ap, fmt);
+    {
         scoped_lock lock(m_current_error->lock);
-		printer_t prt(this, m_current_error);
-		prt.format("~&~%");
-		prt.format_va_list(fmt, ap);
-		prt.format("~%");
-		prt.flush();
-	}
-	va_end(ap);
-	throw vm_exception_t();
+        printer_t prt(this, m_current_error);
+        prt.format("~&~%");
+        prt.format_va_list(fmt, ap);
+        prt.format("~%");
+        prt.flush();
+    }
+    va_end(ap);
+    throw vm_exception_t();
 }
 
 void
 VM::system_error(const char* fmt, ...)
 {
     {
-	    scoped_lock lock(m_current_output->lock);
-		port_flush_output(m_current_output);
-	}
+        scoped_lock lock(m_current_output->lock);
+        port_flush_output(m_current_output);
+    }
     {
-	    scoped_lock lock(m_current_input->lock);
-		while (port_nonblock_byte_ready(m_current_input)) port_get_byte(m_current_input);
-	}	
-	va_list ap;
-	va_start(ap, fmt);
-	{
+        scoped_lock lock(m_current_input->lock);
+        while (port_nonblock_byte_ready(m_current_input)) port_get_byte(m_current_input);
+    }
+    va_list ap;
+    va_start(ap, fmt);
+    {
         scoped_lock lock(m_current_error->lock);
-		printer_t prt(this, m_current_error);
-		prt.format("~&~%");
-		prt.format_va_list(fmt, ap);
-		prt.format("~%");
-		prt.flush();
-	}
-	va_end(ap);
-	throw vm_exception_t();
+        printer_t prt(this, m_current_error);
+        prt.format("~&~%");
+        prt.format_va_list(fmt, ap);
+        prt.format("~%");
+        prt.flush();
+    }
+    va_end(ap);
+    throw vm_exception_t();
 }
 
 void
 VM::backtrace_seek_make_cont(scm_obj_t note)
 {
-	if (note != scm_unspecified) {
-		scm_obj_t* argp = m_fp;
-		int argc = m_sp - m_fp;
-		int space = sizeof(vm_cont_rec_t) + sizeof(scm_obj_t*) * argc;
-		if ((uintptr_t)m_sp + space >= (uintptr_t)m_stack_limit) collect_stack(space);
-		vm_cont_t cont = (vm_cont_t)m_sp;
-		cont->trace = note;
-		cont->fp = m_fp;
-		cont->env = m_env;
-		cont->pc = scm_nil;
-		cont->up = m_cont;
-		m_sp = m_fp = (scm_obj_t*)(cont + 1);
-		m_cont = &cont->up;
-		for (int i = 0; i < argc; i++) *m_sp++ = *argp++; // move args
-	}
+    if (note != scm_unspecified) {
+        scm_obj_t* argp = m_fp;
+        int argc = m_sp - m_fp;
+        int space = sizeof(vm_cont_rec_t) + sizeof(scm_obj_t*) * argc;
+        if ((uintptr_t)m_sp + space >= (uintptr_t)m_stack_limit) collect_stack(space);
+        vm_cont_t cont = (vm_cont_t)m_sp;
+        cont->trace = note;
+        cont->fp = m_fp;
+        cont->env = m_env;
+        cont->pc = scm_nil;
+        cont->up = m_cont;
+        m_sp = m_fp = (scm_obj_t*)(cont + 1);
+        m_cont = &cont->up;
+        for (int i = 0; i < argc; i++) *m_sp++ = *argp++; // move args
+    }
 }
 
 void
 VM::backtrace_seek()
 {
-	if (flags.m_backtrace != scm_false) {
-		backtrace_seek_make_cont(m_trace);
-		backtrace_seek_make_cont(m_trace_tail);
-		m_trace = m_trace_tail = scm_unspecified;
-		scm_obj_t lst = CDR(m_pc);
-		while (lst != scm_nil) {
-			scm_obj_t operands = (scm_obj_t)CDAR(lst);
+    if (flags.m_backtrace != scm_false) {
+        backtrace_seek_make_cont(m_trace);
+        backtrace_seek_make_cont(m_trace_tail);
+        m_trace = m_trace_tail = scm_unspecified;
+        scm_obj_t lst = CDR(m_pc);
+        while (lst != scm_nil) {
+            scm_obj_t operands = (scm_obj_t)CDAR(lst);
             int opcode = instruction_to_opcode(CAAR(lst));
-			switch (opcode) {
-			case VMOP_RET_SUBR_GLOC_OF:
-			case VMOP_APPLY_GLOC_OF:
+            switch (opcode) {
+            case VMOP_RET_SUBR_GLOC_OF:
+            case VMOP_APPLY_GLOC_OF:
                 fatal("%s:%u internal error: backtrace_seek()", __FILE__, __LINE__);
-			case VMOP_RET_SUBR:
-				if (PAIRP(CDR(operands))) {
+            case VMOP_RET_SUBR:
+                if (PAIRP(CDR(operands))) {
                     backtrace_seek_make_cont(CDR(operands));
                     goto more_seek;
                 }
-				break;
-			case VMOP_APPLY_GLOC:
-				if (PAIRP(CDR(operands))) {
-                    backtrace_seek_make_cont(CDR(operands));					
+                break;
+            case VMOP_APPLY_GLOC:
+                if (PAIRP(CDR(operands))) {
+                    backtrace_seek_make_cont(CDR(operands));
                     goto more_seek;
                 }
-				break;
-			case VMOP_APPLY_ILOC:
-				if (PAIRP(CDR(operands))) {
-                    backtrace_seek_make_cont(CDR(operands));	
+                break;
+            case VMOP_APPLY_ILOC:
+                if (PAIRP(CDR(operands))) {
+                    backtrace_seek_make_cont(CDR(operands));
                     goto more_seek;
                 }
-				break;
-			case VMOP_APPLY_ILOC_LOCAL:
-				if (PAIRP(CDR(operands))) {
-                    backtrace_seek_make_cont(CDR(operands));	
+                break;
+            case VMOP_APPLY_ILOC_LOCAL:
+                if (PAIRP(CDR(operands))) {
+                    backtrace_seek_make_cont(CDR(operands));
                     goto more_seek;
                 }
-				break;	                		
-			case VMOP_APPLY:
-				if (PAIRP(operands)) {
-                    backtrace_seek_make_cont(operands);					
+                break;
+            case VMOP_APPLY:
+                if (PAIRP(operands)) {
+                    backtrace_seek_make_cont(operands);
                     goto more_seek;
                 }
-				break;
-			case VMOP_RET_CONS:
-			case VMOP_RET_EQP:
-			case VMOP_RET_NULLP:
-			case VMOP_RET_PAIRP:
-				if (PAIRP(operands)) {
-                    backtrace_seek_make_cont(operands);					
+                break;
+            case VMOP_RET_CONS:
+            case VMOP_RET_EQP:
+            case VMOP_RET_NULLP:
+            case VMOP_RET_PAIRP:
+                if (PAIRP(operands)) {
+                    backtrace_seek_make_cont(operands);
                     goto more_seek;
                 }
-				break;
-			case VMOP_EXTEND:
-			case VMOP_EXTEND_UNBOUND:
-				goto more_seek;
+                break;
+            case VMOP_EXTEND:
+            case VMOP_EXTEND_UNBOUND:
+                goto more_seek;
             }
-			lst = CDR(lst);
-		}
+            lst = CDR(lst);
+        }
 more_seek:
         scm_obj_t lst2 = m_pc;
 more_more_seek:
@@ -315,14 +315,14 @@ more_more_seek:
         case VMOP_SUBR_GLOC_OF:
             fatal("%s:%u intern error backtrace_seek()", __FILE__, __LINE__);
         case VMOP_SUBR:
-            if (PAIRP(CDDR(operands))) backtrace_seek_make_cont(CDDR(operands));					
+            if (PAIRP(CDDR(operands))) backtrace_seek_make_cont(CDDR(operands));
             return;
         case VMOP_EQ_ILOC:
         case VMOP_LT_ILOC:
         case VMOP_LE_ILOC:
         case VMOP_GT_ILOC:
         case VMOP_GE_ILOC:
-            if (PAIRP(CDR(operands))) backtrace_seek_make_cont(CDR(operands));					
+            if (PAIRP(CDR(operands))) backtrace_seek_make_cont(CDR(operands));
             return;
         case VMOP_EQ_N_ILOC:
         case VMOP_LT_N_ILOC:
@@ -332,7 +332,7 @@ more_more_seek:
         case VMOP_NADD_ILOC:
         case VMOP_PUSH_NADD_ILOC:
         case VMOP_PUSH_SUBR:
-            if (PAIRP(CDDR(operands))) backtrace_seek_make_cont(CDDR(operands));					
+            if (PAIRP(CDDR(operands))) backtrace_seek_make_cont(CDDR(operands));
             return;
         case VMOP_CAR_ILOC:
         case VMOP_CDR_ILOC:
@@ -340,7 +340,7 @@ more_more_seek:
         case VMOP_PUSH_CDR_ILOC:
         case VMOP_PUSH_CADR_ILOC:
         case VMOP_PUSH_CDDR_ILOC:
-            if (PAIRP(CDR(operands))) backtrace_seek_make_cont(CDR(operands));					
+            if (PAIRP(CDR(operands))) backtrace_seek_make_cont(CDR(operands));
             return;
         case VMOP_CONST:
         case VMOP_GLOC:
@@ -360,13 +360,13 @@ more_more_seek:
             lst2 = CDR(lst2);
             goto more_more_seek;
         }
-	}
+    }
 }
 
 scm_obj_t
 VM::backtrace_fetch(const char* name, int line, int column)
 {
-	try {
+    try {
         scm_port_t port = make_file_port(m_heap, make_string_literal(m_heap, name), SCM_PORT_DIRECTION_IN, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_true);
         scoped_lock lock(port->lock);
         if (port_regular_file_pred(port)) {
@@ -399,12 +399,12 @@ VM::backtrace_each(printer_t* prt, int n, scm_obj_t note)
         int comment = FIXNUM(CDR(note));
         int line = comment / MAX_SOURCE_COLUMN;
         int column = comment % MAX_SOURCE_COLUMN;
-		scm_obj_t expr = backtrace_fetch(string->name, line, column);
-		if (expr == scm_unspecified) {
-			prt->format(" %d  --- unknown ---", n);
-		} else {
-			prt->format(" %d  ~u", n, expr);
-		}
+        scm_obj_t expr = backtrace_fetch(string->name, line, column);
+        if (expr == scm_unspecified) {
+            prt->format(" %d  --- unknown ---", n);
+        } else {
+            prt->format(" %d  ~u", n, expr);
+        }
        prt->format("~%  ...~s line %d", string, line);
     } else {
         // (expr path . fixnum) : repl
@@ -420,29 +420,29 @@ VM::backtrace_each(printer_t* prt, int n, scm_obj_t note)
 bool
 VM::backtrace(scm_port_t port)
 {
-	if (flags.m_backtrace == scm_false) return false;
+    if (flags.m_backtrace == scm_false) return false;
 
     scoped_lock lock(port->lock);
-	printer_t prt(this, port);
-	
-	scm_obj_t obj = scm_unspecified;
-	if (m_trace_tail != scm_unspecified && CDR(m_trace_tail) != scm_nil) {
-		obj = m_trace_tail;
-	} else if (m_trace != scm_unspecified && CDR(m_trace) != scm_nil) {
-		obj = m_trace;
-	} else {
-		void* lnk = m_cont;
-		while (lnk) {
-			vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
-			if (cont->trace != scm_unspecified && CDR(cont->trace)) {
-				obj = cont->trace;
-				break;
-			}
-			lnk = (*(void**)lnk);
-		}
-	}
-	if (obj == scm_unspecified) return false;
-	int bt_level = FIXNUMP(flags.m_backtrace) ? FIXNUM(flags.m_backtrace) : FIXNUM_MAX;
+    printer_t prt(this, port);
+
+    scm_obj_t obj = scm_unspecified;
+    if (m_trace_tail != scm_unspecified && CDR(m_trace_tail) != scm_nil) {
+        obj = m_trace_tail;
+    } else if (m_trace != scm_unspecified && CDR(m_trace) != scm_nil) {
+        obj = m_trace;
+    } else {
+        void* lnk = m_cont;
+        while (lnk) {
+            vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
+            if (cont->trace != scm_unspecified && CDR(cont->trace)) {
+                obj = cont->trace;
+                break;
+            }
+            lnk = (*(void**)lnk);
+        }
+    }
+    if (obj == scm_unspecified) return false;
+    int bt_level = FIXNUMP(flags.m_backtrace) ? FIXNUM(flags.m_backtrace) : FIXNUM_MAX;
     int n = 0;
     if (n == bt_level) return false;
     prt.format("~%backtrace:~%");
@@ -470,14 +470,14 @@ VM::backtrace(scm_port_t port)
 void
 VM::reset()
 {
-	m_pc = scm_nil;
-	m_cont = NULL;
-	m_env = NULL;
-	m_sp = m_fp = m_stack_top;
-	m_value = scm_unspecified;
-	m_trace = scm_unspecified;	
+    m_pc = scm_nil;
+    m_cont = NULL;
+    m_env = NULL;
+    m_sp = m_fp = m_stack_top;
+    m_value = scm_unspecified;
+    m_trace = scm_unspecified;
     m_trace_tail = scm_unspecified;
-	errno = 0;
+    errno = 0;
 }
 
 #if PROFILE_SUBR
@@ -561,10 +561,10 @@ VM::reset()
 void
 VM::boot()
 {
-	try {
+    try {
 
   #if USE_DEBUG_BOOT
-		{
+        {
             char load_path[] = "heap/debug-boot.vmi";
             m_bootport = make_file_port(m_heap, make_string_literal(m_heap, load_path), SCM_PORT_DIRECTION_IN, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_true);
             printf(";; loading \"%s\"\n", load_path);
@@ -597,11 +597,11 @@ VM::boot()
         }
   #endif
 
-		m_bootport = (scm_port_t)scm_unspecified;
+        m_bootport = (scm_port_t)scm_unspecified;
         m_current_environment = m_heap->m_interaction_environment;
 
   #if USE_DEBUG_CORE
-		{
+        {
             char load_path[] = "heap/debug-core.vmi";
             m_bootport = make_file_port(m_heap, make_string_literal(m_heap, load_path), SCM_PORT_DIRECTION_IN, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_true);
             printf(";; loading \"%s\"\n", load_path);
@@ -634,10 +634,10 @@ VM::boot()
         }
   #endif
 
-		m_bootport = (scm_port_t)scm_unspecified;
+        m_bootport = (scm_port_t)scm_unspecified;
 
-	} catch (vm_exception_t& e) {
-		fatal("fatal in boot: unexpected vm_exception_t");
+    } catch (vm_exception_t& e) {
+        fatal("fatal in boot: unexpected vm_exception_t");
     } catch (reader_exception_t& e) {
         fatal("fatal in boot: unexpected reader_expecption_t(%s)", e.m_message);
     } catch (io_exception_t& e) {
@@ -648,10 +648,10 @@ VM::boot()
         fatal("fatal in boot: unexpected vm_escape_t, maybe <#subr escape> in bad context");
     } catch (vm_continue_t& e) {
         fatal("fatal in boot: unexpected vm_continue_t, maybe <#subr escape> in bad context");
-	} catch (int code) {
-		fatal("fatal in boot: unexpected system error (errno %d, %s)", code, strerror(code));
-	} catch (...) {
-		fatal("fatal in boot: unknown exception");
+    } catch (int code) {
+        fatal("fatal in boot: unexpected system error (errno %d, %s)", code, strerror(code));
+    } catch (...) {
+        fatal("fatal in boot: unknown exception");
     }
 
   #if PROFILE_OPCODE
@@ -659,8 +659,8 @@ VM::boot()
   #endif
 
 loop:
-	try {
-		reset();
+    try {
+        reset();
         scm_closure_t closure = lookup_system_closure(".@start-scheme-session");
         m_pc = closure->code;
         prebind(m_pc);
@@ -673,9 +673,9 @@ loop:
         display_subr_profile();
   #endif
         exit(e.m_code);
-	} catch (vm_exception_t& e) {
-		backtrace(m_current_error);
-		goto loop;
+    } catch (vm_exception_t& e) {
+        backtrace(m_current_error);
+        goto loop;
     } catch (io_exception_t& e) {
         if (e.m_err == EINTR) goto loop;
         if (e.m_err == EIO) goto loop;
@@ -688,10 +688,10 @@ loop:
         fatal("fatal in run: unhandled exception vm_escape_t, maybe (escape) procedure in bad context");
     } catch (vm_continue_t& e) {
         fatal("fatal in run: unhandled exception vm_continue_t, maybe (escape) procedure in bad context");
-	} catch (int code) {
-		fatal("fatal in run: unexpected exception (errno %d, %s)", code, strerror(code));
-	} catch (...) {
-		fatal("fatal in run: unknown exception");
+    } catch (int code) {
+        fatal("fatal in run: unexpected exception (errno %d, %s)", code, strerror(code));
+    } catch (...) {
+        fatal("fatal in run: unknown exception");
     }
 }
 
@@ -699,7 +699,7 @@ void
 VM::stop()
 {
 
-	#define	ARGC_TH		8
+    #define ARGC_TH     8
 
     char usage[128];
     if (flags.m_collect_notify != scm_false) {
@@ -756,7 +756,7 @@ VM::stop()
     }
     if (m_heap->m_usage.m_recorded) m_heap->m_usage.clear();
 
-	double t1 = msec();
+    double t1 = msec();
     if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING || m_heap->m_root_snapshot == ROOT_SNAPSHOT_GLOBALS) {
         m_heap->enqueue_root(m_bootport);
         m_heap->enqueue_root(m_current_input);
@@ -777,11 +777,11 @@ VM::stop()
         if (m_fp != m_sp) {
             int argc = m_sp - m_fp;
             if (argc > ARGC_TH) {
-            	scm_vector_t vector = make_vector(m_heap, argc, scm_nil);
-            	for (int i = 0; i < argc; i++) vector->elts[i] = m_fp[i];
-            	m_heap->enqueue_root(vector);
+                scm_vector_t vector = make_vector(m_heap, argc, scm_nil);
+                for (int i = 0; i < argc; i++) vector->elts[i] = m_fp[i];
+                m_heap->enqueue_root(vector);
             } else {
-            	for (int i = 0; i < argc; i++) m_heap->enqueue_root(m_fp[i]);
+                for (int i = 0; i < argc; i++) m_heap->enqueue_root(m_fp[i]);
             }
         }
         if (m_cont) {
@@ -793,16 +793,16 @@ VM::stop()
             m_heap->enqueue_root(OBJECT_SLAB_TRAITS_OF(m_env)->cache->lookup(m_env));
         }
     }
-	m_heap->m_collector_lock.lock();
-	while (m_heap->m_stop_the_world) {
-		m_heap->m_mutator_stopped = true;
-		m_heap->m_collector_wake.signal();
-		m_heap->m_mutator_wake.wait(m_heap->m_collector_lock);
-		m_heap->m_mutator_stopped = false;
-	}
-	m_heap->m_collector_wake.signal();
-	m_heap->m_collector_lock.unlock();
-	double t2 = msec();
+    m_heap->m_collector_lock.lock();
+    while (m_heap->m_stop_the_world) {
+        m_heap->m_mutator_stopped = true;
+        m_heap->m_collector_wake.signal();
+        m_heap->m_mutator_wake.wait(m_heap->m_collector_lock);
+        m_heap->m_mutator_stopped = false;
+    }
+    m_heap->m_collector_wake.signal();
+    m_heap->m_collector_lock.unlock();
+    double t2 = msec();
 
     switch (m_heap->m_root_snapshot) {
         case ROOT_SNAPSHOT_GLOBALS:

@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	VIOLATION_H_INCLUDED
-#define	VIOLATION_H_INCLUDED
+#ifndef VIOLATION_H_INCLUDED
+#define VIOLATION_H_INCLUDED
 
 #include "core.h"
 #include "object.h"

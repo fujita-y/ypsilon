@@ -17,117 +17,117 @@
 #include "ioerror.h"
 #include "printer.h"
 #include "violation.h"
-            
+
 // set-port-current-line!
 scm_obj_t
 subr_set_port_current_line(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PORTP(argv[0])) {
-			scm_port_t port = (scm_port_t)argv[0];
+    if (argc == 2) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
-			if (port_input_pred(port)) {
-				if (FIXNUMP(argv[1])) {
-					port->line = FIXNUM(argv[1]);	
-					return scm_unspecified;
-				}
-				if (exact_integer_pred(argv[1])) {
-					invalid_argument_violation(vm, "set-port-current-line!", "line too large,", argv[1], 1, argc, argv);
-					return scm_undef;
-				} else {
-					wrong_type_argument_violation(vm, "set-port-current-line!", 1, "exact integer", argv[1], argc, argv);
-					return scm_undef;
-				}
-			}
-			/*** FALL THROUGH ***/
-		}
-		wrong_type_argument_violation(vm, "set-port-current-line!", 0, "input port", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "set-port-current-line!", 2, 2, argc, argv);
-	return scm_undef;
+            if (port_input_pred(port)) {
+                if (FIXNUMP(argv[1])) {
+                    port->line = FIXNUM(argv[1]);
+                    return scm_unspecified;
+                }
+                if (exact_integer_pred(argv[1])) {
+                    invalid_argument_violation(vm, "set-port-current-line!", "line too large,", argv[1], 1, argc, argv);
+                    return scm_undef;
+                } else {
+                    wrong_type_argument_violation(vm, "set-port-current-line!", 1, "exact integer", argv[1], argc, argv);
+                    return scm_undef;
+                }
+            }
+            /*** FALL THROUGH ***/
+        }
+        wrong_type_argument_violation(vm, "set-port-current-line!", 0, "input port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "set-port-current-line!", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // set-port-current-column!
 scm_obj_t
 subr_set_port_current_column(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
-		if (PORTP(argv[0])) {
-			scm_port_t port = (scm_port_t)argv[0];
+    if (argc == 2) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             if (port_output_pred(port)) {
-				if (FIXNUMP(argv[1])) {
-					port->column = FIXNUM(argv[1]);	
-					return scm_unspecified;
-				}
-				if (exact_integer_pred(argv[1])) {
-					invalid_argument_violation(vm, "set-port-current-column!", "column too large,", argv[1], 1, argc, argv);
-					return scm_undef;
-				} else {
-					wrong_type_argument_violation(vm, "set-port-current-column!", 1, "exact integer", argv[1], argc, argv);
-					return scm_undef;
-				}
-			}
-			/*** FALL THROUGH ***/
-		}
-		wrong_type_argument_violation(vm, "set-port-current-column!", 0, "output port", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "set-port-current-column!", 2, 2, argc, argv);
-	return scm_undef;
+                if (FIXNUMP(argv[1])) {
+                    port->column = FIXNUM(argv[1]);
+                    return scm_unspecified;
+                }
+                if (exact_integer_pred(argv[1])) {
+                    invalid_argument_violation(vm, "set-port-current-column!", "column too large,", argv[1], 1, argc, argv);
+                    return scm_undef;
+                } else {
+                    wrong_type_argument_violation(vm, "set-port-current-column!", 1, "exact integer", argv[1], argc, argv);
+                    return scm_undef;
+                }
+            }
+            /*** FALL THROUGH ***/
+        }
+        wrong_type_argument_violation(vm, "set-port-current-column!", 0, "output port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "set-port-current-column!", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // port?
 scm_obj_t
 subr_port_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) return scm_true;
-		return scm_false;
-	}
-	wrong_number_of_arguments_violation(vm, "port?", 1, 1, argc, argv);
-	return scm_undef;
+    if (argc == 1) {
+        if (PORTP(argv[0])) return scm_true;
+        return scm_false;
+    }
+    wrong_number_of_arguments_violation(vm, "port?", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // input-port?
 scm_obj_t
 subr_input_port_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			scm_port_t port = (scm_port_t)argv[0];
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
-			return port_input_pred(port) ? scm_true : scm_false;
-		}
-		return scm_false;
-	}
-	wrong_number_of_arguments_violation(vm, "input-port?", 1, 1, argc, argv);
-	return scm_undef;
+            return port_input_pred(port) ? scm_true : scm_false;
+        }
+        return scm_false;
+    }
+    wrong_number_of_arguments_violation(vm, "input-port?", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // output-port?
 scm_obj_t
 subr_output_port_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			scm_port_t port = (scm_port_t)argv[0];
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
-			return port_output_pred(port) ? scm_true : scm_false;
-		}
-		return scm_false;
-	}
-	wrong_number_of_arguments_violation(vm, "output-port?", 1, 1, argc, argv);
-	return scm_undef;
+            return port_output_pred(port) ? scm_true : scm_false;
+        }
+        return scm_false;
+    }
+    wrong_number_of_arguments_violation(vm, "output-port?", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // output-port-buffer-mode
 scm_obj_t
 subr_output_port_buffer_mode(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OUTPUT_PORT(0, "output-port-buffer-mode");
@@ -137,7 +137,7 @@ subr_output_port_buffer_mode(VM* vm, int argc, scm_obj_t argv[])
                     case SCM_PORT_BUFFER_MODE_NONE: return make_symbol(vm->m_heap, "none");
                     case SCM_PORT_BUFFER_MODE_LINE: return make_symbol(vm->m_heap, "line");
                     case SCM_PORT_BUFFER_MODE_BLOCK: return make_symbol(vm->m_heap, "block");
-                    default: 
+                    default:
                         fatal("%s:%u wrong port buffer mode", __FILE__, __LINE__);
                 }
             } catch (io_exception_t& e) {
@@ -148,17 +148,17 @@ subr_output_port_buffer_mode(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
         }
-	}
-	wrong_number_of_arguments_violation(vm, "output-port-buffer-mode", 1, 1, argc, argv);
-	return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "output-port-buffer-mode", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // flush-output-port
 scm_obj_t
 subr_flush_output_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OUTPUT_PORT(0, "flush-output-port");
@@ -173,128 +173,128 @@ subr_flush_output_port(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
         }
-	}
-	wrong_number_of_arguments_violation(vm, "flush-output-port", 1, 1, argc, argv);
-	return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "flush-output-port", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // close-port
 scm_obj_t
 subr_close_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			scm_port_t port = (scm_port_t)argv[0];
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             try {
-                port_close(port);            
+                port_close(port);
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "close-port", e.m_operation, e.m_message, e.m_err, port, scm_false);
                 return scm_undef;
             }
-            return scm_unspecified; 
-		}
-		wrong_type_argument_violation(vm, "close-port", 0, "port", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "close-port", 1, 1, argc, argv);
-	return scm_undef;
+            return scm_unspecified;
+        }
+        wrong_type_argument_violation(vm, "close-port", 0, "port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "close-port", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // eof-object
 scm_obj_t
 subr_eof_object(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) return scm_eof;
-	wrong_number_of_arguments_violation(vm, "eof-object", 0, 0, argc, argv);
-	return scm_undef;
+    if (argc == 0) return scm_eof;
+    wrong_number_of_arguments_violation(vm, "eof-object", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 // eof-object?
 scm_obj_t
 subr_eof_object_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) return (argv[0] == scm_eof) ? scm_true : scm_false;
-	wrong_number_of_arguments_violation(vm, "eof-object?", 1, 1, argc, argv);
-	return scm_undef;
+    if (argc == 1) return (argv[0] == scm_eof) ? scm_true : scm_false;
+    wrong_number_of_arguments_violation(vm, "eof-object?", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // current-input-port
 scm_obj_t
 subr_current_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) return vm->m_current_input;
-	wrong_number_of_arguments_violation(vm, "current-input-port", 0, 0, argc, argv);
-	return scm_undef;
+    if (argc == 0) return vm->m_current_input;
+    wrong_number_of_arguments_violation(vm, "current-input-port", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 // current-output-port
 scm_obj_t
 subr_current_output_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) return vm->m_current_output;
-	wrong_number_of_arguments_violation(vm, "current-output-port", 0, 0, argc, argv);
-	return scm_undef;
+    if (argc == 0) return vm->m_current_output;
+    wrong_number_of_arguments_violation(vm, "current-output-port", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 // current-error-port
 scm_obj_t
 subr_current_error_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) return vm->m_current_error;
-	wrong_number_of_arguments_violation(vm, "current-error-port", 0, 0, argc, argv);
-	return scm_undef;
+    if (argc == 0) return vm->m_current_error;
+    wrong_number_of_arguments_violation(vm, "current-error-port", 0, 0, argc, argv);
+    return scm_undef;
 }
 /*
 // current-input-port
 scm_obj_t
 subr_current_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) return vm->m_current_input;
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			vm->m_current_input = (scm_port_t)argv[0];
-			return scm_unspecified;
-		}
-		wrong_type_argument_violation(vm, "current-input-port", 0, "port", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "current-input-port", 0, 1, argc, argv);
-	return scm_undef;
+    if (argc == 0) return vm->m_current_input;
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            vm->m_current_input = (scm_port_t)argv[0];
+            return scm_unspecified;
+        }
+        wrong_type_argument_violation(vm, "current-input-port", 0, "port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "current-input-port", 0, 1, argc, argv);
+    return scm_undef;
 }
 
 // current-output-port
 scm_obj_t
 subr_current_output_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) return vm->m_current_output;
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			vm->m_current_output = (scm_port_t)argv[0];
-			return scm_unspecified;
-		}
-		wrong_type_argument_violation(vm, "current-output-port", 0, "port", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "current-output-port", 0, 1, argc, argv);
-	return scm_undef;
+    if (argc == 0) return vm->m_current_output;
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            vm->m_current_output = (scm_port_t)argv[0];
+            return scm_unspecified;
+        }
+        wrong_type_argument_violation(vm, "current-output-port", 0, "port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "current-output-port", 0, 1, argc, argv);
+    return scm_undef;
 }
 
 // current-error-port
 scm_obj_t
 subr_current_error_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) return vm->m_current_error;
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			vm->m_current_error = (scm_port_t)argv[0];
-			return scm_unspecified;
-		}
-		wrong_type_argument_violation(vm, "current-error-port", 0, "port", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "current-error-port", 0, 1, argc, argv);
-	return scm_undef;
+    if (argc == 0) return vm->m_current_error;
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            vm->m_current_error = (scm_port_t)argv[0];
+            return scm_unspecified;
+        }
+        wrong_type_argument_violation(vm, "current-error-port", 0, "port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "current-error-port", 0, 1, argc, argv);
+    return scm_undef;
 }
 
  */
@@ -302,7 +302,7 @@ subr_current_error_port(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_standard_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) {
+    if (argc == 0) {
         try {
 #if _MSC_VER
             HANDLE hdl;
@@ -312,23 +312,23 @@ subr_standard_input_port(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             return make_std_port(vm->m_heap, hdl, make_string_literal(vm->m_heap, "/dev/stdin"), SCM_PORT_DIRECTION_IN, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_false);
-#else        
+#else
             return make_std_port(vm->m_heap, dup(0), make_string_literal(vm->m_heap, "/dev/stdin"), SCM_PORT_DIRECTION_IN, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_false);
 #endif
         } catch (io_exception_t& e) {
             raise_io_error(vm, "standard-input-port", e.m_operation, e.m_message, e.m_err, scm_false, scm_false);
             return scm_undef;
         }
-	}
+    }
     wrong_number_of_arguments_violation(vm, "standard-input-port", 0, 0, argc, argv);
-	return scm_undef;
+    return scm_undef;
 }
 
 // standard-output-port
 scm_obj_t
 subr_standard_output_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) {
+    if (argc == 0) {
         try {
 #if _MSC_VER
             HANDLE hdl;
@@ -345,16 +345,16 @@ subr_standard_output_port(VM* vm, int argc, scm_obj_t argv[])
             raise_io_error(vm, "standard-output-port", e.m_operation, e.m_message, e.m_err, scm_false, scm_false);
             return scm_undef;
         }
-	}
+    }
     wrong_number_of_arguments_violation(vm, "standard-output-port", 0, 0, argc, argv);
-	return scm_undef;
+    return scm_undef;
 }
 
 // standard-error-port
 scm_obj_t
 subr_standard_error_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) {
+    if (argc == 0) {
         try {
 #if _MSC_VER
             HANDLE hdl;
@@ -371,46 +371,46 @@ subr_standard_error_port(VM* vm, int argc, scm_obj_t argv[])
             raise_io_error(vm, "standard-error-port", e.m_operation, e.m_message, e.m_err, scm_false, scm_false);
             return scm_undef;
         }
-	}
+    }
     wrong_number_of_arguments_violation(vm, "standard-error-port", 0, 0, argc, argv);
-	return scm_undef;
+    return scm_undef;
 }
 
 // native-transcoder-descriptor
 scm_obj_t
 subr_native_transcoder_descriptor(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) {
+    if (argc == 0) {
         return vm->m_heap->m_native_transcoder;
     }
-	wrong_number_of_arguments_violation(vm, "native-transcoder-descriptor", 0, 0, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "native-transcoder-descriptor", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 // port-transcoder-descriptor
 scm_obj_t
 subr_port_transcoder_descriptor(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			scm_port_t port = (scm_port_t)argv[0];
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             return port->transcoder;
-		}
-		wrong_type_argument_violation(vm, "port-transcoder-descriptor", 0, "port", argv[0], argc, argv);
-		return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "port-transcoder-descriptor", 0, "port", argv[0], argc, argv);
+        return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "port-transcoder-descriptor", 0, 0, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "port-transcoder-descriptor", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 // port-device-subtype
 scm_obj_t
 subr_port_device_subtype(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			scm_port_t port = (scm_port_t)argv[0];
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             switch (port->type) {
             case SCM_PORT_TYPE_NAMED_FILE:
@@ -429,100 +429,100 @@ subr_port_device_subtype(VM* vm, int argc, scm_obj_t argv[])
             default:
                 fatal("%s:%u unknown port type", __FILE__, __LINE__);
             }
-		}
-		wrong_type_argument_violation(vm, "port-device-subtype", 0, "port", argv[0], argc, argv);
-		return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "port-device-subtype", 0, "port", argv[0], argc, argv);
+        return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "port-device-subtype", 0, 0, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "port-device-subtype", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 // extract-accumulated-bytevector
 scm_obj_t
 subr_extract_accumulated_bytevector(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			scm_port_t port = (scm_port_t)argv[0];
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_PORT(0, "extract-accumulated-bytevector");
             if (port_bytevector_pred(port) && port_output_pred(port)) return port_extract_bytevector(vm->m_heap, port);
             wrong_type_argument_violation(vm, "extract-accumulated-bytevector", 0, "bytevector or string output port", argv[0], argc, argv);
             return scm_undef;
-		}
-		wrong_type_argument_violation(vm, "extract-accumulated-bytevector", 0, "bytevector or string output port", argv[0], argc, argv);
-		return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "extract-accumulated-bytevector", 0, "bytevector or string output port", argv[0], argc, argv);
+        return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "extract-accumulated-bytevector", 0, 0, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "extract-accumulated-bytevector", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 // extract-accumulated-string
 scm_obj_t
 subr_extract_accumulated_string(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			scm_port_t port = (scm_port_t)argv[0];
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_PORT(0, "extract-accumulated-string");
             if (port_bytevector_pred(port) && port_output_pred(port)) return port_extract_string(vm->m_heap, port);
             wrong_type_argument_violation(vm, "extract-accumulated-string", 0, "bytevector or string output port", argv[0], argc, argv);
             return scm_undef;
-		}
-		wrong_type_argument_violation(vm, "extract-accumulated-string", 0, "bytevector or string output port", argv[0], argc, argv);
-		return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "extract-accumulated-string", 0, "bytevector or string output port", argv[0], argc, argv);
+        return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "extract-accumulated-string", 0, 0, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "extract-accumulated-string", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 // get-accumulated-string
 scm_obj_t
 subr_get_accumulated_string(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			scm_port_t port = (scm_port_t)argv[0];
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_PORT(0, "get-accumulated-string");
             if (port_bytevector_pred(port) && port_output_pred(port)) return port_get_string(vm->m_heap, port);
             wrong_type_argument_violation(vm, "get-accumulated-string", 0, "bytevector or string output port", argv[0], argc, argv);
             return scm_undef;
-		}
-		wrong_type_argument_violation(vm, "get-accumulated-string", 0, "bytevector or string output port", argv[0], argc, argv);
-		return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "get-accumulated-string", 0, "bytevector or string output port", argv[0], argc, argv);
+        return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-accumulated-string", 0, 0, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-accumulated-string", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 scm_obj_t
 subr_make_string_output_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0) {
+    if (argc == 0) {
         return make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
-	}
-	wrong_number_of_arguments_violation(vm, "make-string-output-port", 0, 0, argc, argv);
-	return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "make-string-output-port", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 scm_obj_t
 subr_make_string_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
+    if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
-			int size = HDR_STRING_SIZE(string->hdr);
+            int size = HDR_STRING_SIZE(string->hdr);
             scm_bvector_t bvector = make_bvector(vm->m_heap, size);
-			memcpy(bvector->elts, string->name, size);
+            memcpy(bvector->elts, string->name, size);
             return make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_IN, bvector, scm_true);
         }
-		wrong_type_argument_violation(vm, "make-string-input-port", 0, "string", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "make-string-input-port", 0, "string", argv[0], argc, argv);
         return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "make-string-input-port", 0, 0, argc, argv);
-	return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "make-string-input-port", 0, 0, argc, argv);
+    return scm_undef;
 }
 
 // open-port
@@ -530,7 +530,7 @@ scm_obj_t
 subr_open_port(VM* vm, int argc, scm_obj_t argv[])
 {
     int type = 0;
-    
+
     if (FIXNUMP(argv[0])) {
         type = FIXNUM(argv[0]);
         switch (type) {
@@ -538,23 +538,23 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
             case SCM_PORT_TYPE_BYTEVECTOR: break;
             case SCM_PORT_TYPE_CUSTOM: break;
             default:
- 				invalid_argument_violation(vm, "open-port", "bad port type,", argv[0], 0, argc, argv);
+                invalid_argument_violation(vm, "open-port", "bad port type,", argv[0], 0, argc, argv);
                 return scm_undef;
         }
     } else {
         wrong_type_argument_violation(vm, "open-port", 0, "fixnum", argv[0], argc, argv);
         return scm_undef;
     }
-    
+
     int direction = 0;
-    
+
     if (FIXNUMP(argv[1])) {
         direction = FIXNUM(argv[1]);
         switch (type) {
             case SCM_PORT_DIRECTION_IN: break;
             case SCM_PORT_DIRECTION_OUT: break;
             case SCM_PORT_DIRECTION_BOTH: break;
-            default: 
+            default:
                 invalid_argument_violation(vm, "open-port", "bad port direction,", argv[1], 1, argc, argv);
                 return scm_undef;
         }
@@ -562,20 +562,20 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "open-port", 1, "fixnum", argv[1], argc, argv);
         return scm_undef;
     }
-    
+
     scm_obj_t name = argv[2];
     if (!(STRINGP(name) || SYMBOLP(name))) {
         wrong_type_argument_violation(vm, "open-port", 2, "string or symbol", argv[2], argc, argv);
         return scm_undef;
     }
-    
+
     switch (type) {
-            
+
         case SCM_PORT_TYPE_NAMED_FILE: {
             if (STRINGP(name)) {
-                
+
                 int file_options;
-                
+
                 if (FIXNUMP(argv[3])) {
                     file_options = FIXNUM(argv[3]);
                 } else if (argv[3] == scm_false) {
@@ -588,9 +588,9 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
                     invalid_argument_violation(vm, "open-port", "bad file options,", argv[3], 3, argc, argv);
                     return scm_undef;
                 }
-                
+
                 int buffer_mode;
-                
+
                 if (FIXNUMP(argv[4])) {
                     buffer_mode = FIXNUM(argv[4]);
                 } else if (argv[4] == scm_false) {
@@ -605,10 +605,10 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
                     default:
                         invalid_argument_violation(vm, "open-port", "bad buffer mode,", argv[4], 4, argc, argv);
                         return scm_undef;
-                }                
-                
+                }
+
                 scm_obj_t transcoder;
-                
+
                 if (BOOLP(argv[5]) || BVECTORP(argv[5])) {
                     transcoder = argv[5];
                 } else {
@@ -621,18 +621,18 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
                     raise_io_error(vm, "open-port", e.m_operation, e.m_message, e.m_err, scm_false, name);
                     return scm_undef;
                 }
-                return scm_unspecified;              
+                return scm_unspecified;
             }
             wrong_type_argument_violation(vm, "open-port", 2, "string", argv[2], argc, argv);
             return scm_undef;
-            
+
         } break;
-            
+
         case SCM_PORT_TYPE_BYTEVECTOR: {
             if (SYMBOLP(name)) {
-                
+
                 scm_obj_t bytes;
-                
+
                 if (BVECTORP(argv[3])) {
                     if (direction == SCM_PORT_DIRECTION_OUT) {
                         wrong_type_argument_violation(vm, "open-port", 3, "#f for bytevector output port", argv[3], argc, argv);
@@ -651,29 +651,29 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
                     wrong_type_argument_violation(vm, "open-port", 3, "#f or bytevector", argv[3], argc, argv);
                     return scm_undef;
                 }
-                
+
                 if (argv[4] != scm_false) {
                     wrong_type_argument_violation(vm, "open-port", 4, "#f for bytevector port", argv[3], argc, argv);
                     return scm_undef;
-                }                
-                
+                }
+
                 scm_obj_t transcoder;
-                
+
                 if (BOOLP(argv[5]) || BVECTORP(argv[5])) {
                     transcoder = argv[5];
                 } else {
                     wrong_type_argument_violation(vm, "open-port", 5, "#f, #t, or bytevector", argv[5], argc, argv);
                     return scm_undef;
                 }
-                
+
                 try {
                     return make_bytevector_port(vm->m_heap, name, direction, bytes, transcoder);
                 } catch (io_exception_t& e) {
                     raise_io_error(vm, "open-port", e.m_operation, e.m_message, e.m_err, scm_false, scm_false);
                     return scm_undef;
                 }
-                return scm_unspecified;              
-                
+                return scm_unspecified;
+
             }
             wrong_type_argument_violation(vm, "open-port", 2, "symbol", argv[2], argc, argv);
             return scm_undef;
@@ -681,43 +681,43 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
 
         case SCM_PORT_TYPE_CUSTOM: {
             if (STRINGP(name)) {
-                
+
                 scm_obj_t handlers;
-                
+
                 if (VECTORP(argv[3])) {
                     handlers = argv[3];
                 } else {
                     wrong_type_argument_violation(vm, "open-port", 3, "vector", argv[3], argc, argv);
                     return scm_undef;
                 }
-                
+
                 if (argv[4] != scm_false) {
                     wrong_type_argument_violation(vm, "open-port", 4, "#f for custom port", argv[3], argc, argv);
                     return scm_undef;
-                }                
-                
+                }
+
                 scm_obj_t transcoder;
-                
+
                 if (BOOLP(argv[5])) {
                     transcoder = argv[5];
                 } else {
                     wrong_type_argument_violation(vm, "open-port", 5, "#f or #t for custom port", argv[5], argc, argv);
                     return scm_undef;
                 }
-                
+
                 try {
                     return make_custom_port(vm->m_heap, name, direction, handlers, transcoder);
                 } catch (io_exception_t& e) {
                     raise_io_error(vm, "open-port", e.m_operation, e.m_message, e.m_err, scm_false, scm_false);
                     return scm_undef;
                 }
-                return scm_unspecified;              
-                
+                return scm_unspecified;
+
             }
             wrong_type_argument_violation(vm, "open-port", 2, "string", argv[2], argc, argv);
             return scm_undef;
         } break;
-            
+
         default: assert(false);
     }
     return scm_unspecified;
@@ -727,10 +727,10 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_open_script_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (STRINGP(argv[0])) {
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
             scm_port_t port = NULL;
-			try {
+            try {
                 scm_bvector_t transcoder = make_bvector(vm->m_heap, 3);
                 transcoder->elts[0] = SCM_PORT_CODEC_UTF8;
                 transcoder->elts[1] = SCM_PORT_EOL_STYLE_LF;
@@ -753,7 +753,7 @@ subr_open_script_input_port(VM* vm, int argc, scm_obj_t argv[])
                         do {
                             ch = port_get_char(port);
                             if (ch == scm_eof) break;
-                        } while (CHARP(ch) && CHAR(ch) != SCM_PORT_UCS4_LF);                    
+                        } while (CHARP(ch) && CHAR(ch) != SCM_PORT_UCS4_LF);
                     } else {
                         port_set_port_position(port, pos);
                         port->track_line_column = true;
@@ -769,22 +769,22 @@ subr_open_script_input_port(VM* vm, int argc, scm_obj_t argv[])
                 raise_io_codec_error(vm, "open-script-input-port", e.m_operation, e.m_message, (port ? port : scm_false), e.m_ch);
                 return scm_undef;
             }
-		}
-		wrong_type_argument_violation(vm, "open-script-input-port", 0, "string", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "open-script-input-port", 1, 1, argc, argv);
-	return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "open-script-input-port", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "open-script-input-port", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // make-file-input-port
 scm_obj_t
 subr_make_file_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (STRINGP(argv[0])) {
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
             scm_port_t port = NULL;
-			try {
+            try {
                 port = make_file_port(vm->m_heap, (scm_string_t)argv[0], SCM_PORT_DIRECTION_IN, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_true);
                 assert(PORTP(port));
                 return port;
@@ -795,22 +795,22 @@ subr_make_file_input_port(VM* vm, int argc, scm_obj_t argv[])
                 raise_io_codec_error(vm, "make-file-input-port", e.m_operation, e.m_message, (port ? port : scm_false), e.m_ch);
                 return scm_undef;
             }
-		}
-		wrong_type_argument_violation(vm, "make-file-input-port", 0, "string", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "make-file-input-port", 1, 1, argc, argv);
-	return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "make-file-input-port", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "make-file-input-port", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // make-file-output-port
 scm_obj_t
 subr_make_file_output_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (STRINGP(argv[0])) {
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
             scm_port_t port = NULL;
-			try {
+            try {
                 port = make_file_port(vm->m_heap, (scm_string_t)argv[0], SCM_PORT_DIRECTION_OUT, SCM_PORT_FILE_OPTION_NO_FAIL, SCM_PORT_BUFFER_MODE_BLOCK, scm_true);
                 assert(PORTP(port));
                 return port;
@@ -821,19 +821,19 @@ subr_make_file_output_port(VM* vm, int argc, scm_obj_t argv[])
                 raise_io_codec_error(vm, "make-file-output-port", e.m_operation, e.m_message, (port ? port : scm_false), e.m_ch);
                 return scm_undef;
             }
-		}
-		wrong_type_argument_violation(vm, "make-file-output-port", 0, "string", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "make-output-file-port", 1, 1, argc, argv);
-	return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "make-file-output-port", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "make-output-file-port", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // make-temporary-file-port
 scm_obj_t
 subr_make_temporary_file_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {
+    if (argc == 2) {
         if (STRINGP(argv[0])) {
             scm_string_t name = (scm_string_t)argv[0];
             if (BOOLP(argv[1]) || BVECTORP(argv[1])) {
@@ -844,24 +844,24 @@ subr_make_temporary_file_port(VM* vm, int argc, scm_obj_t argv[])
                     raise_io_error(vm, "make-temporary-file-port", e.m_operation, e.m_message, e.m_err, scm_false, name);
                     return scm_undef;
                 }
-                return scm_unspecified;   
+                return scm_unspecified;
             }
             wrong_type_argument_violation(vm, "make-temporary-file-port", 1, "#f, #t, or bytevector", argv[1], argc, argv);
             return scm_undef;
         }
         wrong_type_argument_violation(vm, "make-temporary-file-port", 0, "string", argv[0], argc, argv);
         return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "make-temporary-file-port", 2, 2, argc, argv);
-	return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "make-temporary-file-port", 2, 2, argc, argv);
+    return scm_undef;
 }
-                
+
 // nonblock-byte-ready?
 scm_obj_t
 subr_nonblock_byte_ready_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_INPUT_PORT(0, "nonblock-byte-ready?");
@@ -875,16 +875,16 @@ subr_nonblock_byte_ready_pred(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "nonblock-byte-ready?", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "nonblock-byte-ready?", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "nonblock-byte-ready?", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // get-char
 scm_obj_t
 subr_get_char(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "get-char");
@@ -901,16 +901,16 @@ subr_get_char(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "get-char", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-char", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-char", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // lookahead-char
 scm_obj_t
 subr_lookahead_char(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "lookahead-char");
@@ -927,16 +927,16 @@ subr_lookahead_char(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "lookahead-char", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "lookahead-char", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "lookahead-char", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 //port-has-port-position?
 scm_obj_t
 subr_port_has_port_position_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             try {
@@ -949,16 +949,16 @@ subr_port_has_port_position_pred(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "port-has-port-position?", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "port-has-port-position?", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "port-has-port-position?", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 //port-position
 scm_obj_t
 subr_port_position(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_PORT(0, "port-position");
@@ -978,16 +978,16 @@ subr_port_position(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "port-position", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "port-position", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "port-position", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 //port-has-set-port-position!?
 scm_obj_t
 subr_port_has_set_port_position_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             try {
@@ -1000,15 +1000,15 @@ subr_port_has_set_port_position_pred(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "port-has-set-port-position!?", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "port-has-set-port-position!?", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "port-has-set-port-position!?", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 //set-port-position!
 scm_obj_t
 subr_set_port_position(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {    
+    if (argc == 2) {
         if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
@@ -1039,16 +1039,16 @@ subr_set_port_position(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "set-port-position!", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "set-port-position!", 2, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "set-port-position!", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 //port-eof?
 scm_obj_t
 subr_port_eof_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_INPUT_PORT(0, "port-eof?");
@@ -1062,16 +1062,16 @@ subr_port_eof_pred(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "port-eof?", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "port-eof?", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "port-eof?", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // get-u8
 scm_obj_t
 subr_get_u8(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_BINARY_INPUT_PORT(0, "get-u8");
@@ -1085,16 +1085,16 @@ subr_get_u8(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "get-u8", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-u8", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-u8", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // lookahead-u8
 scm_obj_t
 subr_lookahead_u8(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_BINARY_INPUT_PORT(0, "lookahead-u8");
@@ -1108,16 +1108,16 @@ subr_lookahead_u8(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "lookahead-u8", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "lookahead-u8", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "lookahead-u8", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // get-byte
 scm_obj_t
 subr_get_byte(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_INPUT_PORT(0, "get-byte");
@@ -1131,16 +1131,16 @@ subr_get_byte(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "get-byte", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-byte", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-byte", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // lookahead-byte
 scm_obj_t
 subr_lookahead_byte(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_INPUT_PORT(0, "lookahead-byte");
@@ -1154,15 +1154,15 @@ subr_lookahead_byte(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "lookahead-byte", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "lookahead-byte", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "lookahead-byte", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 //get-bytevector-n
 scm_obj_t
 subr_get_bytevector_n(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {    
+    if (argc == 2) {
         if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
@@ -1190,15 +1190,15 @@ subr_get_bytevector_n(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "get-bytevector-n", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-bytevector-n", 2, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-bytevector-n", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 //get-bytevector-n!
 scm_obj_t
 subr_get_bytevector_n_ex(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 4) {    
+    if (argc == 4) {
         if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
@@ -1226,29 +1226,29 @@ subr_get_bytevector_n_ex(VM* vm, int argc, scm_obj_t argv[])
                     }
                 }
                 if (start >= bvector->count) {
-					invalid_argument_violation(vm, "get-bytevector-n!", "index out of bounds,", argv[2], 2, argc, argv);
+                    invalid_argument_violation(vm, "get-bytevector-n!", "index out of bounds,", argv[2], 2, argc, argv);
                     return scm_undef;
                 } else {
-					invalid_argument_violation(vm, "get-bytevector-n!", "too many elements,", argv[3], 3, argc, argv);
+                    invalid_argument_violation(vm, "get-bytevector-n!", "too many elements,", argv[3], 3, argc, argv);
                     return scm_undef;
                 }
             }
             wrong_type_argument_violation(vm, "get-bytevector-n!", 1, "bytevector", argv[1], argc, argv);
-			return scm_undef;
+            return scm_undef;
         }
         wrong_type_argument_violation(vm, "get-bytevector-n!", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-bytevector-n", 4, 4, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-bytevector-n", 4, 4, argc, argv);
+    return scm_undef;
 }
 
 // get-bytevector-some
 scm_obj_t
 subr_get_bytevector_some(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock1(port->lock);
             CHECK_OPENED_BINARY_INPUT_PORT(0, "get-bytevector-some");
@@ -1267,16 +1267,16 @@ subr_get_bytevector_some(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "get-bytevector-some", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-bytevector-some", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-bytevector-some", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // get-bytevector-all
 scm_obj_t
 subr_get_bytevector_all(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock1(port->lock);
             CHECK_OPENED_BINARY_INPUT_PORT(0, "get-bytevector-all");
@@ -1299,15 +1299,15 @@ subr_get_bytevector_all(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "get-bytevector-all", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-bytevector-all", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-bytevector-all", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 //get-string-n
 scm_obj_t
 subr_get_string_n(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {    
+    if (argc == 2) {
         if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
@@ -1336,15 +1336,15 @@ subr_get_string_n(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "get-string-n", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-string-n", 2, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-string-n", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 //get-string-n!
 scm_obj_t
 subr_get_string_n_ex(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 4) {    
+    if (argc == 4) {
         if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
@@ -1373,29 +1373,29 @@ subr_get_string_n_ex(VM* vm, int argc, scm_obj_t argv[])
                     }
                 }
                 if (start >= length) {
-					invalid_argument_violation(vm, "get-string-n!", "index out of bounds,", argv[2], 2, argc, argv);
+                    invalid_argument_violation(vm, "get-string-n!", "index out of bounds,", argv[2], 2, argc, argv);
                     return scm_undef;
                 } else {
-					invalid_argument_violation(vm, "get-string-n!", "too many elements,", argv[3], 3, argc, argv);
+                    invalid_argument_violation(vm, "get-string-n!", "too many elements,", argv[3], 3, argc, argv);
                     return scm_undef;
                 }
             }
             wrong_type_argument_violation(vm, "get-string-n!", 1, "string", argv[1], argc, argv);
-			return scm_undef;
+            return scm_undef;
         }
         wrong_type_argument_violation(vm, "get-string-n!", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-string-n!", 4, 4, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-string-n!", 4, 4, argc, argv);
+    return scm_undef;
 }
 
 // get-string-all
 scm_obj_t
 subr_get_string_all(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock1(port->lock);
             CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "get-string-all");
@@ -1420,16 +1420,16 @@ subr_get_string_all(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "get-string-all", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-string-all", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-string-all", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // get-line
 scm_obj_t
 subr_get_line(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock1(port->lock);
             CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "get-line");
@@ -1455,16 +1455,16 @@ subr_get_line(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "get-line", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "get-line", 1, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "get-line", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // get-datum
 scm_obj_t
 subr_get_datum(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-        if (PORTP(argv[0])) {        
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "get-datum");
@@ -1478,17 +1478,17 @@ subr_get_datum(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
         }
-	}
-	wrong_number_of_arguments_violation(vm, "get-datum", 1, 1, argc, argv);
-	return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "get-datum", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // put-u8
 scm_obj_t
 subr_put_u8(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 2) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_BINARY_OUTPUT_PORT(0, "put-u8");
@@ -1504,16 +1504,16 @@ subr_put_u8(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "put-u8", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "put-u8", 2, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "put-u8", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // put-byte
 scm_obj_t
 subr_put_byte(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 2) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_OUTPUT_PORT(0, "put-byte");
@@ -1529,16 +1529,16 @@ subr_put_byte(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "put-byte", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "put-byte", 2, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "put-byte", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // put-bytevector
 scm_obj_t
 subr_put_bytevector(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc >= 2 && argc <= 4) {    
-        if (PORTP(argv[0])) {        
+    if (argc >= 2 && argc <= 4) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_BINARY_OUTPUT_PORT(0, "put-bytevector");
@@ -1554,7 +1554,7 @@ subr_put_bytevector(VM* vm, int argc, scm_obj_t argv[])
                 if (argc > 3) {
                     CHECK_NON_NEGATIVE_FIXNUM(3, "put-bytevector");
                     count = FIXNUM(argv[3]);
-                }               
+                }
                 if (start + count <= bvector->count) {
                     try {
                         for (int i = 0; i < count; i++) port_put_byte(port, bvector->elts[start + i]);
@@ -1565,10 +1565,10 @@ subr_put_bytevector(VM* vm, int argc, scm_obj_t argv[])
                     }
                 }
                 if (start >= bvector->count) {
-					invalid_argument_violation(vm, "put-bytevector", "index out of bounds,", argv[2], 2, argc, argv);
+                    invalid_argument_violation(vm, "put-bytevector", "index out of bounds,", argv[2], 2, argc, argv);
                     return scm_undef;
                 } else {
-					invalid_argument_violation(vm, "put-bytevector", "too many elements,", argv[3], 3, argc, argv);
+                    invalid_argument_violation(vm, "put-bytevector", "too many elements,", argv[3], 3, argc, argv);
                     return scm_undef;
                 }
             }
@@ -1578,16 +1578,16 @@ subr_put_bytevector(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "put-bytevector", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "put-bytevector", 2, 4, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "put-bytevector", 2, 4, argc, argv);
+    return scm_undef;
 }
 
 // put-char
 scm_obj_t
 subr_put_char(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 2) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_TEXTUAL_OUTPUT_PORT(0, "put-char");
@@ -1609,16 +1609,16 @@ subr_put_char(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "put-char", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "put-char", 2, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "put-char", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // put-string
 scm_obj_t
 subr_put_string(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc >= 2 && argc <= 4) {    
-        if (PORTP(argv[0])) {        
+    if (argc >= 2 && argc <= 4) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_TEXTUAL_OUTPUT_PORT(0, "put-string");
@@ -1647,7 +1647,7 @@ subr_put_string(VM* vm, int argc, scm_obj_t argv[])
                 if (argc > 3) {
                     CHECK_NON_NEGATIVE_FIXNUM(3, "put-string");
                     count = FIXNUM(argv[3]);
-                }               
+                }
                 if (start + count <= len) {
                     try {
                         for (int i = 0; i < count; i++) {
@@ -1669,10 +1669,10 @@ subr_put_string(VM* vm, int argc, scm_obj_t argv[])
                     }
                 }
                 if (start >= len) {
-					invalid_argument_violation(vm, "put-string", "index out of bounds,", argv[2], 2, argc, argv);
+                    invalid_argument_violation(vm, "put-string", "index out of bounds,", argv[2], 2, argc, argv);
                     return scm_undef;
                 } else {
-					invalid_argument_violation(vm, "put-string", "too many elements,", argv[3], 3, argc, argv);
+                    invalid_argument_violation(vm, "put-string", "too many elements,", argv[3], 3, argc, argv);
                     return scm_undef;
                 }
             }
@@ -1682,15 +1682,15 @@ subr_put_string(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "put-string", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "put-string", 2, 4, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "put-string", 2, 4, argc, argv);
+    return scm_undef;
 }
 
 // put-datum
 scm_obj_t
 subr_put_datum(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {    
+    if (argc == 2) {
         if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
@@ -1716,8 +1716,8 @@ subr_put_datum(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "put-datum", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "put-datum", 2, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "put-datum", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // put-fasl
@@ -1727,7 +1727,7 @@ subr_put_fasl(VM* vm, int argc, scm_obj_t argv[])
 #if DISABLE_FASL
     return subr_put_datum(vm, argc, argv);
 #endif
-	if (argc == 2) {    
+    if (argc == 2) {
         if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
@@ -1743,22 +1743,22 @@ subr_put_fasl(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "put-fasl", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "put-fasl", 2, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "put-fasl", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // write
 scm_obj_t
 subr_write(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1 || argc == 2) {
+    if (argc == 1 || argc == 2) {
         scm_port_t port;
         if (argc == 1) {
             port = vm->m_current_output;
             if (!port_open_pred(port) || !port_output_pred(port)) {
                 invalid_object_violation(vm, "write", "current output port opened for output", port, argc, argv);
                 return scm_undef;
-            }                                              
+            }
         } else {
             if (PORTP(argv[1])) {
                 port = (scm_port_t)argv[1];
@@ -1787,22 +1787,22 @@ subr_write(VM* vm, int argc, scm_obj_t argv[])
             return scm_undef;
         }
     }
-	wrong_number_of_arguments_violation(vm, "write", 1, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "write", 1, 2, argc, argv);
+    return scm_undef;
 }
 
 // display
 scm_obj_t
 subr_display(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1 || argc == 2) {
+    if (argc == 1 || argc == 2) {
         scm_port_t port;
         if (argc == 1) {
             port = vm->m_current_output;
             if (!port_open_pred(port) || !port_output_pred(port)) {
                 invalid_object_violation(vm, "display", "current output port opened for output", port, argc, argv);
                 return scm_undef;
-            }                                              
+            }
         } else {
             if (PORTP(argv[1])) {
                 port = (scm_port_t)argv[1];
@@ -1831,22 +1831,22 @@ subr_display(VM* vm, int argc, scm_obj_t argv[])
             return scm_undef;
         }
     }
-	wrong_number_of_arguments_violation(vm, "display", 1, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "display", 1, 2, argc, argv);
+    return scm_undef;
 }
 
 // newline
 scm_obj_t
 subr_newline(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0 || argc == 1) {
+    if (argc == 0 || argc == 1) {
         scm_port_t port;
         if (argc == 0) {
             port = vm->m_current_output;
             if (!port_open_pred(port) || !port_output_pred(port)) {
                 invalid_object_violation(vm, "newline", "current output port opened for output", port, argc, argv);
                 return scm_undef;
-            }                                              
+            }
         } else {
             if (PORTP(argv[0])) {
                 port = (scm_port_t)argv[0];
@@ -1868,22 +1868,22 @@ subr_newline(VM* vm, int argc, scm_obj_t argv[])
             return scm_undef;
         }
     }
-	wrong_number_of_arguments_violation(vm, "newline", 0, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "newline", 0, 1, argc, argv);
+    return scm_undef;
 }
 
 // read-char
 scm_obj_t
 subr_read_char(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0 || argc == 1) {
+    if (argc == 0 || argc == 1) {
         scm_port_t port;
         if (argc == 0) {
             port = vm->m_current_input;
             if (!port_open_pred(port) || !port_input_pred(port)) {
                 invalid_object_violation(vm, "read-char", "current input port opened for input", port, argc, argv);
                 return scm_undef;
-            }                                              
+            }
         } else {
             if (PORTP(argv[0])) {
                 port = (scm_port_t)argv[0];
@@ -1904,22 +1904,22 @@ subr_read_char(VM* vm, int argc, scm_obj_t argv[])
             return scm_undef;
         }
     }
-	wrong_number_of_arguments_violation(vm, "read-char", 0, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "read-char", 0, 1, argc, argv);
+    return scm_undef;
 }
 
 // peek-char
 scm_obj_t
 subr_peek_char(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0 || argc == 1) {
+    if (argc == 0 || argc == 1) {
         scm_port_t port;
         if (argc == 0) {
             port = vm->m_current_input;
             if (!port_open_pred(port) || !port_input_pred(port)) {
                 invalid_object_violation(vm, "peek-char", "current input port opened for input", port, argc, argv);
                 return scm_undef;
-            }                                              
+            }
         } else {
             if (PORTP(argv[0])) {
                 port = (scm_port_t)argv[0];
@@ -1940,22 +1940,22 @@ subr_peek_char(VM* vm, int argc, scm_obj_t argv[])
             return scm_undef;
         }
     }
-	wrong_number_of_arguments_violation(vm, "peek-char", 0, 1, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "peek-char", 0, 1, argc, argv);
+    return scm_undef;
 }
 
 // write-char
 scm_obj_t
 subr_write_char(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1 || argc == 2) {
+    if (argc == 1 || argc == 2) {
         scm_port_t port;
         if (argc == 1) {
             port = vm->m_current_output;
             if (!port_open_pred(port) || !port_output_pred(port)) {
                 invalid_object_violation(vm, "write-char", "current output port opened for output", port, argc, argv);
                 return scm_undef;
-            }                                              
+            }
         } else {
             if (PORTP(argv[1])) {
                 port = (scm_port_t)argv[1];
@@ -1981,22 +1981,22 @@ subr_write_char(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "write-char", 0, "char", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "write-char", 1, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "write-char", 1, 2, argc, argv);
+    return scm_undef;
 }
 
 // read
 scm_obj_t
 subr_read(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 0 || argc == 1) {
+    if (argc == 0 || argc == 1) {
         scm_port_t port;
         if (argc == 0) {
             port = vm->m_current_input;
             if (!port_open_pred(port) || !port_input_pred(port)) {
                 invalid_object_violation(vm, "read", "current input port opened for input", port, argc, argv);
                 return scm_undef;
-            }                                              
+            }
         } else {
             if (PORTP(argv[0])) {
                 port = (scm_port_t)argv[0];
@@ -2016,17 +2016,17 @@ subr_read(VM* vm, int argc, scm_obj_t argv[])
             raise_lexical_violation(vm, make_symbol(vm->m_heap, "read"), exception.m_message);
             return scm_undef;
         }
-	}
-	wrong_number_of_arguments_violation(vm, "read", 0, 1, argc, argv);
-	return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "read", 0, 1, argc, argv);
+    return scm_undef;
 }
 
 // make-transcoded-port
 scm_obj_t
 subr_make_transcoded_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 2) {    
-        if (PORTP(argv[0])) {        
+    if (argc == 2) {
+        if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             CHECK_OPENED_BINARY_PORT(0, "make-transcoded-port");
@@ -2046,61 +2046,61 @@ subr_make_transcoded_port(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "make-transcoded-port", 0, "port", argv[0], argc, argv);
         return scm_undef;
     }
-	wrong_number_of_arguments_violation(vm, "make-transcoded-port", 2, 2, argc, argv);
-	return scm_undef;
+    wrong_number_of_arguments_violation(vm, "make-transcoded-port", 2, 2, argc, argv);
+    return scm_undef;
 }
 
 // set-current-input-port!
 scm_obj_t
 subr_set_current_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			vm->m_current_input = (scm_port_t)argv[0];
-			return scm_unspecified;
-		}
-		wrong_type_argument_violation(vm, "set-current-input-port!", 0, "port", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "set-current-input-port!", 1, 1, argc, argv);
-	return scm_undef;
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            vm->m_current_input = (scm_port_t)argv[0];
+            return scm_unspecified;
+        }
+        wrong_type_argument_violation(vm, "set-current-input-port!", 0, "port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "set-current-input-port!", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // set-current-output-port!
 scm_obj_t
 subr_set_current_output_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			vm->m_current_output = (scm_port_t)argv[0];
-			return scm_unspecified;
-		}
-		wrong_type_argument_violation(vm, "set-current-output-port!", 0, "port", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "set-current-output-port!", 1, 1, argc, argv);
-	return scm_undef;
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            vm->m_current_output = (scm_port_t)argv[0];
+            return scm_unspecified;
+        }
+        wrong_type_argument_violation(vm, "set-current-output-port!", 0, "port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "set-current-output-port!", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 // set-current-error-port!
 scm_obj_t
 subr_set_current_error_port(VM* vm, int argc, scm_obj_t argv[])
 {
-	if (argc == 1) {
-		if (PORTP(argv[0])) {
-			vm->m_current_error = (scm_port_t)argv[0];
-			return scm_unspecified;
-		}
-		wrong_type_argument_violation(vm, "set-current-error-port!", 0, "port", argv[0], argc, argv);
-		return scm_undef;
-	}
-	wrong_number_of_arguments_violation(vm, "set-current-error-port!", 1, 1, argc, argv);
-	return scm_undef;
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            vm->m_current_error = (scm_port_t)argv[0];
+            return scm_unspecified;
+        }
+        wrong_type_argument_violation(vm, "set-current-error-port!", 0, "port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "set-current-error-port!", 1, 1, argc, argv);
+    return scm_undef;
 }
 
 void init_subr_port(object_heap_t* heap)
-{	
-    #define	DEFSUBR(SYM, FUNC)	heap->intern_system_subr(SYM, FUNC)
+{
+    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("port?", subr_port_pred);
     DEFSUBR("input-port?", subr_input_port_pred);
@@ -2114,40 +2114,40 @@ void init_subr_port(object_heap_t* heap)
     DEFSUBR("standard-input-port", subr_standard_input_port);
     DEFSUBR("standard-output-port", subr_standard_output_port);
     DEFSUBR("standard-error-port", subr_standard_error_port);
-    
+
     DEFSUBR("flush-output-port", subr_flush_output_port);
     DEFSUBR("output-port-buffer-mode", subr_output_port_buffer_mode);
 
     DEFSUBR("set-port-current-line!", subr_set_port_current_line);
     DEFSUBR("set-port-current-column!", subr_set_port_current_column);
     DEFSUBR("port-device-subtype", subr_port_device_subtype);
-    
+
     DEFSUBR("native-transcoder-descriptor", subr_native_transcoder_descriptor);
     DEFSUBR("port-transcoder-descriptor", subr_port_transcoder_descriptor);
-    
+
     DEFSUBR("extract-accumulated-bytevector", subr_extract_accumulated_bytevector);
     DEFSUBR("extract-accumulated-string", subr_extract_accumulated_string);
     DEFSUBR("get-accumulated-string", subr_get_accumulated_string);
     DEFSUBR("make-string-output-port", subr_make_string_output_port);
     DEFSUBR("make-string-input-port", subr_make_string_input_port);
-    
+
     DEFSUBR("open-script-input-port", subr_open_script_input_port);
     DEFSUBR("make-file-input-port", subr_make_file_input_port);
     DEFSUBR("make-file-output-port", subr_make_file_output_port);
     DEFSUBR("make-temporary-file-port", subr_make_temporary_file_port);
-    
+
     DEFSUBR("open-port", subr_open_port);
-    
+
     DEFSUBR("nonblock-byte-ready?", subr_nonblock_byte_ready_pred);
     DEFSUBR("get-char", subr_get_char);
     DEFSUBR("lookahead-char", subr_lookahead_char);
-    
+
     DEFSUBR("port-has-port-position?", subr_port_has_port_position_pred);
     DEFSUBR("port-position", subr_port_position);
     DEFSUBR("port-has-set-port-position!?", subr_port_has_set_port_position_pred);
     DEFSUBR("set-port-position!", subr_set_port_position);
     DEFSUBR("port-eof?", subr_port_eof_pred);
-    
+
     DEFSUBR("get-u8", subr_get_u8);
     DEFSUBR("get-byte", subr_get_byte);
     DEFSUBR("lookahead-u8", subr_lookahead_u8);
@@ -2162,11 +2162,11 @@ void init_subr_port(object_heap_t* heap)
     DEFSUBR("get-string-all", subr_get_string_all);
     DEFSUBR("get-line", subr_get_line);
     DEFSUBR("get-datum", subr_get_datum);
-    
+
     DEFSUBR("put-u8", subr_put_u8);
     DEFSUBR("put-byte", subr_put_byte);
     DEFSUBR("put-bytevector", subr_put_bytevector);
-    
+
     DEFSUBR("put-char", subr_put_char);
     DEFSUBR("put-string", subr_put_string);
     DEFSUBR("put-datum", subr_put_datum);
@@ -2183,6 +2183,5 @@ void init_subr_port(object_heap_t* heap)
     DEFSUBR("make-transcoded-port", subr_make_transcoded_port);
     DEFSUBR("set-current-input-port!", subr_set_current_input_port);
     DEFSUBR("set-current-output-port!", subr_set_current_output_port);
-    DEFSUBR("set-current-error-port!", subr_set_current_error_port);    
+    DEFSUBR("set-current-error-port!", subr_set_current_error_port);
 }
-

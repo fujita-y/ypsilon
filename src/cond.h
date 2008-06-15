@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	COND_H_INCLUDED
-#define	COND_H_INCLUDED
+#ifndef COND_H_INCLUDED
+#define COND_H_INCLUDED
 
 #include "core.h"
 
@@ -18,7 +18,7 @@
 
     public:
 
-        HANDLE	ev;
+        HANDLE  ev;
 
         cond_t() { /* should be blank */ }
 
@@ -27,17 +27,17 @@
             ev = CreateEvent(NULL, FALSE, FALSE, NULL);
             MTVERIFY(ev);
         }
-        
+
         void destroy()
         {
             MTVERIFY(CloseHandle(ev));
         }
-        
+
         void signal()
         {
             MTVERIFY(SetEvent(ev));
         }
-                
+
         void wait(mutex_t& mutex)
         {
             #if USE_CRITICAL_SECTION
@@ -49,7 +49,7 @@
                 MTVERIFY(WaitForSingleObject(mutex.mutex, INFINITE) != WAIT_FAILED);
             #endif
         }
-        
+
     };
 
 #else
@@ -69,22 +69,22 @@
         {
             MTVERIFY(pthread_cond_init(&cv, NULL));
         }
-        
+
         void destroy()
         {
             MTVERIFY(pthread_cond_destroy(&cv));
         }
-        
+
         void signal()
         {
             MTVERIFY(pthread_cond_signal(&cv));
         }
-                
+
         void wait(mutex_t& mutex)
         {
             MTVERIFY(pthread_cond_wait(&cv, &mutex.mutex));
         }
-        
+
     };
 
 #endif

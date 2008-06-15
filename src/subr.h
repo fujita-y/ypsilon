@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	SUBR_H_INCLUDED
-#define	SUBR_H_INCLUDED
+#ifndef SUBR_H_INCLUDED
+#define SUBR_H_INCLUDED
 
 #include "core.h"
 #include "object.h"
@@ -50,72 +50,72 @@ void init_subr_others(object_heap_t* heap);
                 return scm_undef;                                                                   \
             } while (false)
 
-#define CHECK_OPENED_TEXTUAL_INPUT_PORT(pos, subr)                                                  	\
-            do {                                                                                    	\
-                assert(PORTP(argv[pos]));                                                           	\
-                scm_port_t port = (scm_port_t)argv[pos];                                           	 	\
-                if (port_open_pred(port)) {                                                         	\
-                    if (port_input_pred(port)) {														\
-						if (port_textual_pred(port)) break;                                         	\
-	                    wrong_type_argument_violation(vm, subr, pos, "textual port", port, argc, argv);	\
-	                    return scm_undef;                                                           	\
-					}																					\
-                    wrong_type_argument_violation(vm, subr, pos, "input port", port, argc, argv);   	\
-                    return scm_undef;                                                               	\
-                }                                                                                   	\
-                wrong_type_argument_violation(vm, subr, pos, "opened port", port, argc, argv);      	\
-                return scm_undef;                                                                   	\
+#define CHECK_OPENED_TEXTUAL_INPUT_PORT(pos, subr)                                                      \
+            do {                                                                                        \
+                assert(PORTP(argv[pos]));                                                               \
+                scm_port_t port = (scm_port_t)argv[pos];                                                \
+                if (port_open_pred(port)) {                                                             \
+                    if (port_input_pred(port)) {                                                        \
+                        if (port_textual_pred(port)) break;                                             \
+                        wrong_type_argument_violation(vm, subr, pos, "textual port", port, argc, argv); \
+                        return scm_undef;                                                               \
+                    }                                                                                   \
+                    wrong_type_argument_violation(vm, subr, pos, "input port", port, argc, argv);       \
+                    return scm_undef;                                                                   \
+                }                                                                                       \
+                wrong_type_argument_violation(vm, subr, pos, "opened port", port, argc, argv);          \
+                return scm_undef;                                                                       \
             } while (false)
 
-#define CHECK_OPENED_TEXTUAL_OUTPUT_PORT(pos, subr)                                                 	\
-            do {                                                                                    	\
-                assert(PORTP(argv[pos]));                                                           	\
-                scm_port_t port = (scm_port_t)argv[pos];                                           		\
-                if (port_open_pred(port)) {                                                         	\
-                    if (port_output_pred(port)) {                                             			\
-						if (port_textual_pred(port)) break;                                         	\
-	                    wrong_type_argument_violation(vm, subr, pos, "textual port", port, argc, argv);	\
-	                    return scm_undef;                                                           	\
-                    }																					\
-					wrong_type_argument_violation(vm, subr, pos, "output port", port, argc, argv);  	\
-                    return scm_undef;                                                               	\
-                }                                                                                   	\
-                wrong_type_argument_violation(vm, subr, pos, "opened port", port, argc, argv);      	\
-                return scm_undef;                                                                   	\
+#define CHECK_OPENED_TEXTUAL_OUTPUT_PORT(pos, subr)                                                     \
+            do {                                                                                        \
+                assert(PORTP(argv[pos]));                                                               \
+                scm_port_t port = (scm_port_t)argv[pos];                                                \
+                if (port_open_pred(port)) {                                                             \
+                    if (port_output_pred(port)) {                                                       \
+                        if (port_textual_pred(port)) break;                                             \
+                        wrong_type_argument_violation(vm, subr, pos, "textual port", port, argc, argv); \
+                        return scm_undef;                                                               \
+                    }                                                                                   \
+                    wrong_type_argument_violation(vm, subr, pos, "output port", port, argc, argv);      \
+                    return scm_undef;                                                                   \
+                }                                                                                       \
+                wrong_type_argument_violation(vm, subr, pos, "opened port", port, argc, argv);          \
+                return scm_undef;                                                                       \
             } while (false)
 
-#define CHECK_OPENED_BINARY_INPUT_PORT(pos, subr)                                                  		\
-            do {                                                                                    	\
-                assert(PORTP(argv[pos]));                                                           	\
-                scm_port_t port = (scm_port_t)argv[pos];                                           	 	\
-                if (port_open_pred(port)) {                                                         	\
-                    if (port_input_pred(port)) {														\
-						if (port_binary_pred(port)) break;                                         		\
-	                    wrong_type_argument_violation(vm, subr, pos, "binary port", port, argc, argv);	\
-	                    return scm_undef;                                                           	\
-					}																					\
-                    wrong_type_argument_violation(vm, subr, pos, "input port", port, argc, argv);   	\
-                    return scm_undef;                                                               	\
-                }                                                                                   	\
-                wrong_type_argument_violation(vm, subr, pos, "opened port", port, argc, argv);      	\
-                return scm_undef;                                                                   	\
+#define CHECK_OPENED_BINARY_INPUT_PORT(pos, subr)                                                       \
+            do {                                                                                        \
+                assert(PORTP(argv[pos]));                                                               \
+                scm_port_t port = (scm_port_t)argv[pos];                                                \
+                if (port_open_pred(port)) {                                                             \
+                    if (port_input_pred(port)) {                                                        \
+                        if (port_binary_pred(port)) break;                                              \
+                        wrong_type_argument_violation(vm, subr, pos, "binary port", port, argc, argv);  \
+                        return scm_undef;                                                               \
+                    }                                                                                   \
+                    wrong_type_argument_violation(vm, subr, pos, "input port", port, argc, argv);       \
+                    return scm_undef;                                                                   \
+                }                                                                                       \
+                wrong_type_argument_violation(vm, subr, pos, "opened port", port, argc, argv);          \
+                return scm_undef;                                                                       \
             } while (false)
 
-#define CHECK_OPENED_BINARY_OUTPUT_PORT(pos, subr)                                                 		\
-            do {                                                                                    	\
-                assert(PORTP(argv[pos]));                                                           	\
-                scm_port_t port = (scm_port_t)argv[pos];                                           		\
-                if (port_open_pred(port)) {                                                         	\
-                    if (port_output_pred(port)) {                                             			\
-						if (port_binary_pred(port)) break;                                         		\
-	                    wrong_type_argument_violation(vm, subr, pos, "binary port", port, argc, argv);	\
-	                    return scm_undef;                                                           	\
-                    }																					\
-					wrong_type_argument_violation(vm, subr, pos, "output port", port, argc, argv);  	\
-                    return scm_undef;                                                               	\
-                }                                                                                   	\
-                wrong_type_argument_violation(vm, subr, pos, "opened port", port, argc, argv);      	\
-                return scm_undef;                                                                   	\
+#define CHECK_OPENED_BINARY_OUTPUT_PORT(pos, subr)                                                      \
+            do {                                                                                        \
+                assert(PORTP(argv[pos]));                                                               \
+                scm_port_t port = (scm_port_t)argv[pos];                                                \
+                if (port_open_pred(port)) {                                                             \
+                    if (port_output_pred(port)) {                                                       \
+                        if (port_binary_pred(port)) break;                                              \
+                        wrong_type_argument_violation(vm, subr, pos, "binary port", port, argc, argv);  \
+                        return scm_undef;                                                               \
+                    }                                                                                   \
+                    wrong_type_argument_violation(vm, subr, pos, "output port", port, argc, argv);      \
+                    return scm_undef;                                                                   \
+                }                                                                                       \
+                wrong_type_argument_violation(vm, subr, pos, "opened port", port, argc, argv);          \
+                return scm_undef;                                                                       \
             } while (false)
 
 #define CHECK_OPENED_PORT(pos, subr)                                                                \
@@ -131,15 +131,15 @@ void init_subr_others(object_heap_t* heap);
             do {                                                                                    \
                 assert(PORTP(argv[pos]));                                                           \
                 scm_port_t port = (scm_port_t)argv[pos];                                            \
-                if (port_open_pred(port)) {															\
-					if (port_binary_pred(port)) break;                                         		\
-	                wrong_type_argument_violation(vm, subr, pos, "binary port", port, argc, argv);  \
-	                return scm_undef;  																\
-				}																					\
+                if (port_open_pred(port)) {                                                         \
+                    if (port_binary_pred(port)) break;                                              \
+                    wrong_type_argument_violation(vm, subr, pos, "binary port", port, argc, argv);  \
+                    return scm_undef;                                                               \
+                }                                                                                   \
                 wrong_type_argument_violation(vm, subr, pos, "opened port", port, argc, argv);      \
                 return scm_undef;                                                                   \
             } while (false)
-            
+
 #define CHECK_OUTPUT_PORT(pos, subr)                                                                \
             do {                                                                                    \
                 assert(PORTP(argv[pos]));                                                           \
@@ -160,7 +160,7 @@ void init_subr_others(object_heap_t* heap);
                 wrong_type_argument_violation(vm, subr, pos, "exact non-negative integer", obj, argc, argv); \
                 return scm_undef;                                                                   \
             } while (false)
-            
+
 #define CHECK_OCTET(pos, subr)                                                                      \
             do {                                                                                    \
                 scm_obj_t obj = argv[pos];                                                          \

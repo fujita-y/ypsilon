@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	EQUIV_H_INCLUDED
-#define	EQUIV_H_INCLUDED
+#ifndef EQUIV_H_INCLUDED
+#define EQUIV_H_INCLUDED
 
 #include "core.h"
 #include "object.h"

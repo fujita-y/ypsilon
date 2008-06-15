@@ -14,29 +14,29 @@
 uint32_t
 clp2(uint32_t x)
 {
-	x = x - 1;
-	x = x | (x >>  1);
-	x = x | (x >>  2);
-	x = x | (x >>  4);
-	x = x | (x >>  8);
-	x = x | (x >> 16);
-	return x + 1;
+    x = x - 1;
+    x = x | (x >>  1);
+    x = x | (x >>  2);
+    x = x | (x >>  4);
+    x = x | (x >>  8);
+    x = x | (x >> 16);
+    return x + 1;
 }
 
 uint32_t
 flp2(uint32_t x)
 {
-    x = x | (x >>  1); 
-    x = x | (x >>  2); 
-    x = x | (x >>  4); 
-    x = x | (x >>  8); 
-    x = x | (x >> 16); 
-    return x - (x >> 1); 
+    x = x | (x >>  1);
+    x = x | (x >>  2);
+    x = x | (x >>  4);
+    x = x | (x >>  8);
+    x = x | (x >> 16);
+    return x - (x >> 1);
 }
 
-uint32_t 
+uint32_t
 nbits(uint32_t x)
-{		
+{
     uint32_t t;
     x = x - ((x >> 1) & 0x55555555);
     t = ((x >> 2) & 0x33333333);
@@ -48,7 +48,7 @@ nbits(uint32_t x)
 }
 
 uint32_t
-nlz(uint32_t x) 
+nlz(uint32_t x)
 {
     uint32_t t;
     int n = 32;

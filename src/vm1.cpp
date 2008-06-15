@@ -10,13 +10,13 @@
 #include "printer.h"
 #include "violation.h"
 
-#define	FOLD_TAIL_CALL_TRACE	1
+#define FOLD_TAIL_CALL_TRACE    1
 #define UNWRAP_BACKTRACE        1
 
-#define	STACKP(p)			(((p) >= (void*)m_stack_top) & ((p) < (void*)m_stack_limit))
-#define FORWARDP(p)			((*(intptr_t*)(p)) & 1)
-#define	FORWARD(from,to)	((*(intptr_t*)(from)) = ((intptr_t)(to) | 1))
-#define	RESOLVE(p)			((void*)((*(intptr_t*)(p)) & (~1)))
+#define STACKP(p)           (((p) >= (void*)m_stack_top) & ((p) < (void*)m_stack_limit))
+#define FORWARDP(p)         ((*(intptr_t*)(p)) & 1)
+#define FORWARD(from,to)    ((*(intptr_t*)(from)) = ((intptr_t)(to) | 1))
+#define RESOLVE(p)          ((void*)((*(intptr_t*)(p)) & (~1)))
 
 static inline void
 object_copy(void* dst, const void* src, int bsize)
@@ -29,24 +29,24 @@ object_copy(void* dst, const void* src, int bsize)
 void*
 VM::save_cont(void* lnk)
 {
-	if (!STACKP(lnk)) return lnk;
-	void* up = save_cont(*(void**)lnk);
-	vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
-	cont->env = save_env(cont->env);
-	int asize = (intptr_t)cont - (intptr_t)cont->fp;
-	int fsize = asize + sizeof(vm_cont_rec_t);
-	void* heap_top = new_heapcont_rec(m_heap, fsize);
+    if (!STACKP(lnk)) return lnk;
+    void* up = save_cont(*(void**)lnk);
+    vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
+    cont->env = save_env(cont->env);
+    int asize = (intptr_t)cont - (intptr_t)cont->fp;
+    int fsize = asize + sizeof(vm_cont_rec_t);
+    void* heap_top = new_heapcont_rec(m_heap, fsize);
     object_copy(heap_top, cont->fp, fsize);
-	vm_cont_t heap_cont = (vm_cont_t)((intptr_t)heap_top + asize);
-	heap_cont->up = up;
-	heap_cont->fp = (scm_obj_t*)heap_top;
-	return &heap_cont->up;
+    vm_cont_t heap_cont = (vm_cont_t)((intptr_t)heap_top + asize);
+    heap_cont->up = up;
+    heap_cont->fp = (scm_obj_t*)heap_top;
+    return &heap_cont->up;
 }
 
 void
 VM::save_stack()
 {
-	int argc = m_sp - m_fp;
+    int argc = m_sp - m_fp;
     m_cont = save_cont(m_cont);
     m_env = save_env(m_env);
     update_cont(m_cont);
@@ -58,99 +58,99 @@ VM::save_stack()
 void*
 VM::gc_env(void* lnk)
 {
-	if (!STACKP(lnk)) return lnk;
-	if (FORWARDP(lnk)) return RESOLVE(lnk);
-	void* up = gc_env(*(void**)lnk);
-	vm_env_t env = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
+    if (!STACKP(lnk)) return lnk;
+    if (FORWARDP(lnk)) return RESOLVE(lnk);
+    void* up = gc_env(*(void**)lnk);
+    vm_env_t env = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
     int bytes = env->count * sizeof(scm_obj_t) + sizeof(vm_env_rec_t);
     object_copy(m_fp, (scm_obj_t*)env - env->count, bytes);
-	vm_env_t to_env = (vm_env_t)(m_fp + env->count);
+    vm_env_t to_env = (vm_env_t)(m_fp + env->count);
     m_fp = (scm_obj_t*)((intptr_t)m_fp + bytes);
-	to_env->up = up;
-	FORWARD(&env->up, &to_env->up);
-	return &to_env->up;
+    to_env->up = up;
+    FORWARD(&env->up, &to_env->up);
+    return &to_env->up;
 }
 
 void*
 VM::gc_cont(void* lnk)
 {
-	if (!STACKP(lnk)) return lnk;
-	void* up = gc_cont(*(void**)lnk);
-	vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
-	cont->env = gc_env(cont->env);
+    if (!STACKP(lnk)) return lnk;
+    void* up = gc_cont(*(void**)lnk);
+    vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
+    cont->env = gc_env(cont->env);
     int bytes = (intptr_t)cont - (intptr_t)cont->fp + sizeof(vm_cont_rec_t);
     object_copy(m_fp, cont->fp, bytes);
-	m_fp = (scm_obj_t*)((intptr_t)m_fp + bytes);
-	vm_cont_t to_cont = (vm_cont_t)((intptr_t)m_fp - sizeof(vm_cont_rec_t));
-	to_cont->up = up;
-	to_cont->fp = (scm_obj_t*)((intptr_t)m_fp - bytes);
-	return &to_cont->up;
+    m_fp = (scm_obj_t*)((intptr_t)m_fp + bytes);
+    vm_cont_t to_cont = (vm_cont_t)((intptr_t)m_fp - sizeof(vm_cont_rec_t));
+    to_cont->up = up;
+    to_cont->fp = (scm_obj_t*)((intptr_t)m_fp - bytes);
+    return &to_cont->up;
 }
 
 void
 VM::collect_stack(int acquire)
 {
-	if (m_stack_busy) {
+    if (m_stack_busy) {
         save_stack();
-		if (flags.m_collect_stack_notify != scm_false) {
+        if (flags.m_collect_stack_notify != scm_false) {
             scoped_lock lock(m_current_output->lock);
             printer_t prt(this, m_current_output);
             prt.format("~&;; [collect-stack: store*]~%~!");
         }
-		if ((uintptr_t)m_sp + acquire > (uintptr_t)m_stack_limit) {
-			int current = (uintptr_t)m_stack_limit - (uintptr_t)m_stack_top;
+        if ((uintptr_t)m_sp + acquire > (uintptr_t)m_stack_limit) {
+            int current = (uintptr_t)m_stack_limit - (uintptr_t)m_stack_top;
             backtrace(m_current_error);
-			fatal("fatal: vm stack overflow: can not handle more than %d arguments under current configuration", current / sizeof(scm_obj_t));
-		}
-		m_stack_busy = false;
+            fatal("fatal: vm stack overflow: can not handle more than %d arguments under current configuration", current / sizeof(scm_obj_t));
+        }
+        m_stack_busy = false;
 
   #if STDEBUG
         check_vm_state();
   #endif
 
         if (m_heap->m_stop_the_world) stop();
-		return;
-	}
-	
-	int argc = m_sp - m_fp;
-	m_fp = m_to_stack_top;
-	m_cont = gc_cont(m_cont);
-	m_env = gc_env(m_env);
-    object_copy(m_fp, m_sp - argc, sizeof(scm_obj_t) * argc);
-	m_sp = m_fp + argc;
+        return;
+    }
 
-	scm_obj_t *tmp;
-	tmp = m_stack_top;
-	m_stack_top = m_to_stack_top;
-	m_to_stack_top = tmp;
-	tmp = m_stack_limit;
-	m_stack_limit = m_to_stack_limit;
-	m_to_stack_limit = tmp;
-		
-	if ((uintptr_t)m_sp + acquire >= (uintptr_t)m_stack_limit) {
+    int argc = m_sp - m_fp;
+    m_fp = m_to_stack_top;
+    m_cont = gc_cont(m_cont);
+    m_env = gc_env(m_env);
+    object_copy(m_fp, m_sp - argc, sizeof(scm_obj_t) * argc);
+    m_sp = m_fp + argc;
+
+    scm_obj_t *tmp;
+    tmp = m_stack_top;
+    m_stack_top = m_to_stack_top;
+    m_to_stack_top = tmp;
+    tmp = m_stack_limit;
+    m_stack_limit = m_to_stack_limit;
+    m_to_stack_limit = tmp;
+
+    if ((uintptr_t)m_sp + acquire >= (uintptr_t)m_stack_limit) {
         save_stack();
-		if (flags.m_collect_stack_notify != scm_false) {
+        if (flags.m_collect_stack_notify != scm_false) {
             scoped_lock lock(m_current_output->lock);
             printer_t prt(this, m_current_output);
             prt.format("~&;; [collect-stack: store**]~%~!");
         }
-		m_stack_busy = true;
-	} else {
-	
-		if (flags.m_collect_stack_notify != scm_false) {
+        m_stack_busy = true;
+    } else {
+
+        if (flags.m_collect_stack_notify != scm_false) {
             char buf[16];
-			double rate = 1.0 - ((double)(m_sp - m_stack_top) / (double)(m_stack_limit - m_stack_top));
+            double rate = 1.0 - ((double)(m_sp - m_stack_top) / (double)(m_stack_limit - m_stack_top));
             snprintf(buf, sizeof(buf), "%.1lf%%", rate * 100.0);
             scoped_lock lock(m_current_output->lock);
             printer_t prt(this, m_current_output);
-			prt.format("~&;; [collect-stack: %s free]~%~!", buf);
-		}
-		
-		m_stack_busy = (m_sp - m_stack_top) > VM_STACK_BUSY_THRESHOLD(m_stack_limit - m_stack_top);
-	}
-	
+            prt.format("~&;; [collect-stack: %s free]~%~!", buf);
+        }
+
+        m_stack_busy = (m_sp - m_stack_top) > VM_STACK_BUSY_THRESHOLD(m_stack_limit - m_stack_top);
+    }
+
   #ifndef NDEBUG
-	if ((uintptr_t)m_sp + acquire > (uintptr_t)m_stack_limit) {
+    if ((uintptr_t)m_sp + acquire > (uintptr_t)m_stack_limit) {
         backtrace(m_current_error);
         fatal("%s:%u stack overflow", __FILE__, __LINE__);
     }
@@ -211,28 +211,28 @@ void
 VM::update_cont(void* lnk)
 {
     while (STACKP(lnk)) {
-		vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
-		if (cont->env && FORWARDP(cont->env)) cont->env = RESOLVE(cont->env);
-		lnk = (*(void**)lnk);
-	}
+        vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
+        if (cont->env && FORWARDP(cont->env)) cont->env = RESOLVE(cont->env);
+        lnk = (*(void**)lnk);
+    }
 }
 
 scm_obj_t*
 VM::lookup_iloc(scm_obj_t operands)
 {
-	void* lnk = m_env;
-	int level = ((intptr_t)CAR(operands)) - 1;
-	while (level) { lnk = *(void**)lnk; level -= 2; }
-	vm_env_t env = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
-	int offset = FIXNUM(CDR(operands));
-	return (scm_obj_t*)env - env->count + offset;
+    void* lnk = m_env;
+    int level = ((intptr_t)CAR(operands)) - 1;
+    while (level) { lnk = *(void**)lnk; level -= 2; }
+    vm_env_t env = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
+    int offset = FIXNUM(CDR(operands));
+    return (scm_obj_t*)env - env->count + offset;
 }
 
 #if USE_GCC_EXTENSION
   #if USE_DIRECT_THREAD
     volatile void* s_volatile_stub;
     #define PIN(tag)        do { s_volatile_stub = &&tag; } while(0)
-    #define CASE(code)		M_##code: \
+    #define CASE(code)      M_##code: \
                             __asm__ ("ud2"); \
                             __asm__ (".p2align 3"); \
                             L_##code: \
@@ -242,7 +242,7 @@ VM::lookup_iloc(scm_obj_t operands)
                             __asm__ ("nop"); \
                             __asm__ ("/* "#code" */");
 
-    #define LABEL(code)		do { assert(code < array_sizeof(m_dispatch_table)); m_dispatch_table[code] = &&L_##code; s_volatile_stub = &&M_##code;} while(0)
+    #define LABEL(code)     do { assert(code < array_sizeof(m_dispatch_table)); m_dispatch_table[code] = &&L_##code; s_volatile_stub = &&M_##code;} while(0)
     #define SWITCH()        goto *instruction_to_adrs(CAAR(m_pc));
   #else
     volatile void* s_volatile_stub;
@@ -251,7 +251,7 @@ VM::lookup_iloc(scm_obj_t operands)
     #define SWITCH()        goto *m_dispatch_table[instruction_to_opcode(CAAR(m_pc))];
   #endif
 #else
-  #define CASE(code)		case code:
+  #define CASE(code)        case code:
   #define SWITCH()          switch (instruction_to_opcode(CAAR(m_pc)))
 #endif
 
@@ -272,7 +272,7 @@ scm_undef  scm_unspecified   call-scheme-proc
 
 void
 VM::run(bool init_dispatch_table)
-{	
+{
   #if USE_GCC_EXTENSION
 
     if (init_dispatch_table) {
@@ -443,7 +443,7 @@ VM::run(bool init_dispatch_table)
   #else
     if (init_dispatch_table) return;
   #endif
-	assert(PAIRP(m_pc));
+    assert(PAIRP(m_pc));
 
     scm_obj_t operand_trace;
     scm_obj_t obj;
@@ -487,7 +487,7 @@ apply:
 
         if (SUBRP(m_value)) {
             scm_subr_t subr = (scm_subr_t)m_value;
-            int argc = m_sp - m_fp;			
+            int argc = m_sp - m_fp;
             m_value = (*subr->adrs)(this, argc, m_fp);
             if (m_value != scm_undef) goto pop_cont;
             m_sp = m_fp;
@@ -536,7 +536,7 @@ trace_n_loop:
 pop_cont:
         if (m_cont == NULL) return;
         {
-            vm_cont_t cont = (vm_cont_t)((intptr_t)m_cont - offsetof(vm_cont_rec_t, up));	
+            vm_cont_t cont = (vm_cont_t)((intptr_t)m_cont - offsetof(vm_cont_rec_t, up));
             m_trace = cont->trace;
             m_fp = cont->fp;
             m_pc = cont->pc;
@@ -550,7 +550,7 @@ pop_cont:
                     const scm_obj_t* s = (scm_obj_t*)cont->fp;
                     scm_obj_t* d = (scm_obj_t*)m_stack_top;
                     for (int i = 0; i < nargs; i++) d[i] = s[i];
-                }		
+                }
                 m_fp = m_stack_top;
                 m_sp = m_fp + nargs;
             }
@@ -649,7 +649,7 @@ loop:
   #if PROFILE_SUBR
                 subr->c_push++;
   #endif
-                assert(SUBRP(subr));	
+                assert(SUBRP(subr));
                 int argc = FIXNUM(CADR(OPERANDS));
                 assert(argc > 0);
                 m_value = (*subr->adrs)(this, argc, m_sp - argc);
@@ -759,7 +759,7 @@ loop:
   #if PROFILE_SUBR
                 subr->c_apply++;
   #endif
-                int argc = m_sp - m_fp;			
+                int argc = m_sp - m_fp;
                 m_value = (*subr->adrs)(this, argc, m_fp);
                 m_sp = m_fp;
                 assert(m_value != scm_undef || ((m_value == scm_undef) && (CAR(m_pc) == scm_unspecified)));
@@ -892,7 +892,7 @@ loop:
                     m_sp[0] = make_closure(m_heap, (scm_closure_t)OPERANDS, m_env);
   #else
                     scm_obj_t spec = CAR(OPERANDS);
-                    scm_obj_t code = CDR(OPERANDS);			
+                    scm_obj_t code = CDR(OPERANDS);
                     scm_obj_t doc = CDDR(spec);
                     m_sp[0] = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), m_env, code, doc);
   #endif
@@ -974,9 +974,9 @@ loop:
             }
 
             CASE(VMOP_CONST) {
-                m_value = OPERANDS;	
+                m_value = OPERANDS;
                 m_pc = CDR(m_pc);
-                goto loop;		
+                goto loop;
             }
 
             CASE(VMOP_SUBR) {
@@ -984,7 +984,7 @@ loop:
   #if PROFILE_SUBR
                 subr->c_load++;
   #endif
-                assert(SUBRP(subr));	
+                assert(SUBRP(subr));
                 int argc = FIXNUM(CADR(OPERANDS));
                 m_value = (*subr->adrs)(this, argc, m_sp - argc);
                 m_sp -= argc;
@@ -1167,7 +1167,7 @@ loop:
                     update_cont(m_cont);
                 }
                 scm_obj_t spec = CAR(OPERANDS);
-                scm_obj_t code = CDR(OPERANDS);			
+                scm_obj_t code = CDR(OPERANDS);
                 scm_obj_t doc = CDDR(spec);
                 m_value = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), m_env, code, doc);
                 m_pc = CDR(m_pc);
@@ -1229,7 +1229,7 @@ loop:
                 m_value = make_closure(m_heap, (scm_closure_t)OPERANDS, m_env);
   #else
                 scm_obj_t spec = CAR(OPERANDS);
-                scm_obj_t code = CDR(OPERANDS);			
+                scm_obj_t code = CDR(OPERANDS);
                 scm_obj_t doc = CDDR(spec);
                 m_value = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), m_env, code, doc);
   #endif
@@ -1485,7 +1485,7 @@ APPLY_VALUES:
                 if (m_sp + argc >= m_stack_limit) collect_stack(sizeof(scm_obj_t) * argc);
                 for (int i = 0; i < argc; i++) m_sp[i] = values->elts[i];
                 m_sp += argc;
-                goto apply;									
+                goto apply;
             } else {
                 m_fp[0] = args;
                 m_sp = m_fp + 1;
@@ -1499,7 +1499,7 @@ APPLY_VALUES:
 APPLY_CONT: {
             scm_cont_t cont = (scm_cont_t)m_value;
             if (cont->wind_rec == scm_unspecified || cont->wind_rec == m_current_dynamic_wind_record) {
-                int argc = m_sp - m_fp;			
+                int argc = m_sp - m_fp;
                 m_cont = cont->cont;
                 if (argc == 0) {
                     m_value = scm_unspecified;
@@ -1526,7 +1526,7 @@ APPLY_CONT: {
         }
 #else
 APPLY_CONT: {
-            int argc = m_sp - m_fp;			
+            int argc = m_sp - m_fp;
             scm_cont_t cont = (scm_cont_t)m_value;
             m_cont = cont->cont;
             if (argc == 0) {
@@ -1576,10 +1576,10 @@ APPLY_VARIADIC: {
                 args = -args - 1;
                 rest = 1;
             }
-            int argc = m_sp - m_fp;			
+            int argc = m_sp - m_fp;
             if (rest & (argc >= args)) {
                 scm_obj_t opt = scm_nil;
-                scm_obj_t* first = m_sp - argc + args;	// find first object of rest arg
+                scm_obj_t* first = m_sp - argc + args;  // find first object of rest arg
                 scm_obj_t* last = m_sp;
                 while (--last >= first) opt = make_pair(m_heap, *last, opt);
                 *first = opt;
@@ -1783,7 +1783,7 @@ THUNK_SUBR_GLOC_OF: {
                 CAR(OPERANDS) = subr;
                 goto loop;
             }
-            system_error("system error: inconsistent code in auto compile cache");		
+            system_error("system error: inconsistent code in auto compile cache");
         }
 
 THUNK_PUSH_SUBR_GLOC_OF: {
@@ -1795,7 +1795,7 @@ THUNK_PUSH_SUBR_GLOC_OF: {
                 CAR(OPERANDS) = subr;
                 goto loop;
             }
-            system_error("system error: inconsistent code in auto compile cache");		
+            system_error("system error: inconsistent code in auto compile cache");
         }
 
 THUNK_RET_SUBR_GLOC_OF: {
@@ -1807,7 +1807,7 @@ THUNK_RET_SUBR_GLOC_OF: {
                 CAR(OPERANDS) = subr;
                 goto loop;
             }
-            system_error("system error: inconsistent code in auto compile cache");		
+            system_error("system error: inconsistent code in auto compile cache");
         }
 
 ERROR_NADD_ILOC:
@@ -1874,13 +1874,13 @@ ERROR_TOUCH_GLOC:
 
 ERROR_APPLY_GLOC:
         raise_undefined_violation(this, ((scm_gloc_t)CAR(OPERANDS))->variable, NULL);
-        m_sp = m_fp;			
+        m_sp = m_fp;
         goto BACK_TO_TRACE_N_LOOP;
 
 ERROR_APPLY_WRONG_NUMBER_ARGS:
         {
             scm_closure_t closure = (scm_closure_t)m_value;
-            int args = HDR_CLOSURE_ARGS(closure->hdr);	
+            int args = HDR_CLOSURE_ARGS(closure->hdr);
             int rest = 0;
             if (args < 0) {
                 args = -args - 1;
@@ -1922,7 +1922,7 @@ BACK_TO_LOOP:
         goto loop;
 
 BACK_TO_TRACE_N_LOOP:
-        m_sp = m_fp;			
+        m_sp = m_fp;
         m_pc = CDR(m_pc);
         goto trace_n_loop;
 
@@ -1938,7 +1938,7 @@ ERROR_BAD_INSTRUCTION:
 #else
 ERROR_BAD_INSTRUCTION:
 #endif
-        system_error("system error: invalid vm instruction %d", instruction_to_opcode(CAAR(m_pc)));		
+        system_error("system error: invalid vm instruction %d", instruction_to_opcode(CAAR(m_pc)));
 
     } catch (vm_continue_t& e) {
         goto resume;
@@ -1947,7 +1947,7 @@ ERROR_BAD_INSTRUCTION:
     }
 
     #undef PUSH_CONST
-    #undef LOAD_CONST	
+    #undef LOAD_CONST
     #undef RET_CONST
     #undef OPERANDS
 }

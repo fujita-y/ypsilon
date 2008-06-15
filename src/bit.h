@@ -4,8 +4,8 @@
     See license.txt for terms and conditions of use
 */
 
-#ifndef	BIT_H_INCLUDED
-#define	BIT_H_INCLUDED
+#ifndef BIT_H_INCLUDED
+#define BIT_H_INCLUDED
 
 #include "core.h"
 

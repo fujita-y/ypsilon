@@ -3,18 +3,18 @@
     Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
- 
-#ifndef	OBJECT_HEAP_H_INCLUDED
-#define	OBJECT_HEAP_H_INCLUDED
+
+#ifndef OBJECT_HEAP_H_INCLUDED
+#define OBJECT_HEAP_H_INCLUDED
 
 // prime (127, 251, 509, 1021, 2039, 4093, 8191, 16381, 32749, 65521)
-#define	KEYWORD_TABLE_SIZE_INIT		127
-#define	STRING_TABLE_SIZE_INIT		1021
-#define	GLOC_TABLE_SIZE_INIT		8191
+#define KEYWORD_TABLE_SIZE_INIT     127
+#define STRING_TABLE_SIZE_INIT      1021
+#define GLOC_TABLE_SIZE_INIT        8191
 
-#define	MARK_STACK_SIZE_INIT        16384       // 16K object, 64K bytes
-#define	MARK_STACK_SIZE_GROW        4096        //  4K object, 16K bytes
-#define	SHADE_QUEUE_SIZE			4096		//  4K object, 16K bytes
+#define MARK_STACK_SIZE_INIT        16384       // 16K object, 64K bytes
+#define MARK_STACK_SIZE_GROW        4096        //  4K object, 16K bytes
+#define SHADE_QUEUE_SIZE            4096        //  4K object, 16K bytes
 
 #include "core.h"
 #include "cond.h"
@@ -32,13 +32,13 @@
 #define ROOT_SNAPSHOT_LOCALS        1
 #define ROOT_SNAPSHOT_EVERYTHING    2
 
-#define	PTAG_FREE		0x00
-#define	PTAG_USED		0x01
-#define	PTAG_EXTENT		0x02
-#define	PTAG_SLAB		0x04
-#define	PTAG_GC			0x08
+#define PTAG_FREE       0x00
+#define PTAG_USED       0x01
+#define PTAG_EXTENT     0x02
+#define PTAG_SLAB       0x04
+#define PTAG_GC         0x08
 
-#define	GCSLABP(tag)	(((tag) & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC))
+#define GCSLABP(tag)    (((tag) & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC))
 
 class collector_usage_t {
 public:
@@ -77,75 +77,75 @@ struct relocate_info_t;
 class object_heap_t {
 public:
     mutex_t             m_lock;
-	object_slab_cache_t	m_collectibles[8];  // 8-16-32-64-128-256-512-1024 
-	object_slab_cache_t	m_privates[8];      // 8-16-32-64-128-256-512-1024
-	object_slab_cache_t	m_weakmappings;
-	object_slab_cache_t	m_cons;
-	object_slab_cache_t	m_flonums;
-    
+    object_slab_cache_t m_collectibles[8];  // 8-16-32-64-128-256-512-1024
+    object_slab_cache_t m_privates[8];      // 8-16-32-64-128-256-512-1024
+    object_slab_cache_t m_weakmappings;
+    object_slab_cache_t m_cons;
+    object_slab_cache_t m_flonums;
+
 public:
 
-	int                 m_trip_bytes;
+    int                 m_trip_bytes;
     int                 m_collect_trip_bytes;
-	int                 m_stop_the_world;
-    
-	uint8_t*            m_sweep_wavefront;
-	int                 m_write_barrier;
-	int                 m_read_barrier;
-	int                 m_alloc_barrier;
-    
-	uint8_t*            m_pool;
-	size_t				m_pool_size;
-	int					m_pool_watermark;
+    int                 m_stop_the_world;
+
+    uint8_t*            m_sweep_wavefront;
+    int                 m_write_barrier;
+    int                 m_read_barrier;
+    int                 m_alloc_barrier;
+
+    uint8_t*            m_pool;
+    size_t              m_pool_size;
+    int                 m_pool_watermark;
     int                 m_pool_memo;
     int                 m_pool_usage;
     int                 m_pool_threshold;
 
-	scm_obj_t*          m_mark_stack;
-	scm_obj_t*          m_mark_sp;
-	int					m_mark_stack_size;
-    
+    scm_obj_t*          m_mark_stack;
+    scm_obj_t*          m_mark_sp;
+    int                 m_mark_stack_size;
+
     mutex_t             m_collector_lock;
-	cond_t              m_collector_wake;
-	cond_t              m_mutator_wake;
+    cond_t              m_collector_wake;
+    cond_t              m_mutator_wake;
     int                 m_mutator_stopped;
 
-	queue_t<scm_obj_t,SHADE_QUEUE_SIZE> m_shade_queue;
+    queue_t<scm_obj_t,SHADE_QUEUE_SIZE> m_shade_queue;
     int                 m_collector_ready;
-	int                 m_collector_kicked;
+    int                 m_collector_kicked;
     int                 m_root_snapshot;
 
     object_set_t        m_symbol;
-	object_set_t		m_string;
-	scm_environment_t	m_system_environment;
-	scm_environment_t	m_interaction_environment;
+    object_set_t        m_string;
+    scm_environment_t   m_system_environment;
+    scm_environment_t   m_interaction_environment;
     int                 m_gensym_counter;
     mutex_t             m_gensym_lock;
     scm_bvector_t       m_native_transcoder;
-	scm_hashtable_t		m_architecture_feature;
-	scm_hashtable_t     m_trampolines;
+    scm_hashtable_t     m_architecture_feature;
+    scm_hashtable_t     m_trampolines;
     scm_obj_t           m_inherents[INHERENT_TOTAL_COUNT];
     collector_usage_t   m_usage;
 
 public:
-						object_heap_t();
-						~object_heap_t();
-                        
-	bool				init(size_t pool_size, size_t initial_datum_size);
-	void				destroy();
-	
-	void*				allocate(size_t size, bool slab, bool gc);
-	void				deallocate(void* p);
+                        object_heap_t();
+                        ~object_heap_t();
 
-	scm_obj_t			allocate_collectible(size_t size);
+    bool                init(size_t pool_size, size_t initial_datum_size);
+    void                destroy();
+
+    void*               allocate(size_t size, bool slab, bool gc);
+    void                deallocate(void* p);
+
+    scm_obj_t           allocate_collectible(size_t size);
     scm_pair_t          allocate_cons();
     scm_flonum_t        allocate_flonum();
-    scm_weakmapping_t	allocate_weakmapping();
-	void*				allocate_private(size_t size);
-	void				deallocate_private(void* obj);
-	int					allocated_size(void* obj);
-	
-			
+    scm_weakmapping_t   allocate_weakmapping();
+    void*               allocate_private(size_t size);
+    void                deallocate_private(void* obj);
+    int                 allocated_size(void* obj);
+
+
     bool in_slab(void* obj) {
         assert(obj);
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
@@ -159,27 +159,27 @@ public:
         assert(index >= 0 && index < m_pool_watermark);
         return (m_pool[index] & PTAG_SLAB) && OBJECT_SLAB_TRAITS_OF(obj)->free != NULL;
     }
-                
+
     bool in_heap(void* obj) {
         // note: include vm stack
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         return (index >= 0 && index < m_pool_watermark);
     }
-     
+
     bool is_collectible(void* obj) {
         assert(obj);
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         assert(index >= 0 && index < m_pool_watermark);
         return (m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
     }
-    
-    
+
+
     scm_obj_t           lookup_system_environment(scm_symbol_t symbol);
     void                intern_system_environment(scm_symbol_t symbol, scm_obj_t value);
     void                intern_system_subr(const char *name, subr_proc_t proc);
 
     void                init_inherents();
-    
+
     scm_symbol_t inherent_symbol(int code) const {
         assert(code < array_sizeof(m_inherents));
         assert(SYMBOLP(m_inherents[code]));
@@ -196,37 +196,37 @@ public:
 
 private:
 
-	bool				extend_pool(size_t extend_size);
+    bool                extend_pool(size_t extend_size);
 
-	void				shade(scm_obj_t obj);
-	void				interior_shade(void* obj);
+    void                shade(scm_obj_t obj);
+    void                interior_shade(void* obj);
 
-	void				mark_weakmapping(object_slab_traits_t* traits);
-	void				break_weakmapping(object_slab_traits_t* traits);
-	
+    void                mark_weakmapping(object_slab_traits_t* traits);
+    void                break_weakmapping(object_slab_traits_t* traits);
+
 public:
-	
-	void			collect();
-	void			collector_init();
+
+    void            collect();
+    void            collector_init();
 
 #if _MSC_VER
-	static unsigned int __stdcall collector_thread(void* param);
-#else    
-	static void*    collector_thread(void* param);
+    static unsigned int __stdcall collector_thread(void* param);
+#else
+    static void*    collector_thread(void* param);
 #endif
     static void     concurrent_collect(object_heap_t& heap);
     static void     synchronized_collect(object_heap_t& heap);
 
-	void			concurrent_marking();
-	bool			serial_marking();
-	void			write_barrier(scm_obj_t rhs);
-	void			trace(scm_obj_t obj);
-	void			dequeue_root();
-	void			enqueue_root(scm_obj_t obj);
+    void            concurrent_marking();
+    bool            serial_marking();
+    void            write_barrier(scm_obj_t rhs);
+    void            trace(scm_obj_t obj);
+    void            dequeue_root();
+    void            enqueue_root(scm_obj_t obj);
 
-	void			display_object_statistics(scm_port_t port);
-	void			display_heap_statistics(scm_port_t port);
-	
+    void            display_object_statistics(scm_port_t port);
+    void            display_heap_statistics(scm_port_t port);
+
 };
 
 #endif
