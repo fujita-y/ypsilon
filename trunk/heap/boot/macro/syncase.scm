@@ -246,7 +246,7 @@
               (syntax-violation 'syntax-case "_ in literals" form lites))
          (and (memq '... lites)
               (syntax-violation 'syntax-case "... in literals" form lites))
-         
+
          (let ((renames (map (lambda (id) (cons id (lookup-lexical-name id env))) lites)))
            (let ((lites (rewrite lites renames)))
 
@@ -271,13 +271,13 @@
                                     ((p expr)
                                      (let-values (((pattern env) (parse-pattern p)))
                                        `(.list ',pattern
-                                              #f
-                                              ,(expand-form `(.LAMBDA (.patvars) ,expr) env))))
+                                               #f
+                                               ,(expand-form `(.LAMBDA (.patvars) ,expr) env))))
                                     ((p fender expr)
                                      (let-values (((pattern env) (parse-pattern p)))
                                        `(.list ',pattern
-                                              ,(expand-form `(.LAMBDA (.patvars) ,fender) env)
-                                              ,(expand-form `(.LAMBDA (.patvars) ,expr) env))))))
+                                               ,(expand-form `(.LAMBDA (.patvars) ,fender) env)
+                                               ,(expand-form `(.LAMBDA (.patvars) ,expr) env))))))
                                 clauses))
                        expr)))))
       (_
@@ -386,8 +386,15 @@
     (or (identifier? id2)
         (assertion-violation 'free-identifier=? (format "expected identifier, but got ~r" id2)))
     (let ((env (current-expansion-environment)))
-      (eq? (or (syntax-object-lexname id1) (lookup-lexical-name (syntax-object-expr id1) env))
-           (or (syntax-object-lexname id2) (lookup-lexical-name (syntax-object-expr id2) env))))))
+      (let ((n1a (syntax-object-lexname id1))
+            (n2a (syntax-object-lexname id2))
+            (n1b (lookup-lexical-name (syntax-object-expr id1) env))
+            (n2b (lookup-lexical-name (syntax-object-expr id2) env)))
+        (if (and n1a n2a)
+            (eq? n1a n2a)
+            (or (eq? n1b n2b)
+                (eq? n1a n2b)
+                (eq? n1b n2a)))))))
 
 (define generate-temporaries
   (lambda (obj)
