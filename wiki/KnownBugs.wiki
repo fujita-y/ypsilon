@@ -2,3 +2,4 @@
 
 version 0.9.5:
   * [http://code.google.com/p/ypsilon/issues/detail?id=1&can=1 Issue 1]: free-identifier=? does not work correctly. (fixed and trunk is updated)
+  * check more bugs in [http://code.google.com/p/ypsilon/issues/list Issues list]
