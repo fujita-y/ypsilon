@@ -1,5 +1,7 @@
 #summary Known bugs in current release
 
 version 0.9.5:
-  * [http://code.google.com/p/ypsilon/issues/detail?id=1&can=1 Issue 1]: free-identifier=? does not work correctly. (fixed, trunk contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=1&can=1 Issue 1]: `free-identifier=?` does not work correctly. (fixed, trunk contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=3&can=1 Issue 3]: `unspecified` keyword hygiene problem. (fixed, trunk contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=4&can=1 Issue 4]: `standard-output-port`, `standard-error-port` malfunction. (fixed, trunk contains updated code)
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
