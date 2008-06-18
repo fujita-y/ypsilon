@@ -926,7 +926,7 @@
                     (emit (pretty e1)))
                    (('if #f _ . e2)
                     (if (null? e2) 
-                        (emit '(unspecified))
+                        (emit '(.unspecified))
                         (emit (pretty (car e2)))))
                    (('if ('not e1) e2 e3)
                     (primitive-function? 'not)
