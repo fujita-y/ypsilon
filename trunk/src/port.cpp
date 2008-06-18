@@ -185,7 +185,15 @@ throw_io_error(int operation, const char* message)
         LARGE_INTEGER in;
         in.QuadPart = offset;
         LARGE_INTEGER out;
-        if (SetFilePointerEx(fd, in, &out, FILE_BEGIN)) return out.QuadPart;
+        int method;
+        switch (origin) {
+        case SEEK_SET: method = FILE_BEGIN; break;
+        case SEEK_CUR: method = FILE_CURRENT; break;
+        case SEEK_END: method = FILE_END; break;
+        default:
+            fatal("%s:%u wrong origin", __FILE__, __LINE__);
+        }
+        if (SetFilePointerEx(fd, in, &out, method)) return out.QuadPart;
         _dosmaperr(GetLastError());
         return -1;
     }
@@ -586,6 +594,26 @@ port_open_std(scm_port_t port, fd_t fd, scm_obj_t name, int direction, int file_
     init_port_tracking(port);
     init_port_transcoder(port);
     init_port_buffer(port);
+}
+
+off64_t
+std_port_position(fd_t fd)
+{
+    if (io_fstat_mode(fd) == SCM_PORT_SUBTYPE_NONE) {
+        off64_t mark = io_lseek64(fd, 0, SEEK_CUR);
+        if (mark < 0) throw_io_error(SCM_PORT_OPERATION_SEEK, errno);
+        return mark;
+    }
+    return 0;
+}
+
+void
+port_sync_port_position(scm_port_t port)
+{
+    if (port_has_set_port_position_pred(port)) {
+       if (io_lseek64(port->fd, port->mark, SEEK_CUR) >= 0) return;
+       throw_io_error(SCM_PORT_OPERATION_SEEK, errno);
+    }
 }
 
 void

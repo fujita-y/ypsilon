@@ -481,7 +481,7 @@
     (cond ((null? (cdddr form))
            (if discard
                (compile-expression `(and ,@(cdr form)) cte discard tail)
-               (compile-expression `(if ,@(cdr form) (unspecified)) cte discard tail)))
+               (compile-expression `(if ,@(cdr form) (.unspecified)) cte discard tail)))
           (else
            (cond ((and (pair? (cadr form)) (top-level-subr (caadr form)))
                   => (lambda (subr)

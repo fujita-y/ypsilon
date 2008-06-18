@@ -122,6 +122,8 @@ int port_buffered_byte_count(scm_port_t port);
 bool port_has_port_position_pred(scm_port_t port);
 bool port_has_set_port_position_pred(scm_port_t port);
 off64_t port_position(scm_port_t port);
+off64_t std_port_position(fd_t fd);
+void port_sync_port_position(scm_port_t port);
 void port_set_port_position(scm_port_t port, off64_t);
 scm_bvector_t port_extract_bytevector(object_heap_t* heap, scm_port_t port);
 scm_string_t port_extract_string(object_heap_t* heap, scm_port_t port);

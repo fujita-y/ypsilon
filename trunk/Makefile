@@ -13,7 +13,9 @@ CXXFLAGS = -x c++ -m32 -O3 -fstrict-aliasing \
 	   -fomit-frame-pointer -momit-leaf-frame-pointer \
 	   -fno-align-labels -fno-align-loops -fno-align-jumps
 
-LDFLAGS  = -lpthread -ldl
+ASFLAGS  = --32
+
+LDFLAGS  = -m32 -lpthread -ldl
 
 SRCS 	 = file.cpp main.cpp vm0.cpp object_heap_compact.cpp subr_flonum.cpp vm1.cpp object_set.cpp \
 	   subr_hash.cpp vm2.cpp object_slab.cpp subr_list.cpp \
