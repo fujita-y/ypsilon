@@ -29,14 +29,20 @@ VPATH 	 = src
 
 UNAME 	 = $(shell uname)
 
+GCC42    = $(shell $(CXX) -dumpspecs | grep 'march=native')
+
+ifeq ($(GCC42), )
+  CXXFLAGS += -march=i686
+else
+  CXXFLAGS += -march=native
+endif
+
 ifneq (, $(findstring Linux, $(UNAME)))
   SRCS += ffi_stub_linux.s
-  CXXFLAGS += -march=native
 endif
 
 ifneq (, $(findstring Darwin, $(UNAME)))
   SRCS += ffi_stub_darwin.s
-  CXXFLAGS += -march=i686
 endif
 
 OBJS =	$(patsubst %.cpp, %.o, $(filter %.cpp, $(SRCS))) $(patsubst %.s, %.o, $(filter %.s, $(SRCS)))
