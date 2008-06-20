@@ -5,4 +5,6 @@ version 0.9.5:
   * [http://code.google.com/p/ypsilon/issues/detail?id=2&can=1 Issue 2]: does not build on x86_64. (fixed, trunk contains updated Makefile)
   * [http://code.google.com/p/ypsilon/issues/detail?id=3&can=1 Issue 3]: `unspecified` keyword hygiene problem. (fixed, trunk contains updated code)
   * [http://code.google.com/p/ypsilon/issues/detail?id=4&can=1 Issue 4]: `standard-output-port`, `standard-error-port` malfunction. (fixed, trunk contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=6&can=1 Issue 6]: `string-for-each`, `string-fill!`, `make-custom-binary-input-port`, `make-custom-textual-input-port`, `make-custom-binary-output-port`, and `make-custom-textual-output-port` are unbound in `rnrs` library (fixed, trunk contains updated code)
+
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
