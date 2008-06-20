@@ -19,7 +19,6 @@
    real-valued? rational-valued? integer-valued?
    exact? inexact?
    inexact exact
-   #;real->flonum #;real->single #;real->double
    = < > <= >=
    zero? positive? negative? odd? even?
    finite? infinite? nan?
@@ -48,7 +47,7 @@
    char=? char<? char>? char<=? char>=?
    string? make-string string string-length string-ref
    string=? string<? string>? string<=? string>=?
-   substring string-append string->list list->string string-copy
+   substring string-append string->list list->string string-copy string-for-each
    vector? make-vector vector vector-length vector-ref vector-set!
    vector->list list->vector vector-fill!
    vector-map vector-for-each
@@ -233,10 +232,10 @@
    put-string
    put-datum
    open-file-input/output-port
-   #;make-custom-binary-input-port
-   #;make-custom-textual-input-port
-   #;make-custom-binary-output-port
-   #;make-custom-textual-output-port
+   make-custom-binary-input-port
+   make-custom-textual-input-port
+   make-custom-binary-output-port
+   make-custom-textual-output-port
 
    #;(rnrs io simple (6))
    call-with-input-file
