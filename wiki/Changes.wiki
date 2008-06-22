@@ -3,4 +3,4 @@
 version 0.9.5-trunk:
   * [http://code.google.com/p/ypsilon/issues/detail?id=7&can=1 Issue 7]: added library-extensions
   * [http://code.google.com/p/ypsilon/issues/detail?id=8&can=1 Issue 8]: added uninstall target to Makefile 
-  * check syntax of top-level program if it have #!r6rs before import form
+  * check syntax of top-level program if it have `#!r6rs` before import form
