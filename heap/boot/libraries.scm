@@ -448,6 +448,7 @@
                         scheme-load-verbose
                         add-load-path
                         add-library-path
+                        library-extensions
                         auto-compile-verbose
                         auto-compile-cache
                         directory-list

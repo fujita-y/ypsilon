@@ -66,7 +66,7 @@
             (else
              (format "~/" path))))))
 
-(define load
+(define locate-load-file
   (lambda (path)
 
     (define path-not-found
@@ -77,24 +77,32 @@
       (lambda (path)
         (and (file-exists? path) path)))
 
-    (define locate
-      (lambda (path)
-        (cond ((= (string-length path) 0)
-               (path-not-found path))
-              ((or (string-contains path ":") (memq (string-ref path 0) '(#\/ #\\)))
-               (or (confirm-path path) (path-not-found path)))
-              ((memq (string-ref path 0) '(#\. #\~))
-               (or (confirm-path (expand-path path)) (path-not-found path)))
-              ((any1 (lambda (e) (confirm-path (expand-path (string-append e "/" path))))
-                     (cons "." (scheme-load-paths))))
-              (else
-               (path-not-found path)))))
+    (cond ((= (string-length path) 0)
+           (path-not-found path))
+          ((or (string-contains path ":") (memq (string-ref path 0) '(#\/ #\\)))
+           (or (confirm-path path) (path-not-found path)))
+          ((memq (string-ref path 0) '(#\. #\~))
+           (or (confirm-path (expand-path path)) (path-not-found path)))
+          ((any1 (lambda (e) (confirm-path (expand-path (string-append e "/" path))))
+                 (cons "." (scheme-load-paths))))
+          (else
+           (path-not-found path)))))
 
+(define load-file-has-r6rs-comment?
+  (lambda (path)
+    (parameterize ((extend-lexical-syntax #t))
+      (let ((port (open-script-input-port (locate-load-file path))))
+        (core-read port #f 'load)
+        (close-port port)
+        (not (extend-lexical-syntax))))))
+
+(define load
+  (lambda (path)
     (cond ((list? path)
            (auto-compile-cache-update)
            (load-scheme-library path))
           (else
-           (let ((abs-path (locate path)))
+           (let ((abs-path (locate-load-file path)))
              (and (scheme-load-verbose) (format #t "~&;; loading ~s~%~!" abs-path))
              (let ((port (open-script-input-port abs-path)))
                (with-exception-handler
@@ -113,8 +121,34 @@
                         (cond ((eof-object? form)
                                (close-port port))
                               (else
-                                 (interpret form)
+                               (interpret form)
                                (loop))))))))))))))
+    
+(define load-r6rs
+  (lambda (path)
+    (let ((abs-path (locate-load-file path)))
+      (and (scheme-load-verbose) (format #t "~&;; loading ~s~%~!" abs-path))
+      (let ((port (open-script-input-port abs-path)))
+        (with-exception-handler
+         (lambda (c)
+           (close-port port)
+           (raise c))
+         (lambda ()
+           (parameterize
+               ((current-source-comments (current-source-comments))
+                (current-environment (current-environment))
+                (extend-lexical-syntax (extend-lexical-syntax))
+                (backtrace (backtrace)))
+             (current-source-comments (and (backtrace) (make-core-hashtable)))
+             (let loop ((acc '()))
+               (let ((form (core-read port (current-source-comments) 'load)))
+                 (cond ((eof-object? form)
+                        (close-port port)
+                        (let ((program (expand-top-level-program (reverse acc) '())))
+                          (current-macro-expression #f)
+                          (interpret program)))
+                       (else
+                        (loop (cons form acc)))))))))))))
 
 (define load-cache
   (lambda (path)
@@ -240,6 +274,14 @@
           (else
            (unspecified)))))
 
+(define library-extensions
+  (make-parameter (list ".ypsilon.sls" ".ypsilon.ss" ".ypsilon.scm" ".sls" ".ss" ".scm")
+                  (lambda (value)
+                    (if (and (list? value) (every1 string? value))
+                        value
+                        (assertion-violation 'library-extensions (format "expected list of strings, but got ~s" value))))))
+
+
 (define load-scheme-library
   (lambda (ref . vital)
     (let ((vital (or (not (pair? vital)) (car vital)))) ; vital default #t
@@ -288,7 +330,7 @@
                                         (run-vmi (cons '(1 . 0) code))
                                         (loop)))))))))))))))
 
-      (define locate-source
+#;      (define locate-source
         (lambda (ref)
           (let ((path (symbol-list->string ref "/")))
             (or (any1 (lambda (base)
@@ -296,8 +338,21 @@
                           (and (file-exists? maybe-path) maybe-path)))
                       (scheme-library-paths))
                 (and vital
-                     (error 'load-scheme-library (format "~s not found in scheme-library-paths: ~s.scm" path (scheme-library-paths))))))))
+                     (error 'load-scheme-library (format "~s not found in scheme-library-paths: ~s" path (scheme-library-paths))))))))
 
+      (define locate-source
+        (lambda (ref)
+          (let ((path (symbol-list->string ref "/")))
+            (or (any1 (lambda (base)
+                        (any1 (lambda (ext)
+                                (let ((maybe-path (format "~a/~a~a" base path ext)))
+                                  (and (file-exists? maybe-path) maybe-path)))
+                              (library-extensions)))
+                      (scheme-library-paths))
+                (and vital
+                     (error 'load-scheme-library (format "~s not found in scheme-library-paths: ~s" path (scheme-library-paths))))))))  
+      
+      
       (define locate-cache
         (lambda (ref source-path)
           (and (auto-compile-cache)

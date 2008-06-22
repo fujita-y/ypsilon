@@ -567,3 +567,219 @@
 (set-top-level-value! '.unintern-scheme-library
   (lambda (library-id)
     (core-hashtable-delete! (scheme-library-exports) library-id)))
+
+
+;; todo: clean up and unify expand-top-level-program and expand-library when ERR5RS spec available
+;; r6rs top-level program
+
+(define expand-top-level-program
+  (lambda (form env)
+
+    (define permute-env
+      (lambda (ht)
+        (let loop ((lst (core-hashtable->alist ht)) (bounds '()) (unbounds '()))
+          (cond ((null? lst)
+                 (append bounds unbounds))
+                ((unbound? (cdar lst))
+                 (loop (cdr lst) bounds (cons (car lst) unbounds)))
+                (else
+                 (loop (cdr lst) (cons (car lst) bounds) unbounds))))))
+
+    (define library-name '(.r6rs-top))
+
+    (destructuring-match form
+      ((('import import-spec ...) body ...)
+       (let ((library-id (library-name->id form library-name))
+             (library-version (library-name->version form library-name)))
+         (and library-version (core-hashtable-set! (scheme-library-versions) library-id library-version))
+         (let ((imports (parse-imports form import-spec))
+               (depends (parse-depends form import-spec)))
+           (let ((ht-library-env (make-shield-id-table body)) (ht-immutables (make-core-hashtable)))
+             (for-each (lambda (a)
+                         (core-hashtable-set! ht-immutables (car a) #t)
+                         (cond ((core-hashtable-ref ht-library-env (car a) #f)
+                                => (lambda (deno)
+                                     (if (unbound? deno)
+                                         (core-hashtable-set! ht-library-env (car a) (cdr a))
+                                         (or (eq? deno (cdr a))
+                                             (syntax-violation "top-level program" "duplicate import identifiers" (abbreviated-take-form form 4 8) (car a))))))))
+                       imports)
+             (let ((library-env (permute-env ht-library-env)))
+               (parameterize ((current-immutable-identifiers ht-immutables))
+                 (expand-top-level-program-body form library-id library-version body imports depends (extend-env private-primitives-environment library-env) library-env)))))))
+      (_
+       (syntax-violation "top-level program" "expected import form and top-level body" (abbreviated-take-form form 4 8))))))
+
+(define expand-top-level-program-body
+  (lambda (form library-id library-version body imports depends env library-env)
+
+    (define internal-definition?
+      (lambda (lst)
+        (and (pair? lst)
+             (pair? (car lst))
+             (symbol? (caar lst))
+             (let ((deno (env-lookup env (caar lst))))
+               (or (macro? deno)
+                   (eq? denote-define deno)
+                   (eq? denote-define-syntax deno)
+                   (eq? denote-define-macro deno)
+                   (eq? denote-let-syntax deno)
+                   (eq? denote-letrec-syntax deno))))))
+
+    (define macro-defs '())
+
+    (define extend-env!
+      (lambda (datum1 datum2)
+        (and (macro? datum2)
+             (set! macro-defs (acons datum1 datum2 macro-defs)))
+        (set! env (extend-env (list (cons datum1 datum2)) env))
+        (for-each (lambda (a) (set-cdr! (cddr a) env)) macro-defs)))
+
+    (define extend-library-env!
+      (lambda (datum1 datum2)
+        (set! library-env (extend-env (list (cons datum1 datum2)) library-env))))
+
+    (define check-duplicate-definition
+      (lambda (defs macros renames)
+        (or (unique-id-list? (map car renames))
+            (let ((id (find-duplicates (map car renames))))
+              (cond ((assq id defs)
+                     => (lambda (e1)
+                          (let ((e2 (assq id (reverse defs))))
+                            (cond ((eq? e1 e2)
+                                   (let ((e2 (assq id macros)))
+                                     (syntax-violation "top-level program" "duplicate definitions"
+                                                       (annotate `(define-syntax ,(car e2) ...) e2)
+                                                       (annotate `(define ,@e1) e1))))
+                                  (else
+                                   (syntax-violation "top-level program" "duplicate definitions"
+                                                     (annotate `(define ,@e1) e1)
+                                                     (annotate `(define ,@e2) e2)))))))
+                    ((assq id macros)
+                     => (lambda (e1)
+                          (let ((e2 (assq id (reverse macros))))
+                            (cond ((eq? e1 e2)
+                                   (let ((e2 (assq id defs)))
+                                     (syntax-violation "top-level program" "duplicate definitions"
+                                                       (annotate `(define-syntax ,(car e1) ...) e1)
+                                                       (annotate `(define ,@e2) e2))))
+                                  (else
+                                   (syntax-violation "top-level program" "duplicate definitions"
+                                                     (annotate `(define-syntax ,(car e1) ...) e1)
+                                                     (annotate `(define-syntax ,(car e2) ...) e2)))))))
+                    (else
+                     (syntax-violation "top-level program" "duplicate definitions" id)))))))
+
+    (define rewrite-body
+      (lambda (body defs macros renames)
+        (check-duplicate-definition defs macros renames)
+        (let ((rewrited-body (expand-each body env)))
+          (let ((rewrited-depends
+                 (map (lambda (dep)
+                        `(.require-scheme-library ',dep))
+                      depends))
+                (rewrited-defs
+                 (map (lambda (def)
+                        (parameterize ((current-top-level-exterior (car def)))
+                          (let ((lhs (cdr (assq (car def) renames)))
+                                (rhs (expand-form (cadr def) env)))
+                            (set-closure-comment! rhs lhs)
+                            `(define ,lhs ,rhs))))
+                      defs))
+                (rewrited-macros
+                 (if (null? macros)
+                     '()
+                     (let ((shared-env (generate-temporary-symbol)))
+                       `((let ((,shared-env
+                                 ',(let ((ht (make-core-hashtable)))
+                                     (for-each (lambda (a)
+                                                 (if (not (unbound? (cdr a)))
+                                                     (core-hashtable-set! ht (car a) (cdr a))))
+                                               (reverse library-env))
+                                     (core-hashtable->alist ht))))
+                           ,@(map (lambda (e)
+                                    (let ((id (cdr (assq (car e) renames)))
+                                          (type (cadr e))
+                                          (spec (caddr e)))
+                                      (case type
+                                        ((template) `(.set-top-level-macro! 'syntax ',id ',spec ,shared-env))
+                                        ((procedure) `(.set-top-level-macro! 'syntax ',id ,spec ,shared-env))
+                                        ((variable) `(.set-top-level-macro! 'variable ',id ,spec ,shared-env))
+                                        (else (scheme-error "internal error in rewrite body: bad macro spec ~s" e)))))
+                                  macros)))))))
+            (let ((vars (map cadr rewrited-defs))
+                  (assignments (map caddr rewrited-defs)))
+              (cond ((check-rec*-contract-violation vars assignments)
+                     => (lambda (var)
+                          (let ((id (any1 (lambda (a) (and (eq? (cdr a) (car var)) (car a))) renames)))
+                            (current-macro-expression #f)
+                            (syntax-violation #f
+                                              (format "attempt to reference unbound variable ~u" id)
+                                              (any1 (lambda (e)
+                                                      (and (check-rec-contract-violation (list id) e)
+                                                           (annotate `(define ,@e) e)))
+                                                    defs)))))))
+            (annotate `(begin
+                         ,@rewrited-depends
+                         ,@rewrited-defs
+                         ,@rewrited-body
+                         ,@rewrited-macros)
+                      form)))))
+
+    (define ht-imported-immutables (make-core-hashtable))
+
+    (define expression-tag
+      (let ((num 0))
+        (lambda ()
+          (set! num (+ num 1))
+          (string->symbol (format ".e~a" num)))))
+
+    (for-each (lambda (b) (core-hashtable-set! ht-imported-immutables (car b) #t)) imports)
+    (let loop ((body (flatten-begin body env)) (defs '()) (macros '()) (renames '()))
+      (if (null? body)
+          (rewrite-body body (reverse defs) (reverse macros) renames)
+          (cond ((and (pair? body) (pair? (car body)) (symbol? (caar body)))
+                 (let ((deno (env-lookup env (caar body))))
+                   (cond ((eq? denote-begin deno)
+                          (loop (flatten-begin body env) defs macros renames))
+                         ((eq? denote-define-syntax deno)
+                          (destructuring-match body
+                            (((_ (? symbol? org) clause) more ...)
+                             (begin
+                               (and (core-hashtable-contains? ht-imported-immutables org)
+                                    (syntax-violation 'define-syntax "attempt to modify immutable binding" (car body)))
+                               (let-values (((code . expr) (compile-macro (car body) clause env)))
+                                 (let ((new (generate-global-id library-id org)))
+                                   (extend-library-env! org (make-import new))
+                                   (cond ((procedure? code)
+                                          (extend-env! org (make-macro code env))
+                                          (loop more defs (cons (list org 'procedure (car expr)) macros) (acons org new renames)))
+                                         ((macro-variable? code)
+                                          (extend-env! org (make-macro-variable (cadr code) env))
+                                          (loop more defs (cons (list org 'variable (car expr)) macros) (acons org new renames)))
+                                         (else
+                                          (extend-env! org (make-macro code env))
+                                          (loop more defs (cons (list org 'template code) macros) (acons org new renames))))))))
+                            (_
+                             (syntax-violation 'define-syntax "expected symbol and single expression" (car body)))))
+                         ((eq? denote-define deno)
+                          (let ((def (annotate (cdr (desugar-define (car body))) (car body))))
+                            (and (core-hashtable-contains? ht-imported-immutables (car def))
+                                 (syntax-violation 'define "attempt to modify immutable binding" (car body)))
+                            (let ((org (car def))
+                                  (new (generate-global-id library-id (car def))))
+                              (extend-env! org new)
+                              (extend-library-env! org (make-import new))
+                              (loop (cdr body) (cons def defs) macros (acons org new renames)))))
+                         ((eq? denote-define-macro deno)
+                          (loop (cons (rewrite-define-macro (car body)) (cdr body)) defs macros renames))
+                         ((or (macro? deno)
+                              (eq? denote-let-syntax deno)
+                              (eq? denote-letrec-syntax deno))
+                          (let-values (((expr new) (expand-initial-forms (car body) env)))
+                            (set! env new)
+                            (loop (append (flatten-begin (list expr) env) (cdr body)) defs macros renames)))
+                         (else
+                          (loop (cons `(define ,(expression-tag) ,(car body)) (cdr body)) defs macros renames)))))
+                (else
+                 (loop (cons `(define ,(expression-tag) ,(car body)) (cdr body)) defs macros renames)))))))
