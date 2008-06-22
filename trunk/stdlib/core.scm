@@ -505,6 +505,7 @@
     letrec-syntax
     lexical-violation?
     library
+    library-extensions
     list
     list->string
     list->vector

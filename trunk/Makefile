@@ -49,7 +49,7 @@ OBJS =	$(patsubst %.cpp, %.o, $(filter %.cpp, $(SRCS))) $(patsubst %.s, %.o, $(f
 
 DEPS =	$(patsubst %.cpp, %.d, $(filter %.cpp, $(SRCS)))
 
-.PHONY: all install sitelib stdlib check bench clean
+.PHONY: all install uninstall sitelib stdlib check bench clean
 
 all: $(PROG)
 	@mkdir -p -m755 $(HOME)/.ypsilon
@@ -70,6 +70,13 @@ install: all stdlib sitelib
 	cp $(PROG).1 $(PREFIX)/share/man/man1/$(PROG).1
 	chmod a-w,a+rX $(PREFIX)/bin/$(PROG)
 	chmod a-wx,a+r $(PREFIX)/share/man/man1/$(PROG).1
+
+uninstall:
+	-rm -rf $(PREFIX)/share/$(PROG)/stdlib
+	-rm -rf $(PREFIX)/share/$(PROG)/sitelib
+	-rm -f $(PREFIX)/share/man/man1/$(PROG).1
+	-rm -f $(PREFIX)/bin/$(PROG)
+	-rmdir $(PREFIX)/share/$(PROG)
 
 stdlib:
 	find stdlib -type f -name '*.scm' | cpio -pdu $(PREFIX)/share/$(PROG)
@@ -105,7 +112,7 @@ check: all
 
 eval: all
 	./$(PROG) --acc=/tmp --sitelib=./sitelib:./stdlib
-	
+
 bench: all
 	./$(PROG) --acc=/tmp --sitelib=./test:./sitelib:./stdlib -- bench/run-ypsilon.scm
 
@@ -113,7 +120,7 @@ clean:
 	rm -f *.o *.d
 	rm -f $(HOME)/.ypsilon/*.cache 
 	rm -f $(HOME)/.ypsilon/*.time
-	
+
 distclean: clean
 	rm -f tmp1 tmp2 tmp3 spheres.pgm
 	find . -type f -name .DS_Store -print0 | xargs -0 rm -f
