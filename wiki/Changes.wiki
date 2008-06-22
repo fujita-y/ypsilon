@@ -1,4 +1,4 @@
-#summary changes in latest trunk version
+#summary changes in latest version
 
 version 0.9.5-trunk:
   * [http://code.google.com/p/ypsilon/issues/detail?id=7&can=1 Issue 7]: added library-extensions
