@@ -879,7 +879,7 @@
                      [id (identifier? #'id) #'e]
                      [(_ x (... ...)) #'(e x (... ...))]))]
                 [(_ (id exp1) ((set! var val) exp2))
-                 (and (identifier? #'id) (identifier? #'var))
+                 #;(and (identifier? #'id) (identifier? #'var)) ; fix errarum in R6RS 12.8 (fujita)
                  (make-variable-transformer
                   (lambda (x)
                     (syntax-case x (set!)

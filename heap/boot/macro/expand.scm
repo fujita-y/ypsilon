@@ -186,45 +186,10 @@
                     (else
                      (syntax-violation (car form) "invalid transformer expression" form transformer))))))))
 
-    (define compile-extended-syntax-rules
-      (lambda (transformer env)
-        (let ((suffix (fresh-rename-count))
-              (arg (generate-temporary-symbol)))
-          (let ((rewrited
-                 (destructuring-match transformer
-                   ((_ (lites ...) clauses ...)
-                    `(.LAMBDA (,arg)
-                       (.SYNTAX-CASE ,arg ,lites
-                                     ,@(map (lambda (clause)
-                                              (destructuring-match clause
-                                                ((p t) `(,p (.SYNTAX ,t)))
-                                                ((p f t) `(,p ,f (.SYNTAX ,t)))
-                                                (_ (scheme-error "internal error: syntax-rules->syntax-case"))))
-                                            clauses)))))))
-            (compile-transformer rewrited env)))))
-
     (define syntax-rules?
       (lambda (id)
         (denote-syntax-rules? env id)))
-
-    (define no-fender?
-      (lambda (clauses)
-        (every1 (lambda (clause)
-                  (destructuring-match clause
-                    ((((? symbol? _) . _) _) #t)
-                    ((((? symbol? _) . _) _ _) #f)
-                    (((_ . _) _)
-                     (syntax-violation 'syntax-rules "expected identifer for first subform of pattern" transformer clause))
-                    (((_ . _) _ _)
-                     (syntax-violation 'syntax-rules "expected identifer for first subform of pattern" transformer clause))
-                    ((_ _ _)
-                     (syntax-violation 'syntax-rules "expected list for pattern" transformer clause))
-                    ((_ _)
-                     (syntax-violation 'syntax-rules "expected list for pattern" transformer clause))
-                    (_
-                     (syntax-violation 'syntax-rules "expected (pattern template) or (pattern fender template) for each rule" transformer clause))))
-                clauses)))
-
+    
     (destructuring-match transformer
       (((? syntax-rules? _))
        (syntax-violation 'syntax-rules "expected literals and rules" transformer))
@@ -238,9 +203,17 @@
               (syntax-violation 'syntax-rules "_ in literals" transformer lites))
          (and (memq '... lites)
               (syntax-violation 'syntax-rules "... in literals" transformer lites))
-         (if (no-fender? clauses)
-             (compile-syntax-rules transformer lites clauses env)
-             (compile-extended-syntax-rules transformer env))))
+         (for-each (lambda (clause)
+                     (destructuring-match clause
+                       ((((? symbol? _) . _) _) #t)
+                       (((_ . _) _)
+                        (syntax-violation 'syntax-rules "expected identifer for first subform of pattern" transformer clause))
+                       ((_ _)
+                        (syntax-violation 'syntax-rules "expected list for pattern" transformer clause))
+                       (_
+                        (syntax-violation 'syntax-rules "expected (pattern template) for each rule" transformer clause))))
+                   clauses)
+         (compile-syntax-rules transformer lites clauses env)))
       (_
        (compile-transformer transformer env)))))
 

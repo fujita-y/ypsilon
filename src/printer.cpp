@@ -774,10 +774,13 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
                             } else {
                                 format("#<record ~a", name);
                                 scm_obj_t* elts = tuple->elts;
+                                bool save_escape = m_escape;
+                                m_escape = true;
                                 for (scm_obj_t* e = elts + 1; e != elts + n; e++) {
                                     port_put_byte(m_port, ' ');
                                     write(ht, *e);
                                 }
+                                m_escape = save_escape;
                                 port_put_byte(m_port, '>');
                             }
                             return;
