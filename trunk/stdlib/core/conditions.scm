@@ -62,11 +62,9 @@
                                (datum->syntax #'condition-type (string->symbol (format "~a-~a" (syntax->datum #'condition-type) (syntax->datum a)))))
                              (syntax (cond-fields ...)))))
            (syntax (begin
-                     (define-record-type condition-type
+                     (define-record-type (condition-type constructor temp)
                        (parent supertype)
                        (fields (immutable cond-fields rec-accessors) ...))
-                     (define constructor
-                       (record-constructor (record-constructor-descriptor condition-type)))
                      (define predicate
                        (condition-predicate (record-type-descriptor condition-type)))
                      (define cond-accessors

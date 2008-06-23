@@ -612,6 +612,19 @@ reader_t::read_list(bool bracketed)
             }
             token = read_token();
             if (token == S_RPAREN) {
+                if (bracketed) {
+                    parsing_range(line_begin, m_in->line);
+                    lexical_error("bracketed list terminated by parenthesis");
+                }
+                lst = reverse_list(lst, rest);
+                if (m_note) put_note(lst, encode_source_comment(line_begin, column_begin, m_file));
+                return lst;
+            }
+            if (token == S_RBRACK) {
+                if (!bracketed) {
+                    parsing_range(line_begin, m_in->line);
+                    lexical_error("parenthesized list terminated by bracket");
+                }
                 lst = reverse_list(lst, rest);
                 if (m_note) put_note(lst, encode_source_comment(line_begin, column_begin, m_file));
                 return lst;
