@@ -6,56 +6,60 @@
 
 (let ()
 
-  (define core-primitive-name (lambda (e) (string->symbol (format ".~a" e))))
-
   (define setup-intrinsic-procs
     (lambda (name lst)
       (copy-environment-variables! (system-environment) (interaction-environment) lst)
-      (let ((ht (scheme-library-exports)) (id (generate-library-id name)))
-        (let ((aliases (map core-primitive-name lst)))
-          (for-each (lambda (a e) 
-                      (set-top-level-value! a (top-level-value e))
-                      (core-hashtable-set! immutable-primitives a #t))
-                    aliases lst)
-          (copy-environment-variables! (system-environment) (interaction-environment) aliases)
-          (core-hashtable-set! ht id (unify-import-bindings
-                                      (append (map (lambda (a e) (cons e (make-import a))) aliases lst)
-                                              (core-hashtable-ref ht id '()))))))))
+      (let ((ht (scheme-library-exports))
+            (id (generate-library-id name))
+            (aliases (map core-primitive-name lst)))
+        (for-each (lambda (a e)
+                    (set-top-level-value! a (top-level-value e))
+                    (core-hashtable-set! immutable-primitives a #t))
+                  aliases lst)
+        (copy-environment-variables! (system-environment) (interaction-environment) aliases)
+        (core-hashtable-set! ht id (unify-import-bindings
+                                    (append (map (lambda (a e) (cons e (make-import a))) aliases lst)
+                                            (core-hashtable-ref ht id '())))))))
 
   (define setup-intrinsic-macros
     (lambda (name lst)
-      (let ((ht (scheme-library-exports)) (id (generate-library-id name)))
+      (let ((ht (scheme-library-exports))
+            (id (generate-library-id name))
+            (aliases (map core-primitive-name lst)))
         (copy-environment-macros! (system-environment) (interaction-environment) lst)
+        (copy-environment-macros! (system-environment) (interaction-environment) aliases)
         (core-hashtable-set! ht id (unify-import-bindings
-                                    (append (map (lambda (e) (cons e (make-import e))) lst)
+                                    (append (map (lambda (a e) (cons e (make-import a))) aliases lst)
                                             (core-hashtable-ref ht id '())))))))
 
   (define setup-core-primitive-procs
     (lambda (name lst)
-      (let ((ht (scheme-library-exports)) (id (generate-library-id name)))
-        (let ((aliases (map core-primitive-name lst)))
-          (for-each (lambda (a e) 
-                      (set-top-level-value! a (top-level-value e))
-                      (core-hashtable-set! immutable-primitives a #t))
-                    aliases lst)
-          (copy-environment-variables! (system-environment) (interaction-environment) aliases)
-          (core-hashtable-set! ht id (unify-import-bindings
-                                      (append (map (lambda (a e) (cons e (make-import a))) aliases lst)
-                                              (core-hashtable-ref ht id '()))))))))
+      (let ((ht (scheme-library-exports))
+            (id (generate-library-id name))
+            (aliases (map core-primitive-name lst)))
+        (for-each (lambda (a e)
+                    (set-top-level-value! a (top-level-value e))
+                    (core-hashtable-set! immutable-primitives a #t))
+                  aliases lst)
+        (copy-environment-variables! (system-environment) (interaction-environment) aliases)
+        (core-hashtable-set! ht id (unify-import-bindings
+                                    (append (map (lambda (a e) (cons e (make-import a))) aliases lst)
+                                            (core-hashtable-ref ht id '())))))))
 
   (define setup-core-primitive-macros
     (lambda (name lst)
-      (let ((ht (scheme-library-exports)) (id (generate-library-id name)))
-        (let ((aliases (map core-primitive-name lst)))
-          (for-each (lambda (a e)
-                      (cond ((core-hashtable-ref (current-macro-environment) e #f)
-                             => (lambda (macro)
-                                  (core-hashtable-set! (current-macro-environment) a macro)))))
-                    aliases lst)
-          (copy-environment-macros! (system-environment) (interaction-environment) aliases)
-          (core-hashtable-set! ht id (unify-import-bindings
-                                      (append (map (lambda (a e) (cons e (make-import a))) aliases lst)
-                                              (core-hashtable-ref ht id '()))))))))
+      (let ((ht (scheme-library-exports))
+            (id (generate-library-id name))
+            (aliases (map core-primitive-name lst)))
+        (for-each (lambda (a e)
+                    (cond ((core-hashtable-ref (current-macro-environment) e #f)
+                           => (lambda (macro)
+                                (core-hashtable-set! (current-macro-environment) a macro)))))
+                  aliases lst)
+        (copy-environment-macros! (system-environment) (interaction-environment) aliases)
+        (core-hashtable-set! ht id (unify-import-bindings
+                                    (append (map (lambda (a e) (cons e (make-import a))) aliases lst)
+                                            (core-hashtable-ref ht id '())))))))
 
   (define compound-exports
     (lambda (target source)

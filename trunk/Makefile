@@ -68,8 +68,8 @@ install: all stdlib sitelib
 	mkdir -pv -m755 $(PREFIX)/share/man/man1
 	cp $(PROG) $(PREFIX)/bin/$(PROG)
 	cp $(PROG).1 $(PREFIX)/share/man/man1/$(PROG).1
-	chmod a-w,a+rX $(PREFIX)/bin/$(PROG)
-	chmod a-wx,a+r $(PREFIX)/share/man/man1/$(PROG).1
+	chmod 755 $(PREFIX)/bin/$(PROG)
+	chmod 644 $(PREFIX)/share/man/man1/$(PROG).1
 
 uninstall:
 	-rm -rf $(PREFIX)/share/$(PROG)/stdlib
