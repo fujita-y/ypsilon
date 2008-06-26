@@ -355,13 +355,6 @@
     (lambda (port transcoder)
       (make-transcoded-port port (transcoder-descriptor transcoder))))
 
-  (define call-with-port
-    (lambda (port proc)
-      (dynamic-wind
-       (lambda () #f)
-       (lambda () (proc port))
-       (lambda () (close-port port)))))
-
   ;; 8.2.7  Input ports
 
   (define open-file-input-port

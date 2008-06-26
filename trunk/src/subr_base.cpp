@@ -364,16 +364,12 @@ subr_list_tail(VM* vm, int argc, scm_obj_t argv[])
             wrong_type_argument_violation(vm, "list-tail", 1, "exact non-negative integer", argv[1], argc, argv);
             return scm_undef;
         }
-        if (argv[0] == scm_nil) {
-            if (FIXNUM(argv[1]) == 0) return scm_nil;
-            if (exact_non_negative_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "list-tail", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "list-tail", 1, "exact non-negative integer", argv[1], argc, argv);
+        if (FIXNUMP(argv[1]) && FIXNUM(argv[1]) == 0) return argv[0];
+        if (exact_non_negative_integer_pred(argv[1])) {
+            invalid_argument_violation(vm, "list-tail", "index out of bounds,", argv[1], 1, argc, argv);
             return scm_undef;
         }
-        wrong_type_argument_violation(vm, "list-tail", 0, "list", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "list-tail", 1, "exact non-negative integer", argv[1], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "list-tail", 2, 2, argc, argv);

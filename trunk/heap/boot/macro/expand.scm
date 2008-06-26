@@ -236,7 +236,7 @@
 
     (define undefined-macro
       (lambda (x)
-        (syntax-violation (car form) "attempt to reference unbound syntactic keyword" form x)))
+        (syntax-violation (car form) "attempt to reference uninitialized syntactic keyword" form x)))
 
     (let ((vars (map car bindings))
           (specs (map cadr bindings)))
@@ -379,7 +379,7 @@
                              (let ((id (any1 (lambda (a) (and (eq? (cdr a) (car var)) (car a))) renames)))
                                (current-macro-expression form)
                                (syntax-violation 'define
-                                                 (format "attempt to reference unbound variable ~u" id)
+                                                 (format "attempt to reference uninitialized variable ~u" id)
                                                  (any1 (lambda (e)
                                                          (and (check-rec-contract-violation (list id) (cdr e))
                                                               (annotate `(define ,@e) e)))
@@ -470,8 +470,8 @@
                                       (expand-macro-use form env deno))))
                       (expand-form expr (extend-env renames env))))
                    ((unbound? deno)
-                    (syntax-violation #f
-                                      (format "attempt to reference unbound variable ~u" form)
+                    (undefined/syntax-violation #f
+                                      (format "attempt to reference unbound identifier ~u" form)
                                       (current-macro-expression)))
                    ((out-of-context? deno)
                     (if (cdr deno)

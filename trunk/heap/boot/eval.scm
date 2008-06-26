@@ -107,8 +107,11 @@
              (let ((port (open-script-input-port abs-path)))
                (with-exception-handler
                 (lambda (c)
-                  (close-port port)
-                  (raise c))
+                  (cond ((serious-condition? c) 
+                         (close-port port)
+                         (raise c))
+                        (else
+                         (raise-continuable c))))
                 (lambda ()
                   (parameterize
                       ((current-source-comments (current-source-comments))
@@ -131,8 +134,11 @@
       (let ((port (open-script-input-port abs-path)))
         (with-exception-handler
          (lambda (c)
-           (close-port port)
-           (raise c))
+           (cond ((serious-condition? c)
+                  (close-port port)
+                  (raise c))
+                 (else
+                  (raise-continuable c))))
          (lambda ()
            (parameterize
                ((current-source-comments (current-source-comments))
@@ -201,13 +207,6 @@
 
 (define auto-compile-cache-update
   (lambda ()
-
-    (define call-with-port
-      (lambda (port proc)
-        (dynamic-wind
-         (lambda () #f)
-         (lambda () (proc port))
-         (lambda () (close-port port)))))
 
     (define inconsistent-cache-state
       (lambda (cache-lst)
@@ -285,13 +284,6 @@
 (define load-scheme-library
   (lambda (ref . vital)
     (let ((vital (or (not (pair? vital)) (car vital)))) ; vital default #t
-
-      (define call-with-port
-        (lambda (port proc)
-          (dynamic-wind
-           (lambda () #f)
-           (lambda () (proc port))
-           (lambda () (close-port port)))))
 
       (define make-cache
         (lambda (src dst source-ref source-time)

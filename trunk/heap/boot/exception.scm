@@ -3,20 +3,25 @@
 ;;; See license.txt for terms and conditions of use.
 
 (define raise
-  (lambda (condition)
-    (let ((proc (current-exception-handler)))
-      (if proc
-          (proc condition)
-          (scheme-error "error in raise: unhandled exception has occurred~%~%irritants:~%~a" (describe-condition #f condition)))
-      (current-exception-handler #f)
-      (scheme-error "error in raise: returned from non-continuable exception~%~%irritants:~%~a" (describe-condition #f condition)))))
+  (lambda (c)
+    (cond ((current-exception-handler)
+           => (lambda (proc)
+                (proc c)
+                (proc (condition (make-non-continuable-violation)
+                                 (make-who-condition 'raise)
+                                 (make-message-condition "returned from non-continuable exception")
+                                 (make-irritants-condition (list c))))))
+          (else
+           (current-exception-handler #f)
+           (scheme-error "error in raise: unhandled exception has occurred~%~%irritants:~%~a" (describe-condition #f c))))))
 
 (define raise-continuable
-  (lambda (condition)
-    (let ((proc (current-exception-handler)))
-      (if proc
-          (proc condition)
-          (scheme-error "error in raise-continuable: unhandled exception has occurred~%~%irritants:~%~a" (describe-condition #f condition))))))
+  (lambda (c)
+    (cond ((current-exception-handler)
+           => (lambda (proc) (proc c)))
+          (else
+           (current-exception-handler #f)
+           (scheme-error "error in raise-continuable: unhandled exception has occurred~%~%irritants:~%~a" (describe-condition #f c))))))
 
 (define with-exception-handler
   (lambda (new thunk)
@@ -84,6 +89,16 @@
                           (and who (make-who-condition who))
                           (make-message-condition message)
                           (and (pair? irritants) (make-irritants-condition irritants))))))))
+
+(define undefined/syntax-violation
+  (lambda (who message form . subform)
+    (raise
+     (apply condition
+            (filter values
+                    (list (make-syntax-violation form (and (pair? subform) (car subform)))
+                          (make-undefined-violation)
+                          (and who (make-who-condition who))
+                          (make-message-condition message)))))))
 
 (define scheme-error
   (lambda args

@@ -39,3 +39,10 @@
                ((caar rec))
                (current-dynamic-wind-record rec)))))
     (apply cont args)))
+
+(define call-with-port
+  (lambda (port proc)
+    (dynamic-wind
+     (lambda () #f)
+     (lambda () (proc port))
+     (lambda () (close-port port)))))

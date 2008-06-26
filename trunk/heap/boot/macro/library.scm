@@ -181,7 +181,7 @@
       (lambda (bindings ids subform)
         (for-each (lambda (id)
                     (or (assq id bindings)
-                        (syntax-violation 'import (format "attempt to reference undefined identifier ~a in (~a ...) form" id (car subform)) (abbreviated-take-form form 4 8) subform)))
+                        (syntax-violation 'import (format "attempt to reference unexported identifier ~a" id) (abbreviated-take-form form 4 8) subform)))
                   ids)))
 
     (define check-bound-identifier
@@ -434,7 +434,7 @@
                           (let ((id (any1 (lambda (a) (and (eq? (cdr a) (car var)) (car a))) renames)))
                             (current-macro-expression #f)
                             (syntax-violation #f
-                                              (format "attempt to reference unbound variable ~u" id)
+                                              (format "attempt to reference uninitialized variable ~u" id)
                                               (any1 (lambda (e)
                                                       (and (check-rec-contract-violation (list id) e)
                                                            (annotate `(define ,@e) e)))
@@ -714,7 +714,7 @@
                           (let ((id (any1 (lambda (a) (and (eq? (cdr a) (car var)) (car a))) renames)))
                             (current-macro-expression #f)
                             (syntax-violation #f
-                                              (format "attempt to reference unbound variable ~u" id)
+                                              (format "attempt to reference uninitialized variable ~u" id)
                                               (any1 (lambda (e)
                                                       (and (check-rec-contract-violation (list id) e)
                                                            (annotate `(define ,@e) e)))
