@@ -11,5 +11,8 @@ version 0.9.5:
   * [http://code.google.com/p/ypsilon/issues/detail?id=13&can=1 Issue 13]: syntax-rules problem. (fixed, trunk contains updated code)
   * [http://code.google.com/p/ypsilon/issues/detail?id=14&can=1 Issue 14]: Makefile permission problem. (fixed, trunk contains updated code)
   * [http://code.google.com/p/ypsilon/issues/detail?id=16&can=1 Issue 16]: REPL hygiene problem. (fixed, trunk contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=12&can=1 Issue 12]: missing `&undefined` condition for unbound identifier exception. (fixed, trunk contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=15&can=1 Issue 15]: `(x ... . r)` pattern does not work. (fixed, trunk contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=17&can=1 Issue 17]: `raise-continuable` with non-serious condition does not return. (fixed, trunk contains updated code)
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
