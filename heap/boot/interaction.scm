@@ -196,16 +196,7 @@
                                (format port "~%  ~n" e))
                              (expansion-trace-stack))))))
 
-        (cond ((undefined-violation? condition)
-               (format port "error: unbound variable")
-               (and (who-condition? condition)
-                    (format port " ~s" (condition-who condition)))
-               (and (message-condition? condition)
-                    (format port ", ~a" (condition-message condition)))
-               (output-irritants)
-               (output-expansion))
-
-              ((syntax-violation? condition)
+        (cond ((syntax-violation? condition)
                (output-who-message)
                (cond ((syntax-violation-form condition)
                       => (lambda (form)
@@ -224,6 +215,15 @@
                             (eq? (current-macro-expression) (syntax-violation-subform condition))))
                    (output-expansion)))
 
+              ((undefined-violation? condition)
+               (format port "error: unbound variable")
+               (and (who-condition? condition)
+                    (format port " ~s" (condition-who condition)))
+               (and (message-condition? condition)
+                    (format port ", ~a" (condition-message condition)))
+               (output-irritants)
+               (output-expansion))
+
               ((error? condition)
                (output-who-message)
                (output-irritants)
@@ -231,6 +231,15 @@
 
               ((violation? condition)
                (output-who-message)
+               (output-irritants)
+               (output-expansion))
+
+              ((warning? condition)
+               (format port "warning")
+               (and (who-condition? condition)
+                    (format port " in ~s" (condition-who condition)))
+               (and (message-condition? condition)
+                    (format port ": ~a" (condition-message condition)))
                (output-irritants)
                (output-expansion))
 
@@ -245,15 +254,20 @@
                (output-expansion))))
 
       (format port "~%")
-      (display-backtrace port)
-
       (let ((plugged (or (lookup-process-environment "EMACS") (not (eq? (port-device-subtype (current-input-port)) 'char)))))
-        (if plugged
-            (format (current-error-port) "~a~!" (extract-accumulated-string port))
-            (format (current-error-port) "~%~a~%~!" (extract-accumulated-string port)))
-        (usleep 10000) ; make console happy
-        (and continue (continue))))))
-
+        (cond ((serious-condition? condition)
+               (display-backtrace port)
+               (if plugged
+                   (format (current-error-port) "~a~!" (extract-accumulated-string port))
+                   (format (current-error-port) "~%~a~%~!" (extract-accumulated-string port)))
+               (usleep 10000) ; make console happy
+               (and continue (continue)))
+              (else
+               (if plugged
+                   (format (current-error-port) "~a~!" (extract-accumulated-string port))
+                   (format (current-error-port) "~%~a~!" (extract-accumulated-string port)))
+               (usleep 10000))))))) ; make console happy
+      
 (define start-scheme-session
   (lambda ()
 
@@ -416,7 +430,7 @@
                         (load path))
                     (flush-output-port (current-error-port))
                     (flush-output-port (current-output-port)))))))))
-    
+
     (define exec-repl
       (lambda ()
         (cond (mute)
@@ -426,7 +440,7 @@
         (if quiet
             (quiet-read-eval-print-loop)
             (read-eval-print-loop))))
-    
+
     (define verbose #f)
     (define quiet #f)
     (define interaction #f)

@@ -296,6 +296,7 @@
                         read-char
                         write-char
                         ; r6rs i/o ports
+                        call-with-port
                         eof-object eof-object?
                         standard-input-port standard-output-port standard-error-port
                         current-input-port current-output-port current-error-port
