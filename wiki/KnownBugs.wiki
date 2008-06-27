@@ -1,18 +1,18 @@
 #summary Known bugs in current release
 
 version 0.9.5:
-  * [http://code.google.com/p/ypsilon/issues/detail?id=1&can=1 Issue 1]: `free-identifier=?` does not work correctly. (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=2&can=1 Issue 2]: does not build on x86_64. (fixed, trunk contains updated Makefile)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=3&can=1 Issue 3]: `unspecified` keyword hygiene problem. (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=4&can=1 Issue 4]: `standard-output-port`, `standard-error-port` malfunction. (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=6&can=1 Issue 6]: `string-for-each`, `string-fill!`, `make-custom-binary-input-port`, `make-custom-textual-input-port`, `make-custom-binary-output-port`, and `make-custom-textual-output-port` are unbound in `rnrs` library (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=9&can=1 Issue 9]: dot lexical syntax problem. (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=10&can=1 Issue 10]: define-condition-type problem. (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=13&can=1 Issue 13]: syntax-rules problem. (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=14&can=1 Issue 14]: Makefile permission problem. (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=16&can=1 Issue 16]: REPL hygiene problem. (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=12&can=1 Issue 12]: missing `&undefined` condition for unbound identifier exception. (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=15&can=1 Issue 15]: `(x ... . r)` pattern does not work. (fixed, trunk contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=17&can=1 Issue 17]: `raise-continuable` with non-serious condition does not return. (fixed, trunk contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=1&can=1 Issue 1]: `free-identifier=?` does not work correctly. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=2&can=1 Issue 2]: does not build on x86_64. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated Makefile)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=3&can=1 Issue 3]: `unspecified` keyword hygiene problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=4&can=1 Issue 4]: `standard-output-port`, `standard-error-port` malfunction. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=6&can=1 Issue 6]: `string-for-each`, `string-fill!`, `make-custom-binary-input-port`, `make-custom-textual-input-port`, `make-custom-binary-output-port`, and `make-custom-textual-output-port` are unbound in `rnrs` library. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=9&can=1 Issue 9]: dot lexical syntax problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=10&can=1 Issue 10]: define-condition-type problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=13&can=1 Issue 13]: syntax-rules problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=14&can=1 Issue 14]: Makefile permission problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=16&can=1 Issue 16]: REPL hygiene problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=12&can=1 Issue 12]: missing `&undefined` condition for unbound identifier exception. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=15&can=1 Issue 15]: `(x ... . r)` pattern does not work. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=17&can=1 Issue 17]: `raise-continuable` with non-serious condition does not return. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
