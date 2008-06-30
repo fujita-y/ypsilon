@@ -1,6 +1,6 @@
 #summary Ypsilon Development Roadmap
 
-version 0.9.5 (comming soon)
+version 0.9.5
   * initial release
   * interactive interpreter
   * debug feature
