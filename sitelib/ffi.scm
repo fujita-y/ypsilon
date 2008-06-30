@@ -52,7 +52,7 @@
     (lambda (name n p)
       (cond ((procedure? p) p)
             (else
-             (assertion-violation name (format "expected procesure, but got ~r, as argument ~s" p n))))))
+             (assertion-violation name (format "expected procedure, but got ~r, as argument ~s" p n))))))
 
   (define assert-int-vector
     (lambda (name n vect)

@@ -42,7 +42,7 @@
     nnnn nnnn nnnn nnnn nnnN Z000 *tc4 1010 : scm_hdr_bignum        NZ: 01 positive 11 negative 00 zero
     .... .... .... .... .... .000 *tc4 1010 : scm_hdr_flonum
     .... .... .... .... .... .000 *tc4 1010 : scm_hdr_cont
-    nnnn nnnn nnnn nnnn .... .000 *tc4 1010 : scm_hdr_closure       if have rest argument, n is  -1 - <required argc>
+    nnnn nnnn nnnn nnnn .... .000 *tc4 1010 : scm_hdr_closure       if has rest arguments then n == (- 1 - <required argc>)
     .... .... .... .... .... .000 *tc4 1010 : scm_hdr_subr
     nnnn nnnn nnnn nnnn nnnn .000 *tc4 1010 : scm_hdr_vector
     .... .... .... .... .... .000 *tc4 1010 : scm_hdr_port

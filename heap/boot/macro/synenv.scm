@@ -136,8 +136,6 @@
 
 (define core-env (make-core-hashtable))
 
-(define core-primitive-name (lambda (e) (string->symbol (format ".~a" e))))
-
 (let ()
   
   (define init-core-macro 

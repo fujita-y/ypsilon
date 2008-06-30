@@ -5,7 +5,7 @@
 (define current-library-prefix (make-parameter ""))
 (define current-library-infix (make-parameter "."))
 (define current-library-suffix (make-parameter "'"))
-
+(define current-primitive-prefix (make-parameter "."))
 (define current-rename-delimiter (make-parameter "`"))
 (define expansion-backtrace (make-parameter 5)) ; #f or fixnum
 (define expansion-trace-stack (make-parameter '()))
@@ -39,6 +39,14 @@
                                   (else
                                    (scheme-error "internal error in .set-top-level-macro!: bad transformer type:~s keyword:~s datum:~s" type keyword datum))))))))
 
+(define core-primitive-name 
+  (lambda (e) 
+    (string->symbol (format "~a~a" (current-primitive-prefix) e))))
+
+(define generate-global-id
+  (lambda (library-id symbol)
+    (string->symbol (format "~a~a~a~a" (current-library-prefix) library-id (current-library-suffix) symbol))))
+
 (define generate-temporary-symbol
   (lambda ()
     (let ((count (current-temporary-count)))
@@ -58,21 +66,18 @@
 
 (define rename-id
   (lambda (id count)
-    (or (symbol? id) (scheme-error "internal error in rename-id: expect symbol but got ~s" id))
     (string->symbol (format "~a~a~a" id (current-rename-delimiter) count))))
 
 (define renamed-id?
   (lambda (id)
     (and (symbol? id)
-         (string-contains (symbol->string id) (current-rename-delimiter)))))
+         (symbol-contains id (current-rename-delimiter)))))
 
 (define original-id
   (lambda (id)
-    (or (symbol? id) (scheme-error "internal error in original-id: expect symbol but got ~s" id))
-    (let ((name (symbol->string id)))
-      (cond ((string-contains name (current-rename-delimiter))
-             => (lambda (mark) (string->symbol (substring name 0 mark))))
-            (else id)))))
+    (cond ((symbol-contains id (current-rename-delimiter))
+           => (lambda (mark) (string->symbol (substring (symbol->string id) 0 mark))))
+          (else id))))
 
 (define strip-rename-suffix
   (lambda (lst)
@@ -87,11 +92,11 @@
 
 (define retrieve-rename-suffix
   (lambda (id)
-    (or (symbol? id) (scheme-error "internal error in retrieve-rename-suffix: expect symbol but got ~s" id))
-    (let ((name (symbol->string id)))
-      (cond ((string-contains name (current-rename-delimiter))
-             => (lambda (mark) (substring name mark (string-length name))))
-            (else "")))))
+    (cond ((symbol-contains id (current-rename-delimiter))
+           => (lambda (mark)
+                (let ((name (symbol->string id)))
+                  (substring name mark (string-length name)))))
+          (else ""))))
 
 (define set-closure-comment!
   (lambda (form note)
