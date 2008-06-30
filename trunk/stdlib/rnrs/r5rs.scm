@@ -7,22 +7,6 @@
 
   (import (core primitives) (core r5rs))
 
-#;  (define force (lambda (object) (object)))
-
-#;  (define-syntax delay
-    (syntax-rules ()
-      ((_ expression)
-       (let ((value #f) (ready? #f))
-         (lambda ()
-           (if ready?
-               value
-               (let ((ans expression))
-                 (if ready?
-                     value
-                     (begin (set! value ans)
-                       (set! ready? #t)
-                       value)))))))))
-
   (define null-environment
     (lambda (n)
       (or (= n 5) (assertion-violation 'null-environment (format "expected 5, but got ~r, as argument 2" n)))
@@ -70,8 +54,7 @@
                           string? make-string string string-length string-ref
                           string=? string-ci=? string<? string>? string<=? string>=?
                           string-ci<? string-ci>? string-ci<=? string-ci>=?
-                          substring string-append string->list list->string
-                          string-copy string-fill!
+                          substring string-append string->list list->string string-copy
                           vector? make-vector vector vector-length vector-ref vector-set!
                           vector->list list->vector vector-fill!
                           procedure? apply map for-each

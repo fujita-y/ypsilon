@@ -6,10 +6,6 @@
 (define scheme-library-exports (make-parameter (make-core-hashtable)))
 (define scheme-library-versions (make-parameter (make-core-hashtable)))
 
-(define generate-global-id
-  (lambda (library-id symbol)
-    (string->symbol (format "~a~a~a~a" (current-library-prefix) library-id (current-library-suffix) symbol))))
-
 (define symbol-list->string
   (lambda (ref infix)
     (apply string-append
@@ -156,6 +152,39 @@
                (loop (vector->list lst)))))
       ht)))
 
+(define verify-no-unbound-id
+  (lambda (form lst imports)
+
+    (define find-expression
+      (lambda (id)
+        (call/cc (lambda (found)
+                   (let loop ((lst (if (eq? (car lst) 'begin) (cdr lst) lst)))
+                     (or (eq? lst id)
+                         (and (pair? lst)
+                              (not (memq (car lst) '(lambda quote)))
+                              (any1 loop lst)
+                              (found lst))))))))
+
+    (let ((ids (make-core-hashtable)))
+      (let loop ((lst (if (eq? (car lst) 'begin) (cdr lst) lst)))
+        (cond ((symbol? lst) (core-hashtable-set! ids lst #t))
+              ((pair? lst)
+               (or (memq (car lst) '(lambda quote))
+                   (for-each loop lst)))))
+      (every1 (lambda (b)
+                (or (symbol-contains (car b) (current-primitive-prefix))
+                    (symbol-contains (car b) (current-rename-delimiter))
+                    (symbol-contains (car b) (current-library-suffix))
+                    (core-hashtable-contains? imports (car b))
+                    (begin
+                      (current-macro-expression #f)
+                      (syntax-violation #f 
+                                        (format "attempt to reference unbound variable ~u" (car b))
+                                        (abbreviated-take-form form 4 8)
+                                        (find-expression (car b))))))
+              (core-hashtable->alist ids))
+      lst)))
+
 (define parse-exports
   (lambda (form specs)
     (let loop ((spec specs) (exports '()))
@@ -190,7 +219,7 @@
                     (and (assq id bindings)
                          (syntax-violation 'import (format "duplicate import identifiers ~a" id) (abbreviated-take-form form 4 8) subform)))
                   ids)))
-    
+
     (let loop ((spec specs) (imports '()))
       (destructuring-match spec
         (() imports)
@@ -291,33 +320,44 @@
          (and library-version (core-hashtable-set! (scheme-library-versions) library-id library-version))
          (let ((exports (parse-exports form export-spec))
                (imports (parse-imports form import-spec))
-               (depends (parse-depends form import-spec)))
-           (let ((ht-library-env (make-shield-id-table body)) (ht-immutables (make-core-hashtable)))
-             (let ((ht-publics (make-core-hashtable)))
-               (for-each (lambda (a)
-                           (and (core-hashtable-ref ht-publics (cdr a) #f)
-                                (syntax-violation 'library "duplicate export identifiers" (abbreviated-take-form form 4 8) (cdr a)))
-                           (core-hashtable-set! ht-publics (cdr a) #t)
-                           (core-hashtable-set! ht-immutables (car a) #t))
-                         exports))
+               (depends (parse-depends form import-spec))
+               (ht-immutables (make-core-hashtable))
+               (ht-imports (make-core-hashtable))
+               (ht-publics (make-core-hashtable)))
+           (for-each (lambda (a)
+                       (and (core-hashtable-ref ht-publics (cdr a) #f)
+                            (syntax-violation 'library "duplicate export identifiers" (abbreviated-take-form form 4 8) (cdr a)))
+                       (core-hashtable-set! ht-publics (cdr a) #t)
+                       (core-hashtable-set! ht-immutables (car a) #t))
+                     exports)
+           (for-each (lambda (a)
+                       (core-hashtable-set! ht-immutables (car a) #t)
+                       (cond ((core-hashtable-ref ht-imports (car a) #f)
+                              => (lambda (deno)
+                                   (or (eq? deno (cdr a))
+                                       (syntax-violation 'library "duplicate import identifiers" (abbreviated-take-form form 4 8) (car a)))))
+                             (else
+                              (core-hashtable-set! ht-imports (car a) (cdr a)))))
+                     imports)
+           (let* ((ht-env (make-shield-id-table body)) (ht-libenv (core-hashtable-copy ht-env)))
              (for-each (lambda (a)
-                         (core-hashtable-set! ht-immutables (car a) #t)
-                         (cond ((core-hashtable-ref ht-library-env (car a) #f)
-                                => (lambda (deno)
-                                     (if (unbound? deno)
-                                         (core-hashtable-set! ht-library-env (car a) (cdr a))
-                                         (or (eq? deno (cdr a))
-                                             (syntax-violation 'library "duplicate import identifiers" (abbreviated-take-form form 4 8) (car a))))))))
-                       imports)
-             (let ((library-env (permute-env ht-library-env)))
-               (parameterize ((current-immutable-identifiers ht-immutables))
-                 (expand-library-body form library-id library-version body exports imports depends (extend-env private-primitives-environment library-env) library-env)))))))
+                         (core-hashtable-set! ht-env (car a) (cdr a))
+                         (and (core-hashtable-contains? ht-libenv (car a))
+                              (core-hashtable-set! ht-libenv (car a) (cdr a))))
+                       (core-hashtable->alist ht-imports))
+             (parameterize ((current-immutable-identifiers ht-immutables))
+               (verify-no-unbound-id
+                form
+                (expand-library-body form library-id library-version body exports imports depends
+                                     (extend-env private-primitives-environment (permute-env ht-env))
+                                     (permute-env ht-libenv))
+                ht-imports))))))
       (_
        (syntax-violation 'library "expected library name, export spec, and import spec" (abbreviated-take-form form 4 8))))))
 
 (define expand-library-body
-  (lambda (form library-id library-version body exports imports depends env library-env)
-      
+  (lambda (form library-id library-version body exports imports depends env libenv)
+
     (define internal-definition?
       (lambda (lst)
         (and (pair? lst)
@@ -340,9 +380,9 @@
         (set! env (extend-env (list (cons datum1 datum2)) env))
         (for-each (lambda (a) (set-cdr! (cddr a) env)) macro-defs)))
 
-    (define extend-library-env!
+    (define extend-libenv!
       (lambda (datum1 datum2)
-        (set! library-env (extend-env (list (cons datum1 datum2)) library-env))))
+        (set! libenv (extend-env (list (cons datum1 datum2)) libenv))))
 
     (define check-duplicate-definition
       (lambda (defs macros renames)
@@ -400,7 +440,7 @@
                                      (for-each (lambda (a)
                                                  (if (not (unbound? (cdr a)))
                                                      (core-hashtable-set! ht (car a) (cdr a))))
-                                               (reverse library-env))
+                                               (reverse libenv))
                                      (core-hashtable->alist ht))))
                            ,@(map (lambda (e)
                                     (let ((id (cdr (assq (car e) renames)))
@@ -463,7 +503,7 @@
                                 (syntax-violation 'define-syntax "attempt to modify immutable binding" (car body)))
                            (let-values (((code . expr) (compile-macro (car body) clause env)))
                              (let ((new (generate-global-id library-id org)))
-                               (extend-library-env! org (make-import new))
+                               (extend-libenv! org (make-import new))
                                (cond ((procedure? code)
                                       (extend-env! org (make-macro code env))
                                       (loop more defs (cons (list org 'procedure (car expr)) macros) (acons org new renames)))
@@ -482,7 +522,7 @@
                         (let ((org (car def))
                               (new (generate-global-id library-id (car def))))
                           (extend-env! org new)
-                          (extend-library-env! org (make-import new))
+                          (extend-libenv! org (make-import new))
                           (loop (cdr body) (cons def defs) macros (acons org new renames)))))
                      ((eq? denote-define-macro deno)
                       (loop (cons (rewrite-define-macro (car body)) (cdr body)) defs macros renames))
@@ -549,7 +589,7 @@
                   (and (eq? (core-hashtable-ref (scheme-library-exports) library-id #f) 'pending)
                        (core-hashtable-set! (scheme-library-exports) library-id #f))))))))
     (unspecified)))
-      
+
 (define unify-import-bindings
   (let ((ht-import-bindings (make-core-hashtable 'equal?)))
     (lambda (lst)
@@ -569,7 +609,8 @@
     (core-hashtable-delete! (scheme-library-exports) library-id)))
 
 
-;; todo: clean up and unify expand-top-level-program and expand-library when ERR5RS spec available
+;; todo: clean up and unify expand-top-level-program and expand-library when ERR5RS available
+
 ;; r6rs top-level program
 
 (define expand-top-level-program
@@ -593,25 +634,36 @@
              (library-version (library-name->version form library-name)))
          (and library-version (core-hashtable-set! (scheme-library-versions) library-id library-version))
          (let ((imports (parse-imports form import-spec))
-               (depends (parse-depends form import-spec)))
-           (let ((ht-library-env (make-shield-id-table body)) (ht-immutables (make-core-hashtable)))
+               (depends (parse-depends form import-spec))
+               (ht-immutables (make-core-hashtable))
+               (ht-imports (make-core-hashtable)))
+           (for-each (lambda (a)
+                       (core-hashtable-set! ht-immutables (car a) #t)
+                       (cond ((core-hashtable-ref ht-imports (car a) #f)
+                              => (lambda (deno)
+                                   (or (eq? deno (cdr a))
+                                       (syntax-violation "top-level program" "duplicate import identifiers" (abbreviated-take-form form 4 8) (car a)))))
+                             (else
+                              (core-hashtable-set! ht-imports (car a) (cdr a)))))
+                     imports)
+           (let* ((ht-env (make-shield-id-table body)) (ht-libenv (core-hashtable-copy ht-env)))
              (for-each (lambda (a)
-                         (core-hashtable-set! ht-immutables (car a) #t)
-                         (cond ((core-hashtable-ref ht-library-env (car a) #f)
-                                => (lambda (deno)
-                                     (if (unbound? deno)
-                                         (core-hashtable-set! ht-library-env (car a) (cdr a))
-                                         (or (eq? deno (cdr a))
-                                             (syntax-violation "top-level program" "duplicate import identifiers" (abbreviated-take-form form 4 8) (car a))))))))
-                       imports)
-             (let ((library-env (permute-env ht-library-env)))
-               (parameterize ((current-immutable-identifiers ht-immutables))
-                 (expand-top-level-program-body form library-id library-version body imports depends (extend-env private-primitives-environment library-env) library-env)))))))
+                         (core-hashtable-set! ht-env (car a) (cdr a))
+                         (and (core-hashtable-contains? ht-libenv (car a))
+                              (core-hashtable-set! ht-libenv (car a) (cdr a))))
+                       (core-hashtable->alist ht-imports))
+             (parameterize ((current-immutable-identifiers ht-immutables))
+               (verify-no-unbound-id
+                #f
+                (expand-top-level-program-body form library-id library-version body imports depends
+                                               (extend-env private-primitives-environment (permute-env ht-env))
+                                               (permute-env ht-libenv))
+                ht-imports))))))
       (_
        (syntax-violation "top-level program" "expected import form and top-level body" (abbreviated-take-form form 4 8))))))
 
 (define expand-top-level-program-body
-  (lambda (form library-id library-version body imports depends env library-env)
+  (lambda (form library-id library-version body imports depends env libenv)
 
     (define internal-definition?
       (lambda (lst)
@@ -635,9 +687,9 @@
         (set! env (extend-env (list (cons datum1 datum2)) env))
         (for-each (lambda (a) (set-cdr! (cddr a) env)) macro-defs)))
 
-    (define extend-library-env!
+    (define extend-libenv!
       (lambda (datum1 datum2)
-        (set! library-env (extend-env (list (cons datum1 datum2)) library-env))))
+        (set! libenv (extend-env (list (cons datum1 datum2)) libenv))))
 
     (define check-duplicate-definition
       (lambda (defs macros renames)
@@ -695,7 +747,7 @@
                                      (for-each (lambda (a)
                                                  (if (not (unbound? (cdr a)))
                                                      (core-hashtable-set! ht (car a) (cdr a))))
-                                               (reverse library-env))
+                                               (reverse libenv))
                                      (core-hashtable->alist ht))))
                            ,@(map (lambda (e)
                                     (let ((id (cdr (assq (car e) renames)))
@@ -750,7 +802,7 @@
                                     (syntax-violation 'define-syntax "attempt to modify immutable binding" (car body)))
                                (let-values (((code . expr) (compile-macro (car body) clause env)))
                                  (let ((new (generate-global-id library-id org)))
-                                   (extend-library-env! org (make-import new))
+                                   (extend-libenv! org (make-import new))
                                    (cond ((procedure? code)
                                           (extend-env! org (make-macro code env))
                                           (loop more defs (cons (list org 'procedure (car expr)) macros) (acons org new renames)))
@@ -769,7 +821,7 @@
                             (let ((org (car def))
                                   (new (generate-global-id library-id (car def))))
                               (extend-env! org new)
-                              (extend-library-env! org (make-import new))
+                              (extend-libenv! org (make-import new))
                               (loop (cdr body) (cons def defs) macros (acons org new renames)))))
                          ((eq? denote-define-macro deno)
                           (loop (cons (rewrite-define-macro (car body)) (cdr body)) defs macros renames))
