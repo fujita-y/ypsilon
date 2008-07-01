@@ -14,5 +14,7 @@ version 0.9.5:
   * [http://code.google.com/p/ypsilon/issues/detail?id=12&can=1 Issue 12]: missing `&undefined` condition for unbound identifier exception. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
   * [http://code.google.com/p/ypsilon/issues/detail?id=15&can=1 Issue 15]: `(x ... . r)` pattern does not work. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
   * [http://code.google.com/p/ypsilon/issues/detail?id=17&can=1 Issue 17]: `raise-continuable` with non-serious condition does not return. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=18&can=1 Issue 18]: `datum->syntax` synthesized lexical context not working. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=19&can=1 Issue 19]: `(scheme-report-environment 5)` not working. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
