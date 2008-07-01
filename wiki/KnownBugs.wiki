@@ -17,6 +17,6 @@ version 0.9.5:
   * [http://code.google.com/p/ypsilon/issues/detail?id=18&can=1 Issue 18]: `datum->syntax` synthesized lexical context not working. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
   * [http://code.google.com/p/ypsilon/issues/detail?id=19&can=1 Issue 19]: `(scheme-report-environment 5)` not working. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
 
-  * reader incorrectly interpret Comma[,](U+002C), Apostrophe['](U+0027), and GraveAccent[`](U+0060) as delimiter. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * reader incorrectly interpret Comma "," (U+002C), Apostrophe "'" (U+0027), and GraveAccent "`" (U+0060) as delimiter. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
