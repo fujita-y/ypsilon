@@ -1,8 +1,7 @@
-#!/usr/local/bin/runic
+;;; Ypsilon Scheme System
+;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
+;;; See license.txt for terms and conditions of use.
 
-;; Copyright (c) 2007, 2008 Yoshikatsu Fujita. All rights reserved. 
-;; runic scheme environment
-;; See license.txt for terms and conditions of use.
   (begin
 
     (import (core primitives)

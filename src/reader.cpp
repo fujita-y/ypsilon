@@ -61,7 +61,7 @@ reader_t::make_char_map()
     for (int i = 0; i < array_sizeof(s_char_map); i++) {
         s_char_map[i]  = ((isalnum(i) || strchr(".!?*+-/:<=>$%&@^_~", i)) ? CHAR_MAP_SYMBOL : 0);
         s_char_map[i] |= ((isalnum(i) || strchr("!?*/:<=>$%&^_~", i)) ? CHAR_MAP_INITIAL : 0);
-        s_char_map[i] |= (strchr("#()[],'`;\"", i) ? CHAR_MAP_DELIMITER : 0);
+        s_char_map[i] |= (strchr("()[]\";#", i) ? CHAR_MAP_DELIMITER : 0);
     }
     s_char_map_ready = true;
 }
