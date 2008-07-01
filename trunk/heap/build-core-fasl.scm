@@ -1,8 +1,7 @@
-#!/usr/local/bin/runic
+;;; Ypsilon Scheme System
+;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
+;;; See license.txt for terms and conditions of use.
 
-  ;; runic scheme environment
-;; Copyright (c) 2007, 2008 Yoshikatsu Fujita. All rights reserved. 
-;; See license.txt for terms and conditions of use.
 ;; 
 ;; if libraries have (define foo <subr-id>) form and foo is referenced within same library, prebind may screwed up
 ;; to avoid problem, erase contents of core.vmi, restart, then build new core.vmi
