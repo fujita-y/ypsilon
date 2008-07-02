@@ -1,4 +1,4 @@
-  
+
 (library (rnrs (6))
 
   (export
@@ -34,7 +34,7 @@
    make-rectangular make-polar real-part imag-part
    magnitude angle
    number->string string->number
-   not boolean?
+   not boolean? boolean=?
    pair? cons car cdr
    caar cadr cdar cddr caaar caadr cadar
    caddr cdaar cdadr cddar cdddr caaaar caaadr
@@ -42,7 +42,7 @@
    cdaadr cdadar cdaddr cddaar cddadr cdddar cddddr
    null? list? list length append reverse list-tail
    list-ref map for-each
-   symbol? symbol->string string->symbol
+   symbol? symbol->string string->symbol symbol=?
    char? char->integer integer->char
    char=? char<? char>? char<=? char>=?
    string? make-string string string-length string-ref
@@ -98,7 +98,7 @@
    assp assoc assv assq cons*
 
    #;(rnrs sorting (6))
-   list-sort vector-sort
+   list-sort vector-sort vector-sort!
 
    #;(rnrs control (6))
    when unless do case-lambda
@@ -143,7 +143,7 @@
    &error make-error error?
    &violation make-violation violation?
    &assertion make-assertion-violation assertion-violation?
-   &irritants make-irritants-condition irritants-condition?
+   &irritants make-irritants-condition irritants-condition? condition-irritants
    &who make-who-condition who-condition? condition-who
    &non-continuable make-non-continuable-violation non-continuable-violation?
    &implementation-restriction make-implementation-restriction-violation implementation-restriction-violation?
@@ -236,6 +236,8 @@
    make-custom-textual-input-port
    make-custom-binary-output-port
    make-custom-textual-output-port
+   make-custom-binary-input/output-port
+   make-custom-textual-input/output-port
 
    #;(rnrs io simple (6))
    call-with-input-file
@@ -359,6 +361,9 @@
    flceiling
    fltruncate
    flround
+   flabs
+   flexpt
+   flsqrt
    flexp
    fllog
    flsin
@@ -368,6 +373,8 @@
    flacos
    flatan
    fixnum->flonum
+   &no-infinities make-no-infinities-violation no-infinities-violation?
+   &no-nans make-no-nans-violation no-nans-violation?
    
    #;(rnrs arithmetic bitwise (6))
    bitwise-not
@@ -443,6 +450,3 @@
           (rnrs enums (6)))
 
   ) ;[end]
-
-
-

@@ -13,7 +13,7 @@
       (environment '(only (rnrs r5rs) delay)
                    '(only (core primitives)
                           define quote lambda if set! cond case and or let
-                          let* letrec begin do quasiquote
+                          let* letrec begin do quasiquote unquote unquote-splicing syntax-rules
                           define-syntax let-syntax letrec-syntax
                           => ... else _))))
 
@@ -26,7 +26,7 @@
                    '(rnrs mutable-strings)
                    '(only (rnrs)
                           define quote lambda if set! cond case and or let
-                          let* letrec begin do quasiquote
+                          let* letrec begin do quasiquote unquote unquote-splicing syntax-rules
                           define-syntax let-syntax letrec-syntax
                           => ... else _
                           eqv? eq? equal?
@@ -68,4 +68,3 @@
                           write display newline write-char
                           ))))
   ) ;[end]
-

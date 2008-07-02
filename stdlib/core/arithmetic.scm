@@ -86,6 +86,7 @@
           fltruncate
           flround
           flexp
+          flexpt
           fllog
           flsin
           flcos
@@ -113,7 +114,10 @@
           bitwise-arithmetic-shift-left
           bitwise-arithmetic-shift-right
           bitwise-rotate-bit-field
-          bitwise-reverse-bit-field)
+          bitwise-reverse-bit-field
+
+          &no-infinities make-no-infinities-violation no-infinities-violation?
+          &no-nans make-no-nans-violation no-nans-violation?)
 
   (import (core primitives))
 
@@ -134,7 +138,7 @@
     (lambda (x y)
       (let ((d0 (fldiv0 x y)))
         (values d0 (fl- x (fl* d0 y))))))
-  
+
   (define 2^fixnum-width (expt 2 (fixnum-width)))
 
   (define fxmod
@@ -212,7 +216,7 @@
             n))))
 
   (define bitwise-arithmetic-shift-left bitwise-arithmetic-shift)
-  
+
   (define bitwise-if
     (lambda (ei1 ei2 ei3)
       (bitwise-ior (bitwise-and ei1 ei2)
@@ -221,7 +225,7 @@
   (define bitwise-bit-set?
     (lambda (ei1 ei2)
       (not (zero? (bitwise-and (bitwise-arithmetic-shift 1 ei2) ei1)))))
-  
+
   (define bitwise-copy-bit
     (lambda (ei1 ei2 ei3)
       (let* ((mask (bitwise-arithmetic-shift 1 ei2)))
@@ -246,7 +250,7 @@
   (define bitwise-arithmetic-shift-right
     (lambda (ei1 ei2)
       (bitwise-arithmetic-shift ei1 (- ei2))))
-  
+
   (define bitwise-rotate-bit-field
     (lambda (ei1 ei2 ei3 ei4)
       (let* ((n ei1)
@@ -283,5 +287,3 @@
             n))))
 
   ) ;[end]
-
-

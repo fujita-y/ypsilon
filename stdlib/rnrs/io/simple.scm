@@ -1,6 +1,6 @@
 
 (library (rnrs io simple (6))
-  
+
   (export &i/o make-i/o-error i/o-error?
           &i/o-read make-i/o-read-error i/o-read-error?
           &i/o-write make-i/o-write-error i/o-write-error?
@@ -13,7 +13,13 @@
           &i/o-port make-i/o-port-error i/o-port-error? i/o-error-port
           &i/o-decoding make-i/o-decoding-error i/o-decoding-error?
           &i/o-encoding make-i/o-encoding-error i/o-encoding-error? i/o-encoding-error-char
-          
+          current-input-port
+          current-output-port
+          current-error-port
+          eof-object
+          eof-object?
+          input-port?
+          output-port?
           call-with-input-file
           call-with-output-file
           with-input-from-file
@@ -29,5 +35,5 @@
           newline
           display
           write)
-  
+
   (import (core io)))

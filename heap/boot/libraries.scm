@@ -167,6 +167,7 @@
                         fltruncate
                         flround
                         flexp
+                        flexpt
                         fllog
                         flsin
                         flcos
@@ -214,6 +215,8 @@
                         fxarithmetic-shift-right
                         fxbit-field
                         fxcopy-bit-field
+                        &no-infinities make-no-infinities-violation no-infinities-violation?
+                        &no-nans make-no-nans-violation no-nans-violation?
                         ; arith bitwise
                         bitwise-not
                         bitwise-and
@@ -271,7 +274,7 @@
                         &error make-error error?
                         &violation make-violation violation?
                         &assertion make-assertion-violation assertion-violation?
-                        &irritants make-irritants-condition irritants-condition?
+                        &irritants make-irritants-condition irritants-condition? condition-irritants
                         &who make-who-condition who-condition? condition-who
                         &non-continuable make-non-continuable-violation non-continuable-violation?
                         &implementation-restriction make-implementation-restriction-violation implementation-restriction-violation?
@@ -507,4 +510,3 @@
 ;; top-level macro
 (copy-environment-macros! (system-environment) (interaction-environment) '(import))
 (set! immutable-primitives (core-hashtable-copy immutable-primitives #f))
-

@@ -15,7 +15,7 @@
           &error make-error error?
           &violation make-violation violation?
           &assertion make-assertion-violation assertion-violation?
-          &irritants make-irritants-condition irritants-condition?
+          &irritants make-irritants-condition irritants-condition? condition-irritants
           &who make-who-condition who-condition? condition-who
           &non-continuable make-non-continuable-violation non-continuable-violation?
           &implementation-restriction make-implementation-restriction-violation implementation-restriction-violation?
@@ -23,33 +23,9 @@
           &syntax make-syntax-violation syntax-violation? syntax-violation-form syntax-violation-subform
           &undefined make-undefined-violation undefined-violation?)
 
-  (import (core intrinsics)
-          (only (core primitives)
-                define-syntax
-                format
-                condition
-                simple-conditions
-                condition?
-                condition-predicate
-                condition-accessor
-                &condition
-                &message make-message-condition message-condition? condition-message
-                &warning make-warning warning?
-                &serious make-serious-condition serious-condition?
-                &error make-error error?
-                &violation make-violation violation?
-                &assertion make-assertion-violation assertion-violation?
-                &irritants make-irritants-condition irritants-condition?
-                &who make-who-condition who-condition? condition-who
-                &non-continuable make-non-continuable-violation non-continuable-violation?
-                &implementation-restriction make-implementation-restriction-violation implementation-restriction-violation?
-                &lexical make-lexical-violation lexical-violation?
-                &syntax make-syntax-violation syntax-violation? syntax-violation-form syntax-violation-subform
-                &undefined make-undefined-violation undefined-violation?)
-          (only (core syntax-case)
-                syntax-case syntax
-                with-syntax datum->syntax syntax->datum)
-          (only (core records) define-record-type))
+  (import (core primitives)
+          (core syntax-case)
+          (core records))
 
   (define-syntax define-condition-type
     (lambda (x)
