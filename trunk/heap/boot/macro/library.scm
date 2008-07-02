@@ -142,6 +142,7 @@
 (define make-shield-id-table
   (lambda (lst)
     (let ((ht (make-core-hashtable)) (deno (make-unbound)))
+      (for-each (lambda (id) (core-hashtable-set! ht id deno)) coreform-primitives)
       (let loop ((lst lst))
         (cond ((pair? lst)
                (loop (car lst))
@@ -176,12 +177,13 @@
                     (symbol-contains (car b) (current-rename-delimiter))
                     (symbol-contains (car b) (current-library-suffix))
                     (core-hashtable-contains? imports (car b))
+                    (memq (car b) coreform-primitives)
                     (begin
                       (current-macro-expression #f)
-                      (syntax-violation #f 
-                                        (format "attempt to reference unbound variable ~u" (car b))
-                                        (abbreviated-take-form form 4 8)
-                                        (find-expression (car b))))))
+                      (undefined/syntax-violation #f
+                                                  (format "attempt to reference unbound variable ~u" (car b))
+                                                  (abbreviated-take-form form 4 8)
+                                                  (find-expression (car b))))))
               (core-hashtable->alist ids))
       lst)))
 
@@ -626,7 +628,7 @@
                 (else
                  (loop (cdr lst) (cons (car lst) bounds) unbounds))))))
 
-    (define library-name '(.r6rs-top))
+    (define library-name '(.R6RS-TOP))
 
     (destructuring-match form
       ((('import import-spec ...) body ...)

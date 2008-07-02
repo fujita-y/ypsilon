@@ -236,14 +236,18 @@ utf8_string_set(object_heap_t* heap, scm_string_t obj, int index, int ch)
         datum[size_new] = 0;
         return true;
     }
-    uint8_t* datum2 = (uint8_t*)heap->allocate_private(size_new + 1);
-    memcpy(datum2, datum, offset);
-    for (int i = 0; i < n_new; i++) datum2[offset + i] = utf8[i];
-    memcpy(datum2 + offset + n_new, datum + offset + n_prev, size_prev - offset - n_prev);
-    datum2[size_new] = 0;
-    uint8_t* prev = (uint8_t*)obj->name;
-    obj->name = (char*)datum2;
-    obj->hdr = scm_hdr_string | (size_new << HDR_STRING_SIZE_SHIFT);
-    heap->deallocate_private(prev);
-    return true;
+    scm_hdr_t hdr2 = scm_hdr_string | (size_new << HDR_STRING_SIZE_SHIFT);
+    if (HDR_STRING_SIZE(hdr2) == size_new) {
+        uint8_t* datum2 = (uint8_t*)heap->allocate_private(size_new + 1);
+        memcpy(datum2, datum, offset);
+        for (int i = 0; i < n_new; i++) datum2[offset + i] = utf8[i];
+        memcpy(datum2 + offset + n_new, datum + offset + n_prev, size_prev - offset - n_prev);
+        datum2[size_new] = 0;
+        uint8_t* prev = (uint8_t*)obj->name;
+        obj->name = (char*)datum2;
+        obj->hdr = hdr2;
+        heap->deallocate_private(prev);
+        return true;
+    }
+    return false;
 }

@@ -700,7 +700,10 @@ scm_obj_t
 subr_make_string(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
-        if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) return make_string(vm->m_heap, FIXNUM(argv[0]), 0x20);
+        if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
+            scm_string_t string = make_string(vm->m_heap, FIXNUM(argv[0]), 0x20);
+            if (HDR_STRING_SIZE(string->hdr) == FIXNUM(argv[0])) return string;
+        }
         if (exact_non_negative_integer_pred(argv[0])) {
             invalid_argument_violation(vm, "make-string", "too many elements,", argv[0], 0, argc, argv);
             return scm_undef;
@@ -716,11 +719,14 @@ subr_make_string(VM* vm, int argc, scm_obj_t argv[])
                 int bytes = cnvt_ucs4_to_utf8(c, utf8);
                 int size = FIXNUM(argv[0]) * bytes;
                 scm_string_t string = make_string(vm->m_heap, size, ' ');
-                for (int i = 0; i < size; i += bytes) memcpy(string->name + i, utf8, bytes);
-                return string;
+                if (HDR_STRING_SIZE(string->hdr) == size) {
+                    for (int i = 0; i < size; i += bytes) memcpy(string->name + i, utf8, bytes);
+                    return string;
+                }
+            } else {
+                wrong_type_argument_violation(vm, "make-string", 1, "char", argv[1], argc, argv);
+                return scm_undef;
             }
-            wrong_type_argument_violation(vm, "make-string", 1, "char", argv[1], argc, argv);
-            return scm_undef;
         }
         if (exact_non_negative_integer_pred(argv[0])) {
             invalid_argument_violation(vm, "make-string", "too many elements,", argv[0], 0, argc, argv);
@@ -818,6 +824,10 @@ subr_string_set(VM* vm, int argc, scm_obj_t argv[])
                     if (index >= 0 && index < HDR_STRING_SIZE(string->hdr)) {
                         if (HDR_STRING_LITERAL(string->hdr) == 0) {
                             if (utf8_string_set(vm->m_heap, string, index, CHAR(argv[2]))) return string;
+                            if (index < utf8_string_length(string)) {
+                                invalid_argument_violation(vm, "string-set!", "too many elements in string", NULL, 0, 0, NULL);
+                                return scm_undef;
+                            }
                             invalid_argument_violation(vm, "string-set!", "index out of bounds,", argv[1], 1, argc, argv);
                             return scm_undef;
                         }
@@ -1054,14 +1064,18 @@ subr_string_append(VM* vm, int argc, scm_obj_t argv[])
         }
     }
     scm_string_t string = make_string(vm->m_heap, size, 0);
-    int p = 0;
-    for (int i = 0; i < argc; i++) {
-        scm_string_t src = (scm_string_t)argv[i];
-        int len = HDR_STRING_SIZE(src->hdr);
-        memcpy(string->name + p, src->name, len);
-        p += len;
+    if (HDR_STRING_SIZE(string->hdr) == size) {
+        int p = 0;
+        for (int i = 0; i < argc; i++) {
+            scm_string_t src = (scm_string_t)argv[i];
+            int len = HDR_STRING_SIZE(src->hdr);
+            memcpy(string->name + p, src->name, len);
+            p += len;
+        }
+        return string;
     }
-    return string;
+    invalid_argument_violation(vm, "string-append", "too many elements in string", NULL, 0, 0, NULL);
+    return scm_undef;
 }
 
 // string-copy
@@ -1092,11 +1106,16 @@ subr_string_fill(VM* vm, int argc, scm_obj_t argv[])
                 int len = utf8_string_length(string);
                 int bsize = len * utf8_sizeof_ucs4(ucs4);
                 if (vm->m_heap->allocated_size((uint8_t*)string->name) < bsize + 1) {
+                    scm_hdr_t hdr2 = scm_hdr_string | (bsize << HDR_STRING_SIZE_SHIFT);
+                    if (HDR_STRING_SIZE(hdr2) != bsize) {
+                        invalid_argument_violation(vm, "string-fill!", "too many elements in string", NULL, 0, 0, NULL);
+                        return scm_undef;
+                    }
                     uint8_t* prev = (uint8_t*)string->name;
                     uint8_t* datum2 = (uint8_t*)vm->m_heap->allocate_private(bsize + 1);
                     datum2[bsize] = 0;
                     string->name = (char*)datum2;
-                    string->hdr = scm_hdr_string | (bsize << HDR_STRING_SIZE_SHIFT);
+                    string->hdr = hdr2;
                     vm->m_heap->deallocate_private(prev);
                 } else {
                     string->hdr = scm_hdr_string | (bsize << HDR_STRING_SIZE_SHIFT);
@@ -1139,7 +1158,10 @@ scm_obj_t
 subr_make_vector(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
-        if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) return make_vector(vm->m_heap, FIXNUM(argv[0]), scm_unspecified);
+        if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
+            scm_vector_t vect = make_vector(vm->m_heap, FIXNUM(argv[0]), scm_unspecified);
+            if (HDR_VECTOR_COUNT(vect->hdr) == FIXNUM(argv[0])) return vect;
+        }
         if (exact_non_negative_integer_pred(argv[0])) {
             invalid_argument_violation(vm, "make-vector", "too many elements,", argv[0], 0, argc, argv);
             return scm_undef;
