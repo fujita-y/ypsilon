@@ -20,6 +20,8 @@
     &irritants
     &lexical
     &message
+    &no-infinities
+    &no-nans
     &non-continuable
     &serious
     &syntax
@@ -221,6 +223,7 @@
     cond
     condition
     condition-accessor
+    condition-irritants
     condition-message
     condition-predicate
     condition-who
@@ -351,6 +354,7 @@
     fldiv0-and-mod0
     fleven?
     flexp
+    flexpt
     flfinite?
     flfloor
     flinfinite?
@@ -561,6 +565,8 @@
     make-lexical-violation
     make-list
     make-message-condition
+    make-no-infinities-violation
+    make-no-nans-violation
     make-non-continuable-violation
     make-parameter
     make-polar
@@ -606,6 +612,8 @@
     native-transcoder-descriptor
     negative?
     newline
+    no-infinities-violation?
+    no-nans-violation?
     non-continuable-violation?
     nonblock-byte-ready?
     not

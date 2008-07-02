@@ -12,7 +12,7 @@
           &violation make-violation violation?
           &assertion make-assertion-violation assertion-violation?
           &irritants make-irritants-condition irritants-condition?
-          &who make-who-condition who-condition? condition-who
+          &who make-who-condition who-condition? condition-who condition-irritants
           &non-continuable make-non-continuable-violation non-continuable-violation?
           &implementation-restriction make-implementation-restriction-violation implementation-restriction-violation?
           &lexical make-lexical-violation lexical-violation?

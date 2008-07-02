@@ -84,6 +84,8 @@
           make-custom-binary-input-port
           make-custom-textual-input-port
           make-custom-binary-output-port
-          make-custom-textual-output-port)
+          make-custom-textual-output-port
+          make-custom-binary-input/output-port
+          make-custom-textual-input/output-port)
 
   (import (core io)))

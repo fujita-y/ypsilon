@@ -673,6 +673,27 @@ subr_fl_exp(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// flexpt
+scm_obj_t
+subr_fl_expt(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 2) {
+        if (FLONUMP(argv[0])) {
+            if (FLONUMP(argv[1])) {
+                double fl1 = FLONUM(argv[0]);
+                double fl2 = FLONUM(argv[1]);
+                return make_flonum(vm->m_heap, pow(fl1, fl2));
+            }
+            wrong_type_argument_violation(vm, "flexpt", 1, "flonum", argv[1], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "flexpt", 0, "flonum", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "flexpt", 2, 2, argc, argv);
+    return scm_undef;
+}
+
 // fllog
 scm_obj_t
 subr_fl_log(VM* vm, int argc, scm_obj_t argv[])
@@ -843,6 +864,7 @@ void init_subr_flonum(object_heap_t* heap)
     DEFSUBR("fltruncate", subr_fl_truncate);
     DEFSUBR("flround", subr_fl_round);
     DEFSUBR("flexp", subr_fl_exp);
+    DEFSUBR("flexpt", subr_fl_expt);
     DEFSUBR("fllog", subr_fl_log);
     DEFSUBR("flsin", subr_fl_sin);
     DEFSUBR("flcos", subr_fl_cos);

@@ -591,16 +591,29 @@ bignum_shift_right_to_double(scm_bignum_t obj, int shift)
 static double
 rational_to_double(scm_rational_t obj)
 {
+    const int BITSIZE_TH = 96;
     double nume = FIXNUMP(obj->nume) ? FIXNUM(obj->nume) : bignum_to_double((scm_bignum_t)obj->nume);
     double deno = FIXNUMP(obj->deno) ? FIXNUM(obj->deno) : bignum_to_double((scm_bignum_t)obj->deno);
     if (isinf(nume) || isinf(deno)) {
-        const int BITSIZE_TH = 1024;
-        int nume_bitsize = bn_bitsize((scm_bignum_t)obj->nume);
-        int deno_bitsize = bn_bitsize((scm_bignum_t)obj->deno);
-        if (nume_bitsize > BITSIZE_TH && deno_bitsize > BITSIZE_TH) {
+        if (isinf(nume) && isinf(deno)) {
+            int nume_bitsize = bn_bitsize((scm_bignum_t)obj->nume);
+            int deno_bitsize = bn_bitsize((scm_bignum_t)obj->deno);
             int shift = (nume_bitsize > deno_bitsize) ? nume_bitsize - BITSIZE_TH : deno_bitsize - BITSIZE_TH;
+            if (shift < 1) shift = 1;
             nume = bignum_shift_right_to_double((scm_bignum_t)obj->nume, shift);
             deno = bignum_shift_right_to_double((scm_bignum_t)obj->deno, shift);
+        } else if (isinf(deno)) {
+            int deno_bitsize = bn_bitsize((scm_bignum_t)obj->deno);
+            int shift = deno_bitsize - BITSIZE_TH;
+            if (shift < 1) shift = 1;
+            nume = ldexp(nume, -shift);
+            deno = bignum_shift_right_to_double((scm_bignum_t)obj->deno, shift);
+        } else {
+            int nume_bitsize = bn_bitsize((scm_bignum_t)obj->nume);
+            int shift = nume_bitsize - BITSIZE_TH;
+            if (shift < 1) shift = 1;
+            nume = bignum_shift_right_to_double((scm_bignum_t)obj->nume, shift);
+            deno = ldexp(deno, -shift);
         }
     }
     return nume / deno;
@@ -3499,18 +3512,27 @@ arith_sqrt(object_heap_t* heap, scm_obj_t obj)
             bn_set_sign(&s2, 1);
             bn_mul(&s2, &workpad, &workpad);
             if (bn_cmp(bn, &s2) == 0) {
-                if (bn_get_sign(bn) == 1) {
-                    return oprtr_norm_integer(heap, &workpad);
-                } else {
-                    return make_complex(heap, MAKEFIXNUM(0), oprtr_norm_integer(heap, &workpad));
-                }
+                if (bn_get_sign(bn) == 1) return oprtr_norm_integer(heap, &workpad);
+                return make_complex(heap, MAKEFIXNUM(0), oprtr_norm_integer(heap, &workpad));
             }
         }
-        goto inexact;
+        const int BITSIZE_TH = 96;
+        int bitsize = bn_bitsize(bn);
+        int shift = bitsize - BITSIZE_TH;
+        if (shift <= 1) {
+            shift = 2;
+        } else if (shift & 1) {
+            shift++;
+        }
+        double s = bignum_shift_right_to_double(bn, shift);
+        s = ldexp(sqrt(s), shift/2);
+        if (bn_get_sign(bn) == 1) return make_flonum(heap, s);
+        return make_complex(heap, make_flonum(heap, 0.0), make_flonum(heap, s));
     }
     if (RATIONALP(obj)) {
         scm_rational_t rn = (scm_rational_t)obj;
         scm_obj_t numerator;
+        scm_obj_t denominator;
         bool complex = false;
         if (n_negative_pred(rn->nume)) {
             numerator = arith_sqrt(heap, arith_negate(heap, rn->nume));
@@ -3518,14 +3540,15 @@ arith_sqrt(object_heap_t* heap, scm_obj_t obj)
         } else {
             numerator = arith_sqrt(heap, rn->nume);
         }
-        if (FIXNUMP(numerator) | BIGNUMP(numerator)) {
-            scm_obj_t denominator = arith_sqrt(heap, rn->deno);
-            if (FIXNUMP(denominator) | BIGNUMP(denominator)) {
+        denominator = arith_sqrt(heap, rn->deno);
+        if (FIXNUMP(numerator) || BIGNUMP(numerator)) {
+            if (FIXNUMP(denominator) || BIGNUMP(denominator)) {
                 if (complex) return make_complex(heap, MAKEFIXNUM(0), oprtr_reduction(heap, numerator, denominator));
                 return oprtr_reduction(heap, numerator, denominator);
-            }
+            }            
         }
-        goto inexact;
+        if (complex) return make_complex(heap, make_flonum(heap, 0.0), arith_div(heap, numerator, denominator));
+        return arith_div(heap, numerator, denominator);
     }
     if (COMPLEXP(obj)) {
         scm_complex_t cn = (scm_complex_t)obj;

@@ -31,7 +31,7 @@
           make-rectangular make-polar real-part imag-part
           magnitude angle
           number->string string->number
-          not boolean?
+          not boolean? boolean=?
           pair? cons car cdr
           caar cadr cdar cddr caaar caadr cadar
           caddr cdaar cdadr cddar cdddr caaaar caaadr
@@ -39,7 +39,7 @@
           cdaadr cdadar cdaddr cddaar cddadr cdddar cddddr
           null? list? list length append reverse list-tail
           list-ref map for-each
-          symbol? symbol->string string->symbol
+          symbol? symbol->string string->symbol symbol=?
           char? char->integer integer->char
           char=? char<? char>? char<=? char>=?
           string? make-string string string-length string-ref

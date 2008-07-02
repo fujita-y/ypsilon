@@ -311,3 +311,17 @@
 (define make-i/o-encoding-error (record-constructor (record-type-rcd &i/o-encoding)))
 (define i/o-encoding-error? (condition-predicate (record-type-rtd &i/o-encoding)))
 (define i/o-encoding-error-char (condition-accessor (record-type-rtd &i/o-encoding) &i/o-encoding-char))
+
+(define &no-infinities
+  (let ((rtd (make-record-type-descriptor '&no-infinities (record-type-rtd &implementation-restriction) #f #f #f '#())))
+    (let ((rcd (make-record-constructor-descriptor rtd (record-type-rcd &implementation-restriction) #f)))
+      (make-record-type '&no-infinities rtd rcd))))
+(define make-no-infinities-violation (record-constructor (record-type-rcd &no-infinities)))
+(define no-infinities-violation? (condition-predicate (record-type-rtd &no-infinities)))
+
+(define &no-nans
+  (let ((rtd (make-record-type-descriptor '&no-nans (record-type-rtd &implementation-restriction) #f #f #f '#())))
+    (let ((rcd (make-record-constructor-descriptor rtd (record-type-rcd &implementation-restriction) #f)))
+      (make-record-type '&no-nans rtd rcd))))
+(define make-no-nans-violation (record-constructor (record-type-rcd &no-nans)))
+(define no-nans-violation? (condition-predicate (record-type-rtd &no-nans)))
