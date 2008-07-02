@@ -31,7 +31,7 @@
     (parse-imports `(environment ,@ref) ref)
     (tuple 'type:eval-environment `,ref)))
 
-(define eval
+#;(define eval
   (lambda (expr env)
     (cond ((environment? env)
            (parameterize ((current-environment env))
@@ -47,6 +47,28 @@
                            (.&DEFINE .&RESULT ,expr))
                          (let ((result ,(generate-global-id (generate-library-id '(.&ANONYMOUS)) '.&RESULT)))
                            (.unintern-scheme-library ',(generate-library-id '(.&ANONYMOUS)))
+                           result)))))))
+(define eval
+  (lambda (expr env)
+    (cond ((environment? env)
+           (parameterize ((current-environment env))
+             (interpret expr)))
+          (else
+           (or (eq? (tuple-ref env 0) 'type:eval-environment)
+               (assertion-violation 'eval (format "expected environment, but got ~r, as argument 2" env)))
+           (interpret `(begin
+                         (library (.R6RS-EVAL)
+                           (export)
+                           (import (rename (only (core primitives) 
+                                                 set-top-level-value! 
+                                                 string->symbol)
+                                           (set-top-level-value! .SET-TOP-LEVEL-VALUE!)
+                                           (string->symbol .STRING->SYMBOL))
+                                   ,@(tuple-ref env 1))
+                           (.SET-TOP-LEVEL-VALUE! (.STRING->SYMBOL ".R6RS-EVAL-RESULT") ,expr))
+                         (let ((result .R6RS-EVAL-RESULT))
+                           (set-top-level-value! '.R6RS-EVAL-RESULT .&UNDEF)
+                           (.unintern-scheme-library ',(generate-library-id '(.R6RS-EVAL)))
                            result)))))))
 
 (define scheme-load-verbose (make-parameter #f))

@@ -127,8 +127,7 @@
     (define concatenate?
       (lambda (lst)
         (and (pair? (car lst))
-             (or (list? (car lst))
-                 (syntax-violation #f "expression is not a proper list" (car lst)))
+             (list? (car lst))
              (denote-begin? env (caar lst)))))
 
     (annotate
@@ -149,8 +148,7 @@
     (define concatenate?
       (lambda (lst)
         (and (pair? (car lst))
-             (or (list? (car lst))
-                 (syntax-violation #f "expression is not a proper list" (car lst)))
+             (list? (car lst))
              (denote-begin? env (caar lst)))))
 
     (annotate
@@ -189,7 +187,7 @@
     (define syntax-rules?
       (lambda (id)
         (denote-syntax-rules? env id)))
-    
+
     (destructuring-match transformer
       (((? syntax-rules? _))
        (syntax-violation 'syntax-rules "expected literals and rules" transformer))
@@ -395,12 +393,12 @@
                         (annotate
                          `((letrec* ,(rewrite-letrec*-bindings (map list lhs rhs) env) ,@(expand-each body env)))
                          form-body))))))))
-                     
+
     (let ((suffix (fresh-rename-count)))
       (let loop ((body (flatten-begin form-body env)) (defs '()) (renames '()))
         (cond ((null? body) body)
-              ((and (pair? (car body)) (symbol? (caar body)))         
-               (set! list-of-lhs (cons (caar body) list-of-lhs))          
+              ((and (pair? (car body)) (symbol? (caar body)))
+               (set! list-of-lhs (cons (caar body) list-of-lhs))
                (let ((deno (env-lookup env (caar body))))
                  (cond ((eq? denote-begin deno)
                         (loop (flatten-begin body env) defs renames))
@@ -426,8 +424,8 @@
                                    => (lambda (e)
                                         (current-macro-expression form)
                                         (syntax-violation 'define
-                                               (format "identifier ~u already used to determine the meaning of undeferred portions of definition" org)
-                                               (car body)))))       
+                                                          (format "identifier ~u already used to determine the meaning of undeferred portions of definition" org)
+                                                          (car body)))))
                             (extend-env! org new)
                             (loop (cdr body) (cons def defs) (acons org new renames)))))
                        ((or (macro? deno)
@@ -471,8 +469,8 @@
                       (expand-form expr (extend-env renames env))))
                    ((unbound? deno)
                     (undefined/syntax-violation #f
-                                      (format "attempt to reference unbound identifier ~u" form)
-                                      (current-macro-expression)))
+                                                (format "attempt to reference unbound identifier ~u" form)
+                                                (current-macro-expression)))
                    ((out-of-context? deno)
                     (if (cdr deno)
                         (syntax-violation #f
@@ -487,12 +485,21 @@
                    ((pattern-variable? deno)
                     (syntax-violation #f (format "misplaced pattern variable ~u" form) (current-macro-expression)))
                    (else form))))
-          ((list? form)
-           (and (null? form) (syntax-violation #f "invalid expression" form))
+          ((null? form)
+           (syntax-violation #f "invalid expression" form))
+          ((pair? form)
            (current-macro-expression form)
            (cond ((symbol? (car form))
                   (let ((deno (env-lookup env (car form))))
-                    (cond ((special? deno)
+                    (cond ((macro? deno)
+                           (let-values (((expr renames) (expand-macro-use form env deno)))
+                             (if (< (expansion-trace-level) (expansion-backtrace))
+                                 (parameterize ((expansion-trace-stack (cons form (expansion-trace-stack)))
+                                                (expansion-trace-level (+ 1 (expansion-trace-level))))
+                                   (expand-form expr (extend-env renames env)))
+                                 (expand-form expr (extend-env renames env)))))
+                          ((special? deno)
+                           (or (list? form) (syntax-violation #f "expression is not a proper list" form))
                            (if (or (unexpect-top-level-form)
                                    (eq? denote-begin deno)
                                    (eq? denote-define deno)
@@ -504,25 +511,20 @@
                                ((cdr deno) form env)
                                (parameterize ((unexpect-top-level-form #t))
                                  ((cdr deno) form env))))
-                          ((macro? deno)
-                           (let-values (((expr renames) (expand-macro-use form env deno)))
-                             (if (< (expansion-trace-level) (expansion-backtrace))
-                                 (parameterize ((expansion-trace-stack (cons form (expansion-trace-stack)))
-                                                (expansion-trace-level (+ 1 (expansion-trace-level))))
-                                   (expand-form expr (extend-env renames env)))
-                                 (expand-form expr (extend-env renames env)))))
                           (else
+                           (or (list? form) (syntax-violation #f "expression is not a proper list" form))
                            (if (unexpect-top-level-form)
                                (expand-each form env)
                                (parameterize ((unexpect-top-level-form #t))
-                                 (expand-each form env)))))))                        
+                                 (expand-each form env)))))))
                  (else
-                  (parameterize ((unexpect-top-level-form #t))
-                    (expand-each form env)))))
-          ((pair? form)
-           (syntax-violation #f "expression is not a proper list" form))
+                  (or (list? form) (syntax-violation #f "expression is not a proper list" form))
+                  (if (unexpect-top-level-form)
+                      (expand-each form env)
+                      (parameterize ((unexpect-top-level-form #t))
+                        (expand-each form env))))))
           ((or (boolean? form) (number? form) (char? form) (string? form) (bytevector? form)) form)
-          (else 
+          (else
            (syntax-violation #f "invalid expression" form)))))
 
 (define macro-expand

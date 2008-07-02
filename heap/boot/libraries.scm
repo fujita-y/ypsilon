@@ -3,6 +3,7 @@
 ;;; See license.txt for terms and conditions of use.
 
 (define immutable-primitives (make-core-hashtable))
+(define coreform-primitives '(begin quote define set! lambda let letrec* if or and))
 
 (let ()
 
@@ -503,7 +504,6 @@
   (for-each (lambda (a) (core-hashtable-set! immutable-primitives a #t)) coreform-private-procs)
   (copy-environment-variables! (system-environment) (interaction-environment) coreform-private-procs))
 
-            
 ;; top-level macro
 (copy-environment-macros! (system-environment) (interaction-environment) '(import))
 (set! immutable-primitives (core-hashtable-copy immutable-primitives #f))
