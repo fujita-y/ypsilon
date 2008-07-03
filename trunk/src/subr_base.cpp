@@ -1171,7 +1171,10 @@ subr_make_vector(VM* vm, int argc, scm_obj_t argv[])
         }
     }
     if (argc == 2) {
-        if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) return make_vector(vm->m_heap, FIXNUM(argv[0]), argv[1]);
+        if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
+            scm_vector_t vect = make_vector(vm->m_heap, FIXNUM(argv[0]), argv[1]);
+            if (HDR_VECTOR_COUNT(vect->hdr) == FIXNUM(argv[0])) return vect;
+        }
         if (exact_non_negative_integer_pred(argv[0])) {
             invalid_argument_violation(vm, "make-vector", "too many elements,", argv[0], 0, argc, argv);
             return scm_undef;

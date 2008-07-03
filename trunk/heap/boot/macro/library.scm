@@ -834,6 +834,6 @@
                             (set! env new)
                             (loop (append (flatten-begin (list expr) env) (cdr body)) defs macros renames)))
                          (else
-                          (loop (cons `(define ,(expression-tag) ,(car body)) (cdr body)) defs macros renames)))))
+                          (loop (cons `(.define ,(expression-tag) ,(car body)) (cdr body)) defs macros renames)))))
                 (else
-                 (loop (cons `(define ,(expression-tag) ,(car body)) (cdr body)) defs macros renames)))))))
+                 (loop (cons `(.define ,(expression-tag) ,(car body)) (cdr body)) defs macros renames)))))))
