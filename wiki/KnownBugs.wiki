@@ -19,7 +19,7 @@ version 0.9.5:
   * [http://code.google.com/p/ypsilon/issues/detail?id=20&can=1 Issue 20]: `make-vector` is broken for 1M elements. (reopened)
   * [http://code.google.com/p/ypsilon/issues/detail?id=21&can=1 Issue 21]: `eof-object?` not exported from (rnrs io simple). (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
   * [http://code.google.com/p/ypsilon/issues/detail?id=22&can=1 Issue 22]: `eval` not working with environment which does not contain `define`. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=23&can=1 Issue 23]: Missing R6RS bindings. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=23&can=1 Issue 23]: Missing R^6^RS bindings. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
   * [http://code.google.com/p/ypsilon/issues/detail?id=24&can=1 Issue 24]: Macro use not allowing improper list form. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
 
   * reader incorrectly interpret Comma "," (U+002C), Apostrophe "'" (U+0027), and Grave Accent "`" (U+0060) as delimiter. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
