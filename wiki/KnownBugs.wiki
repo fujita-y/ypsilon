@@ -22,7 +22,8 @@ version 0.9.5:
   * [http://code.google.com/p/ypsilon/issues/detail?id=23&can=1 Issue 23]: Missing R6RS bindings. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
   * [http://code.google.com/p/ypsilon/issues/detail?id=24&can=1 Issue 24]: Macro use not allowing improper list form. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
 
-  * incorrect conversion from rational to inexact if rational have bignum for its elements. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
   * reader incorrectly interpret Comma "," (U+002C), Apostrophe "'" (U+0027), and Grave Accent "`" (U+0060) as delimiter. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * incorrect conversion from rational to inexact if rational have bignum for its elements. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * R^6^RS top-level program which do not import 'define' cause endless expansion. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
