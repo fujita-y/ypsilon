@@ -6,4 +6,4 @@ version 0.9.5-trunk:
   * Top-level program syntax will be checked if it have `#!r6rs` before import form
   * [http://code.google.com/p/ypsilon/issues/detail?id=11&can=1 Issue 11]: record printer use write instead of display
 
-  * See [KnownBugs Known bugs in current release] to check more changes.
+  * See [KnownBugs Known bugs in current release] to check more.
