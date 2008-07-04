@@ -25,5 +25,6 @@ version 0.9.5:
   * reader incorrectly interpret Comma "," (U+002C), Apostrophe "'" (U+0027), and Grave Accent "`" (U+0060) as delimiter. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
   * incorrect conversion from rational to inexact if rational have bignum for its elements. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
   * R^6^RS top-level program which do not import 'define' cause endless expansion. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+  * syntax-case transformer wrap/unwrap syntax incorrectly. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
