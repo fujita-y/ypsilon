@@ -561,6 +561,29 @@ subr_microsecond(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// microsecond->utc
+scm_obj_t
+subr_microsecond_utc(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (exact_non_negative_integer_pred(argv[0])) {
+            uint64_t usec;
+            exact_integer_to_uint64(argv[0], &usec);
+#if _MSC_VER
+            return MAKEFIXNUM(0);
+#else
+            time_t sec = usec / 1000000;
+            struct tm* m = gmtime(&sec);
+            return uint64_to_integer(vm->m_heap, usec + (int64_t)(mktime(m) - sec) * 1000000);
+#endif
+        }
+        wrong_type_argument_violation(vm, "microsecond->utc", 0, "exact non-negative integer", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "microsecond->utc", 1, 1, argc, argv);
+    return scm_undef;
+}
+
 // time-usage
 scm_obj_t
 subr_time_usage(VM* vm, int argc, scm_obj_t argv[])
@@ -1674,6 +1697,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("collect-trip-bytes", subr_collect_trip_bytes);
     DEFSUBR("collect-stack-notify", subr_collect_stack_notify);
     DEFSUBR("microsecond", subr_microsecond);
+    DEFSUBR("microsecond->utc", subr_microsecond_utc);
     DEFSUBR("time-usage", subr_time_usage);
     DEFSUBR("backtrace", subr_backtrace);
     DEFSUBR("extend-lexical-syntax", subr_extend_lexical_syntax);
