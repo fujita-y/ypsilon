@@ -427,6 +427,7 @@
                         core-hashtable-hash-function
                         usleep
                         microsecond
+                        microsecond->utc
                         scheme-error
                         architecture-feature
                         load-shared-object lookup-shared-object
