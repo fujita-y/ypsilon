@@ -29,35 +29,23 @@
             ((and (macro? deno) (assq deno env)) => cdr)
             (else id)))))
 
-(define contain-wrapped-syntax-object?
-  (lambda (lst)
-    (let loop ((lst lst))
-      (cond ((pair? lst)
-             (or (loop (car lst)) (loop (cdr lst))))
-            ((vector? lst)
-             (let loop2 ((i (- (vector-length lst) 1)))
-               (and (>= i 0)
-                    (or (loop (vector-ref lst i))
-                        (loop2 (- i 1))))))
-            (else
-             (wrapped-syntax-object? lst))))))
-
-(define contain-non-id-wrapped-syntax-object?
-  (lambda (lst)
-    (let loop ((lst lst))
-      (cond ((pair? lst)
-             (or (loop (car lst)) (loop (cdr lst))))
-            ((vector? lst)
-             (let loop2 ((i (- (vector-length lst) 1)))
-               (and (>= i 0)
-                    (or (loop (vector-ref lst i))
-                        (loop2 (- i 1))))))
-            ((identifier? lst) #f)
-            (else
-             (wrapped-syntax-object? lst))))))
-
 (define unwrap-syntax
   (lambda (expr)
+
+    (define contain-non-id-wrapped-syntax-object?
+      (lambda (lst)
+        (let loop ((lst lst))
+          (cond ((pair? lst)
+                 (or (loop (car lst)) (loop (cdr lst))))
+                ((vector? lst)
+                 (let loop2 ((i (- (vector-length lst) 1)))
+                   (and (>= i 0)
+                        (or (loop (vector-ref lst i))
+                            (loop2 (- i 1))))))
+                ((identifier? lst) #f)
+                (else
+                 (wrapped-syntax-object? lst))))))
+
     (cond ((contain-non-id-wrapped-syntax-object? expr)
            (let ((renames
                   (let ((ht (make-core-hashtable)))
@@ -174,6 +162,31 @@
         (cond ((wrapped-syntax-object? datum) datum)
               (else (make-syntax-object datum '() #f)))))
 
+    (define contain-wrapped-syntax-object?
+      (lambda (lst)
+        (let loop ((lst lst))
+          (cond ((pair? lst)
+                 (or (null? (car lst)) (loop (car lst)) (loop (cdr lst))))
+                ((vector? lst)
+                 (let loop2 ((i (- (vector-length lst) 1)))
+                   (and (>= i 0)
+                        (or (loop (vector-ref lst i))
+                            (loop2 (- i 1))))))
+                (else
+                 (wrapped-syntax-object? lst))))))
+
+    (define rewrite-nil
+      (lambda (lst)
+        (let loop ((lst lst))
+          (cond ((pair? lst)
+                 (let ((a (loop (car lst))) (d (loop (cdr lst))))
+                   (cond ((and (eq? (car lst) a) (eq? (cdr lst) d)) lst)
+                         (else (cons a d)))))
+                ((vector? lst)
+                 (list->vector (loop (vector->list lst))))
+                ((eq? lst '.&NIL) '())
+                (else lst)))))
+
     (define partial-wrap-syntax-object
       (lambda (lst renames)
         (let loop ((lst lst))
@@ -183,45 +196,52 @@
                           (cond ((and (eq? (car lst) a) (eq? (cdr lst) d)) lst)
                                 (else (cons a d)))))
                        (else lst)))
+                ((eq? lst '.&NIL)
+                 (make-syntax-object '() '() #f))
                 ((symbol? lst)
                  (make-syntax-object lst (or (assq lst renames) '()) #f))
-                ((or (pair? lst) (vector? lst))
-                 (make-syntax-object lst renames #f))
+                ((vector? lst)
+                 (make-syntax-object (rewrite-nil lst) renames #f))
+                ((pair? lst)
+                 (make-syntax-object (rewrite-nil lst) renames #f))
                 ((null? lst) '())
                 (else
                  (make-syntax-object lst '() #f))))))
 
-    (let* ((env-def
-            (current-transformer-environment))
-           (suffix
-            (current-rename-count))
-           (aliases
-            (map (lambda (id) (cons id (rename-id id suffix)))
-                 (collect-rename-ids template ranks)))
-           (renames
-            (map (lambda (lst) (cons (cdr lst) (env-lookup env-def (car lst))))
-                 aliases))
-           (out-of-context
-            (cond ((null? lexname-check-list) '())
-                  ((null? env-def) '())
+    (if (null? template)
+        (make-syntax-object '() '() #f)
+        (let* ((env-def
+                (current-transformer-environment))
+               (suffix
+                (current-rename-count))
+               (aliases
+                (map (lambda (id) (cons id (rename-id id suffix)))
+                     (collect-rename-ids template ranks)))
+               (renames
+                (map (lambda (lst) (cons (cdr lst) (env-lookup env-def (car lst))))
+                     aliases))
+               (out-of-context
+                (cond ((null? lexname-check-list) '())
+                      ((null? env-def) '())
+                      (else
+                       (filter values
+                               (map (lambda (a)
+                                      (let ((id (car a)))
+                                        (cond ((assq id lexname-check-list)
+                                               => (lambda (e)
+                                                    (cond ((eq? (lookup-lexical-name id env-def) (cdr e)) #f)
+                                                          (else (cons (cdr a) (make-out-of-context template))))))
+                                              (else #f))))
+                                    aliases))))))
+          (let ((form (transcribe-template template ranks vars aliases emit)))
+            (cond ((null? form) '())
+                  ((wrapped-syntax-object? form) form)
+                  ((eq? form '.&NIL) 
+                   (make-syntax-object '() '() #f))
+                  ((symbol? form)
+                   (make-syntax-object form (or (assq form out-of-context) (assq form renames) '()) identifier-lexname))
                   (else
-                   (filter values
-                           (map (lambda (a)
-                                  (let ((id (car a)))
-                                    (cond ((assq id lexname-check-list)
-                                           => (lambda (e)
-                                                (cond ((eq? (lookup-lexical-name id env-def) (cdr e)) #f)
-                                                      (else (cons (cdr a) (make-out-of-context template))))))
-                                          (else #f))))
-                                aliases))))))
-      (let ((form (transcribe-template template ranks vars aliases emit)))
-        (cond ((null? form) '())
-              ((symbol? form)
-               (make-syntax-object form (or (assq form out-of-context) (assq form renames) '()) identifier-lexname))
-              ((wrapped-syntax-object? form)
-               (if (null? (syntax-object-expr form)) '() form))
-              (else
-               (partial-wrap-syntax-object form (extend-env out-of-context renames))))))))
+                   (partial-wrap-syntax-object form (extend-env out-of-context renames)))))))))
 
 (define expand-syntax-case
   (lambda (form env)
