@@ -567,11 +567,13 @@ subr_microsecond_utc(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
         if (exact_non_negative_integer_pred(argv[0])) {
-            uint64_t usec;
-            exact_integer_to_uint64(argv[0], &usec);
+            int64_t usec;
+            exact_integer_to_int64(argv[0], &usec);
             time_t sec = usec / 1000000;
             struct tm* m = gmtime(&sec);
-            return uint64_to_integer(vm->m_heap, usec + (int64_t)(mktime(m) - sec) * 1000000);
+            int64_t utc = usec + (int64_t)(mktime(m) - sec) * 1000000;
+            if (utc <= 0) return MAKEFIXNUM(0);
+            return int64_to_integer(vm->m_heap, utc);
         }
         wrong_type_argument_violation(vm, "microsecond->utc", 0, "exact non-negative integer", argv[0], argc, argv);
         return scm_undef;

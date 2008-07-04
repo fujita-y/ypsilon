@@ -601,6 +601,7 @@
     memv
     message-condition?
     microsecond
+    microsecond->utc
     min
     mod
     mod0
