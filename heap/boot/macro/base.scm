@@ -99,8 +99,6 @@
     (destructuring-match form
       ((_ (? symbol? name) body)
        (begin
-         (or (list? body)
-             (syntax-violation (car form) "expression is not a proper list" form))
          (parameterize ((unexpect-top-level-form #t))
            (let-values (((code . expr) (compile-macro form body env)))
              (if (macro-variable? code)

@@ -676,25 +676,27 @@ subr_closure_arity(VM* vm, int argc, scm_obj_t argv[])
             obj->elts[1] = MAKEFIXNUM(rest);
             return obj;
         }
-        wrong_type_argument_violation(vm, "closure-arity", 0, "closure", argv[0], argc, argv);
-        return scm_undef;
+        scm_values_t obj = make_values(vm->m_heap, 2);
+        obj->elts[0] = scm_false;
+        obj->elts[1] = scm_false;
+        return obj;
     }
     wrong_number_of_arguments_violation(vm, "closure-arity", 1, 1, argc, argv);
     return scm_undef;
 }
 
-// decode-float
+// decode-flonum
 scm_obj_t
-subr_decode_float(VM* vm, int argc, scm_obj_t argv[])
+subr_decode_flonum(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
         if (FLONUMP(argv[0])) {
             return decode_flonum(vm->m_heap, (scm_flonum_t)argv[0]);
         }
-        wrong_type_argument_violation(vm, "decode-float", 0, "flonum", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "decode-flonum", 0, "flonum", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "decode-float", 1, 1, argc, argv);
+    wrong_number_of_arguments_violation(vm, "decode-flonum", 1, 1, argc, argv);
     return scm_undef;
 }
 
@@ -1666,7 +1668,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("display-heap-statistics", subr_display_heap_statistics);
     DEFSUBR("closure-code", subr_closure_code);
     DEFSUBR("closure-arity", subr_closure_arity);
-    DEFSUBR("decode-float", subr_decode_float);
+    DEFSUBR("decode-flonum", subr_decode_flonum);
     DEFSUBR("environment?", subr_environment_pred);
     DEFSUBR("system-environment", subr_system_environment);
     DEFSUBR("tuple", subr_tuple);

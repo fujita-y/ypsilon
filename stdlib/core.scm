@@ -261,6 +261,7 @@
     current-source-comments
     current-variable-environment
     datum->syntax
+    decode-flonum
     define
     define-condition-type
     define-enumeration

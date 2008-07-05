@@ -20,7 +20,7 @@ scm_obj_t set_current_directory(VM* vm, scm_string_t path);
 
 void* load_shared_object(scm_string_t path);
 void* lookup_shared_object(void* hdl, scm_obj_t proc);
-char* last_shared_object_error();
+const char* last_shared_object_error();
 
 #if _MSC_VER
 bool win32path(scm_string_t path, wchar_t* buf, int count);

@@ -186,7 +186,7 @@
         return GetProcAddress((HMODULE)hdl, name);
     }
 
-    char*
+    const char*
     last_shared_object_error()
     {
         static char* s_last_message;
@@ -307,7 +307,7 @@
         return dlsym(hdl, name);
     }
 
-    char*
+    const char*
     last_shared_object_error()
     {
         return dlerror();

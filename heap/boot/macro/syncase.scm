@@ -154,7 +154,7 @@
                       (expr (append vars patvars))
                       (loop (cdr lst)))))))))))
 
-(set-top-level-value! '.syntax-transcribe
+(define syntax-transcribe
   (lambda (vars template ranks identifier-lexname lexname-check-list)
 
     (define emit
@@ -243,6 +243,38 @@
                   (else
                    (partial-wrap-syntax-object form (extend-env out-of-context renames)))))))))
 
+(set-top-level-value! '.syntax/i0 ; identifier: no-rank no-lexname
+  (lambda (vars template)
+    (syntax-transcribe vars template '() template '())))
+
+(set-top-level-value! '.syntax/i1 ; identifier: rank-0 no-lexname
+  (lambda (vars template)
+    (syntax-transcribe vars template (list (cons template 0)) template '())))
+
+(set-top-level-value! '.syntax/i2 ; identifier: no-rank has-lexname
+  (lambda (vars template identifier-lexname)
+    (syntax-transcribe vars template '() identifier-lexname '())))
+
+(set-top-level-value! '.syntax/i3 ; identifier: rank-0 has-lexname
+  (lambda (vars template identifier-lexname)
+    (syntax-transcribe vars template (list (cons template 0)) identifier-lexname '())))
+
+(set-top-level-value! '.syntax/c0 ; subtemplate: no-ranks no-lexname-check-list
+  (lambda (vars template)
+    (syntax-transcribe vars template '() #f '())))
+
+(set-top-level-value! '.syntax/c1 ; subtemplate: has-ranks no-lexname-check-list
+  (lambda (vars template ranks)
+    (syntax-transcribe vars template ranks #f '())))
+
+(set-top-level-value! '.syntax/c2 ; subtemplate: no-ranks has-lexname-check-list
+  (lambda (vars template lexname-check-list)
+    (syntax-transcribe vars template '() #f lexname-check-list)))
+
+(set-top-level-value! '.syntax/c3 ; subtemplate: has-ranks has-lexname-check-list
+  (lambda (vars template ranks lexname-check-list)
+    (syntax-transcribe vars template ranks #f lexname-check-list)))
+
 (define expand-syntax-case
   (lambda (form env)
 
@@ -325,17 +357,35 @@
                                    (and (pattern-variable? deno)
                                         (cons id (cdr deno)))))
                                ids))))
-             (let ((lexname-check-list
-                    (filter values
-                            (map (lambda (id)
-                                   (let ((lexname (lookup-lexical-name id env)))
-                                     (and (renamed-id? lexname)
-                                          (cond ((eq? id lexname) #f)
-                                                (else (cons id lexname))))))
-                                 (collect-rename-ids template ranks)))))
                (check-template template ranks)
-               (let ((identifier-lexname (and (symbol? tmpl) (lookup-lexical-name tmpl env))))
-                 (annotate `(.syntax-transcribe ,(expand-form '.patvars env) ',template ',ranks ',identifier-lexname ',lexname-check-list) form)))))))
+               (let ((patvar (expand-form '.patvars env)))
+                 (if (symbol? template)
+                     (let ((identifier-lexname (lookup-lexical-name tmpl env)))
+                       (if (eq? template identifier-lexname)
+                           (if (null? ranks)
+                               (annotate `(.syntax/i0 ,patvar ',template) form)
+                               (annotate `(.syntax/i1 ,patvar ',template) form))
+                           (if (null? ranks)
+                               (annotate `(.syntax/i2 ,patvar ',template ',identifier-lexname) form)
+                               (annotate `(.syntax/i3 ,patvar ',template ',identifier-lexname) form))))
+                     (let ((lexname-check-list
+                            (filter values
+                                    (map (lambda (id)
+                                           (let ((lexname (lookup-lexical-name id env)))
+                                             (and (renamed-id? lexname)
+                                                  (cond ((eq? id lexname) #f)
+                                                        (else (cons id lexname))))))
+                                         (collect-rename-ids template ranks)))))
+                       (if (null? lexname-check-list)
+                           (if (null? ranks)
+                               (annotate `(.syntax/c0 ,patvar ',template) form)
+                               (annotate `(.syntax/c1 ,patvar ',template ',ranks) form))
+                           (if (null? ranks)
+                               (annotate `(.syntax/c2 ,patvar ',template ',lexname-check-list) form)
+                               (annotate `(.syntax/c3 ,patvar ',template ',ranks ',lexname-check-list) form))))))))))
+               ; generic
+               ; (let ((identifier-lexname (and (symbol? tmpl) (lookup-lexical-name tmpl env))))
+               ;   (annotate `(.syntax-transcribe ,(expand-form '.patvars env) ',template ',ranks ',identifier-lexname ',lexname-check-list) form)))))))
       (_
        (syntax-violation 'syntax "expected exactly one datum" form)))))
 
@@ -449,7 +499,7 @@
                           (values obj (car env))))))))
       (cond ((procedure? code)
              (let-values (((nargs opt) (closure-arity code)))
-               (and (= nargs 1) (= opt 0) thunk)))
+               (and nargs opt (= nargs 1) (= opt 0) thunk)))
             ((variable-transformer-token? code)
              (set! code (tuple-ref code 1))
              (make-variable-transformer-token thunk))
