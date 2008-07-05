@@ -135,7 +135,8 @@
                   .list-head
                   .datum->syntax
                   .syntax->datum
-                  .syntax-transcribe
+                  .syntax/i0 .syntax/i1 .syntax/i2 .syntax/i3
+                  .syntax/c0 .syntax/c1 .syntax/c2 .syntax/c3
                   .string-contains
                   .top-level-value
                   .unspecified

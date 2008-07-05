@@ -110,8 +110,10 @@ bn_demote(scm_bignum_t bn)
 {
     if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
     assert(bn_get_sign(bn) != 0);
-    if ((bn_get_count(bn) == 1) & (bn->elts[0] <= FIXNUM_MAX)) {
-        return (bn_get_sign(bn) >= 0) ? MAKEFIXNUM(bn->elts[0]) : MAKEFIXNUM(-bn->elts[0]);
+    if (bn_get_count(bn) == 1) {
+        int64_t n = bn->elts[0];
+        if (bn_get_sign(bn) < 0) n = -n;
+        if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
     }
     return bn;
 }
@@ -2440,10 +2442,13 @@ arith_logash(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     int shift = FIXNUM(rhs);
     if (FIXNUMP(lhs)) {
         intptr_t n = FIXNUM(lhs);
-        if (shift > 0) n = n << shift;
-        else n = n >> (-shift);
-        if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-        return intptr_to_bignum(heap, n);
+        if (shift < (sizeof(intptr_t) * 8)) {
+            int n2;
+            if (shift > 0) n2 = n << shift;
+            else n2 = n >> (-shift);
+            if ((n2 >= FIXNUM_MIN) & (n2 <= FIXNUM_MAX)) return MAKEFIXNUM(n2);
+        }
+        return oprtr_logash(heap, (scm_bignum_t)intptr_to_bignum(heap, n), shift);
     }
     if (BIGNUMP(lhs)) {
         scm_bignum_t bn = (scm_bignum_t)lhs;
@@ -4051,18 +4056,23 @@ integer_ucmp3(scm_obj_t n1, scm_obj_t n2, scm_obj_t n3)
 static scm_obj_t
 integer_init_n_alloc(object_heap_t* heap, int64_t m, int shift_left)
 {
+    assert(m >= 0);
     if (m == 0) return MAKEFIXNUM(0);
-    int count = (shift_left + 53 + 31) >> 5;
-    assert(count >= 2);
+    int count = 2 + ((shift_left + 31) / 32);
     scm_bignum_t bn = make_bignum(heap, count);
-    bn->elts[0] = m & 0xffffffff;
-    bn->elts[1] = (uint32_t)(m >> 32);
+    bn->elts[0] = (uint32_t)(m & 0xffffffff);
+    bn->elts[1] = (uint32_t)((uint64_t)m >> 32);
     memset(bn->elts + 2, 0, sizeof(uint32_t) * (count - 2));
     bn_shift_left(bn, shift_left);
     bn_norm(bn);
     bn_set_sign(bn, 1);
     return bn_demote(bn);
 }
+
+//  Reference:
+//  Robert G. Burger and R. Kent Dybvig.
+//  Printing floatingpoint numbers quickly and accurately.
+//  In Proceedings of the ACM SIGPLAN '96 Conference on Programming Language Design and Implementation, pages 108--116.
 
 // note: can optimize with (mp = mm * 2) rule, but its very rare
 scm_string_t
@@ -4314,15 +4324,14 @@ prevfloat(double z)
     return ldexp((double)(m - 1), k);
 }
 
+//  Reference:
+//  William D. Clinger.
+//  How to read floating point numbers accurately
+//  Proceedings of the ACM SIGPLAN 1990 conference on Programming language design and implementation, p.92-101, June 1990
+
 static double
 algorithmR(object_heap_t* heap, const int64_t f, const int e, const double z0)
 {
-
-//  Reference:
-//  Robert G. Burger and R. Kent Dybvig.
-//  Printing floatingpoint numbers quickly and accurately.
-//  In Proceedings of the ACM SIGPLAN '96 Conference on Programming Language Design and Implementation, pages 108--116.
-
     double z = z0;
     scm_obj_t x0;
     scm_obj_t pow10e;
@@ -4346,7 +4355,7 @@ algorithmR(object_heap_t* heap, const int64_t f, const int e, const double z0)
                 x = x0;
                 y = integer_init_n_alloc(heap, m, k);
             } else {
-                x = arith_mul(heap, x0, arith_expt(heap, MAKEFIXNUM(2), MAKEFIXNUM(-k)));
+                x = arith_logash(heap, x0, MAKEFIXNUM(-k));
                 y = int64_to_integer(heap, m);
             }
         } else {

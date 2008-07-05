@@ -466,6 +466,7 @@
                         create-directory
                         home-directory
                         time-usage
+                        decode-flonum
                         load
                         system-share-path
                         lookup-process-environment
@@ -503,7 +504,9 @@
 (let ((coreform-private-procs
        '(.set-top-level-macro!
          .require-scheme-library .intern-scheme-library .unintern-scheme-library
-         .patvars .syntax-dispatch .syntax-transcribe .flatten-syntax .transformer-thunk
+         .patvars .syntax-dispatch .flatten-syntax .transformer-thunk
+         .syntax/i0 .syntax/i1 .syntax/i2 .syntax/i3
+         .syntax/c0 .syntax/c1 .syntax/c2 .syntax/c3
          .run-vmi)))
   (for-each (lambda (a) (core-hashtable-set! immutable-primitives a #t)) coreform-private-procs)
   (copy-environment-variables! (system-environment) (interaction-environment) coreform-private-procs))
