@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "setup-win32", "setup-win32\setup-win32.vdproj", "{4122640F-31BD-4F9C-B841-9D6299265589}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ypsilon", "ypsilon.vcproj", "{C227CC3C-019C-4894-804C-225F40B92C2D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4122640F-31BD-4F9C-B841-9D6299265589}.Debug|Win32.ActiveCfg = Debug
+		{4122640F-31BD-4F9C-B841-9D6299265589}.Release|Win32.ActiveCfg = Release
+		{4122640F-31BD-4F9C-B841-9D6299265589}.Release|Win32.Build.0 = Release
+		{C227CC3C-019C-4894-804C-225F40B92C2D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C227CC3C-019C-4894-804C-225F40B92C2D}.Debug|Win32.Build.0 = Debug|Win32
+		{C227CC3C-019C-4894-804C-225F40B92C2D}.Release|Win32.ActiveCfg = Release|Win32
+		{C227CC3C-019C-4894-804C-225F40B92C2D}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
