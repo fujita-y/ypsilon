@@ -6,8 +6,6 @@ version 0.9.5-update1 (based on revision 69):
 
 version 0.9.5:
 
-  * _Following bugs fixed in version 0.9.5-update1_
-
   * [http://code.google.com/p/ypsilon/issues/detail?id=1&can=1 Issue 1]: `free-identifier=?` does not work correctly.
   * [http://code.google.com/p/ypsilon/issues/detail?id=2&can=1 Issue 2]: does not build on x86_64.
   * [http://code.google.com/p/ypsilon/issues/detail?id=3&can=1 Issue 3]: `unspecified` keyword hygiene problem.
@@ -34,3 +32,5 @@ version 0.9.5:
   * `syntax-case` transformer wrap/unwrap syntax incorrectly.
   * reading inexact number possibly cause memory overflow.
   * `bitwise-arithmetic-shift` does not work correctly for fixnum.
+
+  * _All bugs are fixed in version 0.9.5-update1_
