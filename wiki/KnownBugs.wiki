@@ -1,32 +1,36 @@
 #summary Known bugs in current release
 
-version 0.9.5:
-  * [http://code.google.com/p/ypsilon/issues/detail?id=1&can=1 Issue 1]: `free-identifier=?` does not work correctly. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=2&can=1 Issue 2]: does not build on x86_64. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated Makefile)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=3&can=1 Issue 3]: `unspecified` keyword hygiene problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=4&can=1 Issue 4]: `standard-output-port`, `standard-error-port` malfunction. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=6&can=1 Issue 6]: `string-for-each`, `string-fill!`, `make-custom-binary-input-port`, `make-custom-textual-input-port`, `make-custom-binary-output-port`, and `make-custom-textual-output-port` are unbound in `rnrs` library. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=9&can=1 Issue 9]: dot lexical syntax problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=10&can=1 Issue 10]: `define-condition-type` problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=13&can=1 Issue 13]: `syntax-rules` problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=14&can=1 Issue 14]: Makefile permission problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=16&can=1 Issue 16]: REPL hygiene problem. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=12&can=1 Issue 12]: missing `&undefined` condition for unbound identifier exception. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=15&can=1 Issue 15]: `(x ... . r)` pattern does not work. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=17&can=1 Issue 17]: `raise-continuable` with non-serious condition does not return. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=18&can=1 Issue 18]: `datum->syntax` synthesized lexical context not working. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=19&can=1 Issue 19]: `(scheme-report-environment 5)` not working. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=20&can=1 Issue 20]: `make-vector` is broken for 1M elements. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=21&can=1 Issue 21]: `eof-object?` not exported from `(rnrs io simple)`. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=22&can=1 Issue 22]: `eval` not working with environment which does not contain `define`. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=23&can=1 Issue 23]: Missing R^6^RS bindings. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=24&can=1 Issue 24]: Macro use not allowing improper list form. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-
-  * reader incorrectly interpret Comma "," (U+002C), Apostrophe "'" (U+0027), and Grave Accent "`" (U+0060) as delimiter. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * incorrect conversion from rational to inexact if rational have bignum for its elements. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * R^6^RS top-level program which do not import 'define' cause endless expansion. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * `syntax-case` transformer wrap/unwrap syntax incorrectly. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * reading inexact number possibly cause memory overflow. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
-  * `bitwise-arithmetic-shift` does not work correctly for fixnum. (fixed, [http://code.google.com/p/ypsilon/source/checkout trunk] contains updated code)
+version 0.9.5-update1 (based on revision 69):
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
+
+version 0.9.5:
+
+  * _Following bugs fixed in version 0.9.5-update1_
+
+  * [http://code.google.com/p/ypsilon/issues/detail?id=1&can=1 Issue 1]: `free-identifier=?` does not work correctly.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=2&can=1 Issue 2]: does not build on x86_64.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=3&can=1 Issue 3]: `unspecified` keyword hygiene problem.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=4&can=1 Issue 4]: `standard-output-port`, `standard-error-port` malfunction.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=6&can=1 Issue 6]: `string-for-each`, `string-fill!`, `make-custom-binary-input-port`, `make-custom-textual-input-port`, `make-custom-binary-output-port`, and `make-custom-textual-output-port` are unbound in `rnrs` library.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=9&can=1 Issue 9]: dot lexical syntax problem.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=10&can=1 Issue 10]: `define-condition-type` problem.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=13&can=1 Issue 13]: `syntax-rules` problem.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=14&can=1 Issue 14]: Makefile permission problem.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=16&can=1 Issue 16]: REPL hygiene problem.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=12&can=1 Issue 12]: missing `&undefined` condition for unbound identifier exception.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=15&can=1 Issue 15]: `(x ... . r)` pattern does not work.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=17&can=1 Issue 17]: `raise-continuable` with non-serious condition does not return.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=18&can=1 Issue 18]: `datum->syntax` synthesized lexical context not working.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=19&can=1 Issue 19]: `(scheme-report-environment 5)` not working.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=20&can=1 Issue 20]: `make-vector` is broken for 1M elements.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=21&can=1 Issue 21]: `eof-object?` not exported from `(rnrs io simple)`.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=22&can=1 Issue 22]: `eval` not working with environment which does not contain `define`.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=23&can=1 Issue 23]: Missing R^6^RS bindings.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=24&can=1 Issue 24]: Macro use not allowing improper list form.
+  * reader incorrectly interpret Comma "," (U+002C), Apostrophe "'" (U+0027), and Grave Accent "`" (U+0060) as delimiter.
+  * incorrect conversion from rational to inexact if rational have bignum for its elements.
+  * R^6^RS top-level program which do not import 'define' cause endless expansion.
+  * `syntax-case` transformer wrap/unwrap syntax incorrectly.
+  * reading inexact number possibly cause memory overflow.
+  * `bitwise-arithmetic-shift` does not work correctly for fixnum.
