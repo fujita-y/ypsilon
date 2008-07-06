@@ -2441,14 +2441,15 @@ arith_logash(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     assert(FIXNUMP(rhs));
     int shift = FIXNUM(rhs);
     if (FIXNUMP(lhs)) {
-        intptr_t n = FIXNUM(lhs);
-        if (shift < (sizeof(intptr_t) * 8)) {
-            int n2;
-            if (shift > 0) n2 = n << shift;
-            else n2 = n >> (-shift);
-            if ((n2 >= FIXNUM_MIN) & (n2 <= FIXNUM_MAX)) return MAKEFIXNUM(n2);
+        if (sizeof(intptr_t) == 4) {
+            if (shift <= 32) {
+                int64_t n = FIXNUM(lhs);
+                if (shift > 0) n = n << shift;
+                else n = n >> (-shift);
+                if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
+            }
         }
-        return oprtr_logash(heap, (scm_bignum_t)intptr_to_bignum(heap, n), shift);
+        return oprtr_logash(heap, (scm_bignum_t)intptr_to_bignum(heap, FIXNUM(lhs)), shift);
     }
     if (BIGNUMP(lhs)) {
         scm_bignum_t bn = (scm_bignum_t)lhs;
@@ -4329,6 +4330,13 @@ prevfloat(double z)
 //  How to read floating point numbers accurately
 //  Proceedings of the ACM SIGPLAN 1990 conference on Programming language design and implementation, p.92-101, June 1990
 
+#define DEBUG_ALGOR    0
+
+#if DEBUG_ALGOR
+#include "vm.h"
+#include "printer.h"
+#endif
+
 static double
 algorithmR(object_heap_t* heap, const int64_t f, const int e, const double z0)
 {
@@ -4342,6 +4350,16 @@ algorithmR(object_heap_t* heap, const int64_t f, const int e, const double z0)
         x0 = scm_unspecified;
         pow10e = arith_expt(heap, MAKEFIXNUM(10), MAKEFIXNUM(-e));
     }
+#if DEBUG_ALGOR
+    {
+        printer_t prt(current_vm(), current_vm()->m_current_output);
+        prt.format("f      ~s ~%", int64_to_integer(heap, f));
+        prt.format("e      ~s ~%", int32_to_integer(heap, e));
+        prt.format("z0     ~s ~%", make_flonum(heap, z0));
+        prt.format("x0     ~s ~%", x0);
+        prt.format("pow10e ~s ~%", pow10e);
+    }
+#endif
     while (1) {
         if (isinf(z)) return z;
         int k;
@@ -4374,6 +4392,17 @@ algorithmR(object_heap_t* heap, const int64_t f, const int e, const double z0)
             if (BIGNUMP(D2)) bn_set_sign((scm_bignum_t)D2, -bn_get_sign((scm_bignum_t)D2));
             else D2 = MAKEFIXNUM(-FIXNUM(D2));
         }
+#if DEBUG_ALGOR
+        {
+            printer_t prt(current_vm(), current_vm()->m_current_output);
+            prt.format("e  ~s ~%", int32_to_integer(heap, e));
+            prt.format("k  ~s ~%", int32_to_integer(heap, k));
+            prt.format("x  ~s ~%", x);
+            prt.format("y  ~s ~%", y);
+            prt.format("D  ~s ~%", D);
+            prt.format("D2 ~s ~%", D2);
+        }
+#endif        
         int test = n_compare(heap, D2, y);
         if (test < 0) {
             if (negD && m == iexpt_2n52 && integer_ucmp3(D2, D2, y) > 0) {
