@@ -1,6 +1,6 @@
 #summary changes in latest version
 
-version 0.9.5-trunk:
+version 0.9.5-update1:
   * [http://code.google.com/p/ypsilon/issues/detail?id=7&can=1 Issue 7]: added library-extensions
   * [http://code.google.com/p/ypsilon/issues/detail?id=8&can=1 Issue 8]: added uninstall target to Makefile
   * Top-level program syntax will be checked if it have `#!r6rs` before import form
