@@ -36,7 +36,7 @@ bytes_to_bucket(int x)
 {
     int bucket = 0;
     if (x > 8) {
-        x = x - 1;
+        x = x - 1;  // see clp2() in bit.cpp
         x = x | (x >>  1);
         x = x | (x >>  2);
         x = x | (x >>  4);
@@ -491,7 +491,7 @@ object_heap_t::mark_weakmapping(object_slab_traits_t* traits)
     while (count) {
         scm_obj_t obj = p;
         if (WEAKMAPPINGP(obj)) {
-            if (traits->cache->state(obj)) { // BitTest here for proper counting
+            if (traits->cache->state(obj)) {
                 scm_weakmapping_t wp = (scm_weakmapping_t)obj;
                 scm_obj_t key = wp->key;
                 if (CELLP(key) && OBJECT_SLAB_TRAITS_OF(key)->cache->state(key) == true) shade(wp->value);
@@ -512,7 +512,7 @@ object_heap_t::break_weakmapping(object_slab_traits_t* traits)
     while (count) {
         scm_obj_t obj = p;
         if (WEAKMAPPINGP(obj)) {
-            if (traits->cache->state(obj)) { // BitTest here for proper counting
+            if (traits->cache->state(obj)) {
                 scm_weakmapping_t wp = (scm_weakmapping_t)obj;
                 scm_obj_t key = wp->key;
                 if (CELLP(key) && OBJECT_SLAB_TRAITS_OF(key)->cache->state(key) == false) wp->key = wp->value = scm_false;
@@ -545,13 +545,13 @@ object_heap_t::write_barrier(scm_obj_t rhs)
                     }
                     m_usage.m_shade_queue_hazard++;
                     if (WBDEBUG) {
-                        printf(";; [write-barrier: m_shade_queue overflow, mutator yield time-slice]\n");
+                        printf(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
                         fflush(stdout);
                     } else {
-                        GC_TRACE(";; [write-barrier: m_shade_queue overflow, mutator yield time-slice]\n");
+                        GC_TRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
                     }
                 }
-                if (DETAILED_STATISTIC) m_usage.m_barriered_write++; //m_write_barrier_count++;
+                if (DETAILED_STATISTIC) m_usage.m_barriered_write++;
             }
         }
     }
@@ -776,7 +776,7 @@ fallback:
 #ifdef ENSURE_REALTIME
     if (heap.serial_marking()) {
         #if DEBUG_CONCURRENT_COLLECT
-        puts("serial_marking() timeout, resume mutator and start concurrent_marking()");
+        puts("serial_marking() timeout, resume mutator and restart concurrent_marking");
         #endif
         goto fallback;
     }
