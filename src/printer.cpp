@@ -22,6 +22,8 @@ printer_t::printer_t(VM* vm, scm_port_t port)
     m_port = port;
     m_shared_tag = 1;
     m_column_limit = 0; // no limit
+    m_tuple_nest = 0;
+    m_tuple_nest_limit = FIXNUM(vm->flags.m_record_print_nesting_limit);    
     m_flush = false;
 }
 
@@ -163,11 +165,7 @@ printer_t::format_va_list(const char* fmt, va_list ap)
                     int save_limit = m_column_limit;
                     m_column_limit = m_port->column + FIXNUM(m_vm->flags.m_restricted_print_line_length);
                     scm_obj_t expr = va_arg(ap, scm_obj_t);
-                    if (infinite_listp(m_vm->m_heap, expr)) {
-                        write_shared(expr);
-                    } else {
-                        write(expr);
-                    }
+                    write(expr);
                     m_column_limit = save_limit;
                 }
                 break;
@@ -758,7 +756,7 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
             return;
         }
         case TC_TUPLE: {
-            scm_tuple_t tuple = (scm_tuple_t)obj;
+            scm_tuple_t tuple = (scm_tuple_t)obj;            
             int n = HDR_TUPLE_COUNT(tuple->hdr);
 #ifdef NDEBUG
             {
@@ -769,26 +767,34 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
                             scm_tuple_t rtd = (scm_tuple_t)tuple->elts[0];
                             scm_obj_t name = rtd->elts[1];
                             scm_obj_t opaque = rtd->elts[5];
+                                                        
                             if (opaque == scm_true) {
                                 format("#<opaque-record ~a>", name);
-                            } else {
-                                format("#<record ~a", name);
-                                scm_obj_t* elts = tuple->elts;
-                                bool save_escape = m_escape;
-                                m_escape = true;
-                                for (scm_obj_t* e = elts + 1; e != elts + n; e++) {
-                                    port_put_byte(m_port, ' ');
-                                    write(ht, *e);
-                                }
-                                m_escape = save_escape;
-                                port_put_byte(m_port, '>');
+                                return;
                             }
+                            if (n > 1 && m_tuple_nest > m_tuple_nest_limit) {
+                                format("#<record ~a ...>", name);
+                                return;
+                            }
+                            format("#<record ~a", name);
+                            scm_obj_t* elts = tuple->elts;
+                            bool save_escape = m_escape;
+                            m_escape = true;
+                            m_tuple_nest++;
+                            for (scm_obj_t* e = elts + 1; e != elts + n; e++) {
+                                port_put_byte(m_port, ' ');
+                                write(ht, *e);
+                            }
+                            m_tuple_nest--;                                
+                            m_escape = save_escape;
+                            port_put_byte(m_port, '>');
                             return;
                         }
                     }
                 }
                 const char* type_name = get_tuple_type_name(tuple);
                 if (type_name) {
+                   
 #if !SCDEBUG
                     if (strcmp(type_name, "syntax") == 0) {
                         port_puts(m_port, "#<syntax ");
@@ -819,12 +825,18 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
                         port_put_byte(m_port, '>');
                         return;
                     }
+                    if (n > 1 && m_tuple_nest > m_tuple_nest_limit) {
+                        format("#<%s ...>", type_name);
+                        return;
+                    }
                     format("#<%s", type_name);
                     scm_obj_t* elts = tuple->elts;
+                    m_tuple_nest++;
                     for (scm_obj_t* e = elts + 1; e != elts + n; e++) {
                         if (e != elts) port_put_byte(m_port, ' ');
                         write(ht, *e);
                     }
+                    m_tuple_nest--;
                     port_put_byte(m_port, '>');
                     return;
                 }

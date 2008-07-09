@@ -400,6 +400,8 @@
                         unspecified
                         unspecified?
                         generate-temporary-symbol
+                        circular-list?
+                        circular-tree?
                         list-transpose
                         list-transpose+
                         list-transpose*
@@ -440,6 +442,7 @@
                         collect collect-notify collect-stack-notify collect-trip-bytes display-heap-statistics display-object-statistics
                         backtrace expansion-backtrace backtrace-line-length display-backtrace
                         restricted-print-line-length
+                        record-print-nesting-limit
                         extend-lexical-syntax
                         macro-expand compile compile-coreform closure-code
                         current-environment current-macro-environment current-variable-environment current-dynamic-environment

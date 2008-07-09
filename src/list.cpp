@@ -75,10 +75,34 @@ listp(scm_obj_t maybe_list)
     }
     return fast == scm_nil;
 }
+/*
+(define circular-tree?
+  (lambda (lst)
+    (let ((ht (make-core-hashtable)))
+      (and (let loop ((lst lst) (ancestor '()))
+             (or (and (core-hashtable-ref ht lst #f)
+                      (memq lst ancestor))
+                 (cond ((pair? lst)
+                        (core-hashtable-set! ht lst #t)
+                        (let ((ancestor (cons lst ancestor)))
+                          (or (loop (car lst) ancestor)
+                              (loop (cdr lst) ancestor))))
+                       ((vector? lst)
+                        (core-hashtable-set! ht lst #t)
+                        (let ((ancestor (cons lst ancestor)))
+                          (any1 (lambda (e) (loop e ancestor)) (vector->list lst))))
+                       ((tuple? lst)
+                        (core-hashtable-set! ht lst #t)
+                        (let ((ancestor (cons lst ancestor)))
+                          (any1 (lambda (e) (loop e ancestor)) (tuple->list lst))))
+                       (else #f))))
+           #t))))
+*/
 
 static bool
 infinite_list_test(scm_obj_t lst, scm_obj_t ancestor, scm_hashtable_t ht, object_heap_t* heap)
 {
+top:
     if (CELLP(lst)) {
         if (get_hashtable(ht, lst) != scm_undef) {
             scm_obj_t p = ancestor;
@@ -87,13 +111,16 @@ infinite_list_test(scm_obj_t lst, scm_obj_t ancestor, scm_hashtable_t ht, object
                 p = CDR(p);
                 continue;
             }
+            return false;
         }
         if (PAIRP(lst)) {
             int nsize = put_hashtable(ht, lst, scm_true);
             if (nsize) rehash_hashtable(heap, ht, nsize);
             scm_obj_t new_ancestor = make_pair(heap, lst, ancestor);
             if (infinite_list_test(CAR(lst), new_ancestor, ht, heap)) return true;
-            if (infinite_list_test(CDR(lst), new_ancestor, ht, heap)) return true;
+            lst = CDR(lst);
+            ancestor = new_ancestor;
+            goto top;
         }
         if (VECTORP(lst)) {
             int nsize = put_hashtable(ht, lst, scm_true);
@@ -101,9 +128,13 @@ infinite_list_test(scm_obj_t lst, scm_obj_t ancestor, scm_hashtable_t ht, object
             scm_obj_t new_ancestor = make_pair(heap, lst, ancestor);
             scm_vector_t vector = (scm_vector_t)lst;
             int n = HDR_VECTOR_COUNT(vector->hdr);
-            for (int i = 0; i < n; i++) {
+            if (n == 0) return false;
+            for (int i = 0; i < n - 1; i++) {
                 if (infinite_list_test(vector->elts[i], new_ancestor, ht, heap)) return true;
             }
+            lst = vector->elts[n - 1];
+            ancestor = new_ancestor;
+            goto top;
         }
         if (TUPLEP(lst)) {
             int nsize = put_hashtable(ht, lst, scm_true);
@@ -111,9 +142,13 @@ infinite_list_test(scm_obj_t lst, scm_obj_t ancestor, scm_hashtable_t ht, object
             scm_obj_t new_ancestor = make_pair(heap, lst, ancestor);
             scm_tuple_t tuple = (scm_tuple_t)lst;
             int n = HDR_TUPLE_COUNT(tuple->hdr);
-            for (int i = 0; i < n; i++) {
+            if (n == 0) return false;
+            for (int i = 0; i < n - 1; i++) {
                 if (infinite_list_test(tuple->elts[i], new_ancestor, ht, heap)) return true;
             }
+            lst = tuple->elts[n - 1];
+            ancestor = new_ancestor;
+            goto top;
         }
     }
     return false;

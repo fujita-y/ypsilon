@@ -15,20 +15,12 @@
     (let loop ((lst lst) (n 0))
       (if (pair? lst) (loop (cdr lst) (+ n 1)) n))))
 
-(define circular-list?
-  (lambda (lst)
-    (let loop ((head lst) (tail lst))
-      (and (pair? head)
-           (pair? (cdr head))
-           (or (eq? (cdr head) tail)
-               (loop (cddr head) (cdr tail)))))))
-  
 (define circular-tree?
   (lambda (lst)
     (let ((ht (make-core-hashtable)))
       (and (let loop ((lst lst) (ancestor '()))
-             (or (and (core-hashtable-ref ht lst #f)
-                      (memq lst ancestor))
+             (if (core-hashtable-ref ht lst #f)
+                 (memq lst ancestor)
                  (cond ((pair? lst)
                         (core-hashtable-set! ht lst #t)
                         (let ((ancestor (cons lst ancestor)))

@@ -186,14 +186,6 @@
       (let ((lst (list-copy lst)))
         (begin (set-cdr! (last-pair lst) lst) lst))))
 
-  (define circular-list?
-    (lambda (lst)
-      (let loop ((head lst) (tail lst))
-        (and (pair? head)
-             (pair? (cdr head))
-             (or (eq? (cdr head) tail)
-                 (loop (cddr head) (cdr tail)))))))
-
   (define dotted-list?
     (lambda (lst)
       (not (let loop ((head lst) (tail lst))

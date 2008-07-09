@@ -37,6 +37,8 @@ private:
     VM*             m_vm;
     scm_port_t      m_port;
     int             m_column_limit;
+    int             m_tuple_nest;
+    int             m_tuple_nest_limit;
     int             m_shared_tag;
     int             m_radix;
     int             m_escape_mode;

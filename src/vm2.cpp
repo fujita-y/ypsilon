@@ -12,7 +12,7 @@
 #define CONS(a, d)      make_pair(m_heap, (a), (d))
 
 scm_gloc_t
-VM::prebind_gloc(scm_obj_t variable, scm_hashtable_t ht)
+VM::prebind_gloc(scm_obj_t variable, scm_hashtable_t ht, bool set)
 {
   #ifndef NDEBUG
     if (!SYMBOLP(variable)) {
@@ -30,10 +30,13 @@ VM::prebind_gloc(scm_obj_t variable, scm_hashtable_t ht)
         m_heap->write_barrier(gloc);
         int nsize = put_hashtable(m_current_environment->variable, symbol, gloc);
         if (nsize) rehash_hashtable(m_heap, m_current_environment->variable, nsize);
-
         if (UNINTERNED_VARIABLE(symbol)) {
-            int nsize = put_hashtable(ht, symbol, scm_true);
+            int nsize = put_hashtable(ht, symbol, (set ? scm_true : scm_false));
             if (nsize) rehash_hashtable(m_heap, ht, nsize);
+        }
+    } else {
+        if (UNINTERNED_VARIABLE(symbol) && set) {
+            if (get_hashtable(ht, symbol) == scm_false) put_hashtable(ht, symbol, scm_true);
         }
     }
     return gloc;
@@ -62,7 +65,9 @@ VM::prebind(scm_obj_t code)
                 scoped_lock lock(m_current_environment->variable->lock);
                 scm_gloc_t gloc = (scm_gloc_t)get_hashtable(m_current_environment->variable, symbol);
                 if (gloc != scm_undef) {
-                    gloc->variable = scm_undef;
+                    if (ht->datum->elts[i + nsize] == scm_true) {
+                        gloc->variable = scm_undef;
+                    }
                     remove_hashtable(m_current_environment->variable, symbol);
                 }
             }
@@ -103,42 +108,42 @@ VM::prebind_list(scm_obj_t code, scm_hashtable_t ht)
         switch (opcode) {
 
             case VMOP_GLOC_OF: {
-                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht);
+                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht, false);
                 CAAR(code) = m_heap->inherent_symbol(VMOP_GLOC);
                 m_heap->write_barrier(gloc);
                 CDAR(code) = gloc;
             } break;
 
             case VMOP_RET_GLOC_OF: {
-                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht);
+                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht, false);
                 CAAR(code) = m_heap->inherent_symbol(VMOP_RET_GLOC);
                 m_heap->write_barrier(gloc);
                 CDAR(code) = gloc;
             } break;
 
             case VMOP_PUSH_GLOC_OF: {
-                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht);
+                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht, false);
                 CAAR(code) = m_heap->inherent_symbol(VMOP_PUSH_GLOC);
                 m_heap->write_barrier(gloc);
                 CDAR(code) = gloc;
             } break;
 
             case VMOP_SET_GLOC_OF: {
-                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht);
+                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht, true);
                 CAAR(code) = m_heap->inherent_symbol(VMOP_SET_GLOC);
                 m_heap->write_barrier(gloc);
                 CDAR(code) = gloc;
             } break;
 
             case VMOP_APPLY_GLOC_OF: {
-                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht);
+                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht, false);
                 CAAR(code) = m_heap->inherent_symbol(VMOP_APPLY_GLOC);
                 m_heap->write_barrier(gloc);
                 CAR(operands) = gloc;
             } break;
 
             case VMOP_TOUCH_GLOC_OF: {
-                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht);
+                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht, false);
                 if (gloc->value != scm_undef)   {
                     m_heap->write_barrier(CADR(code));
                     m_heap->write_barrier(CDDR(code));
@@ -152,7 +157,7 @@ VM::prebind_list(scm_obj_t code, scm_hashtable_t ht)
             } break;
 
             case VMOP_PUSH_SUBR_GLOC_OF: {
-                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht);
+                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht, false);
   #ifndef NDEBUG
                 if (!SUBRP(gloc->value)) {
                     if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %x, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name, gloc->value);
@@ -173,7 +178,7 @@ VM::prebind_list(scm_obj_t code, scm_hashtable_t ht)
             } break;
 
             case VMOP_SUBR_GLOC_OF: {
-                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht);
+                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht, false);
   #ifndef NDEBUG
                 if (!SUBRP(gloc->value)) {
                     if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %x, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name, gloc->value);
@@ -194,7 +199,7 @@ VM::prebind_list(scm_obj_t code, scm_hashtable_t ht)
             } break;
 
             case VMOP_RET_SUBR_GLOC_OF: {
-                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht);
+                scm_gloc_t gloc = prebind_gloc(CAR(operands), ht, false);
             #ifndef NDEBUG
                 if (!SUBRP(gloc->value)) {
                     if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %x, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name, gloc->value);

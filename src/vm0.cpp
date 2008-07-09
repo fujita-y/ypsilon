@@ -133,6 +133,7 @@ VM::init(object_heap_t* heap)
         flags.m_backtrace = scm_true;
         flags.m_backtrace_line_length = MAKEFIXNUM(80);
         flags.m_restricted_print_line_length = MAKEFIXNUM(40);
+        flags.m_record_print_nesting_limit = MAKEFIXNUM(2);
         run(true);
         return true;
     } catch (io_exception_t& e) {

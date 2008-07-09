@@ -55,6 +55,7 @@ public:
         scm_obj_t   m_backtrace;                    // #t or #f or fixnum, no gc protect
         scm_obj_t   m_backtrace_line_length;        // fixnum, no gc protect
         scm_obj_t   m_restricted_print_line_length; // fixnum, no gc protect
+        scm_obj_t   m_record_print_nesting_limit;    // fixnum, no gc protect        
     } flags;
 
     scm_port_t          m_bootport;
@@ -78,7 +79,7 @@ public:
 
 private:
 
-    scm_gloc_t          prebind_gloc(scm_obj_t variable, scm_hashtable_t ht);
+    scm_gloc_t          prebind_gloc(scm_obj_t variable, scm_hashtable_t ht, bool set);
     void                prebind_list(scm_obj_t code, scm_hashtable_t ht);
 
     void                backtrace_each(printer_t* prt, int n, scm_obj_t note);
