@@ -207,6 +207,8 @@
     char>?
     char?
     check-argument
+    circular-list?
+    circular-tree?
     close-input-port
     close-output-port
     close-port
@@ -686,6 +688,7 @@
     record-field-mutable?
     record-mutator
     record-predicate
+    record-print-nesting-limit
     record-rtd
     record-type-descriptor
     record-type-descriptor?

@@ -15,10 +15,31 @@
 #include "arith.h"
 #include "reader.h"
 #include "ioerror.h"
+#include "list.h"
 #include "printer.h"
 #include "violation.h"
 
 #define DEFAULT_GENSYM_PREFIX   ".G"
+
+// circular-tree?
+/*
+scm_obj_t
+subr_circular_tree_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) return infinite_listp(vm->m_heap, argv[0]) ? scm_true : scm_false;
+    wrong_number_of_arguments_violation(vm, "circular-tree?", 1, 1, argc, argv);
+    return scm_undef;
+}
+*/
+
+// circular-list?
+scm_obj_t
+subr_circular_list_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) return circular_listp(argv[0]) ? scm_true : scm_false;
+    wrong_number_of_arguments_violation(vm, "circular-list?", 1, 1, argc, argv);
+    return scm_undef;
+}
 
 // core-read
 scm_obj_t
@@ -465,6 +486,23 @@ subr_restricted_print_line_length(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// record-print-nesting-limit
+scm_obj_t
+subr_record_print_nesting_limit(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
+            vm->flags.m_record_print_nesting_limit = argv[0];
+            return scm_unspecified;
+        } else {
+            wrong_type_argument_violation(vm, "record-print-nesting-limit", 0, "non-negative fixnum", argv[0], argc, argv);
+            return scm_undef;
+        }
+    }
+    if (argc == 0) return vm->flags.m_record_print_nesting_limit;
+    wrong_number_of_arguments_violation(vm, "record-print-nesting-limit", 0, 1, argc, argv);
+    return scm_undef;
+}
 // collect-notify
 scm_obj_t
 subr_collect_notify(VM* vm, int argc, scm_obj_t argv[])
@@ -1655,6 +1693,9 @@ init_subr_others(object_heap_t* heap)
 {
     #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
+//  DEFSUBR("circular-tree?", subr_circular_tree_pred);
+    DEFSUBR("circular-list?", subr_circular_list_pred);
+
     DEFSUBR("core-read", subr_core_read);
     DEFSUBR("interaction-environment", subr_interaction_environment);
     DEFSUBR("format", subr_format);
@@ -1704,6 +1745,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("display-backtrace", subr_display_backtrace);
     DEFSUBR("backtrace-line-length", subr_backtrace_line_length);
     DEFSUBR("restricted-print-line-length", subr_restricted_print_line_length);
+    DEFSUBR("record-print-nesting-limit", subr_record_print_nesting_limit);
     DEFSUBR("current-directory", subr_current_directory);
     DEFSUBR("create-directory", subr_create_directory);
     DEFSUBR("current-environment", subr_current_environment);

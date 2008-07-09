@@ -37,14 +37,6 @@
                 bn_flip2sc(&(NEW));                                                     \
             } while(0);
 
-
-#define RN_LET_INTEGER(VAR, VALUE)              \
-            do {                                \
-                (VAR).hdr = scm_hdr_rational;   \
-                (VAR).nume = (VALUE);           \
-                (VAR).deno = MAKEFIXNUM(1);     \
-            } while(0)
-
 static const int64_t iexpt_2n52 = 0x10000000000000LL; // 2^(53-1)
 static const int64_t iexpt_2n53 = 0x20000000000000LL; // 2^53
 
@@ -1010,15 +1002,80 @@ oprtr_norm_complex(object_heap_t* heap, scm_obj_t real, scm_obj_t imag)
 }
 
 static scm_obj_t
+oprtr_reduction_fixnum(object_heap_t* heap, scm_fixnum_t numerator, scm_fixnum_t denominator)
+{
+    intptr_t nume = FIXNUM(numerator);
+    intptr_t deno = FIXNUM(denominator);
+    assert(deno != 0);
+    if (nume == 0) return MAKEFIXNUM(0);
+    if (nume == 1) {
+        if (deno < 0) return make_rational(heap, MAKEFIXNUM(-1), intptr_to_integer(heap, -deno));
+        return make_rational(heap, numerator, denominator);
+    }
+    if (nume == -1) {
+        if (deno < 0) return make_rational(heap, MAKEFIXNUM(1), intptr_to_integer(heap, -deno));
+        return make_rational(heap, numerator, denominator);
+    }
+    int ans_sign = 1;
+    if (nume < 0) {
+        ans_sign = -ans_sign;
+        nume = -nume;
+    }
+    if (deno < 0) {
+        ans_sign = -ans_sign;
+        deno = -deno;
+    }
+    int shift = 0;
+    while (((nume | deno) & 1) == 0) {
+        nume >>= 1;
+        deno >>= 1;
+    }
+    intptr_t n1 = nume;
+    intptr_t n2 = deno;
+    while (n1) {
+        if ((n1 & 1) == 0) {
+            n1 >>= 1;
+        } else if ((n2 & 1) == 0) {
+            n2 >>= 1;
+        } else {
+            if (n1 < n2) {
+                n2 = (n2 - n1) >> 1;
+            } else {
+                n1 = (n1 - n2) >> 1;
+            }
+        }
+    }
+    if (deno == n2) return intptr_to_integer(heap, nume * ans_sign / n2);
+    return make_rational(heap, intptr_to_integer(heap, nume * ans_sign / n2), MAKEFIXNUM(deno / n2));
+}
+
+static scm_obj_t
 oprtr_reduction(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
 {
     assert(FIXNUMP(numerator) || BIGNUMP(numerator));
     assert(FIXNUMP(denominator) || BIGNUMP(denominator));
     assert(n_zero_pred(denominator) == false);
+    
+    if (FIXNUMP(numerator) && FIXNUMP(denominator)) return oprtr_reduction_fixnum(heap, (scm_fixnum_t)numerator, (scm_fixnum_t)denominator);
 
+    if (numerator == MAKEFIXNUM(0)) return MAKEFIXNUM(0);
+    if (numerator == MAKEFIXNUM(1)) {
+        if (n_negative_pred(denominator)) return make_rational(heap, MAKEFIXNUM(-1), arith_negate(heap, denominator));
+        return make_rational(heap, MAKEFIXNUM(1), denominator);
+    }
+    if (numerator == MAKEFIXNUM(-1)) {
+        if (n_negative_pred(denominator)) return make_rational(heap, MAKEFIXNUM(1), arith_negate(heap, denominator));
+        return make_rational(heap, MAKEFIXNUM(-1), denominator);
+    }
+    if (denominator == MAKEFIXNUM(1)) return numerator;
+    if (denominator == MAKEFIXNUM(-1)) return arith_negate(heap, numerator);
+    
     int ans_sign;
-    int n1_count;
     scm_bignum_rec_t n1;
+    scm_bignum_rec_t n2;
+    int n1_count;
+    int n2_count;
+
     if (BIGNUMP(numerator)) {
         assert(bn_norm_pred((scm_bignum_t)numerator));
         assert(bn_get_count((scm_bignum_t)numerator) != 0);
@@ -1028,23 +1085,11 @@ oprtr_reduction(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         memcpy(n1.elts, ((scm_bignum_t)numerator)->elts, sizeof(uint32_t) * n1_count);
         ans_sign = bn_get_sign((scm_bignum_t)numerator);
     } else {
-        if (numerator == MAKEFIXNUM(0)) return MAKEFIXNUM(0);
-        if (numerator == MAKEFIXNUM(1)) {
-            if (n_negative_pred(denominator)) return make_rational(heap, MAKEFIXNUM(-1), arith_negate(heap, denominator));
-            return make_rational(heap, MAKEFIXNUM(1), denominator);
-        }
-        if (numerator == MAKEFIXNUM(-1)) {
-            if (n_negative_pred(denominator)) return make_rational(heap, MAKEFIXNUM(1), arith_negate(heap, denominator));
-            return make_rational(heap, MAKEFIXNUM(-1), denominator);
-        }
         n1_count = 1;
         BN_ALLOC(n1, n1_count);
         bn_let(&n1, (scm_fixnum_t)numerator);
         ans_sign = bn_get_sign(&n1);
     }
-
-    scm_bignum_rec_t n2;
-    int n2_count;
     if (BIGNUMP(denominator)) {
         assert(bn_norm_pred((scm_bignum_t)denominator));
         if (bn_get_sign((scm_bignum_t)denominator) < 0) ans_sign = -ans_sign;
@@ -1053,9 +1098,6 @@ oprtr_reduction(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         BN_ALLOC(n2, n2_count);
         memcpy(n2.elts, ((scm_bignum_t)denominator)->elts, sizeof(uint32_t) * n2_count);
     } else {
-        assert(denominator != MAKEFIXNUM(0));
-        if (denominator == MAKEFIXNUM(1)) return numerator;
-        if (denominator == MAKEFIXNUM(-1)) return arith_negate(heap, numerator);
         n2_count = 1;
         BN_ALLOC(n2, n2_count);
         bn_let(&n2, (scm_fixnum_t)denominator);
@@ -1101,8 +1143,11 @@ oprtr_reduction(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         }
         return make_rational(heap, numerator, denominator);
     }
+    
+    // n2 -> divisor
     bn_copy(&divisor, &n2);
-
+    
+    // numerator -> n1
     bn_set_count(&n1, n1_count);
     if (BIGNUMP(numerator)) {
         memcpy(n1.elts, ((scm_bignum_t)numerator)->elts, sizeof(uint32_t) * n1_count);
@@ -1110,6 +1155,8 @@ oprtr_reduction(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         int32_t value = FIXNUM(numerator);
         n1.elts[0] = (value > 0) ? value : -value;
     }
+    
+    // denominator-> n2
     bn_set_count(&n2, n2_count);
     if (BIGNUMP(denominator)) {
         memcpy(n2.elts, ((scm_bignum_t)denominator)->elts, sizeof(uint32_t) * n2_count);
@@ -1122,12 +1169,10 @@ oprtr_reduction(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
     bn_norm(&n1);
     bn_quotient(heap, &n1, &n1, &divisor);
     bn_set_sign(&n1, ans_sign);
-
     bn_shift_right(&n2, shift);
     bn_norm(&n2);
     bn_quotient(heap, &n2, &n2, &divisor);
     bn_set_sign(&n2, 1);
-
     scm_obj_t ans_numerator = oprtr_norm_integer(heap, &n1);
     scm_obj_t ans_denominator = oprtr_norm_integer(heap, &n2);
     if (ans_denominator == MAKEFIXNUM(1)) return ans_numerator;
@@ -1460,7 +1505,7 @@ oprtr_mul(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
 static scm_obj_t
 oprtr_mul(object_heap_t* heap, scm_rational_t lhs, scm_rational_t rhs)
 {
-    scm_obj_t nume = arith_mul(heap, lhs->nume,  rhs->nume);
+    scm_obj_t nume = arith_mul(heap, lhs->nume, rhs->nume);
     scm_obj_t deno = arith_mul(heap, lhs->deno, rhs->deno);
     return oprtr_reduction(heap, nume, deno);
 }
@@ -2222,9 +2267,11 @@ arith_inverse(object_heap_t* heap, scm_obj_t obj)
     if (RATIONALP(obj)) {
         scm_rational_t rn = (scm_rational_t)obj;
         if (n_negative_pred(rn->nume) == false) {
-            return oprtr_reduction(heap, rn->deno, rn->nume);
+            if (rn->nume == MAKEFIXNUM(1)) return rn->deno;
+            return make_rational(heap, rn->deno, rn->nume);
         }
-        return oprtr_reduction(heap, arith_negate(heap, rn->deno), arith_negate(heap, rn->nume));
+        if (rn->nume == MAKEFIXNUM(-1)) return arith_negate(heap, rn->deno);
+        return make_rational(heap, arith_negate(heap, rn->deno), arith_negate(heap, rn->nume));
     }
     if (COMPLEXP(obj)) return arith_div(heap, MAKEFIXNUM(1), obj);
     fatal("%s:%u wrong datum type", __FILE__, __LINE__);
@@ -2490,8 +2537,8 @@ arith_add(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return oprtr_add(heap, (scm_bignum_t)rhs, &bn);
         }
         if (RATIONALP(rhs)) {   // fixnum + rational
-            RN_LET_INTEGER(rn, lhs);
-            return oprtr_add(heap, &rn, (scm_rational_t)rhs);
+            scm_rational_t rn = (scm_rational_t)rhs;
+            return oprtr_reduction(heap, arith_add(heap, rn->nume, arith_mul(heap, rn->deno, lhs)), rn->deno);
         }
         if (COMPLEXP(rhs)) {    // fixnum + complex
             real = ((scm_complex_t)rhs)->real;
@@ -2531,8 +2578,8 @@ arith_add(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return oprtr_add(heap, (scm_bignum_t)lhs, (scm_bignum_t)rhs);
         }
         if (RATIONALP(rhs)) {   // bignum + rational
-            RN_LET_INTEGER(rn, lhs);
-            return oprtr_add(heap, &rn, (scm_rational_t)rhs);
+            scm_rational_t rn = (scm_rational_t)rhs;
+            return oprtr_reduction(heap, arith_add(heap, rn->nume, arith_mul(heap, rn->deno, lhs)), rn->deno);
         }
         if (COMPLEXP(rhs)) {    // bignum + complex
             real = ((scm_complex_t)rhs)->real;
@@ -2542,15 +2589,15 @@ arith_add(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     }
     if (RATIONALP(lhs)) {
         if (FIXNUMP(rhs)) {     // rational + fixnum
-            RN_LET_INTEGER(rn, rhs);
-            return oprtr_add(heap, (scm_rational_t)lhs, &rn);
+            scm_rational_t rn = (scm_rational_t)lhs;
+            return oprtr_reduction(heap, arith_add(heap, rn->nume, arith_mul(heap, rn->deno, rhs)), rn->deno);
         }
         if (FLONUMP(rhs)) {     // rational + flonum
             return make_flonum(heap, rational_to_double((scm_rational_t)lhs) + ((scm_flonum_t)rhs)->value);
         }
         if (BIGNUMP(rhs)) {     // rational + bignum
-            RN_LET_INTEGER(rn, rhs);
-            return oprtr_add(heap, (scm_rational_t)lhs, &rn);
+            scm_rational_t rn = (scm_rational_t)lhs;
+            return oprtr_reduction(heap, arith_add(heap, rn->nume, arith_mul(heap, rn->deno, rhs)), rn->deno);
         }
         if (RATIONALP(rhs)) {   // rational + rational
             return oprtr_add(heap, (scm_rational_t)lhs, (scm_rational_t)rhs);
@@ -2609,8 +2656,8 @@ arith_sub(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return oprtr_sub(heap, &bn, (scm_bignum_t)rhs);
         }
         if (RATIONALP(rhs)) {   // fixnum - rational --> rational
-            RN_LET_INTEGER(rn, lhs);
-            return oprtr_sub(heap, &rn, (scm_rational_t)rhs);
+            scm_rational_t rn = (scm_rational_t)rhs;
+            return oprtr_reduction(heap, arith_sub(heap, arith_mul(heap, rn->deno, lhs), rn->nume), rn->deno);
         }
         if (COMPLEXP(rhs)) {    // fixnum - complex --> complex
             real = ((scm_complex_t)rhs)->real;
@@ -2650,8 +2697,8 @@ arith_sub(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return oprtr_sub(heap, (scm_bignum_t)lhs, (scm_bignum_t)rhs);
         }
         if (RATIONALP(rhs)) {   // bignum - rational --> rational
-            RN_LET_INTEGER(rn, lhs);
-            return oprtr_sub(heap, &rn, (scm_rational_t)rhs);
+            scm_rational_t rn = (scm_rational_t)rhs;
+            return oprtr_reduction(heap, arith_sub(heap, arith_mul(heap, rn->deno, lhs), rn->nume), rn->deno);
         }
         if (COMPLEXP(rhs)) {    // bignum - complex --> complex
             real = ((scm_complex_t)rhs)->real;
@@ -2661,15 +2708,15 @@ arith_sub(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     }
     if (RATIONALP(lhs)) {
         if (FIXNUMP(rhs)) {     // rational - fixnum
-            RN_LET_INTEGER(rn, rhs);
-            return oprtr_sub(heap, (scm_rational_t)lhs, &rn);
+            scm_rational_t rn = (scm_rational_t)lhs;
+            return oprtr_reduction(heap, arith_sub(heap, rn->nume, arith_mul(heap, rn->deno, rhs)), rn->deno);
         }
         if (FLONUMP(rhs)) {     // rational - flonum
             return make_flonum(heap, rational_to_double((scm_rational_t)lhs) - ((scm_flonum_t)rhs)->value);
         }
         if (BIGNUMP(rhs)) {     // rational - bignum
-            RN_LET_INTEGER(rn, rhs);
-            return oprtr_sub(heap, (scm_rational_t)lhs, &rn);
+            scm_rational_t rn = (scm_rational_t)lhs;
+            return oprtr_reduction(heap, arith_sub(heap, rn->nume, arith_mul(heap, rn->deno, rhs)), rn->deno);
         }
         if (RATIONALP(rhs)) {   // rational - rational
             return oprtr_sub(heap, (scm_rational_t)lhs, (scm_rational_t)rhs);
@@ -2729,8 +2776,10 @@ arith_mul(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return oprtr_mul(heap, (scm_bignum_t)rhs, &bn);
         }
         if (RATIONALP(rhs)) {   // fixnum * rational
-            RN_LET_INTEGER(rn, lhs);
-            return oprtr_mul(heap, &rn, (scm_rational_t)rhs);
+            scm_rational_t rn = (scm_rational_t)rhs;
+            if (rn->nume == MAKEFIXNUM(1)) return oprtr_reduction(heap, lhs, rn->deno);
+            if (rn->nume == MAKEFIXNUM(-1)) return arith_negate(heap, oprtr_reduction(heap, lhs, rn->deno));
+            return oprtr_reduction(heap, arith_mul(heap, rn->nume, lhs), rn->deno);
         }
         if (COMPLEXP(rhs)) {    // fixnum * complex
             real = ((scm_complex_t)rhs)->real;
@@ -2772,8 +2821,10 @@ arith_mul(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return oprtr_mul(heap, (scm_bignum_t)lhs, (scm_bignum_t)rhs);
         }
         if (RATIONALP(rhs)) {   // bignum * rational
-            RN_LET_INTEGER(rn, lhs);
-            return oprtr_mul(heap, &rn, (scm_rational_t)rhs);
+            scm_rational_t rn = (scm_rational_t)rhs;
+            if (rn->nume == MAKEFIXNUM(1)) return oprtr_reduction(heap, lhs, rn->deno);
+            if (rn->nume == MAKEFIXNUM(-1)) return arith_negate(heap, oprtr_reduction(heap, lhs, rn->deno));
+            return oprtr_reduction(heap, arith_mul(heap, rn->nume, lhs), rn->deno);
         }
         if (COMPLEXP(rhs)) {    // bignum * complex
             real = ((scm_complex_t)rhs)->real;
@@ -2784,15 +2835,19 @@ arith_mul(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     if (RATIONALP(lhs)) {
         if (FIXNUMP(rhs)) {     // rational * fixnum
             if (FIXNUM(rhs) == 0) return MAKEFIXNUM(0);
-            RN_LET_INTEGER(rn, rhs);
-            return oprtr_mul(heap, (scm_rational_t)lhs, &rn);
+            scm_rational_t rn = (scm_rational_t)lhs;          
+            if (rn->nume == MAKEFIXNUM(1)) return oprtr_reduction(heap, rhs, rn->deno);
+            if (rn->nume == MAKEFIXNUM(-1)) return arith_negate(heap, oprtr_reduction(heap, rhs, rn->deno));
+            return oprtr_reduction(heap, arith_mul(heap, rn->nume, rhs), rn->deno);
         }
         if (FLONUMP(rhs)) {     // rational * flonum
             return make_flonum(heap, rational_to_double((scm_rational_t)lhs) * ((scm_flonum_t)rhs)->value);
         }
         if (BIGNUMP(rhs)) {     // rational * bignum
-            RN_LET_INTEGER(rn, rhs);
-            return oprtr_mul(heap, (scm_rational_t)lhs, &rn);
+            scm_rational_t rn = (scm_rational_t)lhs;
+            if (rn->nume == MAKEFIXNUM(1)) return oprtr_reduction(heap, rhs, rn->deno);
+            if (rn->nume == MAKEFIXNUM(-1)) return arith_negate(heap, oprtr_reduction(heap, rhs, rn->deno));
+            return oprtr_reduction(heap, arith_mul(heap, rn->nume, rhs), rn->deno);
         }
         if (RATIONALP(rhs)) {   // rational * rational
             return oprtr_mul(heap, (scm_rational_t)lhs, (scm_rational_t)rhs);
@@ -2842,7 +2897,7 @@ arith_div(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             goto flonum_again;
         }
         if (FIXNUMP(rhs)) {     // fixnum / fixnum
-            return oprtr_reduction(heap, lhs, rhs);
+            return oprtr_reduction_fixnum(heap, lhs, rhs);
         }
         if (FLONUMP(rhs)) {     // fixnum / flonum
             return make_flonum(heap, (double)FIXNUM(lhs) / ((scm_flonum_t)rhs)->value);
@@ -2851,8 +2906,8 @@ arith_div(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return oprtr_reduction(heap, lhs, rhs);
         }
         if (RATIONALP(rhs)) {   // fixnum / rational
-            RN_LET_INTEGER(rn, lhs);
-            return oprtr_div(heap, &rn, (scm_rational_t)rhs);
+            scm_rational_t rn = (scm_rational_t)rhs;
+            return oprtr_reduction(heap, arith_mul(heap, rn->deno, lhs), rn->nume);
         }
         if (COMPLEXP(rhs)) {    // fixnum / complex
             real = ((scm_complex_t)rhs)->real;
@@ -2893,8 +2948,8 @@ flonum_again:
             return oprtr_reduction(heap, lhs, rhs);
         }
         if (RATIONALP(rhs)) {   // bignum / rational
-            RN_LET_INTEGER(rn, lhs);
-            return oprtr_div(heap, &rn, (scm_rational_t)rhs);
+            scm_rational_t rn = (scm_rational_t)rhs;
+            return oprtr_reduction(heap, arith_mul(heap, rn->deno, lhs), rn->nume);
         }
         if (COMPLEXP(rhs)) {    // bignum / complex
             real = ((scm_complex_t)rhs)->real;
@@ -2905,15 +2960,15 @@ flonum_again:
     }
     if (RATIONALP(lhs)) {
         if (FIXNUMP(rhs)) {     // rational / fixnum
-            RN_LET_INTEGER(rn, rhs);
-            return oprtr_div(heap, (scm_rational_t)lhs, &rn);
+            scm_rational_t rn = (scm_rational_t)lhs;
+            return oprtr_reduction(heap, rn->nume, arith_mul(heap, rn->deno, rhs));
         }
         if (FLONUMP(rhs)) {     // rational / flonum
             return make_flonum(heap, rational_to_double((scm_rational_t)lhs) / ((scm_flonum_t)rhs)->value);
         }
         if (BIGNUMP(rhs)) {     // rational / bignum
-            RN_LET_INTEGER(rn, rhs);
-            return oprtr_div(heap, (scm_rational_t)lhs, &rn);
+            scm_rational_t rn = (scm_rational_t)lhs;
+            return oprtr_reduction(heap, rn->nume, arith_mul(heap, rn->deno, rhs));
         }
         if (RATIONALP(rhs)) {   // rational / rational
             return oprtr_div(heap, (scm_rational_t)lhs, (scm_rational_t)rhs);
