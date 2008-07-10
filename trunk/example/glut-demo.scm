@@ -7,13 +7,13 @@
 ;;   Darwin:  OpenGL.framework GLUT.framework
 ;;   Windows: opengl32.dll glut32.dll
 ;;   Linux:   libGL.so.1 libglut.so.3    
-               
+
 (import (core primitives))
 (auto-compile-verbose #t)
 (scheme-load-verbose #t)
-  
+
 (begin
-  
+
   (import (core) (gl) (glut) (rnrs) (rnrs programs))
 
   (define object glutSolidIcosahedron)
@@ -62,6 +62,12 @@
       (and (= state 0) (set! reverse (not reverse)))
       (format #t "mouse callback ~s ~s ~s ~s ~%" button state x y)))
 
+  (define show-dodecahedron (lambda () (glScalef 0.6 0.6 0.6) (glutSolidDodecahedron)))
+  (define show-sphere       (lambda () (glutSolidSphere 1.0 32 16)))
+  (define show-cone         (lambda () (glutSolidCone 1.0 2.0 32 1)))
+  (define show-cube         (lambda () (glutSolidCube 1.5)))
+  (define show-torus        (lambda () (glutSolidTorus 0.5 1.0 16 32)))
+
   (define menu
     (lambda (m)
       (format #t "menu callback ~s ~%" m)
@@ -69,7 +75,14 @@
         ((1) (set! object glutSolidIcosahedron))
         ((2) (set! object glutSolidOctahedron))
         ((3) (set! object glutSolidTetrahedron))
-        ((4) (exit)))))
+        ((4) (set! object show-dodecahedron))
+        ((5) (set! object show-sphere))
+        ((6) (set! object show-cone))
+        ((7) (set! object show-cube))
+        ((8) (set! object show-torus))
+        ((9) (glShadeModel GL_SMOOTH))
+        ((10) (glShadeModel GL_FLAT))
+        ((11) (exit)))))
 
   (define reshape
     (lambda (w h)
@@ -106,7 +119,11 @@
     (lambda (x y ambr ambg ambb difr difg difb specr specg specb shine)
       (glPushMatrix)
       (glTranslatef x y 0.0)
-      (glRotatef angle -0.3 1.0 -0.5)
+      (cond ((eq? object show-sphere)
+             (glRotatef 90.0 0.0 1.0 0.0)
+             (glRotatef angle 0.0 0.0 1.0))
+            (else
+             (glRotatef angle -0.3 1.0 -0.5)))
       (glMaterialfv GL_FRONT GL_AMBIENT (f32vector ambr ambg ambb 1.0))
       (glMaterialfv GL_FRONT GL_DIFFUSE (f32vector difr difg difb 1.0))
       (glMaterialfv GL_FRONT GL_SPECULAR (f32vector specr specg specb 1.0))
@@ -130,6 +147,7 @@
       (glLightfv GL_LIGHT0 GL_POSITION (f32vector 0.0 3.0 3.0 0.0))
       (glLightModelfv GL_LIGHT_MODEL_AMBIENT (f32vector 0.2 0.2 0.2 1.0))
       (glLightModelfv GL_LIGHT_MODEL_LOCAL_VIEWER (f32vector 0.0))
+      (glShadeModel GL_FLAT)
       (glFrontFace GL_CW)
       (glEnable GL_LIGHTING)
       (glEnable GL_LIGHT0)
@@ -146,7 +164,14 @@
       (glutAddMenuEntry "Icosahedron" 1)
       (glutAddMenuEntry "Octahedron" 2)
       (glutAddMenuEntry "Tetrahedron" 3)
-      (glutAddMenuEntry "Exit" 4)
+      (glutAddMenuEntry "Dodecahedron" 4)
+      (glutAddMenuEntry "Sphere" 5)
+      (glutAddMenuEntry "Cone" 6)
+      (glutAddMenuEntry "Cube" 7)
+      (glutAddMenuEntry "Torus" 8)
+      (glutAddMenuEntry "[smooth]" 9)
+      (glutAddMenuEntry "[flat]" 10)
+      (glutAddMenuEntry "Exit" 11)
       (glutAttachMenu GLUT_RIGHT_BUTTON)
       (glutMainLoop)))
 
