@@ -555,22 +555,24 @@ subr_num_mul(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "*", 0, "number", argv[0], argc, argv);
         return scm_undef;
     }
+    if (argc > 2) {
+        for (int i = 0; i < argc; i++) {
+            if (number_pred(argv[i])) continue;
+            wrong_type_argument_violation(vm, "*", i, "number", argv[i], argc, argv);
+            return scm_undef;
+        }
+        scm_obj_t acc = argv[0];
+        for (int i = 1; i < argc; i++) {
+            acc = arith_mul(vm->m_heap, acc, argv[i]);
+        }
+        return acc;
+    }
     if (argc == 1) {
         if (number_pred(argv[0])) return argv[0];
         wrong_type_argument_violation(vm, "*", 0, "number", argv[0], argc, argv);
         return scm_undef;
     }
     if (argc == 0) return MAKEFIXNUM(1);
-    for (int i = 0; i < argc; i++) {
-        if (number_pred(argv[i])) continue;
-        wrong_type_argument_violation(vm, "*", i, "number", argv[i], argc, argv);
-        return scm_undef;
-    }
-    scm_obj_t acc = argv[0];
-    for (int i = 1; i < argc; i++) {
-        acc = arith_mul(vm->m_heap, acc, argv[i]);
-    }
-    return acc;
 }
 
 // /
