@@ -3,7 +3,7 @@ version 0.9.5-trunk:
   * printer speed improved
   * added record-print-nesting-limit
   * rational number arithmetic speed improved
-
+  * [http://code.google.com/p/ypsilon/issues/detail?id=25&can=1 Issue 25]: added new OpenGL example
 version 0.9.5-update1:
   * [http://code.google.com/p/ypsilon/issues/detail?id=7&can=1 Issue 7]: added library-extensions
   * [http://code.google.com/p/ypsilon/issues/detail?id=8&can=1 Issue 8]: added uninstall target to Makefile
