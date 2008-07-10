@@ -167,7 +167,7 @@ top:
             int n2 = HDR_TUPLE_COUNT(tuple2->hdr);
             if (n1 == n2) {
                 scm_obj_t* elts1 = tuple1->elts;
-                scm_obj_t* elts2 = tuple1->elts;
+                scm_obj_t* elts2 = tuple2->elts;
                 for (int i = 0; i < n1; i++) {
                     if (equal_pred(heap, visited, elts1[i], elts2[i])) continue;
                     return false;
