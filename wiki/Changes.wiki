@@ -4,7 +4,7 @@ version 0.9.5-trunk:
   * added record-print-nesting-limit
   * rational number arithmetic speed improved
   * [http://code.google.com/p/ypsilon/issues/detail?id=25&can=1 Issue 25]: added new OpenGL example
-  * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 26]: added `process` and `process-wait`
+  * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 26]: added `process` and `process-wait` for linux/darwin
 
 version 0.9.5-update1:
   * [http://code.google.com/p/ypsilon/issues/detail?id=7&can=1 Issue 7]: added library-extensions
