@@ -1688,6 +1688,153 @@ subr_lookup_process_environment(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// process-wait
+scm_obj_t
+subr_process_wait(VM* vm, int argc, scm_obj_t argv[])
+{
+#if _MSC_VER
+    raise_error(vm, "process-wait", "procedure not supported in this platform", 0);
+    return scm_undef;
+#else
+    int option = 0;
+    if (argc == 2) {
+        if (FIXNUMP(argv[0])) {
+            if (BOOLP(argv[1])) {
+                if (argv[1] == scm_true) option = WNOHANG;
+            } else {
+                wrong_type_argument_violation(vm, "process-wait", 1, "#t or #f", argv[1], argc, argv);
+                return scm_undef;
+            }
+            int status;
+            int pid = waitpid(FIXNUM(argv[0]), &status, option);
+            if (pid == -1) goto waitpid_fail;
+            if (WIFEXITED(status)) return int_to_integer(vm->m_heap, WEXITSTATUS(status));
+            return scm_false;
+        }
+        wrong_type_argument_violation(vm, "process-wait", 0, "fixnum", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "process-wait", 2, 2, argc, argv);
+    return scm_undef;
+
+waitpid_fail:
+    int err = errno;
+    char message[256];
+    snprintf(message, sizeof(message), "waitpid() failed. %s", strerror(err));    
+    raise_error(vm, "process-wait", message, err);
+    return scm_undef;
+
+#endif
+}
+
+// process
+scm_obj_t
+subr_process(VM* vm, int argc, scm_obj_t argv[])
+{
+#if _MSC_VER
+    raise_error(vm, "process", "procedure not supported in this platform", 0);
+    return scm_undef;
+#else
+
+    int pipe0[2] = { -1, -1 };
+    int pipe1[2] = { -1, -1 };
+    int pipe2[2] = { -1, -1 };
+    const char* sysfunc = NULL;
+    if (argc >= 1) {
+        for (int i = 0; i < argc; i++) {
+            if (!STRINGP(argv[i])) {
+                wrong_type_argument_violation(vm, "process", i, "string", argv[i], argc, argv);
+                return scm_undef;
+            }
+            sysfunc = "pipe";
+            if (pipe(pipe0)) goto pipe_fail;
+            if (pipe(pipe1)) goto pipe_fail;
+            if (pipe(pipe2)) goto pipe_fail;
+            sysfunc = "fork";
+            pid_t cpid = fork();
+            if (cpid == -1) goto fork_fail;
+            if (cpid == 0) {
+                sysfunc = "close";
+                if (close(pipe0[1])) goto close_fail;
+                if (close(pipe1[0])) goto close_fail;
+                if (close(pipe2[0])) goto close_fail;
+                sysfunc = "close";
+                if (close(0)) goto close_fail;
+                sysfunc = "dup";
+                if (dup(pipe0[0]) == -1) goto dup_fail;
+                sysfunc = "close";
+                if (close(1)) goto close_fail;
+                sysfunc = "dup";
+                if (dup(pipe1[1]) == -1) goto dup_fail;
+                sysfunc = "close";
+                if (close(2)) goto close_fail;
+                sysfunc = "dup";
+                if (dup(pipe2[1]) == -1) goto dup_fail;
+                const char* command_name = ((scm_string_t)argv[0])->name;
+                char** command_argv = (char**)alloca(sizeof(char*) * (argc + 1));
+                for (int i = 0; i < argc; i++) command_argv[i] = ((scm_string_t)argv[i])->name;
+                command_argv[argc] = (char*)NULL;
+                sysfunc = "execvp";
+                execvp(command_name, command_argv);
+                goto exec_fail;
+            } else {
+                close(pipe0[0]);
+                close(pipe1[1]);
+                close(pipe2[1]);
+                assert(sizeof(pid_t) == sizeof(int));
+                return make_list(vm->m_heap, 
+                                 4,
+                                 int_to_integer(vm->m_heap, cpid),
+                                 make_std_port(vm->m_heap,
+                                               pipe0[1],
+                                               make_symbol(vm->m_heap, "process-stdin"),
+                                               SCM_PORT_DIRECTION_OUT,
+                                               SCM_PORT_FILE_OPTION_NONE,
+                                               SCM_PORT_BUFFER_MODE_BLOCK,
+                                               scm_false),
+                                 make_std_port(vm->m_heap,
+                                               pipe1[0],
+                                               make_symbol(vm->m_heap, "process-stdout"),
+                                               SCM_PORT_DIRECTION_IN,
+                                               SCM_PORT_FILE_OPTION_NONE,
+                                               SCM_PORT_BUFFER_MODE_BLOCK,
+                                               scm_false),
+                                 make_std_port(vm->m_heap,
+                                               pipe2[0],
+                                               make_symbol(vm->m_heap, "process-stderr"),
+                                               SCM_PORT_DIRECTION_IN,
+                                               SCM_PORT_FILE_OPTION_NONE,
+                                               SCM_PORT_BUFFER_MODE_BLOCK,
+                                               scm_false));
+            }
+        }
+    }
+    wrong_number_of_arguments_violation(vm, "process", 1, -1, argc, argv);
+    return scm_undef;
+
+pipe_fail:
+fork_fail: {
+        int err = errno;
+        char message[256];
+        snprintf(message, sizeof(message), "%s() failed. %s", sysfunc, strerror(err));    
+        if (pipe0[0] != -1) close(pipe0[0]);
+        if (pipe0[1] != -1) close(pipe0[1]);
+        if (pipe1[0] != -1) close(pipe1[0]);
+        if (pipe1[1] != -1) close(pipe1[1]);
+        if (pipe2[0] != -1) close(pipe2[0]);
+        if (pipe2[1] != -1) close(pipe2[1]);
+        raise_error(vm, "process", message, err);
+        return scm_undef;
+    }
+close_fail:
+dup_fail: 
+exec_fail: {
+        exit(EXIT_FAILURE);
+    }
+
+#endif
+}
+
 void
 init_subr_others(object_heap_t* heap)
 {
@@ -1764,6 +1911,8 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("command-line", subr_command_line);
     DEFSUBR("command-line-shift", subr_command_line_shift);
     DEFSUBR("system-share-path", subr_system_share_path);
+    DEFSUBR("process",subr_process);
+    DEFSUBR("process-wait",subr_process_wait);
 
     #undef DEFSUBR
 

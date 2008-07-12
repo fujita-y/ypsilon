@@ -192,6 +192,7 @@
     #include <sys/times.h>
     #include <sys/resource.h>
     #include <sys/utsname.h>
+    #include <sys/wait.h>
     #include <stdint.h>
     #include <unistd.h>
     #include <regex.h>

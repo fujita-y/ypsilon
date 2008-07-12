@@ -660,6 +660,8 @@
     pretty-print-maximum-lines
     pretty-print-unwrap-syntax
     procedure?
+    process
+    process-wait
     put-byte
     put-bytevector
     put-char
