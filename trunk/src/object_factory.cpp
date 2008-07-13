@@ -27,7 +27,7 @@ make_symbol(object_heap_t* heap, const char *name, int len)
         } else {
             obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
             obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) ;
-            obj->name = (char*)heap->allocate_private(len);
+            obj->name = (char*)heap->allocate_private(len + 1);
         }
         memcpy(obj->name, name, len);
         obj->name[len] = 0;
