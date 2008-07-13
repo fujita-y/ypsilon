@@ -172,36 +172,44 @@ fasl_printer_t::put_datum(scm_obj_t obj)
 void
 fasl_printer_t::put_lites()
 {
-    scm_obj_t* lites = (scm_obj_t*)alloca(sizeof(scm_obj_t) * m_lites->datum->live);
-    hashtable_rec_t* ht_datum = m_lites->datum;
-    int nsize = m_lites->datum->capacity;
-    for (int i = 0; i < nsize; i++) {
-        scm_obj_t key = ht_datum->elts[i];
-        scm_obj_t value = ht_datum->elts[i + nsize];
-        if (CELLP(key)) {
-            assert(FIXNUM(value) < m_lites->datum->live);
-            lites[FIXNUM(value)] = key;
+    scm_obj_t* lites = (scm_obj_t*)calloc(m_lites->datum->live, sizeof(scm_obj_t));
+    try {
+        hashtable_rec_t* ht_datum = m_lites->datum;
+        int nsize = m_lites->datum->capacity;
+        for (int i = 0; i < nsize; i++) {
+            scm_obj_t key = ht_datum->elts[i];
+            scm_obj_t value = ht_datum->elts[i + nsize];
+            if (CELLP(key)) {
+                assert(FIXNUM(value) < m_lites->datum->live);
+                lites[FIXNUM(value)] = key;
+            }
         }
+        emit_u32(m_lites->datum->live);
+        for (int i = 0; i < m_lites->datum->live; i++) {
+            if (SYMBOLP(lites[i])) {
+                scm_symbol_t symbol = (scm_symbol_t)lites[i];
+                emit_u8(FASL_TAG_SYMBOL);
+                emit_u32(i);
+                int n = HDR_SYMBOL_SIZE(symbol->hdr);
+                emit_u32(n);
+                emit_string(symbol->name, n);
+                continue;
+            }
+            if (STRINGP(lites[i])) {
+                scm_string_t string = (scm_string_t)lites[i];
+                emit_u8(FASL_TAG_STRING);
+                emit_u32(i);
+                int n = HDR_STRING_SIZE(string->hdr);
+                emit_u32(n);
+                emit_string(string->name, n);
+                continue;
+            }
+        }
+    } catch (...) {
+        free(lites);
+        throw;
     }
-    emit_u32(m_lites->datum->live);
-    for (int i = 0; i < m_lites->datum->live; i++) {
-        if (SYMBOLP(lites[i])) {
-            scm_symbol_t symbol = (scm_symbol_t)lites[i];
-            emit_u8(FASL_TAG_SYMBOL);
-            emit_u32(i);
-            emit_u32(strlen(symbol->name));
-            emit_string(symbol->name);
-            continue;
-        }
-        if (STRINGP(lites[i])) {
-            scm_string_t string = (scm_string_t)lites[i];
-            emit_u8(FASL_TAG_STRING);
-            emit_u32(i);
-            emit_u32(strlen(string->name));
-            emit_string(string->name);
-            continue;
-        }
-    }
+    free(lites);
 }
 
 void
@@ -315,13 +323,13 @@ fasl_reader_t::get_lites()
         uint32_t len = fetch_u32();
         if (len > buflen) {
             free(buf);
-            buf = (char*)malloc(len);
+            buf = (char*)malloc(len + 1);
             buflen = len;
         }
         for (int i = 0; i < len; i++) buf[i] = fetch_u8();
         buf[len] = 0;
-        if (tag == FASL_TAG_SYMBOL) m_lites[uid] = make_symbol(m_vm->m_heap, buf);
-        else m_lites[uid] = make_string_literal(m_vm->m_heap, buf);
+        if (tag == FASL_TAG_SYMBOL) m_lites[uid] = make_symbol(m_vm->m_heap, buf, len);
+        else m_lites[uid] = make_string_literal(m_vm->m_heap, buf, len);
     }
     free(buf);
     return false;

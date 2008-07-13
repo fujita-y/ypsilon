@@ -72,9 +72,9 @@ class fasl_printer_t {
         }
     }
 
-    void emit_string(const char* s)
+    void emit_string(const char* s, int n)
     {
-        while (*s) emit_u8(*s++);
+        for (int i = 0; i < n; i++) emit_u8(s[i]);
     }
 
     void push(scm_obj_t obj) {

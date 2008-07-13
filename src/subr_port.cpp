@@ -143,9 +143,9 @@ subr_output_port_buffer_mode(VM* vm, int argc, scm_obj_t argv[])
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "output-port-buffer-mode", e.m_operation, e.m_message, e.m_err, port, scm_false);
                 return scm_undef;
-            } catch (reader_exception_t& exception) {
-                raise_lexical_violation(vm, make_symbol(vm->m_heap, "output-port-buffer-mode"), exception.m_message);
-                return scm_undef;
+//            } catch (reader_exception_t& exception) {
+//                raise_lexical_violation(vm, make_symbol(vm->m_heap, "output-port-buffer-mode"), exception.m_message);
+//                return scm_undef;
             }
         }
     }
@@ -169,9 +169,9 @@ subr_flush_output_port(VM* vm, int argc, scm_obj_t argv[])
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "flush-output-port", e.m_operation, e.m_message, e.m_err, port, scm_false);
                 return scm_undef;
-            } catch (reader_exception_t& exception) {
-                raise_lexical_violation(vm, make_symbol(vm->m_heap, "flush-output-port"), exception.m_message);
-                return scm_undef;
+//            } catch (reader_exception_t& exception) {
+//                raise_lexical_violation(vm, make_symbol(vm->m_heap, "flush-output-port"), exception.m_message);
+//                return scm_undef;
             }
         }
     }

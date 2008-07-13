@@ -38,6 +38,8 @@
   #endif
 #endif
 
+extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
+
 #if _MSC_VER
 
     #pragma warning(disable:4996)
