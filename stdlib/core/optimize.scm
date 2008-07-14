@@ -33,6 +33,7 @@
   (define-syntax diagnostics (syntax-rules () ((_ _) #f)))
 
   (define max-transform-pass 5)
+  (define limit-arguments 200)
   (define noname-lambda-infix "`")
   (define library-variable-infix "'")
 
@@ -862,7 +863,21 @@
                           lst
                           (cons (car lst) ed))))))
            form)))
-      
+
+      (define divide
+        (lambda (form)
+          (let* ((limit (- limit-arguments 1))
+                 (args (let loop ((lst '()) (expr (cdr form)))
+                         (cond ((> (length expr) limit)
+                                (loop (cons (list-head expr limit) lst)
+                                      (list-tail expr limit)))
+                               (else (reverse (cons expr lst)))))))
+            (if (and (symbol? (car form))
+                     (top-level-bound? (car form))
+                     (eq? (top-level-value (car form)) (top-level-value '.list)))
+                (emit (pretty `(.append ,@(map (lambda (e) `(.list ,@e)) args))))
+                (emit (pretty `(.apply ,(car form) (.append ,@(map (lambda (e) `(.list ,@e)) args)))))))))
+
       (if (pair? form)
           (if (pair? (car form))
               (destructuring-match form
@@ -870,7 +885,10 @@
                  (= (length vars) (length args))
                  (let ((body (flatten-begin (pretty-each body))) (args (pretty-each args)))
                    (emit `(let ,(map list vars args) ,@body))))
-                (_ (pretty-each form)))
+                (_
+                 (if (> (length form) limit-arguments)
+                     (divide form)
+                     (pretty-each form))))
               (case (car form)
                 ((and)
                  (cond ((null? (cdr form)) #t)
@@ -937,7 +955,9 @@
                    (_
                     (assertion-violation "coreform-optimize" (format "internal inconsistency in ~s" pretty) form))))
                 (else
-                 (pretty-each form))))
+                 (if (> (length form) limit-arguments)
+                     (divide form)
+                     (pretty-each form)))))
           form)))
 
   (define process-stackable
