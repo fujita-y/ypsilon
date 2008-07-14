@@ -365,12 +365,12 @@ object_heap_t::destroy()
 }
 
 void*
-object_heap_t::allocate(size_t size, bool slab, bool gc)
+object_heap_t::allocate(size_t size, bool for_slab, bool for_collectible)
 {
-    assert(slab || (gc == false));
+    assert(for_slab || (for_collectible == false));
     uint8_t attr = 0;
-    if (slab) {
-        if (gc) attr = PTAG_SLAB | PTAG_GC;
+    if (for_slab) {
+        if (for_collectible) attr = PTAG_SLAB | PTAG_GC;
         else attr = PTAG_SLAB;
     }
     assert(m_pool);
@@ -379,13 +379,16 @@ object_heap_t::allocate(size_t size, bool slab, bool gc)
     if (npage == 1) {
         for (int i = m_pool_memo; i < m_pool_watermark; i++) {
             if (m_pool[i] == PTAG_FREE) {
+                void* slab = m_pool + (i << OBJECT_SLAB_SIZE_SHIFT);
+                if (for_collectible) OBJECT_SLAB_TRAITS_OF(slab)->cache = NULL;
                 m_pool[i] = PTAG_USED | attr;
                 m_pool_memo = i + 1;
                 m_pool_usage = m_pool_usage + 1;
-                return m_pool + (i << OBJECT_SLAB_SIZE_SHIFT);
+                return slab;
             }
         }
     } else {
+        assert(for_collectible == false);
         int head = m_pool_memo;
         while (head < m_pool_watermark) {
             if (m_pool[head] == PTAG_FREE) {
@@ -431,7 +434,7 @@ object_heap_t::deallocate(void* p)
             break;
         }
     }
-#ifndef NDEBUG
+#if !defined(NDEBUG) || HPDEBUG
     memset(p, 0xBD, OBJECT_SLAB_SIZE);
 #endif
 }
@@ -815,6 +818,30 @@ fallback:
     while (i < capacity) {
         int memo = heap.m_pool_usage;
         if (GCSLABP(heap.m_pool[i])) {
+            
+            if (OBJECT_SLAB_TRAITS_OF(slab)->cache == NULL) {
+#if HPDEBUG
+                printf(";; [collector: wait for mutator complete slab init]\n");
+                fflush(stdout);
+#endif                
+#if _MSC_VER
+                Sleep(0);
+#else
+                sched_yield();
+#endif
+                continue;
+            }
+#if HPDEBUG
+            {
+                object_slab_cache_t* ca = OBJECT_SLAB_TRAITS_OF(slab)->cache;
+                bool hit = false;
+                for (int u = 0; u < array_sizeof(heap.m_collectibles); u++) hit |= (&heap.m_collectibles[u] == ca);
+                hit |= (&heap.m_weakmappings == ca);
+                hit |= (&heap.m_flonums == ca);
+                hit |= (&heap.m_cons == ca);
+                if (! hit) fatal("%s:%u concurrent_collect(): bad cache reference 0x%x in slab 0x%x", __FILE__, __LINE__, ca, slab);
+            }
+#endif
             OBJECT_SLAB_TRAITS_OF(slab)->cache->sweep(slab);
             slab += OBJECT_SLAB_SIZE;
             i++;

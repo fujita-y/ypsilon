@@ -93,6 +93,7 @@ reader_t::lexical_error(const char* fmt, ...)
         continue;
     }
     scm_port_t port = make_bytevector_port(m_vm->m_heap, make_symbol(m_vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
+    scoped_lock lock2(port->lock);
     printer_t prt(m_vm, port);
     va_list ap;
     va_start(ap, fmt);

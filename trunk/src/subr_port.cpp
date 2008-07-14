@@ -1765,10 +1765,6 @@ subr_write(VM* vm, int argc, scm_obj_t argv[])
         scm_port_t port;
         if (argc == 1) {
             port = vm->m_current_output;
-            if (!port_open_pred(port) || !port_output_pred(port)) {
-                invalid_object_violation(vm, "write", "current output port opened for output", port, argc, argv);
-                return scm_undef;
-            }
         } else {
             if (PORTP(argv[1])) {
                 port = (scm_port_t)argv[1];
@@ -1778,7 +1774,14 @@ subr_write(VM* vm, int argc, scm_obj_t argv[])
             }
         }
         scoped_lock lock(port->lock);
-        if (argc == 2) CHECK_OPENED_TEXTUAL_OUTPUT_PORT(1, "write");
+        if (argc == 2) {
+            CHECK_OPENED_TEXTUAL_OUTPUT_PORT(1, "write");
+        } else {
+            if (!port_open_pred(port) || !port_output_pred(port) || !port_textual_pred(port)) {
+                invalid_object_violation(vm, "write", "current output port is textual and it opened for output", port, argc, argv);
+                return scm_undef;
+            }
+        }
         try {
             if (BOOLP(port->transcoder)) {
                 printer_t(vm, port).format("~s", argv[0]);
@@ -1809,10 +1812,6 @@ subr_display(VM* vm, int argc, scm_obj_t argv[])
         scm_port_t port;
         if (argc == 1) {
             port = vm->m_current_output;
-            if (!port_open_pred(port) || !port_output_pred(port)) {
-                invalid_object_violation(vm, "display", "current output port opened for output", port, argc, argv);
-                return scm_undef;
-            }
         } else {
             if (PORTP(argv[1])) {
                 port = (scm_port_t)argv[1];
@@ -1822,7 +1821,14 @@ subr_display(VM* vm, int argc, scm_obj_t argv[])
             }
         }
         scoped_lock lock(port->lock);
-        if (argc == 2) CHECK_OPENED_TEXTUAL_OUTPUT_PORT(1, "display");
+        if (argc == 2) {
+            CHECK_OPENED_TEXTUAL_OUTPUT_PORT(1, "display");
+        } else {
+            if (!port_open_pred(port) || !port_output_pred(port) || !port_textual_pred(port)) {
+                invalid_object_violation(vm, "display", "current output port is textual and it opened for output", port, argc, argv);
+                return scm_undef;
+            }
+        }
         try {
             if (BOOLP(port->transcoder)) {
                 printer_t(vm, port).format("~a", argv[0]);
@@ -1853,10 +1859,6 @@ subr_newline(VM* vm, int argc, scm_obj_t argv[])
         scm_port_t port;
         if (argc == 0) {
             port = vm->m_current_output;
-            if (!port_open_pred(port) || !port_output_pred(port)) {
-                invalid_object_violation(vm, "newline", "current output port opened for output", port, argc, argv);
-                return scm_undef;
-            }
         } else {
             if (PORTP(argv[0])) {
                 port = (scm_port_t)argv[0];
@@ -1866,7 +1868,14 @@ subr_newline(VM* vm, int argc, scm_obj_t argv[])
             }
         }
         scoped_lock lock(port->lock);
-        if (argc == 1) CHECK_OPENED_TEXTUAL_OUTPUT_PORT(0, "newline");
+        if (argc == 1) {
+            CHECK_OPENED_TEXTUAL_OUTPUT_PORT(0, "newline");
+        } else {
+            if (!port_open_pred(port) || !port_output_pred(port) || !port_textual_pred(port)) {
+                invalid_object_violation(vm, "newline", "current output port is textual and it opened for output", port, argc, argv);
+                return scm_undef;
+            }
+        }
         try {
             printer_t(vm, port).format("~%", argv[1]);
             return scm_unspecified;
@@ -1890,10 +1899,6 @@ subr_read_char(VM* vm, int argc, scm_obj_t argv[])
         scm_port_t port;
         if (argc == 0) {
             port = vm->m_current_input;
-            if (!port_open_pred(port) || !port_input_pred(port)) {
-                invalid_object_violation(vm, "read-char", "current input port opened for input", port, argc, argv);
-                return scm_undef;
-            }
         } else {
             if (PORTP(argv[0])) {
                 port = (scm_port_t)argv[0];
@@ -1903,7 +1908,14 @@ subr_read_char(VM* vm, int argc, scm_obj_t argv[])
             }
         }
         scoped_lock lock(port->lock);
-        if (argc == 1) CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "read-char");
+        if (argc == 1) {
+            CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "read-char");
+        } else {
+            if (!port_open_pred(port) || !port_input_pred(port) || !port_textual_pred(port)) {
+                invalid_object_violation(vm, "read-char", "current input port is textual and it opened for input", port, argc, argv);
+                return scm_undef;
+            }
+        }
         try {
             return port_get_char(port);
         } catch (io_exception_t& e) {
@@ -1926,10 +1938,6 @@ subr_peek_char(VM* vm, int argc, scm_obj_t argv[])
         scm_port_t port;
         if (argc == 0) {
             port = vm->m_current_input;
-            if (!port_open_pred(port) || !port_input_pred(port)) {
-                invalid_object_violation(vm, "peek-char", "current input port opened for input", port, argc, argv);
-                return scm_undef;
-            }
         } else {
             if (PORTP(argv[0])) {
                 port = (scm_port_t)argv[0];
@@ -1939,7 +1947,14 @@ subr_peek_char(VM* vm, int argc, scm_obj_t argv[])
             }
         }
         scoped_lock lock(port->lock);
-        if (argc == 1) CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "peek-char");
+        if (argc == 1) {
+            CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "peek-char");
+        } else {
+            if (!port_open_pred(port) || !port_input_pred(port) || !port_textual_pred(port)) {
+                invalid_object_violation(vm, "peek-char", "current input port is textual and it opened for input", port, argc, argv);
+                return scm_undef;
+            }
+        }
         try {
             return port_lookahead_char(port);
         } catch (io_exception_t& e) {
@@ -1962,10 +1977,6 @@ subr_write_char(VM* vm, int argc, scm_obj_t argv[])
         scm_port_t port;
         if (argc == 1) {
             port = vm->m_current_output;
-            if (!port_open_pred(port) || !port_output_pred(port)) {
-                invalid_object_violation(vm, "write-char", "current output port opened for output", port, argc, argv);
-                return scm_undef;
-            }
         } else {
             if (PORTP(argv[1])) {
                 port = (scm_port_t)argv[1];
@@ -1975,7 +1986,14 @@ subr_write_char(VM* vm, int argc, scm_obj_t argv[])
             }
         }
         scoped_lock lock(port->lock);
-        if (argc == 2) CHECK_OPENED_TEXTUAL_OUTPUT_PORT(1, "write-char");
+        if (argc == 2) {
+            CHECK_OPENED_TEXTUAL_OUTPUT_PORT(1, "write-char");
+        } else {
+            if (!port_open_pred(port) || !port_output_pred(port) || !port_textual_pred(port)) {
+                invalid_object_violation(vm, "write-char", "current output port is textual and it opened for output", port, argc, argv);
+                return scm_undef;
+            }
+        }
         if (CHARP(argv[0])) {
             try {
                 port_put_char(port, argv[0]);
@@ -2003,10 +2021,6 @@ subr_read(VM* vm, int argc, scm_obj_t argv[])
         scm_port_t port;
         if (argc == 0) {
             port = vm->m_current_input;
-            if (!port_open_pred(port) || !port_input_pred(port)) {
-                invalid_object_violation(vm, "read", "current input port opened for input", port, argc, argv);
-                return scm_undef;
-            }
         } else {
             if (PORTP(argv[0])) {
                 port = (scm_port_t)argv[0];
@@ -2016,7 +2030,14 @@ subr_read(VM* vm, int argc, scm_obj_t argv[])
             }
         }
         scoped_lock lock(port->lock);
-        if (argc == 1) CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "read");
+        if (argc == 1) {
+            CHECK_OPENED_TEXTUAL_INPUT_PORT(0, "read");
+        } else {
+            if (!port_open_pred(port) || !port_input_pred(port) || !port_textual_pred(port)) {
+                invalid_object_violation(vm, "read", "current input port is textual and it opened for input", port, argc, argv);
+                return scm_undef;
+            }
+        }
         try {
             return reader_t(vm, port).read(NULL);
         } catch (io_exception_t& e) {

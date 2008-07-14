@@ -38,12 +38,14 @@
     #define SCDEBUG                 0
     #define STDEBUG                 0
     #define WBDEBUG                 0
+    #define HPDEBUG                 0
 #else
     #define MTDEBUG                 0
     #define GCDEBUG                 0
     #define SCDEBUG                 0
     #define STDEBUG                 0
     #define WBDEBUG                 0
+    #define HPDEBUG                 0
 #endif
 
 #define PROFILE_OPCODE              0
