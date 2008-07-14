@@ -206,6 +206,7 @@
         {
           #if MTDEBUG
             if (lock_count == 0) {
+                *((intptr_t*)0) = 0;
                 fatal("internal error:%s:%u verify_locked() failed.", __FILE__, __LINE__);
             }
           #endif
