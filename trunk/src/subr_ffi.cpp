@@ -25,7 +25,7 @@ subr_load_shared_object(VM* vm, int argc, scm_obj_t argv[])
             invalid_argument_violation(vm, "load-shared-object", last_shared_object_error(), NULL, -1, argc, argv);
             return scm_undef;
         }
-        wrong_type_argument_violation(vm, "load-shared-object", 0, "string or location", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "load-shared-object", 0, "string", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "load-shared-object", 1, 1, argc, argv);
@@ -44,7 +44,7 @@ subr_lookup_shared_object(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
         } else {
-            wrong_type_argument_violation(vm, "lookup-shared-object", 0, "c-function address", argv[0], argc, argv);
+            wrong_type_argument_violation(vm, "lookup-shared-object", 0, "shared object handle", argv[0], argc, argv);
             return scm_undef;
         }
         if (STRINGP(argv[1]) || SYMBOLP(argv[1])) {

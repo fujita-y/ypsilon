@@ -34,4 +34,5 @@
   (set-top-level-value! '.list list)
   (set-top-level-value! '.cons* cons*)
   (set-top-level-value! '.memq memq)
-  (set-top-level-value! '.append append))
+  (set-top-level-value! '.append append)
+  (set-top-level-value! '.apply apply))

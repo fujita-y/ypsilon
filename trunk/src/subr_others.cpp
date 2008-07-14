@@ -1693,7 +1693,7 @@ scm_obj_t
 subr_process_wait(VM* vm, int argc, scm_obj_t argv[])
 {
 #if _MSC_VER
-    raise_error(vm, "process-wait", "procedure not supported in this platform", 0);
+    raise_error(vm, "process-wait", "not supported on this platform", 0);
     return scm_undef;
 #else
     int option = 0;
@@ -1732,7 +1732,7 @@ scm_obj_t
 subr_process(VM* vm, int argc, scm_obj_t argv[])
 {
 #if _MSC_VER
-    raise_error(vm, "process", "procedure not supported in this platform", 0);
+    raise_error(vm, "process", "not supported on this platform", 0);
     return scm_undef;
 #else
 
