@@ -49,44 +49,50 @@ VM*             s_current_vm;
     static void*
     signal_waiter(void* param)
     {
-        sigset_t* set = (sigset_t*)param;
+        sigset_t set = *(sigset_t*)param;
         while (true) {
             int sig;
-            sigwait(set, &sig);
-            if (sig == SIGHUP) {
-                fprintf(stderr,": SIGHUP\n");
+            int err = sigwait(&set, &sig);
+            if (err == 0) {
+                if (sig == SIGHUP) {
+                    fprintf(stderr, ": SIGHUP\n");
+                    exit(0);
+                }
+                if (sig == SIGTERM) {
+                    fprintf(stderr, ": SIGTERM\n");
+                    exit(0);
+                }
+                if (sig == SIGQUIT) {
+                    fprintf(stderr, ": SIGQUIT\n");
+                    exit(0);
+                }
+                if (sig == SIGKILL) {
+                    fprintf(stderr, ": SIGKILL\n");
+                    exit(0);
+                }
+                if (sig == SIGABRT) {
+                    fprintf(stderr, ": SIGABRT\n");
+                    exit(0);
+                }
+                if (sig == SIGINT) {
+                    fprintf(stderr, ": SIGINT\n");
+                    continue;
+                }
+                if (sig == SIGTSTP) {
+                    fprintf(stderr, ": SIGTSTP\n");
+                    continue;
+                }
+                if (sig == SIGCONT) {
+                    fprintf(stderr, ": SIGCONT\n");
+                    continue;
+                }
+                fprintf(stderr, ";; ### UNHANDLED SIGNAL %d ###\n", sig);
                 exit(0);
+            } else {
+                if (err != EINTR) {
+                    fprintf(stderr, "error: sigwait() %s (%d)\n", strerror(err), err);
+                }
             }
-            if (sig == SIGTERM) {
-                fprintf(stderr,": SIGTERM\n");
-                exit(0);
-            }
-            if (sig == SIGQUIT) {
-                fprintf(stderr,": SIGQUIT\n");
-                exit(0);
-            }
-            if (sig == SIGKILL) {
-                fprintf(stderr,": SIGKILL\n");
-                exit(0);
-            }
-            if (sig == SIGABRT) {
-                fprintf(stderr,": SIGABRT\n");
-                exit(0);
-            }
-            if (sig == SIGINT) {
-                fprintf(stderr,": SIGINT\n");
-                continue;
-            }
-            if (sig == SIGTSTP) {
-                fprintf(stderr,": SIGTSTP\n");
-                continue;
-            }
-            if (sig == SIGCONT) {
-                fprintf(stderr,": SIGCONT\n");
-                continue;
-            }
-            fprintf(stderr,";; ### UNHANDLED SIGNAL %d ###\n", sig);
-            exit(0);
         }
         return NULL;
     }
@@ -109,7 +115,7 @@ VM*             s_current_vm;
         printf("sizeof(pthread_mutex_t) %d\n", sizeof(pthread_mutex_t));
         printf("sizeof(pthread_cond_t) %d\n", sizeof(pthread_cond_t));
     #endif
-
+        
     #if MTDEBUG
         puts(";; MTDEBUG ON");
     #endif
@@ -122,17 +128,21 @@ VM*             s_current_vm;
     #if STDEBUG
         puts(";; STDEBUG ON");
     #endif
-
+    #if HPDEBUG
+        puts(";; HPDEBUG ON");
+    #endif
+        
         sigset_t set;
         sigemptyset(&set);
         sigaddset(&set, SIGINT);
         MTVERIFY(pthread_sigmask(SIG_BLOCK, &set, NULL));
-        {
-            pthread_t tid;
-            MTVERIFY(pthread_create(&tid, NULL, signal_waiter, &set));
-            MTVERIFY(pthread_detach(tid));
-        }
+
+        pthread_t tid;
+        MTVERIFY(pthread_create(&tid, NULL, signal_waiter, &set));
+        MTVERIFY(pthread_detach(tid));
+
         scm_standalone(NULL);
+        
         return 0;
     }
 

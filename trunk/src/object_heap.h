@@ -28,9 +28,12 @@
   #include "spinlock.h"
 #endif
 
-#define ROOT_SNAPSHOT_GLOBALS       0
-#define ROOT_SNAPSHOT_LOCALS        1
-#define ROOT_SNAPSHOT_EVERYTHING    2
+#define ROOT_SNAPSHOT_GLOBALS           0
+#define ROOT_SNAPSHOT_LOCALS            1
+#define ROOT_SNAPSHOT_EVERYTHING        2
+#if HPDEBUG
+#define ROOT_SNAPSHOT_CONSISTENCY_CHECK 3
+#endif
 
 #define PTAG_FREE       0x00
 #define PTAG_USED       0x01
@@ -227,6 +230,10 @@ public:
     void            display_object_statistics(scm_port_t port);
     void            display_heap_statistics(scm_port_t port);
 
+#if HPDEBUG
+    void            consistency_check();
+#endif
+    
 };
 
 #endif

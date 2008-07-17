@@ -791,6 +791,7 @@
     syntax-violation-form
     syntax-violation-subform
     syntax-violation?
+    system
     system-environment
     system-share-path
     take
