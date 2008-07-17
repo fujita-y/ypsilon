@@ -213,6 +213,7 @@ resolve_collectible(void* obj, int size, void* desc)
             port->bytes = heap->forward(port->bytes);
             port->name = heap->forward(port->name);
             port->transcoder = heap->forward(port->transcoder);
+            port->handlers = heap->forward(port->handlers);
             break;
         }
         case TC_COMPLEX: {

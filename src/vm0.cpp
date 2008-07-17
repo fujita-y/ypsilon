@@ -66,8 +66,8 @@ VM::init(object_heap_t* heap)
         m_current_environment = m_heap->m_system_environment;
 
         #if _MSC_VER
-            scm_bvector_t cp932 = make_bvector(m_heap, 3);;
-            scm_bvector_t utf8 = make_bvector(m_heap, 3);;
+            scm_bvector_t cp932 = make_bvector(m_heap, 3);
+            scm_bvector_t utf8 = make_bvector(m_heap, 3);
             cp932->elts[0] = SCM_PORT_CODEC_CP932;
             cp932->elts[1] = SCM_PORT_EOL_STYLE_CRLF;
             cp932->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_IGNORE;
@@ -758,6 +758,9 @@ VM::stop()
     if (m_heap->m_usage.m_recorded) m_heap->m_usage.clear();
 
     double t1 = msec();
+#if HPDEBUG
+    if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_CONSISTENCY_CHECK) save_stack();
+#endif
     if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING || m_heap->m_root_snapshot == ROOT_SNAPSHOT_GLOBALS) {
         m_heap->enqueue_root(m_bootport);
         m_heap->enqueue_root(m_current_input);

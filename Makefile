@@ -9,11 +9,9 @@ PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(PREFIX)/share/$(PROG)"'
 
-CXXFLAGS = -x c++ -m32 -O3 -fstrict-aliasing \
+CXXFLAGS = -x c++ -m32 -pthread -O3 -fstrict-aliasing \
 	   -fomit-frame-pointer -momit-leaf-frame-pointer \
 	   -fno-align-labels -fno-align-loops -fno-align-jumps
-
-ASFLAGS  = --32
 
 LDFLAGS  = -m32 -lpthread -ldl
 
@@ -38,6 +36,7 @@ else
 endif
 
 ifneq (, $(findstring Linux, $(UNAME)))
+  ASFLAGS = --32
   SRCS += ffi_stub_linux.s
 endif
 

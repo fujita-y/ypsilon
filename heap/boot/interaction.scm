@@ -2,6 +2,8 @@
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
+(define dump-condition (make-parameter #f))
+
 (define add-load-path
   (lambda (path)
     (cond ((string? path)
@@ -196,6 +198,12 @@
                                (format port "~%  ~n" e))
                              (expansion-trace-stack))))))
 
+        (define output-condition
+          (lambda (c)
+            (and (dump-condition)
+                 (format port "~%~%")
+                 (describe-condition port c))))
+                 
         (cond ((syntax-violation? condition)
                (output-who-message)
                (cond ((syntax-violation-form condition)
@@ -210,6 +218,7 @@
                              (format port "~%  @  ")
                              (pretty-print (unrename-private-primitives form) port)
                              (and (pair? form) (format port "~%  ~n" form))))))
+               (output-condition condition)
                (or (and (null? (expansion-trace-stack))
                         (or (eq? (current-macro-expression) (syntax-violation-form condition))
                             (eq? (current-macro-expression) (syntax-violation-subform condition))))
@@ -222,16 +231,19 @@
                (and (message-condition? condition)
                     (format port ", ~a" (condition-message condition)))
                (output-irritants)
+               (output-condition condition)
                (output-expansion))
 
               ((error? condition)
                (output-who-message)
                (output-irritants)
+               (output-condition condition)
                (output-expansion))
 
               ((violation? condition)
                (output-who-message)
                (output-irritants)
+               (output-condition condition)
                (output-expansion))
 
               ((warning? condition)
@@ -241,15 +253,16 @@
                (and (message-condition? condition)
                     (format port ": ~a" (condition-message condition)))
                (output-irritants)
+               (output-condition condition)
                (output-expansion))
 
               ((condition? condition)
-               (format port "error: unknown exception caught~%~%irritants:~%~a" (describe-condition #f condition))
+               (format port "error: unknown type of exception caught~%~%irritants:~%~a" (describe-condition #f condition))
                (output-irritants)
                (output-expansion))
 
               (else
-               (format port "error: unknown exception caught, ~a" condition)
+               (format port "error: unknown type of exception caught, ~a" condition)
                (output-irritants)
                (output-expansion))))
 
@@ -379,6 +392,7 @@
         (format #t "  --interactive (-i)     enters repl after running the script file~%")
         (format #t "  --r6rs (-6)            conforms r6rs lexical syntax (default)~%")
         (format #t "  --compatible (-c)      extends lexical syntax for compatibility~%")
+        (format #t "  --dump-condition       default exception handler dump condition~%")
         (format #t "  --sitelib=path         adds sitelib path (YPSILON_SITELIB)~%")
         (format #t "  --loadpath=path        adds load search path (YPSILON_LOADPATH)~%")
         (format #t "  --acc=dir              sets a auto-compile-cache directory (YPSILON_ACC)~%")
@@ -503,6 +517,9 @@
                              (loop (cdr lst)))
                             ((or (opt? "--interactive" #f) (opt? "-i" #f))
                              (set! interaction #t)
+                             (loop (cdr lst)))
+                            ((opt? "--dump-condition" #f)
+                             (dump-condition #t)
                              (loop (cdr lst)))
                             ((opt? "--acc" #f)
                              (or (pair? (cdr lst)) (bad-option opt))

@@ -472,7 +472,7 @@
                         decode-flonum
                         load
                         system-share-path
-                        process process-wait
+                        system process process-wait
                         lookup-process-environment
                         set-current-input-port! set-current-output-port! set-current-error-port!
                         open-builtin-data-input-port))

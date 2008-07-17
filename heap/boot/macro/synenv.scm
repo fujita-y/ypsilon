@@ -29,7 +29,7 @@
                 (set-car! binding #f)
                 (set-cdr! binding 'no-use))))))
 
-(define free-id=?
+#;(define free-id=?
   (lambda (id1 id2)
     (let ((env (current-expansion-environment)))
 
@@ -51,6 +51,27 @@
                   (lookup-lexical-name (syntax-object-expr id) env)))))
 
       (free-lexical-name=? (lexical-name id1) (lexical-name id2)))))
+
+(define free-id=?
+  (lambda (id1 id2)
+    
+    (define lexical=?
+      (lambda (env s1 s2)
+        (or (eq? s1 s2)
+            (and (eq? (original-id s1) (original-id s2))
+                 (let ((deno1 (env-lookup env s1)) (deno2 (env-lookup env s2)))
+                   (or (eq? deno1 deno2)
+                       (and (or (eq? s1 deno1) (unbound? deno1))
+                            (or (eq? s2 deno2) (unbound? deno2)))))))))
+    
+    (or (eq? id1 id2)
+        (let* ((env (current-expansion-environment)) (s1 (lookup-lexical-name id1 env)))
+          (if (symbol? id2)
+              (lexical=? env s1 (lookup-lexical-name id2 env))
+              (cond ((syntax-object-lexname id2) => (lambda (s2) (eq? s1 s2)))
+                    (else
+                     (let ((s2 (lookup-lexical-name (syntax-object-expr id2) env)))
+                       (if (renamed-id? s1) (eq? s1 s2) (lexical=? env s1 s2))))))))))
 
 (define make-import
   (lambda (id)

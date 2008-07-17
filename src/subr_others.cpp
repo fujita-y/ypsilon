@@ -1688,42 +1688,30 @@ subr_lookup_process_environment(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// process-wait
+// system
 scm_obj_t
-subr_process_wait(VM* vm, int argc, scm_obj_t argv[])
+subr_system(VM* vm, int argc, scm_obj_t argv[])
 {
 #if _MSC_VER
-    raise_error(vm, "process-wait", "not supported on this platform", 0);
+    raise_error(vm, "system", "not supported on this platform", 0);
     return scm_undef;
 #else
-    int option = 0;
-    if (argc == 2) {
-        if (FIXNUMP(argv[0])) {
-            if (BOOLP(argv[1])) {
-                if (argv[1] == scm_true) option = WNOHANG;
-            } else {
-                wrong_type_argument_violation(vm, "process-wait", 1, "#t or #f", argv[1], argc, argv);
-                return scm_undef;
-            }
-            int status;
-            int pid = waitpid(FIXNUM(argv[0]), &status, option);
-            if (pid == -1) goto waitpid_fail;
-            if (WIFEXITED(status)) return int_to_integer(vm->m_heap, WEXITSTATUS(status));
-            return scm_false;
+    if (argc >= 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            int retval = system(string->name);
+            if(retval >= 0) return MAKEFIXNUM(retval);
+            int err = errno;
+            char message[256];
+            snprintf(message, sizeof(message), "system() failed. %s", strerror(err));    
+            raise_error(vm, "system", message, err);
+            return scm_undef;
         }
-        wrong_type_argument_violation(vm, "process-wait", 0, "fixnum", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "system", 0, "string", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "process-wait", 2, 2, argc, argv);
+    wrong_number_of_arguments_violation(vm, "system", 1, 1, argc, argv);
     return scm_undef;
-
-waitpid_fail:
-    int err = errno;
-    char message[256];
-    snprintf(message, sizeof(message), "waitpid() failed. %s", strerror(err));    
-    raise_error(vm, "process-wait", message, err);
-    return scm_undef;
-
 #endif
 }
 
@@ -1746,6 +1734,9 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
                 wrong_type_argument_violation(vm, "process", i, "string", argv[i], argc, argv);
                 return scm_undef;
             }
+            sysfunc = "sysconf";
+            int open_max;
+            if ((open_max = sysconf(_SC_OPEN_MAX)) < 0) goto sysconf_fail;
             sysfunc = "pipe";
             if (pipe(pipe0)) goto pipe_fail;
             if (pipe(pipe1)) goto pipe_fail;
@@ -1754,27 +1745,25 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
             pid_t cpid = fork();
             if (cpid == -1) goto fork_fail;
             if (cpid == 0) {
-                sysfunc = "close";
                 if (close(pipe0[1])) goto close_fail;
                 if (close(pipe1[0])) goto close_fail;
                 if (close(pipe2[0])) goto close_fail;
-                sysfunc = "close";
                 if (close(0)) goto close_fail;
-                sysfunc = "dup";
                 if (dup(pipe0[0]) == -1) goto dup_fail;
-                sysfunc = "close";
                 if (close(1)) goto close_fail;
-                sysfunc = "dup";
                 if (dup(pipe1[1]) == -1) goto dup_fail;
-                sysfunc = "close";
                 if (close(2)) goto close_fail;
-                sysfunc = "dup";
                 if (dup(pipe2[1]) == -1) goto dup_fail;
+                for (int i = 3; i < open_max; i++) {
+                    if (i == pipe0[0]) continue;
+                    if (i == pipe1[1]) continue;
+                    if (i == pipe2[1]) continue;
+                    close(i);
+                }
                 const char* command_name = ((scm_string_t)argv[0])->name;
                 char** command_argv = (char**)alloca(sizeof(char*) * (argc + 1));
                 for (int i = 0; i < argc; i++) command_argv[i] = ((scm_string_t)argv[i])->name;
                 command_argv[argc] = (char*)NULL;
-                sysfunc = "execvp";
                 execvp(command_name, command_argv);
                 goto exec_fail;
             } else {
@@ -1812,8 +1801,10 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "process", 1, -1, argc, argv);
     return scm_undef;
 
+sysconf_fail:
 pipe_fail:
-fork_fail: {
+fork_fail: 
+    {
         int err = errno;
         char message[256];
         snprintf(message, sizeof(message), "%s() failed. %s", sysfunc, strerror(err));    
@@ -1826,11 +1817,57 @@ fork_fail: {
         raise_error(vm, "process", message, err);
         return scm_undef;
     }
+
 close_fail:
 dup_fail: 
-exec_fail: {
-        exit(EXIT_FAILURE);
+exec_fail: 
+     exit(EXIT_FAILURE);
+
+#endif
+}
+
+// process-wait
+scm_obj_t
+subr_process_wait(VM* vm, int argc, scm_obj_t argv[])
+{
+#if _MSC_VER
+    raise_error(vm, "process-wait", "not supported on this platform", 0);
+    return scm_undef;
+#else
+    int option = 0;
+    if (argc == 2) {
+        if (FIXNUMP(argv[0])) {
+            if (BOOLP(argv[1])) {
+                if (argv[1] == scm_true) option = WNOHANG;
+            } else {
+                wrong_type_argument_violation(vm, "process-wait", 1, "#t or #f", argv[1], argc, argv);
+                return scm_undef;
+            }
+            int status;
+            int pid;
+            while (true) {
+                pid = waitpid(FIXNUM(argv[0]), &status, option);
+                if (pid == -1) {
+                    if (errno == EINTR) continue;
+                    goto waitpid_fail;
+                }
+                break;
+            }
+            if (WIFEXITED(status)) return int_to_integer(vm->m_heap, WEXITSTATUS(status));
+            return scm_false;
+        }
+        wrong_type_argument_violation(vm, "process-wait", 0, "fixnum", argv[0], argc, argv);
+        return scm_undef;
     }
+    wrong_number_of_arguments_violation(vm, "process-wait", 2, 2, argc, argv);
+    return scm_undef;
+
+waitpid_fail:
+    int err = errno;
+    char message[256];
+    snprintf(message, sizeof(message), "waitpid() failed. %s", strerror(err));    
+    raise_error(vm, "process-wait", message, err);
+    return scm_undef;
 
 #endif
 }
@@ -1911,6 +1948,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("command-line", subr_command_line);
     DEFSUBR("command-line-shift", subr_command_line_shift);
     DEFSUBR("system-share-path", subr_system_share_path);
+    DEFSUBR("system",subr_system);
     DEFSUBR("process",subr_process);
     DEFSUBR("process-wait",subr_process_wait);
 

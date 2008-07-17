@@ -454,6 +454,7 @@ void
 object_heap_t::shade(scm_obj_t obj)
 {
     if (CELLP(obj)) {
+        assert(obj);
         if (OBJECT_SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
             if (m_mark_sp < m_mark_stack + m_mark_stack_size) {
                 *m_mark_sp++ = obj;
@@ -881,6 +882,9 @@ finish:
             t6 - t5);
     fflush(stdout);
 #endif
+#if HPDEBUG
+    heap.consistency_check();
+#endif    
 }
 
 #if _MSC_VER
@@ -1368,3 +1372,216 @@ object_heap_t::init_inherents()
     }
 #endif
 }
+
+#if HPDEBUG
+
+static const char*
+verify_obj(void* obj, object_heap_t* heap)
+{
+    static char msg[256];
+    if (CELLP(obj)) {
+        if (heap->is_collectible(obj)) {
+            if (PAIRP(obj)) return NULL;
+            int tc = HDR_TC(HDR(obj));
+            if (tc >= 0 || tc <= TC_MASKBITS) return NULL;
+            snprintf(msg, sizeof(msg), "have invalid TC %d\n", tc);
+            return msg;
+        }
+        snprintf(msg, sizeof(msg), "out of GCSLAB");
+        return msg;
+    }
+    return NULL;
+}
+
+static const char*
+verify_interior_obj(void* ref, object_heap_t* heap)
+{
+    if (ref == NULL) return NULL;
+    return verify_obj(OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref), heap);
+}
+
+static void
+check_collectible(void* obj, int size, void* refcon)
+{
+    #define VERIFY_OBJ(OBJ, SLOT) \
+        do { \
+            const char* msg = verify_obj((OBJ)->SLOT, heap); \
+            if (msg) fatal("bad %s 0x%x %s->%s 0x%x %s\n", #OBJ, OBJ, #OBJ, #SLOT, (OBJ)->SLOT, msg); \
+        } while (false);
+        
+    #define VERIFY_INTERIOR_OBJ(OBJ, SLOT) \
+    do { \
+        const char* msg = verify_interior_obj((OBJ)->SLOT, heap); \
+        if (msg) fatal("bad %s 0x%x %s->%s 0x%x %s\n", #OBJ, OBJ, #OBJ, #SLOT, (OBJ)->SLOT, msg); \
+    } while (false);
+
+    #define VERIFY_ELT(OBJ, ELT) \
+    do { \
+        const char* msg = verify_obj(ELT, heap); \
+        if (msg) fatal("bad %s 0x%x %s 0x%x %s\n", #OBJ, OBJ, #ELT, ELT, msg); \
+    } while (false);
+    
+    object_heap_t* heap = (object_heap_t*)refcon;
+    
+    if (!CELLP(obj)) return;
+    if (!heap->is_collectible(obj)) {
+        fatal("object 0x%x out of GCSLAB\n", obj);
+    }
+    if (PAIRP(obj)) {
+        scm_pair_t pair = (scm_pair_t)obj;
+        VERIFY_OBJ(pair, car);
+        VERIFY_OBJ(pair, cdr);
+        return;
+    }
+    int tc = HDR_TC(HDR(obj));
+    if (tc < 0 || tc > TC_MASKBITS) {
+        fatal("object 0x%x have invalid TC %d\n", obj, tc);
+    }
+    switch (tc) {
+        case TC_VECTOR: {
+            scm_vector_t vector = (scm_vector_t)obj;
+            int count = HDR_VECTOR_COUNT(vector->hdr);
+            for (int i = 0; i < count; i++) VERIFY_OBJ(vector, elts[i]);
+        } return;
+        case TC_TUPLE: {
+            scm_tuple_t tuple = (scm_tuple_t)obj;
+            int count = HDR_TUPLE_COUNT(tuple->hdr);
+            for (int i = 0; i < count; i++) VERIFY_OBJ(tuple, elts[i]);
+        } return;
+        case TC_VALUES: {
+            scm_values_t values = (scm_values_t)obj;
+            int count = HDR_VALUES_COUNT(values->hdr);
+            for (int i = 0; i < count; i++) VERIFY_OBJ(values, elts[i]);
+        } return;
+        case TC_HASHTABLE: {
+            scm_hashtable_t ht = (scm_hashtable_t)obj;
+            scoped_lock lock(ht->lock);
+            hashtable_rec_t* hashtable_datum = ht->datum;
+            if (hashtable_datum) {
+                int nsize = hashtable_datum->capacity;
+                for (int i = 0; i < nsize * 2; i++) VERIFY_OBJ(hashtable_datum, elts[i]);
+            }
+        } return;
+        case TC_WEAKHASHTABLE: {
+            scm_weakhashtable_t ht = (scm_weakhashtable_t)obj;
+            scoped_lock lock(ht->lock);
+            weakhashtable_rec_t* weakhashtable_datum = ht->datum;
+            int nsize = weakhashtable_datum->capacity;
+            for (int i = 0; i < nsize; i++) VERIFY_OBJ(weakhashtable_datum, elts[i]);
+        } return;
+        case TC_PORT: {
+            scm_port_t port = (scm_port_t)obj;
+            VERIFY_OBJ(port, bytes);
+            VERIFY_OBJ(port, name);
+            VERIFY_OBJ(port, transcoder);
+            VERIFY_OBJ(port, handlers);
+        } return;
+        case TC_COMPLEX: {
+            scm_complex_t complex = (scm_complex_t)obj;
+            VERIFY_OBJ(complex, imag);
+            VERIFY_OBJ(complex, real);
+        } return;
+        case TC_RATIONAL: {
+            scm_rational_t rational = (scm_rational_t)obj;
+            VERIFY_OBJ(rational, nume);
+            VERIFY_OBJ(rational, deno);
+        } return;
+        case TC_CLOSURE: {
+            scm_closure_t closure = (scm_closure_t)obj;
+            VERIFY_OBJ(closure, code);
+            VERIFY_OBJ(closure, doc);
+            VERIFY_INTERIOR_OBJ(closure, env);
+        } return;
+        case TC_CONT: {
+            scm_cont_t cont = (scm_cont_t)obj;
+            VERIFY_OBJ(cont, wind_rec);
+            VERIFY_INTERIOR_OBJ(cont, cont);
+        } return;
+        case TC_HEAPENV: {
+            int nbytes = HDR(obj) >> HDR_HEAPENV_SIZE_SHIFT;
+            uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
+            vm_env_t env = (vm_env_t)(top + nbytes - sizeof(vm_env_rec_t));
+            VERIFY_INTERIOR_OBJ(env, up);
+            for (scm_obj_t* vars = (scm_obj_t*)top; vars < (scm_obj_t*)env; vars++) {
+                VERIFY_ELT(obj, *vars);
+            }
+        } return;
+        case TC_HEAPCONT: {
+             int nbytes = HDR(obj) >> HDR_HEAPCONT_SIZE_SHIFT;
+             uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
+             vm_cont_t cont = (vm_cont_t)(top + nbytes - sizeof(vm_cont_rec_t));            
+             VERIFY_INTERIOR_OBJ(cont, up);
+             VERIFY_INTERIOR_OBJ(cont, env);
+             VERIFY_OBJ(cont, pc);
+             VERIFY_OBJ(cont, trace);
+             for (scm_obj_t* args = (scm_obj_t*)top; args < (scm_obj_t*)cont; args++) {
+                 VERIFY_ELT(obj, *args);
+             }
+        } return;
+        case TC_ENVIRONMENT: {
+            scm_environment_t environment = (scm_environment_t)obj;
+            VERIFY_OBJ(environment, variable);
+            VERIFY_OBJ(environment, macro);
+            VERIFY_OBJ(environment, name);
+        } return;
+        case TC_GLOC: {
+            scm_gloc_t gloc = (scm_gloc_t)obj;            
+            VERIFY_OBJ(gloc, variable);
+            VERIFY_OBJ(gloc, value);
+        } return;
+        case TC_SUBR: {
+            scm_subr_t subr = (scm_subr_t)obj;
+            VERIFY_OBJ(subr, doc);
+        } return;
+        case TC_WEAKMAPPING: {
+            scm_weakmapping_t wmap = (scm_weakmapping_t)obj;
+            VERIFY_OBJ(wmap, key);
+            VERIFY_OBJ(wmap, value);
+        } return;
+        case TC_SYMBOL: {
+            //
+        } return;
+        case TC_STRING: {
+            //
+        } return;
+        case TC_BVECTOR: {
+            //
+        } return;
+        case TC_FLONUM: {
+            //
+        } return;
+        case TC_BIGNUM: {
+            //
+        } return;
+        default: {
+            fatal("bad object 0x%x, unknown TC %d\n", obj, tc);
+            return;
+        }
+    }
+}
+
+void
+object_heap_t::consistency_check()
+{
+//    puts(";; [collector: heap check]");
+    m_root_snapshot = ROOT_SNAPSHOT_CONSISTENCY_CHECK;
+    m_stop_the_world = true;
+    while (!m_mutator_stopped) {
+        m_collector_wake.wait(m_collector_lock);
+        if (!m_mutator_stopped) m_mutator_wake.signal();
+    }
+    object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_pool);
+    for (int i = 0; i < m_pool_watermark; i++) {
+        if (GCSLABP(m_pool[i])) {
+            traits->cache->iterate(m_pool + (i << OBJECT_SLAB_SIZE_SHIFT), check_collectible, this);
+        }
+        traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    }
+    m_stop_the_world = false;
+    m_mutator_wake.signal();
+    while (m_mutator_stopped) {
+        m_collector_wake.wait(m_collector_lock);
+    }
+}
+
+#endif
