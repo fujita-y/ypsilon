@@ -2,6 +2,9 @@
 
 version 0.9.5-update1 (based on revision 69):
 
+  * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 26]: unpredictable heap crash with process fork/exec etc. (fixed, trunk contains updated code)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=29&can=1 Issue 29]: `free-identifier=?` problem with shadowed identifer (fixed, trunk contains updated code)
+
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
 
 version 0.9.5:
