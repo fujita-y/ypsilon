@@ -1734,68 +1734,68 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
                 wrong_type_argument_violation(vm, "process", i, "string", argv[i], argc, argv);
                 return scm_undef;
             }
-            sysfunc = "sysconf";
-            int open_max;
-            if ((open_max = sysconf(_SC_OPEN_MAX)) < 0) goto sysconf_fail;
-            sysfunc = "pipe";
-            if (pipe(pipe0)) goto pipe_fail;
-            if (pipe(pipe1)) goto pipe_fail;
-            if (pipe(pipe2)) goto pipe_fail;
-            sysfunc = "fork";
-            pid_t cpid = fork();
-            if (cpid == -1) goto fork_fail;
-            if (cpid == 0) {
-                if (close(pipe0[1])) goto close_fail;
-                if (close(pipe1[0])) goto close_fail;
-                if (close(pipe2[0])) goto close_fail;
-                if (close(0)) goto close_fail;
-                if (dup(pipe0[0]) == -1) goto dup_fail;
-                if (close(1)) goto close_fail;
-                if (dup(pipe1[1]) == -1) goto dup_fail;
-                if (close(2)) goto close_fail;
-                if (dup(pipe2[1]) == -1) goto dup_fail;
-                for (int i = 3; i < open_max; i++) {
-                    if (i == pipe0[0]) continue;
-                    if (i == pipe1[1]) continue;
-                    if (i == pipe2[1]) continue;
-                    close(i);
-                }
-                const char* command_name = ((scm_string_t)argv[0])->name;
-                char** command_argv = (char**)alloca(sizeof(char*) * (argc + 1));
-                for (int i = 0; i < argc; i++) command_argv[i] = ((scm_string_t)argv[i])->name;
-                command_argv[argc] = (char*)NULL;
-                execvp(command_name, command_argv);
-                goto exec_fail;
-            } else {
-                close(pipe0[0]);
-                close(pipe1[1]);
-                close(pipe2[1]);
-                assert(sizeof(pid_t) == sizeof(int));
-                return make_list(vm->m_heap, 
-                                 4,
-                                 int_to_integer(vm->m_heap, cpid),
-                                 make_std_port(vm->m_heap,
-                                               pipe0[1],
-                                               make_string_literal(vm->m_heap, "process-stdin"),
-                                               SCM_PORT_DIRECTION_OUT,
-                                               SCM_PORT_FILE_OPTION_NONE,
-                                               SCM_PORT_BUFFER_MODE_BLOCK,
-                                               scm_false),
-                                 make_std_port(vm->m_heap,
-                                               pipe1[0],
-                                               make_string_literal(vm->m_heap, "process-stdout"),
-                                               SCM_PORT_DIRECTION_IN,
-                                               SCM_PORT_FILE_OPTION_NONE,
-                                               SCM_PORT_BUFFER_MODE_BLOCK,
-                                               scm_false),
-                                 make_std_port(vm->m_heap,
-                                               pipe2[0],
-                                               make_string_literal(vm->m_heap, "process-stderr"),
-                                               SCM_PORT_DIRECTION_IN,
-                                               SCM_PORT_FILE_OPTION_NONE,
-                                               SCM_PORT_BUFFER_MODE_BLOCK,
-                                               scm_false));
+        }
+        sysfunc = "sysconf";
+        int open_max;
+        if ((open_max = sysconf(_SC_OPEN_MAX)) < 0) goto sysconf_fail;
+        sysfunc = "pipe";
+        if (pipe(pipe0)) goto pipe_fail;
+        if (pipe(pipe1)) goto pipe_fail;
+        if (pipe(pipe2)) goto pipe_fail;
+        sysfunc = "fork";
+        pid_t cpid = fork();
+        if (cpid == -1) goto fork_fail;
+        if (cpid == 0) {
+            if (close(pipe0[1])) goto close_fail;
+            if (close(pipe1[0])) goto close_fail;
+            if (close(pipe2[0])) goto close_fail;
+            if (close(0)) goto close_fail;
+            if (dup(pipe0[0]) == -1) goto dup_fail;
+            if (close(1)) goto close_fail;
+            if (dup(pipe1[1]) == -1) goto dup_fail;
+            if (close(2)) goto close_fail;
+            if (dup(pipe2[1]) == -1) goto dup_fail;
+            for (int i = 3; i < open_max; i++) {
+                if (i == pipe0[0]) continue;
+                if (i == pipe1[1]) continue;
+                if (i == pipe2[1]) continue;
+                close(i);
             }
+            const char* command_name = ((scm_string_t)argv[0])->name;
+            char** command_argv = (char**)alloca(sizeof(char*) * (argc + 1));
+            for (int i = 0; i < argc; i++) command_argv[i] = ((scm_string_t)argv[i])->name;
+            command_argv[argc] = (char*)NULL;
+            execvp(command_name, command_argv);
+            goto exec_fail;
+        } else {
+            close(pipe0[0]);
+            close(pipe1[1]);
+            close(pipe2[1]);
+            assert(sizeof(pid_t) == sizeof(int));
+            return make_list(vm->m_heap, 
+                             4,
+                             int_to_integer(vm->m_heap, cpid),
+                             make_std_port(vm->m_heap,
+                                           pipe0[1],
+                                           make_string_literal(vm->m_heap, "process-stdin"),
+                                           SCM_PORT_DIRECTION_OUT,
+                                           SCM_PORT_FILE_OPTION_NONE,
+                                           SCM_PORT_BUFFER_MODE_BLOCK,
+                                           scm_false),
+                            make_std_port(vm->m_heap,
+                                          pipe1[0],
+                                          make_string_literal(vm->m_heap, "process-stdout"),
+                                          SCM_PORT_DIRECTION_IN,
+                                          SCM_PORT_FILE_OPTION_NONE,
+                                          SCM_PORT_BUFFER_MODE_BLOCK,
+                                          scm_false),
+                            make_std_port(vm->m_heap,
+                                          pipe2[0],
+                                          make_string_literal(vm->m_heap, "process-stderr"),
+                                          SCM_PORT_DIRECTION_IN,
+                                          SCM_PORT_FILE_OPTION_NONE,
+                                          SCM_PORT_BUFFER_MODE_BLOCK,
+                                        scm_false));
         }
     }
     wrong_number_of_arguments_violation(vm, "process", 1, -1, argc, argv);
