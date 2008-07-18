@@ -1,7 +1,4 @@
-#How to checkout latest source code with Xcode3
-
-= Instruction =
-
+Instruction:
   * Launch Xcode3
   * Select *`Xcode`* -> *`Preferences...`* (_Xcode will open preferences window_)
   * Select *`SCM`* pane
