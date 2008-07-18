@@ -1,4 +1,4 @@
-#summary Repository checkout instruction for Xcode 3
+#summary Xcode3: How to checkout latest source code from repository
   * Launch Xcode3
   * Select *`Xcode`* -> *`Preferences...`* (_Xcode will open preferences window_)
   * Select *`SCM`* pane
