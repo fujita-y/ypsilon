@@ -28,7 +28,9 @@ private:
     void            read_thing(char *buff,size_t size);
     int             read_hex_scalar_value();
     int             read_escape_sequence();
-    scm_obj_t       read_prefixed_number(int prefix, int radix);
+    int             read_radix(int exactness);
+    int             read_exactness(int radix);
+    scm_obj_t       read_prefixed_number(int exactness, int radix, bool swap);
     scm_obj_t       read_number();
     scm_obj_t       read_token();
     scm_obj_t       read_string();

@@ -331,7 +331,7 @@ reader_t::read_number()
 {
     char buf[512];
     read_thing(buf, sizeof(buf));
-    scm_obj_t obj = parse_number(m_vm->m_heap, buf, 0, 10);
+    scm_obj_t obj = parse_number(m_vm->m_heap, buf, 0, 0);
     if (obj != scm_false) return obj;
     if (m_vm->flags.m_extend_lexical_syntax != scm_true) {
         if (buf[1] == 0) {
@@ -356,13 +356,55 @@ reader_t::read_number()
 }
 
 scm_obj_t
-reader_t::read_prefixed_number(int prefix, int radix)
+reader_t::read_prefixed_number(int exactness, int radix, bool swap)
 {
     char buf[512];
     read_thing(buf, sizeof(buf));
-    scm_obj_t obj = parse_number(m_vm->m_heap, buf, prefix, radix);
+    scm_obj_t obj = parse_number(m_vm->m_heap, buf, exactness, radix);
     if (obj != scm_false) return obj;
-    lexical_error("invalid lexical syntax #%c%s while reading number", prefix, buf);
+    if (exactness) {
+        if (radix) {
+            if (swap) lexical_error("invalid lexical syntax #%c#%c%s while reading number", radix, exactness, buf);
+            lexical_error("invalid lexical syntax #%c#%c%s while reading number", exactness, radix, buf);
+        }
+        lexical_error("invalid lexical syntax #%c%s while reading number", exactness, buf);
+    }
+    lexical_error("invalid lexical syntax #%c%s while reading number", radix, buf);
+}
+
+int
+reader_t::read_radix(int exactness)
+{
+    if (get_ucs4() != '#') {
+        unget_ucs4();
+        return 10;
+    }
+    int c = get_ucs4();
+    switch (c) {
+    case 'b': case 'B': case 'o': case 'O': case 'd': case 'D': case 'x': case 'X': 
+        return c;
+    case EOF:
+        lexical_error("unexpected end-of-file while reading number");
+    default:
+        lexical_error("invalid lexical syntax #%c#%c while reading number", exactness, c);
+    }
+}
+
+int
+reader_t::read_exactness(int radix)
+{
+    if (get_ucs4() != '#') {
+        unget_ucs4();
+        return 0;
+    }
+    int c = get_ucs4();
+    switch (c) {
+    case 'e': case 'E': case 'i': case 'I': return c;
+    case EOF:
+        lexical_error("unexpected end-of-file while reading number");
+    default:
+        lexical_error("invalid lexical syntax #%c#%c while reading number", radix, c);
+    }
 }
 
 scm_obj_t
@@ -733,12 +775,12 @@ top:
                 case '|': return skip_srfi30();
                 case '\\': return read_char();
                 case ';': read_expr(); goto top;
-                case 'b': case 'B': return read_prefixed_number(c, 2);
-                case 'o': case 'O': return read_prefixed_number(c, 8);
-                case 'd': case 'D': return read_prefixed_number(c, 10);
-                case 'x': case 'X': return read_prefixed_number(c, 16);
-                case 'i': case 'I': return read_prefixed_number(c, 10);
-                case 'e': case 'E': return read_prefixed_number(c, 10);
+                case 'b': case 'B': return read_prefixed_number(read_exactness(c), c, true);
+                case 'o': case 'O': return read_prefixed_number(read_exactness(c), c, true);
+                case 'd': case 'D': return read_prefixed_number(read_exactness(c), c, true);
+                case 'x': case 'X': return read_prefixed_number(read_exactness(c), c, true);
+                case 'i': case 'I': return read_prefixed_number(c, read_radix(c), false);
+                case 'e': case 'E': return read_prefixed_number(c, read_radix(c), false);
                 case '\'': return list2(S_SYNTAX, read_expr());
                 case '`': return list2(S_QUASISYNTAX, read_expr());
                 case ',':

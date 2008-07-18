@@ -1220,7 +1220,7 @@ scm_obj_t
 subr_string_to_number(VM* vm, int argc, scm_obj_t argv[])
 {
     if ((argc == 1) || (argc == 2)) {
-        int radix = 10;
+        int radix = 0;
         if (argc == 2) {
             if (FIXNUMP(argv[1])) {
                 radix = FIXNUM(argv[1]);
