@@ -5061,33 +5061,43 @@ parse_negate(object_heap_t* heap, scm_obj_t obj)
 scm_obj_t
 parse_number(object_heap_t* heap, const char* s, int prefix, int radix)
 {
+    // prefix should be { e | E | i | I | 0 }, 
+    // radix should be { b | B | o | O | d | D | x | X | 16 | 10 | 8 | 2 | 0 }
+
     bool negative = false;
     bool nosign = true;
     bool exact = false;
     bool inexact = false;
-    bool radix_fixed = false;
 
-    if (prefix) {
-        if ((prefix == 'e') | (prefix == 'E')) exact = true;
-        else if ((prefix == 'i') | (prefix == 'I')) inexact = true;
-        else radix_fixed = true; // prefix should be { x | b | o | d }, radix should be { 16 | 10 | 8 | 2 }
+    switch (prefix) {
+        case 'e': case 'E': exact = true; break;
+        case 'i': case 'I': inexact = true; break;
+    }
+    switch (radix) {
+        case 'b': case 'B': radix =  2; break;
+        case 'o': case 'O': radix =  8; break;
+        case 'd': case 'D': radix = 10; break;
+        case 'x': case 'X': radix = 16; break;
     }
     while (s[0] == '#') {
         switch (s[1]) {
-        case 'i': case 'I': if (exact | inexact) return scm_false; inexact = true; break;
-        case 'e': case 'E': if (exact | inexact) return scm_false; exact = true; break;
-        case 'b': case 'B': if (radix_fixed) return scm_false; radix =  2; radix_fixed = true; break;
-        case 'o': case 'O': if (radix_fixed) return scm_false; radix =  8; radix_fixed = true; break;
-        case 'd': case 'D': if (radix_fixed) return scm_false; radix = 10; radix_fixed = true; break;
-        case 'x': case 'X': if (radix_fixed) return scm_false; radix = 16; radix_fixed = true; break;
-        default: return scm_false;
+            case 'i': case 'I': if (exact | inexact) return scm_false; inexact = true; break;
+            case 'e': case 'E': if (exact | inexact) return scm_false; exact = true; break;
+            case 'b': case 'B': if (radix) return scm_false; radix =  2; break;
+            case 'o': case 'O': if (radix) return scm_false; radix =  8; break;
+            case 'd': case 'D': if (radix) return scm_false; radix = 10; break;
+            case 'x': case 'X': if (radix) return scm_false; radix = 16; break;
+            default: return scm_false;
         }
         s += 2;
     }
+    if (radix == 0) radix = 10;
+#if ENABLE_HASH_IN_NUMBER
     if (!exact && strchr(s, '#')) {
         inexact = true;
         exact = false;
     }
+#endif
     if (s[0] == '-') {
         s++;
         if ((s[0] == 'i') | (s[0] == 'I')) {
