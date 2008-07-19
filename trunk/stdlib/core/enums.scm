@@ -140,21 +140,21 @@
     (syntax-rules ()
       ((_ type-name (symbol1 ...) constructor-syntax)
        (begin
-         (define universe (make-enumeration '(symbol1 ...)))
          (define-syntax type-name
            (lambda (x)
              (syntax-case x ()
                ((_ symbol2)
-                (or (enum-set-member? (syntax->datum (syntax symbol2)) universe)
+                (or (memq (syntax->datum (syntax symbol2)) '(symbol1 ...))
                     (syntax-violation 'type-name "excpectd symbols which belong to the universe" x))
                 (syntax symbol2)))))
          (define-syntax constructor-syntax
            (lambda (x)
              (syntax-case x ()
                ((_ symbol3 (... ...))
-                (or (for-all (lambda (e) (enum-set-member? e universe))
+                (or (for-all (lambda (e) (memq e '(symbol1 ...)))
                              (syntax->datum (syntax (symbol3 (... ...)))))
                     (syntax-violation 'constructor-syntax "excpectd symbols which belong to the universe" x))
-                (syntax ((enum-set-constructor universe) '(symbol3 (... ...))))))))))))
+                (syntax ((enum-set-constructor (make-enumeration '(symbol1 ...))) '(symbol3 (... ...))))))))))))
+
   ) ;[end]
 
