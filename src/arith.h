@@ -121,6 +121,19 @@ exact_integer_to_intptr(scm_obj_t obj, intptr_t* ans)
     return false;
 }
 
+inline bool
+exact_integer_to_int(scm_obj_t obj, int* ans)
+{
+    if (sizeof(int) == sizeof(int32_t)) {
+        return exact_integer_to_int32(obj, (int32_t*)ans);
+    }
+    if (sizeof(int) == sizeof(int64_t)) {
+        return exact_integer_to_int64(obj, (int64_t*)ans);
+    }
+    assert(false);
+    return false;
+}
+
 scm_obj_t double_to_inexact(object_heap_t* heap, double value);
 double real_to_double(scm_obj_t obj);
 
