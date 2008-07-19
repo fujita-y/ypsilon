@@ -1704,7 +1704,7 @@ subr_system(VM* vm, int argc, scm_obj_t argv[])
             int err = errno;
             char message[256];
             snprintf(message, sizeof(message), "system() failed. %s", strerror(err));    
-            raise_error(vm, "system", message, err);
+            raise_error(vm, "system", message, err, argc, argv);
             return scm_undef;
         }
         wrong_type_argument_violation(vm, "system", 0, "string", argv[0], argc, argv);
@@ -1777,7 +1777,7 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
 						   NULL, NULL, TRUE, 0, NULL, NULL,
 						   &startup, 
 						   &process) == 0) goto create_fail;
-
+		CloseHandle(process.hThread);
         return make_list(vm->m_heap, 
                          4,
                          intptr_to_integer(vm->m_heap, (intptr_t)process.hProcess),
@@ -1818,7 +1818,7 @@ create_fail:
     if (pipe1[1] != INVALID_HANDLE_VALUE) CloseHandle(pipe1[1]);
     if (pipe2[0] != INVALID_HANDLE_VALUE) CloseHandle(pipe2[0]);
     if (pipe2[1] != INVALID_HANDLE_VALUE) CloseHandle(pipe2[1]);
-    raise_error(vm, "process", message, err, argc, argv);
+    raise_error(vm, "process", message, errno, argc, argv);
     return scm_undef;
 
 #else
@@ -1935,7 +1935,7 @@ subr_process_wait(VM* vm, int argc, scm_obj_t argv[])
 #else
     int option = 0;
     if (argc == 2) {
-        if (FIXNUMP(argv[0])) {
+        if (exact_integer_pred(argv[0])) {
             if (BOOLP(argv[1])) {
                 if (argv[1] == scm_true) option = WNOHANG;
             } else {
@@ -1944,18 +1944,22 @@ subr_process_wait(VM* vm, int argc, scm_obj_t argv[])
             }
             int status;
             int pid;
-            while (true) {
-                pid = waitpid(FIXNUM(argv[0]), &status, option);
-                if (pid == -1) {
-                    if (errno == EINTR) continue;
-                    goto waitpid_fail;
+            if (exact_integer_to_int(argv[0], &pid)) {
+                while (true) {
+                    pid = waitpid(pid, &status, option);
+                    if (pid == -1) {
+                        if (errno == EINTR) continue;
+                        goto waitpid_fail;
+                    }
+                    break;
                 }
-                break;
+                if (WIFEXITED(status)) return int_to_integer(vm->m_heap, WEXITSTATUS(status));
+                return scm_false;
             }
-            if (WIFEXITED(status)) return int_to_integer(vm->m_heap, WEXITSTATUS(status));
-            return scm_false;
+            invalid_argument_violation(vm, "process-wait", "value out of bounds,", argv[0], 0, argc, argv);
+            return scm_undef;
         }
-        wrong_type_argument_violation(vm, "process-wait", 0, "fixnum", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "process-wait", 0, "exact integer", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "process-wait", 2, 2, argc, argv);
