@@ -1720,8 +1720,107 @@ scm_obj_t
 subr_process(VM* vm, int argc, scm_obj_t argv[])
 {
 #if _MSC_VER
-    raise_error(vm, "process", "not supported on this platform", 0);
+
+	HANDLE pipe0[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
+	HANDLE pipe1[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
+	HANDLE pipe2[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
+	const char* sysfunc = NULL;
+	if (argc >= 1) {
+        for (int i = 0; i < argc; i++) {
+            if (!STRINGP(argv[i])) {
+                wrong_type_argument_violation(vm, "process", i, "string", argv[i], argc, argv);
+                return scm_undef;
+            }
+        }
+
+		wchar_t command_line_ucs2[MAX_PATH] = { 0 };
+		wchar_t module_name_ucs2[MAX_PATH] = { 0 };
+		{
+			int bsize = 0;
+			for (int i = 0; i < argc; i++) bsize = bsize + HDR_STRING_SIZE(((scm_string_t)argv[i])->hdr) + 1;
+			if (bsize) {
+				char* utf8 = (char*)malloc(bsize + 1);
+				if (utf8 == NULL) fatal("fatal: memory overflow in malloc(%d)", bsize + 1);
+				utf8[0] = 0;
+				for (int i = 0; i < argc; i++) {
+					strcat(utf8, " ");
+					strcat(utf8, ((scm_string_t)argv[i])->name);
+				}
+				MultiByteToWideChar(CP_UTF8, 0, utf8 + 1, -1, command_line_ucs2, array_sizeof(command_line_ucs2));
+				free(utf8);
+			}
+			MultiByteToWideChar(CP_UTF8, 0, ((scm_string_t)argv[0])->name, -1, module_name_ucs2, array_sizeof(module_name_ucs2));
+		}
+
+		SECURITY_ATTRIBUTES sa;
+		sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+		sa.lpSecurityDescriptor = NULL;
+		sa.bInheritHandle = TRUE;
+		sysfunc = "CreatePipe";
+		if (CreatePipe(&pipe0[0], &pipe0[1], &sa, 0) == 0) goto pipe_fail;
+		if (CreatePipe(&pipe1[0], &pipe1[1], &sa, 0) == 0) goto pipe_fail;
+		if (CreatePipe(&pipe2[0], &pipe2[1], &sa, 0) == 0) goto pipe_fail;
+
+		STARTUPINFO startup;
+		memset(&startup, 0, sizeof(STARTUPINFO));
+		startup.cb = sizeof(STARTUPINFO);
+		startup.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+		startup.wShowWindow = SW_HIDE;
+		startup.hStdInput = pipe0[0];
+		startup.hStdOutput = pipe1[1];
+		startup.hStdError = pipe2[1];
+    
+		sysfunc = "CreateProcess";
+		PROCESS_INFORMATION process;
+		if (CreateProcessW(NULL,
+						   command_line_ucs2, 
+						   NULL, NULL, TRUE, 0, NULL, NULL,
+						   &startup, 
+						   &process) == 0) goto create_fail;
+
+        return make_list(vm->m_heap, 
+                         4,
+                         intptr_to_integer(vm->m_heap, (intptr_t)process.hProcess),
+                         make_std_port(vm->m_heap,
+                                       pipe0[1],
+                                       make_string_literal(vm->m_heap, "process-stdin"),
+                                       SCM_PORT_DIRECTION_OUT,
+                                       SCM_PORT_FILE_OPTION_NONE,
+                                       SCM_PORT_BUFFER_MODE_BLOCK,
+                                       scm_false),
+                        make_std_port(vm->m_heap,
+                                      pipe1[0],
+                                      make_string_literal(vm->m_heap, "process-stdout"),
+                                      SCM_PORT_DIRECTION_IN,
+                                      SCM_PORT_FILE_OPTION_NONE,
+                                      SCM_PORT_BUFFER_MODE_BLOCK,
+                                      scm_false),
+                        make_std_port(vm->m_heap,
+                                      pipe2[0],
+                                      make_string_literal(vm->m_heap, "process-stderr"),
+                                      SCM_PORT_DIRECTION_IN,
+                                      SCM_PORT_FILE_OPTION_NONE,
+                                      SCM_PORT_BUFFER_MODE_BLOCK,
+                                    scm_false));
+
+	}
+    wrong_number_of_arguments_violation(vm, "process", 1, -1, argc, argv);
     return scm_undef;
+
+pipe_fail:
+create_fail:
+	_dosmaperr(GetLastError());
+    char message[256];
+    snprintf(message, sizeof(message), "%s() failed. %s", sysfunc, strerror(errno));    
+    if (pipe0[0] != INVALID_HANDLE_VALUE) CloseHandle(pipe0[0]);
+    if (pipe0[1] != INVALID_HANDLE_VALUE) CloseHandle(pipe0[1]);
+    if (pipe1[0] != INVALID_HANDLE_VALUE) CloseHandle(pipe1[0]);
+    if (pipe1[1] != INVALID_HANDLE_VALUE) CloseHandle(pipe1[1]);
+    if (pipe2[0] != INVALID_HANDLE_VALUE) CloseHandle(pipe2[0]);
+    if (pipe2[1] != INVALID_HANDLE_VALUE) CloseHandle(pipe2[1]);
+    raise_error(vm, "process", message, errno);
+    return scm_undef;
+
 #else
 
     int pipe0[2] = { -1, -1 };
