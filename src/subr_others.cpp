@@ -1818,7 +1818,7 @@ create_fail:
     if (pipe1[1] != INVALID_HANDLE_VALUE) CloseHandle(pipe1[1]);
     if (pipe2[0] != INVALID_HANDLE_VALUE) CloseHandle(pipe2[0]);
     if (pipe2[1] != INVALID_HANDLE_VALUE) CloseHandle(pipe2[1]);
-    raise_error(vm, "process", message, errno);
+    raise_error(vm, "process", message, err, argc, argv);
     return scm_undef;
 
 #else
@@ -1913,7 +1913,7 @@ fork_fail:
         if (pipe1[1] != -1) close(pipe1[1]);
         if (pipe2[0] != -1) close(pipe2[0]);
         if (pipe2[1] != -1) close(pipe2[1]);
-        raise_error(vm, "process", message, err);
+        raise_error(vm, "process", message, err, argc, argv);
         return scm_undef;
     }
 
