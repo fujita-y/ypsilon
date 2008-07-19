@@ -268,3 +268,23 @@ raise_error(VM* vm, const char* who, const char* description, int code)
     scm_obj_t proc = vm->lookup_system_closure(".@error");
     vm->apply_scheme(proc, 2, (who ? make_symbol(vm->m_heap, who) : scm_false), message);
 }
+
+void raise_error(VM* vm, const char* who, const char* description, int code, int argc, scm_obj_t argv[])
+{
+    vm->backtrace_seek();
+    scm_port_t port = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
+    scoped_lock lock(port->lock);
+    printer_t prt(vm, port);
+    if (code) prt.format("%s (%d)", description, code);
+    else prt.format("%s", description);
+    scm_string_t message = port_extract_string(vm->m_heap, port);
+    scm_obj_t proc = vm->lookup_system_closure(".@error");
+    if (argc == 0) {
+        vm->apply_scheme(proc, 2, (who ? make_symbol(vm->m_heap, who) : scm_false), message);
+    } else {
+        scm_obj_t irritants = scm_nil;
+        int last = argc;
+        while (--last >= 0) irritants = make_pair(vm->m_heap, argv[last], irritants);
+        vm->apply_scheme(proc, 3, (who ? make_symbol(vm->m_heap, who) : scm_false), message, irritants);
+    }
+}

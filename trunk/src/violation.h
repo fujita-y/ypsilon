@@ -13,6 +13,7 @@
 void raise_undefined_violation(VM* vm, scm_obj_t who, scm_string_t message);
 void raise_lexical_violation(VM* vm, scm_obj_t who, scm_string_t message);
 void raise_error(VM* vm, const char* who, const char* description, int code);
+void raise_error(VM* vm, const char* who, const char* description, int code, int argc, scm_obj_t argv[]);
 void wrong_number_of_arguments_violation(VM* vm, const char* who, int required_min, int required_max, int argc, scm_obj_t argv[]);
 void wrong_number_of_arguments_violation(VM* vm, scm_obj_t proc, int required_min, int required_max, int argc, scm_obj_t argv[]);
 void wrong_type_argument_violation(VM* vm, const char* who, int position, const char* expected, scm_obj_t got, int argc, scm_obj_t argv[]);
