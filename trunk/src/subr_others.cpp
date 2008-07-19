@@ -1692,10 +1692,6 @@ subr_lookup_process_environment(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_system(VM* vm, int argc, scm_obj_t argv[])
 {
-#if _MSC_VER
-    raise_error(vm, "system", "not supported on this platform", 0);
-    return scm_undef;
-#else
     if (argc >= 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
@@ -1712,7 +1708,6 @@ subr_system(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "system", 1, 1, argc, argv);
     return scm_undef;
-#endif
 }
 
 // process
@@ -1721,11 +1716,11 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
 {
 #if _MSC_VER
 
-	HANDLE pipe0[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
-	HANDLE pipe1[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
-	HANDLE pipe2[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
-	const char* sysfunc = NULL;
-	if (argc >= 1) {
+    HANDLE pipe0[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
+    HANDLE pipe1[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
+    HANDLE pipe2[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
+    const char* sysfunc = NULL;
+    if (argc >= 1) {
         for (int i = 0; i < argc; i++) {
             if (!STRINGP(argv[i])) {
                 wrong_type_argument_violation(vm, "process", i, "string", argv[i], argc, argv);
@@ -1733,51 +1728,51 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
             }
         }
 
-		wchar_t command_line_ucs2[MAX_PATH] = { 0 };
-		wchar_t module_name_ucs2[MAX_PATH] = { 0 };
-		{
-			int bsize = 0;
-			for (int i = 0; i < argc; i++) bsize = bsize + HDR_STRING_SIZE(((scm_string_t)argv[i])->hdr) + 1;
-			if (bsize) {
-				char* utf8 = (char*)malloc(bsize + 1);
-				if (utf8 == NULL) fatal("fatal: memory overflow in malloc(%d)", bsize + 1);
-				utf8[0] = 0;
-				for (int i = 0; i < argc; i++) {
-					strcat(utf8, " ");
-					strcat(utf8, ((scm_string_t)argv[i])->name);
-				}
-				MultiByteToWideChar(CP_UTF8, 0, utf8 + 1, -1, command_line_ucs2, array_sizeof(command_line_ucs2));
-				free(utf8);
-			}
-			MultiByteToWideChar(CP_UTF8, 0, ((scm_string_t)argv[0])->name, -1, module_name_ucs2, array_sizeof(module_name_ucs2));
-		}
+        wchar_t command_line_ucs2[MAX_PATH] = { 0 };
+        wchar_t module_name_ucs2[MAX_PATH] = { 0 };
+        {
+            int bsize = 0;
+            for (int i = 0; i < argc; i++) bsize = bsize + HDR_STRING_SIZE(((scm_string_t)argv[i])->hdr) + 1;
+            if (bsize) {
+                char* utf8 = (char*)malloc(bsize + 1);
+                if (utf8 == NULL) fatal("fatal: memory overflow in malloc(%d)", bsize + 1);
+                utf8[0] = 0;
+                for (int i = 0; i < argc; i++) {
+                    strcat(utf8, " ");
+                    strcat(utf8, ((scm_string_t)argv[i])->name);
+                }
+                MultiByteToWideChar(CP_UTF8, 0, utf8 + 1, -1, command_line_ucs2, array_sizeof(command_line_ucs2));
+                free(utf8);
+            }
+            MultiByteToWideChar(CP_UTF8, 0, ((scm_string_t)argv[0])->name, -1, module_name_ucs2, array_sizeof(module_name_ucs2));
+        }
 
-		SECURITY_ATTRIBUTES sa;
-		sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-		sa.lpSecurityDescriptor = NULL;
-		sa.bInheritHandle = TRUE;
-		sysfunc = "CreatePipe";
-		if (CreatePipe(&pipe0[0], &pipe0[1], &sa, 0) == 0) goto pipe_fail;
-		if (CreatePipe(&pipe1[0], &pipe1[1], &sa, 0) == 0) goto pipe_fail;
-		if (CreatePipe(&pipe2[0], &pipe2[1], &sa, 0) == 0) goto pipe_fail;
+        SECURITY_ATTRIBUTES sa;
+        sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+        sa.lpSecurityDescriptor = NULL;
+        sa.bInheritHandle = TRUE;
+        sysfunc = "CreatePipe";
+        if (CreatePipe(&pipe0[0], &pipe0[1], &sa, 0) == 0) goto pipe_fail;
+        if (CreatePipe(&pipe1[0], &pipe1[1], &sa, 0) == 0) goto pipe_fail;
+        if (CreatePipe(&pipe2[0], &pipe2[1], &sa, 0) == 0) goto pipe_fail;
 
-		STARTUPINFO startup;
-		memset(&startup, 0, sizeof(STARTUPINFO));
-		startup.cb = sizeof(STARTUPINFO);
-		startup.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-		startup.wShowWindow = SW_HIDE;
-		startup.hStdInput = pipe0[0];
-		startup.hStdOutput = pipe1[1];
-		startup.hStdError = pipe2[1];
+        STARTUPINFO startup;
+        memset(&startup, 0, sizeof(STARTUPINFO));
+        startup.cb = sizeof(STARTUPINFO);
+        startup.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+        startup.wShowWindow = SW_HIDE;
+        startup.hStdInput = pipe0[0];
+        startup.hStdOutput = pipe1[1];
+        startup.hStdError = pipe2[1];
     
-		sysfunc = "CreateProcess";
-		PROCESS_INFORMATION process;
-		if (CreateProcessW(NULL,
-						   command_line_ucs2, 
-						   NULL, NULL, TRUE, 0, NULL, NULL,
-						   &startup, 
-						   &process) == 0) goto create_fail;
-		CloseHandle(process.hThread);
+        sysfunc = "CreateProcess";
+        PROCESS_INFORMATION process;
+        if (CreateProcessW(NULL,
+                           command_line_ucs2, 
+                           NULL, NULL, TRUE, 0, NULL, NULL,
+                           &startup, 
+                           &process) == 0) goto create_fail;
+        CloseHandle(process.hThread);
         return make_list(vm->m_heap, 
                          4,
                          intptr_to_integer(vm->m_heap, (intptr_t)process.hProcess),
@@ -1803,13 +1798,13 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
                                       SCM_PORT_BUFFER_MODE_BLOCK,
                                     scm_false));
 
-	}
+    }
     wrong_number_of_arguments_violation(vm, "process", 1, -1, argc, argv);
     return scm_undef;
 
 pipe_fail:
 create_fail:
-	_dosmaperr(GetLastError());
+    _dosmaperr(GetLastError());
     char message[256];
     snprintf(message, sizeof(message), "%s() failed. %s", sysfunc, strerror(errno));    
     if (pipe0[0] != INVALID_HANDLE_VALUE) CloseHandle(pipe0[0]);
@@ -1930,8 +1925,48 @@ scm_obj_t
 subr_process_wait(VM* vm, int argc, scm_obj_t argv[])
 {
 #if _MSC_VER
-    raise_error(vm, "process-wait", "not supported on this platform", 0);
+
+    const char* sysfunc = NULL;
+    uint32_t timeout = 0;
+    if (argc == 2) {
+        if (exact_integer_pred(argv[0])) {
+            if (BOOLP(argv[1])) {
+                if (argv[1] == scm_false) timeout = INFINITE;
+            } else {
+                wrong_type_argument_violation(vm, "process-wait", 1, "#t or #f", argv[1], argc, argv);
+                return scm_undef;
+            }
+            int status;
+            intptr_t pid;
+            if (exact_integer_to_intptr(argv[0], &pid)) {
+                HANDLE hdl = (HANDLE)pid;
+                sysfunc = "WaitForSingleObject";
+                DWORD result = WaitForSingleObject(hdl, timeout);
+                if (result == WAIT_TIMEOUT) return scm_false;
+                if (result == WAIT_OBJECT_0) {
+                    DWORD exitcode;
+                    sysfunc = "GetExitCodeProcess";
+                    if (GetExitCodeProcess(hdl, &exitcode) == 0) goto exit_fail;
+                    return uint32_to_integer(vm->m_heap, exitcode);
+                }
+                goto wait_fail;
+            }
+            invalid_argument_violation(vm, "process-wait", "value out of bounds,", argv[0], 0, argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "process-wait", 0, "exact integer", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "process-wait", 2, 2, argc, argv);
     return scm_undef;
+
+exit_fail:
+wait_fail:
+    _dosmaperr(GetLastError());
+    char message[256];
+    snprintf(message, sizeof(message), "%s() failed. %s", sysfunc, strerror(errno));    
+    raise_error(vm, "process-wait", message, errno, argc, argv);
+    return scm_undef; 
 #else
     int option = 0;
     if (argc == 2) {
