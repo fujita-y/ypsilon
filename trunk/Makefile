@@ -9,11 +9,9 @@ PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(PREFIX)/share/$(PROG)"'
 
-CXXFLAGS = -x c++ -m32 -pthread -O3 -fstrict-aliasing \
+CXXFLAGS = -x c++ -pthread -msse -mfpmath=sse -O3 -fstrict-aliasing \
 	   -fomit-frame-pointer -momit-leaf-frame-pointer \
 	   -fno-align-labels -fno-align-loops -fno-align-jumps
-
-LDFLAGS  = -m32 -lpthread -ldl
 
 SRCS 	 = file.cpp main.cpp vm0.cpp object_heap_compact.cpp subr_flonum.cpp vm1.cpp object_set.cpp \
 	   subr_hash.cpp vm2.cpp object_slab.cpp subr_list.cpp \
@@ -27,20 +25,19 @@ VPATH 	 = src
 
 UNAME 	 = $(shell uname)
 
-GCC42    = $(shell $(CXX) -dumpspecs | grep 'march=native')
-
-ifeq ($(GCC42), )
-  CXXFLAGS += -march=i686
-else
-  CXXFLAGS += -march=native
-endif
-
 ifneq (, $(findstring Linux, $(UNAME)))
+  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native')), )
+    CXXFLAGS += -m32 -march=i686
+  else
+    CXXFLAGS += -m32 -march=native
+  endif
   ASFLAGS = --32
+  LDFLAGS = -m32 -lpthread -ldl
   SRCS += ffi_stub_linux.s
 endif
 
 ifneq (, $(findstring Darwin, $(UNAME)))
+  CXXFLAGS += -arch i386
   SRCS += ffi_stub_darwin.s
 endif
 
