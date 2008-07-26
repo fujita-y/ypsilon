@@ -25,7 +25,7 @@
 (define lookup-lexical-name
   (lambda (id env)
     (let ((deno (env-lookup env id)))
-      (cond ((renamed-id? deno) deno)
+      (cond ((symbol? deno) deno)
             ((and (macro? deno) (assq deno env)) => cdr)
             (else id)))))
 

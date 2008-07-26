@@ -58,11 +58,11 @@
                    (syntax-violation (car form) "empty body" form)
                    (cond ((check-rec*-contract-violation renames inits)
                           => (lambda (var)
-                               (syntax-violation (car form)
-                                                 (format "attempt to reference uninitialized variable ~u" (car var))
-                                                 form
-                                                 (any1 (lambda (e) (and (check-rec-contract-violation (list (car var)) e) e))
-                                                       inits))))
+                               (assertion/syntax-violation (car form)
+                                                           (format "attempt to reference uninitialized variable ~u" (car var))
+                                                           form
+                                                           (any1 (lambda (e) (and (check-rec-contract-violation (list (car var)) e) e))
+                                                                 inits))))
                          (else
                           (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form)))))))))
       (_
@@ -100,13 +100,13 @@
                    (body (expand-body form (cddr form) env)))
                (if (null? body)
                    (syntax-violation (car form) "empty body" form)
-                   (cond ((check-rec-contract-violation renames inits)
+                   (cond ((and (not (no-letrec-check)) (check-rec-contract-violation renames inits))
                           => (lambda (var)
-                               (syntax-violation (car form)
-                                                 (format "attempt to reference uninitialized variable ~u" (car var))
-                                                 form
-                                                 (any1 (lambda (e) (and (check-rec-contract-violation (list (car var)) e) e))
-                                                       inits))))
+                               (assertion/syntax-violation (car form)
+                                                           (format "attempt to reference uninitialized variable ~u" (car var))
+                                                           form
+                                                           (any1 (lambda (e) (and (check-rec-contract-violation (list (car var)) e) e))
+                                                                 inits))))
                          (else
                           (if (every1 (lambda (e) (or (not (pair? e)) (denote-lambda? env (car e)))) inits)
                               (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form)

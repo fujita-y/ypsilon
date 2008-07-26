@@ -763,6 +763,38 @@ subr_string(VM* vm, int argc, scm_obj_t argv[])
     return string;
 }
 
+// list->string
+scm_obj_t
+subr_list_string(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (listp(argv[0])) {
+            scm_obj_t lst = argv[0];
+            scm_port_t port = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "bytevector"), SCM_PORT_DIRECTION_OUT, scm_false, scm_false);
+            scoped_lock lock(port->lock);
+            char utf8[4];
+            int count = list_length(lst);
+            for (int i = 0; i < count; i++) {
+                scm_obj_t obj = CAR(lst);
+                if (CHARP(obj)) {
+                    uint32_t ucs4 = CHAR(obj);
+                    int n = cnvt_ucs4_to_utf8(ucs4, (uint8_t*)utf8);
+                    for (int i = 0; i < n; i++) port_put_byte(port, utf8[i]);
+                    lst = CDR(lst);
+                } else {
+                    wrong_type_argument_violation(vm, "list->string", i, "char", argv[i], argc, argv);
+                    return scm_undef;
+                }
+            }
+            return port_get_string(vm->m_heap, port);
+        }
+        wrong_type_argument_violation(vm, "list->string", 0, "proper list", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "list->string", 1, 1, argc, argv);
+    return scm_undef;
+
+}
 // string-length
 scm_obj_t
 subr_string_length(VM* vm, int argc, scm_obj_t argv[])
@@ -1160,7 +1192,7 @@ subr_make_vector(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
             scm_vector_t vect = make_vector(vm->m_heap, FIXNUM(argv[0]), scm_unspecified);
-            if (HDR_VECTOR_COUNT(vect->hdr) == FIXNUM(argv[0])) return vect;
+            return vect;
         }
         if (exact_non_negative_integer_pred(argv[0])) {
             invalid_argument_violation(vm, "make-vector", "too many elements,", argv[0], 0, argc, argv);
@@ -1173,7 +1205,7 @@ subr_make_vector(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 2) {
         if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
             scm_vector_t vect = make_vector(vm->m_heap, FIXNUM(argv[0]), argv[1]);
-            if (HDR_VECTOR_COUNT(vect->hdr) == FIXNUM(argv[0])) return vect;
+            return vect;
         }
         if (exact_non_negative_integer_pred(argv[0])) {
             invalid_argument_violation(vm, "make-vector", "too many elements,", argv[0], 0, argc, argv);
@@ -1203,7 +1235,7 @@ subr_vector_length(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (VECTORP(argv[0])) {
             scm_vector_t vector = (scm_vector_t)argv[0];
-            return MAKEFIXNUM(HDR_VECTOR_COUNT(vector->hdr));
+            return MAKEFIXNUM(vector->count);
         }
         wrong_type_argument_violation(vm, "vector-length", 0, "vector", argv[0], argc, argv);
         return scm_undef;
@@ -1221,7 +1253,7 @@ subr_vector_ref(VM* vm, int argc, scm_obj_t argv[])
             scm_vector_t vector = (scm_vector_t)argv[0];
             if (FIXNUMP(argv[1])) {
                 int n = FIXNUM(argv[1]);
-                if (n >= 0 && n < HDR_VECTOR_COUNT(vector->hdr)) return vector->elts[n];
+                if (n >= 0 && n < vector->count) return vector->elts[n];
                 /*** FALL THROUGH ***/
             }
             if (exact_non_negative_integer_pred(argv[1])) {
@@ -1248,7 +1280,7 @@ subr_vector_set(VM* vm, int argc, scm_obj_t argv[])
             scm_vector_t vector = (scm_vector_t)argv[0];
             if (FIXNUMP(argv[1])) {
                 int n = FIXNUM(argv[1]);
-                if (n >= 0 && n < HDR_VECTOR_COUNT(vector->hdr)) {
+                if (n >= 0 && n < vector->count) {
                     vm->m_heap->write_barrier(argv[2]);
                     vector->elts[n] = argv[2];
                     return scm_unspecified;
@@ -1270,7 +1302,29 @@ subr_vector_set(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// list->vector vector-map vector-for-each -> r6rs-aux.scm
+// vector-map vector-for-each -> r6rs-aux.scm
+
+// list->vector
+scm_obj_t
+subr_list_vector(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (listp(argv[0])) {
+            scm_obj_t lst = argv[0];
+            int count = list_length(lst);
+            scm_vector_t vector = make_vector(vm->m_heap, count, scm_unspecified);
+            for (int i = 0; i < count; i++) {
+                vector->elts[i] = CAR(lst);
+                lst = CDR(lst);
+            }
+            return vector;
+        }
+        wrong_type_argument_violation(vm, "list->vector", 0, "proper list", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "list->vector", 1, 1, argc, argv);
+    return scm_undef;
+}
 
 // vector->list
 scm_obj_t
@@ -1279,7 +1333,7 @@ subr_vector_list(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (VECTORP(argv[0])) {
             scm_vector_t vector = (scm_vector_t)argv[0];
-            int n = HDR_VECTOR_COUNT(vector->hdr);
+            int n = vector->count;
             scm_obj_t lst = scm_nil;
             for (int i = n - 1; i >= 0 ; i--) lst = make_pair(vm->m_heap, vector->elts[i], lst);
             return lst;
@@ -1298,7 +1352,7 @@ subr_vector_fill(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 2) {
         if (VECTORP(argv[0])) {
             scm_vector_t vector = (scm_vector_t)argv[0];
-            int n = HDR_VECTOR_COUNT(vector->hdr);
+            int n = vector->count;
             vm->m_heap->write_barrier(argv[1]);
             for (int i = 0; i < n ; i++) vector->elts[i] = argv[1];
             return scm_unspecified;
@@ -1564,6 +1618,7 @@ void init_subr_base(object_heap_t* heap)
     DEFSUBR("string?", subr_string_pred);
     DEFSUBR("make-string", subr_make_string);
     DEFSUBR("string", subr_string);
+    DEFSUBR("list->string", subr_list_string);
     DEFSUBR("string-length", subr_string_length);
     DEFSUBR("string-ref", subr_string_ref);
     DEFSUBR("string-set!", subr_string_set);
@@ -1580,6 +1635,7 @@ void init_subr_base(object_heap_t* heap)
     DEFSUBR("vector?", subr_vector_pred);
     DEFSUBR("make-vector", subr_make_vector);
     DEFSUBR("vector", subr_vector);
+    DEFSUBR("list->vector", subr_list_vector);
     DEFSUBR("vector-length", subr_vector_length);
     DEFSUBR("vector-ref", subr_vector_ref);
     DEFSUBR("vector-set!", subr_vector_set);

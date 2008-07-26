@@ -18,6 +18,7 @@ int utf8_string_length(scm_string_t obj);
 void utf8_substring(scm_string_t obj, int from, int to, int* head, int* tail);
 bool utf8_string_set(object_heap_t* heap, scm_string_t obj, int index, int ch);
 int utf8_sizeof_ucs4(uint32_t ucs4);
+bool utf8_decode_test(scm_bvector_t obj);
 bool string_eq_pred(scm_obj_t obj1, scm_obj_t obj2);
 bool string_ci_eq_pred(scm_obj_t obj1, scm_obj_t obj2);
 int string_compare(scm_obj_t obj1, scm_obj_t obj2);

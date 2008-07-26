@@ -240,6 +240,7 @@ DEFINE_OBJECT_REC(scm_subr_rec_t) {
 
 DEFINE_OBJECT_REC(scm_vector_rec_t) {
     scm_hdr_t   hdr;
+    int         count;
     scm_obj_t*  elts;
 } END;
 
@@ -436,7 +437,7 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_SYMBOL_SIZE_SHIFT               20
 #define HDR_STRING_LITERAL_SHIFT            11
 #define HDR_STRING_SIZE_SHIFT               12
-#define HDR_VECTOR_COUNT_SHIFT              12
+//#define HDR_VECTOR_COUNT_SHIFT              12
 #define HDR_VALUES_COUNT_SHIFT              12
 #define HDR_TUPLE_COUNT_SHIFT               12
 #define HDR_HEAPENV_SIZE_SHIFT              12
@@ -456,7 +457,7 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_CLOSURE_ARGS(hdr)               (((intptr_t)(hdr)) >> HDR_CLOSURE_ARGS_SHIFT)
 #define HDR_STRING_LITERAL(hdr)             (((hdr) >> HDR_STRING_LITERAL_SHIFT) & 0x01)
 #define HDR_STRING_SIZE(hdr)                (((uintptr_t)(hdr)) >> HDR_STRING_SIZE_SHIFT)
-#define HDR_VECTOR_COUNT(hdr)               (((uintptr_t)(hdr)) >> HDR_VECTOR_COUNT_SHIFT)
+//#define HDR_VECTOR_COUNT(hdr)               (((uintptr_t)(hdr)) >> HDR_VECTOR_COUNT_SHIFT)
 #define HDR_VALUES_COUNT(hdr)               (((uintptr_t)(hdr)) >> HDR_VALUES_COUNT_SHIFT)
 #define HDR_TUPLE_COUNT(hdr)                (((uintptr_t)(hdr)) >> HDR_TUPLE_COUNT_SHIFT)
 #define HDR_HEAPENV_SIZE(hdr)               (((uintptr_t)(hdr)) >> HDR_HEAPENV_SIZE_SHIFT)

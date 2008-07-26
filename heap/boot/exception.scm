@@ -100,6 +100,16 @@
                           (and who (make-who-condition who))
                           (make-message-condition message)))))))
 
+(define assertion/syntax-violation
+  (lambda (who message form . subform)
+    (raise
+     (apply condition
+            (filter values
+                    (list (make-syntax-violation form (and (pair? subform) (car subform)))
+                          (make-assertion-violation)
+                          (and who (make-who-condition who))
+                          (make-message-condition message)))))))
+
 (define scheme-error
   (lambda args
     (format #t "~!")

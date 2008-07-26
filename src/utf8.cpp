@@ -58,23 +58,29 @@ cnvt_utf8_to_ucs4(const uint8_t utf8[4], uint32_t* ucs4)
         if (sv >= 0x80) return -1;                          // invalid sequence
         *ucs4 = sv;
         return 1;
-    } else if (utf8[0] < 0xc0) {
+    } else if (utf8[0] < 0xc2) {
         return -1;                                          // invalid sequence
     } else if (utf8[0] < 0xe0) {
+        if ((utf8[1] < 0x80) | (utf8[1] > 0xbf)) return -1;
         sv = ((utf8[0] & 0x1f) << 6) + (utf8[1] & 0x3f);
-        if (sv >= 0x800) return -1;                         // invalid sequence
+        if ((sv < 0x80) | (sv > 0x7FF)) return -1;          // invalid sequence
         *ucs4 = sv;
         return 2;
     } else if (utf8[0] < 0xf0) {
+        if ((utf8[1] < 0x80) | (utf8[1] > 0xbf)) return -1;
+        if ((utf8[2] < 0x80) | (utf8[2] > 0xbf)) return -1;
         sv = ((utf8[0] & 0x0f) << 12) + ((utf8[1] & 0x3f) << 6) + (utf8[2] & 0x3f);
+        if ((sv < 0x800) | (sv > 0xFFFF)) return -1;        // invalid sequence
         if ((sv >= 0xD800) & (sv <= 0xDFFF)) return -1;     // SURROGATE AREA
-        if (sv >= 0x10000) return -1;                       // invalid sequence
         // if (sv >= 0xFFFE) return -1;                     // NONCHARACTERS
         *ucs4 = sv;
         return 3;
-    } else  if (utf8[0] < 0xf8) {
+    } else if (utf8[0] < 0xf8) {
+        if ((utf8[1] < 0x80) | (utf8[1] > 0xbf)) return -1;
+        if ((utf8[2] < 0x80) | (utf8[2] > 0xbf)) return -1;
+        if ((utf8[3] < 0x80) | (utf8[3] > 0xbf)) return -1;
         sv = ((utf8[0] & 0x07) << 18) + ((utf8[1] & 0x3f) << 12) + ((utf8[2] & 0x3f) << 6) + (utf8[3] & 0x3f);
-        if (sv > 0x10FFFF) return -1;                       // non-assignment
+        if ((sv < 0x10000) | (sv > 0x10FFFF)) return -1;    // non-assignment
         *ucs4 = sv;
         return 4;
     }
@@ -143,7 +149,7 @@ int
 utf8_byte_count(const uint8_t datum)
 {
     if (datum < 0x80) return 1;
-    if (datum < 0xc0) return 1; // cnvt_utf8_to_ucs4() detect this
+    if (datum < 0xc2) return 1; // cnvt_utf8_to_ucs4() detect this
     if (datum < 0xe0) return 2;
     if (datum < 0xf0) return 3;
     if (datum < 0xf8) return 4;
@@ -158,6 +164,20 @@ utf8_char_index_to_byte_offset(const uint8_t datum[], int index, int limit)
     for (int c = 0; c < index && n < limit; c++) n += utf8_byte_count(datum[n]);
     if (n >= limit) return -1;
     return n;
+}
+
+bool
+utf8_decode_test(scm_bvector_t obj)
+{
+    uint8_t* datum = (uint8_t*)obj->elts;
+    int end = obj->count;
+    int n = 0;
+    for (int n = 0; n < end; n++) {
+        uint32_t ucs4;
+        if (cnvt_utf8_to_ucs4(datum + n, &ucs4) < 1) return false;
+        n += utf8_byte_count(datum[n]);
+    }
+    return true;
 }
 
 int

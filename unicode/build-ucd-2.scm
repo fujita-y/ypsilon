@@ -123,7 +123,7 @@
                            (cons (string->number (pregexp-substring s m2 1) 16) lst)))
                     (else
                      (assertion-violation 'parse-unicode-data "bad decomp in unicode data" s)))))))))
-
+  
   (define parse-unicodedata
     (lambda ()
       (let ((re (pregexp "^([A-F0-9]{4,6});[^;]*;[a-zA-Z]{2};([0-9]{0,3});[^;]*;([^;]*);.*$")))

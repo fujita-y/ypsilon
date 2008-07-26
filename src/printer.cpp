@@ -507,7 +507,7 @@ printer_t::scan(scm_hashtable_t ht, scm_obj_t obj)
     }
     if (VECTORP(obj)) {
         scm_vector_t vector = (scm_vector_t)obj;
-        int n = HDR_VECTOR_COUNT(vector->hdr);
+        int n = vector->count;
         if (n == 0) return;
         m_vm->m_heap->write_barrier(obj);
         int nsize = put_hashtable(ht, obj, scm_false);
@@ -722,7 +722,7 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
         case TC_VECTOR: {
             port_puts(m_port, "#(");
             scm_vector_t vector = (scm_vector_t)obj;
-            int n = HDR_VECTOR_COUNT(vector->hdr);
+            int n = vector->count;
             scm_obj_t* elts = vector->elts;
             for (scm_obj_t* e = elts; e != elts + n; e++) {
                 if (e != elts) port_put_byte(m_port, ' ');

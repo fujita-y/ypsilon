@@ -105,6 +105,57 @@
   ; (code-point) name (general-category) canonical-combining bidi decomposition numeric bidi-mirrored 
   ; unicode-1-name comment (simple-uppercase) (simple-lowercase) (simple-titlecase)
 
+  #;(define add-special-range-area
+    (lambda (ht)
+      
+      (define put-range
+        (lambda (cn first last)
+          (let loop ((cp first))
+            (cond ((> cp last))
+                  (else
+                   (hashtable-set! ht cp cn)
+                   (loop (+ cp 1)))))))
+      
+      ; 3400;<CJK Ideograph Extension A, First>;Lo;0;L;;;;;N;;;;;
+      ; 4DB5;<CJK Ideograph Extension A, Last>;Lo;0;L;;;;;N;;;;;
+      (put-range 'Lo #x3400 #x4DB5)
+      
+      ; 4E00;<CJK Ideograph, First>;Lo;0;L;;;;;N;;;;;
+      ; 9FBB;<CJK Ideograph, Last>;Lo;0;L;;;;;N;;;;;
+      (put-range 'Lo #x4E00 #x9FBB)
+
+      ; AC00;<Hangul Syllable, First>;Lo;0;L;;;;;N;;;;;
+      ; D7A3;<Hangul Syllable, Last>;Lo;0;L;;;;;N;;;;;
+      (put-range 'Lo #xAC00 #xD7A3)
+
+      ; D800;<Non Private Use High Surrogate, First>;Cs;0;L;;;;;N;;;;;
+      ; DB7F;<Non Private Use High Surrogate, Last>;Cs;0;L;;;;;N;;;;;
+      (put-range 'Cs #xD800 #xDB7F)
+
+      ; DB80;<Private Use High Surrogate, First>;Cs;0;L;;;;;N;;;;;
+      ; DBFF;<Private Use High Surrogate, Last>;Cs;0;L;;;;;N;;;;;
+      (put-range 'Cs #xDB80 #xDBFF)
+
+      ; DC00;<Low Surrogate, First>;Cs;0;L;;;;;N;;;;;
+      ; DFFF;<Low Surrogate, Last>;Cs;0;L;;;;;N;;;;;
+      (put-range 'Cs #xDC00 #xDFFF)
+
+      ; E000;<Private Use, First>;Co;0;L;;;;;N;;;;;
+      ; F8FF;<Private Use, Last>;Co;0;L;;;;;N;;;;;
+      (put-range 'Co #xE000 #xF8FF)
+
+      ; 20000;<CJK Ideograph Extension B, First>;Lo;0;L;;;;;N;;;;;
+      ; 2A6D6;<CJK Ideograph Extension B, Last>;Lo;0;L;;;;;N;;;;;
+      (put-range 'Lo #x20000 #x2A6D6)
+
+      ; F0000;<Plane 15 Private Use, First>;Co;0;L;;;;;N;;;;;
+      ; FFFFD;<Plane 15 Private Use, Last>;Co;0;L;;;;;N;;;;;
+      (put-range 'Co #xF0000 #xFFFFD)
+
+      ; 100000;<Plane 16 Private Use, First>;Co;0;L;;;;;N;;;;;
+      ; 10FFFD;<Plane 16 Private Use, Last>;Co;0;L;;;;;N;;;;;
+      (put-range 'Co #x100000 #x10FFFD)))
+  
   (define parse-unicodedata
     (lambda ()
       ;(let ((re (pregexp "^([A-F0-9]{4,6});.*;([a-zA-Z]{2});.*;.*;.*;.*;.*;(.*);.*;.*;.*;([A-F0-9]{0,6});([A-F0-9]{0,6});([A-F0-9]{0,6})$")))
@@ -117,6 +168,8 @@
         (define ht-simple-lowercase (make-eqv-hashtable))
         (define ht-simple-titlecase (make-eqv-hashtable))
 
+        #;(add-special-range-area ht-general-category-2)
+        
         (call-with-port
             (open-file-input-port (ucd-file "UnicodeData.txt") (file-options) (buffer-mode block) (native-transcoder))
             (lambda (input)
@@ -147,7 +200,7 @@
               (call-with-port
                   (open-file-output-port (datum-file "general-category-1.datum") (file-options no-fail) (buffer-mode block) (native-transcoder))
                   (lambda (output)
-                    (format #t "processing general-category-1.datum ...~!")
+                    (format #t "processing general-category-1.datum (~a)...~!" (length (hashtable->alist ht-general-category-1)))
                     (put-datum output (hashtable->alist ht-general-category-1))
 ;              (let ((lst (list-sort (lambda (e1 e2) (< (car e1) (car e2))) (hashtable->alist ht-general-category-1))))
 ;                (for-each (lambda (e) (put-datum output e) (put-char output #\linefeed)) lst))
@@ -156,7 +209,7 @@
               (call-with-port
                   (open-file-output-port (datum-file "general-category-2.datum") (file-options no-fail) (buffer-mode block) (native-transcoder))
                   (lambda (output)
-                    (format #t "processing general-category-2.datum ...~!")
+                    (format #t "processing general-category-2.datum (~a)...~!" (length (hashtable->alist ht-general-category-2)))
                     (put-datum output (hashtable->alist ht-general-category-2))
 ;              (let ((lst (list-sort (lambda (e1 e2) (< (car e1) (car e2))) (hashtable->alist ht-general-category-2))))
 ;                (for-each (lambda (e) (put-datum output e) (put-char output #\linefeed)) lst))

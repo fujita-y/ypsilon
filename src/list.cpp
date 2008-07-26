@@ -127,7 +127,7 @@ top:
             if (nsize) rehash_hashtable(heap, ht, nsize);
             scm_obj_t new_ancestor = make_pair(heap, lst, ancestor);
             scm_vector_t vector = (scm_vector_t)lst;
-            int n = HDR_VECTOR_COUNT(vector->hdr);
+            int n = vector->count;
             if (n == 0) return false;
             for (int i = 0; i < n - 1; i++) {
                 if (infinite_list_test(vector->elts[i], new_ancestor, ht, heap)) return true;

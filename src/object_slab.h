@@ -103,6 +103,22 @@ struct object_slab_cache_t {
       #endif
     }
 
+    bool test_and_mark(void* obj)
+    {
+        assert(m_bitmap_size);
+        uint8_t* bitmap = (uint8_t*)OBJECT_SLAB_TRAITS_OF(obj) - m_bitmap_size;
+        int bit_n = ((intptr_t)obj & (OBJECT_SLAB_SIZE - 1)) >> m_object_size_shift;
+        assert(bit_n < m_bitmap_size * 8);
+        uint8_t bit = (1 << (bit_n & 7));
+        uint8_t* p = bitmap + (bit_n >> 3);
+        if (*p & bit) return true;
+      #if PARALLEL_COLLECT
+        interlocked_or_uint8(p, bit);
+      #else
+        *p |= bit;
+      #endif
+        return false;
+    }
 };
 
 #endif

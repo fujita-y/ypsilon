@@ -146,7 +146,7 @@
                ((_ symbol2)
                 (or (memq (syntax->datum (syntax symbol2)) '(symbol1 ...))
                     (syntax-violation 'type-name "excpectd symbols which belong to the universe" x))
-                (syntax symbol2)))))
+                (syntax 'symbol2)))))
          (define-syntax constructor-syntax
            (lambda (x)
              (syntax-case x ()

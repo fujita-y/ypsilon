@@ -27,6 +27,7 @@
 #define DEBUG_CONCURRENT_COLLECT    0
 
 #define SYNCHRONIZE_THRESHOLD(x)    ((x) - (x) / 4)
+#define DEFALUT_COLLECT_TRIP_BYTES  (2 * 1024 * 1024)
 
 #define ENSURE_REALTIME             (1.0)       // in msec (1.0 for 0.0001 second)
 #define TIMEOUT_CHECK_EACH          (100)
@@ -83,7 +84,7 @@ scm_flonum_t
 object_heap_t::allocate_flonum()
 {
     assert(m_collectibles[1].m_object_size == sizeof(scm_flonum_rec_t));
-    m_trip_bytes += sizeof(scm_flonum_t);
+    m_trip_bytes += sizeof(scm_flonum_rec_t);
     if (m_trip_bytes >= m_collect_trip_bytes) collect();
     do {
         scm_flonum_t obj = (scm_flonum_t)m_flonums.new_collectible_object();
@@ -213,7 +214,7 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size)
 
     // collector
     m_trip_bytes = 0;
-    m_collect_trip_bytes = m_pool_size / 16; // m_pool_size / 16;
+    m_collect_trip_bytes = ((m_pool_size / 16) < DEFALUT_COLLECT_TRIP_BYTES) ?  (m_pool_size / 16) : DEFALUT_COLLECT_TRIP_BYTES;
     collector_init();
 
     // slab
@@ -535,7 +536,9 @@ object_heap_t::write_barrier(scm_obj_t rhs)
     if (m_write_barrier) {
         if (CELLP(rhs)) {
             if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
+                MEM_STORE_FENCE;
                 while (m_shade_queue.wait_lock_try_put(rhs) == false) {
+                    if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
                     if (m_stop_the_world) {
                         m_collector_lock.lock();
                         m_collector_wake.signal();
@@ -925,8 +928,13 @@ object_heap_t::trace(scm_obj_t obj)
 {
     assert(is_collectible(obj));
     object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
-    traits->cache->mark(obj);
-
+    if (traits->cache->test_and_mark(obj)) {
+#if HPDEBUG
+        printf(";; [collector: duplicate objects in mark stack]\n");
+        fflush(stdout);
+#endif                
+        return;
+    }
     if (PAIRP(obj)) {
         scm_pair_t pair = (scm_pair_t)obj;
         shade(pair->cdr);
@@ -939,7 +947,7 @@ object_heap_t::trace(scm_obj_t obj)
     switch (tc) {
         case TC_VECTOR: {
             scm_vector_t vector = (scm_vector_t)obj;
-            int count = HDR_VECTOR_COUNT(vector->hdr);
+            int count = vector->count;
             for (int i = 0; i < count; i++) shade(vector->elts[i]);
             break;
         }
@@ -1336,7 +1344,8 @@ object_heap_t::init_inherents()
     {
         assert(INTERNAL_PRIVATE_THRESHOLD >= sizeof(scm_vector_rec_t) + sizeof(scm_obj_t));
         scm_vector_t obj = (scm_vector_t)allocate_collectible(sizeof(scm_vector_rec_t) + sizeof(scm_obj_t));
-        obj->hdr = scm_hdr_vector | (0 << HDR_VECTOR_COUNT_SHIFT);
+        obj->hdr = scm_hdr_vector;
+        obj->count = 0;
         obj->elts = (scm_obj_t*)((uintptr_t)obj + sizeof(scm_vector_rec_t));
         obj->elts[0] = scm_unspecified;
         m_inherents[NIL_VECTOR] = obj;
@@ -1369,6 +1378,12 @@ object_heap_t::init_inherents()
         obj->hdr = scm_hdr_flonum;
         obj->value = - 0.0;
         m_inherents[FL_NEGATIVE_ZERO] = obj;
+    }
+    {
+        scm_flonum_t obj = (scm_flonum_t)allocate_collectible(sizeof(scm_flonum_rec_t));
+        obj->hdr = scm_hdr_flonum;
+        obj->value = VALUE_NAN;
+        m_inherents[FL_NAN] = obj;
     }
 #endif
 }
@@ -1440,7 +1455,7 @@ check_collectible(void* obj, int size, void* refcon)
     switch (tc) {
         case TC_VECTOR: {
             scm_vector_t vector = (scm_vector_t)obj;
-            int count = HDR_VECTOR_COUNT(vector->hdr);
+            int count = vector->count;
             for (int i = 0; i < count; i++) VERIFY_OBJ(vector, elts[i]);
         } return;
         case TC_TUPLE: {

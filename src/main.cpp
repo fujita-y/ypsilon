@@ -11,6 +11,44 @@ int             main_command_line_argc;
 char* const*    main_command_line_argv;
 VM*             s_current_vm;
 
+// --heap-limit=32   -> 32MB (default)
+// --heap-limit=512  -> 768MB
+// --heap-limit=1024 -> 1GB
+
+static int opt_heap_limit(int argc, char* const argv[])
+{
+    int value = DEFAULT_HEAP_LIMIT;
+    for (int i = 0; i < argc; i++) {
+        const int strlen_mlimit = strlen("--heap-limit=");
+        const char* opt = argv[i];
+        const char* param = NULL;
+
+        if (strcmp(opt, "--") == 0) {
+             break;
+        } else if ((strlen(argv[i]) >= strlen_mlimit) && (memcmp(opt, "--heap-limit=", strlen_mlimit) == 0)) {
+            param = opt + strlen_mlimit;
+        } else if (strcmp(opt, "--heap-limit") == 0) {
+            if ((i + 1 < argc) && strcmp(argv[i + 1], "--")) {
+                param = argv[i + 1];
+            } else {
+                fprintf(stderr, "** ERROR in option '--heap-limit': missing value\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        if (param) {
+            int tmp;
+            if ((sscanf(param, "%d", &tmp) == 1) && (tmp >= 16) && (tmp < 2048)) {
+                value = tmp;
+            } else {
+                fprintf(stderr, "** ERROR in option '--heap-limit=%s': parameter should be in the range of 16 .. 2047\n", param);
+                exit(EXIT_FAILURE);
+            }
+        }
+        
+    }
+    return value;
+}
+
 #if _MSC_VER
 
     int main(int argc, char* argv[])
@@ -20,31 +58,21 @@ VM*             s_current_vm;
 
         main_command_line_argc = argc;
         main_command_line_argv = argv;
+        
         object_heap_t* heap = new object_heap_t;
-        heap->init(OBJECT_SLAB_SIZE * 8192, OBJECT_SLAB_SIZE * 2048);
+        int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
+        int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
+        heap->init(heap_limit, heap_init);
+        
         VM rootVM;
         rootVM.init(heap);
         s_current_vm = &rootVM;
         rootVM.boot();
+        
+        return 0;
     }
 
 #else
-
-    void standalone_loop()
-    {
-        object_heap_t* heap = new object_heap_t;
-        heap->init(OBJECT_SLAB_SIZE * 8192, OBJECT_SLAB_SIZE * 2048);
-        VM rootVM;
-        rootVM.init(heap);
-        s_current_vm = &rootVM;
-        rootVM.boot();
-    }
-
-    void* scm_standalone(void* arg)
-    {
-        standalone_loop();
-        return ((void*)0);
-    }
 
     static void*
     signal_waiter(void* param)
@@ -101,6 +129,7 @@ VM*             s_current_vm;
     {
         main_command_line_argc = argc;
         main_command_line_argv = argv;
+        
     #ifndef NDEBUG
         struct foo { char i; };
         struct bar { int i; struct foo o; };
@@ -141,7 +170,20 @@ VM*             s_current_vm;
         MTVERIFY(pthread_create(&tid, NULL, signal_waiter, &set));
         MTVERIFY(pthread_detach(tid));
 
-        scm_standalone(NULL);
+        object_heap_t* heap = new object_heap_t;
+        int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
+        int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
+        
+#ifndef NDEBUG
+        printf("heap_limit %d heap_init %d\n", heap_limit, heap_init);
+#endif
+        
+        heap->init(heap_limit, heap_init);
+        
+        VM rootVM;
+        rootVM.init(heap);
+        s_current_vm = &rootVM;
+        rootVM.boot();
         
         return 0;
     }

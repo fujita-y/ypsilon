@@ -1071,6 +1071,7 @@ port_lookahead_byte(scm_port_t port)
                 return bvec->elts[port->mark];
             } break;
 
+            case SCM_PORT_TYPE_CUSTOM:
             case SCM_PORT_TYPE_NAMED_FILE: {
                 if (port->buf) {
                     assert(port->lookahead_size == 0);
@@ -1214,19 +1215,22 @@ port_lookahead_utf8(scm_port_t port)
                             assert(port->buf_size >= PORT_LOOKAHEAD_SIZE);
                             int n1 = port->buf_tail - port->buf_head;
                             while (n1 < code_length) {
-                                if (port->buf != port->buf_head) memmove(port->buf, port->buf_head, n1);
+                                if (port->buf != port->buf_head) {
+                                    memmove(port->buf, port->buf_head, n1);
+                                    port->buf_head = port->buf;
+                                }
                                 int n2 = device_read(port, port->buf + n1, port->buf_size - n1, port->mark + n1);
-                                if (n2 == 0) goto hit_eof;
                                 n1 = n1 + n2;
                                 port->buf_tail = port->buf_head + n1;
+                                if (n2 == 0) goto hit_eof;
                             }
                             memcpy(utf8, port->buf_head, code_length);
                         } else {
                             assert(port->buf == NULL);
                             while (port->lookahead_size < code_length) {
                                 int n = device_read(port, port->lookahead + port->lookahead_size, code_length - port->lookahead_size, port->mark + port->lookahead_size);
-                                if (n == 0) goto hit_eof;
                                 port->lookahead_size += n;
+                                if (n == 0) goto hit_eof;
                             }
                             memcpy(utf8, port->lookahead, code_length);
                         }
@@ -1450,11 +1454,14 @@ port_lookahead_utf16(scm_port_t port)
                     assert(port->buf_size >= PORT_LOOKAHEAD_SIZE);
                     int n1 = port->buf_tail - port->buf_head;
                     while (n1 < 4) {
-                        if (port->buf != port->buf_head) memmove(port->buf, port->buf_head, n1);
+                        if (port->buf != port->buf_head) {
+                            memmove(port->buf, port->buf_head, n1);
+                            port->buf_head = port->buf;
+                        }
                         int n2 = device_read(port, port->buf + n1, port->buf_size - n1, port->mark + n1);
-                        if (n2 == 0) return scm_eof;
                         n1 = n1 + n2;
                         port->buf_tail = port->buf_head + n1;
+                        if (n2 == 0) return scm_eof;
                     }
                     const uint8_t* utf16 = port->buf_head;
                     if (port->mark == 0 && test_bom(port, utf16)) goto hit_bom;
@@ -1473,8 +1480,8 @@ port_lookahead_utf16(scm_port_t port)
                     assert(port->buf == NULL);
                     while (port->lookahead_size < 2) {
                         int n = device_read(port, port->lookahead + port->lookahead_size, 2 - port->lookahead_size, port->mark + port->lookahead_size);
-                        if (n == 0) return scm_eof;
                         port->lookahead_size += n;
+                        if (n == 0) return scm_eof;
                     }
                     const uint8_t* utf16 = port->lookahead;
                     if (port->mark == 0 && test_bom(port, utf16)) goto hit_bom;
@@ -1483,8 +1490,8 @@ port_lookahead_utf16(scm_port_t port)
                     if ((ucs4 >= 0xD800) & (ucs4 <= 0xDBFF)) {
                         while (port->lookahead_size < 4) {
                             int n = device_read(port, port->lookahead + port->lookahead_size, 4 - port->lookahead_size, port->mark + port->lookahead_size);
-                            if (n == 0) goto hit_eof;
                             port->lookahead_size += n;
+                            if (n == 0) goto hit_eof;
                         }
                         utf16 = port->lookahead + 2;
                         uint32_t right = cnvt_utf16_to_ucs4_using_bom(port, utf16);
@@ -1636,19 +1643,22 @@ hit_eof:
                                 assert(port->buf_size >= PORT_LOOKAHEAD_SIZE);
                                 int n1 = port->buf_tail - port->buf_head;
                                 while (n1 < code_length) {
-                                    if (port->buf != port->buf_head) memmove(port->buf, port->buf_head, n1);
+                                    if (port->buf != port->buf_head) {
+                                        memmove(port->buf, port->buf_head, n1);
+                                        port->buf_head = port->buf;
+                                    }
                                     int n2 = device_read(port, port->buf + n1, port->buf_size - n1, port->mark + n1);
-                                    if (n2 == 0) goto hit_eof;
                                     n1 = n1 + n2;
                                     port->buf_tail = port->buf_head + n1;
+                                    if (n2 == 0) goto hit_eof;
                                 }
                                 memcpy(cp932, port->buf_head, code_length);
                             } else {
                                 assert(port->buf == NULL);
                                 while (port->lookahead_size < code_length) {
                                     int n = device_read(port, port->lookahead + port->lookahead_size, code_length - port->lookahead_size, port->mark + port->lookahead_size);
-                                    if (n == 0) goto hit_eof;
                                     port->lookahead_size += n;
+                                    if (n == 0) goto hit_eof;
                                 }
                                 memcpy(cp932, port->lookahead, code_length);
                             }
@@ -2007,7 +2017,8 @@ port_get_string(object_heap_t* heap, scm_port_t port)
     assert(port->buf_state == SCM_PORT_BUF_STATE_ACCUMULATE);
     scm_string_t string;
     if (port->buf == NULL) string = make_string(heap, "");
-    else string = make_string(heap, (const char*)port->buf_head, port->buf_tail - port->buf_head);    return string;
+    else string = make_string(heap, (const char*)port->buf_head, port->buf_tail - port->buf_head);
+    return string;
 }
 
 static scm_obj_t
