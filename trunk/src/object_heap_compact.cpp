@@ -158,7 +158,7 @@ resolve_collectible(void* obj, int size, void* desc)
     switch (tc) {
         case TC_VECTOR: {
             scm_vector_t vector = (scm_vector_t)obj;
-            int count = HDR_VECTOR_COUNT(vector->hdr);
+            int count = vector->count;
             for (int i = 0; i < count; i++) vector->elts[i] = heap->forward(vector->elts[i]);
             break;
         }

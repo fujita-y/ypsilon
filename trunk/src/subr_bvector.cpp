@@ -1863,14 +1863,36 @@ subr_utf8_string(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (BVECTORP(argv[0])) {
             scm_bvector_t bvector = (scm_bvector_t)argv[0];
-            int count = bvector->count;
-            int n;
-            for (n = 0; n < count; n++) {
-                if (bvector->elts[n]) continue;
+            if (utf8_decode_test(bvector)) {
+                int count = bvector->count;
+                scm_string_t string = make_string(vm->m_heap, count, ' ');
+                memcpy(string->name, bvector->elts, count);
+                return string;
             }
-            scm_string_t string = make_string(vm->m_heap, n, ' ');
-            memcpy(string->name, bvector->elts, n);
-            return string;
+            scm_port_t port = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "bytevector"), SCM_PORT_DIRECTION_OUT, scm_false, scm_false);
+            scoped_lock lock(port->lock);
+            uint8_t* datum = (uint8_t*)bvector->elts;
+            int end = bvector->count;
+            int n = 0;
+            while (n < end) {
+                int nbytes = utf8_byte_count(datum[n]);
+                uint32_t ucs4;
+                if (n + nbytes > end || cnvt_utf8_to_ucs4(datum + n, &ucs4) < 1) {
+                    //printf("replace %d bytes\n", nbytes);
+                    // U+FFFD
+                    port_put_byte(port, 0xEF);
+                    port_put_byte(port, 0xBF);
+                    port_put_byte(port, 0xBD);
+                    nbytes = 1;
+                } else {
+                    for (int i = 0; i < nbytes; i++) {
+                        //printf("output %d:%x\n", i, datum[n + i]);
+                        port_put_byte(port, datum[n + i]);
+                    }
+                }
+                n += nbytes;
+            }
+            return port_get_string(vm->m_heap, port);
         }
         wrong_type_argument_violation(vm, "utf8->string", 0, "bytevector", argv[0], argc, argv);
         return scm_undef;

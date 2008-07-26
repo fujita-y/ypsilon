@@ -173,6 +173,7 @@ scm_obj_t arith_magnitude(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_angle(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_rectangular(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 scm_obj_t arith_polar(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
+scm_obj_t arith_floor(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_integer_div(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 scm_obj_t arith_integer_div0(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 

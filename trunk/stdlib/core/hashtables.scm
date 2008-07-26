@@ -112,9 +112,15 @@
             (core-hashtable-clear! ht-root k)
             (set! size 0))))
 
-      (define generic-hashtable->alist
+      #;(define generic-hashtable->alist
         (lambda (ht-custom)
           (apply append (map cdr (core-hashtable->alist ht-root)))))
+      (define generic-hashtable->alist
+        (lambda (ht-custom)
+          (let loop ((lst (core-hashtable->alist ht-root)) (ans '()))
+            (cond ((null? lst) ans)
+                  (else
+                   (loop (cdr lst) (append (cdar lst) ans)))))))
 
       (define generic-hashtable-equivalence-function (lambda (ht-custom) equiv-function))
 
@@ -170,12 +176,13 @@
 
   (define hashtable-keys
     (lambda (ht)
-      (apply vector (map car (core-hashtable->alist ht)))))
+      (list->vector (map car (core-hashtable->alist ht)))))
   
   (define hashtable-entries
     (lambda (ht)
-      (values (apply vector (map car (core-hashtable->alist ht)))
-              (apply vector (map cdr (core-hashtable->alist ht)))))) 
+      (let ((lst (core-hashtable->alist ht)))
+        (values (list->vector (map car lst))
+                (list->vector (map cdr lst))))))
   
   (define string-ci-hash
     (lambda (s)

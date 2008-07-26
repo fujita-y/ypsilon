@@ -3,6 +3,7 @@
 ;;; See license.txt for terms and conditions of use.
 
 (define dump-condition (make-parameter #f))
+(define no-letrec-check (make-parameter #f))
 
 (define add-load-path
   (lambda (path)
@@ -350,7 +351,7 @@
                     (cond ((directory-exists? (expand-path path))
                            (add-library-path (expand-path path)))
                           (else
-                           (format (current-error-port) "** ERROR in option '-sitelib=~a': directory ~s not exist~%" paths path)
+                           (format (current-error-port) "** ERROR in option '--sitelib=~a': directory ~s not exist~%" paths path)
                            (exit #f))))
                   (reverse (if (string-contains (architecture-feature 'operating-system) "windows")
                                (string-split paths #\;)
@@ -362,7 +363,7 @@
                     (cond ((directory-exists? (expand-path path))
                            (add-load-path (expand-path path)))
                           (else
-                           (format (current-error-port) "** ERROR in option '-loadpath=~a': directory ~s not exist~%" paths path)
+                           (format (current-error-port) "** ERROR in option '--loadpath=~a': directory ~s not exist~%" paths path)
                            (exit #f))))
                   (reverse (if (string-contains (architecture-feature 'operating-system) "windows")
                                (string-split paths #\;)
@@ -373,7 +374,7 @@
         (cond ((directory-exists? (expand-path path))
                (auto-compile-cache (expand-path path)))
               (else
-               (format (current-error-port) "** ERROR in option '-acc=~a': directory ~s not exist~%" path path)
+               (format (current-error-port) "** ERROR in option '--acc=~a': directory ~s not exist~%" path path)
                (exit #f)))))
 
     (define bad-option
@@ -392,10 +393,12 @@
         (format #t "  --interactive (-i)     enters repl after running the script file~%")
         (format #t "  --r6rs (-6)            conforms r6rs lexical syntax (default)~%")
         (format #t "  --compatible (-c)      extends lexical syntax for compatibility~%")
-        (format #t "  --dump-condition       default exception handler dump condition~%")
+        (format #t "  --no-letrec-check      no letrec restriction check~%")
         (format #t "  --sitelib=path         adds sitelib path (YPSILON_SITELIB)~%")
         (format #t "  --loadpath=path        adds load search path (YPSILON_LOADPATH)~%")
         (format #t "  --acc=dir              sets a auto-compile-cache directory (YPSILON_ACC)~%")
+        (format #t "  --heap-limit=mbytes    sets a total heap limit in MBytes~%")
+        (format #t "  --dump-condition       default exception handler dump condition~%")
         (format #t "  --disable-acc          disables auto-compile-cache~%")
         (format #t "  --clean-acc            cleans auto-compile-cache~%")
         (format #t "  --version              prints version and exit~%")
@@ -439,7 +442,8 @@
                     (flush-output-port (current-output-port))
                     (default-exception-handler c (lambda () (exit #f))))
                   (lambda ()
-                    (if (load-file-has-r6rs-comment? path)
+                    (auto-compile-cache-update)
+                    (if (or r6rs-program (load-file-has-r6rs-comment? path))
                         (load-r6rs path)
                         (load path))
                     (flush-output-port (current-error-port))
@@ -460,6 +464,8 @@
     (define interaction #f)
     (define script #f)
     (define mute #f)
+    (define r6rs-program #f)
+      
     (define initial-command-line (command-line))
 
     (init-sys-acc)
@@ -488,7 +494,12 @@
                                    (substring opt (+ (string-length flag) 1) (string-length opt)))
                                   (else #f)))))
 
-                      (cond ((opt? "--version" #f)
+                      (cond ((opt? "--heap-limit" #f) (loop (cddr lst)))
+                            ((opt? "--heap-limit" #t) (loop (cdr lst)))
+                            ((opt? "--no-letrec-check" #f)
+                             (no-letrec-check #t)
+                             (loop (cdr lst)))
+                            ((opt? "--version" #f)
                              (show-banner)
                              (exit))
                             ((opt? "--help" #f)
@@ -496,9 +507,11 @@
                              (exit))
                             ((or (opt? "--r6rs" #f) (opt? "-6" #f))
                              (extend-lexical-syntax #f)
+                             (set! r6rs-program #t)
                              (loop (cdr lst)))
                             ((or (opt? "--compatible" #f) (opt? "-c" #f))
                              (extend-lexical-syntax #t)
+                             (set! r6rs-program #f)
                              (loop (cdr lst)))
                             ((or (opt? "--verbose" #f) (opt? "-v" #f))
                              (scheme-load-verbose #t)

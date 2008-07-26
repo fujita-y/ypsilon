@@ -201,7 +201,11 @@ subr_num_lt(VM* vm, int argc, scm_obj_t argv[])
         if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) return (FIXNUM(argv[0]) < FIXNUM(argv[1])) ? scm_true : scm_false;
         if (BOTHFLONUMP(argv[0], argv[1])) return (FLONUM(argv[0]) < FLONUM(argv[1])) ? scm_true : scm_false;
         if (real_valued_pred(argv[0])) {
-            if (real_valued_pred(argv[1])) return (n_compare(vm->m_heap, argv[0], argv[1]) < 0) ? scm_true : scm_false;
+            if (real_valued_pred(argv[1])) {
+                if (argv[0] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+                if (argv[1] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+                return (n_compare(vm->m_heap, argv[0], argv[1]) < 0) ? scm_true : scm_false;
+            }
             wrong_type_argument_violation(vm, "<", 1, "real", argv[1], argc, argv);
             return scm_undef;
         }
@@ -209,16 +213,25 @@ subr_num_lt(VM* vm, int argc, scm_obj_t argv[])
         return scm_undef;
     }
     if (argc == 1) {
-        if (real_valued_pred(argv[0])) return scm_true;
+        if (real_valued_pred(argv[0])) {
+            if (argv[0] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+            return scm_true;
+        }
         wrong_type_argument_violation(vm, "<", 0, "real", argv[0], argc, argv);
         return scm_undef;
     }
     if (argc >= 3) {
+        bool has_nan = false;
         for (int i = 0; i < argc; i++) {
+            if (argv[i] == vm->m_heap->m_inherents[FL_NAN]) {
+                has_nan = true;
+                continue;
+            }
             if (real_valued_pred(argv[i])) continue;
             wrong_type_argument_violation(vm, "<", i, "real", argv[i], argc, argv);
             return scm_undef;
         }
+        if (has_nan) return scm_false;
         for (int i = 0; i < argc - 1; i++) {
             if (n_compare(vm->m_heap, argv[i], argv[i + 1]) < 0) continue;
             return scm_false;
@@ -237,7 +250,11 @@ subr_num_gt(VM* vm, int argc, scm_obj_t argv[])
         if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) return (FIXNUM(argv[0]) > FIXNUM(argv[1])) ? scm_true : scm_false;
         if (BOTHFLONUMP(argv[0], argv[1])) return (FLONUM(argv[0]) > FLONUM(argv[1])) ? scm_true : scm_false;
         if (real_valued_pred(argv[0])) {
-            if (real_valued_pred(argv[1])) return (n_compare(vm->m_heap, argv[0], argv[1]) > 0) ? scm_true : scm_false;
+            if (real_valued_pred(argv[1])) {
+                if (argv[0] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+                if (argv[1] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+                return (n_compare(vm->m_heap, argv[0], argv[1]) > 0) ? scm_true : scm_false;
+            }
             wrong_type_argument_violation(vm, ">", 1, "real", argv[1], argc, argv);
             return scm_undef;
         }
@@ -245,16 +262,25 @@ subr_num_gt(VM* vm, int argc, scm_obj_t argv[])
         return scm_undef;
     }
     if (argc == 1) {
-        if (real_valued_pred(argv[0])) return scm_true;
+        if (real_valued_pred(argv[0])) {
+            if (argv[0] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+            return scm_true;
+        }
         wrong_type_argument_violation(vm, ">", 0, "real", argv[0], argc, argv);
         return scm_undef;
     }
     if (argc >= 3) {
+        bool has_nan = false;
         for (int i = 0; i < argc; i++) {
+            if (argv[i] == vm->m_heap->m_inherents[FL_NAN]) {
+                has_nan = true;
+                continue;
+            }
             if (real_valued_pred(argv[i])) continue;
             wrong_type_argument_violation(vm, ">", i, "real", argv[i], argc, argv);
             return scm_undef;
         }
+        if (has_nan) return scm_false;
         for (int i = 0; i < argc - 1; i++) {
             if (n_compare(vm->m_heap, argv[i], argv[i + 1]) > 0) continue;
             return scm_false;
@@ -273,7 +299,11 @@ subr_num_le(VM* vm, int argc, scm_obj_t argv[])
         if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) return (FIXNUM(argv[0]) <= FIXNUM(argv[1])) ? scm_true : scm_false;
         if (BOTHFLONUMP(argv[0], argv[1])) return (FLONUM(argv[0]) <= FLONUM(argv[1])) ? scm_true : scm_false;
         if (real_valued_pred(argv[0])) {
-            if (real_valued_pred(argv[1])) return (n_compare(vm->m_heap, argv[0], argv[1]) <= 0) ? scm_true : scm_false;
+            if (real_valued_pred(argv[1])) {
+                if (argv[0] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+                if (argv[1] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+                return (n_compare(vm->m_heap, argv[0], argv[1]) <= 0) ? scm_true : scm_false;
+            }
             wrong_type_argument_violation(vm, "<=", 1, "real", argv[1], argc, argv);
             return scm_undef;
         }
@@ -281,16 +311,25 @@ subr_num_le(VM* vm, int argc, scm_obj_t argv[])
         return scm_undef;
     }
     if (argc == 1) {
-        if (real_valued_pred(argv[0])) return scm_true;
+        if (real_valued_pred(argv[0])) {
+            if (argv[0] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+            return scm_true;
+        }
         wrong_type_argument_violation(vm, "<=", 0, "real", argv[0], argc, argv);
         return scm_undef;
     }
     if (argc >= 3) {
+        bool has_nan = false;
         for (int i = 0; i < argc; i++) {
+            if (argv[i] == vm->m_heap->m_inherents[FL_NAN]) {
+                has_nan = true;
+                continue;
+            }
             if (real_valued_pred(argv[i])) continue;
             wrong_type_argument_violation(vm, "<=", i, "real", argv[i], argc, argv);
             return scm_undef;
         }
+        if (has_nan) return scm_false;
         for (int i = 0; i < argc - 1; i++) {
             if (n_compare(vm->m_heap, argv[i], argv[i + 1]) <= 0) continue;
             return scm_false;
@@ -309,7 +348,11 @@ subr_num_ge(VM* vm, int argc, scm_obj_t argv[])
         if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) return (FIXNUM(argv[0]) >= FIXNUM(argv[1])) ? scm_true : scm_false;
         if (BOTHFLONUMP(argv[0], argv[1])) return (FLONUM(argv[0]) >= FLONUM(argv[1])) ? scm_true : scm_false;
         if (real_valued_pred(argv[0])) {
-            if (real_valued_pred(argv[1])) return (n_compare(vm->m_heap, argv[0], argv[1]) >= 0) ? scm_true : scm_false;
+            if (real_valued_pred(argv[1])) {
+                if (argv[0] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+                if (argv[1] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+                return (n_compare(vm->m_heap, argv[0], argv[1]) >= 0) ? scm_true : scm_false;
+            }
             wrong_type_argument_violation(vm, ">=", 1, "real", argv[1], argc, argv);
             return scm_undef;
         }
@@ -317,16 +360,25 @@ subr_num_ge(VM* vm, int argc, scm_obj_t argv[])
         return scm_undef;
     }
     if (argc == 1) {
-        if (real_valued_pred(argv[0])) return scm_true;
+        if (real_valued_pred(argv[0])) {
+            if (argv[0] == vm->m_heap->m_inherents[FL_NAN]) return scm_false;
+            return scm_true;
+        }
         wrong_type_argument_violation(vm, ">=", 0, "real", argv[0], argc, argv);
         return scm_undef;
     }
     if (argc >= 3) {
+        bool has_nan = false;
         for (int i = 0; i < argc; i++) {
+            if (argv[i] == vm->m_heap->m_inherents[FL_NAN]) {
+                has_nan = true;
+                continue;
+            }
             if (real_valued_pred(argv[i])) continue;
             wrong_type_argument_violation(vm, ">=", i, "real", argv[i], argc, argv);
             return scm_undef;
         }
+        if (has_nan) return scm_false;
         for (int i = 0; i < argc - 1; i++) {
             if (n_compare(vm->m_heap, argv[i], argv[i + 1]) >= 0) continue;
             return scm_false;
@@ -759,15 +811,8 @@ subr_floor(VM* vm, int argc, scm_obj_t argv[])
             double value = ((scm_flonum_t)argv[0])->value;
             return make_flonum(vm->m_heap, floor(value));
         }
-        if (FIXNUMP(argv[0])) return argv[0];
-        if (BIGNUMP(argv[0])) return argv[0];
-        if (RATIONALP(argv[0])) {
-            scm_rational_t rn = (scm_rational_t)argv[0];
-            if (!n_negative_pred(rn->nume)) {
-                return arith_quotient(vm->m_heap, rn->nume, rn->deno);
-            }
-            return arith_sub(vm->m_heap, arith_quotient(vm->m_heap, rn->nume, rn->deno), MAKEFIXNUM(1));
-        }
+        if (FIXNUMP(argv[0]) || BIGNUMP(argv[0])) return argv[0];
+        if (RATIONALP(argv[0])) return arith_floor(vm->m_heap, argv[0]);
         wrong_type_argument_violation(vm, "floor", 0, "number", argv[0], argc, argv);
         return scm_undef;
     }
@@ -1063,7 +1108,7 @@ subr_expt(VM* vm, int argc, scm_obj_t argv[])
                         return make_flonum(vm->m_heap, 0.0);
                     } else {
                         assert(COMPLEXP(argv[1]));
-                        if (n_positive_pred(((scm_complex_t)argv[1])->real)) return make_flonum(vm->m_heap, 0.0);
+                        if (n_positive_pred(((scm_complex_t)argv[1])->real)) return MAKEFIXNUM(0);
                         return make_complex(vm->m_heap, VALUE_NAN, VALUE_NAN);
                     }
                 }
@@ -1126,8 +1171,8 @@ scm_obj_t
 subr_real_part(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
-        if (real_valued_pred(argv[0])) return argv[0];
         if (COMPLEXP(argv[0])) return ((scm_complex_t)argv[0])->real;
+        if (real_valued_pred(argv[0])) return argv[0];
         wrong_type_argument_violation(vm, "real-part", 0, "number", argv[0], argc, argv);
         return scm_undef;
     }
@@ -1183,9 +1228,9 @@ subr_angle(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_number_to_string(VM* vm, int argc, scm_obj_t argv[])
 {
-    if ((argc == 1) || (argc == 2)) {
+    if ((argc == 1) || (argc == 2) || (argc == 3)) {
         int radix = 10;
-        if (argc == 2) {
+        if (argc >= 2) {
             if (FIXNUMP(argv[1])) {
                 radix = FIXNUM(argv[1]);
                 switch (radix) {
@@ -1202,6 +1247,14 @@ subr_number_to_string(VM* vm, int argc, scm_obj_t argv[])
                 wrong_type_argument_violation(vm, "number->string", 1, "exact non-negative integer", argv[1], argc, argv);
                 return scm_undef;
             }
+            if (argc == 3) {
+                if (exact_non_negative_integer_pred(argv[2])) {
+                    // precision ignored
+                } else {
+                    wrong_type_argument_violation(vm, "number->string", 2, "exact non-negative integer", argv[2], argc, argv);
+                    return scm_undef;
+                }
+            }
         }
         if (number_pred(argv[0])) {
             if (radix == 10 || n_exact_pred(argv[0])) return cnvt_number_to_string(vm->m_heap, argv[0], radix);
@@ -1211,7 +1264,7 @@ subr_number_to_string(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "number->string", 0, "number", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "number->string", 1, 2, argc, argv);
+    wrong_number_of_arguments_violation(vm, "number->string", 1, 3, argc, argv);
     return scm_undef;
 }
 

@@ -409,9 +409,19 @@ bn_let(scm_bignum_t dst, scm_fixnum_t src)
     }
 }
 
+#define DEBUG_BN_DIV 0
+
+#if DEBUG_BN_DIV
+#include "vm.h"
+#include "printer.h"
+#endif
+
 static void
 bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bignum_t denominator)
 {
+#if DEBUG_BN_DIV
+    printer_t prt(current_vm(), current_vm()->m_current_output);
+#endif
     assert(bn_norm_pred(numerator));
     assert(bn_norm_pred(denominator));
     assert(bn_get_count(numerator));
@@ -445,11 +455,31 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
     int qt_index = quotient_count - 1;
     int rd_index = remainder_count - 1;
     int de_index = denominator_count - 1;
-    uint64_t n;
-    uint32_t qt;
+
+#if DEBUG_BN_DIV
+    prt.format("numerator: ~x~%", numerator);
+    prt.format("shift: %d~%", shift);
+    prt.format("remainder: ~x~%", &remainder);
+    prt.format("denominator: ~x~%", denominator);
+#endif
+    
     while (qt_index >= 0) {
+        
+#if DEBUG_BN_DIV
+        prt.format("loop: quotient   : ~x~%", &quotient);
+        prt.format("      remainder  : ~x~%", &remainder);
+#endif
+        
         assert(rd_index >= 0);
         if (remainder.elts[rd_index] >= denominator->elts[de_index]) {
+            
+#if DEBUG_BN_DIV
+            prt.format("-- path1: remainder.elts[%d]   : %x ~%", rd_index, remainder.elts[rd_index]);
+            prt.format("          denominator->elts[%d]: %x ~%", de_index, denominator->elts[de_index]);
+            prt.format("          remainder  : ~x~%", &remainder);
+            prt.format("          denominator: ~x~%", denominator);
+#endif
+            
             scm_bignum_rec_t subsec;
             bn_subsection(&subsec, &remainder, rd_index - de_index);
             if (bn_sub(&subsec, &subsec, denominator)) {
@@ -458,16 +488,28 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
                 quotient.elts[qt_index] = 1;
             }
         }
-        if (qt_index > 0) {
+        if (qt_index > 0) {            
             assert(rd_index > 0);
-            n = ((uint64_t)remainder.elts[rd_index] << 32) + remainder.elts[rd_index - 1];
+            uint64_t n = ((uint64_t)remainder.elts[rd_index] << 32) + remainder.elts[rd_index - 1];
+                        
+#if DEBUG_BN_DIV
+            prt.format("-- path2: n                   : ~x\n", uint64_to_integer(heap, n));
+            prt.format("          denominator->elts[%d]: %x\n", de_index, denominator->elts[de_index]);
+#endif
+            
             if (n > denominator->elts[de_index]) {
-                qt = n / denominator->elts[de_index];
-                if (qt) {
+                uint32_t qt = 0;
+                if (remainder.elts[rd_index] < denominator->elts[de_index]) {
+                    qt = n / denominator->elts[de_index];
+#if DEBUG_BN_DIV
+                    prt.format("-- path5: qt: %x\n", qt);
+#endif
                     bn_set_count(&workpad, workpad_count);
                     bn_mul_add_uint32(&workpad, denominator, qt, 0);
                 } else {
-                    // qt == 0 here mean overflow
+#if DEBUG_BN_DIV
+                    prt.format("-- path6: qt: 0 (overflow)\n");
+#endif
                     assert(remainder.elts[rd_index] == denominator->elts[de_index]);
                     bn_set_count(&workpad, workpad_count);
                     memcpy(workpad.elts, denominator->elts, sizeof(uint32_t) * denominator_count);
@@ -483,7 +525,6 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
                 assert(qt >= 0);
                 bn_sub(&subsec, &subsec, &workpad);
                 quotient.elts[qt_index - 1] = qt;
-                // after this, no head pass
             } else {
                 quotient.elts[qt_index - 1] = 0;
             }
@@ -4966,7 +5007,7 @@ parse_digits:
             bn_norm(&workpad);
             bn_mul_add_uint32(&bn, &workpad, n, 0);
         }
-        *ans = oprtr_reduce(heap, mantissa, bn_dup(heap, &bn));
+        *ans = oprtr_reduce(heap, oprtr_norm_integer(heap, mantissa), oprtr_norm_integer(heap, bn_dup(heap, &bn)));
     } else {
         int count = 1;
         double e = pow10n(bignum_to_double(mantissa), exp10);
@@ -5252,13 +5293,30 @@ decode_flonum(object_heap_t* heap, scm_flonum_t n)
 }
 
 scm_obj_t
+arith_floor(object_heap_t* heap, scm_obj_t obj)
+{
+    if (FIXNUMP(obj)) return obj;
+    if (BIGNUMP(obj)) return obj;
+    if (FLONUMP(obj)) {
+        double value = ((scm_flonum_t)obj)->value;
+        return make_flonum(heap, floor(value));
+    }
+    if (RATIONALP(obj)) {
+        scm_rational_t rn = (scm_rational_t)obj;
+        if (n_negative_pred(rn->nume)) return arith_sub(heap, arith_quotient(heap, rn->nume, rn->deno), MAKEFIXNUM(1));
+        return arith_quotient(heap, rn->nume, rn->deno);
+    }
+    fatal("%s:%u wrong datum type", __FILE__, __LINE__);
+}
+
+scm_obj_t
 arith_integer_div(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
     if (FIXNUMP(lhs)) {
         if (FIXNUMP(rhs)) {
-            int x = FIXNUM(lhs);
-            int y = FIXNUM(rhs);
-            int div;
+            intptr_t x = FIXNUM(lhs);
+            intptr_t y = FIXNUM(rhs);
+            intptr_t div;
             if (x == 0) {
                 div = 0;
             } else if (x > 0) {
@@ -5268,118 +5326,24 @@ arith_integer_div(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             } else {
                 div = (x + y + 1) / y;
             }
-            return MAKEFIXNUM(div);
+            return intptr_to_integer(heap, div);
         }
     }
     if (FLONUMP(lhs) || FLONUMP(rhs)) {
         double x = real_to_double(lhs);
         double y = real_to_double(rhs);
-        double div;
-        if (x > 0.0) {
-            div = x / y;
-        } else if (y > 0.0) {
-            div = (x - y + 1.0) / y;
-        } else {
-            div = (x + y + 1.0) / y;
-        }
-        return make_flonum(heap, trunc(div));
+        return make_flonum(heap, (y > 0.0) ? floor(x / y) : - floor(x / - y));
     }
-    scm_obj_t x = lhs;
-    scm_obj_t y = rhs;
-    if (RATIONALP(lhs)) {
-        if (RATIONALP(rhs)) {
-            x = arith_mul(heap, ((scm_rational_t)lhs)->nume, ((scm_rational_t)rhs)->deno);
-            y = arith_mul(heap, ((scm_rational_t)rhs)->nume, ((scm_rational_t)lhs)->deno);
-        } else {
-            x = ((scm_rational_t)lhs)->nume;
-            y = arith_mul(heap, rhs, ((scm_rational_t)lhs)->deno);
-        }
-    } else if (RATIONALP(rhs)) {
-        x = arith_mul(heap, lhs, ((scm_rational_t)rhs)->deno);
-        y = ((scm_rational_t)rhs)->nume;
-    }
-    scm_obj_t div;
-    if (n_zero_pred(x)) return MAKEFIXNUM(0);
-    if (n_positive_pred(x)) {
-        div = arith_quotient(heap, x, y);
-    } else if (n_positive_pred(y)) {
-        div = arith_negate(heap, arith_quotient(heap, arith_add(heap, arith_sub(heap, x, y), MAKEFIXNUM(1)), y));
-    } else {
-        div = arith_negate(heap, arith_quotient(heap, arith_add(heap, arith_add(heap, x, y), MAKEFIXNUM(1)), y));
-    }
-    assert(FIXNUMP(div) || BIGNUMP(div));
-    return div;
+    if (n_positive_pred(rhs)) return arith_floor(heap, arith_div(heap, lhs, rhs));
+    return arith_negate(heap, arith_floor(heap, arith_div(heap, lhs, arith_negate(heap, rhs))));
 }
 
 scm_obj_t
 arith_integer_div0(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
-    if (FIXNUMP(lhs)) {
-        if (FIXNUMP(rhs)) {
-            double x = FIXNUM(lhs);
-            double y = FIXNUM(rhs);
-            if (y > 0) x = x + 0.5 * y;
-            else x = x - 0.5 * y;
-            double div;
-            if (x == 0) {
-                div = 0;
-            } else if (x > 0) {
-                div = x / y;
-            } else if (y > 0) {
-                div = (x - y + 1) / y;
-            } else {
-                div = (x + y + 1) / y;
-            }
-            return MAKEFIXNUM((int)div);
-        }
-    }
-    if (FLONUMP(lhs) || FLONUMP(rhs)) {
-        double x = real_to_double(lhs);
-        double y = real_to_double(rhs);
-        if (y > 0.0) x = x + 0.5 * y;
-        else x = x - 0.5 * y;
-        double div;
-        if (x > 0.0) {
-            div = x / y;
-        } else if (y > 0.0) {
-            div = (x - y + 1.0) / y;
-        } else {
-            div = (x + y + 1.0) / y;
-        }
-        return make_flonum(heap, trunc(div));
-    }
-    scm_obj_t x = lhs;
-    scm_obj_t y = rhs;
-    if (n_positive_pred(y)) {
-        x = arith_add(heap, x, arith_div(heap, y, MAKEFIXNUM(2)));
-    } else {
-        x = arith_sub(heap, x, arith_div(heap, y, MAKEFIXNUM(2)));
-    }
-    if (RATIONALP(lhs)) {
-        if (RATIONALP(rhs)) {
-            x = arith_mul(heap, ((scm_rational_t)lhs)->nume, ((scm_rational_t)rhs)->deno);
-            y = arith_mul(heap, ((scm_rational_t)rhs)->nume, ((scm_rational_t)lhs)->deno);
-        } else {
-            x = ((scm_rational_t)lhs)->nume;
-            y = arith_mul(heap, rhs, ((scm_rational_t)lhs)->deno);
-        }
-    } else if (RATIONALP(rhs)) {
-        x = arith_mul(heap, lhs, ((scm_rational_t)rhs)->deno);
-        y = ((scm_rational_t)rhs)->nume;
-    }
-
-    scm_obj_t div;
-    if (n_zero_pred(x)) return MAKEFIXNUM(0);
-    if (n_positive_pred(x)) {
-        div = arith_quotient(heap, x, y);
-    } else if (n_positive_pred(y)) {
-        div = arith_negate(heap, arith_quotient(heap, arith_add(heap, arith_sub(heap, x, y), MAKEFIXNUM(1)), y));
-    } else {
-        div = arith_negate(heap, arith_quotient(heap, arith_add(heap, arith_add(heap, x, y), MAKEFIXNUM(1)), y));
-    }
-    assert(FIXNUMP(div) || BIGNUMP(div));
-    return div;
+    scm_obj_t div = arith_integer_div(heap, lhs, rhs);
+    scm_obj_t mod = arith_sub(heap, lhs, arith_mul(heap, div, rhs));
+    if (n_compare(heap, mod, arith_magnitude(heap, arith_div(heap, rhs, MAKEFIXNUM(2)))) < 0) return div;
+    if (n_positive_pred(rhs)) return arith_add(heap, div, MAKEFIXNUM(1));
+    return arith_sub(heap, div, MAKEFIXNUM(1));
 }
-
-
-

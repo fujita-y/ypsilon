@@ -24,6 +24,10 @@
 #include <fcntl.h>
 #include <signal.h>
 
+#ifndef DEFAULT_HEAP_LIMIT
+  #define DEFAULT_HEAP_LIMIT        32  // 32MB
+#endif
+
 #if _MSC_VER
   #define USE_GCC_EXTENSION         0
 #else

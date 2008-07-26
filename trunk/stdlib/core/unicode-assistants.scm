@@ -31,25 +31,25 @@
           (core bytevector-transcoders))
 
   (define load-unicode-table-file
-    (lambda (name)
+    (lambda (name k)
       (call-with-port
-       (open-builtin-data-input-port name)
-       (lambda (port)
-         (let ((ht (make-core-hashtable 'eqv?)))
-           (let loop ((lst (get-datum port)))
-             (cond ((null? lst))
-                   (else
-                    (core-hashtable-set! ht (caar lst) (cdar lst))
-                    (loop (cdr lst)))))
-           (core-hashtable-copy ht #t))))))
-  
+          (open-builtin-data-input-port name)
+          (lambda (port)
+            (let ((ht (make-core-hashtable 'eqv? k)))
+              (let loop ((lst (get-datum port)))
+                (cond ((null? lst))
+                      (else
+                       (core-hashtable-set! ht (caar lst) (cdar lst))
+                       (loop (cdr lst)))))
+              (core-hashtable-copy ht #t))))))
+
   (define load-unicode-list-file
     (lambda (name)
       (call-with-port
-       (open-builtin-data-input-port name)
-       (lambda (port)
-         (get-datum port)))))
-  
+          (open-builtin-data-input-port name)
+          (lambda (port)
+            (get-datum port)))))
+
   (define-syntax autoload
     (syntax-rules ()
       ((_ var init)
@@ -60,27 +60,43 @@
 
   (autoload
    general-category-table-1
-   (load-unicode-table-file "general-category-1"))
+   (load-unicode-table-file "general-category-1" 1000))
 
   (autoload
    general-category-table-2
-   (load-unicode-table-file "general-category-2"))
+   (load-unicode-table-file "general-category-2" 170000))
 
   (autoload
    simple-uppercase-table
-   (load-unicode-table-file "simple-uppercase"))
+   (load-unicode-table-file "simple-uppercase" 1500))
 
   (autoload
    simple-lowercase-table
-   (load-unicode-table-file "simple-lowercase"))
+   (load-unicode-table-file "simple-lowercase" 1500))
 
   (autoload
    simple-titlecase-table
-   (load-unicode-table-file "simple-titlecase"))
+   (load-unicode-table-file "simple-titlecase" 1500))
 
   (autoload
    numeric-property-table
-   (load-unicode-table-file "numeric-property"))
+   (load-unicode-table-file "numeric-property" 1500))
+
+  (autoload
+   special-casing-lower-table
+   (load-unicode-table-file "special-casing-lower" 300))
+
+  (autoload
+   special-casing-title-table
+   (load-unicode-table-file "special-casing-title" 300))
+
+  (autoload
+   special-casing-upper-table
+   (load-unicode-table-file "special-casing-upper" 300))
+
+  (autoload
+   case-folding-table
+   (load-unicode-table-file "case-folding" 1500))
 
   (autoload
    other-uppercase-list
@@ -94,26 +110,43 @@
    other-alphabetic-list
    (load-unicode-list-file "other-alphabetic"))
 
-  (autoload
-   special-casing-lower-table
-   (load-unicode-table-file "special-casing-lower"))
-
-  (autoload
-   special-casing-title-table
-   (load-unicode-table-file "special-casing-title"))
-
-  (autoload
-   special-casing-upper-table
-   (load-unicode-table-file "special-casing-upper"))
-
-  (autoload
-   case-folding-table
-   (load-unicode-table-file "case-folding"))
-
   (define general-category
     (lambda (c)
-      (or (core-hashtable-ref (general-category-table-1) (char->integer c) #f)
-          (core-hashtable-ref (general-category-table-2) (char->integer c) 'Cn))))
+      (let ((cp (char->integer c)))
+        (or (core-hashtable-ref (general-category-table-1) cp #f)
+            (core-hashtable-ref (general-category-table-2) cp #f)
+            (cond
+             ;3400;<CJK Ideograph Extension A, First>;Lo;0;L;;;;;N;;;;;
+             ;4DB5;<CJK Ideograph Extension A, Last>;Lo;0;L;;;;;N;;;;;
+             ((<= #x3400 cp #x4DB5) 'Lo)
+             ; 4E00;<CJK Ideograph, First>;Lo;0;L;;;;;N;;;;;
+             ; 9FBB;<CJK Ideograph, Last>;Lo;0;L;;;;;N;;;;;
+             ((<= #x4E00 cp #x9FBB) 'Lo)
+             ; AC00;<Hangul Syllable, First>;Lo;0;L;;;;;N;;;;;
+             ; D7A3;<Hangul Syllable, Last>;Lo;0;L;;;;;N;;;;;
+             ((<= #xAC00 cp #xD7A3) 'Lo)
+             ; D800;<Non Private Use High Surrogate, First>;Cs;0;L;;;;;N;;;;;
+             ; DB7F;<Non Private Use High Surrogate, Last>;Cs;0;L;;;;;N;;;;;
+             ((<= #xD800 cp #xDB7F) 'Cs)
+             ; DB80;<Private Use High Surrogate, First>;Cs;0;L;;;;;N;;;;;
+             ; DBFF;<Private Use High Surrogate, Last>;Cs;0;L;;;;;N;;;;;
+             ((<= #xDB80 cp #xDBFF) 'Cs)
+             ; DC00;<Low Surrogate, First>;Cs;0;L;;;;;N;;;;;
+             ; DFFF;<Low Surrogate, Last>;Cs;0;L;;;;;N;;;;;
+             ((<= #xDC00 cp #xDFFF) 'Cs)
+             ; E000;<Private Use, First>;Co;0;L;;;;;N;;;;;
+             ; F8FF;<Private Use, Last>;Co;0;L;;;;;N;;;;;
+             ((<= #xE000 cp #xF8FF) 'Co)
+             ; 20000;<CJK Ideograph Extension B, First>;Lo;0;L;;;;;N;;;;;
+             ; 2A6D6;<CJK Ideograph Extension B, Last>;Lo;0;L;;;;;N;;;;;
+             ((<= #x20000 cp #x2A6D6) 'Lo)
+             ; F0000;<Plane 15 Private Use, First>;Co;0;L;;;;;N;;;;;
+             ; FFFFD;<Plane 15 Private Use, Last>;Co;0;L;;;;;N;;;;;
+             ((<= #xF0000 cp #xFFFFD) 'Co)
+             ; 100000;<Plane 16 Private Use, First>;Co;0;L;;;;;N;;;;;
+             ; 10FFFD;<Plane 16 Private Use, Last>;Co;0;L;;;;;N;;;;;
+             ((<= #x100000 cp #x10FFFD) 'Co)
+             (else 'Cn))))))
 
   (define numeric-property?
     (lambda (c)
@@ -173,19 +206,19 @@
 
   (autoload
    canonical-class-table
-   (load-unicode-table-file "canonical-class"))
+   (load-unicode-table-file "canonical-class" 1500))
 
   (autoload
    decompose-table
-   (load-unicode-table-file "decompose"))
+   (load-unicode-table-file "decompose" 80000))
 
   (autoload
    compose-table
-   (load-unicode-table-file "compose"))
+   (load-unicode-table-file "compose" 5000))
 
   (autoload
    compatibility-table
-   (load-unicode-table-file "compatibility"))
+   (load-unicode-table-file "compatibility" 5000))
 
   (define SBase #xAC00)
   (define LBase #x1100)

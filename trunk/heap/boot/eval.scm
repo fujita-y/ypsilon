@@ -60,14 +60,14 @@
                          (library (.R6RS-EVAL)
                            (export)
                            (import (rename (only (core primitives) 
-                                                 set-top-level-value! 
+                                                 set-top-level-value!
                                                  string->symbol)
                                            (set-top-level-value! .SET-TOP-LEVEL-VALUE!)
                                            (string->symbol .STRING->SYMBOL))
                                    ,@(tuple-ref env 1))
                            (.SET-TOP-LEVEL-VALUE! (.STRING->SYMBOL ".R6RS-EVAL-RESULT") ,expr))
                          (let ((result .R6RS-EVAL-RESULT))
-                           (set-top-level-value! '.R6RS-EVAL-RESULT .&UNDEF)
+                           (.set-top-level-value! '.R6RS-EVAL-RESULT .&UNDEF)
                            (.unintern-scheme-library ',(generate-library-id '(.R6RS-EVAL)))
                            result)))))))
 

@@ -54,11 +54,29 @@ cnvt_hex_char_to_int(int c)
     return -1;
 }
 
+#include "../unicode/lexeme.inc"
+
+static inline bool
+ucs4_constituent(uint32_t ucs4)
+{
+    int offset = ucs4 / 8;
+    int bit = 1 << (ucs4 & 7);
+    return (s_constituent[offset] & bit) != 0;
+}
+
+static inline bool
+ucs4_subsequent(uint32_t ucs4)
+{
+    int offset = ucs4 / 8;
+    int bit = 1 << (ucs4 & 7);    
+    return (s_subsequent[offset] & bit) != 0;
+}
+
 void
 reader_t::make_char_map()
 {
     if (s_char_map_ready) return;
-    for (int i = 0; i < array_sizeof(s_char_map); i++) {
+    for (int i = 1; i < array_sizeof(s_char_map); i++) {
         s_char_map[i]  = ((isalnum(i) || strchr(".!?*+-/:<=>$%&@^_~", i)) ? CHAR_MAP_SYMBOL : 0);
         s_char_map[i] |= ((isalnum(i) || strchr("!?*/:<=>$%&^_~", i)) ? CHAR_MAP_INITIAL : 0);
         s_char_map[i] |= (strchr("()[]\";#", i) ? CHAR_MAP_DELIMITER : 0);
@@ -218,6 +236,7 @@ seek_c2:
     goto seek_c1;
 }
 
+/*
 void
 reader_t::read_thing(char* buf, size_t size)
 {
@@ -233,6 +252,27 @@ reader_t::read_thing(char* buf, size_t size)
             buf[i] = 0;
             return;
         }
+        if (c < 128) buf[i++] = c;
+        else i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
+    }
+    lexical_error("token buffer overflow while reading identifier, %s ...", buf);
+}
+*/
+void
+reader_t::read_thing(char* buf, size_t size)
+{
+    size_t i = 0;
+    while (i + 4 < size) {
+        int c = lookahead_ucs4();
+        if (c == EOF) {
+            buf[i] = 0;
+            return;
+        }
+        if (delimited(c)) {
+            buf[i] = 0;
+            return;
+        }
+        get_ucs4();
         if (c < 128) buf[i++] = c;
         else i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
     }
@@ -329,7 +369,7 @@ reader_t::read_bytevector()
 scm_obj_t
 reader_t::read_number()
 {
-    char buf[512];
+    char buf[4096];
     read_thing(buf, sizeof(buf));
     scm_obj_t obj = parse_number(m_vm->m_heap, buf, 0, 0);
     if (obj != scm_false) return obj;
@@ -358,7 +398,7 @@ reader_t::read_number()
 scm_obj_t
 reader_t::read_prefixed_number(int exactness, int radix, bool swap)
 {
-    char buf[512];
+    char buf[4096];
     read_thing(buf, sizeof(buf));
     scm_obj_t obj = parse_number(m_vm->m_heap, buf, exactness, radix);
     if (obj != scm_false) return obj;
@@ -550,6 +590,71 @@ reader_t::read_symbol()
     char buf[MAX_READ_SYMBOL_LENGTH];
     int i = 0;
     while (i + 4 < array_sizeof(buf)) {
+        int c = lookahead_ucs4();
+        if (c == EOF) {
+            buf[i] = 0;
+            return make_symbol(m_vm->m_heap, buf, i);
+        }
+        if (delimited(c)) {
+            buf[i] = 0;
+            return make_symbol(m_vm->m_heap, buf, i);
+        }
+        get_ucs4();
+        if (c == '\\') {
+            c = get_ucs4();
+            if (c == 'x') {
+                unget_ucs4();
+                c = read_escape_sequence();
+                i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
+                continue;
+            } else {
+                lexical_error("invalid character '\\' while reading identifier");
+            }
+        }
+        if (c > 127) {
+            ensure_ucs4(c);
+            if (i == 0) {
+                if (ucs4_constituent(c)) {
+                    i += cnvt_ucs4_to_utf8(c, (uint8_t*)buf + i);
+                    continue;
+                }
+            } else {
+                if (ucs4_subsequent(c)) {
+                    i += cnvt_ucs4_to_utf8(c, (uint8_t*)buf + i);
+                    continue;
+                }
+            }
+            lexical_error("invalid character %U while reading identifier", c);
+        }
+        if (m_vm->flags.m_extend_lexical_syntax == scm_true) {
+            if (SYMBOL_CHARP(c)) {
+                buf[i++] = c;
+                continue;
+            }
+        } else {
+            if (i == 0) {
+                if (INITIAL_CHARP(c)) {
+                    buf[i++] = c;
+                    continue;
+                }
+            } else {
+                if (SYMBOL_CHARP(c)) {
+                    buf[i++] = c;
+                    continue;
+                }
+            }
+        }
+        lexical_error("invalid character %U while reading identifier", c);
+    }
+    lexical_error("token buffer overflow while reading identifier");
+}
+/*
+scm_obj_t
+reader_t::read_symbol()
+{
+    char buf[MAX_READ_SYMBOL_LENGTH];
+    int i = 0;
+    while (i + 4 < array_sizeof(buf)) {
         int c = get_ucs4();
         if (c == EOF) {
             buf[i] = 0;
@@ -598,6 +703,7 @@ reader_t::read_symbol()
     lexical_error("token buffer overflow while reading identifier");
 }
 
+*/
 static scm_obj_t
 encode_source_comment(int line, int column, bool file)
 {
@@ -709,8 +815,16 @@ top:
         case ')':   return S_RPAREN;
         case '[':   return S_LBRACK;
         case ']':   return S_RBRACK;
-        case '\'':  return list2(S_QUOTE, read_expr());
-        case '`':   return list2(S_QUASIQUOTE, read_expr());
+        case '\'': { 
+            scm_obj_t obj = read_expr();
+            if (obj == scm_eof) lexical_error("unexpected end-of-file following quotation-mark(')");
+            return list2(S_QUOTE, obj);
+        }
+        case '`':  {
+            scm_obj_t obj = read_expr();
+            if (obj == scm_eof) lexical_error("unexpected end-of-file following grave-accent(`)");
+            return list2(S_QUASIQUOTE, obj);
+        }
         case '+':
         case '.':
             unget_ucs4();
@@ -728,6 +842,7 @@ top:
                     if (SYMBOLP(desc)) {
                         const char* tag = ((scm_symbol_t)desc)->name;
                         if (strcmp(tag, "fasl0") == 0) {
+                            get_ucs4(); // read delimiter
                             return fasl_reader_t(m_vm, m_in).get();
                         }
 #if ENABLE_NOBACKTRACE_COMMENT
@@ -781,8 +896,10 @@ top:
                 case 'x': case 'X': return read_prefixed_number(read_exactness(c), c, true);
                 case 'i': case 'I': return read_prefixed_number(c, read_radix(c), false);
                 case 'e': case 'E': return read_prefixed_number(c, read_radix(c), false);
-                case '\'': return list2(S_SYNTAX, read_expr());
-                case '`': return list2(S_QUASISYNTAX, read_expr());
+                case '\'': 
+                    return list2(S_SYNTAX, read_expr());
+                case '`': 
+                    return list2(S_QUASISYNTAX, read_expr());
                 case ',':
                     c = get_ucs4();
                     if (c == EOF) lexical_error("unexpected end-of-file following sharp comma(#,)");

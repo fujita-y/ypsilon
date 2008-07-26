@@ -20,7 +20,7 @@
       (let-optionals opt ((endian (endianness big)))
         (if (= (string-length str) 0)
             #vu8()
-            (let ((input (open-string-input-port str))
+            (let ((input (make-string-input-port str #t))
                   (buf (make-bytevector 4)))
               (let-values (((output extract) (open-bytevector-output-port)))
                 (let loop ((ch (get-char input)))
@@ -41,9 +41,9 @@
 
   (define transcode-utf32->string
     (lambda (i rest bvect endian)
-      (let-values (((output extract) (open-string-output-port)))
+      (let ((output (make-string-output-port #t)))
         (let loop ((i i) (rest rest))
-          (cond ((= rest 0) (extract))
+          (cond ((= rest 0) (extract-accumulated-string output))
                 ((>= rest 4)
                  (let ((sv (bytevector-u32-ref bvect i endian)))
                    (cond ((> sv #x10FFFF) (put-char output #\xFFFD))
@@ -52,19 +52,18 @@
                  (loop (+ i 4) (- rest 4)))
                 (else
                  (put-char output #\xFFFD)
-                 (extract)))))))
+                 (extract-accumulated-string output)))))))
 
   (define utf32->string
     (lambda (bvect endian . opt)
       (let-optionals opt ((endianness-mandatory #f))
-        (let-values (((output extract) (open-string-output-port)))
-          (cond (endianness-mandatory
-                 (transcode-utf32->string 0 (bytevector-length bvect) bvect endian))
-                ((test-utf32-bom bvect)
-                 => (lambda (bom)
-                      (transcode-utf32->string 4 (- (bytevector-length bvect) 4) bvect bom)))
-                (else
-                 (transcode-utf32->string 0 (bytevector-length bvect) bvect endian)))))))
+        (cond (endianness-mandatory
+               (transcode-utf32->string 0 (bytevector-length bvect) bvect endian))
+              ((test-utf32-bom bvect)
+               => (lambda (bom)
+                    (transcode-utf32->string 4 (- (bytevector-length bvect) 4) bvect bom)))
+              (else
+               (transcode-utf32->string 0 (bytevector-length bvect) bvect endian))))))
 
   (define encode-surrogates
     (lambda (ucs4)
@@ -94,7 +93,7 @@
       (let-optionals opt ((endian (endianness big)))
         (if (= (string-length str) 0)
             #vu8()
-            (let ((input (open-string-input-port str))
+            (let ((input (make-string-input-port str #t))
                   (buf (make-bytevector 2)))
               (let-values (((output extract) (open-bytevector-output-port)))
                 (let loop ((ch (get-char input)))
@@ -115,9 +114,9 @@
 
   (define transcode-utf16->string
     (lambda (i rest bvect endian)
-      (let-values (((output extract) (open-string-output-port)))
+      (let ((output (make-string-output-port #t)))
         (let loop ((i i) (rest rest))
-          (cond ((= rest 0) (extract))
+          (cond ((= rest 0) (extract-accumulated-string output))
                 ((>= rest 2)
                  (let ((sv (bytevector-u16-ref bvect i endian)))
                    (cond ((<= #xD800 sv #xDBFF)
@@ -131,7 +130,7 @@
                                           (loop (+ i 2) (- rest 2))))))
                                 (else
                                  (put-char output #\xFFFD)
-                                 (extract))))
+                                 (extract-accumulated-string output))))
                          ((<= #xDC00 sv #xDFFF)
                           (put-char output #\xFFFD)
                           (loop (+ i 2) (- rest 2)))
@@ -140,17 +139,18 @@
                           (loop (+ i 2) (- rest 2))))))
                 (else
                  (put-char output #\xFFFD)
-                 (extract)))))))
+                 (extract-accumulated-string output)))))))
 
   (define utf16->string
     (lambda (bvect endian . opt)
       (let-optionals opt ((endianness-mandatory #f))
-        (let-values (((output extract) (open-string-output-port)))
-          (cond (endianness-mandatory
-                 (transcode-utf16->string 0 (bytevector-length bvect) bvect endian))
-                ((test-utf16-bom bvect)
-                 => (lambda (bom)
-                      (transcode-utf16->string 2 (- (bytevector-length bvect) 2) bvect bom)))
-                (else
-                 (transcode-utf16->string 0 (bytevector-length bvect) bvect endian))))))) )
+        (cond (endianness-mandatory
+               (transcode-utf16->string 0 (bytevector-length bvect) bvect endian))
+              ((test-utf16-bom bvect)
+               => (lambda (bom)
+                    (transcode-utf16->string 2 (- (bytevector-length bvect) 2) bvect bom)))
+              (else
+               (transcode-utf16->string 0 (bytevector-length bvect) bvect endian))))))
+  
+  ) ;[end]
 

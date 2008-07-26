@@ -75,7 +75,7 @@ equal_hash(scm_obj_t obj, uint32_t bound, int depth)
     }
     if (VECTORP(obj)) {
         scm_vector_t vector = (scm_vector_t)obj;
-        int n = HDR_VECTOR_COUNT(vector->hdr);
+        int n = vector->count;
         scm_obj_t* elts = vector->elts;
         uint32_t hash = 1;
         for (int i = 0; i < n; i++) {
@@ -103,7 +103,7 @@ equal_hash2(scm_obj_t obj, uint32_t bound, int depth)
     }
     if (VECTORP(obj)) {
         scm_vector_t vector = (scm_vector_t)obj;
-        int n = HDR_VECTOR_COUNT(vector->hdr);
+        int n = vector->count;
         scm_obj_t* elts = vector->elts;
         uint32_t hash = 1;
         for (int i = 0; i < n; i++) {

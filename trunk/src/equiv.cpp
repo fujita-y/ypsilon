@@ -38,10 +38,17 @@ eqv_pred(scm_obj_t obj1, scm_obj_t obj2)
 bool
 r5rs_equal_pred(scm_obj_t lst1, scm_obj_t lst2)
 {
+
+top:
+    
     if (lst1 == lst2) return true;
     if (PAIRP(lst1)) {
         if (PAIRP(lst2)) {
-            return r5rs_equal_pred(CAR(lst1), CAR(lst2)) && r5rs_equal_pred(CDR(lst1), CDR(lst2));
+            if (r5rs_equal_pred(CAR(lst1), CAR(lst2))) {
+                lst1 = CDR(lst1);
+                lst2 = CDR(lst2);
+                goto top;
+            }
         }
         return false;
     }
@@ -49,8 +56,8 @@ r5rs_equal_pred(scm_obj_t lst1, scm_obj_t lst2)
         if (VECTORP(lst2)) {
             scm_vector_t vector1 = (scm_vector_t)lst1;
             scm_vector_t vector2 = (scm_vector_t)lst2;
-            int n1 = HDR_VECTOR_COUNT(vector1->hdr);
-            int n2 = HDR_VECTOR_COUNT(vector2->hdr);
+            int n1 = vector1->count;
+            int n2 = vector2->count;
             if (n1 == n2) {
                 scm_obj_t* elts1 = vector1->elts;
                 scm_obj_t* elts2 = vector2->elts;
@@ -95,6 +102,26 @@ r5rs_equal_pred(scm_obj_t lst1, scm_obj_t lst2)
     return eqv_pred(lst1, lst2);
 }
 
+static int
+terminal_listp(scm_obj_t maybe_list)
+{
+    int count = 1;
+    if (maybe_list == scm_nil) return count;
+    scm_obj_t fast = maybe_list;
+    scm_obj_t slow = fast;
+    while (PAIRP(fast)) {
+        count++;
+        fast = CDR(fast);
+        if (!PAIRP(fast)) return count;
+        scm_obj_t elt = CAR(fast);
+        if (PAIRP(elt) || VECTORP(elt) || TUPLEP(elt)) return 0;        
+        fast = CDR(fast);
+        slow = CDR(slow);
+        if (slow == fast) return 0;
+    }
+    return count;
+}
+
 static bool
 find_and_merge_opponent(object_heap_t* heap, scm_hashtable_t visited, scm_obj_t lst1, scm_obj_t lst2)
 {
@@ -125,6 +152,14 @@ equal_pred(object_heap_t* heap, scm_hashtable_t visited, scm_obj_t lst1, scm_obj
     return r5rs_equal_pred(lst1, lst2);
 #endif
 
+    int c1 = terminal_listp(lst1);
+    if (c1) {
+        if (c1 == terminal_listp(lst2)) return r5rs_equal_pred(lst1, lst2);
+        return false;
+    } else {
+        if (terminal_listp(lst2)) return false;
+    }
+
 top:
 
     if (lst1 == lst2) return true;
@@ -144,8 +179,8 @@ top:
             if (find_and_merge_opponent(heap, visited, lst1, lst2)) return true;
             scm_vector_t vector1 = (scm_vector_t)lst1;
             scm_vector_t vector2 = (scm_vector_t)lst2;
-            int n1 = HDR_VECTOR_COUNT(vector1->hdr);
-            int n2 = HDR_VECTOR_COUNT(vector2->hdr);
+            int n1 = vector1->count;
+            int n2 = vector2->count;
             if (n1 == n2) {
                 scm_obj_t* elts1 = vector1->elts;
                 scm_obj_t* elts2 = vector2->elts;

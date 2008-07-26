@@ -38,7 +38,7 @@ c_stack_frame_t::push(scm_obj_t obj)
         }
         if (VECTORP(obj)) {
             scm_vector_t vector = (scm_vector_t)obj;
-            int n = HDR_VECTOR_COUNT(vector->hdr);
+            int n = vector->count;
             if (n == 0) return "nonempty vector";
             assert(n);
             if (!FIXNUMP(vector->elts[0])) return "vector contains fixnum in first element";

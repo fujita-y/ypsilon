@@ -510,28 +510,54 @@ subr_get_accumulated_string(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_make_string_output_port(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 0) {
-        return make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
+    if (argc == 0 || argc == 1) {
+        scm_obj_t transcoder = scm_true;
+        if (argc == 1) {
+            if (argv[0] == scm_true) {
+                scm_bvector_t utf8 = make_bvector(vm->m_heap, 3);
+                utf8->elts[0] = SCM_PORT_CODEC_UTF8;
+                utf8->elts[1] = SCM_PORT_EOL_STYLE_NONE;
+                utf8->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_IGNORE;
+                transcoder = utf8;
+            } else if (argv[0] != scm_false) {
+                wrong_type_argument_violation(vm, "make-string-output-port", 0, "#t or #f", argv[0], argc, argv);
+                return scm_undef;
+            }
+        }
+        return make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, transcoder);
     }
-    wrong_number_of_arguments_violation(vm, "make-string-output-port", 0, 0, argc, argv);
+    wrong_number_of_arguments_violation(vm, "make-string-output-port", 0, 1, argc, argv);
     return scm_undef;
 }
 
 scm_obj_t
 subr_make_string_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 1) {
+    if (argc == 1 || argc == 2) {
+        scm_obj_t transcoder = scm_true;
+        if (argc == 2) {
+            if (argv[1] == scm_true) {
+                scm_bvector_t utf8 = make_bvector(vm->m_heap, 3);
+                utf8->elts[0] = SCM_PORT_CODEC_UTF8;
+                utf8->elts[1] = SCM_PORT_EOL_STYLE_NONE;
+                utf8->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_IGNORE;
+                transcoder = utf8;
+            } else if (argv[1] != scm_false) {
+                wrong_type_argument_violation(vm, "make-string-input-port", 1, "#t or #f", argv[1], argc, argv);
+                return scm_undef;
+            }
+        }
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
             int size = HDR_STRING_SIZE(string->hdr);
             scm_bvector_t bvector = make_bvector(vm->m_heap, size);
             memcpy(bvector->elts, string->name, size);
-            return make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_IN, bvector, scm_true);
+            return make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_IN, bvector, transcoder);
         }
         wrong_type_argument_violation(vm, "make-string-input-port", 0, "string", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "make-string-input-port", 0, 0, argc, argv);
+    wrong_number_of_arguments_violation(vm, "make-string-input-port", 1, 2, argc, argv);
     return scm_undef;
 }
 
@@ -1341,6 +1367,9 @@ subr_get_string_n(VM* vm, int argc, scm_obj_t argv[])
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "get-string-n", e.m_operation, e.m_message, e.m_err, port, scm_false);
                 return scm_undef;
+            } catch (io_codec_exception_t& e) {
+                raise_io_codec_error(vm, "get-string-n", e.m_operation, e.m_message, port, e.m_ch);
+                return scm_undef;
             }
         }
         wrong_type_argument_violation(vm, "get-string-n", 0, "port", argv[0], argc, argv);
@@ -1379,6 +1408,9 @@ subr_get_string_n_ex(VM* vm, int argc, scm_obj_t argv[])
                         return MAKEFIXNUM(count);
                     } catch (io_exception_t& e) {
                         raise_io_error(vm, "get-string-n!", e.m_operation, e.m_message, e.m_err, port, scm_false);
+                        return scm_undef;
+                    } catch (io_codec_exception_t& e) {
+                        raise_io_codec_error(vm, "get-string-n!", e.m_operation, e.m_message, port, e.m_ch);
                         return scm_undef;
                     }
                 }
@@ -1425,6 +1457,9 @@ subr_get_string_all(VM* vm, int argc, scm_obj_t argv[])
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "get-string-all", e.m_operation, e.m_message, e.m_err, port, scm_false);
                 return scm_undef;
+            } catch (io_codec_exception_t& e) {
+                raise_io_codec_error(vm, "get-string-all", e.m_operation, e.m_message, port, e.m_ch);
+                return scm_undef;
             }
         }
         wrong_type_argument_violation(vm, "get-string-all", 0, "port", argv[0], argc, argv);
@@ -1460,6 +1495,9 @@ subr_get_line(VM* vm, int argc, scm_obj_t argv[])
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "get-line", e.m_operation, e.m_message, e.m_err, port, scm_false);
                 return scm_undef;
+            } catch (io_codec_exception_t& e) {
+                raise_io_codec_error(vm, "get-line", e.m_operation, e.m_message, port, e.m_ch);
+                return scm_undef;
             }
         }
         wrong_type_argument_violation(vm, "get-line", 0, "port", argv[0], argc, argv);
@@ -1482,6 +1520,9 @@ subr_get_datum(VM* vm, int argc, scm_obj_t argv[])
                 return reader_t(vm, port).read(NULL);
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "get-datum", e.m_operation, e.m_message, e.m_err, port, scm_false);
+                return scm_undef;
+            } catch (io_codec_exception_t& e) {
+                raise_io_codec_error(vm, "get-datum", e.m_operation, e.m_message, port, e.m_ch);
                 return scm_undef;
             } catch (reader_exception_t& exception) {
                 raise_lexical_violation(vm, make_symbol(vm->m_heap, "get-datum"), exception.m_message);
@@ -1745,6 +1786,9 @@ subr_put_fasl(VM* vm, int argc, scm_obj_t argv[])
             try {
                 fasl_printer_t(vm, port).put(argv[1]);
                 return scm_unspecified;
+            } catch (io_codec_exception_t& e) {
+                raise_io_codec_error(vm, "get-fasl", e.m_operation, e.m_message, port, e.m_ch);
+                return scm_undef;
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "put-fasl", e.m_operation, e.m_message, e.m_err, port, scm_false);
                 return scm_undef;
@@ -2042,6 +2086,9 @@ subr_read(VM* vm, int argc, scm_obj_t argv[])
             return reader_t(vm, port).read(NULL);
         } catch (io_exception_t& e) {
             raise_io_error(vm, "read", e.m_operation, e.m_message, e.m_err, port, scm_false);
+            return scm_undef;
+        } catch (io_codec_exception_t& e) {
+            raise_io_codec_error(vm, "read", e.m_operation, e.m_message, port, e.m_ch);
             return scm_undef;
         } catch (reader_exception_t& exception) {
             raise_lexical_violation(vm, make_symbol(vm->m_heap, "read"), exception.m_message);

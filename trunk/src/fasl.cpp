@@ -8,6 +8,7 @@
 #include "vm.h"
 #include "fasl.h"
 #include "arith.h"
+#include "ucs4.h"
 
 fasl_printer_t::fasl_printer_t(VM* vm, scm_port_t port) {
     m_vm = vm;
@@ -42,7 +43,7 @@ loop:
     }
     if (VECTORP(obj)) {
         scm_vector_t vector = (scm_vector_t)obj;
-        int count = HDR_VECTOR_COUNT(vector->hdr);
+        int count = vector->count;
         if (count == 0) return;
         scm_obj_t* elts = vector->elts;
         for (int i = 0; i < count; i++) scan(elts[i]);
@@ -109,7 +110,7 @@ fasl_printer_t::put_datum(scm_obj_t obj)
     }
     if (VECTORP(obj)) {
         scm_vector_t vector = (scm_vector_t)obj;
-        int count = HDR_VECTOR_COUNT(vector->hdr);
+        int count = vector->count;
         emit_u8(FASL_TAG_VECTOR);
         emit_u32(count);
         scm_obj_t* elts = vector->elts;
@@ -314,7 +315,7 @@ fasl_reader_t::get_lites()
 {
     int buflen = MAX_READ_STRING_LENGTH;
     char* buf = (char*)malloc(buflen + 1);
-    if (port_lookahead_u8(m_port) == scm_eof) return true;
+    scm_obj_t obj;
     int count = fetch_u32();
     m_lites = (scm_obj_t*)calloc(count, sizeof(scm_obj_t));
     for (int i = 0; i < count; i++) {

@@ -151,11 +151,13 @@ make_vector(object_heap_t* heap, scm_obj_t lst)
     scm_vector_t obj;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
         obj = (scm_vector_t)heap->allocate_collectible(bytes);
-        obj->hdr = scm_hdr_vector | (n << HDR_VECTOR_COUNT_SHIFT);
+        obj->hdr = scm_hdr_vector;
+        obj->count = n;
         obj->elts = (scm_obj_t*)((uintptr_t)obj + sizeof(scm_vector_rec_t));
     } else {
         obj = (scm_vector_t)heap->allocate_collectible(sizeof(scm_vector_rec_t));
-        obj->hdr = scm_hdr_vector | (n << HDR_VECTOR_COUNT_SHIFT);
+        obj->hdr = scm_hdr_vector;
+        obj->count = n;
         obj->elts = (scm_obj_t*)heap->allocate_private(sizeof(scm_obj_t) * n);
     }
     for (int i = 0; i < n; i++) {
@@ -174,11 +176,13 @@ make_vector(object_heap_t* heap, int n, scm_obj_t elt)
     scm_vector_t obj;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
         obj = (scm_vector_t)heap->allocate_collectible(bytes);
-        obj->hdr = scm_hdr_vector | (n << HDR_VECTOR_COUNT_SHIFT);
+        obj->hdr = scm_hdr_vector;
+        obj->count = n;
         obj->elts = (scm_obj_t*)((uintptr_t)obj + sizeof(scm_vector_rec_t));
     } else {
         obj = (scm_vector_t)heap->allocate_collectible(sizeof(scm_vector_rec_t));
-        obj->hdr = scm_hdr_vector | (n << HDR_VECTOR_COUNT_SHIFT);
+        obj->hdr = scm_hdr_vector;
+        obj->count = n;
         obj->elts = (scm_obj_t*)heap->allocate_private(sizeof(scm_obj_t) * n);
     }
     for (int i = 0; i < n; i++) obj->elts[i] = elt;
@@ -465,6 +469,7 @@ make_flonum(object_heap_t* heap, double num)
             return (scm_flonum_t)heap->m_inherents[FL_POSITIVE_ZERO];
         }
     }
+    if (isnan(num)) return (scm_flonum_t)heap->m_inherents[FL_NAN];
 #endif
     scm_flonum_t obj = heap->allocate_flonum();
     obj->hdr = scm_hdr_flonum;

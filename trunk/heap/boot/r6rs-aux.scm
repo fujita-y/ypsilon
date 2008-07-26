@@ -95,18 +95,27 @@
                                (let ((a (- x 1)))
                                  (+ a (/ 1 (loop (/ 1 (- top a)) (/ 1 (- bottom a)))))))))))))))))
 
-(define list->string
+#;(define list->string
   (lambda (lst) (apply string lst)))
 
-(define list->vector 
+#;(define list->vector 
   (lambda (lst) (apply vector lst)))
 
-(define string->list
+#;(define string->list
   (lambda (s)
     (let loop ((i (- (string-length s) 1)) (lst '()))
       (if (< i 0)
           lst
           (loop (- i 1) (cons (string-ref s i) lst))))))
+
+(define string->list
+  (lambda (s)
+    (let ((port (make-string-input-port s #t)))
+      (let loop ((lst '()))
+        (let ((ch (get-char port)))
+          (if (eof-object? ch)
+              (reverse lst)
+              (loop (cons ch lst))))))))
 
 (define map
   (lambda (proc lst1 . lst2)
