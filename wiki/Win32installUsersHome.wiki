@@ -1,9 +1,9 @@
 #summary Windows: How to install Ypsilon to 'C:\Users\<UserName>\Ypsilon'.
 
-  #Create directory 'C:\Users\<UserName>\Ypsilon'
-  #Copy 'Ypsilon.exe' from build-win32\Release to 'C:\Users\<UserName>\Ypsilon'.
-  #Copy 'sitelib' and 'stdlib' from project root to 'C:\Users\<UserName>\Ypsilon'.
-  #Start Ypsilon with '--sitelib=.\sitelib' option as follows
+  # Create directory 'C:\Users\<UserName>\Ypsilon'
+  # Copy 'Ypsilon.exe' from build-win32\Release to 'C:\Users\<UserName>\Ypsilon'.
+  # Copy 'sitelib' and 'stdlib' from project root to 'C:\Users\<UserName>\Ypsilon'.
+  # Start Ypsilon with '--sitelib=.\sitelib' option as follows
 
 {{{
 C:\Users\<UserName>\Ypsilon> Ypsilon --sitelib=.\sitelib
