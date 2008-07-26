@@ -1,13 +1,16 @@
 #summary Known bugs in current release
 
+version 0.9.5-update2 (based on revision 110):
+
+  * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
+
 version 0.9.5-update1 (based on revision 69):
 
   * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 26]: unpredictable heap crash with process fork/exec etc.
   * [http://code.google.com/p/ypsilon/issues/detail?id=29&can=1 Issue 29]: `free-identifier=?` problem with shadowed identifer.
   * [http://code.google.com/p/ypsilon/issues/detail?id=30&can=1 Issue 30]: `Test Arithmetics` enter an infinite loop on MacOS X 10.5 Leopard.
 
-  * _Above bugs are fixed in [http://code.google.com/p/ypsilon/source/checkout version 0.9.5-trunk]._
-  * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
+  * _All bugs in version 0.9.5 are fixed in version 0.9.5-update2_
 
 version 0.9.5:
 
