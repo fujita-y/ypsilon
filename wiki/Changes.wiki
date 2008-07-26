@@ -6,8 +6,8 @@ version 0.9.5-update2:
   * added record-print-nesting-limit
   * rational number arithmetic speed improved
   * [http://code.google.com/p/ypsilon/issues/detail?id=25&can=1 Issue 25]: added new OpenGL example
-  * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 26]: added `process` and `process-wait` for linux/darwin
-  * [http://code.google.com/p/ypsilon/issues/detail?id=27&can=1 Issue 27]: added `system` for linux/darwin
+  * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 26]: added `process` and `process-wait`
+  * [http://code.google.com/p/ypsilon/issues/detail?id=27&can=1 Issue 27]: added `system`
   * added `system`, `process`, and `process-wait` for windows
   * added `--heap-limit`, `--dump-condition`, and `--no-letrec-check` options added 
 
