@@ -1,5 +1,7 @@
 #summary changes in latest version
 version 0.9.5-trunk:
+
+version 0.9.5-update2:
   * printer speed improved
   * added record-print-nesting-limit
   * rational number arithmetic speed improved
