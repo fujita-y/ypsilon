@@ -441,6 +441,7 @@
                         cstring->string
                         collect collect-notify collect-stack-notify collect-trip-bytes display-heap-statistics display-object-statistics
                         backtrace expansion-backtrace backtrace-line-length display-backtrace
+                        warning-level
                         restricted-print-line-length
                         record-print-nesting-limit
                         extend-lexical-syntax

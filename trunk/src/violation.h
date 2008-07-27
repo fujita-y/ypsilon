@@ -10,6 +10,7 @@
 #include "core.h"
 #include "object.h"
 
+void raise_letrec_violation(VM* vm);
 void raise_undefined_violation(VM* vm, scm_obj_t who, scm_string_t message);
 void raise_lexical_violation(VM* vm, scm_obj_t who, scm_string_t message);
 void raise_error(VM* vm, const char* who, const char* description, int code);

@@ -55,7 +55,8 @@ public:
         scm_obj_t   m_backtrace;                    // #t or #f or fixnum, no gc protect
         scm_obj_t   m_backtrace_line_length;        // fixnum, no gc protect
         scm_obj_t   m_restricted_print_line_length; // fixnum, no gc protect
-        scm_obj_t   m_record_print_nesting_limit;    // fixnum, no gc protect        
+        scm_obj_t   m_record_print_nesting_limit;   // fixnum, no gc protect
+        scm_obj_t   m_warning_level;                // #t or #f or fixnum, no gc protect
     } flags;
 
     scm_port_t          m_bootport;

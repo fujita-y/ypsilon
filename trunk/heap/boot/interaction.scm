@@ -3,8 +3,8 @@
 ;;; See license.txt for terms and conditions of use.
 
 (define dump-condition (make-parameter #f))
-(define no-letrec-check (make-parameter #f))
-
+(define no-letrec-check (make-parameter #t))
+  
 (define add-load-path
   (lambda (path)
     (cond ((string? path)
@@ -149,6 +149,28 @@
               ((vector? lst)
                (list->vector (map loop (vector->list lst))))
               (else lst))))))
+
+(define display-warning
+  (lambda (message form subform)
+    (let ((port (make-string-output-port)))
+      (format port "~a" message)
+      (parameterize ((pretty-print-line-length (backtrace-line-length))
+                     (pretty-print-maximum-lines 10)
+                     (pretty-print-unwrap-syntax #t)
+                     (pretty-print-initial-indent 5))
+        (cond (form
+               (format port  "~%  >  ")
+               (pretty-print (unrename-private-primitives form) port)
+               (and (pair? form) (format port "~%  ~n" form))))
+        (cond (subform
+               (format port "~%  >  ")
+               (pretty-print (unrename-private-primitives subform) port)
+               (and (pair? subform) (format port "~%  ~n" subform))))
+        (format port "~%")
+        (let ((plugged (or (lookup-process-environment "EMACS") (not (eq? (port-device-subtype (current-input-port)) 'char)))))
+          (if plugged
+              (format (current-error-port) "~a~!" (extract-accumulated-string port))
+              (format (current-error-port) "~%~a~!" (extract-accumulated-string port))))))))
 
 (define default-exception-handler
   (lambda (condition continue)
@@ -390,6 +412,7 @@
         (format #t "  --mute (-m)            suppresses greeting~%")
         (format #t "  --quiet (-q)           suppresses greeting, repl prompt, and repl output~%")
         (format #t "  --verbose (-v)         prints load and compile activities~%")
+        (format #t "  --warning (-w)         prints warnings~%")
         (format #t "  --interactive (-i)     enters repl after running the script file~%")
         (format #t "  --r6rs (-6)            conforms r6rs lexical syntax (default)~%")
         (format #t "  --compatible (-c)      extends lexical syntax for compatibility~%")
@@ -498,6 +521,9 @@
                             ((opt? "--heap-limit" #t) (loop (cdr lst)))
                             ((opt? "--no-letrec-check" #f)
                              (no-letrec-check #t)
+                             (loop (cdr lst)))
+                            ((or (opt? "--warning" #f) (opt? "-w" #f))
+                             (warning-level #t)
                              (loop (cdr lst)))
                             ((opt? "--version" #f)
                              (show-banner)

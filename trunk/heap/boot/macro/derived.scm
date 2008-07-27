@@ -54,17 +54,53 @@
                   (env (extend-env (map cons vars renames) env)))
              (let ((inits (map (lambda (a) (expand-form (cadr a) env)) bindings))
                    (body (expand-body form (cddr form) env)))
-               (if (null? body)
-                   (syntax-violation (car form) "empty body" form)
-                   (cond ((check-rec*-contract-violation renames inits)
-                          => (lambda (var)
-                               (assertion/syntax-violation (car form)
-                                                           (format "attempt to reference uninitialized variable ~u" (car var))
-                                                           form
-                                                           (any1 (lambda (e) (and (check-rec-contract-violation (list (car var)) e) e))
-                                                                 inits))))
-                         (else
-                          (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form)))))))))
+               (cond ((null? body) (syntax-violation (car form) "empty body" form))
+                     (else
+                      (cond ((and (warning-level) (check-rec*-contract-violation renames inits))
+                             => (lambda (lst)
+                                  (for-each
+                                   (lambda (var)
+                                     (display-warning
+                                      (format "warning: binding construct may attempt to reference uninitialized variable ~u" var)
+                                      form
+                                      (any1 (lambda (e) (and (check-rec-contract-violation (list var) e) e)) inits)))
+                                   lst))))
+                      (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form))))))))
+      (_
+       (syntax-violation (car form) "expected bindings and body" form)))))
+
+(define expand-letrec
+  (lambda (form env)
+    (destructuring-match form
+      ((_ () body ...)
+       (expand-form (annotate `(.LET () ,@body) form) env))
+      ((_ ((var init)) body ...)
+       (expand-form (annotate `(.LETREC* ((,var ,init)) ,@body) form) env))
+      ((_ bindings body ...)
+       (begin
+         (check-let-bindings form bindings)
+         (let ((vars (map car bindings)) (suffix (fresh-rename-count)))
+           (let* ((renames (map (lambda (id) (rename-id id suffix)) vars))
+                  (env (extend-env (map cons vars renames) env)))
+             (let ((inits (map (lambda (a) (expand-form (cadr a) env)) bindings))
+                   (body (expand-body form (cddr form) env)))
+               (cond ((null? body) (syntax-violation (car form) "empty body" form))
+                     (else
+                      (cond ((and (warning-level) (check-rec-contract-violation renames inits))
+                             => (lambda (lst)
+                                  (for-each
+                                   (lambda (var)
+                                     (display-warning
+                                      (format "warning: binding construct may attempt to reference uninitialized variable ~u" var)
+                                      form
+                                      (any1 (lambda (e) (and (check-rec-contract-violation (list var) e) e)) inits)))
+                                   lst))))
+                      (if (every1 (lambda (e) (or (not (pair? e)) (denote-lambda? env (car e)))) inits)
+                          (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form)
+                          (let ((temps (map (lambda (_) (generate-temporary-symbol)) bindings)))
+                            `(let ,(map (lambda (e) (list e '.&UNDEF)) renames)
+                               (let ,(map list temps inits)
+                                 ,@(map (lambda (lhs rhs) `(set! ,lhs ,rhs)) renames temps) ,@body)))))))))))
       (_
        (syntax-violation (car form) "expected bindings and body" form)))))
 
@@ -82,40 +118,6 @@
             form)
            env))
         (syntax-violation (car form) "expected bindings and body" form))))
-
-(define expand-letrec
-  (lambda (form env)
-    (destructuring-match form
-      ((_ () body ...)
-       (expand-form (annotate `(.LET () ,@body) form) env))
-      ((_ ((var init)) body ...)
-       (expand-form (annotate `(.LETREC* ((,var ,init)) ,@body) form) env))
-      ((_ bindings body ...)
-       (begin
-         (check-let-bindings form bindings)
-         (let ((vars (map car bindings)) (suffix (fresh-rename-count)))
-           (let* ((renames (map (lambda (id) (rename-id id suffix)) vars))
-                  (env (extend-env (map cons vars renames) env)))
-             (let ((inits (map (lambda (a) (expand-form (cadr a) env)) bindings))
-                   (body (expand-body form (cddr form) env)))
-               (if (null? body)
-                   (syntax-violation (car form) "empty body" form)
-                   (cond ((and (not (no-letrec-check)) (check-rec-contract-violation renames inits))
-                          => (lambda (var)
-                               (assertion/syntax-violation (car form)
-                                                           (format "attempt to reference uninitialized variable ~u" (car var))
-                                                           form
-                                                           (any1 (lambda (e) (and (check-rec-contract-violation (list (car var)) e) e))
-                                                                 inits))))
-                         (else
-                          (if (every1 (lambda (e) (or (not (pair? e)) (denote-lambda? env (car e)))) inits)
-                              (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form)
-                              (let ((temps (map (lambda (_) (generate-temporary-symbol)) bindings)))
-                                `(let ,(map (lambda (e) (list e '.&UNDEF)) renames)
-                                   (let ,(map list temps inits)
-                                     ,@(map (lambda (lhs rhs) `(set! ,lhs ,rhs)) renames temps) ,@body))))))))))))
-      (_
-       (syntax-violation (car form) "expected bindings and body" form)))))
 
 (define expand-let-values
   (lambda (form env)

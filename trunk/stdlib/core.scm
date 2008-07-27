@@ -841,6 +841,7 @@
     vector-sort!
     vector?
     violation?
+    warning-level
     warning?
     weak-core-hashtable?
     weak-hashtable?
