@@ -2,6 +2,7 @@
 
 version 0.9.5-update2 (based on revision 111):
   * `letrec` and `letrec*` restriction violation raises synatx violation on load. But it should raises assertion violation on runtime. (fixed in trunk version)
+
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
 
 version 0.9.5-update1 (based on revision 69):
