@@ -317,6 +317,9 @@ VM::run(bool init_dispatch_table)
         PIN(ERROR_CDDR_ILOC);
         PIN(ERROR_PUSH_GLOC);
         PIN(ERROR_GLOC);
+        PIN(ERROR_RET_ILOC);
+        PIN(ERROR_APPLY_ILOC);
+        PIN(ERROR_LETREC_VIOLATION);
         PIN(ERROR_RET_GLOC);
         PIN(ERROR_TOUCH_GLOC);
         PIN(ERROR_APPLY_GLOC);
@@ -627,6 +630,7 @@ loop:
 
             CASE(VMOP_RET_ILOC) {
                 m_value = *lookup_iloc(OPERANDS);
+                if (m_value == scm_undef) goto ERROR_RET_ILOC;
                 goto pop_cont;
             }
 
@@ -694,6 +698,7 @@ loop:
             CASE(VMOP_PUSH_ILOC) {
                 if (m_sp < m_stack_limit) {
                     m_sp[0] = *lookup_iloc(OPERANDS);
+                    if (m_sp[0] == scm_undef) goto ERROR_LETREC_VIOLATION;
                     m_sp++;
                     m_pc = CDR(m_pc);
                     goto loop;
@@ -726,6 +731,7 @@ loop:
                     void* lnk = *(void**)m_env;
                     vm_env_t env = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
                     m_sp[0] = *((scm_obj_t*)env - env->count + FIXNUM(OPERANDS));
+                    if (m_sp[0] == scm_undef) goto ERROR_LETREC_VIOLATION;
                     m_sp++;
                     m_pc = CDR(m_pc);
                     goto loop;
@@ -737,6 +743,7 @@ loop:
                 if (m_sp < m_stack_limit) {
                     vm_env_t env = (vm_env_t)((intptr_t)m_env - offsetof(vm_env_rec_t, up));
                     m_sp[0] = *((scm_obj_t*)env - env->count + FIXNUM(OPERANDS));
+                    if (m_sp[0] == scm_undef) goto ERROR_LETREC_VIOLATION;
                     m_sp++;
                     m_pc = CDR(m_pc);
                     goto loop;
@@ -771,6 +778,7 @@ loop:
             CASE(VMOP_APPLY_ILOC) {
                 operand_trace = CDR(OPERANDS);
                 m_value = *lookup_iloc(CAR(OPERANDS));
+                if (m_value == scm_undef) goto ERROR_APPLY_ILOC;
                 goto apply;
             }
 
@@ -949,6 +957,7 @@ loop:
 
             CASE(VMOP_ILOC) {
                 m_value = *lookup_iloc(OPERANDS);
+                if (m_value == scm_undef) goto ERROR_LETREC_VIOLATION;
                 m_pc = CDR(m_pc);
                 goto loop;
             }
@@ -997,6 +1006,7 @@ loop:
                 void* lnk = *(void**)m_env;
                 vm_env_t env = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
                 m_value = *((scm_obj_t*)env - env->count + FIXNUM(OPERANDS));
+                if (m_value == scm_undef) goto ERROR_LETREC_VIOLATION;
                 m_pc = CDR(m_pc);
                 goto loop;
             }
@@ -1004,6 +1014,7 @@ loop:
             CASE(VMOP_ILOC0) {
                 vm_env_t env = (vm_env_t)((intptr_t)m_env - offsetof(vm_env_rec_t, up));
                 m_value = *((scm_obj_t*)env - env->count + FIXNUM(OPERANDS));
+                if (m_value == scm_undef) goto ERROR_LETREC_VIOLATION;
                 m_pc = CDR(m_pc);
                 goto loop;
             }
@@ -1685,6 +1696,7 @@ FALLBACK_EQ_ILOC: {
                     m_pc = CDR(m_pc);
                     goto loop;
                 }
+                if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
                 bad = 1;
             } else {
                 bad = 0;
@@ -1702,6 +1714,7 @@ FALLBACK_LT_ILOC: {
                     m_pc = CDR(m_pc);
                     goto loop;
                 }
+                if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
                 bad = 1;
             } else {
                 bad = 0;
@@ -1719,6 +1732,7 @@ FALLBACK_LE_ILOC: {
                     m_pc = CDR(m_pc);
                     goto loop;
                 }
+                if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
                 bad = 1;
             } else {
                 bad = 0;
@@ -1736,6 +1750,7 @@ FALLBACK_GT_ILOC: {
                     m_pc = CDR(m_pc);
                     goto loop;
                 }
+                if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
                 bad = 1;
             } else {
                 bad = 0;
@@ -1753,6 +1768,7 @@ FALLBACK_GE_ILOC: {
                     m_pc = CDR(m_pc);
                     goto loop;
                 }
+                if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
                 bad = 1;
             } else {
                 bad = 0;
@@ -1812,36 +1828,42 @@ THUNK_RET_SUBR_GLOC_OF: {
 
 ERROR_NADD_ILOC:
 ERROR_PUSH_NADD_ILOC: {
+            if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "operator(+ -)", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
 ERROR_EQ_N_ILOC: {
+            if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "=", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
 ERROR_LT_N_ILOC: {
+            if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
 ERROR_LE_N_ILOC: {
+            if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
 ERROR_GT_N_ILOC: {
+            if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
 ERROR_GE_N_ILOC: {
+            if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
@@ -1849,18 +1871,22 @@ ERROR_GE_N_ILOC: {
 
 ERROR_PUSH_CAR_ILOC:
 ERROR_CAR_ILOC:
+        if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
         wrong_type_argument_violation(this, "car", 0, "pair", obj, 1, &obj);
         goto BACK_TO_LOOP;
 ERROR_PUSH_CDR_ILOC:
 ERROR_CDR_ILOC:
+        if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
         wrong_type_argument_violation(this, "cdr", 0, "pair", obj, 1, &obj);
         goto BACK_TO_LOOP;
 ERROR_PUSH_CADR_ILOC:
 ERROR_CADR_ILOC:
+        if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
         wrong_type_argument_violation(this, "cadr", 0, "appropriate list structure", obj, 1, &obj);
         goto BACK_TO_LOOP;
 ERROR_PUSH_CDDR_ILOC:
 ERROR_CDDR_ILOC:
+        if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
         wrong_type_argument_violation(this, "cddr", 0, "appropriate list structure", obj, 1, &obj);
         goto BACK_TO_LOOP;
 
@@ -1870,6 +1896,16 @@ ERROR_PUSH_GLOC:
 ERROR_TOUCH_GLOC:
         raise_undefined_violation(this, ((scm_gloc_t)OPERANDS)->variable, NULL);
         m_sp = m_fp;
+        goto BACK_TO_LOOP;
+
+ERROR_RET_ILOC:
+ERROR_APPLY_ILOC:
+        raise_letrec_violation(this);
+        m_sp = m_fp;
+        goto BACK_TO_LOOP;
+
+ERROR_LETREC_VIOLATION:
+        raise_letrec_violation(this);
         goto BACK_TO_LOOP;
 
 ERROR_APPLY_GLOC:

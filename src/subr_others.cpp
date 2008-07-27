@@ -412,6 +412,24 @@ subr_backtrace(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// warning-level
+scm_obj_t
+subr_warning_level(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (argv[0] == scm_false || argv[0] == scm_true || (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0)) {
+            vm->flags.m_warning_level = argv[0];
+            return scm_unspecified;
+        } else {
+            wrong_type_argument_violation(vm, "warning-level", 0, "#t, #f, or non-negative fixnum", argv[0], argc, argv);
+            return scm_undef;
+        }
+    }
+    if (argc == 0) return vm->flags.m_warning_level;
+    wrong_number_of_arguments_violation(vm, "warning-level", 0, 1, argc, argv);
+    return scm_undef;
+}
+
 // extend-lexical-syntax
 scm_obj_t
 subr_extend_lexical_syntax(VM* vm, int argc, scm_obj_t argv[])
@@ -2063,6 +2081,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("microsecond->utc", subr_microsecond_utc);
     DEFSUBR("time-usage", subr_time_usage);
     DEFSUBR("backtrace", subr_backtrace);
+    DEFSUBR("warning-level", subr_warning_level);
     DEFSUBR("extend-lexical-syntax", subr_extend_lexical_syntax);
     DEFSUBR("display-backtrace", subr_display_backtrace);
     DEFSUBR("backtrace-line-length", subr_backtrace_line_length);

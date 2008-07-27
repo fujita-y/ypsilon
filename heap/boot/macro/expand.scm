@@ -76,7 +76,7 @@
       (any1 (lambda (id) (and (memq id ids) id)) bindings))))
 
 (define check-rec-contract-violation
-  (lambda (bindings lst)
+  (lambda (vars lst)
 
     (define filter-unique-ids
       (lambda (lst)
@@ -100,14 +100,21 @@
                  (else '()))))))
 
     (let ((ids (collect-ids lst)))
-      (any1 (lambda (id) (memq id ids)) bindings))))
+      (let loop ((vars vars) (lst '()))
+        (if (pair? vars)
+            (if (memq (car vars) ids)
+                (loop (cdr vars) (cons (car vars) lst))
+                (loop (cdr vars) lst))
+            (and (pair? lst) (reverse lst)))))))
 
 (define check-rec*-contract-violation
   (lambda (vars forms)
-    (let loop ((vars vars) (forms forms))
-      (and (pair? vars)
-           (or (check-rec-contract-violation vars (car forms))
-               (loop (cdr vars) (cdr forms)))))))
+    (let loop ((vars vars) (forms forms) (lst '()))
+      (if (pair? vars)
+          (if (check-rec-contract-violation vars (car forms))
+              (loop (cdr vars) (cdr forms) (cons (car vars) lst))
+              (loop (cdr vars) (cdr forms) lst))
+          (and (pair? lst) (reverse lst))))))
 
 (define rewrite-letrec*-bindings
   (lambda (form env)
