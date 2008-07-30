@@ -298,6 +298,7 @@ DEFINE_OBJECT_REC(scm_port_rec_t) {
     uint8_t         type;
     uint8_t         subtype;
     uint8_t         direction;
+    bool            force_sync;
     bool            bom_le;
     bool            bom_be;
     bool            track_line_column;

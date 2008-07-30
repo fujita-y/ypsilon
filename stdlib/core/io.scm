@@ -14,9 +14,10 @@
           port-lookup-error-handling-mode-code
           port-reverse-lookup-codec-code
           port-reverse-lookup-eol-style-code
-          port-reverse-lookup-error-handling-mode-code)
+          port-reverse-lookup-error-handling-mode-code
+          make-file-options)
 
-  (import (core primitives))
+  (import (core primitives) (core enums))
 
   (define direction-codes
     '((input . 1) (output . 2) (input/output . 3)))
@@ -26,7 +27,7 @@
 
   (define file-option-codes
     '((no-create . 1) (no-fail . 2) (no-truncate . 4)))
-
+  
   (define buffer-mode-codes
     '((none . 1) (line . 2) (block . 3)))
 
@@ -80,7 +81,11 @@
   (define port-lookup-error-handling-mode-code (lambda (obj) (lookup obj error-handling-mode-codes)))
   (define port-reverse-lookup-codec-code (lambda (obj) (lookup obj flipped-codec-codes)))
   (define port-reverse-lookup-eol-style-code (lambda (obj) (lookup obj flipped-eol-style-codes)))
-  (define port-reverse-lookup-error-handling-mode-code (lambda (obj) (lookup obj flipped-error-handling-mode-codes))) )
+  (define port-reverse-lookup-error-handling-mode-code (lambda (obj) (lookup obj flipped-error-handling-mode-codes)))
+  
+  (define make-file-options (enum-set-constructor (make-enumeration (map car file-option-codes))))
+  
+  )
 
 (library (core io)
 
@@ -207,7 +212,8 @@
           (core conditions)
           (core bytevectors)
           (core optargs)
-          (core chkarg))
+          (core chkarg)
+          (core enums))
 
   ;; 8.2.2  File options
 
@@ -215,20 +221,17 @@
     (lambda (x)
       (syntax-case x ()
         ((_ options ...)
-         (list-of-unique-symbols? (syntax->datum (syntax (options ...))))
-         (with-syntax
-             ((bits (datum->syntax
-                     #'k
-                     (apply
-                      +
-                      (map (lambda (e)
-                             (or (port-lookup-file-option-code e)
-                                 (syntax-violation 'file-options "invalid file options" x)))
-                           (syntax->datum (syntax (options ...))))))))
-           (syntax (tuple 'type:file-options bits))))
+         (let ((lst (syntax->datum (syntax (options ...)))))
+           (or (and (list-of-unique-symbols? lst) (for-all port-lookup-file-option-code lst))
+               (syntax-violation 'file-options "invalid option" x))
+           (syntax (make-file-options '(options ...)))))
         (_
-         (syntax-violation 'file-options "invalid file options" x)))))
+         (syntax-violation 'file-options "invalid syntax" x)))))
 
+  (define file-options->bits
+    (lambda (x)
+      (apply + (map (lambda (e) (port-lookup-file-option-code e)) (enum-set->list x)))))
+  
   ;; 8.2.3  Buffer modes
 
   (define-syntax buffer-mode
@@ -320,8 +323,8 @@
                      (else 
                       (put-char out c)
                       (loop (get-char in))))))))))
-                
-  (define string->bytevector
+                  
+ #; (define string->bytevector
     (lambda (string transcoder)
       (let-values (((out extract) (open-bytevector-output-port transcoder)))
         (call-with-port
@@ -332,6 +335,18 @@
                    (else 
                     (put-char out c)
                     (loop (get-char in))))))))))
+  
+  (define string->bytevector
+    (lambda (string transcoder)
+      (let-values (((out extract) (open-bytevector-output-port transcoder)))
+        (call-with-port
+         (make-string-input-port string)
+         (lambda (in)
+           (let loop ((c (get-char in)))
+             (cond ((eof-object? c) (extract))
+                   (else 
+                    (put-char out c)
+                    (loop (get-char in))))))))))  
   
   ;; 8.2.6  Input and output ports
 
@@ -366,7 +381,7 @@
         (open-port (port-type file)
                    (port-direction input)
                    filename
-                   (tuple-ref file-options 1)
+                   (file-options->bits file-options)
                    (port-lookup-buffer-mode-code buffer-mode)
                    (and transcoder (transcoder-descriptor transcoder))))))
 
@@ -422,8 +437,11 @@
         (lambda (token)
           (cond ((core-hashtable-ref ht-token token #f)
                  => (lambda (pos) (set-position! pos)))
+                ((warning-level)
+                 (format (current-error-port) "~&warning in set-port-position: expected return value of a call to get-position, but got ~u~%~!" token)
+                 (set-position! token))
                 (else
-                 (assertion-violation 'set-port-position "expected position which returned by port-position procedure")))))
+                 (set-position! token)))))
 
       (set! port (open-port (port-type custom)
                             (port-direction input)
@@ -444,7 +462,7 @@
         (open-port (port-type file)
                    (port-direction output)
                    filename
-                   (tuple-ref file-options 1)
+                   (file-options->bits file-options)
                    (port-lookup-buffer-mode-code buffer-mode)
                    (and transcoder (transcoder-descriptor transcoder))))))
 
@@ -524,8 +542,11 @@
         (lambda (token)
           (cond ((core-hashtable-ref ht-token token #f)
                  => (lambda (pos) (set-position! pos)))
+                ((warning-level)
+                 (format (current-error-port) "~&warning in set-port-position: expected return value of a call to get-position, but got ~u~%~!" token)
+                 (set-position! token))
                 (else
-                 (assertion-violation 'set-port-position "expected position which returned by port-position procedure")))))
+                 (set-position! token)))))
 
       (set! port (open-port (port-type custom)
                             (port-direction output)
@@ -546,7 +567,7 @@
         (open-port (port-type file)
                    (port-direction input output)
                    filename
-                   (tuple-ref file-options 1)
+                   (file-options->bits file-options)
                    (port-lookup-buffer-mode-code buffer-mode)
                    (and transcoder (transcoder-descriptor transcoder))))))
 
@@ -600,8 +621,11 @@
         (lambda (token)
           (cond ((core-hashtable-ref ht-token token #f)
                  => (lambda (pos) (set-position! pos)))
+                ((warning-level)
+                 (format (current-error-port) "~&warning in set-port-position: expected return value of a call to get-position, but got ~u~%~!" token)
+                 (set-position! token))
                 (else
-                 (assertion-violation 'set-port-position "expected position which returned by port-position procedure")))))
+                 (set-position! token)))))
 
       (set! port (open-port (port-type custom)
                             (port-direction input output)

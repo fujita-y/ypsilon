@@ -2,32 +2,35 @@
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
+(define parent-exception-handler (make-parameter #f))
+
 (define raise
   (lambda (c)
     (cond ((current-exception-handler)
            => (lambda (proc)
                 (proc c)
-                (proc (condition (make-non-continuable-violation)
-                                 (make-who-condition 'raise)
-                                 (make-message-condition "returned from non-continuable exception")
-                                 (make-irritants-condition (list c))))))
-          (else
-           (current-exception-handler #f)
-           (scheme-error "error in raise: unhandled exception has occurred~%~%irritants:~%~a" (describe-condition #f c))))))
+                (cond ((parent-exception-handler)
+                       => (lambda (proc)
+                            (proc (condition (make-non-continuable-violation)
+                                             (make-who-condition 'raise)
+                                             (make-message-condition "returned from non-continuable exception")
+                                             (make-irritants-condition (list c)))))))
+                (scheme-error "error in raise: returned from non-continuable exception~%~%irritants:~%~a" (describe-condition #f c)))))
+    (scheme-error "error in raise: unhandled exception has occurred~%~%irritants:~%~a" (describe-condition #f c))))
 
 (define raise-continuable
   (lambda (c)
     (cond ((current-exception-handler)
            => (lambda (proc) (proc c)))
           (else
-           (current-exception-handler #f)
            (scheme-error "error in raise-continuable: unhandled exception has occurred~%~%irritants:~%~a" (describe-condition #f c))))))
 
 (define with-exception-handler
   (lambda (new thunk)
     (let ((parent (current-exception-handler)))
       (parameterize
-          ((current-exception-handler
+          ((parent-exception-handler parent)
+           (current-exception-handler
             (lambda (condition)
               (parameterize ((current-exception-handler parent))
                 (new condition)))))
@@ -41,7 +44,7 @@
                     (list (make-assertion-violation)
                           (and who (make-who-condition who))
                           (make-message-condition message)
-                          (and (pair? irritants) (make-irritants-condition irritants))))))))
+                          (make-irritants-condition irritants)))))))
 
 (define undefined-violation
   (lambda (who . message)
@@ -67,7 +70,14 @@
      (apply condition
             (filter values
                     (list (make-syntax-violation form (and (pair? subform) (car subform)))
-                          (and who (make-who-condition who))
+                          (if who
+                              (make-who-condition who)
+                              (cond ((let ((obj (if (wrapped-syntax-object? form) (unwrap-syntax form) form)))
+                                       (cond ((identifier? obj) (original-id (syntax-object-expr obj)))
+                                             ((and (pair? obj) (identifier? (car obj))) (original-id (syntax-object-expr (car obj))))
+                                             (else #f)))
+                                     => make-who-condition)
+                                    (else #f)))
                           (make-message-condition message)))))))
 
 (define error
@@ -78,7 +88,7 @@
                     (list (make-error)
                           (and who (make-who-condition who))
                           (make-message-condition message)
-                          (and (pair? irritants) (make-irritants-condition irritants))))))))
+                          (make-irritants-condition irritants)))))))
 
 (define implementation-restriction-violation
   (lambda (who message . irritants)
@@ -110,7 +120,7 @@
                           (and who (make-who-condition who))
                           (make-message-condition message)))))))
 
-(define scheme-error
+#;(define scheme-error
   (lambda args
     (format #t "~!")
     (let ((port (current-error-port)) (proc (current-exception-handler)))
@@ -122,6 +132,17 @@
              (display-backtrace)
              (format port "~%[exit]~%")
              (exit #f))))))
+
+(define scheme-error
+  (lambda args
+    (format #t "~!")
+    (let ((port (current-error-port)))
+      (format port "~&~%")
+      (apply format port args)
+      (format port "~%")
+      (display-backtrace)
+      (format port "~%[exit]~%")
+      (exit #f))))
 
 (define raise-i/o-filename-error
   (lambda (who message filename . irritants)

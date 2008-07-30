@@ -41,7 +41,7 @@
                       (else
                        (core-hashtable-set! ht (caar lst) (cdar lst))
                        (loop (cdr lst)))))
-              (core-hashtable-copy ht #t))))))
+              (core-hashtable-copy ht))))))
 
   (define load-unicode-list-file
     (lambda (name)

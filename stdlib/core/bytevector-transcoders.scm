@@ -20,7 +20,7 @@
       (let-optionals opt ((endian (endianness big)))
         (if (= (string-length str) 0)
             #vu8()
-            (let ((input (make-string-input-port str #t))
+            (let ((input (make-string-input-port str))
                   (buf (make-bytevector 4)))
               (let-values (((output extract) (open-bytevector-output-port)))
                 (let loop ((ch (get-char input)))
@@ -41,7 +41,7 @@
 
   (define transcode-utf32->string
     (lambda (i rest bvect endian)
-      (let ((output (make-string-output-port #t)))
+      (let ((output (make-string-output-port)))
         (let loop ((i i) (rest rest))
           (cond ((= rest 0) (extract-accumulated-string output))
                 ((>= rest 4)
@@ -93,7 +93,7 @@
       (let-optionals opt ((endian (endianness big)))
         (if (= (string-length str) 0)
             #vu8()
-            (let ((input (make-string-input-port str #t))
+            (let ((input (make-string-input-port str))
                   (buf (make-bytevector 2)))
               (let-values (((output extract) (open-bytevector-output-port)))
                 (let loop ((ch (get-char input)))
@@ -114,7 +114,7 @@
 
   (define transcode-utf16->string
     (lambda (i rest bvect endian)
-      (let ((output (make-string-output-port #t)))
+      (let ((output (make-string-output-port)))
         (let loop ((i i) (rest rest))
           (cond ((= rest 0) (extract-accumulated-string output))
                 ((>= rest 2)

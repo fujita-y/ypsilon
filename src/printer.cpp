@@ -10,11 +10,12 @@
 #include "heap.h"
 #include "port.h"
 #include "utf8.h"
+#include "ucs4.h"
 #include "arith.h"
 #include "printer.h"
 
-static const char  write_char_escape_datums[] = { 7, 8, 9, 10, 11, 12, 13, 92, 0};
-static const char* write_char_escape_names = "abtnvfr\\";
+static const char  write_string_escape_codes[] = { 7, 8, 9, 10, 11, 12, 13, 92, 0};
+static const char* write_string_escape_names = "abtnvfr\\";
 
 printer_t::printer_t(VM* vm, scm_port_t port)
 {
@@ -25,6 +26,7 @@ printer_t::printer_t(VM* vm, scm_port_t port)
     m_tuple_nest = 0;
     m_tuple_nest_limit = FIXNUM(vm->flags.m_record_print_nesting_limit);    
     m_flush = false;
+    m_r6rs = true;
 }
 
 printer_t::~printer_t()
@@ -75,54 +77,126 @@ printer_t::symbol_need_bar(const char* s)
         if (isalnum(c)) continue;
         if (strchr("!$%&/:*<=>?^_~+-.@", c)) continue;
         if (c == '`' && m_unwrap) continue;
-//      if (strchr(write_char_escape_datums, c)) return true;
         return true;
     }
     return false;
 }
 
 void
-printer_t::write_escaped_char(unsigned int c)
+printer_t::write_string(const uint8_t* utf8, int n)
 {
-    if (c == '"') {
-        if (m_escape_mode == escape_mode_string) port_put_byte(m_port, '\\');
-        port_put_byte(m_port, c);
-        return;
-    }
-    if (c == '|') {
-        if (m_escape_mode == escape_mode_symbol) port_put_byte(m_port, '\\');
-        port_put_byte(m_port, c);
-        return;
-    }
-    if (m_escape_mode == escape_mode_string) {
-        const char* p = strchr(write_char_escape_datums, c);
-        if (p == NULL || p[0] == 0) {
-            if (c < 32) {
-                char buf[32];
-                snprintf(buf, sizeof(buf), "\\x%02X;", c);
-                port_puts(m_port, buf);
-            } else {
+    uint32_t ucs4;
+    int i = 0;
+    while (i < n) {
+        if (utf8[i] < 128) {
+            int c = utf8[i];
+            if (c == '"') {
+                port_put_byte(m_port, '\\');
                 port_put_byte(m_port, c);
+            } else {
+                const char* p = strchr(write_string_escape_codes, c);
+                if (p == NULL || p[0] == 0) {
+                    if (c < 32 || c == 127) {
+                        char buf[32];
+                        snprintf(buf, sizeof(buf), "\\x%X;", c);
+                        port_puts(m_port, buf);
+                    } else {
+                        port_put_byte(m_port, c);
+                    }
+                } else {
+                    port_put_byte(m_port, '\\');
+                    port_put_byte(m_port, write_string_escape_names[p - write_string_escape_codes]);
+                }
             }
+            i = i + 1;
+            continue;
         } else {
-            port_put_byte(m_port, '\\');
-            port_put_byte(m_port, write_char_escape_names[p - write_char_escape_datums]);
-        }
-    } else {
-        if (c < 32 || c == 127) {
-            char buf[32];
-            snprintf(buf, sizeof(buf), "\\x%02X;", c);
-            port_puts(m_port, buf);
-        } else {
-            port_put_byte(m_port, c);
+            int bytes = cnvt_utf8_to_ucs4(utf8 + i, &ucs4);
+            if (bytes < 0) fatal("%s:%u invalid utf8 encodeing in string", __FILE__, __LINE__);
+            if (ucs4_subsequent(ucs4)) {
+                write_ucs4(ucs4);
+            } else {
+                char buf[16];
+                snprintf(buf, sizeof(buf), "\\x%X;", ucs4);
+                port_puts(m_port, buf);
+            }
+            i = i + bytes;
         }
     }
 }
 
 void
-printer_t::write_escaped_string(const char* s, int n)
+printer_t::write_pretty_symbol(const uint8_t* utf8, int n)
 {
-    for (int i = 0; i < n; i++) write_escaped_char(s[i]);
+    bool quote = symbol_need_bar((const char*)utf8);
+    if (quote) port_put_byte(m_port, '|');
+
+    uint32_t ucs4;
+    int i = 0;
+    while (i < n) {
+        if (utf8[i] < 128) {
+            int c = utf8[i];    
+            if (c == '|') {
+                port_put_byte(m_port, '\\');
+                port_put_byte(m_port, c);
+            } else if (c < 32 || c == 127) {
+                char buf[16];
+                snprintf(buf, sizeof(buf), "\\x%X;", c);
+                port_puts(m_port, buf);
+            } else {
+                port_put_byte(m_port, c);
+            }
+            i = i + 1;
+        } else {
+            int bytes = cnvt_utf8_to_ucs4(utf8 + i, &ucs4);
+            if (bytes < 0) fatal("%s:%u invalid utf8 encodeing in symbol", __FILE__, __LINE__);
+            if (ucs4_subsequent(ucs4)) {
+                write_ucs4(ucs4);
+            } else {
+                char buf[16];
+                snprintf(buf, sizeof(buf), "\\x%X;", ucs4);
+                port_puts(m_port, buf);
+            }
+            i = i + bytes;
+        }
+    }
+
+    if (quote) port_put_byte(m_port, '|');
+}
+
+void
+printer_t::write_r6rs_symbol(const uint8_t* utf8, int n)
+{
+    uint32_t cp;
+    int i = 0;
+    while (i < n) {
+        int bytes = cnvt_utf8_to_ucs4(utf8 + i, &cp);
+        if (bytes < 0) fatal("%s:%u invalid utf8 encodeing in symbol", __FILE__, __LINE__);
+        if ((i == 0 && ucs4_constituent(cp)) || (i > 0 && ucs4_subsequent(cp))) {
+            write_ucs4(cp);
+        } else {
+            // ... 
+            if (i == 0) {
+                if (n == 3) {
+                    if (utf8[0] == '.' && utf8[1] == '.' && utf8[2] == '.') {
+                        port_puts(m_port, "...");
+                        return;
+                    }
+                }
+                if (n > 2) {
+                    if (utf8[0] == '-' && utf8[1] == '>') {
+                        port_puts(m_port, "->");
+                        i = i + 2;
+                        continue;
+                    }
+                }
+            }
+            char buf[16];
+            snprintf(buf, sizeof(buf), "\\x%X;", cp);
+            port_puts(m_port, buf);
+        }
+        i = i + bytes;
+    }
 }
 
 void
@@ -540,7 +614,7 @@ proc_name(scm_obj_t obj)
     }
     if (CLOSUREP(obj)) {
         scm_closure_t closure = (scm_closure_t)obj;
-        if (closure->doc == scm_nil) return "unknown";
+        if (closure->doc == scm_nil) return NULL;
         assert(SYMBOLP(closure->doc));
         scm_symbol_t symbol = (scm_symbol_t)closure->doc;
         const char* s = symbol->name;
@@ -552,7 +626,7 @@ proc_name(scm_obj_t obj)
     if (obj == scm_proc_callcc) return "call-with-current-continuation";
     if (obj == scm_proc_apply_values) "apply-values";
     assert(false);
-    return "unknown";
+    return NULL;
 }
 
 void
@@ -680,7 +754,6 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
             return;
         }
         case TC_SYMBOL: {
-            m_escape_mode = escape_mode_symbol;
             scm_symbol_t symbol = (scm_symbol_t)obj;
             const char *s = symbol->name;
             if (m_unwrap) {
@@ -688,31 +761,28 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
                 if (e == NULL) e = s + strlen(s);
                 const char* p = strchr(s, IDENTIFIER_LIBRARY_SUFFIX);
                 if (p) s = p + 1;
-
                 if (s[0] == IDENTIFIER_PRIMITIVE_PREFIX) {
                     if (s[1] && (s[1] != IDENTIFIER_PRIMITIVE_PREFIX) && (s[1] != IDENTIFIER_CSTUB_MARK)) s = s + 1;
                 }
-
-                bool quote = m_escape && symbol_need_bar(s);
-                if (quote) port_put_byte(m_port, '|');
-                if (m_escape) while (s != e) write_escaped_char(*s++);
-                else while (s != e) port_put_byte(m_port, *s++);
-                if (quote) port_put_byte(m_port, '|');
+                if (m_escape) {
+                    if (m_r6rs) write_r6rs_symbol((const uint8_t*)s, e - s);
+                    else write_pretty_symbol((const uint8_t*)s, e - s);
+                } else {
+                    while (s != e) port_put_byte(m_port, *s++);
+                }
+            } else if (m_escape) {
+                if (m_r6rs) write_r6rs_symbol((const uint8_t*)s, HDR_SYMBOL_SIZE(symbol->hdr));
+                else write_pretty_symbol((const uint8_t*)s, HDR_SYMBOL_SIZE(symbol->hdr));
             } else {
-                bool quote = m_escape && symbol_need_bar(s);
-                if (quote) port_put_byte(m_port, '|');
-                if (m_escape) write_escaped_string(s, HDR_SYMBOL_SIZE(symbol->hdr));
-                else port_puts(m_port, s);
-                if (quote) port_put_byte(m_port, '|');
+                port_puts(m_port, s);
             }
             return;
         }
         case TC_STRING: {
-            m_escape_mode = escape_mode_string;
             scm_string_t string = (scm_string_t)obj;
             if (m_escape) {
                 port_put_byte(m_port, '"');
-                write_escaped_string(string->name, HDR_STRING_SIZE(string->hdr));
+                write_string((const uint8_t *)string->name, HDR_STRING_SIZE(string->hdr));
                 port_put_byte(m_port, '"');
             } else {
                 port_puts(m_port, string->name);
@@ -798,11 +868,11 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
 #if !SCDEBUG
                     if (strcmp(type_name, "syntax") == 0) {
                         port_puts(m_port, "#<syntax ");
-                        bool save_unwrap = m_unwrap;
-                        m_unwrap = true;
+                        bool save_r6rs = m_r6rs;
+                        m_r6rs = false;
                         format("~r", tuple->elts[1]);
+                        m_r6rs = save_r6rs;
                         port_put_byte(m_port, '>');
-                        m_unwrap = save_unwrap;
                         return;
                     }
 #endif
@@ -889,7 +959,12 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
                 }
                 case SCM_HASHTABLE_TYPE_GENERIC: {
                     scm_vector_t vector = (scm_vector_t)ht->handlers;
-                    format("%s %s>", proc_name(vector->elts[SCM_HASHTABLE_HANDLER_HASH]), proc_name(vector->elts[SCM_HASHTABLE_HANDLER_EQUIV]));
+                    const char* hash_name = proc_name(vector->elts[SCM_HASHTABLE_HANDLER_HASH]);
+                    if (hash_name) format("%s ", hash_name);
+                    else format("0x%x ", vector->elts[SCM_HASHTABLE_HANDLER_HASH]);
+                    const char* equiv_name = proc_name(vector->elts[SCM_HASHTABLE_HANDLER_EQUIV]);
+                    if (equiv_name) format("%s>", equiv_name);
+                    else format("0x%x>", vector->elts[SCM_HASHTABLE_HANDLER_EQUIV]);
                     return;
                 }
                 default:
@@ -944,8 +1019,11 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
         case TC_CLOSURE: {
             scm_closure_t closure = (scm_closure_t)obj;
 #ifdef NDEBUG
+            bool save_r6rs = m_r6rs;
+            m_r6rs = false;
             if (closure->doc == scm_nil) format("#<closure 0x%x>", closure);
             else format("#<closure ~s>", closure->doc);
+            m_r6rs = save_r6rs;
 #else
             vm_env_t env = (vm_env_t)closure->env;
             if (env == NULL) {

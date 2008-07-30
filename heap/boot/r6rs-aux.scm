@@ -110,7 +110,7 @@
 
 (define string->list
   (lambda (s)
-    (let ((port (make-string-input-port s #t)))
+    (let ((port (make-string-input-port s)))
       (let loop ((lst '()))
         (let ((ch (get-char port)))
           (if (eof-object? ch)

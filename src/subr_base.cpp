@@ -1376,7 +1376,7 @@ subr_vector_fill(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_values(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 0) return scm_unspecified;
+//    if (argc == 0) return scm_unspecified;
     if (argc == 1) return argv[0];
     scm_values_t values = make_values(vm->m_heap, argc);
     for (int i = 0; i < argc; i++) values->elts[i] = argv[i];

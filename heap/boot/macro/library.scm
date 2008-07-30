@@ -341,7 +341,7 @@
                              (else
                               (core-hashtable-set! ht-imports (car a) (cdr a)))))
                      imports)
-           (let* ((ht-env (make-shield-id-table body)) (ht-libenv (core-hashtable-copy ht-env)))
+           (let* ((ht-env (make-shield-id-table body)) (ht-libenv (core-hashtable-copy ht-env #t)))
              (for-each (lambda (a)
                          (core-hashtable-set! ht-env (car a) (cdr a))
                          (and (core-hashtable-contains? ht-libenv (car a))
@@ -648,7 +648,7 @@
                              (else
                               (core-hashtable-set! ht-imports (car a) (cdr a)))))
                      imports)
-           (let* ((ht-env (make-shield-id-table body)) (ht-libenv (core-hashtable-copy ht-env)))
+           (let* ((ht-env (make-shield-id-table body)) (ht-libenv (core-hashtable-copy ht-env #t)))
              (for-each (lambda (a)
                          (core-hashtable-set! ht-env (car a) (cdr a))
                          (and (core-hashtable-contains? ht-libenv (car a))
