@@ -301,11 +301,28 @@ subr_length(VM* vm, int argc, scm_obj_t argv[])
 
 // append
 
+/*
 static scm_obj_t
 append2(object_heap_t* heap, scm_obj_t lst1, scm_obj_t lst2)
 {
     if (lst1 == scm_nil) return lst2;
     return make_pair(heap, CAR(lst1), append2(heap, CDR(lst1), lst2));
+}
+*/
+static scm_obj_t
+append2(object_heap_t* heap, scm_obj_t lst1, scm_obj_t lst2)
+{
+    if (lst1 == scm_nil) return lst2;
+    scm_obj_t head = make_pair(heap, CAR(lst1), scm_nil);
+    scm_obj_t tail = head;
+    lst1 = CDR(lst1);
+    while (lst1 != scm_nil) {
+        CDR(tail) = make_pair(heap, CAR(lst1), scm_nil);
+        tail = CDR(tail);
+        lst1 = CDR(lst1);
+    }    
+    CDR(tail) = lst2;
+    return head;
 }
 
 scm_obj_t
