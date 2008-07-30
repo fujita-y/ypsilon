@@ -73,6 +73,8 @@ throw_io_error(int operation, const char* message)
             int create = OPEN_EXISTING;
             switch (oflag & (O_CREAT | O_TRUNC | O_EXCL)) {
                 case O_CREAT:
+                    create = OPEN_ALWAYS;
+                    break;
                 case O_CREAT | O_TRUNC:
                     create = CREATE_ALWAYS;
                     break;
@@ -656,7 +658,7 @@ port_open_file(scm_port_t port, scm_obj_t name, int direction, int file_options,
                     options = O_CREAT | O_TRUNC | O_EXCL | O_WRONLY;
                     break;
                 case SCM_PORT_DIRECTION_BOTH:
-                    options =  O_CREAT | O_TRUNC | O_EXCL | O_RDWR;
+                    options = O_CREAT | O_TRUNC | O_EXCL | O_RDWR;
                     break;
             }
 
@@ -1992,7 +1994,6 @@ port_extract_bytevector(object_heap_t* heap, scm_port_t port)
     port->lock.verify_locked();
     assert(port->direction & SCM_PORT_DIRECTION_OUT);
     assert(port->type == SCM_PORT_TYPE_BYTEVECTOR);
-    assert(port->buf);
     assert(port->buf_state == SCM_PORT_BUF_STATE_ACCUMULATE);
     int n = port->buf_tail - port->buf_head;
     scm_bvector_t bvector;

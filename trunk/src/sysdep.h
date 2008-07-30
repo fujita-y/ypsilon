@@ -108,7 +108,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #define PORT_STDERR_FD      GetStdHandle(STD_ERROR_HANDLE)
 
     inline int      isnan(double x) { return _isnan(x); }
-    inline int      isinf(double x) { return !_finite(x); }
+    inline int      isinf(double x) { return (!_finite(x) && !_isnan(x)); }
     inline double   round(double x) { return (x >= 0.0) ? floor(x + 0.5) : ceil(x - 0.5); }
     inline double   trunc(double x) { return (x >= 0.0) ? floor(x) : ceil(x); }
 
