@@ -54,31 +54,13 @@ cnvt_hex_char_to_int(int c)
     return -1;
 }
 
-#include "../unicode/lexeme.inc"
-
-static inline bool
-ucs4_constituent(uint32_t ucs4)
-{
-    int offset = ucs4 / 8;
-    int bit = 1 << (ucs4 & 7);
-    return (s_constituent[offset] & bit) != 0;
-}
-
-static inline bool
-ucs4_subsequent(uint32_t ucs4)
-{
-    int offset = ucs4 / 8;
-    int bit = 1 << (ucs4 & 7);    
-    return (s_subsequent[offset] & bit) != 0;
-}
-
 void
 reader_t::make_char_map()
 {
     if (s_char_map_ready) return;
     for (int i = 1; i < array_sizeof(s_char_map); i++) {
         s_char_map[i]  = ((isalnum(i) || strchr(".!?*+-/:<=>$%&@^_~", i)) ? CHAR_MAP_SYMBOL : 0);
-        s_char_map[i] |= ((isalnum(i) || strchr("!?*/:<=>$%&^_~", i)) ? CHAR_MAP_INITIAL : 0);
+        s_char_map[i] |= ((isalpha(i) || strchr("!?*/:<=>$%&^_~", i)) ? CHAR_MAP_INITIAL : 0);
         s_char_map[i] |= (strchr("()[]\";#", i) ? CHAR_MAP_DELIMITER : 0);
     }
     s_char_map_ready = true;
@@ -195,7 +177,7 @@ reader_t::skip_line()
     }
     return scm_eof;
 }
-
+/*
 void
 reader_t::skip_intraline_whitespace()
 {
@@ -208,7 +190,7 @@ reader_t::skip_intraline_whitespace()
     do { c = get_ucs4(); } while (ucs4_intraline_whitespace(c));
     unget_ucs4();
 }
-
+*/
 scm_obj_t
 reader_t::skip_srfi30()
 {
@@ -236,28 +218,6 @@ seek_c2:
     goto seek_c1;
 }
 
-/*
-void
-reader_t::read_thing(char* buf, size_t size)
-{
-    size_t i = 0;
-    while (i + 4 < size) {
-        int c = get_ucs4();
-        if (c == EOF) {
-            buf[i] = 0;
-            return;
-        }
-        if (delimited(c)) {
-            unget_ucs4();
-            buf[i] = 0;
-            return;
-        }
-        if (c < 128) buf[i++] = c;
-        else i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
-    }
-    lexical_error("token buffer overflow while reading identifier, %s ...", buf);
-}
-*/
 void
 reader_t::read_thing(char* buf, size_t size)
 {
@@ -538,17 +498,48 @@ reader_t::read_string()
     while (i + 4 < array_sizeof(buf)) {
         int c = get_ucs4();
         if (c == EOF) lexical_error("unexpected end-of-file while reading string");
+        switch (c) {
+        case SCM_PORT_UCS4_CR:
+            c = get_ucs4();
+            if (c != SCM_PORT_UCS4_LF && c != SCM_PORT_UCS4_NEL) unget_ucs4();
+        case SCM_PORT_UCS4_LF: case SCM_PORT_UCS4_NEL: case SCM_PORT_UCS4_LS:
+            buf[i++] = SCM_PORT_UCS4_LF;
+            continue;
+        }
         if (c == '"') {
             buf[i] = 0;
             return make_string_literal(m_vm->m_heap, buf, i);
-        }
+        }        
         if (c == '\\') {
             c = get_ucs4();
-            if (c == '\n' || ucs4_intraline_whitespace(c)) {
+            
+            if (ucs4_intraline_whitespace(c)) {
+                do {
+                    c = get_ucs4();
+                    if (c == EOF) lexical_error("unexpected end-of-file while reading intraline whitespeace");
+                } while (ucs4_intraline_whitespace(c));
+                switch (c) {
+                case SCM_PORT_UCS4_CR:
+                    c = get_ucs4();
+                    if (c != SCM_PORT_UCS4_LF && c != SCM_PORT_UCS4_NEL) unget_ucs4();
+                case SCM_PORT_UCS4_LF: case SCM_PORT_UCS4_NEL: case SCM_PORT_UCS4_LS:
+                    break;
+                default:
+                    lexical_error("unexpected charactor %U while reading intraline whitespeace", c);
+                }
+                do { c = get_ucs4(); } while (ucs4_intraline_whitespace(c));
                 unget_ucs4();
-                skip_intraline_whitespace();
                 continue;
-            }
+            }          
+            switch (c) {
+            case SCM_PORT_UCS4_CR:
+                c = get_ucs4();
+                if (c != SCM_PORT_UCS4_LF && c != SCM_PORT_UCS4_NEL) unget_ucs4();
+            case SCM_PORT_UCS4_LF: case SCM_PORT_UCS4_NEL: case SCM_PORT_UCS4_LS:
+                do { c = get_ucs4(); } while (ucs4_intraline_whitespace(c));
+                unget_ucs4();
+                continue;
+            }            
             unget_ucs4();
             c = read_escape_sequence();
             i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);

@@ -9,6 +9,10 @@
 
 #include "core.h"
 
+// unicode bitmaps
+extern const uint8_t        s_constituent[];
+extern const uint8_t        s_subsequent[];
+
 inline bool
 ucs4_whitespace(int c) // http://www.unicode.org/Public/UNIDATA/PropList.txt
 {
@@ -29,6 +33,22 @@ ucs4_whitespace(int c) // http://www.unicode.org/Public/UNIDATA/PropList.txt
             return true;
     }
     return false;
+}
+
+inline bool
+ucs4_constituent(uint32_t ucs4)
+{
+    int offset = ucs4 / 8;
+    int bit = 1 << (ucs4 & 7);
+    return (s_constituent[offset] & bit) != 0;
+}
+
+inline bool
+ucs4_subsequent(uint32_t ucs4)
+{
+    int offset = ucs4 / 8;
+    int bit = 1 << (ucs4 & 7);    
+    return (s_subsequent[offset] & bit) != 0;
 }
 
 bool ucs4_intraline_whitespace(int c);

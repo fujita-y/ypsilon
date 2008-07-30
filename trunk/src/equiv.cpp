@@ -32,6 +32,25 @@ eqv_pred(scm_obj_t obj1, scm_obj_t obj2)
             }
         }
     }
+    if (TUPLEP(obj1)) {
+        if (TUPLEP(obj2)) {
+            scm_tuple_t tuple1 = (scm_tuple_t)obj1;
+            scm_tuple_t tuple2 = (scm_tuple_t)obj2;
+            int n1 = HDR_TUPLE_COUNT(tuple1->hdr);
+            int n2 = HDR_TUPLE_COUNT(tuple2->hdr);
+            if (n1 == n2) {
+                scm_obj_t* elts1 = tuple1->elts;
+                scm_obj_t* elts2 = tuple2->elts;
+                for (int i = 0; i < n1; i++) {
+                    if (eqv_pred(elts1[i], elts2[i])) continue;
+                    return false;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     return false;
 }
 
@@ -70,6 +89,7 @@ top:
         }
         return false;
     }
+/*
     if (TUPLEP(lst1)) {
         if (TUPLEP(lst2)) {
             scm_tuple_t tuple1 = (scm_tuple_t)lst1;
@@ -88,6 +108,7 @@ top:
         }
         return false;
     }
+*/
     if (BVECTORP(lst1)) {
         if (BVECTORP(lst2)) {
             scm_bvector_t bvector1 = (scm_bvector_t)lst1;
@@ -193,6 +214,7 @@ top:
         }
         return false;
     }
+/*
     if (TUPLEP(lst1)) {
         if (TUPLEP(lst2)) {
             if (find_and_merge_opponent(heap, visited, lst1, lst2)) return true;
@@ -212,6 +234,7 @@ top:
         }
         return false;
     }
+*/
     if (BVECTORP(lst1)) {
         if (BVECTORP(lst2)) {
             scm_bvector_t bvector1 = (scm_bvector_t)lst1;

@@ -113,7 +113,8 @@
                       (and (pred head)
                            (loop (car rest) (cdr rest))))
                      (else
-                      (assertion-violation 'for-all (format "traversal reached to non-pair element ~s" rest) (list pred lst))))))
+                      (and (pred head)
+                           (assertion-violation 'for-all (format "traversal reached to non-pair element ~s" rest) (list pred lst)))))))
             (else
              (assertion-violation 'for-all (format "expected chain of pairs, but got ~r, as argument 2" lst) (list pred lst))))))
 

@@ -65,9 +65,21 @@
                  (proc line)
                  (loop)))))))
 
+  (define ascii-area-list
+    (lambda (s num?)
+      (let loop ((cp 0) (acc '()))
+        (cond ((> cp 127) (reverse acc))
+              ((or (char<=? #\a (integer->char cp) #\z)
+                   (char<=? #\A (integer->char cp) #\Z)
+                   (and num? (char<=? #\0 (integer->char cp) #\9))
+                   (string-contains s (string (integer->char cp))))
+               (loop (+ cp 1) (cons (integer->char cp) acc)))
+              (else
+               (loop (+ cp 1) acc))))))
+
   (define add-special-range-area
     (lambda (ht)
-      
+
       (define put-range
         (lambda (cn first last)
           (let loop ((cp first))
@@ -75,7 +87,7 @@
                   (else
                    (hashtable-set! ht cp cn)
                    (loop (+ cp 1)))))))
-      
+
       ; 3400;<CJK Ideograph Extension A, First>;Lo;0;L;;;;;N;;;;;
       ; 4DB5;<CJK Ideograph Extension A, Last>;Lo;0;L;;;;;N;;;;;
       (put-range 'Lo #x3400 #x4DB5)
@@ -133,7 +145,7 @@
                    (let ((code-point       (string->number (pregexp-substring line m 1) 16))
                          (general-category (string->symbol (pregexp-substring line m 2))))
                      (hashtable-set! ht-general-category code-point general-category))))
-               input)   
+               input)
               (format #t " done~%~!")
 
               (call-with-port
@@ -143,6 +155,9 @@
                     (define bv-c (make-bytevector (div #x110000 8)))
                     (define bv-s (make-bytevector (div #x110000 8)))
 
+                    (define ascii-c (ascii-area-list "!?*/:<=>$%&^_~" #f))
+                    (define ascii-s (ascii-area-list "!?*/:<=>$%&^_~.@+-" #t))
+                    
                     (define advance
                       (lambda (cp offset bit)
                         (let ((bit (+ bit bit)))
@@ -153,7 +168,13 @@
                     (format #t "processing lexeme.inc...~!")
 
                     (let loop ((cp 0) (offset 0) (bit 1))
-                      (cond ((<= #xd800 cp #xdfff) (apply loop (advance cp offset bit)))
+                      (cond ((< cp 128)
+                             (and (memq (integer->char cp) ascii-c)
+                                  (bytevector-u8-set! bv-c offset (+ (bytevector-u8-ref bv-c offset) bit)))
+                             (and (memq (integer->char cp) ascii-s)
+                                  (bytevector-u8-set! bv-s offset (+ (bytevector-u8-ref bv-s offset) bit)))
+                             (apply loop (advance cp offset bit)))
+                            ((<= #xd800 cp #xdfff) (apply loop (advance cp offset bit)))
                             ((> cp #x10ffff))
                             ((hashtable-ref ht-general-category cp 'Cn)
                              => (lambda (cc)
@@ -166,7 +187,7 @@
 
                     (let ((bv bv-c))
                       (let ((bytes (bytevector-length bv)))
-                        (put-string output (format "static const uint8_t s_constituent[~a] = {" bytes))
+                        (put-string output (format "const uint8_t s_constituent[~a] = {" bytes))
                         (let loop ((c 0))
                           (if (zero? (mod c 16)) (put-byte output (char->integer #\linefeed)))
                           (let ((b (bytevector-u8-ref bv c)))
@@ -177,7 +198,7 @@
                                    (loop (+ c 1))))))))
                     (let ((bv bv-s))
                       (let ((bytes (bytevector-length bv)))
-                        (put-string output (format "static const uint8_t s_subsequent[~a] = {" bytes))
+                        (put-string output (format "const uint8_t s_subsequent[~a] = {" bytes))
                         (let loop ((c 0))
                           (if (zero? (mod c 16)) (put-byte output (char->integer #\linefeed)))
                           (let ((b (bytevector-u8-ref bv c)))

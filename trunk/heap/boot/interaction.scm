@@ -190,7 +190,7 @@
 
         (define output-irritants
           (lambda ()
-            (cond ((irritants-condition? condition)
+            (cond ((and (irritants-condition? condition) (pair? (condition-irritants condition)))
                    (format port "~%~%irritants:")
                    (for-each (lambda (e)
                                (format port "~% ")
@@ -250,7 +250,7 @@
               ((undefined-violation? condition)
                (format port "error: unbound variable")
                (and (who-condition? condition)
-                    (format port " ~s" (condition-who condition)))
+                    (format port " ~u" (condition-who condition)))
                (and (message-condition? condition)
                     (format port ", ~a" (condition-message condition)))
                (output-irritants)
@@ -272,7 +272,7 @@
               ((warning? condition)
                (format port "warning")
                (and (who-condition? condition)
-                    (format port " in ~s" (condition-who condition)))
+                    (format port " in ~u" (condition-who condition)))
                (and (message-condition? condition)
                     (format port ": ~a" (condition-message condition)))
                (output-irritants)

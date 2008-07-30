@@ -225,7 +225,7 @@ subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[])
                 vm->apply_scheme_argv(vector->elts[SCM_HASHTABLE_HANDLER_SET], argc, argv);
                 return scm_undef;
             }
-            invalid_object_violation(vm, "core-hashtable-set!", "to be mutable", argv[0], argc, argv);
+            invalid_object_violation(vm, "core-hashtable-set!", "mutable hashtable", argv[0], argc, argv);
             return scm_undef;
         }
         if (WEAKHASHTABLEP(argv[0])) {
@@ -245,7 +245,7 @@ subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[])
                 }
                 return scm_unspecified;
             }
-            invalid_object_violation(vm, "core-hashtable-set!", "to be mutable", argv[0], argc, argv);
+            invalid_object_violation(vm, "core-hashtable-set!", "mutable hashtable", argv[0], argc, argv);
             return scm_undef;
         }
         wrong_type_argument_violation(vm, "core-hashtable-set!", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
@@ -307,7 +307,7 @@ subr_core_hashtable_delete(VM* vm, int argc, scm_obj_t argv[])
                 vm->apply_scheme_argv(vector->elts[SCM_HASHTABLE_HANDLER_DELETE], argc, argv);
                 return scm_undef;
             }
-            invalid_object_violation(vm, "core-hashtable-delete!", "to be mutable", argv[0], argc, argv);
+            invalid_object_violation(vm, "core-hashtable-delete!", "mutable hashtable", argv[0], argc, argv);
             return scm_undef;
         }
         if (WEAKHASHTABLEP(argv[0])) {
@@ -318,7 +318,7 @@ subr_core_hashtable_delete(VM* vm, int argc, scm_obj_t argv[])
                 if (nsize) rehash_weakhashtable(vm->m_heap, ht, nsize);
                 return scm_unspecified;
             }
-            invalid_object_violation(vm, "core-hashtable-delete!", "to be mutable", argv[0], argc, argv);
+            invalid_object_violation(vm, "core-hashtable-delete!", "mutable hashtable", argv[0], argc, argv);
             return scm_undef;
         }
         wrong_type_argument_violation(vm, "core-hashtable-delete!", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
@@ -358,7 +358,7 @@ subr_core_hashtable_clear(VM* vm, int argc, scm_obj_t argv[])
                     vm->apply_scheme_argv(vector->elts[SCM_HASHTABLE_HANDLER_CLEAR], argc, argv);
                     return scm_undef;
                 }
-                invalid_object_violation(vm, "core-hashtable-clear!", "to be mutable", argv[0], argc, argv);
+                invalid_object_violation(vm, "core-hashtable-clear!", "mutable hashtable", argv[0], argc, argv);
                 return scm_undef;
             }
             if (WEAKHASHTABLEP(argv[0])) {
@@ -368,7 +368,7 @@ subr_core_hashtable_clear(VM* vm, int argc, scm_obj_t argv[])
                     clear_weakhashtable(vm->m_heap, ht, nsize);
                     return scm_unspecified;
                 }
-                invalid_object_violation(vm, "core-hashtable-clear!", "to be mutable", argv[0], argc, argv);
+                invalid_object_violation(vm, "core-hashtable-clear!", "mutable hashtable", argv[0], argc, argv);
                 return scm_undef;
             }
         }
@@ -445,9 +445,9 @@ subr_core_hashtable_contains_pred(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_core_hashtable_copy(VM* vm, int argc, scm_obj_t argv[])
 {
-    bool immutable = false;
+    bool immutable = true;
     if (argc == 1 || argc == 2) {
-        if (argc == 2 && argv[1] != scm_false) immutable = true;
+        if (argc == 2 && argv[1] != scm_false) immutable = false;
         if (HASHTABLEP(argv[0])) {
             scm_hashtable_t ht = (scm_hashtable_t)argv[0];
             scoped_lock lock(ht->lock);

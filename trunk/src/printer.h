@@ -21,16 +21,18 @@ public:
     void            ucs4(uint32_t c);
     void            format_va_list(const char* fmt, va_list ap);
     void            column_limit(int limit);
+    void            r6rs(bool flag) { m_r6rs = flag; }
 
 private:
-    void            scan(scm_hashtable_t ht, scm_obj_t obj);
     void            write(scm_obj_t ht, scm_obj_t obj);
     void            write_shared(scm_obj_t obj);
     void            write(scm_obj_t obj);
-    void            write_escaped_string(const char* s, int n);
-    void            write_escaped_char(unsigned int c);
+    void            write_r6rs_symbol(const uint8_t* utf8, int n);
+    void            write_pretty_symbol(const uint8_t* utf8, int n);
     bool            write_abbreviated(scm_obj_t obj);
+    void            write_string(const uint8_t* utf8, int n);
     void            write_ucs4(uint32_t c);
+    void            scan(scm_hashtable_t ht, scm_obj_t obj);
     bool            symbol_need_bar(const char* s);
     const char*     get_tuple_type_name(scm_obj_t obj);
 
@@ -41,10 +43,10 @@ private:
     int             m_tuple_nest_limit;
     int             m_shared_tag;
     int             m_radix;
-    int             m_escape_mode;
     bool            m_escape;
     bool            m_unwrap;
     bool            m_flush;
+    bool            m_r6rs;
 
     enum {
         escape_mode_string,

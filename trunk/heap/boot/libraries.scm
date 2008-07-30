@@ -518,4 +518,4 @@
 
 ;; top-level macro
 (copy-environment-macros! (system-environment) (interaction-environment) '(import))
-(set! immutable-primitives (core-hashtable-copy immutable-primitives #f))
+(set! immutable-primitives (core-hashtable-copy immutable-primitives))

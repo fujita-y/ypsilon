@@ -68,6 +68,7 @@
 
       (define generic-hashtable-set!
         (lambda (ht-custom key obj)
+          (or mutable? (assertion-violation 'hashtable-set! (format "expected mutable hashtable, but ~s is not" ht-custom) (list ht-custom key obj)))
           (let ((slot (hash-function key))
                 (equiv? (lambda (e) (equiv-function e key))))
             (cond ((core-hashtable-ref ht-root slot #f)
@@ -83,6 +84,7 @@
 
       (define generic-hashtable-delete!
         (lambda (ht-custom key)
+          (or mutable? (assertion-violation 'hashtable-delete! (format "expected mutable hashtable, but ~s is not" ht-custom) (list ht-custom key)))
           (let ((slot (hash-function key))
                 (equiv? (lambda (e) (equiv-function e key))))
             (cond ((core-hashtable-ref ht-root slot #f)
@@ -100,21 +102,29 @@
                    => (lambda (alist)
                         (and (assp equiv? alist) #t)))
                   (else #f)))))
-
+      
       (define generic-hashtable-copy
         (lambda (ht-custom . opt)
-          (let-optionals opt ((mutable? #t))
-            (make-generic-hashtable hash-function equiv-function (core-hashtable-copy ht-root mutable?) size mutable?))))
+          (let-optionals opt ((new-mutable? #f))
+            (if mutable?
+                (let ((ht-new-root (make-core-hashtable)))
+                  (for-each (lambda (a) (core-hashtable-set!
+                                         ht-new-root
+                                         (car a)
+                                         (map (lambda (e) (cons (car e) (cdr e))) (cdr a))))
+                            (core-hashtable->alist ht-root))
+                  (if new-mutable?
+                      (make-generic-hashtable hash-function equiv-function ht-new-root size new-mutable?)
+                      (make-generic-hashtable hash-function equiv-function (core-hashtable-copy ht-new-root) size new-mutable?)))
+                (make-generic-hashtable hash-function equiv-function (core-hashtable-copy ht-root new-mutable?) size new-mutable?)))))
 
       (define generic-hashtable-clear!
         (lambda (ht-custom . opt)
           (let-optionals opt ((k 0))
+            (or mutable? (assertion-violation 'hashtable-clear! (format "expected mutable hashtable, but ~s is not" ht-custom) (cons ht-custom opt)))
             (core-hashtable-clear! ht-root k)
             (set! size 0))))
 
-      #;(define generic-hashtable->alist
-        (lambda (ht-custom)
-          (apply append (map cdr (core-hashtable->alist ht-root)))))
       (define generic-hashtable->alist
         (lambda (ht-custom)
           (let loop ((lst (core-hashtable->alist ht-root)) (ans '()))
@@ -124,9 +134,9 @@
 
       (define generic-hashtable-equivalence-function (lambda (ht-custom) equiv-function))
 
-      (define generic-hashtable-hash-function  (lambda (ht-custom) hash-function))
+      (define generic-hashtable-hash-function (lambda (ht-custom) hash-function))
 
-      (define generic-hashtable-mutable?  (lambda (ht-custom) mutable?))
+      (define generic-hashtable-mutable? (lambda (ht-custom) mutable?))
       
       (make-core-hashtable 'generic
                            (vector 'hashtable-handler

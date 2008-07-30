@@ -149,11 +149,11 @@
                                  (renames (map cons
                                                vars
                                                (map (lambda (id) (rename-id id suffix))
-                                                    vars))))
+                                                    vars))))    
                             `(.call-with-values
-                                 (lambda () ,(expand-form init init-env))
-                                 (lambda ,(rename-lambda-formals formals renames)
-                                   ,(loop (cdr lst) (extend-env renames env)))))))
+                              (lambda () ,(expand-form init init-env))
+                              (lambda ,(rename-lambda-formals formals renames)
+                                ,(loop (cdr lst) (extend-env renames env)))))))
                        (_ (scheme-error "internal error: let-values: ~m" form))))))
 
             form))))

@@ -186,6 +186,19 @@
                  (list->vector (loop (vector->list lst))))
                 ((eq? lst '.&NIL) '())
                 (else lst)))))
+    
+    (define wrap-renamed-id
+      (lambda (lst renames)
+        (let loop ((lst lst))
+          (cond ((pair? lst)
+                 (let ((a (loop (car lst))) (d (loop (cdr lst))))
+                   (cond ((and (eq? (car lst) a) (eq? (cdr lst) d)) lst)
+                         (else (cons a d)))))
+                ((vector? lst)
+                 (list->vector (loop (vector->list lst))))
+                ((renamed-id? lst)
+                 (make-syntax-object lst (or (assq lst renames) '()) #f))
+                (else lst)))))
 
     (define partial-wrap-syntax-object
       (lambda (lst renames)
@@ -233,15 +246,20 @@
                                                           (else (cons (cdr a) (make-out-of-context template))))))
                                               (else #f))))
                                     aliases))))))
-          (let ((form (transcribe-template template ranks vars aliases emit)))
-            (cond ((null? form) '())
-                  ((wrapped-syntax-object? form) form)
-                  ((eq? form '.&NIL) 
-                   (make-syntax-object '() '() #f))
-                  ((symbol? form)
-                   (make-syntax-object form (or (assq form out-of-context) (assq form renames) '()) identifier-lexname))
-                  (else
-                   (partial-wrap-syntax-object form (extend-env out-of-context renames)))))))))
+          (if (null? (current-expansion-environment))
+              (let ((form (transcribe-template template ranks vars aliases #f)))
+                (if (renamed-id? form)
+                    (make-syntax-object form (or (assq form renames) '()) identifier-lexname)
+                    (wrap-renamed-id form renames)))
+              (let ((form (transcribe-template template ranks vars aliases emit)))
+                (cond ((null? form) '())
+                      ((wrapped-syntax-object? form) form)
+                      ((eq? form '.&NIL)
+                       (make-syntax-object '() '() #f))
+                      ((symbol? form)
+                       (make-syntax-object form (or (assq form out-of-context) (assq form renames) '()) identifier-lexname))
+                      (else
+                       (partial-wrap-syntax-object form (extend-env out-of-context renames))))))))))
 
 (set-top-level-value! '.syntax/i0 ; identifier: no-rank no-lexname
   (lambda (vars template)

@@ -510,44 +510,26 @@ subr_get_accumulated_string(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_make_string_output_port(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 0 || argc == 1) {
-        scm_obj_t transcoder = scm_true;
-        if (argc == 1) {
-            if (argv[0] == scm_true) {
-                scm_bvector_t utf8 = make_bvector(vm->m_heap, 3);
-                utf8->elts[0] = SCM_PORT_CODEC_UTF8;
-                utf8->elts[1] = SCM_PORT_EOL_STYLE_NONE;
-                utf8->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_IGNORE;
-                transcoder = utf8;
-            } else if (argv[0] != scm_false) {
-                wrong_type_argument_violation(vm, "make-string-output-port", 0, "#t or #f", argv[0], argc, argv);
-                return scm_undef;
-            }
-        }
+    if (argc == 0) {
+        scm_bvector_t transcoder = make_bvector(vm->m_heap, 3);
+        transcoder->elts[0] = SCM_PORT_CODEC_UTF8;
+        transcoder->elts[1] = SCM_PORT_EOL_STYLE_NONE;
+        transcoder->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_IGNORE;
         return make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, transcoder);
     }
-    wrong_number_of_arguments_violation(vm, "make-string-output-port", 0, 1, argc, argv);
+    wrong_number_of_arguments_violation(vm, "make-string-output-port", 0, 0, argc, argv);
     return scm_undef;
 }
 
 scm_obj_t
 subr_make_string_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 1 || argc == 2) {
-        scm_obj_t transcoder = scm_true;
-        if (argc == 2) {
-            if (argv[1] == scm_true) {
-                scm_bvector_t utf8 = make_bvector(vm->m_heap, 3);
-                utf8->elts[0] = SCM_PORT_CODEC_UTF8;
-                utf8->elts[1] = SCM_PORT_EOL_STYLE_NONE;
-                utf8->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_IGNORE;
-                transcoder = utf8;
-            } else if (argv[1] != scm_false) {
-                wrong_type_argument_violation(vm, "make-string-input-port", 1, "#t or #f", argv[1], argc, argv);
-                return scm_undef;
-            }
-        }
+    if (argc == 1) {
         if (STRINGP(argv[0])) {
+            scm_bvector_t transcoder = make_bvector(vm->m_heap, 3);
+            transcoder->elts[0] = SCM_PORT_CODEC_UTF8;
+            transcoder->elts[1] = SCM_PORT_EOL_STYLE_NONE;
+            transcoder->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_IGNORE;
             scm_string_t string = (scm_string_t)argv[0];
             int size = HDR_STRING_SIZE(string->hdr);
             scm_bvector_t bvector = make_bvector(vm->m_heap, size);
@@ -557,7 +539,7 @@ subr_make_string_input_port(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "make-string-input-port", 0, "string", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "make-string-input-port", 1, 2, argc, argv);
+    wrong_number_of_arguments_violation(vm, "make-string-input-port", 1, 1, argc, argv);
     return scm_undef;
 }
 
@@ -1546,6 +1528,7 @@ subr_put_u8(VM* vm, int argc, scm_obj_t argv[])
             CHECK_OCTET(1, "put-u8");
             try {
                 port_put_byte(port, FIXNUM(argv[1]));
+                if (port->force_sync) port_flush_output(port);                
                 return scm_unspecified;
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "put-u8", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1571,6 +1554,7 @@ subr_put_byte(VM* vm, int argc, scm_obj_t argv[])
             CHECK_OCTET(1, "put-byte");
             try {
                 port_put_byte(port, FIXNUM(argv[1]));
+                if (port->force_sync) port_flush_output(port);                
                 return scm_unspecified;
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "put-byte", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1609,6 +1593,7 @@ subr_put_bytevector(VM* vm, int argc, scm_obj_t argv[])
                 if (start + count <= bvector->count) {
                     try {
                         for (int i = 0; i < count; i++) port_put_byte(port, bvector->elts[start + i]);
+                        if (port->force_sync) port_flush_output(port);                
                         return scm_unspecified;
                     } catch (io_exception_t& e) {
                         raise_io_error(vm, "put-bytevector", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1645,6 +1630,7 @@ subr_put_char(VM* vm, int argc, scm_obj_t argv[])
             if (CHARP(argv[1])) {
                 try {
                     port_put_char(port, argv[1]);
+                    if (port->force_sync) port_flush_output(port);                
                     return scm_unspecified;
                 } catch (io_exception_t& e) {
                     raise_io_error(vm, "put-char", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1678,6 +1664,7 @@ subr_put_string(VM* vm, int argc, scm_obj_t argv[])
                 if (argc == 2) {
                     try {
                         port_put_string(port, string);
+                        if (port->force_sync) port_flush_output(port);                
                         return scm_unspecified;
                     } catch (io_exception_t& e) {
                         raise_io_error(vm, "put-string", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1710,6 +1697,7 @@ subr_put_string(VM* vm, int argc, scm_obj_t argv[])
                             invalid_object_violation(vm, "put-string", "properly encoded string", string, argc, argv);
                             return scm_undef;
                         }
+                        if (port->force_sync) port_flush_output(port);                
                         return scm_unspecified;
                     } catch (io_exception_t& e) {
                         raise_io_error(vm, "put-string", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1748,12 +1736,15 @@ subr_put_datum(VM* vm, int argc, scm_obj_t argv[])
             CHECK_OPENED_TEXTUAL_OUTPUT_PORT(0, "put-datum");
             try {
                 if (BOOLP(port->transcoder)) {
-                    printer_t(vm, port).format("~s", argv[1]);
+                    printer_t prt(vm, port);
+                    prt.format("~s", argv[1]);
                 } else {
                     scm_port_t buf = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
                     scoped_lock lock2(buf->lock);
-                    printer_t(vm, buf).format("~s", argv[1]);
+                    printer_t prt(vm, buf);
+                    prt.format("~s", argv[1]);
                     port_put_string(port, port_extract_string(vm->m_heap, buf));
+                    if (port->force_sync) port_flush_output(port);                
                 }
                 return scm_unspecified;
             } catch (io_exception_t& e) {
@@ -1828,13 +1819,16 @@ subr_write(VM* vm, int argc, scm_obj_t argv[])
         }
         try {
             if (BOOLP(port->transcoder)) {
-                printer_t(vm, port).format("~s", argv[0]);
+                printer_t prt(vm, port);
+                prt.format("~s", argv[0]);
             } else {
                 scm_port_t buf = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
                 scoped_lock lock2(buf->lock);
-                printer_t(vm, buf).format("~s", argv[0]);
+                printer_t prt(vm, buf);
+                prt.format("~s", argv[0]);
                 port_put_string(port, port_extract_string(vm->m_heap, buf));
             }
+            if (port->force_sync) port_flush_output(port);                
             return scm_unspecified;
         } catch (io_exception_t& e) {
             raise_io_error(vm, "write", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1882,6 +1876,7 @@ subr_display(VM* vm, int argc, scm_obj_t argv[])
                 printer_t(vm, buf).format("~a", argv[0]);
                 port_put_string(port, port_extract_string(vm->m_heap, buf));
             }
+            if (port->force_sync) port_flush_output(port);                
             return scm_unspecified;
         } catch (io_exception_t& e) {
             raise_io_error(vm, "display", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1922,6 +1917,7 @@ subr_newline(VM* vm, int argc, scm_obj_t argv[])
         }
         try {
             printer_t(vm, port).format("~%", argv[1]);
+            if (port->force_sync) port_flush_output(port);                
             return scm_unspecified;
         } catch (io_exception_t& e) {
             raise_io_error(vm, "newline", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -2041,6 +2037,7 @@ subr_write_char(VM* vm, int argc, scm_obj_t argv[])
         if (CHARP(argv[0])) {
             try {
                 port_put_char(port, argv[0]);
+                if (port->force_sync) port_flush_output(port);                
                 return scm_unspecified;
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "write-char", e.m_operation, e.m_message, e.m_err, port, scm_false);

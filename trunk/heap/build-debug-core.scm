@@ -28,13 +28,13 @@
     destructuring : syntax-case lists
     records       : syntax-case lists destructuring
     conditions    : syntax-case records
+    enums         : struct lists sorting
     io            : syntax-case lists conditions bytevectors optargs
     files         : io lists
     bytevector-transcoders : optargs io bytevectors
     unicode-assistants : io files lists bytevectors bytevector-transcoders
     unicode       : io files lists bytevectors bytevector-transcoders
     hashtables    : lists unicode optargs
-    enums         : struct lists hashtables sorting
   
     coreform optimizer dependencies
   
@@ -53,6 +53,7 @@
           (core destructuring)
           (core optimize)
           (core parameters)
+          (core enums)
           (core io)
           (core files)
           ;; end of vital library
@@ -73,7 +74,6 @@
           (core unicode)
           (core hashtables)
           (core struct)
-          (core enums)
           (rnrs))
 
 ;  (define source-directory (format "~a/../stdlib" (current-directory)))
@@ -99,6 +99,7 @@
       "core/destructuring.scm"
       "core/records.scm"
       "core/conditions.scm"
+      "core/enums.scm"
       "core/io.scm"
       "core/files.scm"
       "core/bytevector-transcoders.scm"
@@ -106,7 +107,6 @@
       "core/unicode.scm"
       "core/hashtables.scm"
       "core/struct.scm"
-      "core/enums.scm"
       "core/optimize.scm"
       "rnrs/base.scm"
       "rnrs/unicode.scm"

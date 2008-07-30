@@ -9,6 +9,7 @@
 #include "heap.h"
 #include "port.h"
 #include "ioerror.h"
+#include "arith.h"
 
 #if _MSC_VER
   #define   ETXTBSY     26
@@ -73,7 +74,7 @@ raise_io_error(VM* vm, const char* who, int operation, const char* message, int 
                     break;
                 default:
                     scm_obj_t irritant = make_list(vm->m_heap, 2, filename, port);
-                    vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-filename-error"),
+                    vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-obj-error"),
                                                 4, arg1, arg2, filename, irritant);
                     break;
             }
@@ -90,8 +91,9 @@ raise_io_error(VM* vm, const char* who, int operation, const char* message, int 
         } break;
 
         case SCM_PORT_OPERATION_SEEK: {
+             scm_obj_t pos = int64_to_integer(vm->m_heap, ((scm_port_t)port)->mark);
              vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-invalid-position-error"),
-                                        3, arg1, arg2, port);
+                                        4, arg1, arg2, port, pos);
         } break;
 
         case SCM_PORT_OPERATION_CLOSE:

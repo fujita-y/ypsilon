@@ -122,9 +122,9 @@ bn_lognot(scm_bignum_t ans, scm_bignum_t obj)
     }
     bn_norm(ans);
 }
-
+/*
 static void
-bn_logand(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs)
+bn_logand(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs, bool lhs2sc, bool rhs2sc)
 {
     int ans_count = bn_get_count(ans);
     int lhs_count = bn_get_count(lhs);
@@ -159,6 +159,53 @@ bn_logxor(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs)
     assert(ans_count >= lhs_count);
     for (int i = 0; i < ans_count; i++) {
         ans->elts[i] = ((i < lhs_count) ? lhs->elts[i] : 0) ^ ((i < rhs_count) ? rhs->elts[i] : 0);
+    }
+    bn_norm(ans);
+}
+
+*/
+
+static void
+bn_logand(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs, bool lhs2sc, bool rhs2sc)
+{
+    int ans_count = bn_get_count(ans);
+    int lhs_count = bn_get_count(lhs);
+    int rhs_count = bn_get_count(rhs);
+    assert(ans_count >= lhs_count);
+    for (int i = 0; i < ans_count; i++) {
+        uint32_t bit1 = (i < lhs_count) ? lhs->elts[i] : (lhs2sc ? 0xFFFFFFFF : 0);
+        uint32_t bit2 = (i < rhs_count) ? rhs->elts[i] : (rhs2sc ? 0xFFFFFFFF : 0);
+        ans->elts[i] = bit1 & bit2;
+    }
+    bn_norm(ans);
+}
+
+static void
+bn_logior(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs, bool lhs2sc, bool rhs2sc)
+{
+    int ans_count = bn_get_count(ans);
+    int lhs_count = bn_get_count(lhs);
+    int rhs_count = bn_get_count(rhs);
+    assert(ans_count >= lhs_count);
+    for (int i = 0; i < ans_count; i++) {
+        uint32_t bit1 = (i < lhs_count) ? lhs->elts[i] : (lhs2sc ? 0xFFFFFFFF : 0);
+        uint32_t bit2 = (i < rhs_count) ? rhs->elts[i] : (rhs2sc ? 0xFFFFFFFF : 0);
+        ans->elts[i] = bit1 | bit2;
+    }
+    bn_norm(ans);
+}
+
+static void
+bn_logxor(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs, bool lhs2sc, bool rhs2sc)
+{
+    int ans_count = bn_get_count(ans);
+    int lhs_count = bn_get_count(lhs);
+    int rhs_count = bn_get_count(rhs);
+    assert(ans_count >= lhs_count);
+    for (int i = 0; i < ans_count; i++) {
+        uint32_t bit1 = (i < lhs_count) ? lhs->elts[i] : (lhs2sc ? 0xFFFFFFFF : 0);
+        uint32_t bit2 = (i < rhs_count) ? rhs->elts[i] : (rhs2sc ? 0xFFFFFFFF : 0);
+        ans->elts[i] = bit1 ^ bit2;
     }
     bn_norm(ans);
 }
@@ -1362,7 +1409,7 @@ oprtr_logand(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     if (lhs_sign == rhs_sign) {                         // (+,+) or (-,-) or (0,0)
         if (lhs_sign) {
             if (lhs_sign > 0) {                         // (+,+)
-                bn_logand(&ans, lhs, rhs);
+                bn_logand(&ans, lhs, rhs, false, false);
                 bn_set_sign(&ans, 1);
                 bn_norm(&ans);
                 return oprtr_norm_integer(heap, &ans);
@@ -1371,7 +1418,7 @@ oprtr_logand(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
             BN_ALLOC_2SC(lhs2sc, lhs);
             scm_bignum_rec_t rhs2sc;
             BN_ALLOC_2SC(rhs2sc, rhs);
-            bn_logand(&ans, &lhs2sc, &rhs2sc);
+            bn_logand(&ans, &lhs2sc, &rhs2sc, true, true);
             bn_flip2sc(&ans);
             bn_set_sign(&ans, -1);
             bn_norm(&ans);
@@ -1383,11 +1430,11 @@ oprtr_logand(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
         if (lhs_sign < 0) {
             scm_bignum_rec_t lhs2sc;                    // (-,+)
             BN_ALLOC_2SC(lhs2sc, lhs);
-            bn_logand(&ans, &lhs2sc, rhs);
+            bn_logand(&ans, &lhs2sc, rhs, true, false);
         } else {                                        // (+,-)
             scm_bignum_rec_t rhs2sc;
             BN_ALLOC_2SC(rhs2sc, rhs);
-            bn_logand(&ans, lhs, &rhs2sc);
+            bn_logand(&ans, lhs, &rhs2sc, false, true);
         }
         bn_set_sign(&ans, 1);
         bn_norm(&ans);
@@ -1409,7 +1456,7 @@ oprtr_logior(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     if (lhs_sign == rhs_sign) {                         // (+,+) or (-,-) or (0,0)
         if (lhs_sign) {
             if (lhs_sign > 0) {                         // (+,+)
-                bn_logior(&ans, lhs, rhs);
+                bn_logior(&ans, lhs, rhs, false, false);
                 bn_set_sign(&ans, 1);
                 bn_norm(&ans);
                 return oprtr_norm_integer(heap, &ans);
@@ -1418,7 +1465,7 @@ oprtr_logior(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
             BN_ALLOC_2SC(lhs2sc, lhs);
             scm_bignum_rec_t rhs2sc;
             BN_ALLOC_2SC(rhs2sc, rhs);
-            bn_logior(&ans, &lhs2sc, &rhs2sc);
+            bn_logior(&ans, &lhs2sc, &rhs2sc, true, true);
             bn_flip2sc(&ans);
             bn_set_sign(&ans, -1);
             bn_norm(&ans);
@@ -1430,13 +1477,14 @@ oprtr_logior(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
         if (lhs_sign < 0) {
             scm_bignum_rec_t lhs2sc;                    // (-,+)
             BN_ALLOC_2SC(lhs2sc, lhs);
-            bn_logior(&ans, &lhs2sc, rhs);
+            bn_logior(&ans, &lhs2sc, rhs, true, false);
         } else {                                        // (+,-)
             scm_bignum_rec_t rhs2sc;
             BN_ALLOC_2SC(rhs2sc, rhs);
-            bn_logior(&ans, lhs, &rhs2sc);
+            bn_logior(&ans, lhs, &rhs2sc, false, true);
         }
-        bn_set_sign(&ans, 1);
+        bn_flip2sc(&ans);
+        bn_set_sign(&ans, -1);
         bn_norm(&ans);
         return oprtr_norm_integer(heap, &ans);
     }
@@ -1456,7 +1504,7 @@ oprtr_logxor(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     if (lhs_sign == rhs_sign) {                         // (+,+) or (-,-) or (0,0)
         if (lhs_sign) {
             if (lhs_sign > 0) {                         // (+,+)
-                bn_logxor(&ans, lhs, rhs);
+                bn_logxor(&ans, lhs, rhs, false, false);
                 bn_set_sign(&ans, 1);
                 bn_norm(&ans);
                 return oprtr_norm_integer(heap, &ans);
@@ -1465,7 +1513,7 @@ oprtr_logxor(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
             BN_ALLOC_2SC(lhs2sc, lhs);
             scm_bignum_rec_t rhs2sc;
             BN_ALLOC_2SC(rhs2sc, rhs);
-            bn_logxor(&ans, &lhs2sc, &rhs2sc);
+            bn_logxor(&ans, &lhs2sc, &rhs2sc, true, true);
             bn_set_sign(&ans, 1);
             bn_norm(&ans);
             return oprtr_norm_integer(heap, &ans);
@@ -1476,11 +1524,11 @@ oprtr_logxor(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
         if (lhs_sign < 0) {
             scm_bignum_rec_t lhs2sc;                    // (-,+)
             BN_ALLOC_2SC(lhs2sc, lhs);
-            bn_logxor(&ans, &lhs2sc, rhs);
+            bn_logxor(&ans, &lhs2sc, rhs, true, false);
         } else {                                        // (+,-)
             scm_bignum_rec_t rhs2sc;
             BN_ALLOC_2SC(rhs2sc, rhs);
-            bn_logxor(&ans, lhs, &rhs2sc);
+            bn_logxor(&ans, lhs, &rhs2sc, false, true);
         }
         bn_flip2sc(&ans);
         bn_set_sign(&ans, -1);

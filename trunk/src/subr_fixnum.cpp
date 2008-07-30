@@ -610,7 +610,7 @@ scm_obj_t
 subr_fx_bit_set_pred(VM* vm, int argc, scm_obj_t argv[])
 {
     int bad;
-    if (argc == 1) {
+    if (argc == 2) {
         if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) {
             intptr_t fx1 = FIXNUM(argv[0]);
             intptr_t fx2 = FIXNUM(argv[1]);

@@ -23,7 +23,6 @@
   (import (core primitives)
           (core struct)
           (core lists)
-          (core hashtables)
           (core sorting))
 
   (define-struct enum-type (universe members indexer constructor))
@@ -35,7 +34,7 @@
                       symbol-list
                       (lambda (set)
                         (lambda (symbol)
-                          (hashtable-ref (enum-type-universe (enum-set-type set)) symbol #f)))
+                          (core-hashtable-ref (enum-type-universe (enum-set-type set)) symbol #f)))
                       (lambda (set)
                         (lambda (symbol-list)
                           (let ((lst (remove-duplicate-symbols symbol-list))
@@ -43,7 +42,7 @@
                             (for-each (lambda (e)
                                         (or (symbol? e)
                                             (assertion-violation "enum-set constructor" "expected list of symbols as argument 1" symbol-list))
-                                        (or (hashtable-ref universe e #f)
+                                        (or (core-hashtable-ref universe e #f)
                                             (assertion-violation "enum-set constructor" "excpectd symbols which belong to the universe" symbol-list)))
                                       lst)
                             (make-enum-set (enum-set-type set) lst)))))))
@@ -51,11 +50,11 @@
   (define make-enumeration
     (lambda (symbol-list)
       (let ((symbol-list (remove-duplicate-symbols symbol-list)))
-        (let ((ht (make-eq-hashtable)) (index 0))
+        (let ((ht (make-core-hashtable)) (index 0))
           (for-each (lambda (e)
                       (or (symbol? e)
                           (assertion-violation 'make-enumeration "expected list of symbols" symbol-list))
-                      (hashtable-set! ht e index)
+                      (core-hashtable-set! ht e index)
                       (set! index (+ index 1)))
                     symbol-list)
           (let ((type (construct-enum-type ht symbol-list)))
@@ -79,7 +78,7 @@
       (let ((universe (enum-type-universe (enum-set-type set))))
         (map car
              (list-sort (lambda (a b) (< (cdr a) (cdr b)))
-                        (map (lambda (e) (cons e (hashtable-ref universe e #f)))
+                        (map (lambda (e) (cons e (core-hashtable-ref universe e #f)))
                              (enum-set-members set)))))))
 
   (define enum-set-member?
@@ -88,15 +87,17 @@
 
   (define enum-set-subset?
     (lambda (set1 set2)
-      (for-all (lambda (e) (enum-set-member? e set2))
-               (enum-set-members set1))))
+      (and (for-all (lambda (e) (enum-set-member? e set2)) (enum-set-members set1))
+           (let ((m2 (enum-type-members (enum-set-type set2))))
+             (for-all (lambda (e) (memq e m2)) (enum-type-members (enum-set-type set1))))
+           #t)))
 
   (define enum-set=?
     (lambda (set1 set2)
-      (and (= (length (enum-set-members set1))
-              (length (enum-set-members set2)))
-           (enum-set-subset? set1 set2))))
-
+      (and (enum-set-subset? set2 set1)
+           (enum-set-subset? set1 set2)
+           #t)))
+  
   (define enum-set-union
     (lambda (set1 set2)
       (or (eq? (enum-set-type set1) (enum-set-type set2))

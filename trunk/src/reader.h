@@ -22,7 +22,6 @@ private:
     void            unget_ucs4();
     int             get_ucs4();
     int             lookahead_ucs4();
-    void            skip_intraline_whitespace();
     int             ensure_ucs4(int ucs4);
     scm_obj_t       read_bytevector();
     void            read_thing(char *buff,size_t size);

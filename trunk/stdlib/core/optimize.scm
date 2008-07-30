@@ -149,13 +149,13 @@
                   .core-hashtable-copy
                   .core-hashtable-equivalence-function
                   .core-hashtable-hash-function))
-      (core-hashtable-copy ht #t)))
+      (core-hashtable-copy ht)))
 
   (define ht-inlinable-primitive-functions
     (let ((ht (make-core-hashtable)))
       (for-each (lambda (e) (core-hashtable-set! ht (top-level-value e) #t))
                 '(.car .cdr .cadr .cddr))
-      (core-hashtable-copy ht #t)))
+      (core-hashtable-copy ht)))
   
   ; r6rs special list functions that all list arguments are immutable
   (define ht-special-list-functions
@@ -164,7 +164,7 @@
                 '(.map .for-each))
       (for-each (lambda (e) (core-hashtable-set! ht e #t))
                 (list find for-all exists filter partition fold-left fold-right assp memp remp))
-      (core-hashtable-copy ht #t)))
+      (core-hashtable-copy ht)))
 
   (define ht-variable-refc (make-core-hashtable))
   (define ht-variable-binding (make-core-hashtable))

@@ -25,3 +25,5 @@ ucs4_intraline_whitespace(int c) // http://www.unicode.org/Public/UNIDATA/PropLi
     }
     return false;
 }
+
+#include "../unicode/lexeme.inc"

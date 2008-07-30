@@ -3,7 +3,6 @@
     Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
-
 /*
 
  * 'ungetc' implementation may return part of replacement character to subsequent get-u8 operation.
@@ -33,8 +32,10 @@
 #include "utf8.h"
 #include "arith.h"
 
-#define SCM_CHAR_LF            MAKECHAR(SCM_PORT_UCS4_LF)
-#define SCM_CHAR_OCTET_MAX     4
+#define SCM_CHAR_LF             MAKECHAR(SCM_PORT_UCS4_LF)
+#define SCM_CHAR_OCTET_MAX      4
+
+#define CUSTOM_PORT_FORCE_SYNC  1
 
 static void
 throw_io_error(int operation, int code)
@@ -590,6 +591,7 @@ port_open_std(scm_port_t port, fd_t fd, scm_obj_t name, int direction, int file_
     port->transcoder = transcoder;
     port->buffer_mode = buffer_mode;
     port->file_options = file_options;
+    port->force_sync = false;
 
     init_port_tracking(port);
     init_port_transcoder(port);
@@ -611,8 +613,10 @@ void
 port_sync_port_position(scm_port_t port)
 {
     if (port_has_set_port_position_pred(port)) {
-       if (io_lseek64(port->fd, port->mark, SEEK_CUR) >= 0) return;
-       throw_io_error(SCM_PORT_OPERATION_SEEK, errno);
+        if (port->type == SCM_PORT_TYPE_NAMED_FILE && port->subtype == SCM_PORT_SUBTYPE_NONE) {
+            if (io_lseek64(port->fd, port->mark, SEEK_CUR) >= 0) return;
+            throw_io_error(SCM_PORT_OPERATION_SEEK, errno);
+        }
     }
 }
 
@@ -637,6 +641,7 @@ port_open_file(scm_port_t port, scm_obj_t name, int direction, int file_options,
     port->transcoder = transcoder;
     port->buffer_mode = buffer_mode;
     port->file_options = file_options;
+    port->force_sync = false;
 
     int options = 0;
     switch (port->subtype) {
@@ -710,6 +715,7 @@ port_open_temp_file(scm_port_t port, scm_obj_t name, int buffer_mode, scm_obj_t 
     port->transcoder = transcoder;
     port->buffer_mode = buffer_mode;
     port->file_options = SCM_PORT_FILE_OPTION_NONE;
+    port->force_sync = false;
 
     char tmpl[256] = "/tmp/scm_temp_XXXXXX";
     port->fd = io_mkstemp(tmpl);
@@ -747,6 +753,7 @@ port_open_bytevector(scm_port_t port, scm_obj_t name, int direction, scm_obj_t b
     port->transcoder = transcoder;
     port->buffer_mode = SCM_PORT_BUFFER_MODE_NONE;
     port->file_options = SCM_PORT_FILE_OPTION_NONE;
+    port->force_sync = false;
 
     init_port_tracking(port);
     init_port_transcoder(port);
@@ -781,7 +788,13 @@ port_make_custom_port(scm_port_t port, scm_obj_t name, int direction, scm_obj_t 
     port->transcoder = transcoder;
     port->buffer_mode = SCM_PORT_BUFFER_MODE_BLOCK;
     port->file_options = SCM_PORT_FILE_OPTION_NONE;
-
+    
+#if CUSTOM_PORT_FORCE_SYNC
+    port->force_sync = true;
+#else
+    port->force_sync = false;
+#endif
+    
     init_port_tracking(port);
     init_port_transcoder(port);
     init_port_buffer(port);
@@ -821,6 +834,7 @@ port_make_transcoded_port(scm_obj_t name, scm_port_t binary, scm_port_t textual,
     textual->direction = binary->direction;
     textual->track_line_column = binary->track_line_column;
     textual->opened = binary->opened;
+    textual->force_sync = binary->force_sync;
 
     binary->fd = INVALID_FD;
     binary->opened = false;
@@ -1895,11 +1909,21 @@ port_put_utf16(scm_port_t port, int32_t ucs4)
         uint32_t left;
         uint32_t right;
         encode_surrogate_pair(ucs4, &left, &right);
+        if (port->mark == 0 && port->bom_be == false && port->bom_le == false) {
+            port->bom_be = true;
+            port_put_byte(port, 0xFE);
+            port_put_byte(port, 0xFF);
+        }
         port_put_byte(port, left >> 8);
         port_put_byte(port, left & 0xFF);
         port_put_byte(port, right >> 8);
         port_put_byte(port, right & 0xFF);
         return;
+    }
+    if (port->mark == 0 && port->bom_be == false && port->bom_le == false) {
+        port->bom_be = true;
+        port_put_byte(port, 0xFE);
+        port_put_byte(port, 0xFF);
     }
     port_put_byte(port, ucs4 >> 8);
     port_put_byte(port, ucs4 & 0xFF);
