@@ -1,7 +1,7 @@
 #summary Known bugs in current release
 
 version 0.9.5-update2 (based on revision 111):
-  * `letrec` and `letrec*` restriction violation raises synatx violation on load. But it should raises assertion violation on runtime. (fixed in trunk version)
+  * `letrec` and `letrec*` restriction violation raises syntax violation on load. But it should raises assertion violation on runtime. (fixed in trunk version)
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
 
@@ -11,12 +11,12 @@ version 0.9.5-update1 (based on revision 69):
   * [http://code.google.com/p/ypsilon/issues/detail?id=29&can=1 Issue 29]: `free-identifier=?` problem with shadowed identifier.
   * [http://code.google.com/p/ypsilon/issues/detail?id=30&can=1 Issue 30]: `Test Arithmetics` enter an infinite loop on MacOS X 10.5 Leopard.
   * bignum operation produce wrong result.
-  * reader infinit loop when reading big exact number (i.e. #e1e2000)
+  * reader infinite loop when reading big exact number (i.e. #e1e2000)
   * reader have some problem with identifier delimited by ';'
   * reader have some problem reading unicode char
   * unicode general category table contains wrong values
   * `free-identifier=?`, `lookahead-char`, `real-part`, `enumerators`, `div`, `mod`, `div0`, and `mod0` may not work correctly
-  * usign eval in the `R6RS top-level program` may causes "error: unbound variable set-top-level-value!"
+  * using eval in the `R6RS top-level program` may causes "error: unbound variable set-top-level-value!"
 
   * _All bugs in version 0.9.5-update1 are fixed in version 0.9.5-update2_
 
