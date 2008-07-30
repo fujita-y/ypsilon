@@ -3,7 +3,6 @@
 ;;; See license.txt for terms and conditions of use.
 
 (define dump-condition (make-parameter #f))
-(define no-letrec-check (make-parameter #t))
   
 (define add-load-path
   (lambda (path)
@@ -416,7 +415,6 @@
         (format #t "  --interactive (-i)     enters repl after running the script file~%")
         (format #t "  --r6rs (-6)            conforms r6rs lexical syntax (default)~%")
         (format #t "  --compatible (-c)      extends lexical syntax for compatibility~%")
-        (format #t "  --no-letrec-check      no letrec restriction check~%")
         (format #t "  --sitelib=path         adds sitelib path (YPSILON_SITELIB)~%")
         (format #t "  --loadpath=path        adds load search path (YPSILON_LOADPATH)~%")
         (format #t "  --acc=dir              sets a auto-compile-cache directory (YPSILON_ACC)~%")
@@ -520,7 +518,8 @@
                       (cond ((opt? "--heap-limit" #f) (loop (cddr lst)))
                             ((opt? "--heap-limit" #t) (loop (cdr lst)))
                             ((opt? "--no-letrec-check" #f)
-                             (no-letrec-check #t)
+                             (format (current-error-port) "** WARNING: '--no-letrec-check' option is deprecated~%")
+                             ;(no-letrec-check #t)
                              (loop (cdr lst)))
                             ((or (opt? "--warning" #f) (opt? "-w" #f))
                              (warning-level #t)
