@@ -69,6 +69,9 @@ Suppresses greeting, repl prompt, and repl output.
 \fB--verbose\fP, \fB-v\fP
 Prints load and compile activities.
 .TP
+\fB--warning\fP, \fB-w\fP
+Prints warnings.
+.TP
 \fB--interactive\fP, \fB-i\fP
 Enters repl after running the script file.
 .TP
@@ -102,6 +105,12 @@ See also YPSILON_LOADPATH in the ENVIRONMENT section.
 Sets a auto-compile-cache directory.
 .br
 See also YPSILON_ACC in the ENVIRONMENT section.
+.TP
+\fB--heap-limit\fP=\fImbytes\fP
+Sets a total heap limit in \fImbytes\fP.
+.TP
+\fB--dump-condition\fP
+Default exception handler prints all components of the condition.
 .TP
 \fB--disable-acc\fP
 Disables the auto-compile-cache.
