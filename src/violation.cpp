@@ -62,7 +62,6 @@ raise_undefined_violation(VM* vm, scm_obj_t who, scm_string_t message)
 void
 raise_letrec_violation(VM* vm)
 {
-    assert(who);
     vm->backtrace_seek();
     scm_obj_t proc = vm->lookup_system_closure(".@assertion-violation");
     if (vm->flags.m_warning_level == scm_false) {
