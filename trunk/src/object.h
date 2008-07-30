@@ -191,43 +191,43 @@ typedef scm_obj_t (*subr_proc_t)(VM *, int argc, scm_obj_t argv[]);
 typedef uint32_t (*hash_proc_t)(scm_obj_t obj, uint32_t bound);
 typedef bool (*equiv_proc_t)(scm_obj_t obj1, scm_obj_t obj2);
 
-#define DEFINE_OBJECT_REC(x)        struct DECLSPEC(align(OBJECT_DATUM_ALIGN)) x
-#define END                         ATTRIBUTE(aligned(OBJECT_DATUM_ALIGN))
+#define OBJECT_ALIGNED(x)   struct DECLSPEC(align(OBJECT_DATUM_ALIGN)) x
+#define END                 ATTRIBUTE(aligned(OBJECT_DATUM_ALIGN))
 
-DEFINE_OBJECT_REC(scm_pair_rec_t) {
+OBJECT_ALIGNED(scm_pair_rec_t) {
     scm_obj_t   car;
     scm_obj_t   cdr;
 } END;
 
-DEFINE_OBJECT_REC(scm_symbol_rec_t) {
+OBJECT_ALIGNED(scm_symbol_rec_t) {
     scm_hdr_t   hdr;
     char*       name;
 } END;
 
-DEFINE_OBJECT_REC(scm_string_rec_t) {
+OBJECT_ALIGNED(scm_string_rec_t) {
     scm_hdr_t   hdr;
     char*       name;
 } END;
 
-DEFINE_OBJECT_REC(scm_flonum_rec_t) {
+OBJECT_ALIGNED(scm_flonum_rec_t) {
     scm_hdr_t   hdr;
     double      value;
 } END;
 
-DEFINE_OBJECT_REC(scm_cont_rec_t) {
+OBJECT_ALIGNED(scm_cont_rec_t) {
     scm_hdr_t   hdr;
     scm_obj_t   wind_rec;
     void*       cont;
 } END;
 
-DEFINE_OBJECT_REC(scm_closure_rec_t) {
+OBJECT_ALIGNED(scm_closure_rec_t) {
     scm_hdr_t   hdr;
     scm_obj_t   doc;
     void*       env;
     void*       code;
 } END;
 
-DEFINE_OBJECT_REC(scm_subr_rec_t) {
+OBJECT_ALIGNED(scm_subr_rec_t) {
     scm_hdr_t   hdr;
     subr_proc_t adrs;
     scm_obj_t   doc;
@@ -238,35 +238,35 @@ DEFINE_OBJECT_REC(scm_subr_rec_t) {
 #endif
 } END;
 
-DEFINE_OBJECT_REC(scm_vector_rec_t) {
+OBJECT_ALIGNED(scm_vector_rec_t) {
     scm_hdr_t   hdr;
     int         count;
     scm_obj_t*  elts;
 } END;
 
-DEFINE_OBJECT_REC(scm_values_rec_t) {
+OBJECT_ALIGNED(scm_values_rec_t) {
     scm_hdr_t   hdr;
     scm_obj_t*  elts;
 } END;
 
-DEFINE_OBJECT_REC(scm_tuple_rec_t) {
+OBJECT_ALIGNED(scm_tuple_rec_t) {
     scm_hdr_t   hdr;
     scm_obj_t*  elts;
 } END;
 
-DEFINE_OBJECT_REC(scm_bvector_rec_t) {
+OBJECT_ALIGNED(scm_bvector_rec_t) {
     scm_hdr_t   hdr;
     int         count;
     uint8_t*    elts;
 } END;
 
-DEFINE_OBJECT_REC(scm_weakmapping_rec_t) {
+OBJECT_ALIGNED(scm_weakmapping_rec_t) {
     scm_hdr_t   hdr;
     scm_obj_t   key;
     scm_obj_t   value;
 } END;
 
-DEFINE_OBJECT_REC(scm_port_rec_t) {
+OBJECT_ALIGNED(scm_port_rec_t) {
     scm_hdr_t       hdr;
     mutex_t         lock;
 
@@ -305,14 +305,14 @@ DEFINE_OBJECT_REC(scm_port_rec_t) {
     bool            opened;
 } END;
 
-DEFINE_OBJECT_REC(hashtable_rec_t) {
+OBJECT_ALIGNED(hashtable_rec_t) {
     int         capacity;
     int         used;
     int         live;
     scm_obj_t   elts[1];            // [ key ... val ... ]
 } END;
 
-DEFINE_OBJECT_REC(scm_hashtable_rec_t) {
+OBJECT_ALIGNED(scm_hashtable_rec_t) {
     scm_hdr_t           hdr;
     mutex_t             lock;
     int                 type;
@@ -322,44 +322,44 @@ DEFINE_OBJECT_REC(scm_hashtable_rec_t) {
     scm_obj_t           handlers;
 } END;
 
-DEFINE_OBJECT_REC(weakhashtable_rec_t) {
+OBJECT_ALIGNED(weakhashtable_rec_t) {
     int         capacity;
     int         used;
     int         live;
     scm_obj_t   elts[1];            // [ key ... val ... ]
 } END;
 
-DEFINE_OBJECT_REC(scm_weakhashtable_rec_t) {
+OBJECT_ALIGNED(scm_weakhashtable_rec_t) {
     scm_hdr_t   hdr;
     mutex_t     lock;
     weakhashtable_rec_t* datum;     // [ weak-mapping ... ]
 } END;
 
-DEFINE_OBJECT_REC(scm_bignum_rec_t) {
+OBJECT_ALIGNED(scm_bignum_rec_t) {
     scm_hdr_t   hdr;
     uint32_t*   elts;
 } END;
 
-DEFINE_OBJECT_REC(scm_complex_rec_t) {
+OBJECT_ALIGNED(scm_complex_rec_t) {
     scm_hdr_t   hdr;
     scm_obj_t   imag;
     scm_obj_t   real;
 } END;
 
-DEFINE_OBJECT_REC(scm_rational_rec_t) {
+OBJECT_ALIGNED(scm_rational_rec_t) {
     scm_hdr_t   hdr;
     scm_obj_t   nume;
     scm_obj_t   deno;
 } END;
 
-DEFINE_OBJECT_REC(scm_environment_rec_t) {
+OBJECT_ALIGNED(scm_environment_rec_t) {
     scm_hdr_t       hdr;
     scm_hashtable_t variable;       // key:symbol value:gloc
     scm_hashtable_t macro;
     scm_string_t    name;
 } END;
 
-DEFINE_OBJECT_REC(scm_gloc_rec_t) {
+OBJECT_ALIGNED(scm_gloc_rec_t) {
     scm_hdr_t       hdr;
     scm_obj_t       value;
     scm_obj_t       variable;       // for error message
@@ -368,7 +368,7 @@ DEFINE_OBJECT_REC(scm_gloc_rec_t) {
   #endif
 } END;
 
-#undef DEFINE_OBJECT_REC
+#undef OBJECT_ALIGNED
 #undef END
 
 struct vm_cont_rec_t {          // record size is variable
