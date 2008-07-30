@@ -18,6 +18,12 @@
 #define P_DIGITS        22
 #define P_EXP10         22      // (floor (/ (* 53 (log 2)) (log 5)))
 
+#ifndef NDEBUG
+  #define BN_TEMPORARY(NAME)      scm_bignum_rec_t NAME; assert((&(NAME) & 7) == 0)
+#else
+  #define BN_TEMPORARY(NAME)      scm_bignum_rec_t NAME
+#endif
+
 #define BN_ALLOC(VAR, COUNT)                                                        \
             do {                                                                    \
                 if (sizeof(uint32_t) * (COUNT) < BN_STACK_LIMIT) {                  \
@@ -59,7 +65,7 @@ bn_dup(object_heap_t* heap, scm_bignum_t bn)
 }
 
 static inline void
-bn_subsection(scm_bignum_rec_t* subsec, scm_bignum_t original, int offset)
+bn_subsection(scm_bignum_t subsec, scm_bignum_t original, int offset)
 {
     *subsec = *original;
     subsec->elts += offset;
@@ -483,7 +489,7 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
     bn_shift_left(denominator, shift);
 
     int remainder_count = numerator_count + 1;
-    scm_bignum_rec_t remainder;
+    BN_TEMPORARY(remainder);
     BN_ALLOC(remainder, remainder_count);
     memcpy(remainder.elts, numerator->elts, sizeof(uint32_t) * numerator_count);
     remainder.elts[remainder_count - 1] = 0;
@@ -491,12 +497,12 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
     remainder_count = bn_norm(&remainder);
 
     int quotient_count = remainder_count - denominator_count + 1;
-    scm_bignum_rec_t quotient;
+    BN_TEMPORARY(quotient);
     BN_ALLOC(quotient, quotient_count);
     memset(quotient.elts, 0, sizeof(uint32_t) * quotient_count);
 
     int workpad_count = denominator_count + 1;
-    scm_bignum_rec_t workpad;
+    BN_TEMPORARY(workpad);
     BN_ALLOC(workpad, workpad_count);
 
     int qt_index = quotient_count - 1;
@@ -527,7 +533,7 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
             prt.format("          denominator: ~x~%", denominator);
 #endif
             
-            scm_bignum_rec_t subsec;
+            BN_TEMPORARY(subsec);
             bn_subsection(&subsec, &remainder, rd_index - de_index);
             if (bn_sub(&subsec, &subsec, denominator)) {
                 bn_add(&subsec, &subsec, denominator);  // ignore overflow
@@ -562,7 +568,7 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
                     memcpy(workpad.elts, denominator->elts, sizeof(uint32_t) * denominator_count);
                     bn_shift_left(&workpad, 32);
                 }
-                scm_bignum_rec_t subsec;
+                BN_TEMPORARY(subsec);
                 bn_subsection(&subsec, &remainder, rd_index - (workpad_count - 1));
                 bn_norm(&subsec);
                 while (bn_cmp(&subsec, &workpad) < 0) {
@@ -617,13 +623,13 @@ bn_sqrt(object_heap_t* heap, scm_bignum_t obj)
     if (bn_get_sign(obj) == 0) return;
     int count = bn_get_count(obj);
 
-    scm_bignum_rec_t s;
+    BN_TEMPORARY(s);
     BN_ALLOC(s, count);
     bn_set_sign(&s, 1);
     memcpy(s.elts, obj->elts, sizeof(uint32_t) * count);
 
     int workpad_count = count + 1;
-    scm_bignum_rec_t workpad;
+    BN_TEMPORARY(workpad);
     BN_ALLOC(workpad, workpad_count);
     bn_set_sign(&workpad, 1);
 
@@ -1163,7 +1169,7 @@ oprtr_reduce_fixnum_bignum(object_heap_t* heap, scm_fixnum_t numerator, scm_bign
     int32_t gcd = n1;
     nume = nume / gcd;
     if (ans_sign < 0) nume = -nume; 
-    scm_bignum_rec_t quo;
+    BN_TEMPORARY(quo);
     int count = bn_get_count(denominator);
     BN_ALLOC(quo, count);
     memset(quo.elts, 0, sizeof(uint32_t) * count);
@@ -1192,7 +1198,7 @@ oprtr_reduce_bignum_fixnum(object_heap_t* heap, scm_bignum_t numerator, scm_fixn
     while (n2) { intptr_t t = n2; n2 = n1 % n2; n1 = t; }
     int32_t gcd = n1;
     deno = deno / gcd;
-    scm_bignum_rec_t quo;
+    BN_TEMPORARY(quo);
     int count = bn_get_count(numerator);
     BN_ALLOC(quo, count);
     memset(quo.elts, 0, sizeof(uint32_t) * count);    
@@ -1228,8 +1234,8 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         return make_rational(heap, MAKEFIXNUM(-1), denominator);
     }
     int ans_sign;
-    scm_bignum_rec_t n1;
-    scm_bignum_rec_t n2;
+    BN_TEMPORARY(n1);
+    BN_TEMPORARY(n2);
     int n1_count;
     int n2_count;
 
@@ -1261,7 +1267,7 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         if (bn_get_sign(&n2) == -1) ans_sign = -ans_sign;
     }
 
-    scm_bignum_rec_t divisor;
+    BN_TEMPORARY(divisor);
     int divisor_count = (n1_count > n2_count) ? n1_count : n2_count;
     BN_ALLOC(divisor, divisor_count);
 
@@ -1346,7 +1352,7 @@ oprtr_add(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     int base_count = (lhs_count > rhs_count) ? lhs_count : rhs_count;
     if (lhs_sign == rhs_sign) {                         // (+,+) or (-,-) or (0,0)
         if (lhs_sign) {
-            scm_bignum_rec_t ans;
+            BN_TEMPORARY(ans);
             BN_ALLOC(ans, base_count + 1);
             bool overflow = bn_add(&ans, lhs, rhs);
             assert(overflow == false);
@@ -1356,7 +1362,7 @@ oprtr_add(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
         return MAKEFIXNUM(0);
     }
     if (lhs_sign & rhs_sign) {                          // (+,-) or (-,+)
-        scm_bignum_rec_t ans;
+        BN_TEMPORARY(ans);
         BN_ALLOC(ans, base_count);
         bool underflow = (lhs_sign > 0) ? bn_sub(&ans, lhs, rhs) : bn_sub(&ans, rhs, lhs);
         if (!underflow) {
@@ -1377,7 +1383,7 @@ oprtr_lognot(object_heap_t* heap, scm_bignum_t obj)
     int obj_sign = bn_get_sign(obj);
     int obj_count = bn_get_count(obj);
     if (obj_sign) {
-        scm_bignum_rec_t ans;
+        BN_TEMPORARY(ans);
         BN_ALLOC(ans, obj_count + 1);
         if (obj_sign > 0) {                         // (+)
             bn_lognot(&ans, obj);
@@ -1386,7 +1392,7 @@ oprtr_lognot(object_heap_t* heap, scm_bignum_t obj)
             bn_norm(&ans);
             return oprtr_norm_integer(heap, &ans);
         }
-        scm_bignum_rec_t obj2sc;                    // (-)
+        BN_TEMPORARY(obj2sc);                    // (-)
         BN_ALLOC_2SC(obj2sc, obj);
         bn_lognot(&ans, &obj2sc);
         bn_set_sign(&ans, 1);
@@ -1404,7 +1410,7 @@ oprtr_logand(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     int lhs_count = bn_get_count(lhs);
     int rhs_count = bn_get_count(rhs);
     int base_count = (lhs_count > rhs_count) ? lhs_count : rhs_count;
-    scm_bignum_rec_t ans;
+    BN_TEMPORARY(ans);
     BN_ALLOC(ans, base_count + 1);
     if (lhs_sign == rhs_sign) {                         // (+,+) or (-,-) or (0,0)
         if (lhs_sign) {
@@ -1414,9 +1420,9 @@ oprtr_logand(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
                 bn_norm(&ans);
                 return oprtr_norm_integer(heap, &ans);
             }
-            scm_bignum_rec_t lhs2sc;                    // (-,-)
+            BN_TEMPORARY(lhs2sc);                    // (-,-)
             BN_ALLOC_2SC(lhs2sc, lhs);
-            scm_bignum_rec_t rhs2sc;
+            BN_TEMPORARY(rhs2sc);
             BN_ALLOC_2SC(rhs2sc, rhs);
             bn_logand(&ans, &lhs2sc, &rhs2sc, true, true);
             bn_flip2sc(&ans);
@@ -1428,11 +1434,11 @@ oprtr_logand(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     }
     if (lhs_sign & rhs_sign) {                          // (+,-) or (-,+)
         if (lhs_sign < 0) {
-            scm_bignum_rec_t lhs2sc;                    // (-,+)
+            BN_TEMPORARY(lhs2sc);                    // (-,+)
             BN_ALLOC_2SC(lhs2sc, lhs);
             bn_logand(&ans, &lhs2sc, rhs, true, false);
         } else {                                        // (+,-)
-            scm_bignum_rec_t rhs2sc;
+            BN_TEMPORARY(rhs2sc);
             BN_ALLOC_2SC(rhs2sc, rhs);
             bn_logand(&ans, lhs, &rhs2sc, false, true);
         }
@@ -1451,7 +1457,7 @@ oprtr_logior(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     int lhs_count = bn_get_count(lhs);
     int rhs_count = bn_get_count(rhs);
     int base_count = (lhs_count > rhs_count) ? lhs_count : rhs_count;
-    scm_bignum_rec_t ans;
+    BN_TEMPORARY(ans);
     BN_ALLOC(ans, base_count + 1);
     if (lhs_sign == rhs_sign) {                         // (+,+) or (-,-) or (0,0)
         if (lhs_sign) {
@@ -1461,9 +1467,9 @@ oprtr_logior(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
                 bn_norm(&ans);
                 return oprtr_norm_integer(heap, &ans);
             }
-            scm_bignum_rec_t lhs2sc;                    // (-,-)
+            BN_TEMPORARY(lhs2sc);                    // (-,-)
             BN_ALLOC_2SC(lhs2sc, lhs);
-            scm_bignum_rec_t rhs2sc;
+            BN_TEMPORARY(rhs2sc);
             BN_ALLOC_2SC(rhs2sc, rhs);
             bn_logior(&ans, &lhs2sc, &rhs2sc, true, true);
             bn_flip2sc(&ans);
@@ -1475,11 +1481,11 @@ oprtr_logior(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     }
     if (lhs_sign & rhs_sign) {                          // (+,-) or (-,+)
         if (lhs_sign < 0) {
-            scm_bignum_rec_t lhs2sc;                    // (-,+)
+            BN_TEMPORARY(lhs2sc);                    // (-,+)
             BN_ALLOC_2SC(lhs2sc, lhs);
             bn_logior(&ans, &lhs2sc, rhs, true, false);
         } else {                                        // (+,-)
-            scm_bignum_rec_t rhs2sc;
+            BN_TEMPORARY(rhs2sc);
             BN_ALLOC_2SC(rhs2sc, rhs);
             bn_logior(&ans, lhs, &rhs2sc, false, true);
         }
@@ -1499,7 +1505,7 @@ oprtr_logxor(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     int lhs_count = bn_get_count(lhs);
     int rhs_count = bn_get_count(rhs);
     int base_count = (lhs_count > rhs_count) ? lhs_count : rhs_count;
-    scm_bignum_rec_t ans;
+    BN_TEMPORARY(ans);
     BN_ALLOC(ans, base_count + 1);
     if (lhs_sign == rhs_sign) {                         // (+,+) or (-,-) or (0,0)
         if (lhs_sign) {
@@ -1509,9 +1515,9 @@ oprtr_logxor(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
                 bn_norm(&ans);
                 return oprtr_norm_integer(heap, &ans);
             }
-            scm_bignum_rec_t lhs2sc;                    // (-,-)
+            BN_TEMPORARY(lhs2sc);                    // (-,-)
             BN_ALLOC_2SC(lhs2sc, lhs);
-            scm_bignum_rec_t rhs2sc;
+            BN_TEMPORARY(rhs2sc);
             BN_ALLOC_2SC(rhs2sc, rhs);
             bn_logxor(&ans, &lhs2sc, &rhs2sc, true, true);
             bn_set_sign(&ans, 1);
@@ -1522,11 +1528,11 @@ oprtr_logxor(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     }
     if (lhs_sign & rhs_sign) {                          // (+,-) or (-,+)
         if (lhs_sign < 0) {
-            scm_bignum_rec_t lhs2sc;                    // (-,+)
+            BN_TEMPORARY(lhs2sc);                    // (-,+)
             BN_ALLOC_2SC(lhs2sc, lhs);
             bn_logxor(&ans, &lhs2sc, rhs, true, false);
         } else {                                        // (+,-)
-            scm_bignum_rec_t rhs2sc;
+            BN_TEMPORARY(rhs2sc);
             BN_ALLOC_2SC(rhs2sc, rhs);
             bn_logxor(&ans, lhs, &rhs2sc, false, true);
         }
@@ -1545,7 +1551,7 @@ oprtr_logash(object_heap_t* heap, scm_bignum_t lhs, int shift)
     if (shift > 0) {
         int lhs_count = bn_get_count(lhs);
         int ans_count = lhs_count + (shift + 31) / 32;
-        scm_bignum_rec_t ans;
+        BN_TEMPORARY(ans);
         BN_ALLOC(ans, ans_count);
         memset(ans.elts, 0, sizeof(uint32_t) * ans_count);
         memcpy(ans.elts, lhs->elts, sizeof(uint32_t) * lhs_count);
@@ -1557,7 +1563,7 @@ oprtr_logash(object_heap_t* heap, scm_bignum_t lhs, int shift)
         int lhs_sign = bn_get_sign(lhs);
         if (lhs_sign > 0) {
             int lhs_count = bn_get_count(lhs);
-            scm_bignum_rec_t ans;
+            BN_TEMPORARY(ans);
             BN_ALLOC(ans, lhs_count);
             memcpy(ans.elts, lhs->elts, sizeof(uint32_t) * lhs_count);
             bn_set_sign(&ans, 1);
@@ -1565,7 +1571,7 @@ oprtr_logash(object_heap_t* heap, scm_bignum_t lhs, int shift)
             bn_norm(&ans);
             return oprtr_norm_integer(heap, &ans);
         } else {
-            scm_bignum_rec_t ans;
+            BN_TEMPORARY(ans);
             BN_ALLOC_2SC(ans, lhs);
             bn_shift_right_2sc(&ans, -shift);
             bn_flip2sc(&ans);
@@ -1596,7 +1602,7 @@ oprtr_sub(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     int base_count = (lhs_count > rhs_count) ? lhs_count : rhs_count;
     if (lhs_sign == rhs_sign) {                         // (+,+) or (-,-) or (0,0)
         if (lhs_sign) {
-            scm_bignum_rec_t ans;
+            BN_TEMPORARY(ans);
             BN_ALLOC(ans, base_count);
             bool underflow = (lhs_sign > 0) ? bn_sub(&ans, lhs, rhs) : bn_sub(&ans, rhs, lhs);
             if (!underflow) {
@@ -1611,7 +1617,7 @@ oprtr_sub(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
         return MAKEFIXNUM(0);
     }
     if (lhs_sign & rhs_sign) {                          // (+,-) or (-,+)
-        scm_bignum_rec_t ans;
+        BN_TEMPORARY(ans);
         BN_ALLOC(ans, base_count + 1);
         bool overflow = bn_add(&ans, lhs, rhs);
         assert(overflow == false);
@@ -1619,7 +1625,7 @@ oprtr_sub(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
         return oprtr_norm_integer(heap, &ans);
     } else {                                            // (0,-) or (0,+) or (-,0) or (+,0)
         if (lhs_sign == 0) {                            // (0,-) or (0,+)
-            scm_bignum_rec_t ans;
+            BN_TEMPORARY(ans);
             BN_ALLOC(ans, rhs_count);
             bn_set_sign(&ans, -rhs_sign);
             memcpy(ans.elts, rhs->elts, sizeof(uint32_t) * rhs_count);
@@ -1652,7 +1658,7 @@ oprtr_mul(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     } else {                                            // (0,-) (0,+) (-,0) (+,0)
         return MAKEFIXNUM(0);
     }
-    scm_bignum_rec_t ans;
+    BN_TEMPORARY(ans);
     int ans_count = bn_get_count(lhs) + bn_get_count(rhs);
     BN_ALLOC(ans, ans_count);
     bn_mul(&ans, lhs, rhs);
@@ -1696,7 +1702,7 @@ oprtr_quotient(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     if (test == 0) {
         return sign > 0 ? MAKEFIXNUM(1) : MAKEFIXNUM(-1);
     }
-    scm_bignum_rec_t quotient;
+    BN_TEMPORARY(quotient);
     int count = bn_get_count(lhs);
     BN_ALLOC(quotient, count);
 
@@ -1728,7 +1734,7 @@ oprtr_remainder(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     if (test < 0) return oprtr_norm_integer(heap, lhs);
     if (test == 0) return MAKEFIXNUM(0);
 
-    scm_bignum_rec_t remainder;
+    BN_TEMPORARY(remainder);
     int count = bn_get_count(lhs);
     BN_ALLOC(remainder, count);
 
@@ -2527,7 +2533,7 @@ arith_first_bit_set(object_heap_t* heap, scm_obj_t obj)
                 return MAKEFIXNUM(bit);
             }
         } else {
-            scm_bignum_rec_t obj2sc;
+            BN_TEMPORARY(obj2sc);
             BN_ALLOC_2SC(obj2sc, bn);
             int bit = 0;
             for (int i = 0; i < bn_get_count(&obj2sc); i++) {
@@ -2563,7 +2569,7 @@ arith_logand(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return MAKEFIXNUM(FIXNUM(lhs) & FIXNUM(rhs));
         }
         if (BIGNUMP(rhs)) {     // fixnum + bignum
-            scm_bignum_rec_t bn;
+            BN_TEMPORARY(bn);
             BN_ALLOC(bn, 1);
             bn_let(&bn, (scm_fixnum_t)lhs);
             return oprtr_logand(heap, (scm_bignum_t)rhs, &bn);
@@ -2571,7 +2577,7 @@ arith_logand(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     }
     if (BIGNUMP(lhs)) {
         if (FIXNUMP(rhs)) {     // bignum + fixnum
-            scm_bignum_rec_t bn;
+            BN_TEMPORARY(bn);
             BN_ALLOC(bn, 1);
             bn_let(&bn, (scm_fixnum_t)rhs);
             return oprtr_logand(heap, &bn, (scm_bignum_t)lhs);
@@ -2591,7 +2597,7 @@ arith_logior(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return MAKEFIXNUM(FIXNUM(lhs) | FIXNUM(rhs));
         }
         if (BIGNUMP(rhs)) {     // fixnum + bignum
-            scm_bignum_rec_t bn;
+            BN_TEMPORARY(bn);
             BN_ALLOC(bn, 1);
             bn_let(&bn, (scm_fixnum_t)lhs);
             return oprtr_logior(heap, (scm_bignum_t)rhs, &bn);
@@ -2599,7 +2605,7 @@ arith_logior(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     }
     if (BIGNUMP(lhs)) {
         if (FIXNUMP(rhs)) {     // bignum + fixnum
-            scm_bignum_rec_t bn;
+            BN_TEMPORARY(bn);
             BN_ALLOC(bn, 1);
             bn_let(&bn, (scm_fixnum_t)rhs);
             return oprtr_logior(heap, &bn, (scm_bignum_t)lhs);
@@ -2619,7 +2625,7 @@ arith_logxor(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return MAKEFIXNUM(FIXNUM(lhs) ^ FIXNUM(rhs));
         }
         if (BIGNUMP(rhs)) {     // fixnum + bignum
-            scm_bignum_rec_t bn;
+            BN_TEMPORARY(bn);
             BN_ALLOC(bn, 1);
             bn_let(&bn, (scm_fixnum_t)lhs);
             return oprtr_logxor(heap, (scm_bignum_t)rhs, &bn);
@@ -2627,7 +2633,7 @@ arith_logxor(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     }
     if (BIGNUMP(lhs)) {
         if (FIXNUMP(rhs)) {     // bignum + fixnum
-            scm_bignum_rec_t bn;
+            BN_TEMPORARY(bn);
             BN_ALLOC(bn, 1);
             bn_let(&bn, (scm_fixnum_t)rhs);
             return oprtr_logxor(heap, &bn, (scm_bignum_t)lhs);
@@ -2666,9 +2672,7 @@ arith_logash(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 scm_obj_t
 arith_add(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
-    scm_bignum_rec_t bn;
-    scm_rational_rec_t rn;
-
+    BN_TEMPORARY(bn);
     scm_obj_t real;
     scm_obj_t imag;
 
@@ -2792,9 +2796,7 @@ arith_add(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 scm_obj_t
 arith_sub(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
-    scm_bignum_rec_t bn;
-    scm_rational_rec_t rn;
-
+    BN_TEMPORARY(bn);
     scm_obj_t real;
     scm_obj_t imag;
 
@@ -2911,9 +2913,7 @@ arith_sub(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 scm_obj_t
 arith_mul(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
-    scm_bignum_rec_t bn;
-    scm_rational_rec_t rn;
-
+    BN_TEMPORARY(bn);
     scm_obj_t real;
     scm_obj_t imag;
 
@@ -3043,7 +3043,6 @@ arith_mul(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 scm_obj_t
 arith_div(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
-    scm_rational_rec_t rn;
     scm_obj_t real;
     scm_obj_t imag;
 
@@ -3167,7 +3166,7 @@ flonum_again:
 scm_obj_t
 arith_quotient(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
-    scm_bignum_rec_t bn;
+    BN_TEMPORARY(bn);
     scm_obj_t real;
     scm_obj_t imag;
 
@@ -3297,7 +3296,7 @@ bignum_again:
 scm_obj_t
 arith_remainder(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
-    scm_bignum_rec_t bn;
+    BN_TEMPORARY(bn);
     scm_obj_t real;
     scm_obj_t imag;
 
@@ -3427,7 +3426,7 @@ bignum_again:
 scm_obj_t
 arith_modulo(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
-    scm_bignum_rec_t bn;
+    BN_TEMPORARY(bn);
     scm_obj_t real;
     scm_obj_t imag;
 
@@ -3720,13 +3719,13 @@ arith_sqrt(object_heap_t* heap, scm_obj_t obj)
     if (BIGNUMP(obj)) {
         scm_bignum_t bn = (scm_bignum_t)obj;
         int count = bn_get_count(bn);
-        scm_bignum_rec_t workpad;
+        BN_TEMPORARY(workpad);
         BN_ALLOC(workpad, count);
         bn_set_sign(&workpad, 1);
         memcpy(workpad.elts, bn->elts, sizeof(uint32_t) * count);
         bn_sqrt(heap, &workpad);
         if (bn->elts[0] == workpad.elts[0] * workpad.elts[0]) {
-            scm_bignum_rec_t s2;
+            BN_TEMPORARY(s2);
             BN_ALLOC(s2, bn_get_count(bn));
             bn_set_sign(&s2, 1);
             bn_mul(&s2, &workpad, &workpad);
@@ -3824,7 +3823,7 @@ arith_exact_integer_sqrt(object_heap_t* heap, scm_obj_t obj)
     if (BIGNUMP(obj)) {
         scm_bignum_t bn = (scm_bignum_t)obj;
         int count = bn_get_count(bn);
-        scm_bignum_rec_t workpad;
+        BN_TEMPORARY(workpad);
         BN_ALLOC(workpad, count);
         bn_set_sign(&workpad, 1);
         memcpy(workpad.elts, bn->elts, sizeof(uint32_t) * count);
@@ -3845,6 +3844,15 @@ arith_asin(object_heap_t* heap, scm_obj_t obj)
         return make_flonum(heap, asin((double)FIXNUM(obj)));
     }
     if (COMPLEXP(obj)) {
+        scm_complex_t cn = make_complex(heap, arith_negate(heap, ((scm_complex_t)obj)->imag), ((scm_complex_t)obj)->real);
+        scm_obj_t ans = arith_log(heap,
+                            arith_add(heap,
+                                arith_sqrt(heap,
+                                    arith_sub(heap,
+                                        MAKEFIXNUM(1),
+                                        arith_mul(heap, obj, obj))),
+                                cn));
+/*
         scm_complex_rec_t cn;
         cn.hdr = scm_hdr_complex;
         cn.real = arith_negate(heap, ((scm_complex_t)obj)->imag);
@@ -3856,6 +3864,7 @@ arith_asin(object_heap_t* heap, scm_obj_t obj)
                                         MAKEFIXNUM(1),
                                         arith_mul(heap, obj, obj))),
                                 &cn));
+*/
         if (COMPLEXP(ans)) {
             return make_complex(heap,
                      real_to_double(((scm_complex_t)ans)->imag),
@@ -3901,6 +3910,12 @@ arith_atan(object_heap_t* heap, scm_obj_t obj)
         return make_flonum(heap, atan((double)FIXNUM(obj)));
     }
     if (COMPLEXP(obj)) {
+        scm_complex_t cn = make_complex(heap, arith_negate(heap, ((scm_complex_t)obj)->imag), ((scm_complex_t)obj)->real);
+        scm_obj_t ans = arith_log(heap,
+                            arith_div(heap,
+                                arith_add(heap, MAKEFIXNUM(1), cn),
+                                arith_sub(heap, MAKEFIXNUM(1), cn)));
+/*
         scm_complex_rec_t cn;
         cn.hdr = scm_hdr_complex;
         cn.real = arith_negate(heap, ((scm_complex_t)obj)->imag);
@@ -3909,6 +3924,7 @@ arith_atan(object_heap_t* heap, scm_obj_t obj)
                             arith_div(heap,
                                 arith_add(heap, MAKEFIXNUM(1), &cn),
                                 arith_sub(heap, MAKEFIXNUM(1), &cn)));
+*/
         if (COMPLEXP(ans)) {
             return make_complex(heap,
                      0.5 * real_to_double(((scm_complex_t)ans)->imag),
@@ -4014,7 +4030,7 @@ cnvt_to_exact(object_heap_t* heap, scm_obj_t obj)
             if (exp == 0) return int64_to_integer(heap, (sign > 0 ? mant : -mant));
             if (exp > 0) {
                 int count = 2 + (exp / 32) + 1;
-                scm_bignum_rec_t bn;
+                BN_TEMPORARY(bn);
                 BN_ALLOC(bn, count);
                 memset(bn.elts,0 ,sizeof(uint32_t) * count);
                 bn.elts[0] = (uint32_t)mant;
@@ -4025,7 +4041,7 @@ cnvt_to_exact(object_heap_t* heap, scm_obj_t obj)
                 return bn_dup(heap, &bn);
             }
             int count = (-exp / 32) + 1;
-            scm_bignum_rec_t bn;
+            BN_TEMPORARY(bn);
             BN_ALLOC(bn, count);
             memset(bn.elts, 0, sizeof(uint32_t) * count);
             bn.elts[0] = 1;
@@ -4053,7 +4069,7 @@ small_bignum_to_string(object_heap_t* heap, scm_bignum_t bn, int radix, char* bu
     // todo: handle string buffer overflow
     int workpad_count = bn_get_count(bn);
     if (workpad_count) {
-        scm_bignum_rec_t workpad;
+        BN_TEMPORARY(workpad);
         BN_ALLOC(workpad, workpad_count);
         memcpy(workpad.elts, bn->elts, sizeof(uint32_t) * workpad_count);
         int i = buf_size - 1;
@@ -4103,7 +4119,7 @@ cnvt_bignum_to_string(object_heap_t* heap, scm_bignum_t bn, int radix)
         }
         scm_port_t port = make_bytevector_port(heap, make_symbol(heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
         scoped_lock lock(port->lock);
-        scm_bignum_rec_t workpad;
+        BN_TEMPORARY(workpad);
         BN_ALLOC(workpad, workpad_count);
         memcpy(workpad.elts, bn->elts, sizeof(uint32_t) * workpad_count);
         if (radix == 10) {
@@ -4363,8 +4379,8 @@ cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
     }
 
     // generate
-    scm_bignum_rec_t bn_q;
-    scm_bignum_rec_t bn_s;
+    BN_TEMPORARY(bn_q);
+    BN_TEMPORARY(bn_s);
     BN_ALLOC(bn_q, 1);
     BN_ALLOC(bn_s, 1);
 loop:
@@ -4646,7 +4662,7 @@ parse_ubignum(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
     const char* p = s;
     int digit_count = 0;
     int workpad_count = BN_QUANTUM;
-    scm_bignum_rec_t workpad;
+    BN_TEMPORARY(workpad);
     BN_ALLOC(workpad, workpad_count);
     bn_set_sign(&workpad, 0);
     memset(workpad.elts, 0, sizeof(uint32_t) * workpad_count);
@@ -4675,8 +4691,9 @@ parse_ubignum(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
 #endif
             digit_count++;
             if (digit < radix) {
-                scm_bignum_rec_t bn1 = workpad;
-                scm_bignum_rec_t bn2 = workpad;
+                BN_TEMPORARY(bn1);
+                BN_TEMPORARY(bn2);
+                bn1 = bn2 = workpad;
                 bn_set_count(&bn1, workpad_count - 1);
                 bn_mul_add_uint32(&bn2, &bn1, radix, digit);
                 if (workpad.elts[workpad_count - 1] == 0) continue;
@@ -4907,7 +4924,7 @@ parse_mantissa(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans, in
     bool fraction = false;
     const char* p = s;
     int workpad_count = BN_QUANTUM;
-    scm_bignum_rec_t workpad;
+    BN_TEMPORARY(workpad);
     BN_ALLOC(workpad, workpad_count);
     bn_set_sign(&workpad, 0);
     memset(workpad.elts, 0, sizeof(uint32_t) * workpad_count);
@@ -4949,8 +4966,9 @@ parse_mantissa(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans, in
             if (digit < radix) {
                 if (fraction) *fraction_count = *fraction_count + 1;
                 *digit_count = *digit_count + 1;
-                scm_bignum_rec_t bn1 = workpad;
-                scm_bignum_rec_t bn2 = workpad;
+                BN_TEMPORARY(bn1);
+                BN_TEMPORARY(bn2);
+                bn1 = bn2 = workpad;
                 bn_set_count(&bn1, workpad_count - 1);
                 bn_mul_add_uint32(&bn2, &bn1, radix, digit);
                 if (workpad.elts[workpad_count - 1] == 0) continue;
@@ -5034,12 +5052,12 @@ parse_digits:
                 count++;
             }
         }
-        scm_bignum_rec_t bn;
+        BN_TEMPORARY(bn);
         BN_ALLOC(bn, count);
         memset(bn.elts,0 ,sizeof(uint32_t) * count);
         bn_set_sign(&bn, 1);
         bn.elts[0] = 1;
-        scm_bignum_rec_t workpad;
+        BN_TEMPORARY(workpad);
         while (exp10 >= 9) {
             bn_set_count(&bn, count);
             workpad = bn;
@@ -5067,13 +5085,13 @@ parse_digits:
                 count++;
             }
         }
-        scm_bignum_rec_t bn;
+        BN_TEMPORARY(bn);
         BN_ALLOC(bn, count);
         memset(bn.elts,0 ,sizeof(uint32_t) * count);
         bn_set_sign(&bn, 1);
         assert(count > bn_get_count(mantissa));
         memcpy(bn.elts, mantissa->elts, sizeof(uint32_t) * bn_get_count(mantissa));
-        scm_bignum_rec_t workpad;
+        BN_TEMPORARY(workpad);
         while (exp10 >= 9) {
             bn_set_count(&bn, count);
             workpad = bn;
