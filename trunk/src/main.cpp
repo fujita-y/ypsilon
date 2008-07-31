@@ -137,6 +137,7 @@ static int opt_heap_limit(int argc, char* const argv[])
         printf("sizeof(foo) %d\n", sizeof(foo)); // 1
         printf("sizeof(bar) %d\n", sizeof(bar)); // 8
         printf("sizeof(hoge) %d\n", sizeof(hoge));
+        printf("sizeof(bool) %d\n", sizeof(bool));
         printf("sizeof(size_t) %d\n", sizeof(size_t));
         printf("__alignof__(double) %d\n", __alignof__(double)); // 8
         printf("FIXNUM_MAX %d %x\n", FIXNUM_MAX, FIXNUM_MAX);

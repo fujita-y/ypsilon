@@ -2,6 +2,8 @@
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
+(define auto-compile-cache-validation-signature 'ypsilon-0.9.6)
+  
 (define core-eval
   (lambda (form)
     (parameterize ((backtrace #f))
@@ -31,23 +33,6 @@
     (parse-imports `(environment ,@ref) ref)
     (tuple 'type:eval-environment `,ref)))
 
-#;(define eval
-  (lambda (expr env)
-    (cond ((environment? env)
-           (parameterize ((current-environment env))
-             (interpret expr)))
-          (else
-           (or (eq? (tuple-ref env 0) 'type:eval-environment)
-               (assertion-violation 'eval (format "expected environment, but got ~r, as argument 2" env)))
-           (interpret `(begin
-                         (library (.&ANONYMOUS)
-                           (export .&RESULT)
-                           (import (rename (only (core intrinsics) define) (define .&DEFINE))
-                                   ,@(tuple-ref env 1))
-                           (.&DEFINE .&RESULT ,expr))
-                         (let ((result ,(generate-global-id (generate-library-id '(.&ANONYMOUS)) '.&RESULT)))
-                           (.unintern-scheme-library ',(generate-library-id '(.&ANONYMOUS)))
-                           result)))))))
 (define eval
   (lambda (expr env)
     (cond ((environment? env)
@@ -277,9 +262,10 @@
                                         (lambda (timestamp-port)
                                           (let* ((cache-timestamp (get-datum timestamp-port))
                                                  (source-timestamp (get-datum timestamp-port))
-                                                 (source-path (get-datum timestamp-port)))
+                                                 (source-path (get-datum timestamp-port))
+                                                 (cache-signature (get-datum timestamp-port)))
                                             (close-port timestamp-port)
-                                            (cond ((not (and (number? cache-timestamp) (number? source-timestamp) (string? source-path) (file-exists? source-path)))
+                                            (cond ((not (and (number? cache-timestamp) (number? source-timestamp) (string? source-path) (eq? cache-signature auto-compile-cache-validation-signature) (file-exists? source-path)))
                                                    (inconsistent-cache-state cache-lst))
                                                   ((= (stat-mtime source-path) source-timestamp)
                                                    (loop (cdr lst) expiration))
@@ -344,16 +330,6 @@
                                         (run-vmi (cons '(1 . 0) code))
                                         (loop)))))))))))))))
 
-#;      (define locate-source
-        (lambda (ref)
-          (let ((path (symbol-list->string ref "/")))
-            (or (any1 (lambda (base)
-                        (let ((maybe-path (format "~a/~a.scm" base path)))
-                          (and (file-exists? maybe-path) maybe-path)))
-                      (scheme-library-paths))
-                (and vital
-                     (error 'load-scheme-library (format "~s not found in scheme-library-paths: ~s" path (scheme-library-paths))))))))
-
       (define locate-source
         (lambda (ref)
           (let ((path (symbol-list->string ref "/")))
@@ -401,5 +377,5 @@
                               (let ((timestamp-path (string-append cache-path ".time")))
                                 (call-with-port
                                     (make-file-output-port timestamp-path)
-                                    (lambda (output) (format output "~s ~s ~s" (microsecond) (stat-mtime source-path) source-path)))))))
+                                    (lambda (output) (format output "~s ~s ~s ~s" (microsecond) (stat-mtime source-path) source-path auto-compile-cache-validation-signature)))))))
                       (load source-path))))))))

@@ -413,7 +413,7 @@
         (format #t "  --verbose (-v)         prints load and compile activities~%")
         (format #t "  --warning (-w)         prints warnings~%")
         (format #t "  --interactive (-i)     enters repl after running the script file~%")
-        (format #t "  --r6rs (-6)            conforms r6rs lexical syntax (default)~%")
+        (format #t "  --r6rs (-6)            conforms r6rs top-level program syntax~%")
         (format #t "  --compatible (-c)      extends lexical syntax for compatibility~%")
         (format #t "  --sitelib=path         adds sitelib path (YPSILON_SITELIB)~%")
         (format #t "  --loadpath=path        adds load search path (YPSILON_LOADPATH)~%")
@@ -428,7 +428,7 @@
 
     (define show-banner
       (lambda ()
-        (put-string (current-output-port) "Ypsilon 0.9.5-trunk Copyright (c) 2008 Y.Fujita, LittleWing Company Limited.\n")))
+        (put-string (current-output-port) "Ypsilon 0.9.6 Copyright (c) 2008 Y.Fujita, LittleWing Company Limited.\n")))
 
     (define show-info
       (lambda ()
@@ -456,6 +456,7 @@
                     (flush-output-port (current-output-port))
                     (default-exception-handler c exec-repl))
                   (lambda ()
+                    (auto-compile-cache-update)
                     (load path))))
                 (else
                  (with-exception-handler
@@ -519,7 +520,6 @@
                             ((opt? "--heap-limit" #t) (loop (cdr lst)))
                             ((opt? "--no-letrec-check" #f)
                              (format (current-error-port) "** WARNING: '--no-letrec-check' option is deprecated~%")
-                             ;(no-letrec-check #t)
                              (loop (cdr lst)))
                             ((or (opt? "--warning" #f) (opt? "-w" #f))
                              (warning-level #t)
@@ -608,4 +608,3 @@
                              (set! script #t)
                              (exec-script lst)
                              (and interaction (exec-repl))))))))))))
-

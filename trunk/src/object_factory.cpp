@@ -22,13 +22,12 @@ make_symbol(object_heap_t* heap, const char *name, int len)
         int bytes = sizeof(scm_symbol_rec_t) + len + 1;
         if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
             obj = (scm_symbol_t)heap->allocate_collectible(bytes);
-            obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) ;
             obj->name = (char*)((uintptr_t)obj + sizeof(scm_symbol_rec_t));
         } else {
             obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
-            obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) ;
             obj->name = (char*)heap->allocate_private(len + 1);
         }
+        obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) ;
         memcpy(obj->name, name, len);
         obj->name[len] = 0;
         heap->m_symbol.put(obj);
@@ -41,27 +40,6 @@ scm_symbol_t
 make_symbol(object_heap_t* heap, const char *name)
 {
     return make_symbol(heap, name, strlen(name));
-    /*
-    heap->m_symbol.lock();
-    int len = strlen(name);
-    scm_symbol_t obj = (scm_symbol_t)heap->m_symbol.get(name, len);
-    if (obj == scm_undef) {
-        int bytes = sizeof(scm_symbol_rec_t) + len + 1;
-        if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
-            obj = (scm_symbol_t)heap->allocate_collectible(bytes);
-            obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) ;
-            obj->name = (char*)((uintptr_t)obj + sizeof(scm_symbol_rec_t));
-        } else {
-            obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
-            obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) ;
-            obj->name = (char*)heap->allocate_private(len);
-        }
-        strcpy(obj->name, name);
-        heap->m_symbol.put(obj);
-    }
-    heap->m_symbol.unlock();
-    return obj;
-    */
 }
 
 scm_symbol_t
@@ -90,9 +68,16 @@ scm_string_t
 make_string(object_heap_t* heap, const char *name, int len)
 {
     if (len == 0) return (scm_string_t)heap->m_inherents[NIL_STRING];
-    scm_string_t obj = (scm_string_t)heap->allocate_collectible(sizeof(scm_string_rec_t));
+    scm_string_t obj;
+    int bytes = sizeof(scm_string_rec_t) + len + 1;
+    if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+        obj = (scm_string_t)heap->allocate_collectible(bytes);
+        obj->name = (char*)((uintptr_t)obj + sizeof(scm_string_rec_t));
+    } else {        
+        obj = (scm_string_t)heap->allocate_collectible(sizeof(scm_string_rec_t));
+        obj->name = (char*)heap->allocate_private(len + 1);
+    }
     obj->hdr = scm_hdr_string | (len << HDR_STRING_SIZE_SHIFT);
-    obj->name = (char*)heap->allocate_private(len + 1);
     memcpy(obj->name, name, len);
     obj->name[len] = 0;
     return obj;
@@ -110,11 +95,15 @@ make_string_literal(object_heap_t* heap, const char* name, int len)
     heap->m_string.lock();
     scm_string_t obj = (scm_string_t)heap->m_string.get(name, len);
     if (obj == scm_undef) {
-        obj = (scm_string_t)heap->allocate_collectible(sizeof(scm_string_rec_t));
-        obj->hdr = scm_hdr_string
-                    | (len << HDR_STRING_SIZE_SHIFT)
-                    | (1 << HDR_STRING_LITERAL_SHIFT);
-        obj->name = (char*)heap->allocate_private(len + 1);
+        int bytes = sizeof(scm_string_rec_t) + len + 1;
+        if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+            obj = (scm_string_t)heap->allocate_collectible(bytes);
+            obj->name = (char*)((uintptr_t)obj + sizeof(scm_string_rec_t));
+        } else {
+            obj = (scm_string_t)heap->allocate_collectible(sizeof(scm_string_rec_t));
+            obj->name = (char*)heap->allocate_private(len + 1);
+        }
+        obj->hdr = scm_hdr_string | (len << HDR_STRING_SIZE_SHIFT) | (1 << HDR_STRING_LITERAL_SHIFT);
         memcpy(obj->name, name, len);
         obj->name[len] = 0;
         heap->m_string.put(obj);

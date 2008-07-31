@@ -1154,7 +1154,13 @@ subr_string_fill(VM* vm, int argc, scm_obj_t argv[])
                 int ucs4 = CHAR(argv[1]);
                 int len = utf8_string_length(string);
                 int bsize = len * utf8_sizeof_ucs4(ucs4);
-                if (vm->m_heap->allocated_size((uint8_t*)string->name) < bsize + 1) {
+                int limit = vm->m_heap->allocated_size((uint8_t*)string->name);
+                bool compound = false;
+                if (string->name == (char*)((uintptr_t)string + sizeof(scm_string_rec_t))) {
+                    limit = limit - sizeof(scm_string_rec_t);
+                    compound = true;
+                }                
+                if (limit < bsize + 1) {
                     scm_hdr_t hdr2 = scm_hdr_string | (bsize << HDR_STRING_SIZE_SHIFT);
                     if (HDR_STRING_SIZE(hdr2) != bsize) {
                         invalid_argument_violation(vm, "string-fill!", "too many elements in string", NULL, 0, 0, NULL);
@@ -1165,7 +1171,7 @@ subr_string_fill(VM* vm, int argc, scm_obj_t argv[])
                     datum2[bsize] = 0;
                     string->name = (char*)datum2;
                     string->hdr = hdr2;
-                    vm->m_heap->deallocate_private(prev);
+                    if (!compound) vm->m_heap->deallocate_private(prev);
                 } else {
                     string->hdr = scm_hdr_string | (bsize << HDR_STRING_SIZE_SHIFT);
                 }
