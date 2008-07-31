@@ -167,7 +167,6 @@ object_heap_t::allocated_size(void* obj)
 {
     assert(in_heap(obj));
     if (in_slab(obj)) {
-        assert(!is_collectible(obj));
         object_slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
         return cache->m_object_size;
     } else {

@@ -229,9 +229,8 @@ bool
 utf8_string_set(object_heap_t* heap, scm_string_t obj, int index, int ch)
 {
     uint8_t* datum = (uint8_t*)obj->name;
-    int limit = heap->allocated_size(datum);
     int size_prev = HDR_STRING_SIZE(obj->hdr);
-    int offset = utf8_char_index_to_byte_offset(datum, index, (limit < size_prev) ? limit : size_prev);
+    int offset = utf8_char_index_to_byte_offset(datum, index, size_prev);
     if (offset < 0) return false;
     uint8_t utf8[4];
     int n_new = cnvt_ucs4_to_utf8(ch, utf8);
@@ -247,6 +246,12 @@ utf8_string_set(object_heap_t* heap, scm_string_t obj, int index, int ch)
         obj->hdr = scm_hdr_string | (size_new << HDR_STRING_SIZE_SHIFT);
         datum[size_new] = 0;
         return true;
+    }
+    int limit = heap->allocated_size(datum);
+    bool compound = false;
+    if (datum == (uint8_t*)((uintptr_t)obj + sizeof(scm_string_rec_t))) {
+        limit = limit - sizeof(scm_string_rec_t);
+        compound = true;
     }
     int size_new = size_prev + n_new - n_prev;
     if (limit > size_new) {
@@ -266,7 +271,7 @@ utf8_string_set(object_heap_t* heap, scm_string_t obj, int index, int ch)
         uint8_t* prev = (uint8_t*)obj->name;
         obj->name = (char*)datum2;
         obj->hdr = hdr2;
-        heap->deallocate_private(prev);
+        if (!compound) heap->deallocate_private(prev);
         return true;
     }
     return false;

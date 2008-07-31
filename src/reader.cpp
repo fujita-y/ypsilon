@@ -363,7 +363,7 @@ reader_t::read_prefixed_number(int exactness, int radix, bool swap)
     scm_obj_t obj = parse_number(m_vm->m_heap, buf, exactness, radix);
     if (obj != scm_false) return obj;
     if (exactness) {
-        if (radix) {
+        if (radix > 32) {
             if (swap) lexical_error("invalid lexical syntax #%c#%c%s while reading number", radix, exactness, buf);
             lexical_error("invalid lexical syntax #%c#%c%s while reading number", exactness, radix, buf);
         }

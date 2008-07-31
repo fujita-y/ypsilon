@@ -177,6 +177,12 @@ printer_t::write_r6rs_symbol(const uint8_t* utf8, int n)
         } else {
             // ... 
             if (i == 0) {
+                if (n == 1) {
+                    if (utf8[0] == '+' || utf8[0] == '-') {
+                        port_put_byte(m_port, utf8[0]);
+                        return;
+                    }
+                }
                 if (n == 3) {
                     if (utf8[0] == '.' && utf8[1] == '.' && utf8[2] == '.') {
                         port_puts(m_port, "...");
@@ -828,7 +834,6 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
         case TC_TUPLE: {
             scm_tuple_t tuple = (scm_tuple_t)obj;            
             int n = HDR_TUPLE_COUNT(tuple->hdr);
-#ifdef NDEBUG
             {
                 if (TUPLEP(tuple->elts[0])) {
                     const char* type_name = get_tuple_type_name(tuple->elts[0]);
@@ -864,7 +869,6 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
                 }
                 const char* type_name = get_tuple_type_name(tuple);
                 if (type_name) {
-                   
 #if !SCDEBUG
                     if (strcmp(type_name, "syntax") == 0) {
                         port_puts(m_port, "#<syntax ");
@@ -911,7 +915,6 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
                     return;
                 }
             }
-    #endif
             if (n == 0) {
                 port_puts(m_port, "#<tuple>");
                 return;

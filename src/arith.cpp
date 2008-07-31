@@ -20,11 +20,7 @@
 
 // note: BN_TEMPORARY may not aligned and BIGNUMP() can not use to it. do not pass it to the function which argument type is scm_obj_t
 
-#ifndef NDEBUG
-  #define BN_TEMPORARY(NAME)      scm_bignum_rec_t NAME; assert((&(NAME) & 7) == 0)
-#else
-  #define BN_TEMPORARY(NAME)      scm_bignum_rec_t NAME
-#endif
+#define BN_TEMPORARY(NAME)      scm_bignum_rec_t NAME
 
 #define BN_ALLOC(VAR, COUNT)                                                        \
             do {                                                                    \
