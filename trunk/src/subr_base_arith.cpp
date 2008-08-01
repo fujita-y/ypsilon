@@ -704,14 +704,18 @@ subr_int_div(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 2) {
         if (real_pred(argv[0])) {
-            if (real_pred(argv[1])) {
-                if (!n_zero_pred(argv[1])) {
-                    return arith_integer_div(vm->m_heap, argv[0], argv[1]);
+            if (n_finite_pred(argv[0])) {
+                if (real_pred(argv[1])) {
+                    if (!n_zero_pred(argv[1])) {
+                        return arith_integer_div(vm->m_heap, argv[0], argv[1]);
+                    }
+                    invalid_argument_violation(vm, "div", "undefined for 0", NULL, 0, argc, argv);
+                    return scm_undef;
                 }
-                invalid_argument_violation(vm, "div", "undefined for 0", NULL, 0, argc, argv);
+                wrong_type_argument_violation(vm, "div", 0, "real", argv[1], argc, argv);
                 return scm_undef;
             }
-            wrong_type_argument_violation(vm, "div", 0, "real", argv[1], argc, argv);
+            wrong_type_argument_violation(vm, "div", 0, "neither infinite nor a NaN", argv[0], argc, argv);
             return scm_undef;
         }
         wrong_type_argument_violation(vm, "div", 0, "real", argv[0], argc, argv);
@@ -729,14 +733,18 @@ subr_int_div0(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 2) {
         if (real_pred(argv[0])) {
-            if (real_pred(argv[1])) {
-                if (!n_zero_pred(argv[1])) {
-                    return arith_integer_div0(vm->m_heap, argv[0], argv[1]);
+            if (n_finite_pred(argv[0])) {
+                if (real_pred(argv[1])) {
+                    if (!n_zero_pred(argv[1])) {
+                        return arith_integer_div0(vm->m_heap, argv[0], argv[1]);
+                    }
+                    invalid_argument_violation(vm, "div0", "undefined for 0", NULL, 0, argc, argv);
+                    return scm_undef;
                 }
-                invalid_argument_violation(vm, "div0", "undefined for 0", NULL, 0, argc, argv);
+                wrong_type_argument_violation(vm, "div0", 0, "real", argv[1], argc, argv);
                 return scm_undef;
             }
-            wrong_type_argument_violation(vm, "div0", 0, "real", argv[1], argc, argv);
+            wrong_type_argument_violation(vm, "div0", 0, "neither infinite nor a NaN", argv[0], argc, argv);
             return scm_undef;
         }
         wrong_type_argument_violation(vm, "div0", 0, "real", argv[0], argc, argv);

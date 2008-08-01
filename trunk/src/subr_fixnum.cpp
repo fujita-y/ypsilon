@@ -414,6 +414,10 @@ subr_fx_div(VM* vm, int argc, scm_obj_t argv[])
 {
     int bad;
     if (argc == 2) {
+        if (argv[1] == MAKEFIXNUM(0)) {
+            invalid_argument_violation(vm, "fxdiv", "undefined for 0", NULL, 0, argc, argv);
+            return scm_undef;
+        }
         if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) return arith_integer_div(vm->m_heap, argv[0], argv[1]);
         bad = FIXNUMP(argv[0]) ? 1 : 0; goto raise_bad;
     }
@@ -431,6 +435,10 @@ subr_fx_div0(VM* vm, int argc, scm_obj_t argv[])
 {
     int bad;
     if (argc == 2) {
+        if (argv[1] == MAKEFIXNUM(0)) {
+            invalid_argument_violation(vm, "fxdiv0", "undefined for 0", NULL, 0, argc, argv);
+            return scm_undef;
+        }
         if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) return arith_integer_div0(vm->m_heap, argv[0], argv[1]);
         bad = FIXNUMP(argv[0]) ? 1 : 0; goto raise_bad;
     }
@@ -676,6 +684,7 @@ subr_fx_arithmetic_shift(VM* vm, int argc, scm_obj_t argv[])
                 else n = fx1 >> (-fx2);
                 if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
                 implementation_restriction_violation(vm, "fxarithmetic-shift", "return value out of fixnum range", intptr_to_integer(vm->m_heap, n), argc, argv);
+                return scm_undef;
             }
             wrong_type_argument_violation(vm, "fxarithmetic-shift", 1, "absolute value less than fixnum width", argv[1], argc, argv);
             return scm_undef;
@@ -703,6 +712,7 @@ subr_fx_arithmetic_shift_left(VM* vm, int argc, scm_obj_t argv[])
                 intptr_t n = fx1 << fx2;
                 if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
                 implementation_restriction_violation(vm, "fxarithmetic-shift-left", "return value out of fixnum range", intptr_to_integer(vm->m_heap, n), argc, argv);
+                return scm_undef;
             }
             wrong_type_argument_violation(vm, "fxarithmetic-shift-left", 1, "non-negative fixnum less than fixnum width", argv[1], argc, argv);
             return scm_undef;
@@ -730,6 +740,7 @@ subr_fx_arithmetic_shift_right(VM* vm, int argc, scm_obj_t argv[])
                 intptr_t n = fx1 >> fx2;
                 if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
                 implementation_restriction_violation(vm, "fxarithmetic-shift-right", "return value out of fixnum range", intptr_to_integer(vm->m_heap, n), argc, argv);
+                return scm_undef;
             }
             wrong_type_argument_violation(vm, "fxarithmetic-shift-right", 1, "non-negative fixnum less than fixnum width", argv[1], argc, argv);
             return scm_undef;
