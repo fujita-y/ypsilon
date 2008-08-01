@@ -30,6 +30,7 @@ bool exact_positive_integer_pred(scm_obj_t obj);
 bool real_valued_pred(scm_obj_t obj);
 bool rational_valued_pred(scm_obj_t obj);
 bool integer_valued_pred(scm_obj_t obj);
+bool n_finite_pred(scm_obj_t obj);
 bool n_zero_pred(scm_obj_t obj);
 bool n_negative_pred(scm_obj_t obj);
 bool n_positive_pred(scm_obj_t obj);
@@ -38,7 +39,6 @@ bool n_exact_pred(scm_obj_t obj);
 bool n_equal_pred(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 bool n_exact_equal_pred(scm_obj_t lhs, scm_obj_t rhs);
 bool n_inexact_equal_pred(scm_obj_t lhs, scm_obj_t rhs);
-bool n_finite_pred(scm_obj_t obj);
 int  n_compare(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 
 uint32_t  n_hash(scm_obj_t obj, uint32_t bound);
