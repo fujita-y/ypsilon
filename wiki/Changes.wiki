@@ -1,5 +1,8 @@
 #summary changes in latest version
-version 0.9.5-trunk:
+version 0.9.6:
+
+  * added `--warning` option
+  * `--no-letrec-check` option is deprecated
 
 version 0.9.5-update2:
   * printer speed improved
@@ -8,7 +11,7 @@ version 0.9.5-update2:
   * [http://code.google.com/p/ypsilon/issues/detail?id=25&can=1 Issue 25]: added new OpenGL example
   * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 26]: added `process` and `process-wait`
   * [http://code.google.com/p/ypsilon/issues/detail?id=27&can=1 Issue 27]: added `system`
-  * added `--heap-limit`, `--dump-condition`, and `--no-letrec-check` options added 
+  * added `--heap-limit`, `--dump-condition`, and `--no-letrec-check` options 
 
 version 0.9.5-update1:
   * [http://code.google.com/p/ypsilon/issues/detail?id=7&can=1 Issue 7]: added library-extensions
