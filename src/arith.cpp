@@ -1844,6 +1844,18 @@ bool real_pred(scm_obj_t obj)
     return false;
 }
 
+bool
+n_finite_pred(scm_obj_t obj)
+{
+    assert(real_pred(obj));
+    if (FLONUMP(obj)) {
+        scm_flonum_t flonum = (scm_flonum_t)obj;
+        if (isinf(flonum->value)) return false;
+        if (isnan(flonum->value)) return false;
+    }
+    return true;
+}
+
 bool real_valued_pred(scm_obj_t obj)
 {
     if (real_pred(obj)) return true;
