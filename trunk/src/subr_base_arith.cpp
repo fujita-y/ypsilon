@@ -1194,8 +1194,7 @@ subr_imag_part(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
         if (COMPLEXP(argv[0])) return ((scm_complex_t)argv[0])->imag;
-        if (FLONUMP(argv[0])) return make_flonum(vm->m_heap, 0.0);
-        if (FIXNUMP(argv[0]) || BIGNUMP(argv[0]) || RATIONALP(argv[0])) return MAKEFIXNUM(0);
+        if (FIXNUMP(argv[0]) || FLONUMP(argv[0]) || BIGNUMP(argv[0]) || RATIONALP(argv[0])) return MAKEFIXNUM(0);
         wrong_type_argument_violation(vm, "imag-part", 0, "number", argv[0], argc, argv);
         return scm_undef;
     }

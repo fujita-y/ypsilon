@@ -31,25 +31,29 @@
 
 (define free-id=?
   (lambda (id1 id2)
-    
-    (define lexical=?
-      (lambda (env s1 s2)
-        (or (eq? s1 s2)
-            (and (eq? (original-id s1) (original-id s2))
-                 (let ((deno1 (env-lookup env s1)) (deno2 (env-lookup env s2)))
-                   (or (eq? s1 deno2)
-                       (eq? deno1 deno2)
-                       (or (eq? s1 deno1) (unbound? deno1))
-                       (or (eq? s2 deno2) (unbound? deno2))))))))
-
-    (or (eq? id1 id2)
-        (let* ((env (current-expansion-environment)) (s1 (lookup-lexical-name id1 env)))
-          (if (symbol? id2) (lexical=? env s1 (lookup-lexical-name id2 env))
-              (cond ((syntax-object-lexname id2)
-                     => (lambda (s2) (eq? s1 s2)))
-                    (else
-                     (let ((s2 (lookup-lexical-name (syntax-object-expr id2) env)))
-                       (if (renamed-id? s1) (eq? s1 s2) (lexical=? env s1 s2))))))))))
+    (let ((env-def (current-transformer-environment)) (env-use (current-expansion-environment)))
+      (let ((n1b (lookup-lexical-name id1 env-def))
+            (n2b (if (symbol? id2)
+                     (lookup-lexical-name id2 env-use)
+                     (lookup-lexical-name (syntax-object-expr id2) env-use))))
+        (if (eq? n1b n2b)
+            (let ((deno-def (env-lookup env-def n1b)) 
+                  (deno-use (env-lookup env-use n2b)))
+              (or (eq? deno-def deno-use) 
+                  (unbound? deno-def)
+                  (unbound? deno-use)))
+            (let ((deno1-def (env-lookup env-def n1b))
+                  (deno2-def (env-lookup env-def n2b))
+                  (deno1-use (env-lookup env-use n1b))
+                  (deno2-use (env-lookup env-use n2b)))
+              (or (and (eq? (original-id n1b) (original-id n2b))
+                       (or (unbound? deno1-def) (eq? deno1-def n1b))
+                       (or (unbound? deno1-use) (eq? deno1-use n1b))
+                       (or (unbound? deno2-def) (eq? deno2-def n2b))
+                       (or (unbound? deno2-use) (eq? deno2-use n2b)))
+                  (and (not (unbound? deno1-def))
+                       (or (eq? deno1-def deno2-def)
+                           (eq? deno1-def deno2-use))))))))))
 
 (define make-import
   (lambda (id)

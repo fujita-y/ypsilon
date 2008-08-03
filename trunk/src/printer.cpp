@@ -17,6 +17,14 @@
 static const char  write_string_escape_codes[] = { 7, 8, 9, 10, 11, 12, 13, 92, 0};
 static const char* write_string_escape_names = "abtnvfr\\";
 
+class r6rs_param_t {
+    printer_t *m_printer;
+    bool m_save;
+public:
+    r6rs_param_t(printer_t* printer, bool mode) { m_printer = printer; m_save = printer->r6rs(mode); }
+    ~r6rs_param_t() { m_printer->r6rs(m_save); }
+};
+    
 printer_t::printer_t(VM* vm, scm_port_t port)
 {
     m_vm = vm;
@@ -832,6 +840,7 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
             return;
         }
         case TC_TUPLE: {
+            r6rs_param_t no_r6rs(this, false);
             scm_tuple_t tuple = (scm_tuple_t)obj;            
             int n = HDR_TUPLE_COUNT(tuple->hdr);
             {
@@ -872,10 +881,7 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
 #if !SCDEBUG
                     if (strcmp(type_name, "syntax") == 0) {
                         port_puts(m_port, "#<syntax ");
-                        bool save_r6rs = m_r6rs;
-                        m_r6rs = false;
                         format("~r", tuple->elts[1]);
-                        m_r6rs = save_r6rs;
                         port_put_byte(m_port, '>');
                         return;
                     }
@@ -1022,11 +1028,9 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
         case TC_CLOSURE: {
             scm_closure_t closure = (scm_closure_t)obj;
 #ifdef NDEBUG
-            bool save_r6rs = m_r6rs;
-            m_r6rs = false;
+            r6rs_param_t no_r6rs(this, false);
             if (closure->doc == scm_nil) format("#<closure 0x%x>", closure);
             else format("#<closure ~s>", closure->doc);
-            m_r6rs = save_r6rs;
 #else
             vm_env_t env = (vm_env_t)closure->env;
             if (env == NULL) {

@@ -21,7 +21,7 @@ public:
     void            ucs4(uint32_t c);
     void            format_va_list(const char* fmt, va_list ap);
     void            column_limit(int limit);
-    void            r6rs(bool flag) { m_r6rs = flag; }
+    bool            r6rs(bool flag) { bool prev = m_r6rs; m_r6rs = flag; return prev; }
 
 private:
     void            write(scm_obj_t ht, scm_obj_t obj);
