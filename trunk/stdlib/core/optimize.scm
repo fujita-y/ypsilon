@@ -399,7 +399,8 @@
                      (for-each (lambda (b)
                                  (core-hashtable-set! ht-variable-letrec (car b) #t)
                                  (core-hashtable-set! ht-variable-binding (car b) (or (cadr b) '(begin #f)))
-                                 (core-hashtable-set! ht-binding-body-common (car b) e2))
+                                 (core-hashtable-set! ht-binding-body-common (car b) e2)
+                                 (or (function? (cadr b)) (core-hashtable-set! ht-variable-pinned (car b) #t)))
                                e1)
 
                      (let ((mutual-body (map (lambda (b) (or (cadr b) '(begin #f))) e1)))
@@ -412,7 +413,7 @@
                                             (not (and (top-level-bound? x)
                                                       (eq? (top-level-value x) denote-call/cc)))))
                                       inits-free)
-                             (for-each (lambda (x) (core-hashtable-set! ht-variable-pinned x #t)) (map car e1)))
+                             (for-each (lambda (x) (core-hashtable-set! ht-variable-pinned x #t)) (map car e1)))       
                          (collect-context-seq e2 bound inits-free)))))
                   (_ (assertion-violation "coreform-optimize" (format "internal inconsistency in ~s" collect-context) form))))
 

@@ -6,7 +6,7 @@
 (library (ffi)
 
   (export c-function c-argument
-          on-windows on-darwin on-linux on-posix)
+          on-windows on-darwin on-linux on-freebsd on-posix)
 
   (import (core primitives)
           (core syntax-case)
@@ -16,6 +16,7 @@
   (define on-windows (and (string-contains (architecture-feature 'operating-system) "windows") #t))
   (define on-darwin  (and (string-contains (architecture-feature 'operating-system) "darwin")  #t))
   (define on-linux   (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
+  (define on-freebsd (and (string-contains (architecture-feature 'operating-system) "freebsd") #t))
   (define on-posix   (not on-windows))
   
   (define assert-int

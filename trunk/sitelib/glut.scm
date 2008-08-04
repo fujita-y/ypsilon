@@ -181,6 +181,7 @@
   (define libGLUT (cond (on-darwin  (load-shared-object "GLUT.framework/GLUT"))
                         (on-windows (load-shared-object "glut32.dll"))
                         (on-linux   (load-shared-object "libglut.so.3"))
+                        (on-freebsd (load-shared-object "libglut.so.4"))
                         (else       (assertion-violation #f "can not locate GLUT library, unknown operating system"))))
 
   ;; Display mode bit masks.
