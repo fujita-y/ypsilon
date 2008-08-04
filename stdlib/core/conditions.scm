@@ -33,10 +33,7 @@
         ((_ condition-type supertype
             constructor predicate
             (cond-fields cond-accessors) ...)
-         (with-syntax (((rec-accessors ...)
-                        (map (lambda (a)
-                               (datum->syntax #'condition-type (string->symbol (format "~a-~a" (syntax->datum #'condition-type) (syntax->datum a)))))
-                             (syntax (cond-fields ...)))))
+         (with-syntax (((rec-accessors ...) (generate-temporaries (syntax (cond-fields ...)))))
            (syntax (begin
                      (define-record-type (condition-type constructor temp)
                        (parent supertype)
@@ -44,4 +41,6 @@
                      (define predicate
                        (condition-predicate (record-type-descriptor condition-type)))
                      (define cond-accessors
-                       (condition-accessor (record-type-descriptor condition-type) rec-accessors)) ...))))))) )
+                       (condition-accessor (record-type-descriptor condition-type) rec-accessors)) ...)))))))
+  
+  ) ;[end]

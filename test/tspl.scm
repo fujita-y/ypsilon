@@ -1173,7 +1173,7 @@
 (test-equal (imag-part 3+4i)  4)
 (test-equal (imag-part -2.3+0.7i)  0.7)
 (test-equal (imag-part -i)  -1)
-(test-equal (imag-part 17.2)  0.0)
+(test-equal (imag-part 17.2)  0) ;; was (test-equal (imag-part 17.2)  0.0) for r5rs
 (test-equal (imag-part -17/100)  0)
 
 (SECTION 6 4 "make-rectangular")

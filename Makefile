@@ -36,6 +36,18 @@ ifneq (, $(findstring Linux, $(UNAME)))
   SRCS += ffi_stub_linux.s
 endif
 
+ifneq (, $(findstring FreeBSD, $(UNAME)))
+  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native')), )
+    CXXFLAGS += -m32 -march=i686
+  else
+    CXXFLAGS += -m32 -march=native
+  endif
+  CPPFLAGS += -D__LITTLE_ENDIAN__
+  ASFLAGS = --32
+  LDFLAGS = -m32 -pthread
+  SRCS += ffi_stub_linux.s
+endif
+
 ifneq (, $(findstring Darwin, $(UNAME)))
   CXXFLAGS += -arch i386
   SRCS += ffi_stub_darwin.s

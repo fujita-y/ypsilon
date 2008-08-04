@@ -267,6 +267,8 @@
 
   (define iota
     (lambda (n . opt)
+      (or (and (number? n) (exact? n) (>= n 0))
+          (assertion-violation 'iota (format "expected non-negative exact integer, but got ~u as argument 1" n) (cons n opt)))
       (let-optionals opt ((start 0) (step 1))
         (let loop ((n (- n 1)) (lst '()))
           (cond ((< n 0) lst)
@@ -274,6 +276,8 @@
 
   (define make-list
     (lambda (n . opt)
+      (or (and (number? n) (exact? n) (>= n 0))
+          (assertion-violation 'make-list (format "expected non-negative exact integer, but got ~u as argument 1" n) (cons n opt)))
       (let-optionals opt ((fill #f))
         (let loop ((lst '()) (n n))
           (cond ((<= n 0) lst)

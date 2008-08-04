@@ -1242,6 +1242,7 @@
   (define libGL (cond (on-darwin  (load-shared-object "OpenGL.framework/OpenGL"))
                       (on-windows (load-shared-object "opengl32.dll"))
                       (on-linux   (load-shared-object "libGL.so.1"))
+                      (on-freebsd (load-shared-object "libGL.so.1"))
                       (else       (assertion-violation #f "can not locate OpenGL library, unknown operating system"))))
   
   ;;;; Boolean values
