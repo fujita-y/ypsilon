@@ -178,7 +178,9 @@
 (define bind-ellipsis-n
   (lambda (expr pat lites n vars evars)
     (if (= n 0)
-        (union-vars vars evars)
+        (if (null? evars)
+            (bind-null-ellipsis pat lites vars)
+            (union-vars vars evars))
         (bind-ellipsis-n (cdr expr) pat lites (- n 1) vars
                          (bind-pattern (car expr) (car pat) lites evars)))))
 
