@@ -2,6 +2,24 @@
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
+(define annotate-bindings
+  (lambda (vars inits env)
+    (for-each (lambda (var init)
+                (and (pair? init)
+                     (denote-lambda? env (car init))
+                     (set-closure-comment! init (original-id var))))
+              vars inits)))
+
+(define warning-contract-violation
+  (lambda (form inits lst)
+    (for-each
+     (lambda (var)
+       (display-warning
+        (format "warning: binding construct may attempt to reference uninitialized variable ~u" var)
+        form
+        (any1 (lambda (e) (and (check-rec-contract-violation (list var) e) e)) inits)))
+     lst)))
+
 (define expand-let
   (lambda (form env)
     (destructuring-match form
@@ -29,11 +47,7 @@
              (cond ((null? body)
                     (syntax-violation (car form) "empty body" form))
                    (else
-                    (for-each (lambda (init var)
-                                (and (pair? init)
-                                     (denote-lambda? env (car init))
-                                     (set-closure-comment! init (original-id var))))
-                              inits vars)
+                    (annotate-bindings vars inits env)
                     (annotate `(let ,(map list renames inits) ,@body) form)))))))
       (_
        (syntax-violation (car form) "expected bindings and body" form)))))
@@ -54,20 +68,14 @@
                   (env (extend-env (map cons vars renames) env)))
              (let ((inits (map (lambda (a) (expand-form (cadr a) env)) bindings))
                    (body (expand-body form (cddr form) env)))
+               (annotate-bindings vars inits env)
                (cond ((null? body) (syntax-violation (car form) "empty body" form))
+                     ((check-rec*-contract-violation renames inits)
+                      => (lambda (lst)
+                           (and (warning-level) (warning-contract-violation form inits lst))
+                           (annotate `(letrec* ,(map list renames inits) ,@body) form)))
                      (else
-                      (cond ((and (warning-level) (check-rec*-contract-violation renames inits))
-                             => (lambda (lst)
-                                  (for-each
-                                   (lambda (var)
-                                     (display-warning
-                                      (format "warning: binding construct may attempt to reference uninitialized variable ~u" var)
-                                      form
-                                      (any1 (lambda (e) (and (check-rec-contract-violation (list var) e) e)) inits)))
-                                   lst))))
-                      (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form))))))))
-      (_
-       (syntax-violation (car form) "expected bindings and body" form)))))
+                      (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form)))))))))))
 
 (define expand-letrec
   (lambda (form env)
@@ -84,25 +92,17 @@
                   (env (extend-env (map cons vars renames) env)))
              (let ((inits (map (lambda (a) (expand-form (cadr a) env)) bindings))
                    (body (expand-body form (cddr form) env)))
+               (annotate-bindings vars inits env)
                (cond ((null? body) (syntax-violation (car form) "empty body" form))
-                     (else
-                      (cond ((and (warning-level) (check-rec-contract-violation renames inits))
-                             => (lambda (lst)
-                                  (for-each
-                                   (lambda (var)
-                                     (display-warning
-                                      (format "warning: binding construct may attempt to reference uninitialized variable ~u" var)
-                                      form
-                                      (any1 (lambda (e) (and (check-rec-contract-violation (list var) e) e)) inits)))
-                                   lst))))
-                      (if (every1 (lambda (e) (or (not (pair? e)) (denote-lambda? env (car e)))) inits)
-                          (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form)
-                          (let ((temps (map (lambda (_) (generate-temporary-symbol)) bindings)))
-                            `(let ,(map (lambda (e) (list e '.&UNDEF)) renames)
-                               (let ,(map list temps inits)
-                                 ,@(map (lambda (lhs rhs) `(set! ,lhs ,rhs)) renames temps) ,@body)))))))))))
-      (_
-       (syntax-violation (car form) "expected bindings and body" form)))))
+                     ((check-rec-contract-violation renames inits)
+                      => (lambda (lst)
+                           (and (warning-level) (warning-contract-violation form inits lst)))))
+               (if (every1 (lambda (e) (if (pair? e) (denote-lambda? env (car e)) (not (symbol? e)))) inits)
+                   (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form)
+                   (let ((temps (map (lambda (_) (generate-temporary-symbol)) bindings)))
+                     `(let ,(map (lambda (e) (list e '.&UNDEF)) renames)
+                        (let ,(map list temps inits)
+                          ,@(map (lambda (lhs rhs) `(set! ,lhs ,rhs)) renames temps) ,@body))))))))))))
 
 (define expand-let*
   (lambda (form env)
