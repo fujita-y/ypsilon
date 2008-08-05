@@ -1512,10 +1512,6 @@ APPLY_CONT: {
             if (cont->wind_rec == scm_unspecified || cont->wind_rec == m_current_dynamic_wind_record) {
                 int argc = m_sp - m_fp;
                 m_cont = cont->cont;
-                if (argc == 0) {
-                    m_value = scm_unspecified;
-                    goto pop_cont;
-                }
                 if (argc == 1) {
                     m_value = *m_fp;
                     goto pop_cont;
@@ -1540,10 +1536,6 @@ APPLY_CONT: {
             int argc = m_sp - m_fp;
             scm_cont_t cont = (scm_cont_t)m_value;
             m_cont = cont->cont;
-            if (argc == 0) {
-                m_value = scm_unspecified;
-                goto pop_cont;
-            }
             if (argc == 1) {
                 m_value = *m_fp;
                 goto pop_cont;
