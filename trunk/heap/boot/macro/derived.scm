@@ -239,10 +239,11 @@
                             `(.BEGIN ,@expr)
                             (syntax-violation (car form) "misplaced else" form clause)))
                        ((test (? =>? _) ((? lambda? _) (a) expr ...))
-                        `(.LET ((,a ,test))
-                               (.IF ,a
-                                    (.LET () ,@expr)
-                                    ,(loop (cdr lst)))))
+                        (let ((temp (generate-temporary-symbol)))
+                          `(.LET ((,temp ,test))
+                                 (.IF ,temp
+                                      (.LET ((,a ,temp)) ,@expr)
+                                      ,(loop (cdr lst))))))
                        ((test (? =>? _) result)
                         (let ((temp (generate-temporary-symbol)))
                           `(.LET ((,temp ,test))
