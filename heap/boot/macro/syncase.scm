@@ -223,8 +223,10 @@
 
     (if (null? template)
         (make-syntax-object '() '() #f)
-        (let* ((env-def
-                (current-transformer-environment))
+        (let* ((env-use
+                (current-expansion-environment))
+               (env-def
+                (current-transformer-environment))            
                (suffix
                 (current-rename-count))
                (aliases
@@ -243,10 +245,24 @@
                                         (cond ((assq id lexname-check-list)
                                                => (lambda (e)
                                                     (cond ((eq? (lookup-lexical-name id env-def) (cdr e)) #f)
+                                                          ((and (local-macro-symbol? (cdr e))
+                                                                (macro? (env-lookup env-use (car e)))
+                                                                (local-macro-symbol? (lookup-lexical-name (car e) env-use)))
+                                                           #f)
+#|                                                                
+                                                           (format #t "(env-lookup envuse (car e)) ~r :~r~%" 
+                                                                   (car e)(env-lookup (current-expansion-environment)
+                                                                                      (car e))) ; macro
+                                                           (format #t "(lookup-lexical-name envuse (car e)) ~r :~r~%" 
+                                                                   (car e)(lookup-lexical-name (car e) 
+                                                                                               (current-expansion-environment))) ; local-macro
+                                                           
+                                                           #f)
+|#
                                                           (else (cons (cdr a) (make-out-of-context template))))))
                                               (else #f))))
                                     aliases))))))
-          (if (null? (current-expansion-environment))
+          (if (null? env-use)
               (let ((form (transcribe-template template ranks vars aliases #f)))
                 (if (renamed-id? form)
                     (make-syntax-object form (or (assq form renames) '()) identifier-lexname)

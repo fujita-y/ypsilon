@@ -57,7 +57,11 @@
   (lambda (id)
     (let ((count (current-temporary-count)))
       (current-temporary-count (+ count 1))
-      (string->symbol (format ".local-macro-~a.~a~a~a" count id (current-rename-delimiter) (current-rename-count))))))
+      (string->symbol (format ".LOCAL-MACRO-~a.~a~a~a" count id (current-rename-delimiter) (current-rename-count))))))
+
+(define local-macro-symbol?
+  (lambda (id)
+    (eq? (symbol-contains id ".LOCAL-MACRO-") 0)))
 
 (define fresh-rename-count
   (lambda ()
