@@ -341,11 +341,10 @@
                              (else
                               (core-hashtable-set! ht-imports (car a) (cdr a)))))
                      imports)
-           (let* ((ht-env (make-shield-id-table body)) (ht-libenv (core-hashtable-copy ht-env #t)))
+           (let ((ht-env (make-shield-id-table body)) (ht-libenv (make-core-hashtable)))
              (for-each (lambda (a)
                          (core-hashtable-set! ht-env (car a) (cdr a))
-                         (and (core-hashtable-contains? ht-libenv (car a))
-                              (core-hashtable-set! ht-libenv (car a) (cdr a))))
+                         (core-hashtable-set! ht-libenv (car a) (cdr a)))
                        (core-hashtable->alist ht-imports))
              (parameterize ((current-immutable-identifiers ht-immutables))
                (verify-no-unbound-id
@@ -421,7 +420,7 @@
       (lambda (body defs macros renames)
         (check-duplicate-definition defs macros renames)
         (let ((rewrited-body (expand-each body env)))
-          (let ((rewrited-depends
+          (let* ((rewrited-depends
                  (map (lambda (dep)
                         `(.require-scheme-library ',dep))
                       depends))
@@ -436,24 +435,29 @@
                 (rewrited-macros
                  (if (null? macros)
                      '()
-                     (let ((shared-env (generate-temporary-symbol)))
-                       `((let ((,shared-env
-                                 ',(let ((ht (make-core-hashtable)))
-                                     (for-each (lambda (a)
-                                                 (if (not (unbound? (cdr a)))
-                                                     (core-hashtable-set! ht (car a) (cdr a))))
-                                               (reverse libenv))
-                                     (core-hashtable->alist ht))))
-                           ,@(map (lambda (e)
-                                    (let ((id (cdr (assq (car e) renames)))
-                                          (type (cadr e))
-                                          (spec (caddr e)))
-                                      (case type
-                                        ((template) `(.set-top-level-macro! 'syntax ',id ',spec ,shared-env))
-                                        ((procedure) `(.set-top-level-macro! 'syntax ',id ,spec ,shared-env))
-                                        ((variable) `(.set-top-level-macro! 'variable ',id ,spec ,shared-env))
-                                        (else (scheme-error "internal error in rewrite body: bad macro spec ~s" e)))))
-                                  macros))))))
+                     (let ((ht-visibles (make-core-hashtable)))
+                       (let loop ((lst (map caddr macros)))
+                         (cond ((pair? lst) (loop (car lst)) (loop (cdr lst)))
+                               ((symbol? lst) (core-hashtable-set! ht-visibles lst #t))
+                               ((vector? lst) (loop (vector->list lst)))))
+                       (let ((shared-env (generate-temporary-symbol)))
+                         `((let ((,shared-env
+                                   ',(let ((ht (make-core-hashtable)))
+                                       (for-each (lambda (a)
+                                                   (and (core-hashtable-contains? ht-visibles (car a))
+                                                        (core-hashtable-set! ht (car a) (cdr a))))
+                                                 (reverse libenv))
+                                       (core-hashtable->alist ht))))
+                             ,@(map (lambda (e)
+                                      (let ((id (cdr (assq (car e) renames)))
+                                            (type (cadr e))
+                                            (spec (caddr e)))
+                                        (case type
+                                          ((template) `(.set-top-level-macro! 'syntax ',id ',spec ,shared-env))
+                                          ((procedure) `(.set-top-level-macro! 'syntax ',id ,spec ,shared-env))
+                                          ((variable) `(.set-top-level-macro! 'variable ',id ,spec ,shared-env))
+                                          (else (scheme-error "internal error in rewrite body: bad macro spec ~s" e)))))
+                                    macros)))))))
                 (rewrited-exports
                  `(.intern-scheme-library
                    ',library-id
@@ -648,11 +652,10 @@
                              (else
                               (core-hashtable-set! ht-imports (car a) (cdr a)))))
                      imports)
-           (let* ((ht-env (make-shield-id-table body)) (ht-libenv (core-hashtable-copy ht-env #t)))
+           (let ((ht-env (make-shield-id-table body)) (ht-libenv (make-core-hashtable)))
              (for-each (lambda (a)
                          (core-hashtable-set! ht-env (car a) (cdr a))
-                         (and (core-hashtable-contains? ht-libenv (car a))
-                              (core-hashtable-set! ht-libenv (car a) (cdr a))))
+                         (core-hashtable-set! ht-libenv (car a) (cdr a)))
                        (core-hashtable->alist ht-imports))
              (parameterize ((current-immutable-identifiers ht-immutables))
                (verify-no-unbound-id
