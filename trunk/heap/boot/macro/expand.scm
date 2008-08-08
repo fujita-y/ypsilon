@@ -133,7 +133,6 @@
     (define concatenate?
       (lambda (lst)
         (and (pair? (car lst))
-             (list? (car lst))
              (denote-begin? env (caar lst)))))
 
     (annotate
@@ -154,7 +153,6 @@
     (define concatenate?
       (lambda (lst)
         (and (pair? (car lst))
-             (list? (car lst))
              (denote-begin? env (caar lst)))))
 
     (annotate
@@ -283,12 +281,14 @@
 
     (define rewrite-form
       (lambda (form alist)
-        (cond ((null? form) '())
-              ((symbol? form)
+        (cond ((symbol? form)
                (cond ((assq form alist) => cdr)
                      (else form)))
+              ((null? form) '())
               ((list? form)
                (annotate (rewrite-form-each form alist) form))
+              ((pair? form)
+               (cons (rewrite-form (car form) alist) (rewrite-form (cdr form) alist)))
               ((vector? form)
                (list->vector (rewrite-form-each (vector->list form) alist)))
               (else form))))

@@ -82,29 +82,6 @@
                      (else lst)))))
           (else expr))))
 
-(define unrename-syntax
-  (lambda (form env)
-
-    (define identical-global-macro?
-      (lambda (deno id)
-        (and (macro? deno)
-             (eq? deno (core-hashtable-ref (current-macro-environment) id #f)))))
-
-    (let loop ((lst form))
-      (cond ((pair? lst)
-             (if (annotated? lst)
-                 (annotate (cons (loop (car lst)) (loop (cdr lst))) lst)
-                 (cons (loop (car lst)) (loop (cdr lst)))))
-            ((symbol? lst)
-             (let ((deno (env-lookup env lst))
-                   (id (original-id lst)))
-               (cond ((special? deno) id)
-                     ((identical-global-macro? deno id) id)
-                     (else lst))))
-            ((vector? lst)
-             (list->vector (map loop (vector->list lst))))
-            (else lst)))))
-
 (set-top-level-value! '.flatten-syntax
   (lambda (expr)
     (let ((ht (make-core-hashtable)))
@@ -244,22 +221,13 @@
                                       (let ((id (car a)))
                                         (cond ((assq id lexname-check-list)
                                                => (lambda (e)
-                                                    (cond ((eq? (lookup-lexical-name id env-def) (cdr e)) #f)
-                                                          ((and (local-macro-symbol? (cdr e))
-                                                                (macro? (env-lookup env-use (car e)))
-                                                                (local-macro-symbol? (lookup-lexical-name (car e) env-use)))
-                                                           #f)
-#|                                                                
-                                                           (format #t "(env-lookup envuse (car e)) ~r :~r~%" 
-                                                                   (car e)(env-lookup (current-expansion-environment)
-                                                                                      (car e))) ; macro
-                                                           (format #t "(lookup-lexical-name envuse (car e)) ~r :~r~%" 
-                                                                   (car e)(lookup-lexical-name (car e) 
-                                                                                               (current-expansion-environment))) ; local-macro
-                                                           
-                                                           #f)
-|#
-                                                          (else (cons (cdr a) (make-out-of-context template))))))
+                                                    (if (or (eq? (lookup-lexical-name id env-def) (cdr e))
+                                                            (and (local-macro-symbol? (cdr e))
+                                                                 (let ((lexname-use (lookup-lexical-name (car e) env-use)))
+                                                                   (and (local-macro-symbol? lexname-use)
+                                                                        (eq? lexname-use (lookup-lexical-name (car e) env-def))))))
+                                                        #f
+                                                        (cons (cdr a) (make-out-of-context template)))))
                                               (else #f))))
                                     aliases))))))
           (if (null? env-use)

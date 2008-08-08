@@ -96,21 +96,21 @@
                                    (parents (list-parents rtd))
                                    (count (vector-length (record-type-field-names rtd))))
                                (format buf "~%    ~a" name)
-                               (and (pair? parents) (format buf " ~s" parents))
+                               (and (pair? parents) (format buf " ~r" parents))
                                (cond ((= count 1)
-                                      (format buf ": ~s" ((record-accessor rtd 0) rec)))
+                                      (format buf ": ~r" ((record-accessor rtd 0) rec)))
                                      ((> count 1)
                                       (let ((lst (vector->list (record-type-field-names rtd))))
                                         (let loop ((i 0) (lst lst))
                                           (and (pair? lst)
                                                (begin
-                                                 (format buf "~%     ~a: ~s" (car lst) ((record-accessor rtd i) rec))
+                                                 (format buf "~%     ~a: ~r" (car lst) ((record-accessor rtd i) rec))
                                                  (loop (+ i 1) (cdr lst)))))))))))
                          lst))
              (format buf "~%   >")
              (format port "~a~!" (extract-accumulated-string buf))))
           (else 
-           (format port "~s~!" c)))))
+           (format port "~r~!" c)))))
 
 (define &message
   (let ((rtd (make-record-type-descriptor '&message (record-type-rtd &condition) #f #f #f '#((immutable message)))))
