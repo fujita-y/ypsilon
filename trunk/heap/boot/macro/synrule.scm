@@ -46,14 +46,6 @@
                   (transcribe-compiled-templete (cdr rule) vars)
                   (loop (cdr rules)))))))))
 
-#;(define parse-syntax-rule
-  (lambda (lites clause env)
-    (let ((pattern (car clause)) (template (cadr clause)))
-      (check-pattern pattern lites)
-      (let ((ranks (collect-vars-ranks pattern lites 0 '())))
-        (check-template template ranks)
-        (values pattern template ranks (collect-rename-ids template ranks))))))
-
 (define parse-syntax-rule
   (lambda (lites clause env)
     (let ((pattern (car clause)) (template (cadr clause)))
