@@ -54,30 +54,32 @@
             (else lst)))))
 
 (define free-id=?
-  (lambda (id1 id2)          
+  (lambda (id1 id2)
     (let ((env-def (current-transformer-environment)) (env-use (current-expansion-environment)))
-      (let ((n1b (lookup-lexical-name id1 env-def))
-            (n2b (if (symbol? id2)
-                     (lookup-lexical-name id2 env-use)
-                     (lookup-lexical-name (syntax-object-expr id2) env-use))))
-        (if (eq? n1b n2b)
-            (let ((deno-def (env-lookup env-def n1b))
-                  (deno-use (env-lookup env-use n2b)))
-              (or (eq? deno-def n1b)
-                  (unbound? deno-def)
-                  (eq? deno-def deno-use)))
-            (let ((deno1-def (env-lookup env-def n1b))
-                  (deno2-def (env-lookup env-def n2b))
-                  (deno1-use (env-lookup env-use n1b))
-                  (deno2-use (env-lookup env-use n2b)))
+
+      (define lexical=?
+        (lambda (n1b n2b)
+          (if (eq? n1b n2b)
+              (let ((deno-def (env-lookup env-def n1b)))
+                (or (eq? deno-def n1b)
+                    (unbound? deno-def)
+                    (eq? deno-def (env-lookup env-use n2b))))
               (or (and (eq? (original-id n1b) (original-id n2b))
-                       (or (unbound? deno1-def) (eq? deno1-def n1b))
-                       (or (unbound? deno1-use) (eq? deno1-use n1b))
-                       (or (unbound? deno2-def) (eq? deno2-def n2b))
-                       (or (unbound? deno2-use) (eq? deno2-use n2b)))
-                  (and (not (unbound? deno1-def))
-                       (or (eq? deno1-def deno2-def)
-                           (eq? deno1-def deno2-use))))))))))
+                       (let ((deno1-def (env-lookup env-def n1b))) (or (unbound? deno1-def) (eq? deno1-def n1b)))
+                       (let ((deno2-def (env-lookup env-def n2b))) (or (unbound? deno2-def) (eq? deno2-def n2b)))
+                       (let ((deno1-use (env-lookup env-use n1b))) (or (unbound? deno1-use) (eq? deno1-use n1b)))
+                       (let ((deno2-use (env-lookup env-use n2b))) (or (unbound? deno2-use) (eq? deno2-use n2b))))
+                  (let ((deno1-def (env-lookup env-def n1b)))
+                    (and (not (unbound? deno1-def))
+                         (or (eq? deno1-def (env-lookup env-def n2b))
+                             (eq? deno1-def (env-lookup env-use n2b)))))))))
+
+      (let ((n1b (lookup-lexical-name id1 env-def)))
+        (if (symbol? id2)
+            (lexical=? n1b (lookup-lexical-name id2 env-use))
+            (let ((ren2 (syntax-object-renames id2)))
+              (or (and (pair? ren2) (eq? (env-lookup env-def n1b) (cdr ren2)))
+                  (lexical=? n1b (lookup-lexical-name (syntax-object-expr id2) env-use)))))))))
 
 (define make-import
   (lambda (id)
@@ -104,7 +106,7 @@
 (define make-macro-variable
   (lambda (spec env)
     (cons* 'macro-variable spec env)))
-  
+
 (define make-special
   (lambda (proc)
     (cons 'special proc)))
@@ -164,8 +166,8 @@
 (define core-env (make-core-hashtable))
 
 (let ()
-  
-  (define init-core-macro 
+
+  (define init-core-macro
     (lambda (id deno)
       (core-hashtable-set! core-env id deno)
       (core-hashtable-set! core-env (core-primitive-name id) deno)))
@@ -330,7 +332,7 @@
          (eq? (env-lookup env obj) denote-set!))))
 
 (define private-primitives-environment
-  (list 
+  (list
    (cons '.LIST '.list)
    (cons '.CONS '.cons)
    (cons '.CONS* '.cons*)
@@ -343,7 +345,7 @@
    (cons '.MEMV '.memv)
    (cons '.CALL-WITH-VALUES '.call-with-values)
    (cons '.APPLY '.apply)
-   (cons '.CDR '.cdr)     
+   (cons '.CDR '.cdr)
    (cons '.IDENTIFIER? '.identifier?)
    (cons '.MAKE-VARIABLE-TRANSFORMER '.make-variable-transformer)
    (cons '.ASSERTION-VIOLATION '.assertion-violation)
