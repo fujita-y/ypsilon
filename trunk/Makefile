@@ -87,10 +87,16 @@ uninstall:
 	-rmdir $(PREFIX)/share/$(PROG)
 
 stdlib:
+	mkdir -pv -m755 $(PREFIX)/share/$(PROG)/stdlib
 	find stdlib -type f -name '*.scm' | cpio -pdu $(PREFIX)/share/$(PROG)
+	find $(PREFIX)/share/$(PROG)/stdlib -type d -exec chmod 755 {} \;
+	find $(PREFIX)/share/$(PROG)/stdlib -type f -exec chmod 644 {} \;
 
 sitelib:
+	mkdir -pv -m755 $(PREFIX)/share/$(PROG)/sitelib
 	find sitelib -type f -name '*.scm' | cpio -pdu $(PREFIX)/share/$(PROG)
+	find $(PREFIX)/share/$(PROG)/sitelib -type d -exec chmod 755 {} \;
+	find $(PREFIX)/share/$(PROG)/sitelib -type f -exec chmod 644 {} \;
 
 check: all
 	@echo '----------------------------------------'
