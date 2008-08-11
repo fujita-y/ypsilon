@@ -535,7 +535,7 @@ object_heap_t::write_barrier(scm_obj_t rhs)
     if (m_write_barrier) {
         if (CELLP(rhs)) {
             if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
-                MEM_STORE_FENCE;
+//              MEM_STORE_FENCE;
                 while (m_shade_queue.wait_lock_try_put(rhs) == false) {
                     if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
                     if (m_stop_the_world) {
@@ -784,6 +784,7 @@ fallback:
         #if DEBUG_CONCURRENT_COLLECT
         puts("serial_marking() timeout, resume mutator and restart concurrent_marking");
         #endif
+        heap.m_write_barrier = true;
         goto fallback;
     }
 #else
