@@ -688,8 +688,8 @@ scm_obj_t
 subr_abs(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
-        if (number_pred(argv[0])) return arith_magnitude(vm->m_heap, argv[0]);
-        wrong_type_argument_violation(vm, "abs", 0, "number", argv[0], argc, argv);
+        if (real_pred(argv[0])) return arith_magnitude(vm->m_heap, argv[0]);
+        wrong_type_argument_violation(vm, "abs", 0, "real", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "abs", 1, 1, argc, argv);
@@ -973,6 +973,25 @@ subr_log(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "log", 0, "number", argv[0], argc, argv);
         return scm_undef;
     }
+    if (argc == 2) {
+        if (number_pred(argv[0])) {
+            if (argv[0] == MAKEFIXNUM(0)) {
+                invalid_argument_violation(vm, "log", "undefined for 0", NULL, 0, argc, argv);
+                return scm_undef;
+            }
+            if (number_pred(argv[1])) {
+                if (argv[1] == MAKEFIXNUM(0)) {
+                    invalid_argument_violation(vm, "log", "undefined for base 0", NULL, 0, argc, argv);
+                    return scm_undef;
+                }
+                return arith_div(vm->m_heap, arith_log(vm->m_heap, argv[0]), arith_log(vm->m_heap, argv[1]));
+            }
+            wrong_type_argument_violation(vm, "log", 1, "number", argv[1], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "log", 0, "number", argv[0], argc, argv);
+        return scm_undef;
+    }
     wrong_number_of_arguments_violation(vm, "log", 1, 1, argc, argv);
     return scm_undef;
 }
@@ -1047,8 +1066,8 @@ scm_obj_t
 subr_atan(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
-        if (real_valued_pred(argv[0])) return arith_atan(vm->m_heap, argv[0]);
-        wrong_type_argument_violation(vm, "atan", 0, "real", argv[0], argc, argv);
+        if (number_pred(argv[0])) return arith_atan(vm->m_heap, argv[0]);
+        wrong_type_argument_violation(vm, "atan", 0, "number", argv[0], argc, argv);
         return scm_undef;
     }
     if (argc == 2) {
@@ -1105,6 +1124,14 @@ subr_expt(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 2) {
         if (number_pred(argv[0])) {
             if (number_pred(argv[1])) {
+                if (argv[0] == MAKEFIXNUM(1)) {
+                   if (n_exact_pred(argv[1])) return MAKEFIXNUM(1);
+                   return make_flonum(vm->m_heap, 1.0);
+                }
+                if (argv[0] == MAKEFIXNUM(-1) && n_exact_pred(argv[1])) {
+                    if (n_even_pred(argv[1])) return MAKEFIXNUM(1);
+                    return MAKEFIXNUM(-1);
+                }
                 if (argv[0] == MAKEFIXNUM(0)) {
                     if (n_zero_pred(argv[1])) {
                         if (n_exact_pred(argv[1])) return MAKEFIXNUM(1);

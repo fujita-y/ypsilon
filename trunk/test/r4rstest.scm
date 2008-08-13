@@ -49,11 +49,11 @@
 
 (define cur-section '())(define errs '())
 (define SECTION (lambda args
-;;;		  (display "SECTION") (write args) (newline) -runic
+;;;		  (display "SECTION") (write args) (newline) -ypsilon
 		  (set! cur-section args) #t))
 (define record-error (lambda (e) (set! errs (cons (list cur-section e) errs))))
 
-;;; +runic begin
+;;; +ypsilon begin
 (import (core) (rnrs r5rs))
 (current-directory "test")
 (add-load-path ".")
@@ -62,32 +62,32 @@
 (and (file-exists? "tmp3") (delete-file "tmp3"))
 (define test-passed 0)
 (display "Test R4RS correctness of scheme implementations\n\n")
-;;; +runic end
+;;; +ypsilon end
 
 (define test
   (lambda (expect fun . args)
-;;;    (write (cons fun args)) -runic
-;;;    (display "  ==> ") -runic
+;;;    (write (cons fun args)) -ypsilon
+;;;    (display "  ==> ") -ypsilon
     ((lambda (res)
-;;;      (write res) -runic
-;;;      (newline) -runic
+;;;      (write res) -ypsilon
+;;;      (newline) -ypsilon
       (cond ((not (equal? expect res))
 	     (record-error (list res expect (cons fun args)))
 	     (display " BUT EXPECTED ")
 	     (write expect)
 	     (newline)
 	     #f)
-;;;	    (else #t))) -runic
-;;; +runic begin
+;;;	    (else #t))) -ypsilon
+;;; +ypsilon begin
         (else
             (set! test-passed (+ test-passed 1))
             (format (current-output-port) "Passed ~a" test-passed)
             (put-byte (current-output-port) 13)
             #t)))
-;;; +runic end
+;;; +ypsilon end
      (if (procedure? fun) (apply fun args) (car args)))))
      
-;;; -runic begin
+;;; -ypsilon begin
 ;;;(define (report-errs)
 ;;;  (newline)
 ;;;  (if (null? errs) (display "Passed all tests")
@@ -99,9 +99,9 @@
 ;;;	(for-each (lambda (l) (write l) (newline))
 ;;;		  errs)))
 ;;;  (newline))
-;;; -runic end
+;;; -ypsilon end
 
-;;; +runic begin
+;;; +ypsilon begin
 (define (report-errs)
   (or (null? errs)
       (begin
@@ -110,7 +110,7 @@
         (display "(SECTION (got expected (call)))")
         (newline)
         (for-each (lambda (l) (write l) (newline)) errs))))
-;;; +runic end  
+;;; +ypsilon end  
 
 (SECTION 2 1);; test that all symbol characters are supported.
 '(+ - ... !.. $.+ %.- &.! *.: /:. :+. <-. =. >. ?. ~. _. ^.)
@@ -123,7 +123,7 @@
    #t #f #\a '() 9739 '(test) record-error "test" "" 'test '#() '#(a b c) ))
 (define i 1)
 
-;;; -runic begin
+;;; -ypsilon begin
 ;;;(for-each (lambda (x) (display (make-string i #\space))
 ;;;		  (set! i (+ 3 i))
 ;;;		  (write x)
@@ -137,7 +137,7 @@
 ;;;	   (newline)
 ;;;	   t))
 ;;;       type-examples))
-;;; -runic end
+;;; -ypsilon end
 
 (set! i 0)
 (define j 0)
@@ -294,7 +294,7 @@
 (define foo (let ((foo foo)) (lambda () (+ 1 (foo)))))
 (test 10 'define (foo))
 
-;;; -runic begin
+;;; -ypsilon begin
 ;;;(define old-+ +)
 ;;;(begin (begin (begin)
 ;;;	      (begin (begin (begin) (define + (lambda (x y) (list y x)))
@@ -305,7 +305,7 @@
 ;;;		     (begin))))
 ;;;(set! + old-+)
 ;;;(test 9 add3 6)
-;;; -runic end
+;;; -ypsilon end
 
 (begin)
 (begin (begin))
@@ -490,7 +490,7 @@
 ;;; But first, what case are symbols in?  Determine the standard case:
 (define char-standard-case char-upcase)
 
-;;; -runic begin
+;;; -ypsilon begin
 ;;;(if (string=? (symbol->string 'A) "a")
 ;;;    (set! char-standard-case char-downcase))
 ;;;(test #t 'standard-case
@@ -498,7 +498,7 @@
 ;;;(test #t 'standard-case
 ;;;      (or (string=? (symbol->string 'a) "A")
 ;;;	  (string=? (symbol->string 'A) "a")))
-;;; -runic end
+;;; -ypsilon end
 
 (define (str-copy s)
   (let ((v (make-string (string-length s))))
@@ -511,12 +511,12 @@
        (sl (string-length s)))
       ((>= i sl) s)
       (string-set! s i (char-standard-case (string-ref s i)))))
-;;;(test (string-standard-case "flying-fish") symbol->string 'flying-fish) -runic
-;;;(test (string-standard-case "martin") symbol->string 'Martin) -runic
+;;;(test (string-standard-case "flying-fish") symbol->string 'flying-fish) -ypsilon
+;;;(test (string-standard-case "martin") symbol->string 'Martin) -ypsilon
 
 (test "Malvina" symbol->string (string->symbol "Malvina"))
 
-;;;(test #t 'standard-case (eq? 'a 'A)) -runic
+;;;(test #t 'standard-case (eq? 'a 'A)) -ypsilon
 
 (define x (string #\a #\b))
 (define y (string->symbol x))
@@ -525,8 +525,8 @@
 (test "ab" symbol->string y)
 (test y string->symbol "ab")
 
-;;;(test #t eq? 'mISSISSIppi 'mississippi) -runic
-;;;(test #f 'string->symbol (eq? 'bitBlt (string->symbol "bitBlt"))) -runic
+;;;(test #t eq? 'mISSISSIppi 'mississippi) -ypsilon
+;;;(test #f 'string->symbol (eq? 'bitBlt (string->symbol "bitBlt"))) -ypsilon
 
 (test 'JollyWog string->symbol (symbol->string 'JollyWog))
 
@@ -668,9 +668,9 @@
   (define wto write-test-obj)
   (define lto load-test-obj)
   
-;;;  (newline) -runic
-;;;  (display ";testing inexact numbers; ") -runic
-;;;  (newline) -runic
+;;;  (newline) -ypsilon
+;;;  (display ";testing inexact numbers; ") -ypsilon
+;;;  (newline) -ypsilon
 
   (SECTION 6 2)
   (test #f eqv? 1 f1.0)
@@ -688,7 +688,7 @@
 	 (test f1.0 'magnitude (/ (magnitude f1e300+1e300i)
 				  (* f1e300 (sqrt 2))))
                   
-	 ;;;(test f.25 / f1e300+1e300i (* 4 f1e300+1e300i)) -runic '+nan.0+nan.0i'
+	 ;;;(test f.25 / f1e300+1e300i (* 4 f1e300+1e300i)) -ypsilon '+nan.0+nan.0i'
 	 
 	 ))
      
@@ -696,7 +696,7 @@
        (let ((f1e-300+1e-300i (make-rectangular f1e-300 f1e-300)))
 	 (test f1.0 'magnitude (round (/ (magnitude f1e-300+1e-300i)
 					 (* f1e-300 (sqrt 2)))))
-	 ;;;(test f.25 / f1e-300+1e-300i (* 4 f1e-300+1e-300i)) -runic '+nan.0+nan.0i'
+	 ;;;(test f.25 / f1e-300+1e-300i (* 4 f1e-300+1e-300i)) -ypsilon '+nan.0+nan.0i'
 	 
 	 ))
 
@@ -728,8 +728,8 @@
   (test f1.0 expt -25  f0.0)
   (test f1.0 expt f-3.25 f0.0)
   
-  ;;;(test f1.0 expt f-3.25 0) -runic
-  (test 1 expt f-3.25 0)   ;;; +runic
+  ;;;(test f1.0 expt f-3.25 0) -ypsilon
+  (test 1 expt f-3.25 0)   ;;; +ypsilon
   
   ;;(test f0.0 expt f0.0 f-3.25)
 
@@ -845,9 +845,9 @@
   (define b3-0 (string->number "33333333333333333330"))
   (define b2-0 (string->number "2177452800"))
   
-;;;  (newline) -runic
-;;;  (display ";testing bignums; ") -runic
-;;;  (newline) -runic
+;;;  (newline) -ypsilon
+;;;  (display ";testing bignums; ") -ypsilon
+;;;  (newline) -ypsilon
 
   (SECTION 6 5 7)
   (test 0 modulo b3-3 3)
@@ -897,9 +897,9 @@
   (let* ((big-ex (expt 2 150))
 	 (big-inex (exact->inexact big-ex)))
      
-;;;    (newline) -runic
-;;;    (display ";testing bignum-inexact comparisons;") -runic
-;;;    (newline) -runic
+;;;    (newline) -ypsilon
+;;;    (display ";testing bignum-inexact comparisons;") -ypsilon
+;;;    (newline) -ypsilon
 
     (SECTION 6 5 5)
     (test #f = (+ big-ex 1) big-inex (- big-ex 1))
@@ -936,11 +936,11 @@
 
 (SECTION 6 6)
 
-;;;(test #t eqv? '#\  #\Space) -runic
-(test #t eqv? '#\  #\space);;; +runic
+;;;(test #t eqv? '#\  #\Space) -ypsilon
+(test #t eqv? '#\  #\space);;; +ypsilon
 
-;;;(test #t eqv? #\space '#\Space) -runic
-(test #t eqv? #\space '#\space);;; +runic
+;;;(test #t eqv? #\space '#\Space) -ypsilon
+(test #t eqv? #\space '#\space);;; +ypsilon
 
 (test #t char? #\a)
 (test #t char? #\()
@@ -1241,9 +1241,9 @@
       (loop (xf) (yf)))))
 (define (test-cont)
 
-;;;  (newline) -runic
-;;;  (display ";testing continuations; ") -runic
-;;;  (newline) -runic
+;;;  (newline) -ypsilon
+;;;  (display ";testing continuations; ") -ypsilon
+;;;  (newline) -ypsilon
 
   (SECTION 6 9)
   (test #t leaf-eq? '(a (b (c))) '((a) b c))
@@ -1253,9 +1253,9 @@
 ;;; Test Optional R4RS DELAY syntax and FORCE procedure
 (define (test-delay)
 
-;;;  (newline) -runic
-;;;  (display ";testing DELAY and FORCE; ") -runic
-;;;  (newline) -runic
+;;;  (newline) -ypsilon
+;;;  (display ";testing DELAY and FORCE; ") -ypsilon
+;;;  (newline) -ypsilon
 
   (SECTION 6 9)
   (test 3 'delay (force (delay (+ 1 2))))
@@ -1342,9 +1342,9 @@
 (check-test-file "tmp2")
 (define (test-sc4)
 
-;;;  (newline) -runic
-;;;  (display ";testing scheme 4 functions; ") -runic
-;;;  (newline) -runic
+;;;  (newline) -ypsilon
+;;;  (display ";testing scheme 4 functions; ") -ypsilon
+;;;  (newline) -ypsilon
 
   (SECTION 6 7)
   (test '(#\P #\space #\l) string->list "P l")
@@ -1375,15 +1375,15 @@
   (if (and have-inexacts? have-bignums?)
       (test-numeric-predicates)))
 
-;;; -runic begin
+;;; -ypsilon begin
 ;;;(newline)
 ;;;(display "To fully test continuations, Scheme 4, and DELAY/FORCE do:")
 ;;;(newline)
 ;;;(display "(test-cont) (test-sc4) (test-delay)")
-;;; -runic end
+;;; -ypsilon end
 
-(test-cont) (test-sc4) (test-delay) ;;; +runic
-(if (not (null? errs)) (exit #f))   ;;; +runic
+(test-cont) (test-sc4) (test-delay) ;;; +ypsilon
+(if (not (null? errs)) (exit #f))   ;;; +ypsilon
 
 (newline)
 "last item in file"

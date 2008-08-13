@@ -648,15 +648,16 @@ bignum_shift_right_to_double(scm_bignum_t obj, int shift)
 {
     int count = bn_get_count(obj);
     if (count == 0) return 0.0;
+    if (count == 1) return (double)(obj->elts[0] >> shift);
     if (bn_bitsize(obj) <= shift) return 0.0;
     double ans = 0.0;
     for (int i = count - 1; i >= 0 && i >= count - 3; i--) {
         int n = 32 * i - shift;
-        if (n < 0) continue;
-        ans += ldexp((double)obj->elts[i], n);
+        ans = ans + ldexp((double)obj->elts[i], n);
     }
     return bn_get_sign(obj) > 0 ? ans : -ans;
 }
+
 
 static double
 rational_to_double(scm_rational_t obj)
@@ -3558,28 +3559,38 @@ bignum_again:
 scm_obj_t
 arith_expt(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
-    if (FIXNUMP(rhs)) {
-        if (FIXNUM(rhs) == 0) return MAKEFIXNUM(1);
-        if (FLONUMP(lhs)) return make_flonum(heap, pow(((scm_flonum_t)lhs)->value, (double)FIXNUM(rhs)));
-        if (number_pred(lhs)) return oprtr_expt(heap, lhs, (scm_fixnum_t)rhs);
+    if (n_exact_pred(rhs)) {
+        if (FIXNUMP(rhs)) {
+            if (FIXNUM(rhs) == 0) return MAKEFIXNUM(1);
+            if (FLONUMP(lhs)) return make_flonum(heap, pow(((scm_flonum_t)lhs)->value, (double)FIXNUM(rhs)));
+            return oprtr_expt(heap, lhs, (scm_fixnum_t)rhs);
+        }
+        if (BIGNUMP(rhs)) {
+            if (real_valued_pred(lhs)) {
+                double n = bignum_to_double((scm_bignum_t)rhs);
+                return make_flonum(heap, pow(real_to_double(lhs), n));
+            }
+            return arith_exp(heap, arith_mul(heap, rhs, arith_log(heap, lhs)));
+        }
+        if (RATIONALP(rhs)) {
+            double n = rational_to_double((scm_rational_t)rhs);
+            if (real_valued_pred(lhs) && !n_negative_pred(lhs)) return make_flonum(heap, pow(real_to_double(lhs), n));
+            return arith_exp(heap, arith_mul(heap, rhs, arith_log(heap, lhs)));
+        }
+        if (COMPLEXP(rhs)) {
+            return arith_exp(heap, arith_mul(heap, rhs, arith_log(heap, lhs)));
+        }
+        fatal("%s:%u wrong datum type", __FILE__, __LINE__);
+    } else {
+        if (FLONUMP(rhs)) {
+            if (real_valued_pred(lhs) && !n_negative_pred(lhs)) {
+                double n = ((scm_flonum_t)rhs)->value;
+                return make_flonum(heap, pow(real_to_double(lhs), n));
+            }
+            return arith_exp(heap, arith_mul(heap, rhs, arith_log(heap, lhs)));
+        }
+        return arith_exp(heap, arith_mul(heap, rhs, arith_log(heap, lhs)));
     }
-    if (BIGNUMP(rhs)) {
-        return make_flonum(heap, VALUE_INF);
-    }
-    if (FLONUMP(rhs)) {
-        double n = ((scm_flonum_t)rhs)->value;
-        if (real_valued_pred(lhs)) return make_flonum(heap, pow(real_to_double(lhs), n));
-        if (COMPLEXP(lhs)) return arith_exp(heap, arith_mul(heap, rhs, arith_log(heap, lhs)));
-    }
-    if (RATIONALP(rhs)) {
-        double n = rational_to_double((scm_rational_t)rhs);
-        if (real_valued_pred(lhs)) return make_flonum(heap, pow(real_to_double(lhs), n));
-        if (COMPLEXP(lhs)) return arith_exp(heap, arith_mul(heap, rhs, arith_log(heap, lhs)));
-    }
-    if (COMPLEXP(rhs)) {
-        if (number_pred(lhs)) return arith_exp(heap, arith_mul(heap, rhs, arith_log(heap, lhs)));
-    }
-    fatal("%s:%u wrong datum type", __FILE__, __LINE__);
 }
 
 scm_obj_t
@@ -3686,7 +3697,7 @@ arith_sqrt(object_heap_t* heap, scm_obj_t obj)
 {
     if (FIXNUMP(obj)) {
         int value = FIXNUM(obj);
-        if (value == 0) return 0;
+        if (value == 0) return MAKEFIXNUM(0);
         if (value > 0) {
             intptr_t iroot = (intptr_t)floor(sqrt((double)value));
             if (iroot * iroot == value) return MAKEFIXNUM(iroot);
@@ -3716,16 +3727,8 @@ arith_sqrt(object_heap_t* heap, scm_obj_t obj)
                 return make_complex(heap, MAKEFIXNUM(0), bn_to_integer(heap, &workpad));
             }
         }
-        const int BITSIZE_TH = 96;
-        int bitsize = bn_bitsize(bn);
-        int shift = bitsize - BITSIZE_TH;
-        if (shift <= 1) {
-            shift = 2;
-        } else if (shift & 1) {
-            shift++;
-        }
-        double s = bignum_shift_right_to_double(bn, shift);
-        s = ldexp(sqrt(s), shift/2);
+        double s = bignum_to_double(bn);
+        s = sqrt(s < 0.0 ? -s : s);
         if (bn_get_sign(bn) == 1) return make_flonum(heap, s);
         return make_complex(heap, make_flonum(heap, 0.0), make_flonum(heap, s));
     }
@@ -3750,6 +3753,12 @@ arith_sqrt(object_heap_t* heap, scm_obj_t obj)
         if (complex) return make_complex(heap, make_flonum(heap, 0.0), arith_div(heap, numerator, denominator));
         return arith_div(heap, numerator, denominator);
     }
+    if (FLONUMP(obj)) {
+        scm_flonum_t flonum = (scm_flonum_t)obj;
+        double s = flonum->value;
+        if (s < 0.0) return make_complex(heap, make_flonum(heap, 0.0), make_flonum(heap, sqrt(-s)));
+        return make_flonum(heap, sqrt(s));
+    }
     if (COMPLEXP(obj)) {
         scm_complex_t cn = (scm_complex_t)obj;
         if (n_exact_pred(cn)) {
@@ -3773,12 +3782,6 @@ arith_sqrt(object_heap_t* heap, scm_obj_t obj)
         double y = imag / 2;
         double s = sqrt(m / (x * x + y * y));
         return make_complex(heap, make_flonum(heap, x * s), make_flonum(heap, y * s));
-    }
-    if (real_valued_pred(obj)) {
-        if (n_negative_pred(obj)) {
-            return make_complex(heap, make_flonum(heap, 0.0), make_flonum(heap, sqrt(-real_to_double(obj))));
-        }
-        return make_flonum(heap, sqrt(real_to_double(obj)));
     }
     fatal("%s:%u wrong datum type", __FILE__, __LINE__);
 }
@@ -3821,66 +3824,41 @@ arith_exact_integer_sqrt(object_heap_t* heap, scm_obj_t obj)
 scm_obj_t
 arith_asin(object_heap_t* heap, scm_obj_t obj)
 {
-    if (FIXNUMP(obj)) {
-        if (FIXNUM(obj) == 0) return MAKEFIXNUM(0);
-        return make_flonum(heap, asin((double)FIXNUM(obj)));
+    scm_complex_t cn;
+    if (real_valued_pred(obj)) {
+        double x = real_to_double(obj);
+        if (x >= -1.0 && x <= 1.0) return make_flonum(heap, asin(real_to_double(obj)));
+        if (x < 0.0) return arith_negate(heap, arith_asin(heap, make_flonum(heap, -x)));
+        cn = make_complex(heap, make_flonum(heap, 0.0), make_flonum(heap, x));
+    } else {
+        assert(COMPLEXP(obj));
+        if (n_positive_pred(((scm_complex_t)obj)->imag)) return arith_negate(heap, arith_asin(heap, arith_negate(heap, obj)));
+        cn = make_complex(heap, arith_negate(heap, ((scm_complex_t)obj)->imag), ((scm_complex_t)obj)->real);
     }
-    if (COMPLEXP(obj)) {
-        scm_complex_t cn = make_complex(heap, arith_negate(heap, ((scm_complex_t)obj)->imag), ((scm_complex_t)obj)->real);
-        scm_obj_t ans = arith_log(heap,
-                            arith_add(heap,
-                                arith_sqrt(heap,
-                                    arith_sub(heap,
-                                        MAKEFIXNUM(1),
-                                        arith_mul(heap, obj, obj))),
-                                cn));
-/*
-        scm_complex_rec_t cn;
-        cn.hdr = scm_hdr_complex;
-        cn.real = arith_negate(heap, ((scm_complex_t)obj)->imag);
-        cn.imag = ((scm_complex_t)obj)->real;
-        scm_obj_t ans = arith_log(heap,
-                            arith_add(heap,
-                                arith_sqrt(heap,
-                                    arith_sub(heap,
-                                        MAKEFIXNUM(1),
-                                        arith_mul(heap, obj, obj))),
-                                &cn));
-*/
-        if (COMPLEXP(ans)) {
-            return make_complex(heap,
-                     real_to_double(((scm_complex_t)ans)->imag),
-                    -real_to_double(((scm_complex_t)ans)->real));
-        }
-        return make_complex(heap, 0.0, -real_to_double(ans));
+    scm_obj_t ans = arith_log(heap,
+                        arith_add(heap,
+                            arith_sqrt(heap,
+                                arith_sub(heap,
+                                    MAKEFIXNUM(1),
+                                    arith_mul(heap, obj, obj))),
+                            cn));
+    if (COMPLEXP(ans)) {
+        return make_complex(heap,
+                 real_to_double(((scm_complex_t)ans)->imag),
+                -real_to_double(((scm_complex_t)ans)->real));
     }
-    if (real_valued_pred(obj)) return make_flonum(heap, asin(real_to_double(obj)));
+    return make_complex(heap, 0.0, -real_to_double(ans));
     fatal("%s:%u wrong datum type", __FILE__, __LINE__);
 }
 
 scm_obj_t
 arith_acos(object_heap_t* heap, scm_obj_t obj)
 {
-    if (FIXNUMP(obj)) {
-        if (FIXNUM(obj) == 1) return MAKEFIXNUM(0);
-        return make_flonum(heap, acos((double)FIXNUM(obj)));
+    if (real_valued_pred(obj)) {
+        double x = real_to_double(obj);
+        if (x >= -1.0 && x <= 1.0) return make_flonum(heap, acos(real_to_double(obj)));
     }
-    if (COMPLEXP(obj)) {
-        scm_obj_t ans = arith_log(heap,
-                            arith_add(heap,
-                                arith_sqrt(heap,
-                                    arith_sub(heap,
-                                        arith_mul(heap, obj, obj),
-                                        MAKEFIXNUM(1))),
-                                obj));
-        if (COMPLEXP(ans)) {
-            return make_complex(heap,
-                     real_to_double(((scm_complex_t)ans)->imag),
-                    -real_to_double(((scm_complex_t)ans)->real));
-        }
-        return make_complex(heap, 0.0, -real_to_double(ans));
-    }
-    if (real_valued_pred(obj)) return make_flonum(heap, acos(real_to_double(obj)));
+    return arith_sub(heap, make_flonum(heap, 3.141592653589793 / 2.0), arith_asin(heap, obj));
     fatal("%s:%u wrong datum type", __FILE__, __LINE__);
 }
 
@@ -3897,16 +3875,6 @@ arith_atan(object_heap_t* heap, scm_obj_t obj)
                             arith_div(heap,
                                 arith_add(heap, MAKEFIXNUM(1), cn),
                                 arith_sub(heap, MAKEFIXNUM(1), cn)));
-/*
-        scm_complex_rec_t cn;
-        cn.hdr = scm_hdr_complex;
-        cn.real = arith_negate(heap, ((scm_complex_t)obj)->imag);
-        cn.imag = ((scm_complex_t)obj)->real;
-        scm_obj_t ans = arith_log(heap,
-                            arith_div(heap,
-                                arith_add(heap, MAKEFIXNUM(1), &cn),
-                                arith_sub(heap, MAKEFIXNUM(1), &cn)));
-*/
         if (COMPLEXP(ans)) {
             return make_complex(heap,
                      0.5 * real_to_double(((scm_complex_t)ans)->imag),
@@ -3944,7 +3912,9 @@ arith_magnitude(object_heap_t* heap, scm_obj_t obj)
             double real = real_to_double(((scm_complex_t)obj)->real);
             double imag = real_to_double(((scm_complex_t)obj)->imag);
             if (isinf(real) || isinf(imag)) return make_flonum(heap, VALUE_INF);
-            return make_flonum(heap, imag / sin(atan2(imag, real)));
+            double m2 = real * real + imag * imag;
+            if (m2 == 0 || isinf(m2)) return make_flonum(heap, imag / sin(atan2(imag, real)));
+            return make_flonum(heap, sqrt(m2));
         }
     }
     if (real_valued_pred(obj)) {

@@ -38,15 +38,19 @@
 
 (define apply-scheme-proc-assistant
   (lambda (proc . args)
-    (let ((modal #t))
+    (let ((done #f) (throw #f))
       (dynamic-wind
        (lambda ()
-         (or modal (assertion-violation 'apply-scheme-proc-assistant "scheme continuation interleave with c/c++ continuation")))
+         (and done (assertion-violation 'apply-scheme-proc-assistant "scheme continuation interleave with c/c++ continuation")))
        (lambda ()
-         (let ((obj (apply proc args)))
-           (begin (set! modal #f) obj))) ; normal return
+         (with-exception-handler
+          (lambda (c)
+            (set! throw #t)
+            (raise c))
+          (lambda ()
+            (let ((obj (apply proc args))) (set! done #t) obj))))
        (lambda ()
-         (and modal (escape))))))) ; exception raised
+         (and throw (escape)))))))
 
 (define nonblock-skip-whitespace
   (lambda ()
