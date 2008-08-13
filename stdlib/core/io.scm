@@ -639,41 +639,27 @@
 
   (define call-with-input-file
     (lambda (filename proc)
-      (let ((port (open-input-file filename)))
-        (dynamic-wind
-         (lambda () #f)
-         (lambda () (proc port))
-         (lambda () (close-input-port port))))))
+      (call-with-port (open-input-file filename) proc)))
 
   (define call-with-output-file
     (lambda (filename proc)
-      (let ((port (open-output-file filename)))
-        (dynamic-wind
-         (lambda () #f)
-         (lambda () (proc port))
-         (lambda () (close-output-port port))))))
+      (call-with-port (open-output-file filename) proc)))
 
   (define with-input-from-file
     (lambda (filename thunk)
-      (let ((port (open-input-file filename))
-            (save (current-input-port)))
+      (let ((port (open-input-file filename)) (save (current-input-port)))
         (dynamic-wind
          (lambda () (set-current-input-port! port))
-         (lambda () (thunk))
-         (lambda ()
-           (set-current-input-port! save)
-           (close-input-port port))))))
+         (lambda () (let ((ans (thunk))) (close-input-port port) ans))
+         (lambda () (set-current-input-port! save))))))
 
   (define with-output-to-file
     (lambda (filename thunk)
-      (let ((port (open-output-file filename))
-            (save (current-output-port)))
+      (let ((port (open-output-file filename)) (save (current-output-port)))
         (dynamic-wind
          (lambda () (set-current-output-port! port))
-         (lambda () (thunk))
-         (lambda ()
-           (set-current-output-port! save)
-           (close-output-port port))))))
+         (lambda () (let ((ans (thunk))) (close-output-port port) ans))
+         (lambda () (set-current-output-port! save))))))
 
   (define open-input-file
     (lambda (filename)

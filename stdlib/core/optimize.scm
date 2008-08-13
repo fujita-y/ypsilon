@@ -632,6 +632,7 @@
                                                           ((eq? proc 'set!)
                                                            (or const (done #f))
                                                            (and (eq? (car b) (car args)) (done #f))
+                                                           (and (eq? (cdr b) (car args)) (done #f)) ;new
                                                            (loop (cdr args))
                                                            (loop (cdr lst)))
                                                           ((eq? proc 'if)

@@ -17,7 +17,7 @@
                    (else
                     (assertion-violation 'max (format "expected real, but got ~s" (car lst)) args)))))
           (else
-           (assertion-violation 'max (format "expected real, but got ~s" (car lst)) args)))))
+           (assertion-violation 'max (format "expected real, but got ~s" (car args)) args)))))
 
 (define min
   (lambda args
@@ -34,7 +34,7 @@
                    (else
                     (assertion-violation 'min (format "expected real, but got ~s" (car lst)) args)))))
           (else
-           (assertion-violation 'min (format "expected real, but got ~s" (car lst)) args)))))
+           (assertion-violation 'min (format "expected real, but got ~s" (car args)) args)))))
 
 (define gcd2
   (lambda (a b)
@@ -81,7 +81,8 @@
     (or (real? e) (assertion-violation 'rationalize (format "expected real, but got ~s as argument 2" e) (list x e)))
     (cond ((infinite? e) 
            (if (infinite? x) +nan.0 0.0))
-          ((= x 0) 0)
+          ((= x 0) x)
+          ((= x e) x)
           ((negative? x)
            (- (rationalize (- x) e)))
           (else
@@ -184,6 +185,14 @@
 (define call-with-values
   (lambda (producer consumer)
     (apply-values consumer (producer))))
+
+(define call-with-port
+  (lambda (port proc)
+    (call-with-values
+     (lambda () (proc port))
+     (lambda args
+       (close-port port)
+       (apply values args)))))
 
 (define mod
   (lambda (x y)
