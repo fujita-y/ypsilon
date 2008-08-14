@@ -22,7 +22,7 @@ version 0.9.5-update1 (based on revision 69):
   * reader have some problem with identifier delimited by ';'
   * reader have some problem reading unicode char
   * unicode general category table contains wrong values
-  * `free-identifier=?`, `lookahead-char`, `real-part`, `enumerators`, `div`, `mod`, `div0`, and `mod0` may not work correctly
+  * `free-identifier=?`, `lookahead-char`, `real-part`, `enumerators`, `div`, `mod`, `div0`, and `mod0` not working correctly
   * using eval in the `R6RS top-level program` may causes "error: unbound variable set-top-level-value!"
 
   * _All bugs in version 0.9.5-update1 are fixed in version 0.9.5-update2_
