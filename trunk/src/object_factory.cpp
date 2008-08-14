@@ -851,7 +851,8 @@ finalize(object_heap_t* heap, void* obj)
             scm_port_t port = (scm_port_t)obj;
             {
                 scoped_lock lock(port->lock);
-                port_close(port);
+                if (port->type != SCM_PORT_TYPE_CUSTOM) port_close(port);
+                // todo: finalizer for custom port
             }
             port->lock.destroy();
             break;
