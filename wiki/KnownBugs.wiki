@@ -2,7 +2,16 @@
 
 version 0.9.6:
 
-  _no item_
+  * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 32]: Macro not working which relies on internal define context having `letrec*` semantics.(fixed in trunk version)  	 
+  * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 33]: `free-identifier=?` broken.(fixed in trunk version) 
+  * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 34]: `make-list` accepting negative argument.(fixed in trunk version) 
+  * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 35]: `list?` Segmentation fault.(fixed in trunk version)  
+  * [http://code.google.com/p/ypsilon/issues/detail?id=26&can=1 Issue 37]: xitomatl tests not working under Ypsilon.(fixed in trunk version)  
+  * `sqrt`, `asin`, `acos`, `log`, `expt`, `rationalize`, and `imag-part` not working correctly.(fixed in trunk version)  
+  * `syntax-case`, `syntax-rules`, `define-condition-type` not working correctly.(fixed in trunk version)  
+  * `call/cc`, `cond`, and `let` not working correctly.(fixed in trunk version)  
+  * custom port not working correctly.(fixed in trunk version)  
+  * incorrect gc write barrier cause random segmentation fault.(fixed in trunk version)  
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
 
