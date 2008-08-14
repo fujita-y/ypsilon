@@ -17,7 +17,7 @@ version 0.9.6:
 
 version 0.9.5-update2 (based on revision 111):
 
-  * `letrec` and `letrec*` restriction violation raises syntax violation on load. But it should raises assertion violation on runtime. (fixed in trunk version)
+  * `letrec` and `letrec*` restriction violation raises syntax violation on load. But it should raises assertion violation on runtime.
 
   * _All bugs in version 0.9.5-update2 are fixed in version 0.9.6_
 
