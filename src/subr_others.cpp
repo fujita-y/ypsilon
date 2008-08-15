@@ -1732,7 +1732,7 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
         wchar_t module_name_ucs2[MAX_PATH] = { 0 };
         {
             int bsize = 0;
-            for (int i = 0; i < argc; i++) bsize = bsize + HDR_STRING_SIZE(((scm_string_t)argv[i])->hdr) + 1;
+            for (int i = 0; i < argc; i++) bsize = bsize + ((scm_string_t)argv[i])->size + 1;
             if (bsize) {
                 char* utf8 = (char*)malloc(bsize + 1);
                 if (utf8 == NULL) fatal("fatal: memory overflow in malloc(%d)", bsize + 1);
