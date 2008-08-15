@@ -454,7 +454,7 @@
                         core-read
                         current-source-comments
                         current-after-expansion-hook
-                        string-contains subr?
+                        string-contains symbol-contains subr?
                         make-bytevector-mapping
                         scheme-library-exports
                         scheme-library-paths
@@ -476,7 +476,12 @@
                         system process process-wait
                         lookup-process-environment
                         set-current-input-port! set-current-output-port! set-current-error-port!
-                        open-builtin-data-input-port))
+                        open-builtin-data-input-port
+                        current-library-infix
+                        current-library-suffix
+                        current-primitive-prefix
+                        current-rename-delimiter
+                        ))
 
   (compound-exports '(core primitives) '(core intrinsics)))
 

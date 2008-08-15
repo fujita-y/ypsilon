@@ -17,6 +17,7 @@
 #include "heap.h"
 #include "port.h"
 #include "subr.h"
+#include "revision.h"
 
 #if GCDEBUG
   #define   GC_TRACE(fmt)   do { printf(fmt); fflush(stdout); } while (0)
@@ -247,7 +248,7 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size)
     m_native_transcoder->elts[1] = SCM_PORT_EOL_STYLE_NATIVE;
     m_native_transcoder->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_REPLACE;
 
-    m_architecture_feature = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(23));
+    m_architecture_feature = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(24));
     // edit hashtable size when add new arch parameter
     scoped_lock lock(m_architecture_feature->lock);
 #define ARCH_FIXNUM_PARAM(name, value)  put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(value))
@@ -273,6 +274,8 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size)
     ARCH_FIXNUM_PARAM(alignof:int32_t,  ALIGNOF(int32_t));
     ARCH_FIXNUM_PARAM(alignof:int64_t,  ALIGNOF(int64_t));
 
+    ARCH_FIXNUM_PARAM(ypsilon-revision, PROGRAM_REVISION);
+    
   #if _MSC_VER
     ARCH_STRING_PARAM(operating-system, "windows");
   #else
@@ -1336,7 +1339,8 @@ object_heap_t::init_inherents()
     make_symbol_inherent(this, ".", S_CODE_DOT);
     {
         scm_string_t obj = (scm_string_t)allocate_collectible(sizeof(scm_string_rec_t));
-        obj->hdr = scm_hdr_string | (0 << HDR_STRING_SIZE_SHIFT);
+        obj->hdr = scm_hdr_string;
+        obj->size = 0;
         obj->name = (char*)allocate_private(1);
         obj->name[0] = 0;
         m_inherents[NIL_STRING] = obj;

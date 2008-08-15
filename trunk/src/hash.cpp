@@ -54,7 +54,7 @@ string_hash(scm_obj_t obj, uint32_t bound)
 {
     if (STRINGP(obj)) {
         scm_string_t string = (scm_string_t)obj;
-        int size = HDR_STRING_SIZE(string->hdr);
+        int size = string->size;
         const char* datum = string->name;
         int hash = size;
         for (int i = 0; i < size; i++) hash = hash * 32 - hash + datum[i]; // hash * 31 + c

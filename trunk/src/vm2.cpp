@@ -11,39 +11,6 @@
 
 #define CONS(a, d)      make_pair(m_heap, (a), (d))
 
-/*
-scm_gloc_t
-VM::prebind_gloc(scm_obj_t variable, scm_hashtable_t ht, bool set)
-{
-  #ifndef NDEBUG
-    if (!SYMBOLP(variable)) {
-        printf("invalid gloc variable: %x\n", variable);
-    }
-  #endif
-    assert(SYMBOLP(variable));
-    scm_symbol_t symbol = (scm_symbol_t)variable;
-    scoped_lock lock(m_current_environment->variable->lock);
-    scm_gloc_t gloc = (scm_gloc_t)get_hashtable(m_current_environment->variable, symbol);
-    if (gloc == scm_undef) {
-        gloc = make_gloc(m_heap, m_current_environment, symbol);
-        gloc->value = scm_undef;
-        m_heap->write_barrier(symbol);
-        m_heap->write_barrier(gloc);
-        int nsize = put_hashtable(m_current_environment->variable, symbol, gloc);
-        if (nsize) rehash_hashtable(m_heap, m_current_environment->variable, nsize);
-        if (UNINTERNED_VARIABLE(symbol)) {
-            int nsize = put_hashtable(ht, symbol, (set ? scm_true : scm_false));
-            if (nsize) rehash_hashtable(m_heap, ht, nsize);
-        }
-    } else {
-        if (UNINTERNED_VARIABLE(symbol) && set) {
-            if (get_hashtable(ht, symbol) == scm_false) put_hashtable(ht, symbol, scm_true);
-        }
-    }
-    return gloc;
-}
-*/
-
 scm_gloc_t
 VM::prebind_gloc(scm_obj_t variable, scm_hashtable_t ht, bool set)
 {

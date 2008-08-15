@@ -394,6 +394,42 @@ subr_current_source_comments(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// current-library-infix
+scm_obj_t
+subr_current_library_infix(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return MAKECHAR(IDENTIFIER_LIBRARY_INFIX);
+    wrong_number_of_arguments_violation(vm, "current-library-infix", 0, 0, argc, argv);
+    return scm_undef;
+}
+
+// current-library-suffix
+scm_obj_t
+subr_current_library_suffix(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return MAKECHAR(IDENTIFIER_LIBRARY_SUFFIX);
+    wrong_number_of_arguments_violation(vm, "current-library-suffix", 0, 0, argc, argv);
+    return scm_undef;
+}
+
+// current-primitive-prefix
+scm_obj_t
+subr_current_primitive_prefix(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return MAKECHAR(IDENTIFIER_PRIMITIVE_PREFIX);
+    wrong_number_of_arguments_violation(vm, "current-primitive-prefix", 0, 0, argc, argv);
+    return scm_undef;
+}
+
+// current-rename-delimiter
+scm_obj_t
+subr_current_rename_delimiter(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return MAKECHAR(IDENTIFIER_RENAME_DELIMITER);
+    wrong_number_of_arguments_violation(vm, "current-rename-delimiter", 0, 0, argc, argv);
+    return scm_undef;
+}
+
 // backtrace
 scm_obj_t
 subr_backtrace(VM* vm, int argc, scm_obj_t argv[])
@@ -1104,7 +1140,7 @@ subr_tuple_index(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// string-contains (srfi-13)
+// string-contains (return byte index)
 scm_obj_t
 subr_string_contains(VM* vm, int argc, scm_obj_t argv[])
 {
@@ -1113,15 +1149,17 @@ subr_string_contains(VM* vm, int argc, scm_obj_t argv[])
             if (STRINGP(argv[1])) {
                 const char* s1 = ((scm_string_t)argv[0])->name;
                 const char* s2 = ((scm_string_t)argv[1])->name;
-                int s1_size = HDR_STRING_SIZE(((scm_string_t)argv[0])->hdr);
-                int s2_size = HDR_STRING_SIZE(((scm_string_t)argv[1])->hdr);
+                int s1_size = ((scm_string_t)argv[0])->size;
+                int s2_size = ((scm_string_t)argv[1])->size;
                 int start1 = 0;
                 int end1 = s1_size;
                 int start2 = 0;
                 int end2 = s2_size;
+                int base = 0;
                 if (argc > 2) {
                     if (FIXNUMP(argv[2])) {
-                        start1 = FIXNUM(argv[2]);
+                        base = FIXNUM(argv[2]);
+                        start1 = utf8_char_index_to_byte_offset((uint8_t*)s1, base, s1_size + 1);
                         if (start1 < 0 || start1 > s1_size) {
                             invalid_argument_violation(vm, "string-contains", "index out of bounds,", argv[2], 2, argc, argv);
                             return scm_undef;
@@ -1136,7 +1174,7 @@ subr_string_contains(VM* vm, int argc, scm_obj_t argv[])
                     }
                     if (argc > 3) {
                         if (FIXNUMP(argv[3])) {
-                            end1 = FIXNUM(argv[3]);
+                            end1 = utf8_char_index_to_byte_offset((uint8_t*)s1, FIXNUM(argv[3]), s1_size + 1);
                             if (end1 < 0 || end1 > s1_size) {
                                 invalid_argument_violation(vm, "string-contains", "index out of bounds,", argv[3], 3, argc, argv);
                                 return scm_undef;
@@ -1151,7 +1189,7 @@ subr_string_contains(VM* vm, int argc, scm_obj_t argv[])
                         }
                         if (argc > 4) {
                             if (FIXNUMP(argv[4])) {
-                                start2 = FIXNUM(argv[4]);
+                                start2 = utf8_char_index_to_byte_offset((uint8_t*)s2, FIXNUM(argv[4]), s2_size + 1);
                                 if (start2 < 0 || start2 > s2_size) {
                                     invalid_argument_violation(vm, "string-contains", "index out of bounds,", argv[4], 4, argc, argv);
                                     return scm_undef;
@@ -1166,7 +1204,7 @@ subr_string_contains(VM* vm, int argc, scm_obj_t argv[])
                             }
                             if (argc > 5) {
                                 if (FIXNUMP(argv[5])) {
-                                    end2 = FIXNUM(argv[5]);
+                                    end2 = utf8_char_index_to_byte_offset((uint8_t*)s2, FIXNUM(argv[5]), s2_size + 1);
                                     if (end2 < 0 || end2 > s2_size) {
                                         invalid_argument_violation(vm, "string-contains", "index out of bounds,", argv[5], 5, argc, argv);
                                         return scm_undef;
@@ -1194,10 +1232,13 @@ subr_string_contains(VM* vm, int argc, scm_obj_t argv[])
                 assert(start1 <= end1 && start2 <= end2 && end1 <= s1_size && end2 <= s2_size);
                 int span = end2 - start2;
                 int to = end1 - span;
-                for (int p = start1; p <= to; p++) {
+                int p = start1;
+                while (p <= to) {
                     int i = 0;
                     while (i < span && s1[p + i] == s2[start2 + i]) i++;
-                    if (i == span) return MAKEFIXNUM(p);
+                    if (i == span) return MAKEFIXNUM(base);
+                    p = p + utf8_byte_count(s1[p]);
+                    base = base + 1;
                 }
                 return scm_false;
             }
@@ -1211,109 +1252,50 @@ subr_string_contains(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// symbol-contains (return byte index)
 scm_obj_t
 subr_symbol_contains(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc >= 2 && argc <= 6) {
+    if (argc == 2) {
         if (SYMBOLP(argv[0])) {
-            if (STRINGP(argv[1])) {
+            if (STRINGP(argv[1]) || CHARP(argv[1])) {
                 const char* s1 = ((scm_symbol_t)argv[0])->name;
-                const char* s2 = ((scm_string_t)argv[1])->name;
+                const char* s2;
                 int s1_size = HDR_SYMBOL_SIZE(((scm_symbol_t)argv[0])->hdr);
-                int s2_size = HDR_STRING_SIZE(((scm_string_t)argv[1])->hdr);
+                int s2_size;
+                uint8_t utf8[8];
+                if (STRINGP(argv[1])) {
+                    s2 = ((scm_string_t)argv[1])->name;
+                    s2_size = ((scm_string_t)argv[1])->size;
+                } else {
+                    s2 = (char*)utf8;
+                    s2_size = cnvt_ucs4_to_utf8(CHAR(argv[1]), utf8);
+                    utf8[s2_size] = 0;
+                }
                 int start1 = 0;
                 int end1 = s1_size;
                 int start2 = 0;
                 int end2 = s2_size;
-                if (argc > 2) {
-                    if (FIXNUMP(argv[2])) {
-                        start1 = FIXNUM(argv[2]);
-                        if (start1 < 0 || start1 > s1_size) {
-                            invalid_argument_violation(vm, "symbol-contains", "index out of bounds,", argv[2], 2, argc, argv);
-                            return scm_undef;
-                        }
-                    } else {
-                        if (exact_non_negative_integer_pred(argv[2])) {
-                            invalid_argument_violation(vm, "symbol-contains", "index out of bounds,", argv[2], 2, argc, argv);
-                        } else {
-                            wrong_type_argument_violation(vm, "symbol-contains", 2, "exact non-negative integer", argv[2], argc, argv);
-                        }
-                        return scm_undef;
-                    }
-                    if (argc > 3) {
-                        if (FIXNUMP(argv[3])) {
-                            end1 = FIXNUM(argv[3]);
-                            if (end1 < 0 || end1 > s1_size) {
-                                invalid_argument_violation(vm, "symbol-contains", "index out of bounds,", argv[3], 3, argc, argv);
-                                return scm_undef;
-                            }
-                        } else {
-                            if (exact_non_negative_integer_pred(argv[3])) {
-                                invalid_argument_violation(vm, "symbol-contains", "index out of bounds,", argv[3], 3, argc, argv);
-                            } else {
-                                wrong_type_argument_violation(vm, "symbol-contains", 3, "exact non-negative integer", argv[3], argc, argv);
-                            }
-                            return scm_undef;
-                        }
-                        if (argc > 4) {
-                            if (FIXNUMP(argv[4])) {
-                                start2 = FIXNUM(argv[4]);
-                                if (start2 < 0 || start2 > s2_size) {
-                                    invalid_argument_violation(vm, "symbol-contains", "index out of bounds,", argv[4], 4, argc, argv);
-                                    return scm_undef;
-                                }
-                            } else {
-                                if (exact_non_negative_integer_pred(argv[4])) {
-                                    invalid_argument_violation(vm, "symbol-contains", "index out of bounds,", argv[4], 4, argc, argv);
-                                } else {
-                                    wrong_type_argument_violation(vm, "symbol-contains", 4, "exact non-negative integer", argv[4], argc, argv);
-                                }
-                                return scm_undef;
-                            }
-                            if (argc > 5) {
-                                if (FIXNUMP(argv[5])) {
-                                    end2 = FIXNUM(argv[5]);
-                                    if (end2 < 0 || end2 > s2_size) {
-                                        invalid_argument_violation(vm, "symbol-contains", "index out of bounds,", argv[5], 5, argc, argv);
-                                        return scm_undef;
-                                    }
-                                } else {
-                                    if (exact_non_negative_integer_pred(argv[5])) {
-                                        invalid_argument_violation(vm, "symbol-contains", "index out of bounds,", argv[5], 5, argc, argv);
-                                    } else {
-                                        wrong_type_argument_violation(vm, "symbol-contains", 5, "exact non-negative integer", argv[5], argc, argv);
-                                    }
-                                    return scm_undef;
-                                }
-                            }
-                        }
-                    }
-                }
-                if (start1 > end1) {
-                    invalid_argument_violation(vm, "symbol-contains", "indices must be start1 <= end1", NULL, -1, argc, argv);
-                    return scm_undef;
-                }
-                if (start2 > end2) {
-                    invalid_argument_violation(vm, "symbol-contains", "indices must be start2 <= end2", NULL, -1, argc, argv);
-                    return scm_undef;
-                }
-                assert(start1 <= end1 && start2 <= end2 && end1 <= s1_size && end2 <= s2_size);
                 int span = end2 - start2;
                 int to = end1 - span;
-                for (int p = start1; p <= to; p++) {
+                int base = 0;               
+                int p = start1;
+                while (p <= to) {
                     int i = 0;
                     while (i < span && s1[p + i] == s2[start2 + i]) i++;
-                    if (i == span) return MAKEFIXNUM(p);
+                    if (i == span) return MAKEFIXNUM(base);
+                    p = p + utf8_byte_count(s1[p]);
+                    base = base + 1;
                 }
                 return scm_false;
             }
-            wrong_type_argument_violation(vm, "symbol-contains", 1, "string", argv[1], argc, argv);
+            wrong_type_argument_violation(vm, "symbol-contains", 1, "string or char", argv[1], argc, argv);
             return scm_undef;
         }
         wrong_type_argument_violation(vm, "symbol-contains", 0, "symbol", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "symbol-contains", 2, 6, argc, argv);
+    wrong_number_of_arguments_violation(vm, "symbol-contains", 2, 2, argc, argv);
     return scm_undef;
 }
 // write-with-shared-structure (srfi-38)
@@ -2107,7 +2089,11 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("system-share-path", subr_system_share_path);
     DEFSUBR("system",subr_system);
     DEFSUBR("process",subr_process);
-    DEFSUBR("process-wait",subr_process_wait);
+    DEFSUBR("process-wait", subr_process_wait);
+    DEFSUBR("current-library-infix", subr_current_library_infix);
+    DEFSUBR("current-library-suffix", subr_current_library_suffix);
+    DEFSUBR("current-primitive-prefix", subr_current_primitive_prefix);
+    DEFSUBR("current-rename-delimiter", subr_current_rename_delimiter);
 
     #undef DEFSUBR
 

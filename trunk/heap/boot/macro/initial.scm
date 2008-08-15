@@ -2,11 +2,6 @@
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
-(define current-library-prefix (make-parameter ""))
-(define current-library-infix (make-parameter "."))
-(define current-library-suffix (make-parameter "'"))
-(define current-primitive-prefix (make-parameter "."))
-(define current-rename-delimiter (make-parameter "`"))
 (define expansion-backtrace (make-parameter 5)) ; #f or fixnum
 (define expansion-trace-stack (make-parameter '()))
 (define expansion-trace-level (make-parameter 0))
@@ -45,7 +40,7 @@
 
 (define generate-global-id
   (lambda (library-id symbol)
-    (string->symbol (format "~a~a~a~a" (current-library-prefix) library-id (current-library-suffix) symbol))))
+    (string->symbol (format "~a~a~a" library-id (current-library-suffix) symbol))))
 
 (define generate-temporary-symbol
   (lambda ()

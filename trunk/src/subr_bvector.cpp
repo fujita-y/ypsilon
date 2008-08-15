@@ -1844,7 +1844,7 @@ subr_string_utf8(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
-            int size = HDR_STRING_SIZE(string->hdr);
+            int size = string->size;
             scm_bvector_t bvector = make_bvector(vm->m_heap, size);
             memcpy(bvector->elts, string->name, size);
             return bvector;
@@ -1908,7 +1908,7 @@ subr_string_cstring(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
-            int size = HDR_STRING_SIZE(string->hdr);
+            int size = string->size;
             scm_bvector_t bvector = make_bvector(vm->m_heap, size + 1);
             memcpy(bvector->elts, string->name, size);
             bvector->elts[size] = 0;

@@ -29,7 +29,7 @@ get_name(scm_obj_t obj)
 static inline int
 get_len(scm_obj_t obj)
 {
-    if (STRINGP(obj)) return HDR_STRING_SIZE(((scm_string_t)obj)->hdr);
+    if (STRINGP(obj)) return ((scm_string_t)obj)->size;
     if (SYMBOLP(obj)) return HDR_SYMBOL_SIZE(((scm_symbol_t)obj)->hdr);
     return 0;
 }

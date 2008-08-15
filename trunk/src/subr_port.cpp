@@ -531,7 +531,7 @@ subr_make_string_input_port(VM* vm, int argc, scm_obj_t argv[])
             transcoder->elts[1] = SCM_PORT_EOL_STYLE_NONE;
             transcoder->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_IGNORE;
             scm_string_t string = (scm_string_t)argv[0];
-            int size = HDR_STRING_SIZE(string->hdr);
+            int size = string->size;
             scm_bvector_t bvector = make_bvector(vm->m_heap, size);
             memcpy(bvector->elts, string->name, size);
             return make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_IN, bvector, transcoder);

@@ -33,10 +33,10 @@
 
     (if (and (list? name) (not (null? name)))
         (if (every1 symbol? name)
-            (string->symbol (symbol-list->string name (current-library-infix)))
+            (string->symbol (symbol-list->string name (format "~a" (current-library-infix))))
             (let ((body (list-head name (- (length name) 1))))
               (if (every1 symbol? body)
-                  (string->symbol (symbol-list->string body (current-library-infix)))
+                  (string->symbol (symbol-list->string body (format "~a" (current-library-infix))))
                   (malformed-name))))
         (malformed-name))))
 
