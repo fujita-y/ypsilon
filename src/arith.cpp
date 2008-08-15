@@ -3912,9 +3912,9 @@ arith_magnitude(object_heap_t* heap, scm_obj_t obj)
             double real = real_to_double(((scm_complex_t)obj)->real);
             double imag = real_to_double(((scm_complex_t)obj)->imag);
             if (isinf(real) || isinf(imag)) return make_flonum(heap, VALUE_INF);
-            double m2 = real * real + imag * imag;
-            if (m2 == 0 || isinf(m2)) return make_flonum(heap, imag / sin(atan2(imag, real)));
-            return make_flonum(heap, sqrt(m2));
+            double m = sqrt(real * real + imag * imag);
+            if (m < DBL_EPSILON || isinf(m)) return make_flonum(heap, imag / sin(atan2(imag, real)));
+            return make_flonum(heap, m);
         }
     }
     if (real_valued_pred(obj)) {
