@@ -612,7 +612,9 @@
                                     (pure (or const
                                               (and (function? (cdr b))
                                                    (or (not (symbol? (cdr b)))
-                                                       (<= (core-hashtable-ref ht-variable-operands-refc (cdr b) 0) 1))))))
+                                                       (<= (core-hashtable-ref ht-variable-operands-refc (cdr b) 0) 1)))))
+                                    (inline (and const
+                                                 (inlinable-expression? (cdr b)))))
                                (let ((ans
                                       (call/cc
                                        (lambda (done)
@@ -630,7 +632,8 @@
                                                           ((eq? proc 'quote)
                                                            (loop (cdr lst)))
                                                           ((eq? proc 'lambda)
-                                                           (and const (loop (cdr args)))
+                                                           #;(and const (loop (cdr args)))
+                                                           (and inline (loop (cdr args)))
                                                            (loop (cdr lst)))
                                                           ((memq proc '(let letrec*))
                                                            (loop (map cadr (car args)))

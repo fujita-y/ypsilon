@@ -423,7 +423,7 @@
         (format #t "  --loadpath=path        adds load search path (YPSILON_LOADPATH)~%")
         (format #t "  --acc=dir              sets a auto-compile-cache directory (YPSILON_ACC)~%")
         (format #t "  --heap-limit=mbytes    sets a total heap limit in MBytes~%")
-        (format #t "  --dump-condition       default exception handler dump condition~%")
+        (format #t "  --dump-condition       default exception handler dumps condition~%")
         (format #t "  --disable-acc          disables auto-compile-cache~%")
         (format #t "  --clean-acc            cleans auto-compile-cache~%")
         (format #t "  --version              prints version and exit~%")
@@ -432,7 +432,7 @@
 
     (define show-banner
       (lambda ()
-        (format #t "Ypsilon 0.9.6-trunk/~a Copyright (c) 2008 Y.Fujita, LittleWing Company Limited.\n" (architecture-feature 'ypsilon-revision))))
+        (format #t "Ypsilon 0.9.6-update1 Copyright (c) 2008 Y.Fujita, LittleWing Company Limited.~%" #;(architecture-feature 'ypsilon-revision))))
 
     (define show-info
       (lambda ()
