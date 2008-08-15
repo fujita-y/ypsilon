@@ -1,19 +1,25 @@
 #summary Known bugs in current release
 
-version 0.9.6:
+version 0.9.6-update1 (based on revision 169):
 
-  * [http://code.google.com/p/ypsilon/issues/detail?id=32&can=1 Issue 32]: Macro not working which relies on internal define context having `letrec*` semantics.(fixed in trunk version)  	 
-  * [http://code.google.com/p/ypsilon/issues/detail?id=33&can=1 Issue 33]: `free-identifier=?` broken.(fixed in trunk version) 
-  * [http://code.google.com/p/ypsilon/issues/detail?id=34&can=1 Issue 34]: `make-list` accepting negative argument.(fixed in trunk version) 
-  * [http://code.google.com/p/ypsilon/issues/detail?id=35&can=1 Issue 35]: `list?` Segmentation fault.(fixed in trunk version)  
-  * [http://code.google.com/p/ypsilon/issues/detail?id=37&can=1 Issue 37]: xitomatl tests not working under Ypsilon.(fixed in trunk version)  
-  * `abs`, `min`, `max`, `sqrt`, `asin`, `acos`, `log`, `expt`, `rationalize`, and `imag-part` not working correctly.(fixed in trunk version)  
-  * `syntax-case`, `syntax-rules`, `define-condition-type` not working correctly.(fixed in trunk version)  
-  * `call/cc`, `cond`, and `let` not working correctly.(fixed in trunk version)  
-  * custom port not working correctly.(fixed in trunk version)  
-  * incorrect gc write barrier cause random segmentation fault.(fixed in trunk version)  
+  * _<no item>_
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
+
+version 0.9.6:
+
+  * [http://code.google.com/p/ypsilon/issues/detail?id=32&can=1 Issue 32]: Macro not working which relies on internal define context having `letrec*` semantics.  	 
+  * [http://code.google.com/p/ypsilon/issues/detail?id=33&can=1 Issue 33]: `free-identifier=?` broken.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=34&can=1 Issue 34]: `make-list` accepting negative argument.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=35&can=1 Issue 35]: `list?` Segmentation fault.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=37&can=1 Issue 37]: xitomatl tests not working under Ypsilon. 
+  * `abs`, `min`, `max`, `sqrt`, `asin`, `acos`, `log`, `expt`, `rationalize`, and `imag-part` not working correctly.(fixed in trunk version)  
+  * `syntax-case`, `syntax-rules`, `define-condition-type` not working correctly. 
+  * `call/cc`, `cond`, and `let` not working correctly.  
+  * custom port not working correctly.  
+  * incorrect gc write barrier cause random segmentation fault.  
+
+  * _All bugs in version 0.9.6 are fixed in version 0.9.6-update1_
 
 version 0.9.5-update2 (based on revision 111):
 
