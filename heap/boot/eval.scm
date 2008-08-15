@@ -2,7 +2,7 @@
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
-(define auto-compile-cache-validation-signature 'ypsilon-0.9.6-080807)
+(define auto-compile-cache-validation-signature 'ypsilon-0.9.6-update1)
   
 (define core-eval
   (lambda (form)
