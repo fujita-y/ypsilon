@@ -94,8 +94,8 @@ string_eq_pred(scm_obj_t obj1, scm_obj_t obj2)
         if (STRINGP(obj2)) {
             scm_string_t string1 = (scm_string_t)obj1;
             scm_string_t string2 = (scm_string_t)obj2;
-            int size1 = HDR_STRING_SIZE(string1->hdr);
-            int size2 = HDR_STRING_SIZE(string2->hdr);
+            int size1 = string1->size;
+            int size2 = string2->size;
             return (size1 == size2) && (memcmp(string1->name, string2->name, size1) == 0);
         }
     }
@@ -122,8 +122,8 @@ string_ci_eq_pred(scm_obj_t obj1, scm_obj_t obj2)
         if (STRINGP(obj2)) {
             scm_string_t string1 = (scm_string_t)obj1;
             scm_string_t string2 = (scm_string_t)obj2;
-            int size1 = HDR_STRING_SIZE(string1->hdr);
-            int size2 = HDR_STRING_SIZE(string2->hdr);
+            int size1 = string1->size;
+            int size2 = string2->size;
             if (size1 == size2) {
                 for (int i = 0; i < size1; i++) {
                     if (toupper(string1->name[i]) == toupper(string2->name[i])) continue;
@@ -162,7 +162,7 @@ utf8_char_index_to_byte_offset(const uint8_t datum[], int index, int limit)
 {
     int n = 0;
     for (int c = 0; c < index && n < limit; c++) n += utf8_byte_count(datum[n]);
-    if (n >= limit) return -1;
+    if ((index < 0) || (n >= limit)) return -1;
     return n;
 }
 
@@ -184,7 +184,7 @@ int
 utf8_string_length(scm_string_t obj)
 {
     uint8_t* datum = (uint8_t*)obj->name;
-    int end = HDR_STRING_SIZE(obj->hdr);
+    int end = obj->size;
     int c = 0;
     for (int n = 0; n < end; c++) n += utf8_byte_count(datum[n]);
     return c;
@@ -194,7 +194,7 @@ void
 utf8_substring(scm_string_t obj, int from, int to, int* head, int* tail)
 {
     uint8_t* datum = (uint8_t*)obj->name;
-    int end = HDR_STRING_SIZE(obj->hdr);
+    int end = obj->size;
     assert(from <= end);
     assert(to <= end);
     assert(from <= to);
@@ -217,11 +217,11 @@ int
 utf8_string_ref(scm_string_t obj, int index)
 {
     uint8_t* datum = (uint8_t*)obj->name;
-    int end = HDR_STRING_SIZE(obj->hdr);
+    int end = obj->size;
     int offset = utf8_char_index_to_byte_offset(datum, index, end);
-    if (offset < 0) return -1;
+    if (offset < 0) return BAD_UTF8_STRING_REF_INDEX;
     uint32_t ucs4;
-    if (cnvt_utf8_to_ucs4(datum + offset, &ucs4) < 1) return -1;
+    if (cnvt_utf8_to_ucs4(datum + offset, &ucs4) < 1) return BAD_UTF8_STRING_REF_DATUM;
     return ucs4;
 }
 
@@ -229,7 +229,7 @@ bool
 utf8_string_set(object_heap_t* heap, scm_string_t obj, int index, int ch)
 {
     uint8_t* datum = (uint8_t*)obj->name;
-    int size_prev = HDR_STRING_SIZE(obj->hdr);
+    int size_prev = obj->size;
     int offset = utf8_char_index_to_byte_offset(datum, index, size_prev);
     if (offset < 0) return false;
     uint8_t utf8[4];
@@ -243,7 +243,8 @@ utf8_string_set(object_heap_t* heap, scm_string_t obj, int index, int ch)
         for (int i = 0; i < n_new; i++) datum[offset + i] = utf8[i];
         memmove(datum + offset + n_new, datum + offset + n_prev, size_prev - offset - n_prev);
         int size_new = size_prev + n_new - n_prev;
-        obj->hdr = scm_hdr_string | (size_new << HDR_STRING_SIZE_SHIFT);
+        obj->hdr = scm_hdr_string;
+        obj->size = size_new;
         datum[size_new] = 0;
         return true;
     }
@@ -257,12 +258,11 @@ utf8_string_set(object_heap_t* heap, scm_string_t obj, int index, int ch)
     if (limit > size_new) {
         memmove(datum + offset + n_new, datum + offset + n_prev, size_prev - offset - n_prev);
         for (int i = 0; i < n_new; i++) datum[offset + i] = utf8[i];
-        obj->hdr = scm_hdr_string | (size_new << HDR_STRING_SIZE_SHIFT);
+        obj->hdr = scm_hdr_string;
+        obj->size = size_new;
         datum[size_new] = 0;
         return true;
-    }
-    scm_hdr_t hdr2 = scm_hdr_string | (size_new << HDR_STRING_SIZE_SHIFT);
-    if (HDR_STRING_SIZE(hdr2) == size_new) {
+    } else {
         uint8_t* datum2 = (uint8_t*)heap->allocate_private(size_new + 1);
         memcpy(datum2, datum, offset);
         for (int i = 0; i < n_new; i++) datum2[offset + i] = utf8[i];
@@ -270,9 +270,10 @@ utf8_string_set(object_heap_t* heap, scm_string_t obj, int index, int ch)
         datum2[size_new] = 0;
         uint8_t* prev = (uint8_t*)obj->name;
         obj->name = (char*)datum2;
-        obj->hdr = hdr2;
+        MEM_STORE_FENCE;
+        obj->hdr = scm_hdr_string;
+        obj->size = size_new;
         if (!compound) heap->deallocate_private(prev);
         return true;
     }
-    return false;
 }

@@ -26,7 +26,7 @@ VPATH 	 = src
 UNAME 	 = $(shell uname)
 
 ifneq (, $(findstring Linux, $(UNAME)))
-  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native')), )
+  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
     CXXFLAGS += -m32 -march=i686
   else
     CXXFLAGS += -m32 -march=native
@@ -37,7 +37,7 @@ ifneq (, $(findstring Linux, $(UNAME)))
 endif
 
 ifneq (, $(findstring FreeBSD, $(UNAME)))
-  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native')), )
+  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
     CXXFLAGS += -m32 -march=i686
   else
     CXXFLAGS += -m32 -march=native
@@ -45,7 +45,7 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
   CPPFLAGS += -D__LITTLE_ENDIAN__
   ASFLAGS = --32
   LDFLAGS = -m32 -pthread
-  SRCS += ffi_stub_linux.s
+  SRCS += ffi_stub_freebsd.s
 endif
 
 ifneq (, $(findstring Darwin, $(UNAME)))

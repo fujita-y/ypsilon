@@ -77,7 +77,8 @@ make_string(object_heap_t* heap, const char *name, int len)
         obj = (scm_string_t)heap->allocate_collectible(sizeof(scm_string_rec_t));
         obj->name = (char*)heap->allocate_private(len + 1);
     }
-    obj->hdr = scm_hdr_string | (len << HDR_STRING_SIZE_SHIFT);
+    obj->hdr = scm_hdr_string;
+    obj->size = len;
     memcpy(obj->name, name, len);
     obj->name[len] = 0;
     return obj;
@@ -103,7 +104,8 @@ make_string_literal(object_heap_t* heap, const char* name, int len)
             obj = (scm_string_t)heap->allocate_collectible(sizeof(scm_string_rec_t));
             obj->name = (char*)heap->allocate_private(len + 1);
         }
-        obj->hdr = scm_hdr_string | (len << HDR_STRING_SIZE_SHIFT) | (1 << HDR_STRING_LITERAL_SHIFT);
+        obj->hdr = scm_hdr_string | (1 << HDR_STRING_LITERAL_SHIFT);
+        obj->size = len;
         memcpy(obj->name, name, len);
         obj->name[len] = 0;
         heap->m_string.put(obj);
@@ -123,7 +125,8 @@ make_string(object_heap_t* heap, int n, char c)
 {
     if (n == 0) return (scm_string_t)heap->m_inherents[NIL_STRING];
     scm_string_t obj = (scm_string_t)heap->allocate_collectible(sizeof(scm_string_rec_t));
-    obj->hdr = scm_hdr_string | (n << HDR_STRING_SIZE_SHIFT);
+    obj->hdr = scm_hdr_string;
+    obj->size = n;
     obj->name = (char*)heap->allocate_private(n + 1);
     memset(obj->name, c, n);
     obj->name[n] = 0;

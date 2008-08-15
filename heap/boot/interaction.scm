@@ -432,7 +432,7 @@
 
     (define show-banner
       (lambda ()
-        (put-string (current-output-port) "Ypsilon 0.9.6-trunk Copyright (c) 2008 Y.Fujita, LittleWing Company Limited.\n")))
+        (format #t "Ypsilon 0.9.6-trunk/~a Copyright (c) 2008 Y.Fujita, LittleWing Company Limited.\n" (architecture-feature 'ypsilon-revision))))
 
     (define show-info
       (lambda ()

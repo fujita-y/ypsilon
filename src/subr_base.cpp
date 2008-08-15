@@ -485,7 +485,7 @@ subr_string_symbol(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
-            return make_symbol(vm->m_heap, string->name, HDR_STRING_SIZE(string->hdr));
+            return make_symbol(vm->m_heap, string->name, string->size);
         }
         wrong_type_argument_violation(vm, "string->symbol", 0, "string", argv[0], argc, argv);
         return scm_undef;
@@ -719,7 +719,7 @@ subr_make_string(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
             scm_string_t string = make_string(vm->m_heap, FIXNUM(argv[0]), 0x20);
-            if (HDR_STRING_SIZE(string->hdr) == FIXNUM(argv[0])) return string;
+            if (string->size == FIXNUM(argv[0])) return string;
         }
         if (exact_non_negative_integer_pred(argv[0])) {
             invalid_argument_violation(vm, "make-string", "too many elements,", argv[0], 0, argc, argv);
@@ -736,7 +736,7 @@ subr_make_string(VM* vm, int argc, scm_obj_t argv[])
                 int bytes = cnvt_ucs4_to_utf8(c, utf8);
                 int size = FIXNUM(argv[0]) * bytes;
                 scm_string_t string = make_string(vm->m_heap, size, ' ');
-                if (HDR_STRING_SIZE(string->hdr) == size) {
+                if (string->size == size) {
                     for (int i = 0; i < size; i += bytes) memcpy(string->name + i, utf8, bytes);
                     return string;
                 }
@@ -812,6 +812,43 @@ subr_list_string(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 
 }
+
+static int update_string_type(scm_string_t string)
+{
+    int type = HDR_STRING_TYPE(string->hdr);
+    if (type == STRING_TYPE_UNKNOWN) {
+        for (int i = 0; i < string->size; i++) {
+            if ((uint8_t)string->name[i] > 0x7f) {
+                string->hdr = scm_hdr_string | (STRING_TYPE_UTF8 << HDR_STRING_TYPE_SHIFT);
+                return STRING_TYPE_UTF8;
+            }
+        }
+        string->hdr = scm_hdr_string | (STRING_TYPE_ASCII << HDR_STRING_TYPE_SHIFT);
+        return STRING_TYPE_ASCII;
+    }
+    return type;
+}
+
+static int update_string_type(scm_string_t string, int ch)
+{
+    if (ch > 0x7f) {
+        string->hdr = scm_hdr_string | (STRING_TYPE_UTF8 << HDR_STRING_TYPE_SHIFT);
+        return STRING_TYPE_UTF8;
+    }
+    int type = HDR_STRING_TYPE(string->hdr);
+    if (type == STRING_TYPE_UNKNOWN) {
+        for (int i = 0; i < string->size; i++) {
+            if ((uint8_t)string->name[i] > 0x7f) {
+                string->hdr = scm_hdr_string | (STRING_TYPE_UTF8 << HDR_STRING_TYPE_SHIFT);
+                return STRING_TYPE_UTF8;
+            }
+        }
+        string->hdr = scm_hdr_string | (STRING_TYPE_ASCII << HDR_STRING_TYPE_SHIFT);
+        return STRING_TYPE_ASCII;
+    }
+    return type;
+}
+
 // string-length
 scm_obj_t
 subr_string_length(VM* vm, int argc, scm_obj_t argv[])
@@ -819,6 +856,7 @@ subr_string_length(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
+            if (HDR_STRING_TYPE(string->hdr) == STRING_TYPE_ASCII) return MAKEFIXNUM(string->size);
             return MAKEFIXNUM(utf8_string_length(string));
         }
         wrong_type_argument_violation(vm, "string-length", 0, "string", argv[0], argc, argv);
@@ -836,12 +874,21 @@ subr_string_ref(VM* vm, int argc, scm_obj_t argv[])
         if (STRINGP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_string_t string = (scm_string_t)argv[0];
+                int type = update_string_type(string);
                 int index = FIXNUM(argv[1]);
-                if (index >= 0 && index < HDR_STRING_SIZE(string->hdr)) {
-                    int c = utf8_string_ref(string, index);
-                    if (c >= 0) return MAKECHAR(c);
-                    invalid_object_violation(vm, "string-ref", "properly encoded string", string, argc, argv);
-                    return scm_undef;
+                if (type == STRING_TYPE_ASCII) {
+                    if (index >= 0 && index < string->size) {
+                        return MAKECHAR(string->name[index]);
+                    }
+                } else {
+                    if (index >= 0 && index < string->size) {
+                        int c = utf8_string_ref(string, index);
+                        if (c >= 0) return MAKECHAR(c);
+                        if (c == BAD_UTF8_STRING_REF_DATUM) {
+                            invalid_object_violation(vm, "string-ref", "properly encoded string", string, argc, argv);
+                            return scm_undef;
+                        }
+                    }
                 }
                 /*** FALL THROUGH ***/
             }
@@ -870,18 +917,22 @@ subr_string_set(VM* vm, int argc, scm_obj_t argv[])
                 if (FIXNUMP(argv[1])) {
                     scm_string_t string = (scm_string_t)argv[0];
                     int index = FIXNUM(argv[1]);
-                    if (index >= 0 && index < HDR_STRING_SIZE(string->hdr)) {
-                        if (HDR_STRING_LITERAL(string->hdr) == 0) {
-                            if (utf8_string_set(vm->m_heap, string, index, CHAR(argv[2]))) return string;
-                            if (index < utf8_string_length(string)) {
-                                invalid_argument_violation(vm, "string-set!", "too many elements in string", NULL, 0, 0, NULL);
+                    int ch = CHAR(argv[2]);
+                    int type = update_string_type(string, ch);
+                    if (type == STRING_TYPE_ASCII) {
+                        if (index >= 0 && index < string->size) {
+                            string->name[index] = ch;
+                            return scm_unspecified;
+                        }
+                    } else {                    
+                        if (index >= 0 && index < string->size) {
+                            if (HDR_STRING_LITERAL(string->hdr) == 0) {
+                                if (utf8_string_set(vm->m_heap, string, index, ch)) return scm_unspecified;
+                            } else {
+                                invalid_argument_violation(vm, "string-set!", "immutable string,", argv[0], 0, argc, argv);
                                 return scm_undef;
                             }
-                            invalid_argument_violation(vm, "string-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                            return scm_undef;
                         }
-                        invalid_argument_violation(vm, "string-set!", "immutable string,", argv[0], 0, argc, argv);
-                        return scm_undef;
                     }
                     /*** FALL THROUGH ***/
                 }
@@ -1106,18 +1157,18 @@ subr_string_append(VM* vm, int argc, scm_obj_t argv[])
     for (int i = 0; i < argc; i++) {
         if (STRINGP(argv[i])) {
             scm_string_t src = (scm_string_t)argv[i];
-            size = size + HDR_STRING_SIZE(src->hdr);
+            size = size + src->size;
         } else {
             wrong_type_argument_violation(vm, "string-append", i, "string", argv[i], argc, argv);
             return scm_undef;
         }
     }
     scm_string_t string = make_string(vm->m_heap, size, 0);
-    if (HDR_STRING_SIZE(string->hdr) == size) {
+    if (string->size == size) {
         int p = 0;
         for (int i = 0; i < argc; i++) {
             scm_string_t src = (scm_string_t)argv[i];
-            int len = HDR_STRING_SIZE(src->hdr);
+            int len = src->size;
             memcpy(string->name + p, src->name, len);
             p += len;
         }
@@ -1134,7 +1185,7 @@ subr_string_copy(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
-            return make_string(vm->m_heap, string->name, HDR_STRING_SIZE(string->hdr));
+            return make_string(vm->m_heap, string->name, string->size);
         }
         wrong_type_argument_violation(vm, "string-copy", 0, "string", argv[0], argc, argv);
         return scm_undef;
@@ -1161,19 +1212,14 @@ subr_string_fill(VM* vm, int argc, scm_obj_t argv[])
                     compound = true;
                 }                
                 if (limit < bsize + 1) {
-                    scm_hdr_t hdr2 = scm_hdr_string | (bsize << HDR_STRING_SIZE_SHIFT);
-                    if (HDR_STRING_SIZE(hdr2) != bsize) {
-                        invalid_argument_violation(vm, "string-fill!", "too many elements in string", NULL, 0, 0, NULL);
-                        return scm_undef;
-                    }
                     uint8_t* prev = (uint8_t*)string->name;
-                    uint8_t* datum2 = (uint8_t*)vm->m_heap->allocate_private(bsize + 1);
-                    datum2[bsize] = 0;
-                    string->name = (char*)datum2;
-                    string->hdr = hdr2;
+                    uint8_t* datum = (uint8_t*)vm->m_heap->allocate_private(bsize + 1);
+                    datum[bsize] = 0;
+                    string->hdr = scm_hdr_string; // reset flag
+                    string->name = (char*)datum;
+                    MEM_STORE_FENCE;
+                    string->size = bsize;
                     if (!compound) vm->m_heap->deallocate_private(prev);
-                } else {
-                    string->hdr = scm_hdr_string | (bsize << HDR_STRING_SIZE_SHIFT);
                 }
                 uint8_t utf8[4];
                 int n = cnvt_ucs4_to_utf8(ucs4, utf8);

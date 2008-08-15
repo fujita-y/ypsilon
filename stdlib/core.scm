@@ -258,8 +258,12 @@
     current-environment
     current-error-port
     current-input-port
+    current-library-infix
+    current-library-suffix
     current-macro-environment
     current-output-port
+    current-primitive-prefix
+    current-rename-delimiter
     current-source-comments
     current-variable-environment
     datum->syntax
@@ -780,6 +784,7 @@
     subr?
     substring
     symbol->string
+    symbol-contains
     symbol-hash
     symbol=?
     symbol?

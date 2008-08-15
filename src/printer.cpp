@@ -796,7 +796,7 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
             scm_string_t string = (scm_string_t)obj;
             if (m_escape) {
                 port_put_byte(m_port, '"');
-                write_string((const uint8_t *)string->name, HDR_STRING_SIZE(string->hdr));
+                write_string((const uint8_t *)string->name, string->size);
                 port_put_byte(m_port, '"');
             } else {
                 port_puts(m_port, string->name);

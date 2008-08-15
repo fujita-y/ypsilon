@@ -38,8 +38,8 @@
 
     nnnn nnnn nnnn 0000 0000 0000 *tc4 1010 : scm_hdr_symbol
     nnnn nnnn nnnn OOOO OOOO I000 *tc4 1010 : scm_hdr_symbol        I: inherent O: S-code
-    nnnn nnnn nnnn nnnn nnnn L000 *tc4 1010 : scm_hdr_string        L: literal
-    nnnn nnnn nnnn nnnn nnnN Z000 *tc4 1010 : scm_hdr_bignum        NZ: 01 positive 11 negative 00 zero
+    .... .... .... .... TTTT L000 *tc4 1010 : scm_hdr_string        L: literal T: (0x0 unknown) (0x1 ascii) (0x2 utf8)
+    nnnn nnnn nnnn nnnn nnnN Z000 *tc4 1010 : scm_hdr_bignum        NZ: (01 positive) (11 negative) (00 zero)
     .... .... .... .... .... .000 *tc4 1010 : scm_hdr_flonum
     .... .... .... .... .... .000 *tc4 1010 : scm_hdr_cont
     nnnn nnnn nnnn nnnn .... .000 *tc4 1010 : scm_hdr_closure       if has rest arguments then n == (- 1 - <required argc>)
@@ -206,6 +206,7 @@ OBJECT_ALIGNED(scm_symbol_rec_t) {
 
 OBJECT_ALIGNED(scm_string_rec_t) {
     scm_hdr_t   hdr;
+    int         size;
     char*       name;
 } END;
 
@@ -437,8 +438,7 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_SYMBOL_CODE_SHIFT               12
 #define HDR_SYMBOL_SIZE_SHIFT               20
 #define HDR_STRING_LITERAL_SHIFT            11
-#define HDR_STRING_SIZE_SHIFT               12
-//#define HDR_VECTOR_COUNT_SHIFT              12
+#define HDR_STRING_TYPE_SHIFT               12
 #define HDR_VALUES_COUNT_SHIFT              12
 #define HDR_TUPLE_COUNT_SHIFT               12
 #define HDR_HEAPENV_SIZE_SHIFT              12
@@ -457,8 +457,7 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_TC(hdr)                         (((hdr) >> 4) & TC_MASKBITS)
 #define HDR_CLOSURE_ARGS(hdr)               (((intptr_t)(hdr)) >> HDR_CLOSURE_ARGS_SHIFT)
 #define HDR_STRING_LITERAL(hdr)             (((hdr) >> HDR_STRING_LITERAL_SHIFT) & 0x01)
-#define HDR_STRING_SIZE(hdr)                (((uintptr_t)(hdr)) >> HDR_STRING_SIZE_SHIFT)
-//#define HDR_VECTOR_COUNT(hdr)               (((uintptr_t)(hdr)) >> HDR_VECTOR_COUNT_SHIFT)
+#define HDR_STRING_TYPE(hdr)                (((hdr) >> HDR_STRING_TYPE_SHIFT) & 0x0f)
 #define HDR_VALUES_COUNT(hdr)               (((uintptr_t)(hdr)) >> HDR_VALUES_COUNT_SHIFT)
 #define HDR_TUPLE_COUNT(hdr)                (((uintptr_t)(hdr)) >> HDR_TUPLE_COUNT_SHIFT)
 #define HDR_HEAPENV_SIZE(hdr)               (((uintptr_t)(hdr)) >> HDR_HEAPENV_SIZE_SHIFT)
@@ -470,6 +469,10 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_HASHTABLE_IMMUTABLE(hdr)        (((hdr) >> HDR_HASHTABLE_IMMUTABLE_SHIFT) & 0x01)
 #define HDR_WEAKHASHTABLE_IMMUTABLE(hdr)    (((hdr) >> HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT) & 0x01)
 #define HDR_BIGNUM_SIGN(hdr)                (((hdr) >> HDR_BIGNUM_SIGN_SHIFT) & 0x03)
+
+#define STRING_TYPE_UNKNOWN                 0x0
+#define STRING_TYPE_ASCII                   0x1
+#define STRING_TYPE_UTF8                    0x2
 
 #define CAR(obj)                            (((scm_pair_t)(obj))->car)
 #define CDR(obj)                            (((scm_pair_t)(obj))->cdr)
@@ -499,6 +502,7 @@ struct vm_env_rec_t {           // record size is variable
 
 #define IDENTIFIER_RENAME_DELIMITER         '`'
 #define IDENTIFIER_LIBRARY_SUFFIX           '\''
+#define IDENTIFIER_LIBRARY_INFIX            '.'
 #define IDENTIFIER_PRIMITIVE_PREFIX         '.'
 #define IDENTIFIER_CSTUB_MARK               '@'
 #define UNINTERNED_VARIABLE(x)              (strchr((x)->name, '`'))

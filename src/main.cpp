@@ -12,7 +12,6 @@ char* const*    main_command_line_argv;
 VM*             s_current_vm;
 
 // --heap-limit=32   -> 32MB (default)
-// --heap-limit=512  -> 768MB
 // --heap-limit=1024 -> 1GB
 
 static int opt_heap_limit(int argc, char* const argv[])

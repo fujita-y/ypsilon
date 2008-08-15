@@ -200,7 +200,7 @@ fasl_printer_t::put_lites()
                 scm_string_t string = (scm_string_t)lites[i];
                 emit_u8(FASL_TAG_STRING);
                 emit_u32(i);
-                int n = HDR_STRING_SIZE(string->hdr);
+                int n = string->size;
                 emit_u32(n);
                 emit_string(string->name, n);
                 continue;

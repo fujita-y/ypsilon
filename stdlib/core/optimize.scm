@@ -34,8 +34,6 @@
 
   (define max-transform-pass 5)
   (define limit-arguments 200)
-  (define noname-lambda-infix "`")
-  (define library-variable-infix "'")
 
   ;; no side effects, no i/o, safe to remove expression
   (define ht-primitive-functions
@@ -139,6 +137,7 @@
                   .syntax/i0 .syntax/i1 .syntax/i2 .syntax/i3
                   .syntax/c0 .syntax/c1 .syntax/c2 .syntax/c3
                   .string-contains
+                  .symbol-contains
                   .top-level-value
                   .unspecified
                   .tuple .make-tuple .tuple-ref .tuple-length .tuple-index .tuple->list
@@ -148,7 +147,11 @@
                   .core-hashtable->alist .core-hashtable-size
                   .core-hashtable-copy
                   .core-hashtable-equivalence-function
-                  .core-hashtable-hash-function))
+                  .core-hashtable-hash-function
+                  .current-library-infix
+                  .current-library-suffix
+                  .current-primitive-prefix
+                  .current-rename-delimiter))
       (core-hashtable-copy ht)))
 
   (define ht-inlinable-primitive-functions
@@ -246,12 +249,19 @@
                (not (core-hashtable-contains? ht-variable-formals x)))
           (symbol? (get-free-variables x)))))
 
+  #;
   (define variable-private?
     (lambda (x)
       (let ((s (symbol->string x)))
         (and (or (string-contains s noname-lambda-infix)
                  (string-contains s library-variable-infix))
              #t))))
+  
+  (define variable-private?
+    (lambda (x)
+      (and (or (symbol-contains x (current-rename-delimiter))
+               (symbol-contains x (current-library-suffix)))
+           #t)))
 
   (define variable-functional?
     (lambda (x)
@@ -556,7 +566,7 @@
             (let ((count 1))
               (for-each (lambda (b)
                           (cond ((symbol? (cdr b))
-                                 (core-hashtable-set! ht (car b) (string->symbol (format ".fn~a.~a~a~a" count pass noname-lambda-infix count)))
+                                 (core-hashtable-set! ht (car b) (string->symbol (format ".fn~a.~a~a~a" count pass (current-rename-delimiter) count)))
                                  (set! count (+ count 1)))))
                         (core-hashtable->alist ht-lambda-node)))
             (for-each (lambda (b)
