@@ -13,7 +13,7 @@ version 0.9.6:
   * [http://code.google.com/p/ypsilon/issues/detail?id=34&can=1 Issue 34]: `make-list` accepting negative argument.
   * [http://code.google.com/p/ypsilon/issues/detail?id=35&can=1 Issue 35]: `list?` Segmentation fault.
   * [http://code.google.com/p/ypsilon/issues/detail?id=37&can=1 Issue 37]: xitomatl tests not working under Ypsilon. 
-  * `abs`, `min`, `max`, `sqrt`, `asin`, `acos`, `log`, `expt`, `rationalize`, and `imag-part` not working correctly.(fixed in trunk version)  
+  * `abs`, `min`, `max`, `sqrt`, `asin`, `acos`, `log`, `expt`, `rationalize`, and `imag-part` not working correctly. 
   * `syntax-case`, `syntax-rules`, `define-condition-type` not working correctly. 
   * `call/cc`, `cond`, and `let` not working correctly.  
   * custom port not working correctly.  
