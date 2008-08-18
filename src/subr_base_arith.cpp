@@ -1147,6 +1147,10 @@ subr_expt(VM* vm, int argc, scm_obj_t argv[])
                         return make_complex(vm->m_heap, VALUE_NAN, VALUE_NAN);
                     }
                 }
+                if (n_exact_pred(argv[0]) && BIGNUMP(argv[1])) {
+                    invalid_argument_violation(vm, "expt", "calculated number is too big to fit into memory", NULL, 0, argc, argv);
+                    return scm_undef;
+                }
                 return arith_expt(vm->m_heap, argv[0], argv[1]);
             }
             wrong_type_argument_violation(vm, "expt", 1, "number", argv[1], argc, argv);

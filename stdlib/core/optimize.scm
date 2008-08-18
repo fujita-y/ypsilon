@@ -159,7 +159,7 @@
       (for-each (lambda (e) (core-hashtable-set! ht (top-level-value e) #t))
                 '(.car .cdr .cadr .cddr))
       (core-hashtable-copy ht)))
-  
+
   ; r6rs special list functions that all list arguments are immutable
   (define ht-special-list-functions
     (let ((ht (make-core-hashtable)))
@@ -230,7 +230,7 @@
     (lambda (x)
       (and (top-level-bound? x)
            (core-hashtable-contains? ht-primitive-functions (top-level-value x)))))
-  
+
   (define special-list-function?
     (lambda (x)
       (and (top-level-bound? x)
@@ -256,7 +256,7 @@
         (and (or (string-contains s noname-lambda-infix)
                  (string-contains s library-variable-infix))
              #t))))
-  
+
   (define variable-private?
     (lambda (x)
       (and (or (symbol-contains x (current-rename-delimiter))
@@ -423,7 +423,7 @@
                                             (not (and (top-level-bound? x)
                                                       (eq? (top-level-value x) denote-call/cc)))))
                                       inits-free)
-                             (for-each (lambda (x) (core-hashtable-set! ht-variable-pinned x #t)) (map car e1)))      
+                             (for-each (lambda (x) (core-hashtable-set! ht-variable-pinned x #t)) (map car e1)))
                          (collect-context-seq e2 bound inits-free)))))
                   (_ (assertion-violation "coreform-optimize" (format "internal inconsistency in ~s" collect-context) form))))
 
@@ -751,7 +751,7 @@
                 (else ((annotate-hook) new form) new))))
 
       (let ((binding (cadr form)) (body (cddr form)))
-        (let ((vars (map car binding)) (inits (map cadr binding)))          
+        (let ((vars (map car binding)) (inits (map cadr binding)))
           (let ((flags (if (eq? (car form) 'letrec*)
                            (map (lambda (var)
                                   (or (core-hashtable-contains? subst var)
@@ -787,7 +787,7 @@
                                                       binding)
                                                 (loop (cdr vars) (cdr flags) (cdr inits)
                                                       (cons (transcribe (car inits) lift subst) motion)
-                                                      binding)))                                           
+                                                      binding)))
                                            ((symbol? (car flags))
                                             (loop (cdr vars) (cdr flags) (cdr inits)
                                                   motion
@@ -928,7 +928,24 @@
                           (cond ((eq? new (cdr form))
                                  (emit (flatten-expression form 'or)))
                                 (else
-                                 (emit (flatten-expression `(or ,@new) 'or))))))))                      
+                                 (emit (flatten-expression `(or ,@new) 'or))))))))
+                ((if)
+                 (destructuring-match (cdr form)
+                   ((('and . e1) e2 #f)
+                    (emit (flatten-expression `(and ,@(pretty-each e1) ,(pretty e2)) 'and)))
+                   ((('not e1) e2 e3)
+                    (primitive-function? 'not)
+                    (emit `(if ,(pretty e1) ,(pretty e3) ,(pretty e2))))
+                   ((#t e1 . _)
+                    (emit (pretty e1)))
+                   ((#f _ . e2)
+                    (if (null? e2)
+                        (emit '(.unspecified))
+                        (emit (pretty (car e2)))))
+                   ((e1 e2 #f)
+                    (emit `(and ,(pretty e1) ,(pretty e2))))
+                   (_
+                    (pretty-each form))))
                 ((quote begin lambda let letrec* if)
                  (destructuring-match form
                    (('quote e1)
@@ -959,20 +976,7 @@
                         (let ((e1a (map cadr e1)))
                           (let ((e1b (pretty-each e1a)) (e2a (flatten-begin (pretty-each e2))))
                             (cond ((and (eq? e2 e2a) (for-all eq? e1a e1b)) form)
-                                  (else (emit `(letrec* ,(map list (map car e1) e1b) ,@e2a))))))))    
-                   (('if ('and . e1) e2 #f)
-                    (emit (flatten-expression `(and ,@(pretty-each e1) ,(pretty e2)) 'and)))
-                   (('if #t e1 . _)
-                    (emit (pretty e1)))
-                   (('if #f _ . e2)
-                    (if (null? e2) 
-                        (emit '(.unspecified))
-                        (emit (pretty (car e2)))))
-                   (('if ('not e1) e2 e3)
-                    (primitive-function? 'not)
-                    (emit `(if ,(pretty e1) ,(pretty e3) ,(pretty e2))))
-                   (('if . _)
-                    (pretty-each form))
+                                  (else (emit `(letrec* ,(map list (map car e1) e1b) ,@e2a))))))))
                    (_
                     (assertion-violation "coreform-optimize" (format "internal inconsistency in ~s" pretty) form))))
                 (else

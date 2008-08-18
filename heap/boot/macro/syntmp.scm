@@ -111,6 +111,17 @@
   (lambda (name vars)
     (cdr (assq name vars))))
 
+#;(define collect-ellipsis-vars
+  (lambda (tmpl ranks depth vars)
+    (let ((ids (collect-unique-ids tmpl)))
+      (filter values
+              (map (lambda (slot)
+                     (and (memq (car slot) ids)
+                          (let ((rank (cdr (assq (car slot) ranks))))
+                            (cond ((< rank depth) slot)
+                                  (else (cons (car slot) (cadr slot)))))))
+                   vars)))))
+
 (define collect-ellipsis-vars
   (lambda (tmpl ranks depth vars)
     (let ((ids (collect-unique-ids tmpl)))
@@ -119,6 +130,7 @@
                      (and (memq (car slot) ids)
                           (let ((rank (cdr (assq (car slot) ranks))))
                             (cond ((< rank depth) slot)
+                                  ((null? (cdr slot)) slot)
                                   (else (cons (car slot) (cadr slot)))))))
                    vars)))))
 

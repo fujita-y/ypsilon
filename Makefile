@@ -1,6 +1,6 @@
 #
-#   Makefile for Linux and Darwin
-#   Use Win32 native build for Cygwin
+#   Makefile for Linux, FreeBSD, and Darwin
+#   (Use Win32 native build for Cygwin)
 #
 
 PROG 	 = ypsilon
@@ -31,8 +31,9 @@ ifneq (, $(findstring Linux, $(UNAME)))
   else
     CXXFLAGS += -m32 -march=native
   endif
-  ASFLAGS = --32
-  LDFLAGS = -m32 -lpthread -ldl
+  ASFLAGS += --32
+  LDFLAGS += -m32
+  LDLIBS += -lpthread -ldl
   SRCS += ffi_stub_linux.s
 endif
 
@@ -43,8 +44,9 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
     CXXFLAGS += -m32 -march=native
   endif
   CPPFLAGS += -D__LITTLE_ENDIAN__
-  ASFLAGS = --32
-  LDFLAGS = -m32 -pthread
+  ASFLAGS += --32
+  LDFLAGS += -m32
+  LDLIBS += -pthread
   SRCS += ffi_stub_freebsd.s
 endif
 
@@ -63,7 +65,7 @@ all: $(PROG)
 	@mkdir -p -m755 $(HOME)/.ypsilon
 
 $(PROG): $(OBJS)
-	$(CXX) $(LDFLAGS) -o $@ $^
+	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
 # VM1.s:
 #	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -fverbose-asm -S src/VM1.cpp
