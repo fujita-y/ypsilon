@@ -135,3 +135,4 @@ c_callback_stub_int:
     popl    %ebp
     ret
 
+.section .note.GNU-stack,"",%progbits

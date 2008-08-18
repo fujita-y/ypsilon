@@ -1363,7 +1363,7 @@ oprtr_lognot(object_heap_t* heap, scm_bignum_t obj)
             bn_norm(&ans);
             return bn_to_integer(heap, &ans);
         }
-        BN_TEMPORARY(obj2sc);                    // (-)
+        BN_TEMPORARY(obj2sc);                       // (-)
         BN_ALLOC_2SC(obj2sc, obj);
         bn_lognot(&ans, &obj2sc);
         bn_set_sign(&ans, 1);
@@ -1391,7 +1391,7 @@ oprtr_logand(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
                 bn_norm(&ans);
                 return bn_to_integer(heap, &ans);
             }
-            BN_TEMPORARY(lhs2sc);                    // (-,-)
+            BN_TEMPORARY(lhs2sc);                       // (-,-)
             BN_ALLOC_2SC(lhs2sc, lhs);
             BN_TEMPORARY(rhs2sc);
             BN_ALLOC_2SC(rhs2sc, rhs);
@@ -1405,7 +1405,7 @@ oprtr_logand(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     }
     if (lhs_sign & rhs_sign) {                          // (+,-) or (-,+)
         if (lhs_sign < 0) {
-            BN_TEMPORARY(lhs2sc);                    // (-,+)
+            BN_TEMPORARY(lhs2sc);                       // (-,+)
             BN_ALLOC_2SC(lhs2sc, lhs);
             bn_logand(&ans, &lhs2sc, rhs, true, false);
         } else {                                        // (+,-)
@@ -1438,7 +1438,7 @@ oprtr_logior(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
                 bn_norm(&ans);
                 return bn_to_integer(heap, &ans);
             }
-            BN_TEMPORARY(lhs2sc);                    // (-,-)
+            BN_TEMPORARY(lhs2sc);                       // (-,-)
             BN_ALLOC_2SC(lhs2sc, lhs);
             BN_TEMPORARY(rhs2sc);
             BN_ALLOC_2SC(rhs2sc, rhs);
@@ -1452,7 +1452,7 @@ oprtr_logior(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     }
     if (lhs_sign & rhs_sign) {                          // (+,-) or (-,+)
         if (lhs_sign < 0) {
-            BN_TEMPORARY(lhs2sc);                    // (-,+)
+            BN_TEMPORARY(lhs2sc);                       // (-,+)
             BN_ALLOC_2SC(lhs2sc, lhs);
             bn_logior(&ans, &lhs2sc, rhs, true, false);
         } else {                                        // (+,-)
@@ -1486,7 +1486,7 @@ oprtr_logxor(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
                 bn_norm(&ans);
                 return bn_to_integer(heap, &ans);
             }
-            BN_TEMPORARY(lhs2sc);                    // (-,-)
+            BN_TEMPORARY(lhs2sc);                       // (-,-)
             BN_ALLOC_2SC(lhs2sc, lhs);
             BN_TEMPORARY(rhs2sc);
             BN_ALLOC_2SC(rhs2sc, rhs);
@@ -1499,7 +1499,7 @@ oprtr_logxor(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     }
     if (lhs_sign & rhs_sign) {                          // (+,-) or (-,+)
         if (lhs_sign < 0) {
-            BN_TEMPORARY(lhs2sc);                    // (-,+)
+            BN_TEMPORARY(lhs2sc);                       // (-,+)
             BN_ALLOC_2SC(lhs2sc, lhs);
             bn_logxor(&ans, &lhs2sc, rhs, true, false);
         } else {                                        // (+,-)
@@ -1553,13 +1553,37 @@ oprtr_logash(object_heap_t* heap, scm_bignum_t lhs, int shift)
     }
 }
 
-
 static scm_obj_t
 oprtr_add(object_heap_t* heap, scm_rational_t lhs, scm_rational_t rhs)
 {
     scm_obj_t deno = arith_mul(heap, lhs->deno, rhs->deno);
     scm_obj_t nume = arith_add(heap, arith_mul(heap, lhs->nume, rhs->deno),
                                      arith_mul(heap, lhs->deno, rhs->nume));
+    return oprtr_reduce(heap, nume, deno);
+}
+
+static scm_obj_t
+oprtr_sub(object_heap_t* heap, scm_rational_t lhs, scm_rational_t rhs)
+{
+    scm_obj_t deno = arith_mul(heap, lhs->deno, rhs->deno);
+    scm_obj_t nume = arith_sub(heap, arith_mul(heap, lhs->nume, rhs->deno),
+                                     arith_mul(heap, lhs->deno, rhs->nume));
+    return oprtr_reduce(heap, nume, deno);
+}
+
+static scm_obj_t
+oprtr_mul(object_heap_t* heap, scm_rational_t lhs, scm_rational_t rhs)
+{
+    scm_obj_t nume = arith_mul(heap, lhs->nume, rhs->nume);
+    scm_obj_t deno = arith_mul(heap, lhs->deno, rhs->deno);
+    return oprtr_reduce(heap, nume, deno);
+}
+
+static scm_obj_t
+oprtr_div(object_heap_t* heap, scm_rational_t lhs, scm_rational_t rhs)
+{
+    scm_obj_t nume = arith_mul(heap, lhs->nume, rhs->deno);
+    scm_obj_t deno = arith_mul(heap, lhs->deno, rhs->nume);
     return oprtr_reduce(heap, nume, deno);
 }
 
@@ -1607,15 +1631,6 @@ oprtr_sub(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
 }
 
 static scm_obj_t
-oprtr_sub(object_heap_t* heap, scm_rational_t lhs, scm_rational_t rhs)
-{
-    scm_obj_t deno = arith_mul(heap, lhs->deno, rhs->deno);
-    scm_obj_t nume = arith_sub(heap, arith_mul(heap, lhs->nume, rhs->deno),
-                                        arith_mul(heap, lhs->deno, rhs->nume));
-    return oprtr_reduce(heap, nume, deno);
-}
-
-static scm_obj_t
 oprtr_mul(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
 {
     int lhs_sign = bn_get_sign(lhs);
@@ -1635,22 +1650,6 @@ oprtr_mul(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     bn_mul(&ans, lhs, rhs);
     bn_set_sign(&ans, sign);
     return bn_to_integer(heap, &ans);
-}
-
-static scm_obj_t
-oprtr_mul(object_heap_t* heap, scm_rational_t lhs, scm_rational_t rhs)
-{
-    scm_obj_t nume = arith_mul(heap, lhs->nume, rhs->nume);
-    scm_obj_t deno = arith_mul(heap, lhs->deno, rhs->deno);
-    return oprtr_reduce(heap, nume, deno);
-}
-
-static scm_obj_t
-oprtr_div(object_heap_t* heap, scm_rational_t lhs, scm_rational_t rhs)
-{
-    scm_obj_t nume = arith_mul(heap, lhs->nume, rhs->deno);
-    scm_obj_t deno = arith_mul(heap, lhs->deno, rhs->nume);
-    return oprtr_reduce(heap, nume, deno);
 }
 
 static scm_obj_t
@@ -1735,6 +1734,15 @@ oprtr_expt(object_heap_t* heap, scm_obj_t lhs, scm_fixnum_t rhs)
     if (n == 0) return MAKEFIXNUM(1);
     if (n == 1) return lhs;
     if (n < 0) return arith_inverse(heap, oprtr_expt(heap, lhs, MAKEFIXNUM(-n)));
+
+    if (n_negative_pred(lhs)) { // new
+        scm_obj_t ans = oprtr_expt(heap, arith_negate(heap, lhs), rhs);
+        if (n & 1) return arith_negate(heap, ans);
+        return ans;
+    }
+    
+    if (lhs == MAKEFIXNUM(0)) return lhs; // new
+    if (lhs == MAKEFIXNUM(1)) return lhs; // new
     if (lhs == MAKEFIXNUM(2)) {
         if (n + 1 <= FIXNUM_BITS - 1) return MAKEFIXNUM(1 << n);
         int count = ((n + 1) + 31) / 32;
@@ -1743,17 +1751,20 @@ oprtr_expt(object_heap_t* heap, scm_obj_t lhs, scm_fixnum_t rhs)
         bn_set_sign(ans, 1);
         ans->elts[count - 1] = 1 << (n & 31);
         return ans;
-    } else {
-        scm_obj_t ans = MAKEFIXNUM(1);
-        while(true) {
-            if (n & 1) {
-                if (ans == MAKEFIXNUM(1)) ans = lhs;
-                else ans = arith_mul(heap, ans, lhs);
-                if (n == 1) return ans;
-            }
-            lhs = arith_mul(heap, lhs, lhs);
-            n >>= 1;
+    }
+    if (RATIONALP(lhs)) {
+        return oprtr_reduce(heap, oprtr_expt(heap, ((scm_rational_t)lhs)->nume, rhs),
+                                  oprtr_expt(heap, ((scm_rational_t)lhs)->deno, rhs));
+    }
+    scm_obj_t ans = MAKEFIXNUM(1);
+    while(true) {
+        if (n & 1) {
+            if (ans == MAKEFIXNUM(1)) ans = lhs;
+            else ans = arith_mul(heap, ans, lhs);
+            if (n == 1) return ans;
         }
+        lhs = arith_mul(heap, lhs, lhs);
+        n >>= 1;
     }
 }
 
@@ -2459,7 +2470,7 @@ arith_bit_count(object_heap_t* heap, scm_obj_t obj)
         if (n > 0) {
             return MAKEFIXNUM(nbits(n));
         } else {
-            return MAKEFIXNUM(~nbits(~n)); // 64bit todo
+            return MAKEFIXNUM(~nbits(~n));
         }
     }
     if (BIGNUMP(obj)) {
@@ -3566,6 +3577,7 @@ arith_expt(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             return oprtr_expt(heap, lhs, (scm_fixnum_t)rhs);
         }
         if (BIGNUMP(rhs)) {
+            assert(!n_exact_pred(lhs));
             if (real_valued_pred(lhs)) {
                 double n = bignum_to_double((scm_bignum_t)rhs);
                 return make_flonum(heap, pow(real_to_double(lhs), n));
@@ -3954,6 +3966,64 @@ arith_polar(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     double a = real_to_double(rhs);
     return make_complex(heap, r * cos(a), r * sin(a));
 }
+
+scm_obj_t
+arith_floor(object_heap_t* heap, scm_obj_t obj)
+{
+    if (FIXNUMP(obj)) return obj;
+    if (BIGNUMP(obj)) return obj;
+    if (FLONUMP(obj)) {
+        double value = ((scm_flonum_t)obj)->value;
+        return make_flonum(heap, floor(value));
+    }
+    if (RATIONALP(obj)) {
+        scm_rational_t rn = (scm_rational_t)obj;
+        if (n_negative_pred(rn->nume)) return arith_sub(heap, arith_quotient(heap, rn->nume, rn->deno), MAKEFIXNUM(1));
+        return arith_quotient(heap, rn->nume, rn->deno);
+    }
+    fatal("%s:%u wrong datum type", __FILE__, __LINE__);
+}
+
+scm_obj_t
+arith_integer_div(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
+{
+    if (FIXNUMP(lhs)) {
+        if (FIXNUMP(rhs)) {
+            intptr_t x = FIXNUM(lhs);
+            intptr_t y = FIXNUM(rhs);
+            intptr_t div;
+            if (x == 0) {
+                div = 0;
+            } else if (x > 0) {
+                div = x / y;
+            } else if (y > 0) {
+                div = (x - y + 1) / y;
+            } else {
+                div = (x + y + 1) / y;
+            }
+            return intptr_to_integer(heap, div);
+        }
+    }
+    if (FLONUMP(lhs) || FLONUMP(rhs)) {
+        double x = real_to_double(lhs);
+        double y = real_to_double(rhs);
+        return make_flonum(heap, (y > 0.0) ? floor(x / y) : - floor(x / - y));
+    }
+    if (n_positive_pred(rhs)) return arith_floor(heap, arith_div(heap, lhs, rhs));
+    return arith_negate(heap, arith_floor(heap, arith_div(heap, lhs, arith_negate(heap, rhs))));
+}
+
+scm_obj_t
+arith_integer_div0(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
+{
+    scm_obj_t div = arith_integer_div(heap, lhs, rhs);
+    scm_obj_t mod = arith_sub(heap, lhs, arith_mul(heap, div, rhs));
+    if (n_compare(heap, mod, arith_magnitude(heap, arith_div(heap, rhs, MAKEFIXNUM(2)))) < 0) return div;
+    if (n_positive_pred(rhs)) return arith_add(heap, div, MAKEFIXNUM(1));
+    return arith_sub(heap, div, MAKEFIXNUM(1));
+}
+
+////
 
 scm_obj_t
 cnvt_to_inexact(object_heap_t* heap, scm_obj_t obj)
@@ -5308,60 +5378,4 @@ decode_flonum(object_heap_t* heap, scm_flonum_t n)
     ans->elts[1] = int32_to_integer(heap, exp);
     ans->elts[2] = int32_to_integer(heap, sign);
     return ans;
-}
-
-scm_obj_t
-arith_floor(object_heap_t* heap, scm_obj_t obj)
-{
-    if (FIXNUMP(obj)) return obj;
-    if (BIGNUMP(obj)) return obj;
-    if (FLONUMP(obj)) {
-        double value = ((scm_flonum_t)obj)->value;
-        return make_flonum(heap, floor(value));
-    }
-    if (RATIONALP(obj)) {
-        scm_rational_t rn = (scm_rational_t)obj;
-        if (n_negative_pred(rn->nume)) return arith_sub(heap, arith_quotient(heap, rn->nume, rn->deno), MAKEFIXNUM(1));
-        return arith_quotient(heap, rn->nume, rn->deno);
-    }
-    fatal("%s:%u wrong datum type", __FILE__, __LINE__);
-}
-
-scm_obj_t
-arith_integer_div(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
-{
-    if (FIXNUMP(lhs)) {
-        if (FIXNUMP(rhs)) {
-            intptr_t x = FIXNUM(lhs);
-            intptr_t y = FIXNUM(rhs);
-            intptr_t div;
-            if (x == 0) {
-                div = 0;
-            } else if (x > 0) {
-                div = x / y;
-            } else if (y > 0) {
-                div = (x - y + 1) / y;
-            } else {
-                div = (x + y + 1) / y;
-            }
-            return intptr_to_integer(heap, div);
-        }
-    }
-    if (FLONUMP(lhs) || FLONUMP(rhs)) {
-        double x = real_to_double(lhs);
-        double y = real_to_double(rhs);
-        return make_flonum(heap, (y > 0.0) ? floor(x / y) : - floor(x / - y));
-    }
-    if (n_positive_pred(rhs)) return arith_floor(heap, arith_div(heap, lhs, rhs));
-    return arith_negate(heap, arith_floor(heap, arith_div(heap, lhs, arith_negate(heap, rhs))));
-}
-
-scm_obj_t
-arith_integer_div0(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
-{
-    scm_obj_t div = arith_integer_div(heap, lhs, rhs);
-    scm_obj_t mod = arith_sub(heap, lhs, arith_mul(heap, div, rhs));
-    if (n_compare(heap, mod, arith_magnitude(heap, arith_div(heap, rhs, MAKEFIXNUM(2)))) < 0) return div;
-    if (n_positive_pred(rhs)) return arith_add(heap, div, MAKEFIXNUM(1));
-    return arith_sub(heap, div, MAKEFIXNUM(1));
 }

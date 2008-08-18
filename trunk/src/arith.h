@@ -20,20 +20,23 @@ struct div_and_mod_ans_t {
     scm_obj_t   mod;
 };
 
-bool integer_pred(scm_obj_t obj);
 bool number_pred(scm_obj_t obj);
-bool real_pred(scm_obj_t obj);
+
+bool integer_pred(scm_obj_t obj);
 bool rational_pred(scm_obj_t obj);
+bool real_pred(scm_obj_t obj);
+bool integer_valued_pred(scm_obj_t obj);
+bool rational_valued_pred(scm_obj_t obj);
+bool real_valued_pred(scm_obj_t obj);
+
 bool exact_integer_pred(scm_obj_t obj);
 bool exact_non_negative_integer_pred(scm_obj_t obj);
 bool exact_positive_integer_pred(scm_obj_t obj);
-bool real_valued_pred(scm_obj_t obj);
-bool rational_valued_pred(scm_obj_t obj);
-bool integer_valued_pred(scm_obj_t obj);
-bool n_finite_pred(scm_obj_t obj);
+
 bool n_zero_pred(scm_obj_t obj);
 bool n_negative_pred(scm_obj_t obj);
 bool n_positive_pred(scm_obj_t obj);
+bool n_finite_pred(scm_obj_t obj);
 bool n_even_pred(scm_obj_t obj);
 bool n_exact_pred(scm_obj_t obj);
 bool n_equal_pred(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
@@ -177,7 +180,6 @@ scm_obj_t arith_polar(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 scm_obj_t arith_floor(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_integer_div(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 scm_obj_t arith_integer_div0(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
-
 scm_obj_t arith_lognot(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_logand(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 scm_obj_t arith_logior(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
@@ -186,9 +188,7 @@ scm_obj_t arith_logash(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 scm_obj_t arith_first_bit_set(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_bit_length(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_bit_count(object_heap_t* heap, scm_obj_t obj);
-
-exact_integer_sqrt_ans_t
-arith_exact_integer_sqrt(object_heap_t* heap, scm_obj_t obj);
+exact_integer_sqrt_ans_t arith_exact_integer_sqrt(object_heap_t* heap, scm_obj_t obj);
 
 scm_obj_t parse_number(object_heap_t* heap, const char* s, int prefix, int radix);
 scm_obj_t decode_flonum(object_heap_t* heap, scm_flonum_t n);
@@ -219,7 +219,7 @@ bn_set_sign(scm_bignum_t bn, int sign)
     bn->hdr = scm_hdr_bignum | (bn->hdr & (-1 << HDR_BIGNUM_COUNT_SHIFT)) | ((sign & 0x3) << HDR_BIGNUM_SIGN_SHIFT);
 }
 
-static inline int
+inline int
 bn_get_sign(scm_bignum_t bn)
 {
     int bits = HDR_BIGNUM_SIGN(bn->hdr);

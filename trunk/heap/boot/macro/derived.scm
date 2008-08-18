@@ -99,7 +99,7 @@
                            (and (warning-level) (warning-contract-violation form inits lst)))))
                (if (every1 (lambda (e) (if (pair? e) (denote-lambda? env (car e)) (not (symbol? e)))) inits)
                    (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form)
-                   (let ((temps (map (lambda (_) (generate-temporary-symbol)) bindings)))
+                   (let ((temps (map (lambda (_) (rename-id (generate-temporary-symbol) suffix)) bindings)))
                      `(let ,(map (lambda (e) (list e '.&UNDEF)) renames)
                         (let ,(map list temps inits)
                           ,@(map (lambda (lhs rhs) `(set! ,lhs ,rhs)) renames temps) ,@body))))))))))))
