@@ -2,7 +2,7 @@
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
-(define auto-compile-cache-validation-signature 'ypsilon-0.9.6-080816)
+(define auto-compile-cache-validation-signature (string->symbol (format "ypsilon-0.9.6/r~a" (architecture-feature 'ypsilon-revision))))
   
 (define core-eval
   (lambda (form)
@@ -62,13 +62,13 @@
 (define expand-path
   (lambda (path)
     (let ((special (and (> (string-length path) 1) (memq (string-ref path 1) '(#\/ #\\)))))
-      (cond ((and special (char=? (string-ref path 0) #\~))
+      (cond ((and special (home-directory) (char=? (string-ref path 0) #\~))
              (format "~a~/" (home-directory) (substring path 1 (string-length path))))
             ((and special (char=? (string-ref path 0) #\.))
              (format "~a~/" (current-directory) (substring path 1 (string-length path))))
             ((string=? path ".")
              (format "~/" (current-directory)))
-            ((string=? path "~")
+            ((and (home-directory) (string=? path "~"))
              (format "~/" (home-directory)))
             (else
              (format "~/" path))))))

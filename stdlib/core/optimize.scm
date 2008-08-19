@@ -946,7 +946,7 @@
                     (emit `(and ,(pretty e1) ,(pretty e2))))
                    (_
                     (pretty-each form))))
-                ((quote begin lambda let letrec* if)
+                ((quote begin lambda let letrec*)
                  (destructuring-match form
                    (('quote e1)
                     (if (self-evaluation? e1) e1 form))
