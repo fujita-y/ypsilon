@@ -2010,6 +2010,41 @@ waitpid_fail:
 #endif
 }
 
+// string->uninterned-symbol
+scm_obj_t
+subr_string_uninterned_symbol(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            return make_symbol_uninterned(vm->m_heap, string->name, string->size);
+        }
+        wrong_type_argument_violation(vm, "string->uninterned-symbol", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "string->uninterned-symbol", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// uninterned-symbol?
+scm_obj_t
+subr_uninterned_symbol_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (SYMBOLP(argv[0])) {
+            scm_symbol_t symbol = (scm_symbol_t)argv[0];
+            vm->m_heap->m_symbol.lock();
+            scm_symbol_t interned = (scm_symbol_t)vm->m_heap->m_symbol.get(symbol->name, HDR_SYMBOL_SIZE(symbol->hdr));
+            vm->m_heap->m_symbol.unlock();
+            return (symbol == interned) ? scm_false : scm_true;
+        }
+        wrong_type_argument_violation(vm, "uninterned-symbol?", 0, "symbol", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "uninterned-symbol?", 1, 1, argc, argv);
+    return scm_undef;
+}
+
 void
 init_subr_others(object_heap_t* heap)
 {
@@ -2094,6 +2129,9 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("current-library-suffix", subr_current_library_suffix);
     DEFSUBR("current-primitive-prefix", subr_current_primitive_prefix);
     DEFSUBR("current-rename-delimiter", subr_current_rename_delimiter);
+
+    DEFSUBR("string->uninterned-symbol", subr_string_uninterned_symbol);
+    DEFSUBR("uninterned-symbol?", subr_uninterned_symbol_pred);
 
     #undef DEFSUBR
 

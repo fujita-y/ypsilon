@@ -31,9 +31,9 @@ ifneq (, $(findstring Linux, $(UNAME)))
   else
     CXXFLAGS += -m32 -march=native
   endif
-  ASFLAGS += --32
-  LDFLAGS += -m32
-  LDLIBS += -lpthread -ldl
+  ASFLAGS = --32
+  LDFLAGS = -m32
+  LDLIBS = -lpthread -ldl
   SRCS += ffi_stub_linux.s
 endif
 
@@ -44,9 +44,9 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
     CXXFLAGS += -m32 -march=native
   endif
   CPPFLAGS += -D__LITTLE_ENDIAN__
-  ASFLAGS += --32
-  LDFLAGS += -m32
-  LDLIBS += -pthread
+  ASFLAGS = --32
+  LDFLAGS = -m32
+  LDLIBS = -pthread
   SRCS += ffi_stub_freebsd.s
 endif
 

@@ -328,9 +328,10 @@
                                   (or (directory-exists? (format "~//Ypsilon" path))
                                       (create-directory (format "~//Ypsilon" path)))
                                   (auto-compile-cache (format "~//Ypsilon" path))))))))
-              (else
-               (cond ((directory-exists? (format "~//.ypsilon" (home-directory)))
-                      (auto-compile-cache (format "~//.ypsilon" (home-directory)))))))))
+              ((home-directory)
+               => (lambda (home)
+                    (directory-exists? (format "~//.ypsilon" home))
+                    (auto-compile-cache (format "~//.ypsilon" home)))))))
 
     (define init-env-acc
       (lambda ()
