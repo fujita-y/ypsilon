@@ -423,7 +423,9 @@
                          ((symbol? lst)
                           (cond ((core-hashtable-ref ht1 lst #f))
                                 (else
-                                 (let ((new (string->symbol (string-append (symbol->string lst) suffix))))
+                                 (let ((new (if (or (uninterned-symbol? lst) (not (string=? suffix "")))
+                                                (make-temporary-symbol (format "~a~a" lst suffix))
+                                                (string->symbol (format "~a~a" lst suffix)))))
                                    (core-hashtable-set! ht1 lst new)
                                    (let ((deno-trans (env-lookup env new)))
                                      (cond ((eq? deno-trans new)

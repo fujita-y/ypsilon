@@ -3,7 +3,7 @@
 ;;; See license.txt for terms and conditions of use.
 
 (define dump-condition (make-parameter #f))
-  
+
 (define add-load-path
   (lambda (path)
     (cond ((string? path)
@@ -63,6 +63,7 @@
 
 (define read-eval-print-loop
   (lambda ()
+    (define top-level-temporaries (make-core-hashtable 'string=?))
     (let ((plugged (or (lookup-process-environment "EMACS") (not (eq? (port-device-subtype (current-input-port)) 'char)))))
       (let loop ()
         (call-with-current-continuation
@@ -78,6 +79,7 @@
                   (format #t "~&~a: ~!" (current-environment)))
               (current-macro-expression #f)
               (current-source-comments (make-core-hashtable))
+              (current-temporaries top-level-temporaries)
               (set-port-current-line! (current-input-port) 1)
               (set-port-current-column! (current-output-port) 1)
               (set-port-current-column! (current-error-port) 1)
@@ -93,6 +95,7 @@
 
 (define quiet-read-eval-print-loop
   (lambda ()
+    (define top-level-temporaries (make-core-hashtable 'string=?))
     (let loop ()
       (call-with-current-continuation
        (lambda (continue)
@@ -104,6 +107,7 @@
             (nonblock-skip-whitespace)
             (current-macro-expression #f)
             (current-source-comments (make-core-hashtable))
+            (current-temporaries top-level-temporaries)
             (let ((form (core-read (current-input-port) (current-source-comments) 'read)))
               (cond ((eof-object? form) (exit 0))
                     (else
@@ -229,7 +233,7 @@
             (and (dump-condition)
                  (format port "~%~%")
                  (describe-condition port c))))
-                 
+
         (cond ((syntax-violation? condition)
                (output-who-message)
                (cond ((syntax-violation-form condition)
@@ -306,7 +310,7 @@
                    (format (current-error-port) "~a~!" (extract-accumulated-string port))
                    (format (current-error-port) "~%~a~!" (extract-accumulated-string port)))
                (usleep 10000))))))) ; make console happy
-      
+
 (define start-scheme-session
   (lambda ()
 
@@ -330,8 +334,8 @@
                                   (auto-compile-cache (format "~//Ypsilon" path))))))))
               ((home-directory)
                => (lambda (home)
-                    (directory-exists? (format "~//.ypsilon" home))
-                    (auto-compile-cache (format "~//.ypsilon" home)))))))
+                    (and (directory-exists? (format "~//.ypsilon" home))
+                         (auto-compile-cache (format "~//.ypsilon" home))))))))
 
     (define init-env-acc
       (lambda ()
@@ -492,7 +496,7 @@
     (define script #f)
     (define mute #f)
     (define r6rs-program #f)
-      
+
     (define initial-command-line (command-line))
 
     (init-sys-acc)

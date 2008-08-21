@@ -36,7 +36,7 @@
 
     boxed:
 
-    nnnn nnnn nnnn 0000 0000 0000 *tc4 1010 : scm_hdr_symbol
+    nnnn nnnn nnnn .... ...U 0000 *tc4 1010 : scm_hdr_symbol        U: uninterned
     nnnn nnnn nnnn OOOO OOOO I000 *tc4 1010 : scm_hdr_symbol        I: inherent O: S-code
     .... .... .... .... TTTT L000 *tc4 1010 : scm_hdr_string        L: literal T: (0x0 unknown) (0x1 ascii) (0x2 utf8)
     nnnn nnnn nnnn nnnn nnnN Z000 *tc4 1010 : scm_hdr_bignum        NZ: (01 positive) (11 negative) (00 zero)
@@ -435,6 +435,7 @@ struct vm_env_rec_t {           // record size is variable
 #define BOTHFLONUMP(x, y)                   (CELLP((intptr_t)(x) | (intptr_t)(y)) && ((((scm_flonum_t)(x))->hdr == scm_hdr_flonum) & (((scm_flonum_t)(y))->hdr == scm_hdr_flonum)))
 
 #define HDR_SYMBOL_INHERENT_SHIFT           11
+#define HDR_SYMBOL_UNINTERNED_SHIFT         12
 #define HDR_SYMBOL_CODE_SHIFT               12
 #define HDR_SYMBOL_SIZE_SHIFT               20
 #define HDR_STRING_LITERAL_SHIFT            11
@@ -450,10 +451,6 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_BIGNUM_COUNT_SHIFT              (HDR_BIGNUM_SIGN_SHIFT + 2)
 #define HDR_CLOSURE_ARGS_SHIFT              16
 
-#define HDR_SYMBOL_INHERENT_BIT             (1 << HDR_SYMBOL_INHERENT_SHIFT)
-#define OPCODESYMBOLP(obj)                  (CELLP(obj) \
-                                                && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_INHERENT_BIT)) \
-                                                && (HDR_SYMBOL_CODE(HDR(obj)) < VMOP_INSTRUCTION_COUNT))
 #define HDR_TC(hdr)                         (((hdr) >> 4) & TC_MASKBITS)
 #define HDR_CLOSURE_ARGS(hdr)               (((intptr_t)(hdr)) >> HDR_CLOSURE_ARGS_SHIFT)
 #define HDR_STRING_LITERAL(hdr)             (((hdr) >> HDR_STRING_LITERAL_SHIFT) & 0x01)
@@ -469,6 +466,16 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_HASHTABLE_IMMUTABLE(hdr)        (((hdr) >> HDR_HASHTABLE_IMMUTABLE_SHIFT) & 0x01)
 #define HDR_WEAKHASHTABLE_IMMUTABLE(hdr)    (((hdr) >> HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT) & 0x01)
 #define HDR_BIGNUM_SIGN(hdr)                (((hdr) >> HDR_BIGNUM_SIGN_SHIFT) & 0x03)
+
+#define HDR_SYMBOL_INHERENT_BIT             (1 << HDR_SYMBOL_INHERENT_SHIFT)
+#define HDR_SYMBOL_UNINTERNED_BIT           (1 << HDR_SYMBOL_UNINTERNED_SHIFT)
+
+#define OPCODESYMBOLP(obj)                  (CELLP(obj) \
+                                                && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_INHERENT_BIT)) \
+                                                && (HDR_SYMBOL_CODE(HDR(obj)) < VMOP_INSTRUCTION_COUNT))
+#define UNINTERNEDSYMBOLP(obj)              (CELLP(obj) \
+                                                && ((HDR(obj) & 0xfff) == scm_hdr_symbol) \
+                                                && (HDR(obj) & HDR_SYMBOL_UNINTERNED_BIT))
 
 #define STRING_TYPE_UNKNOWN                 0x0
 #define STRING_TYPE_ASCII                   0x1
@@ -505,7 +512,7 @@ struct vm_env_rec_t {           // record size is variable
 #define IDENTIFIER_LIBRARY_INFIX            '.'
 #define IDENTIFIER_PRIMITIVE_PREFIX         '.'
 #define IDENTIFIER_CSTUB_MARK               '@'
-#define UNINTERNED_VARIABLE(x)              (strchr((x)->name, '`'))
+#define TEMPORARY_VARIABLE(x)               (strchr((x)->name, '`'))
 
 #define MAX_READ_SYMBOL_LENGTH              256
 #define MAX_READ_STRING_LENGTH              2048
