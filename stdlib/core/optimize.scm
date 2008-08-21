@@ -249,14 +249,6 @@
                (not (core-hashtable-contains? ht-variable-formals x)))
           (symbol? (get-free-variables x)))))
 
-  #;
-  (define variable-private?
-    (lambda (x)
-      (let ((s (symbol->string x)))
-        (and (or (string-contains s noname-lambda-infix)
-                 (string-contains s library-variable-infix))
-             #t))))
-
   (define variable-private?
     (lambda (x)
       (and (or (symbol-contains x (current-rename-delimiter))
@@ -931,11 +923,8 @@
                                  (emit (flatten-expression `(or ,@new) 'or))))))))
                 ((if)
                  (destructuring-match (cdr form)
-                   ((('and . e1) e2 #f)
+                   #;((('and . e1) e2 #f)
                     (emit (flatten-expression `(and ,@(pretty-each e1) ,(pretty e2)) 'and)))
-                   ((('not e1) e2 e3)
-                    (primitive-function? 'not)
-                    (emit `(if ,(pretty e1) ,(pretty e3) ,(pretty e2))))
                    ((#t e1 . _)
                     (emit (pretty e1)))
                    ((#f _ . e2)
@@ -944,6 +933,9 @@
                         (emit (pretty (car e2)))))
                    ((e1 e2 #f)
                     (emit `(and ,(pretty e1) ,(pretty e2))))
+                   ((('not e1) e2 e3)
+                    (primitive-function? 'not)
+                    (emit `(if ,(pretty e1) ,(pretty e3) ,(pretty e2))))
                    (_
                     (pretty-each form))))
                 ((quote begin lambda let letrec*)

@@ -3,7 +3,7 @@
 ;;; See license.txt for terms and conditions of use.
 
 (define auto-compile-cache-validation-signature (string->symbol (format "ypsilon-0.9.6/r~a" (architecture-feature 'ypsilon-revision))))
-  
+
 (define core-eval
   (lambda (form)
     (parameterize ((backtrace #f))
@@ -44,7 +44,7 @@
            (interpret `(begin
                          (library (.R6RS-EVAL)
                            (export)
-                           (import (rename (only (core primitives) 
+                           (import (rename (only (core primitives)
                                                  set-top-level-value!
                                                  string->symbol)
                                            (set-top-level-value! .SET-TOP-LEVEL-VALUE!)
@@ -114,7 +114,7 @@
              (let ((port (open-script-input-port abs-path)))
                (with-exception-handler
                 (lambda (c)
-                  (cond ((serious-condition? c) 
+                  (cond ((serious-condition? c)
                          (close-port port)
                          (raise c))
                         (else
@@ -122,9 +122,12 @@
                 (lambda ()
                   (parameterize
                       ((current-source-comments (current-source-comments))
+                       (current-temporaries (current-temporaries))
                        (current-environment (current-environment))
                        (extend-lexical-syntax (extend-lexical-syntax))
                        (backtrace (backtrace)))
+                    (current-temporaries (make-core-hashtable 'string=?))
+                    (current-rename-count 0)
                     (let loop ()
                       (current-source-comments (and (backtrace) (make-core-hashtable)))
                       (let ((form (core-read port (current-source-comments) 'load)))
@@ -133,7 +136,7 @@
                               (else
                                (interpret form)
                                (loop))))))))))))))
-    
+
 (define load-r6rs
   (lambda (path)
     (let ((abs-path (locate-load-file path)))
@@ -149,10 +152,13 @@
          (lambda ()
            (parameterize
                ((current-source-comments (current-source-comments))
+                (current-temporaries (current-temporaries))
                 (current-environment (current-environment))
                 (extend-lexical-syntax (extend-lexical-syntax))
                 (backtrace (backtrace)))
              (current-source-comments (and (backtrace) (make-core-hashtable)))
+             (current-temporaries (make-core-hashtable 'string=?))
+             (current-rename-count 0)
              (let loop ((acc '()))
                (let ((form (core-read port (current-source-comments) 'load)))
                  (cond ((eof-object? form)
@@ -175,6 +181,8 @@
          (parameterize
              ((backtrace #f)
               (current-source-comments #f)
+              (current-temporaries (make-core-hashtable 'string=?))
+              (current-rename-count 0)
               (current-environment (current-environment)))
            (let loop ()
              (let ((form (core-read port #f 'load)))
@@ -241,14 +249,14 @@
                                                    (timestamp-path (string-append cache-path ".time")))
                                               (cond ((file-exists? timestamp-path)
                                                      (call-with-port
-                                                         (make-file-input-port timestamp-path)
-                                                         (lambda (timestamp-port)
-                                                           (let ((cache-timestamp (get-datum timestamp-port)))
-                                                             (close-port timestamp-port)
-                                                             (cond ((>= cache-timestamp expiration)
-                                                                    (delete-file timestamp-path)
-                                                                    (delete-file cache-path)
-                                                                    (and (auto-compile-verbose) (format #t "~&;; clean ~s~%" cache-path))))))))
+                                                      (make-file-input-port timestamp-path)
+                                                      (lambda (timestamp-port)
+                                                        (let ((cache-timestamp (get-datum timestamp-port)))
+                                                          (close-port timestamp-port)
+                                                          (cond ((>= cache-timestamp expiration)
+                                                                 (delete-file timestamp-path)
+                                                                 (delete-file cache-path)
+                                                                 (and (auto-compile-verbose) (format #t "~&;; clean ~s~%" cache-path))))))))
                                                     (else
                                                      (inconsistent-cache-state cache-lst)))))
                                           cache-lst))
@@ -258,22 +266,22 @@
                                   (timestamp-path (string-append cache-path ".time")))
                              (cond ((file-exists? timestamp-path)
                                     (call-with-port
-                                        (make-file-input-port timestamp-path)
-                                        (lambda (timestamp-port)
-                                          (let* ((cache-timestamp (get-datum timestamp-port))
-                                                 (source-timestamp (get-datum timestamp-port))
-                                                 (source-path (get-datum timestamp-port))
-                                                 (cache-signature (get-datum timestamp-port)))
-                                            (close-port timestamp-port)
-                                            (cond ((not (and (number? cache-timestamp) (number? source-timestamp) (string? source-path) (eq? cache-signature auto-compile-cache-validation-signature) (file-exists? source-path)))
-                                                   (inconsistent-cache-state cache-lst))
-                                                  ((= (stat-mtime source-path) source-timestamp)
-                                                   (loop (cdr lst) expiration))
-                                                  (else
-                                                   (loop (cdr lst)
-                                                         (cond ((not expiration) cache-timestamp)
-                                                               ((< cache-timestamp expiration) cache-timestamp)
-                                                               (else expiration)))))))))
+                                     (make-file-input-port timestamp-path)
+                                     (lambda (timestamp-port)
+                                       (let* ((cache-timestamp (get-datum timestamp-port))
+                                              (source-timestamp (get-datum timestamp-port))
+                                              (source-path (get-datum timestamp-port))
+                                              (cache-signature (get-datum timestamp-port)))
+                                         (close-port timestamp-port)
+                                         (cond ((not (and (number? cache-timestamp) (number? source-timestamp) (string? source-path) (eq? cache-signature auto-compile-cache-validation-signature) (file-exists? source-path)))
+                                                (inconsistent-cache-state cache-lst))
+                                               ((= (stat-mtime source-path) source-timestamp)
+                                                (loop (cdr lst) expiration))
+                                               (else
+                                                (loop (cdr lst)
+                                                      (cond ((not expiration) cache-timestamp)
+                                                            ((< cache-timestamp expiration) cache-timestamp)
+                                                            (else expiration)))))))))
                                    (else
                                     (delete-file cache-path)
                                     (and (auto-compile-verbose) (format #t "~&;; clean ~s~%" cache-path))
@@ -296,39 +304,42 @@
       (define make-cache
         (lambda (src dst source-ref source-time)
           (call-with-port
-              (make-file-output-port dst)
-              (lambda (output)
-                (call-with-port
-                    (open-script-input-port src)
-                    (lambda (input)
-                      (with-exception-handler
-                       (lambda (c)
-                         (close-port input)
-                         (close-port output)
-                         (and dst (file-exists? dst) (delete-file dst))
-                         (raise c))
-                       (lambda ()
-                         (parameterize
-                             ((current-source-comments (current-source-comments))
-                              (current-environment (current-environment))
-                              (extend-lexical-syntax (extend-lexical-syntax))
-                              (backtrace (backtrace)))
-                           (let loop ()
-                             (current-source-comments (and (backtrace) (make-core-hashtable)))
-                             (let ((obj (core-read input (current-source-comments) 'load)))
-                               (cond ((eof-object? obj)
-                                      (format output "~%")
-                                      (close-port input)
-                                      (close-port output))
-                                     (else
-                                      (let ((code
-                                             (parameterize
-                                                 ((current-closure-comments (make-core-hashtable)))
-                                               (compile-coreform (macro-expand obj)))))
-                                        (put-fasl output code)
-                                        (format output "~%")
-                                        (run-vmi (cons '(1 . 0) code))
-                                        (loop)))))))))))))))
+           (make-file-output-port dst)
+           (lambda (output)
+             (call-with-port
+              (open-script-input-port src)
+              (lambda (input)
+                (with-exception-handler
+                 (lambda (c)
+                   (close-port input)
+                   (close-port output)
+                   (and dst (file-exists? dst) (delete-file dst))
+                   (raise c))
+                 (lambda ()
+                   (parameterize
+                       ((current-source-comments (current-source-comments))
+                        (current-temporaries (current-temporaries))
+                        (current-environment (current-environment))
+                        (extend-lexical-syntax (extend-lexical-syntax))
+                        (backtrace (backtrace)))
+                     (let loop ()
+                       (current-source-comments (and (backtrace) (make-core-hashtable)))
+                       (current-temporaries (make-core-hashtable 'string=?))
+                       (current-rename-count 0)
+                       (let ((obj (core-read input (current-source-comments) 'load)))
+                         (cond ((eof-object? obj)
+                                (format output "~%")
+                                (close-port input)
+                                (close-port output))
+                               (else
+                                (let ((code
+                                       (parameterize
+                                           ((current-closure-comments (make-core-hashtable)))
+                                         (compile-coreform (macro-expand obj)))))
+                                  (put-fasl output code)
+                                  (format output "~%")
+                                  (run-vmi (cons '(1 . 0) code))
+                                  (loop)))))))))))))))
 
       (define locate-source
         (lambda (ref)
@@ -340,9 +351,9 @@
                               (library-extensions)))
                       (scheme-library-paths))
                 (and vital
-                     (error 'load-scheme-library (format "~s not found in scheme-library-paths: ~s" path (scheme-library-paths))))))))  
-      
-      
+                     (error 'load-scheme-library (format "~s not found in scheme-library-paths: ~s" path (scheme-library-paths))))))))
+
+
       (define locate-cache
         (lambda (ref source-path)
           (and (auto-compile-cache)
@@ -351,15 +362,15 @@
                       (let ((timestamp-path (string-append cache-path ".time")))
                         (and (file-exists? timestamp-path)
                              (call-with-port
-                                 (make-file-input-port timestamp-path)
-                                 (lambda (timestamp-port)
-                                   (get-datum timestamp-port)
-                                   (get-datum timestamp-port)
-                                   (cond ((equal? source-path (get-datum timestamp-port)) cache-path)
-                                         (else
-                                          (close-port timestamp-port)
-                                          (auto-compile-cache-clean)
-                                          #f))))))
+                              (make-file-input-port timestamp-path)
+                              (lambda (timestamp-port)
+                                (get-datum timestamp-port)
+                                (get-datum timestamp-port)
+                                (cond ((equal? source-path (get-datum timestamp-port)) cache-path)
+                                      (else
+                                       (close-port timestamp-port)
+                                       (auto-compile-cache-clean)
+                                       #f))))))
                       cache-path)))))
 
       (or (list? ref)
@@ -376,6 +387,6 @@
                               (make-cache source-path cache-path ref (stat-mtime source-path))
                               (let ((timestamp-path (string-append cache-path ".time")))
                                 (call-with-port
-                                    (make-file-output-port timestamp-path)
-                                    (lambda (output) (format output "~s ~s ~s ~s" (microsecond) (stat-mtime source-path) source-path auto-compile-cache-validation-signature)))))))
+                                 (make-file-output-port timestamp-path)
+                                 (lambda (output) (format output "~s ~s ~s ~s" (microsecond) (stat-mtime source-path) source-path auto-compile-cache-validation-signature)))))))
                       (load source-path))))))))

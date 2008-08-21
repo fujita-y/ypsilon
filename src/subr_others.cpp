@@ -1355,7 +1355,7 @@ subr_gensym(VM* vm, int argc, scm_obj_t argv[])
             count = vm->m_heap->m_gensym_counter++;
         }
         snprintf(buf, sizeof(buf), "%s%d", prefix, count);
-        return make_symbol(vm->m_heap, buf);
+        return make_symbol_uninterned(vm->m_heap, buf, strlen(buf));
     }
     wrong_number_of_arguments_violation(vm, "gensym", 0, 1, argc, argv);
     return scm_undef;
@@ -2030,17 +2030,7 @@ subr_string_uninterned_symbol(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_uninterned_symbol_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 1) {
-        if (SYMBOLP(argv[0])) {
-            scm_symbol_t symbol = (scm_symbol_t)argv[0];
-            vm->m_heap->m_symbol.lock();
-            scm_symbol_t interned = (scm_symbol_t)vm->m_heap->m_symbol.get(symbol->name, HDR_SYMBOL_SIZE(symbol->hdr));
-            vm->m_heap->m_symbol.unlock();
-            return (symbol == interned) ? scm_false : scm_true;
-        }
-        wrong_type_argument_violation(vm, "uninterned-symbol?", 0, "symbol", argv[0], argc, argv);
-        return scm_undef;
-    }
+    if (argc == 1) return UNINTERNEDSYMBOLP(argv[0]) ? scm_true : scm_false;
     wrong_number_of_arguments_violation(vm, "uninterned-symbol?", 1, 1, argc, argv);
     return scm_undef;
 }

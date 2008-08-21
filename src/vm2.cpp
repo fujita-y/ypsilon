@@ -31,10 +31,14 @@ VM::prebind_gloc(scm_obj_t variable, scm_hashtable_t ht, bool set)
         int nsize = put_hashtable(m_current_environment->variable, symbol, gloc);
         if (nsize) rehash_hashtable(m_heap, m_current_environment->variable, nsize);
     }
-    if (set && UNINTERNED_VARIABLE(symbol)) {
+    if (!set) return gloc;
+    if (UNINTERNEDSYMBOLP(symbol)) return gloc;
+    
+    if (TEMPORARY_VARIABLE(symbol)) {
         int nsize = put_hashtable(ht, symbol, scm_true);
         if (nsize) rehash_hashtable(m_heap, ht, nsize);
     }
+    
     return gloc;
 }
 

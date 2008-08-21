@@ -535,10 +535,8 @@
 
 (define macro-expand
   (lambda (form . mode)
-    (parameterize ((current-temporary-count 0)
-                   (current-rename-count 0)
+    (parameterize ((current-expansion-mode mode)
                    (current-macro-expression #f)
-                   (current-expansion-mode mode)
                    (current-top-level-exterior #f)
                    (unexpect-top-level-form #f)
                    (expansion-trace-level 0)

@@ -6,7 +6,7 @@
 
 (define local-closure?
   (lambda (e)
-    (cond ((core-hashtable-ref (current-closure-comments) e #f)
+    (cond ((and (current-closure-comments) (core-hashtable-ref (current-closure-comments) e #f))
            => (lambda (e) (memq (car e) '(stack))))
           (else #f))))
 

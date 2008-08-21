@@ -56,10 +56,9 @@ ifneq (, $(findstring Darwin, $(UNAME)))
 endif
 
 OBJS =	$(patsubst %.cpp, %.o, $(filter %.cpp, $(SRCS))) $(patsubst %.s, %.o, $(filter %.s, $(SRCS)))
+DEPS = 	$(patsubst %.cpp, %.d, $(filter %.cpp, $(SRCS)))
 
-DEPS =	$(patsubst %.cpp, %.d, $(filter %.cpp, $(SRCS)))
-
-.PHONY: all install uninstall sitelib stdlib check bench clean
+.PHONY: all install uninstall sitelib stdlib check bench clean distclean
 
 all: $(PROG)
 	@mkdir -p -m755 $(HOME)/.ypsilon
@@ -153,7 +152,11 @@ distclean: clean
 	$(SHELL) -ec '$(CXX) -MM $(CPPFLAGS) $< \
 	| sed '\''s/\($*\)\.o[ :]*/\1.o $@ : /g'\'' > $@; [ -s $@ ] || rm -f $@'
 
-ifneq (, $(findstring clean, $(MAKEFLAGS)))
-  -include $(DEPS)
+ifeq ($(findstring clean, $(MAKECMDGOALS)), )
+  ifeq ($(findstring uninstall, $(MAKECMDGOALS)), )
+    -include $(DEPS)
+  endif
 endif
+
+
 

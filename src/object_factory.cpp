@@ -48,7 +48,7 @@ make_symbol_uninterned(object_heap_t* heap, const char *name, int len)
         obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
         obj->name = (char*)heap->allocate_private(len + 1);
     }
-    obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) ;
+    obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) | HDR_SYMBOL_UNINTERNED_BIT;
     memcpy(obj->name, name, len);
     obj->name[len] = 0;
     return obj;
