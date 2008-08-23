@@ -1735,7 +1735,7 @@ oprtr_expt(object_heap_t* heap, scm_obj_t lhs, scm_fixnum_t rhs)
     if (n == 1) return lhs;
     if (n < 0) return arith_inverse(heap, oprtr_expt(heap, lhs, MAKEFIXNUM(-n)));
 
-    if (n_negative_pred(lhs)) { // new
+    if (!COMPLEXP(lhs) && n_negative_pred(lhs)) { // new
         scm_obj_t ans = oprtr_expt(heap, arith_negate(heap, lhs), rhs);
         if (n & 1) return arith_negate(heap, ans);
         return ans;

@@ -19,7 +19,7 @@
 #include "printer.h"
 #include "violation.h"
 
-#define DEFAULT_GENSYM_PREFIX   ".G"
+#define DEFAULT_GENSYM_PREFIX   "G"
 
 // circular-tree?
 /*
@@ -1354,7 +1354,9 @@ subr_gensym(VM* vm, int argc, scm_obj_t argv[])
             scoped_lock lock(vm->m_heap->m_gensym_lock);
             count = vm->m_heap->m_gensym_counter++;
         }
-        snprintf(buf, sizeof(buf), "%s%d", prefix, count);
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        snprintf(buf, sizeof(buf), "%s%d.%x.%x", prefix, count, tv.tv_sec, tv.tv_usec);
         return make_symbol_uninterned(vm->m_heap, buf, strlen(buf));
     }
     wrong_number_of_arguments_violation(vm, "gensym", 0, 1, argc, argv);

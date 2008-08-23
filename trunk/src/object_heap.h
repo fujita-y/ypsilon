@@ -122,6 +122,7 @@ public:
     object_set_t        m_string;
     scm_environment_t   m_system_environment;
     scm_environment_t   m_interaction_environment;
+    scm_weakhashtable_t m_hidden_variables;
     int                 m_gensym_counter;
     mutex_t             m_gensym_lock;
     scm_bvector_t       m_native_transcoder;

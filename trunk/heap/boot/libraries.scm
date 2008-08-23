@@ -481,6 +481,8 @@
                         current-library-suffix
                         current-primitive-prefix
                         current-rename-delimiter
+                        string->uninterned-symbol
+                        uninterned-symbol?
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))

@@ -512,7 +512,6 @@ struct vm_env_rec_t {           // record size is variable
 #define IDENTIFIER_LIBRARY_INFIX            '.'
 #define IDENTIFIER_PRIMITIVE_PREFIX         '.'
 #define IDENTIFIER_CSTUB_MARK               '@'
-#define TEMPORARY_VARIABLE(x)               (strchr((x)->name, '`'))
 
 #define MAX_READ_SYMBOL_LENGTH              256
 #define MAX_READ_STRING_LENGTH              2048
