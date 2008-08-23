@@ -242,6 +242,7 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size)
     // global shared
     m_interaction_environment = make_environment(this, "interaction");
     m_system_environment = make_environment(this, "system");
+    m_hidden_variables = make_weakhashtable(this, lookup_mutable_hashtable_size(0));
     m_gensym_counter = 1;
     m_native_transcoder = make_bvector(this, 3);
     m_native_transcoder->elts[0] = SCM_PORT_CODEC_NATIVE;
@@ -636,6 +637,7 @@ object_heap_t::synchronized_collect(object_heap_t& heap)
     heap.m_trip_bytes = 0;
     heap.shade(heap.m_system_environment);
     heap.shade(heap.m_interaction_environment);
+    heap.shade(heap.m_hidden_variables);
     heap.shade(heap.m_architecture_feature);
     heap.shade(heap.m_native_transcoder);
     heap.shade(heap.m_trampolines);
@@ -735,6 +737,7 @@ object_heap_t::concurrent_collect(object_heap_t& heap)
     // mark phase 1+
     heap.shade(heap.m_system_environment);
     heap.shade(heap.m_interaction_environment);
+    heap.shade(heap.m_hidden_variables);
     heap.shade(heap.m_architecture_feature);
     heap.shade(heap.m_native_transcoder);
     heap.shade(heap.m_trampolines);

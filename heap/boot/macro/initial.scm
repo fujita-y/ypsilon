@@ -61,11 +61,11 @@
   (lambda (id)
     (let ((count (current-temporary-count)))
       (current-temporary-count (+ count 1))
-      (make-temporary-symbol (format ".LOCAL-MACRO-~a.~a~a~a" count id (current-rename-delimiter) (current-rename-count))))))
+      (make-temporary-symbol (format ".MACRO-~a.~a" count id)))))
 
 (define local-macro-symbol?
   (lambda (id)
-    (and (uninterned-symbol? id) (eq? (symbol-contains id ".LOCAL-MACRO-") 0))))
+    (and (uninterned-symbol? id) (eq? (symbol-contains id ".MACRO-") 0))))
 
 (define rename-id
   (lambda (id count)
@@ -73,8 +73,7 @@
 
 (define renamed-id?
   (lambda (id)
-    (and (symbol? id)
-         (uninterned-symbol? id)
+    (and (uninterned-symbol? id)
          (symbol-contains id (current-rename-delimiter)))))
 
 (define original-id
@@ -83,11 +82,6 @@
            => (lambda (mark) (string->symbol (substring (symbol->string id) 0 mark))))
           (else id))))
 
-(define fresh-rename-count
-  (lambda ()
-    (current-rename-count (+ (current-rename-count) 1))
-    (current-rename-count)))
-
 (define strip-rename-suffix
   (lambda (lst)
     (cond ((pair? lst)
@@ -95,7 +89,7 @@
                  (d (strip-rename-suffix (cdr lst))))
              (cond ((and (eq? a (car lst)) (eq? d (cdr lst))) lst)
                    (else (cons a d)))))
-          ((renamed-id? lst) (original-id lst))
+          ((symbol? lst) (original-id lst))
           ((vector? lst) (list->vector (map strip-rename-suffix (vector->list lst))))
           (else lst))))
 
@@ -106,6 +100,11 @@
                 (let ((name (symbol->string id)))
                   (substring name mark (string-length name)))))
           (else ""))))
+
+(define fresh-rename-count
+  (lambda ()
+    (current-rename-count (+ (current-rename-count) 1))
+    (current-rename-count)))
 
 (define set-closure-comment!
   (lambda (form note)

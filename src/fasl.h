@@ -11,25 +11,26 @@
 #include "hash.h"
 #include "port.h"
 
-#define FASL_DEBUG          0
+#define FASL_DEBUG                  0
 
-#define FASL_EOF            0
-#define FASL_TAG_LOOKUP     1
-#define FASL_TAG_FIXNUM     2
-#define FASL_TAG_PLIST      3
-#define FASL_TAG_DLIST      4
-#define FASL_TAG_VECTOR     5
-#define FASL_TAG_RATIONAL   6
-#define FASL_TAG_COMPLEX    7
-#define FASL_TAG_FLONUM     8
-#define FASL_TAG_BIGNUM     9
-#define FASL_TAG_BVECTOR    10
-#define FASL_TAG_CHAR       11
-#define FASL_TAG_NIL        12
-#define FASL_TAG_T          13
-#define FASL_TAG_F          14
-#define FASL_TAG_SYMBOL     15
-#define FASL_TAG_STRING     16
+#define FASL_EOF                    0
+#define FASL_TAG_LOOKUP             1
+#define FASL_TAG_FIXNUM             2
+#define FASL_TAG_PLIST              3
+#define FASL_TAG_DLIST              4
+#define FASL_TAG_VECTOR             5
+#define FASL_TAG_RATIONAL           6
+#define FASL_TAG_COMPLEX            7
+#define FASL_TAG_FLONUM             8
+#define FASL_TAG_BIGNUM             9
+#define FASL_TAG_BVECTOR            10
+#define FASL_TAG_CHAR               11
+#define FASL_TAG_NIL                12
+#define FASL_TAG_T                  13
+#define FASL_TAG_F                  14
+#define FASL_TAG_SYMBOL             15
+#define FASL_TAG_STRING             16
+#define FASL_TAG_UNINTERNED_SYMBOL  17
 
 
 class fasl_printer_t {

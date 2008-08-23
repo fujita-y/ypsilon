@@ -80,8 +80,8 @@ public:
 
 private:
 
-    scm_gloc_t          prebind_gloc(scm_obj_t variable, scm_hashtable_t ht, bool set);
-    void                prebind_list(scm_obj_t code, scm_hashtable_t ht);
+    scm_gloc_t          prebind_gloc(scm_obj_t variable);
+    void                prebind_list(scm_obj_t code);
 
     void                backtrace_each(printer_t* prt, int n, scm_obj_t note);
     scm_obj_t           backtrace_fetch(const char* name, int line, int column);

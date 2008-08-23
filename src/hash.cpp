@@ -330,7 +330,7 @@ put_weakhashtable(scm_weakhashtable_t ht, scm_weakmapping_t wmap)
             goto found;
         }
         assert(WEAKMAPPINGP(entry));
-        assert(((scm_weakmapping_t)entry)->key != key); // use lookup_weak_hash_table() to avoid
+        assert(((scm_weakmapping_t)entry)->key != key); // do not forget to use lookup_weakhashtable() before put_weakhashtable()
         index += hash2;
         if (index >= nsize) index -= nsize;
     } while (index != hash);

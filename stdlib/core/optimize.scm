@@ -251,6 +251,11 @@
 
   (define variable-private?
     (lambda (x)
+      (or (uninterned-symbol? x)
+          (and (symbol-contains x (current-library-suffix)) #t))))
+  
+  #;(define variable-private?
+    (lambda (x)
       (and (or (symbol-contains x (current-rename-delimiter))
                (symbol-contains x (current-library-suffix)))
            #t)))
@@ -555,12 +560,8 @@
       (define make-table
         (lambda ()
           (let ((ht (make-core-hashtable)))
-            (let ((count 1))
-              (for-each (lambda (b)
-                          (cond ((symbol? (cdr b))
-                                 (core-hashtable-set! ht (car b) (string->symbol (format ".fn~a.~a~a~a" count pass (current-rename-delimiter) count)))
-                                 (set! count (+ count 1)))))
-                        (core-hashtable->alist ht-lambda-node)))
+            (for-each (lambda (b) (and (symbol? (cdr b)) (core-hashtable-set! ht (car b) (generate-temporary-symbol))))
+                      (core-hashtable->alist ht-lambda-node))
             (for-each (lambda (b)
                         (cond ((core-hashtable-ref ht-lambda-node (cdr b) #f)
                                => (lambda (e)

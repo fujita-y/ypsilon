@@ -749,6 +749,7 @@
     string->list
     string->number
     string->symbol
+    string->uninterned-symbol
     string->utf16
     string->utf32
     string->utf8
@@ -820,6 +821,7 @@
     u8-list->bytevector
     uint-list->bytevector
     undefined-violation?
+    uninterned-symbol?
     unless
     unquote
     unquote-splicing

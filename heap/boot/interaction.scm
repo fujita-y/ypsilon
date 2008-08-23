@@ -63,7 +63,6 @@
 
 (define read-eval-print-loop
   (lambda ()
-    (define top-level-temporaries (make-core-hashtable 'string=?))
     (let ((plugged (or (lookup-process-environment "EMACS") (not (eq? (port-device-subtype (current-input-port)) 'char)))))
       (let loop ()
         (call-with-current-continuation
@@ -79,7 +78,7 @@
                   (format #t "~&~a: ~!" (current-environment)))
               (current-macro-expression #f)
               (current-source-comments (make-core-hashtable))
-              (current-temporaries top-level-temporaries)
+              (current-temporaries (make-core-hashtable 'string=?))
               (set-port-current-line! (current-input-port) 1)
               (set-port-current-column! (current-output-port) 1)
               (set-port-current-column! (current-error-port) 1)
@@ -95,7 +94,6 @@
 
 (define quiet-read-eval-print-loop
   (lambda ()
-    (define top-level-temporaries (make-core-hashtable 'string=?))
     (let loop ()
       (call-with-current-continuation
        (lambda (continue)
@@ -107,7 +105,7 @@
             (nonblock-skip-whitespace)
             (current-macro-expression #f)
             (current-source-comments (make-core-hashtable))
-            (current-temporaries top-level-temporaries)
+            (current-temporaries (make-core-hashtable 'string=?))
             (let ((form (core-read (current-input-port) (current-source-comments) 'read)))
               (cond ((eof-object? form) (exit 0))
                     (else

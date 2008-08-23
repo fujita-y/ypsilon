@@ -410,6 +410,7 @@ object_heap_t::resolve(relocate_info_t* info)
     m_trampolines = (scm_hashtable_t)forward(m_trampolines);
     m_system_environment = (scm_environment_t)forward(m_system_environment);
     m_interaction_environment = (scm_environment_t)forward(m_interaction_environment);
+    m_hidden_variables = (scm_weakhashtable_t)forward(m_hidden_variables);
 
     slab = first_slab;
     traits = first_traits;
