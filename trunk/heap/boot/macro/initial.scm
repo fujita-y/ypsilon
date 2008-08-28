@@ -20,8 +20,7 @@
 
 (set-top-level-value! '.set-top-level-macro!
   (lambda (type keyword datum env)
-    (and (top-level-bound? keyword)
-         (set-top-level-value! keyword .&UNDEF))
+    (and (top-level-bound? keyword) (set-top-level-value! keyword .&UNDEF))
     (core-hashtable-set! (current-macro-environment)
                          keyword
                          (case type
@@ -44,10 +43,10 @@
     (string->symbol (format "~a~a~a" library-id (current-library-suffix) symbol))))
 
 (define make-temporary-symbol
-  (lambda (name)
+  (lambda (name prefix)
     (let ((temps (current-temporaries)))
       (or (core-hashtable-ref temps name #f)
-          (let ((new (string->uninterned-symbol name)))
+          (let ((new (string->uninterned-symbol name prefix)))
             (core-hashtable-set! temps name new)
             new)))))
     
@@ -55,50 +54,53 @@
   (lambda ()
     (let ((count (current-temporary-count)))
       (current-temporary-count (+ count 1))
-      (make-temporary-symbol (format ".L~a" count)))))
+      (let ((name (format ".L~a" count)))
+        (make-temporary-symbol name (string-length name))))))
 
 (define generate-local-macro-symbol
   (lambda (id)
     (let ((count (current-temporary-count)))
       (current-temporary-count (+ count 1))
-      (make-temporary-symbol (format ".MACRO-~a.~a" count id)))))
+      (make-temporary-symbol (format ".MACRO~a.~a" count id) 6))))
 
 (define local-macro-symbol?
   (lambda (id)
-    (and (uninterned-symbol? id) (eq? (symbol-contains id ".MACRO-") 0))))
+    (and (uninterned-symbol? id) (string=? (uninterned-symbol-prefix id) ".MACRO"))))
 
 (define rename-id
   (lambda (id count)
-    (make-temporary-symbol (format "~a~a~a" id (current-rename-delimiter) count))))
+    (if (uninterned-symbol? id)
+        (make-temporary-symbol (format "~a~a~a" id (current-rename-delimiter) count) (string-length (uninterned-symbol-prefix id)))
+        (make-temporary-symbol (format "~a~a~a" id (current-rename-delimiter) count) (string-length (symbol->string id))))))
+
+(define compose-id
+  (lambda (id suffix)
+    (if (uninterned-symbol? id)
+        (make-temporary-symbol (format "~a~a" id suffix) (string-length (uninterned-symbol-prefix id)))
+        (make-temporary-symbol (format "~a~a" id suffix) (string-length (symbol->string id))))))
 
 (define renamed-id?
   (lambda (id)
     (and (uninterned-symbol? id)
-         (symbol-contains id (current-rename-delimiter)))))
+         (string-contains (uninterned-symbol-suffix id) (current-rename-delimiter)))))
 
 (define original-id
   (lambda (id)
-    (cond ((and (uninterned-symbol? id) (symbol-contains id (current-rename-delimiter)))
-           => (lambda (mark) (string->symbol (substring (symbol->string id) 0 mark))))
-          (else id))))
+    (if (renamed-id? id) (string->symbol (uninterned-symbol-prefix id)) id)))
 
 (define strip-rename-suffix
   (lambda (lst)
     (cond ((pair? lst)
            (let ((a (strip-rename-suffix (car lst)))
                  (d (strip-rename-suffix (cdr lst))))
-             (cond ((and (eq? a (car lst)) (eq? d (cdr lst))) lst)
-                   (else (cons a d)))))
+             (if (and (eq? a (car lst)) (eq? d (cdr lst))) lst (cons a d))))
           ((symbol? lst) (original-id lst))
           ((vector? lst) (list->vector (map strip-rename-suffix (vector->list lst))))
           (else lst))))
 
 (define retrieve-rename-suffix
   (lambda (id)
-    (cond ((and (renamed-id? id) (symbol-contains id (current-rename-delimiter)))
-           => (lambda (mark)
-                (let ((name (symbol->string id)))
-                  (substring name mark (string-length name)))))
+    (cond ((renamed-id? id) (uninterned-symbol-suffix id))
           (else ""))))
 
 (define fresh-rename-count

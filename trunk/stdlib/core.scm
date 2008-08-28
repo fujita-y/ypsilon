@@ -821,6 +821,8 @@
     u8-list->bytevector
     uint-list->bytevector
     undefined-violation?
+    uninterned-symbol-prefix
+    uninterned-symbol-suffix
     uninterned-symbol?
     unless
     unquote

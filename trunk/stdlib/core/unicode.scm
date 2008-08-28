@@ -264,6 +264,9 @@
                                   (else
                                    (put-char output ch)
                                    (titlecase-first-char))))
+                               ((Nd)
+                                (put-char output ch)
+                                (loop (get-char input)))
                                (else
                                 (put-char output ch)
                                 (titlecase-first-char)))))))))

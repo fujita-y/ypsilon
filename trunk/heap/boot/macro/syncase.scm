@@ -11,7 +11,7 @@
 ;;   if call (datum->syntax ...) on macro expansion, (syntax-object-renames template-id) should be nil.
 ;;   if call (datum->syntax ...) on transformer evaluation, (syntax-object-renames template-id) should be alist.
 
-(set-top-level-value! '.patvars '())
+(set-top-level-value! '.vars '())
 
 (define make-syntax-object    (lambda (form renames lexname) (tuple 'type:syntax form renames lexname)))
 (define syntax-object-expr    (lambda (obj) (tuple-ref obj 1)))
@@ -21,13 +21,6 @@
 (define wrapped-syntax-object?
   (lambda (datum)
     (eq? (tuple-ref datum 0) 'type:syntax)))
-
-(define lookup-lexical-name
-  (lambda (id env)
-    (let ((deno (env-lookup env id)))
-      (cond ((symbol? deno) deno)
-            ((and (macro? deno) (assq deno env)) => cdr)
-            (else id)))))
 
 (define unwrap-syntax
   (lambda (expr)
@@ -317,7 +310,7 @@
                                        env)))))
 
              (annotate `(.syntax-dispatch
-                         ,(expand-form '.patvars env)
+                         ,(expand-form '.vars env)
                          ,(expand-form expr env)
                          ',lites
                          ,@(map (lambda (clause)
@@ -326,12 +319,12 @@
                                      (let-values (((pattern env) (parse-pattern p)))
                                        `(.list ',pattern
                                                #f
-                                               ,(expand-form `(.LAMBDA (.patvars) ,expr) env))))
+                                               ,(expand-form `(.LAMBDA (.vars) ,expr) env))))
                                     ((p fender expr)
                                      (let-values (((pattern env) (parse-pattern p)))
                                        `(.list ',pattern
-                                               ,(expand-form `(.LAMBDA (.patvars) ,fender) env)
-                                               ,(expand-form `(.LAMBDA (.patvars) ,expr) env))))))
+                                               ,(expand-form `(.LAMBDA (.vars) ,fender) env)
+                                               ,(expand-form `(.LAMBDA (.vars) ,expr) env))))))
                                 clauses))
                        expr)))))
       (_
@@ -360,7 +353,7 @@
                                         (cons id (cdr deno)))))
                                ids))))
              (check-template template ranks)
-             (let ((patvar (expand-form '.patvars env)))
+             (let ((patvar (expand-form '.vars env)))
                (if (symbol? template)
                    (let ((identifier-lexname (lookup-lexical-name tmpl env)))
                      (if (eq? template identifier-lexname)
@@ -387,7 +380,7 @@
                              (annotate `(.syntax/c3 ,patvar ',template ',ranks ',lexname-check-list) form))))))))))
       ; generic
       ; (let ((identifier-lexname (and (symbol? tmpl) (lookup-lexical-name tmpl env))))
-      ;   (annotate `(.syntax-transcribe ,(expand-form '.patvars env) ',template ',ranks ',identifier-lexname ',lexname-check-list) form)))))))
+      ;   (annotate `(.syntax-transcribe ,(expand-form '.vars env) ',template ',ranks ',identifier-lexname ',lexname-check-list) form)))))))
       (_
        (syntax-violation 'syntax "expected exactly one datum" form)))))
 
@@ -424,7 +417,7 @@
                           (cond ((core-hashtable-ref ht1 lst #f))
                                 (else
                                  (let ((new (if (or (uninterned-symbol? lst) (not (string=? suffix "")))
-                                                (make-temporary-symbol (format "~a~a" lst suffix))
+                                                (compose-id lst suffix)
                                                 (string->symbol (format "~a~a" lst suffix)))))
                                    (core-hashtable-set! ht1 lst new)
                                    (let ((deno-trans (env-lookup env new)))
@@ -466,13 +459,12 @@
         (let ((n1b (or n1a (lookup-lexical-name (syntax-object-expr id1) env-use)))
               (n2b (or n2a (lookup-lexical-name (syntax-object-expr id2) env-use))))
           (cond ((and n1a n2a) (eq? n1a n2a))
-                ((eq? n1b n2b) (eq? (env-lookup env-def n1b) (env-lookup env-use n2b)))
+                ((eq? n1b n2b) (eq? (lookup-topmost-subst n1b env-def) (lookup-topmost-subst n2b env-use)))
                 (else
-                 (let ((ren1 (syntax-object-renames id1))
-                       (ren2 (syntax-object-renames id2)))
+                 (let ((ren1 (syntax-object-renames id1)) (ren2 (syntax-object-renames id2)))
                    (if (and (pair? ren1) (pair? ren2))
                        (eq? (cdr ren1) (cdr ren2))
-                       (eq? (env-lookup env-def n1b) (env-lookup env-def n2b)))))))))))
+                       (eq? (lookup-topmost-subst n1b env-def) (lookup-topmost-subst n2b env-def)))))))))))
 
 (define generate-temporaries
   (lambda (obj)

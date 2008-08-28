@@ -73,7 +73,7 @@ class fasl_printer_t {
         }
     }
 
-    void emit_string(const char* s, int n)
+    void emit_bytes(const char* s, int n)
     {
         for (int i = 0; i < n; i++) emit_u8(s[i]);
     }

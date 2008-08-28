@@ -201,7 +201,7 @@ OBJECT_ALIGNED(scm_pair_rec_t) {
 
 OBJECT_ALIGNED(scm_symbol_rec_t) {
     scm_hdr_t   hdr;
-    char*       name;
+    char*       name;   // uninterned symbol contains <prefix-size> after '\0'
 } END;
 
 OBJECT_ALIGNED(scm_string_rec_t) {

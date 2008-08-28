@@ -55,7 +55,7 @@ printer_t::column_limit(int limit)
 }
 
 bool
-printer_t::symbol_need_bar(const char* s)
+printer_t::symbol_need_bar(const char* s, int n)
 {
     switch (s[0]) {
     case '@':
@@ -78,13 +78,13 @@ printer_t::symbol_need_bar(const char* s)
     }
     if (isdigit(s[0])) return true;
     char c;
-    while ((c = *s++) != 0) {
+    while ((c = *s++) != 0 && n--) {
         if (c < 32) continue;
         if (c == 127) continue;
         if (c & 0x80) continue;
         if (isalnum(c)) continue;
         if (strchr("!$%&/:*<=>?^_~+-.@", c)) continue;
-        if (c == '`' && m_unwrap) continue;
+//      if (c == '`' && m_unwrap) continue;
         return true;
     }
     return false;
@@ -136,7 +136,7 @@ printer_t::write_string(const uint8_t* utf8, int n)
 void
 printer_t::write_pretty_symbol(const uint8_t* utf8, int n)
 {
-    bool quote = symbol_need_bar((const char*)utf8);
+    bool quote = symbol_need_bar((const char*)utf8, n);
     if (quote) port_put_byte(m_port, '|');
 
     uint32_t ucs4;
@@ -771,16 +771,34 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
             scm_symbol_t symbol = (scm_symbol_t)obj;
             const char *s = symbol->name;
             if (m_unwrap) {
-                const char* e = strchr(s, IDENTIFIER_RENAME_DELIMITER);
-                if (e == NULL) e = s + strlen(s);
+                const char* e;
+                if (UNINTERNEDSYMBOLP(symbol)) {
+                    int len = HDR_SYMBOL_SIZE(symbol->hdr);
+                    int n1 = (uint8_t)symbol->name[len + 1];
+                    if (m_escape) {
+                        e = s + n1;
+                    } else {
+                        int n2 = strlen(s);
+                        e = s + (n1 < n2 ? n1 : n2);
+                    }
+                } else {
+                    if (m_escape) e = s + HDR_SYMBOL_SIZE(symbol->hdr);
+                    else e = s + strlen(s);
+                }
                 const char* p = strchr(s, IDENTIFIER_LIBRARY_SUFFIX);
                 if (p) s = p + 1;
                 if (s[0] == IDENTIFIER_PRIMITIVE_PREFIX) {
-                    if (s[1] && (s[1] != IDENTIFIER_PRIMITIVE_PREFIX) && (s[1] != IDENTIFIER_CSTUB_MARK)) s = s + 1;
+                    if (s[1] && (s[1] != IDENTIFIER_PRIMITIVE_PREFIX) && (s[1] != IDENTIFIER_CSTUB_MARK)) {
+                        if (e - s < MAX_READ_SYMBOL_LENGTH) {
+                            char name[MAX_READ_SYMBOL_LENGTH + 1];
+                            memcpy(name, s, e - s);
+                            name[e - s] = 0;
+                            if (m_vm->m_heap->lookup_system_environment(make_symbol(m_vm->m_heap, name)) != scm_undef) s = s + 1;
+                        }
+                    }
                 }
                 if (m_escape) {
-                    if (m_r6rs) write_r6rs_symbol((const uint8_t*)s, e - s);
-                    else write_pretty_symbol((const uint8_t*)s, e - s);
+                    write_pretty_symbol((const uint8_t*)s, e - s);
                 } else {
                     while (s != e) port_put_byte(m_port, *s++);
                 }

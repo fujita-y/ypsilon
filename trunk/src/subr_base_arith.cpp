@@ -1143,7 +1143,10 @@ subr_expt(VM* vm, int argc, scm_obj_t argv[])
                         return make_flonum(vm->m_heap, 0.0);
                     } else {
                         assert(COMPLEXP(argv[1]));
-                        if (n_positive_pred(((scm_complex_t)argv[1])->real)) return MAKEFIXNUM(0);
+                        if (n_positive_pred(((scm_complex_t)argv[1])->real)) {
+                            if (n_exact_pred(argv[1])) return MAKEFIXNUM(0);
+                            return make_flonum(vm->m_heap, 0.0);
+                        }
                         return make_complex(vm->m_heap, VALUE_NAN, VALUE_NAN);
                     }
                 }

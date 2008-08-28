@@ -897,7 +897,7 @@ bc"
 (test-equal "opr 114" (expt 5 -3) => 1/125)
 (test-equal "opr 115" (expt 5 0) => 1)
 (test-equal "opr 116" (expt 0 5) => 0)
-(test-equal "opr 117" (expt 0 5+.0000312i) => 0)
+(test-equal "opr 117" (expt 0 5+.0000312i) => 0.0) ; fix errarum in R6RS (fujita)
 (test-equal "opr unspec 1" (number->string (expt 0 -5)) => "+nan.0+nan.0i")
 (test-equal "opr unspec 2" (number->string (expt 0 -5+.0000312i)) => "+nan.0+nan.0i")
 (test-equal "opr 118" (expt 0 0) => 1)

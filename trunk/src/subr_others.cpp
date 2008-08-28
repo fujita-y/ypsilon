@@ -19,7 +19,7 @@
 #include "printer.h"
 #include "violation.h"
 
-#define DEFAULT_GENSYM_PREFIX   "G"
+#define DEFAULT_GENSYM_PREFIX   ".G"
 
 // circular-tree?
 /*
@@ -1146,11 +1146,20 @@ subr_string_contains(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc >= 2 && argc <= 6) {
         if (STRINGP(argv[0])) {
-            if (STRINGP(argv[1])) {
+            if (STRINGP(argv[1]) || CHARP(argv[1])) {
                 const char* s1 = ((scm_string_t)argv[0])->name;
-                const char* s2 = ((scm_string_t)argv[1])->name;
+                const char* s2;
                 int s1_size = ((scm_string_t)argv[0])->size;
-                int s2_size = ((scm_string_t)argv[1])->size;
+                int s2_size;
+                uint8_t utf8[8];
+                if (STRINGP(argv[1])) {
+                    s2 = ((scm_string_t)argv[1])->name;
+                    s2_size = ((scm_string_t)argv[1])->size;
+                } else {
+                    s2 = (char*)utf8;
+                    s2_size = cnvt_ucs4_to_utf8(CHAR(argv[1]), utf8);
+                    utf8[s2_size] = 0;
+                }                
                 int start1 = 0;
                 int end1 = s1_size;
                 int start2 = 0;
@@ -1242,7 +1251,7 @@ subr_string_contains(VM* vm, int argc, scm_obj_t argv[])
                 }
                 return scm_false;
             }
-            wrong_type_argument_violation(vm, "string-contains", 1, "string", argv[1], argc, argv);
+            wrong_type_argument_violation(vm, "string-contains", 1, "string or char", argv[1], argc, argv);
             return scm_undef;
         }
         wrong_type_argument_violation(vm, "string-contains", 0, "string", argv[0], argc, argv);
@@ -1252,7 +1261,7 @@ subr_string_contains(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// symbol-contains (return byte index)
+// symbol-contains
 scm_obj_t
 subr_symbol_contains(VM* vm, int argc, scm_obj_t argv[])
 {
@@ -2016,15 +2025,24 @@ waitpid_fail:
 scm_obj_t
 subr_string_uninterned_symbol(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 1) {
+    if (argc == 1 || argc == 2) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
-            return make_symbol_uninterned(vm->m_heap, string->name, string->size);
+            if (argc == 1) return make_symbol_uninterned(vm->m_heap, string->name, string->size);
+            if (argc == 2) {
+                if (FIXNUMP(argv[1])) {
+                    scm_string_t suffix = (scm_string_t)argv[1];
+                    int offset = utf8_char_index_to_byte_offset((uint8_t*)string->name, FIXNUM(argv[1]), string->size + 1);
+                    return make_symbol_uninterned(vm->m_heap, string->name, string->size, offset);
+                }
+                wrong_type_argument_violation(vm, "string->uninterned-symbol", 1, "string", argv[1], argc, argv);
+                return scm_undef;
+            }
         }
         wrong_type_argument_violation(vm, "string->uninterned-symbol", 0, "string", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "string->uninterned-symbol", 1, 1, argc, argv);
+    wrong_number_of_arguments_violation(vm, "string->uninterned-symbol", 1, 2, argc, argv);
     return scm_undef;
 }
 
@@ -2034,6 +2052,41 @@ subr_uninterned_symbol_pred(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) return UNINTERNEDSYMBOLP(argv[0]) ? scm_true : scm_false;
     wrong_number_of_arguments_violation(vm, "uninterned-symbol?", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// uninterned-symbol-prefix
+scm_obj_t
+subr_uninterned_symbol_prefix(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (UNINTERNEDSYMBOLP(argv[0])) {
+            scm_symbol_t symbol = (scm_symbol_t)argv[0];
+            int len = HDR_SYMBOL_SIZE(symbol->hdr);
+            return make_string_literal(vm->m_heap, symbol->name, (uint8_t)symbol->name[len + 1]);
+        }
+        wrong_type_argument_violation(vm, "uninterned-symbol-prefix", 0, "uninterned symbol", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "uninterned-symbol-prefix", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// uninterned-symbol-suffix
+scm_obj_t
+subr_uninterned_symbol_suffix(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (UNINTERNEDSYMBOLP(argv[0])) {
+            scm_symbol_t symbol = (scm_symbol_t)argv[0];
+            int len = HDR_SYMBOL_SIZE(symbol->hdr);
+            int offset = (uint8_t)symbol->name[len + 1];
+            return make_string_literal(vm->m_heap, symbol->name + offset , len - offset);
+        }
+        wrong_type_argument_violation(vm, "uninterned-symbol-suffix", 0, "uninterned symbol", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "uninterned-symbol-suffix", 1, 1, argc, argv);
     return scm_undef;
 }
 
@@ -2124,6 +2177,8 @@ init_subr_others(object_heap_t* heap)
 
     DEFSUBR("string->uninterned-symbol", subr_string_uninterned_symbol);
     DEFSUBR("uninterned-symbol?", subr_uninterned_symbol_pred);
+    DEFSUBR("uninterned-symbol-prefix", subr_uninterned_symbol_prefix);
+    DEFSUBR("uninterned-symbol-suffix", subr_uninterned_symbol_suffix);
 
     #undef DEFSUBR
 

@@ -17,6 +17,7 @@
 scm_symbol_t        make_symbol(object_heap_t* heap, const char* name);
 scm_symbol_t        make_symbol(object_heap_t* heap, const char* name, int len);
 scm_symbol_t        make_symbol_uninterned(object_heap_t* heap, const char* name, int len);
+scm_symbol_t        make_symbol_uninterned(object_heap_t* heap, const char* name, int len, int prefix);
 scm_symbol_t        make_symbol_inherent(object_heap_t* heap, const char* name, int code);
 scm_string_t        make_string(object_heap_t* heap, const char* name);
 scm_string_t        make_string(object_heap_t* heap, const char* name, int len);

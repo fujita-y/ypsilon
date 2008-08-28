@@ -48,57 +48,44 @@
              (list->vector (map loop (vector->list lst))))
             (else lst)))))
 
-#|
-(format #t "id1 ~s ~%" id1)
-(format #t "id2 ~s ~%" id2)
-(format #t "n1a ~s ~%" n1a)
-(format #t "n1b ~s ~%" n1b)
-(format #t "n2a ~s ~%" n2a)
-(format #t "n2b ~s ~%" n2b)
-(format #t "(env-lookup env-def n1b) ~r ~%" (env-lookup env-def n1b))
-(format #t "(env-lookup env-def n2b) ~r ~%" (env-lookup env-def n2b))
-(format #t "(env-lookup env-use n1b) ~r ~%" (env-lookup env-use n1b))
-(format #t "(env-lookup env-use n2b) ~r ~%" (env-lookup env-use n2b))
-|#
+(define lookup-lexical-name
+  (lambda (id env)
+    (let ((deno (env-lookup env id)))
+      (cond ((symbol? deno) deno)
+            ((and (macro? deno) (assq deno env)) => cdr)
+            (else id)))))
 
+(define lookup-topmost-subst
+  (lambda (id env)
+    
+    (define unrename-primitive-id
+      (lambda (id)
+        (if (and (eq? (symbol-contains id (current-primitive-prefix)) 0)
+                 (core-hashtable-contains? (current-variable-environment) id))
+            (let ((name (symbol->string id)))
+              (string->symbol (substring name 1 (string-length name))))
+            id)))
+
+    (if (symbol? id)
+        (let ((deno (env-lookup env id)))
+          (cond ((uninterned-symbol? deno) deno)
+                ((symbol? deno) 
+                 (unrename-primitive-id deno))
+                ((unbound? deno) 
+                 (unrename-primitive-id (original-id id)))
+                ((and (macro? deno) (assq deno env)) => cdr)
+                (else deno)))
+        (let ((ren (syntax-object-renames id)))
+          (if (pair? ren)
+              (if (symbol? (cdr ren))
+                  (lookup-topmost-subst (cdr ren) env)
+                  (cdr ren))
+              (lookup-topmost-subst (syntax-object-expr id) env))))))
 
 (define free-id=?
   (lambda (id1 id2)
-    (let ((env-def (current-transformer-environment)) (env-use (current-expansion-environment)))
-
-      (define lexical=?
-        (lambda (n1b n2b)
-          (let ((deno1-def (env-lookup env-def n1b)))
-            (if (eq? n1b n2b)
-                (or (eq? deno1-def n1b)
-                    (unbound? deno1-def)
-                    (eq? deno1-def (env-lookup env-use n2b)))
-                (or (and (eq? (original-id n1b) (original-id n2b))
-                         (or (eq? deno1-def n1b) (unbound? deno1-def))
-                         (let ((deno2-def (env-lookup env-def n2b))) (or (unbound? deno2-def) (eq? deno2-def n2b)))
-                         (let ((deno1-use (env-lookup env-use n1b))) (or (unbound? deno1-use) (eq? deno1-use n1b)))
-                         (let ((deno2-use (env-lookup env-use n2b))) (or (unbound? deno2-use) (eq? deno2-use n2b))))
-                    (and (not (unbound? deno1-def))
-                         (or (eq? deno1-def (env-lookup env-def n2b))
-                             (eq? deno1-def (env-lookup env-use n2b)))))))))
-
-      (let ((n1b (lookup-lexical-name id1 env-def)))
-        (if (symbol? id2)
-            (lexical=? n1b (lookup-lexical-name id2 env-use))
-            (let ((n2a (syntax-object-lexname id2)))
-              (if n2a
-                  (eq? n1b n2a)
-                  (let ((n2b (lookup-lexical-name (syntax-object-expr id2) env-use))
-                        (deno1-def (env-lookup env-def n1b)))
-                    (if (eq? n1b n2b)
-                        (or (eq? deno1-def n1b)
-                            (unbound? deno1-def)
-                            (eq? deno1-def (env-lookup env-use n2b)))
-                        (let ((ren2 (syntax-object-renames id2)))
-                          (if (pair? ren2)
-                              (eq? deno1-def (cdr ren2))
-                              (or (eq? deno1-def (env-lookup env-def n2b))
-                                  (eq? deno1-def (env-lookup env-use n2b))))))))))))))
+    (eq? (lookup-topmost-subst id1 (current-transformer-environment))
+         (lookup-topmost-subst id2 (current-expansion-environment)))))
 
 (define make-import
   (lambda (id)

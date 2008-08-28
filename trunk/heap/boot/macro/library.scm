@@ -153,40 +153,6 @@
                (loop (vector->list lst)))))
       ht)))
 
-(define verify-no-unbound-id
-  (lambda (form lst imports)
-
-    (define find-expression
-      (lambda (id)
-        (call/cc (lambda (found)
-                   (let loop ((lst (if (eq? (car lst) 'begin) (cdr lst) lst)))
-                     (or (eq? lst id)
-                         (and (pair? lst)
-                              (not (memq (car lst) '(lambda quote)))
-                              (any1 loop lst)
-                              (found lst))))))))
-
-    (let ((ids (make-core-hashtable)))
-      (let loop ((lst (if (eq? (car lst) 'begin) (cdr lst) lst)))
-        (cond ((symbol? lst) (core-hashtable-set! ids lst #t))
-              ((pair? lst)
-               (or (memq (car lst) '(lambda quote))
-                   (for-each loop lst)))))
-      (every1 (lambda (b)
-                (or (symbol-contains (car b) (current-primitive-prefix))
-                    (symbol-contains (car b) (current-rename-delimiter))
-                    (symbol-contains (car b) (current-library-suffix))
-                    (core-hashtable-contains? imports (car b))
-                    (memq (car b) coreform-primitives)
-                    (begin
-                      (current-macro-expression #f)
-                      (undefined/syntax-violation #f
-                                                  (format "attempt to reference unbound variable ~u" (car b))
-                                                  (abbreviated-take-form form 4 8)
-                                                  (find-expression (car b))))))
-              (core-hashtable->alist ids))
-      lst)))
-
 (define parse-exports
   (lambda (form specs)
     (let loop ((spec specs) (exports '()))
@@ -347,12 +313,9 @@
                          (core-hashtable-set! ht-libenv (car a) (cdr a)))
                        (core-hashtable->alist ht-imports))
              (parameterize ((current-immutable-identifiers ht-immutables))
-               (verify-no-unbound-id
-                form
-                (expand-library-body form library-id library-version body exports imports depends
-                                     (extend-env private-primitives-environment (permute-env ht-env))
-                                     (permute-env ht-libenv))
-                ht-imports))))))
+               (expand-library-body form library-id library-version body exports imports depends
+                                    (extend-env private-primitives-environment (permute-env ht-env))
+                                    (permute-env ht-libenv)))))))
       (_
        (syntax-violation 'library "expected library name, export spec, and import spec" (abbreviated-take-form form 4 8))))))
 
@@ -444,10 +407,10 @@
                                     (or (assq (car b) libenv)
                                         (let ((deno (env-lookup env (car b))))
                                           (if (and (symbol? deno) (not (eq? deno (car b))))
-                                              (extend-libenv! (car b) (make-import deno))))))
+                                              (extend-libenv! (car b) (make-import deno))
+                                              (or (uninterned-symbol? (car b))
+                                                  (extend-libenv! (car b) (make-unbound)))))))
                                   (core-hashtable->alist ht-visibles))
-
-
                         (let ((shared-env (generate-temporary-symbol)))
                           `((let ((,shared-env
                                     ',(let ((ht (make-core-hashtable)))
@@ -666,12 +629,9 @@
                          (core-hashtable-set! ht-libenv (car a) (cdr a)))
                        (core-hashtable->alist ht-imports))
              (parameterize ((current-immutable-identifiers ht-immutables))
-               (verify-no-unbound-id
-                #f
-                (expand-top-level-program-body form library-id library-version body imports depends
-                                               (extend-env private-primitives-environment (permute-env ht-env))
-                                               (permute-env ht-libenv))
-                ht-imports))))))
+               (expand-top-level-program-body form library-id library-version body imports depends
+                                              (extend-env private-primitives-environment (permute-env ht-env))
+                                              (permute-env ht-libenv)))))))
       (_
        (syntax-violation "top-level program" "expected import form and top-level body" (abbreviated-take-form form 4 8))))))
 
