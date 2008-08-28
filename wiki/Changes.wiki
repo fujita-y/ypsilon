@@ -1,6 +1,6 @@
 #summary changes in latest version
 
-version 0.9.6-trunk:
+version 0.9.6-update1:
 
   * [http://code.google.com/p/ypsilon/issues/detail?id=38&can=1 Issue 38]: added FreeBSD support to Makefile
 
