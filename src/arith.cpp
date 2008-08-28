@@ -3570,6 +3570,13 @@ bignum_again:
 scm_obj_t
 arith_expt(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
+    if (FLONUMP(lhs) && FLONUM(lhs) == 0.0) {
+        if (COMPLEXP(rhs)) {
+            if (n_positive_pred(((scm_complex_t)rhs)->real)) return make_flonum(heap, 0.0);
+        } else {
+            if (n_positive_pred(rhs)) return make_flonum(heap, 0.0);
+        }
+    }
     if (n_exact_pred(rhs)) {
         if (FIXNUMP(rhs)) {
             if (FIXNUM(rhs) == 0) return MAKEFIXNUM(1);

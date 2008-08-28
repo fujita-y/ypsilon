@@ -40,17 +40,37 @@ scm_symbol_t
 make_symbol_uninterned(object_heap_t* heap, const char *name, int len)
 {
     scm_symbol_t obj;
-    int bytes = sizeof(scm_symbol_rec_t) + len + 1;
+    int bytes = sizeof(scm_symbol_rec_t) + len + 2;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
         obj = (scm_symbol_t)heap->allocate_collectible(bytes);
         obj->name = (char*)((uintptr_t)obj + sizeof(scm_symbol_rec_t));
     } else {
         obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
-        obj->name = (char*)heap->allocate_private(len + 1);
+        obj->name = (char*)heap->allocate_private(len + 2);
     }
     obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) | HDR_SYMBOL_UNINTERNED_BIT;
     memcpy(obj->name, name, len);
     obj->name[len] = 0;
+    obj->name[len + 1] = len;
+    return obj;
+}
+
+scm_symbol_t
+make_symbol_uninterned(object_heap_t* heap, const char *name, int len, int prefix)
+{
+    scm_symbol_t obj;
+    int bytes = sizeof(scm_symbol_rec_t) + len + 2;
+    if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+        obj = (scm_symbol_t)heap->allocate_collectible(bytes);
+        obj->name = (char*)((uintptr_t)obj + sizeof(scm_symbol_rec_t));
+    } else {
+        obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
+        obj->name = (char*)heap->allocate_private(len + 2);
+    }
+    obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) | HDR_SYMBOL_UNINTERNED_BIT;
+    memcpy(obj->name, name, len);
+    obj->name[len] = 0;
+    obj->name[len + 1] = prefix;
     return obj;
 }
 

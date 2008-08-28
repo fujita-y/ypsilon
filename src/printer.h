@@ -33,7 +33,7 @@ private:
     void            write_string(const uint8_t* utf8, int n);
     void            write_ucs4(uint32_t c);
     void            scan(scm_hashtable_t ht, scm_obj_t obj);
-    bool            symbol_need_bar(const char* s);
+    bool            symbol_need_bar(const char* s, int n);
     const char*     get_tuple_type_name(scm_obj_t obj);
 
     VM*             m_vm;

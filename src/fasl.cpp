@@ -189,12 +189,19 @@ fasl_printer_t::put_lites()
         for (int i = 0; i < m_lites->datum->live; i++) {
             if (SYMBOLP(lites[i])) {
                 scm_symbol_t symbol = (scm_symbol_t)lites[i];
-                if (UNINTERNEDSYMBOLP(symbol)) emit_u8(FASL_TAG_UNINTERNED_SYMBOL);
-                else emit_u8(FASL_TAG_SYMBOL);
-                emit_u32(i);
-                int n = HDR_SYMBOL_SIZE(symbol->hdr);
-                emit_u32(n);
-                emit_string(symbol->name, n);
+                if (UNINTERNEDSYMBOLP(symbol)) {
+                    emit_u8(FASL_TAG_UNINTERNED_SYMBOL);
+                    emit_u32(i);
+                    int n = HDR_SYMBOL_SIZE(symbol->hdr) + 2;
+                    emit_u32(n);
+                    emit_bytes(symbol->name, n);
+                } else {
+                    emit_u8(FASL_TAG_SYMBOL);
+                    emit_u32(i);
+                    int n = HDR_SYMBOL_SIZE(symbol->hdr);
+                    emit_u32(n);
+                    emit_bytes(symbol->name, n);
+                }
                 continue;
             }
             if (STRINGP(lites[i])) {
@@ -203,7 +210,7 @@ fasl_printer_t::put_lites()
                 emit_u32(i);
                 int n = string->size;
                 emit_u32(n);
-                emit_string(string->name, n);
+                emit_bytes(string->name, n);
                 continue;
             }
         }
@@ -336,10 +343,7 @@ fasl_reader_t::get_lites()
             m_lites[uid] = make_symbol(m_vm->m_heap, buf, len);
             break;
         case FASL_TAG_UNINTERNED_SYMBOL:
-            m_lites[uid] = make_symbol_uninterned(m_vm->m_heap, buf, len);
-#if FASL_DEBUG
-            printf("fasl: uninterned symbol: %s\n", buf);
-#endif
+            m_lites[uid] = make_symbol_uninterned(m_vm->m_heap, buf, len - 2, buf[len - 1]);
             break;
         case FASL_TAG_STRING:
             m_lites[uid] = make_string_literal(m_vm->m_heap, buf, len);

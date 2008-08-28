@@ -320,11 +320,11 @@
       ((_ ((? symbol? name) . formals))
        (begin
          (collect-lambda-formals (annotate formals form) form)
-         (annotate `(define ,name (lambda ,formals (.UNSPECIFIED))) form)))
+         (annotate `(define ,name (.LAMBDA ,formals (.UNSPECIFIED))) form)))
       ((_ ((? symbol? name) . formals) . (? pair? body))
        (begin
          (collect-lambda-formals (annotate formals form) form)
-         (annotate `(define ,name (lambda ,formals ,@body)) form)))
+         (annotate `(define ,name (.LAMBDA ,formals ,@body)) form)))
       ((_ (e1 . e2) . _)
        (syntax-violation (car form) "invalid syntax" form e1))
       (_
@@ -341,7 +341,7 @@
       ((_ ((? symbol? name) . formals) . (? pair? body))
        (begin
          (collect-lambda-formals (annotate formals form) form)
-         (annotate `(define-macro ,name (lambda ,formals ,@body)) form)))
+         (annotate `(define-macro ,name (.LAMBDA ,formals ,@body)) form)))
       ((_ (e1 . e2) . _)
        (syntax-violation (car form) "invalid syntax" form e1))
       (_

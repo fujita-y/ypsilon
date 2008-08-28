@@ -82,7 +82,7 @@
     (cond ((infinite? e) 
            (if (infinite? x) +nan.0 0.0))
           ((= x 0) x)
-          ((= x e) x)
+          ((= x e) (- x e))
           ((negative? x)
            (- (rationalize (- x) e)))
           (else
@@ -95,19 +95,6 @@
                               (else
                                (let ((a (- x 1)))
                                  (+ a (/ 1 (loop (/ 1 (- top a)) (/ 1 (- bottom a)))))))))))))))))
-
-#;(define list->string
-  (lambda (lst) (apply string lst)))
-
-#;(define list->vector 
-  (lambda (lst) (apply vector lst)))
-
-#;(define string->list
-  (lambda (s)
-    (let loop ((i (- (string-length s) 1)) (lst '()))
-      (if (< i 0)
-          lst
-          (loop (- i 1) (cons (string-ref s i) lst))))))
 
 (define string->list
   (lambda (s)

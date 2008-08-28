@@ -483,6 +483,8 @@
                         current-rename-delimiter
                         string->uninterned-symbol
                         uninterned-symbol?
+                        uninterned-symbol-prefix
+                        uninterned-symbol-suffix
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))
@@ -516,7 +518,7 @@
 (let ((coreform-private-procs
        '(.set-top-level-macro!
          .require-scheme-library .intern-scheme-library .unintern-scheme-library
-         .patvars .syntax-dispatch .flatten-syntax .transformer-thunk
+         .vars .syntax-dispatch .flatten-syntax .transformer-thunk
          .syntax/i0 .syntax/i1 .syntax/i2 .syntax/i3
          .syntax/c0 .syntax/c1 .syntax/c2 .syntax/c3
          .run-vmi)))

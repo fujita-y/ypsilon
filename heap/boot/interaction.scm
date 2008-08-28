@@ -472,9 +472,11 @@
                     (default-exception-handler c (lambda () (exit #f))))
                   (lambda ()
                     (auto-compile-cache-update)
-                    (if (or r6rs-program (load-file-has-r6rs-comment? path))
-                        (load-r6rs path)
-                        (load path))
+                    (cond ((or r6rs-program (load-file-has-r6rs-comment? path))
+                           (load-r6rs path))
+                          (else
+                           (interpret '(import (core) (rnrs)))
+                           (load path)))
                     (flush-output-port (current-error-port))
                     (flush-output-port (current-output-port)))))))))
 
