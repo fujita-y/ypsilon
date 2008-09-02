@@ -816,9 +816,11 @@ VM::stop()
         case ROOT_SNAPSHOT_LOCALS:
             m_heap->m_usage.m_pause2 = t2 - t1;
             break;
-        case ROOT_SNAPSHOT_EVERYTHING:
-            m_heap->m_usage.m_pause3 = t2 - t1;
-            break;
+        case ROOT_SNAPSHOT_EVERYTHING: {
+            double d = t2 - t1;
+            if (d > m_heap->m_usage.m_pause3) m_heap->m_usage.m_pause3 = d;
+        } break;
+        
     }
 }
 

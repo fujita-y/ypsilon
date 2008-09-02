@@ -1345,7 +1345,6 @@ scm_obj_t
 subr_gensym(VM* vm, int argc, scm_obj_t argv[])
 {
     const char *prefix;
-    char buf[MAX_READ_SYMBOL_LENGTH];
     if (argc < 2) {
         if (argc == 0) {
             prefix = DEFAULT_GENSYM_PREFIX;
@@ -1363,10 +1362,13 @@ subr_gensym(VM* vm, int argc, scm_obj_t argv[])
             scoped_lock lock(vm->m_heap->m_gensym_lock);
             count = vm->m_heap->m_gensym_counter++;
         }
+        char head[MAX_READ_SYMBOL_LENGTH];
+        snprintf(head, sizeof(head), "%s%d", prefix, count);
+        char buf[MAX_READ_SYMBOL_LENGTH];        
         struct timeval tv;
         gettimeofday(&tv, NULL);
-        snprintf(buf, sizeof(buf), "%s%d.%x.%x", prefix, count, tv.tv_sec, tv.tv_usec);
-        return make_symbol_uninterned(vm->m_heap, buf, strlen(buf));
+        snprintf(buf, sizeof(buf), "%s.%x.%x",head, tv.tv_sec, tv.tv_usec);
+        return make_symbol_uninterned(vm->m_heap, buf, strlen(buf), strlen(head));
     }
     wrong_number_of_arguments_violation(vm, "gensym", 0, 1, argc, argv);
     return scm_undef;
