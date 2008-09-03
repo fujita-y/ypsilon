@@ -435,7 +435,9 @@
 
     (define show-banner
       (lambda ()
-        (format #t "Ypsilon 0.9.6-trunk/r~a Copyright (c) 2008 Y.Fujita, LittleWing Company Limited.~%" (architecture-feature 'ypsilon-revision))))
+        (format #t "Ypsilon 0.9.6-update2 Copyright (c) 2008 Y.Fujita, LittleWing Company Limited.~%")
+        #;(format #t "Ypsilon 0.9.6-trunk/r~a Copyright (c) 2008 Y.Fujita, LittleWing Company Limited.~%" (architecture-feature 'ypsilon-revision))
+    ))
 
     (define show-info
       (lambda ()
