@@ -2,14 +2,6 @@
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
-(define annotate-bindings
-  (lambda (vars inits env)
-    (for-each (lambda (var init)
-                (and (pair? init)
-                     (denote-lambda? env (car init))
-                     (set-closure-comment! init (original-id var))))
-              vars inits)))
-
 (define warning-contract-violation
   (lambda (form inits lst)
     (for-each
