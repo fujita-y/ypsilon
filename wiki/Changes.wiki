@@ -2,7 +2,7 @@
 
 version 0.9.6-update2:
 
-  * REPL improved its hygiene.
+  * REPL improved its hygiene and exception handling.
 
 version 0.9.6-update1:
 
