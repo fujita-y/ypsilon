@@ -1,12 +1,18 @@
 #summary Known bugs in current release
 
-version 0.9.6-update1 (based on revision 169):
+version 0.9.6-update2 (based on revision 184):
 
-  * [http://code.google.com/p/ypsilon/issues/detail?id=40&can=1 Issue 40]: random segfault (fixed in revision 175)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=41&can=1 Issue 41]: `generate-temporaries` / `gensym` broken (fixed in revision 175)
-  * [http://code.google.com/p/ypsilon/issues/detail?id=42&can=1 Issue 42]: wrong optimization (fixed in revision 175)
+  * _<no item>_
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
+
+version 0.9.6-update1 (based on revision 169):
+
+  * [http://code.google.com/p/ypsilon/issues/detail?id=40&can=1 Issue 40]: random segfault.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=41&can=1 Issue 41]: `generate-temporaries` / `gensym` broken.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=42&can=1 Issue 42]: wrong optimization.
+
+  * _All bugs in version 0.9.6-update1 are fixed in version 0.9.6-update2_
 
 version 0.9.6:
 
