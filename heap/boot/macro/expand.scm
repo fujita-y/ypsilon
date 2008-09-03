@@ -28,6 +28,14 @@
           (else
            (cdr (assq formals renames))))))
 
+(define annotate-bindings
+  (lambda (vars inits env)
+    (for-each (lambda (var init)
+                (and (pair? init)
+                     (denote-lambda? env (car init))
+                     (set-closure-comment! init (original-id var))))
+              vars inits)))
+
 (define check-let*-bindings
   (lambda (form bindings)
     (or (list? bindings)
@@ -396,6 +404,7 @@
                                                (cond ((assq id defs) => (lambda (e) (annotate `(define ,@e) e)))
                                                      (else #f)))))
                        (else
+                        (annotate-bindings lhs rhs env)
                         (annotate
                          `((letrec* ,(rewrite-letrec*-bindings (map list lhs rhs) env) ,@(expand-each body env)))
                          form-body))))))))
