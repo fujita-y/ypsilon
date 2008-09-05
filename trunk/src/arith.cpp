@@ -10,8 +10,6 @@
 #include "port.h"
 #include "heap.h"
 
-#define ENABLE_HASH_IN_NUMBER    0
-
 #define BN_QUANTUM      32
 #define BN_STACK_LIMIT  1024
 
@@ -4595,13 +4593,13 @@ prevfloat(double z)
 #endif
 
 static double
-algorithmR(object_heap_t* heap, const int64_t f, const int e, const double z0)
+algorithmR(object_heap_t* heap, scm_obj_t f, const int e, const double z0)
 {
     double z = z0;
     scm_obj_t x0;
     scm_obj_t pow10e;
     if (e >= 0) {
-        x0 = arith_mul(heap, int64_to_integer(heap, f), arith_expt(heap, MAKEFIXNUM(10), MAKEFIXNUM(e)));
+        x0 = arith_mul(heap, f, arith_expt(heap, MAKEFIXNUM(10), MAKEFIXNUM(e)));
         pow10e = scm_unspecified;
     } else {
         x0 = scm_unspecified;
@@ -4610,7 +4608,7 @@ algorithmR(object_heap_t* heap, const int64_t f, const int e, const double z0)
 #if DEBUG_ALGOR
     {
         printer_t prt(current_vm(), current_vm()->m_current_output);
-        prt.format("f      ~s ~%", int64_to_integer(heap, f));
+        prt.format("f      ~s ~%", f);
         prt.format("e      ~s ~%", int32_to_integer(heap, e));
         prt.format("z0     ~s ~%", make_flonum(heap, z0));
         prt.format("x0     ~s ~%", x0);
@@ -4635,10 +4633,10 @@ algorithmR(object_heap_t* heap, const int64_t f, const int e, const double z0)
             }
         } else {
             if (k >= 0) {
-                x = int64_to_integer(heap, f);
+                x = f;
                 y = arith_mul(heap, integer_init_n_alloc(heap, m, k), pow10e);
             } else {
-                x = integer_init_n_alloc(heap, f, -k);
+                x = arith_logash(heap, f, MAKEFIXNUM(-k));
                 y = arith_mul(heap, int64_to_integer(heap, m), pow10e);
             }
         }
@@ -4685,9 +4683,6 @@ algorithmR(object_heap_t* heap, const int64_t f, const int e, const double z0)
 static const char*
 parse_ubignum(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
 {
-#if ENABLE_HASH_IN_NUMBER
-    bool hash_mode = false;
-#endif
     const char* p = s;
     int digit_count = 0;
     int workpad_count = BN_QUANTUM;
@@ -4699,25 +4694,11 @@ parse_ubignum(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
         char c;
         while ((c = *p++) != 0) {
             int digit;
-#if ENABLE_HASH_IN_NUMBER
-            if (c == '#') {
-                if ((hash_mode == false) & (digit_count == 0)) return p - 1;
-                hash_mode = true;
-                digit = 0;
-            } else {
-                if ((c >= '0') & (c <= '9')) digit = c - '0';
-                else if (c >= 'a') digit = c - 'a' + 10;
-                else if (c >= 'A') digit = c - 'A' + 10;
-                else break;
-                if (hash_mode & (digit < radix)) return p - 1;
-            }
-#else
             if (c == '#') return p - 1;
             if ((c >= '0') & (c <= '9')) digit = c - '0';
             else if (c >= 'a') digit = c - 'a' + 10;
             else if (c >= 'A') digit = c - 'A' + 10;
             else break;
-#endif
             digit_count++;
             if (digit < radix) {
                 BN_TEMPORARY(bn1);
@@ -4749,9 +4730,6 @@ parse_ubignum(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
 static const char*
 parse_uinteger(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
 {
-#if ENABLE_HASH_IN_NUMBER
-    bool hash_mode = false;
-#endif
     int digit_count = 0;
     const char* p = s;
     if (*p) {
@@ -4759,25 +4737,11 @@ parse_uinteger(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
         char c;
         while ((c = *p++) != 0) {
             int digit;
-#if ENABLE_HASH_IN_NUMBER
-            if (c == '#') {
-                if ((hash_mode == false) & (digit_count == 0)) return p - 1;
-                hash_mode = true;
-                digit = 0;
-            } else {
-                if ((c >= '0') & (c <= '9')) digit = c - '0';
-                else if (c >= 'a') digit = c - 'a' + 10;
-                else if (c >= 'A') digit = c - 'A' + 10;
-                else break;
-                if (hash_mode & (digit < radix)) return p - 1;
-            }
-#else
             if (c == '#') return p - 1;
             if ((c >= '0') & (c <= '9')) digit = c - '0';
             else if (c >= 'a') digit = c - 'a' + 10;
             else if (c >= 'A') digit = c - 'A' + 10;
             else break;
-#endif
             digit_count++;
             if (digit < radix) {
                 value *= radix;
@@ -4796,9 +4760,6 @@ parse_uinteger(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
 static const char*
 parse_udecimal(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
 {
-#if ENABLE_HASH_IN_NUMBER
-    bool hash_mode = false;
-#endif
     if (s[0] == 'n' && strncmp(s + 1, "an.0", 4) == 0) {
         *ans = make_flonum(heap, VALUE_NAN);
         return s + 5;
@@ -4813,12 +4774,11 @@ parse_udecimal(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
     int digit_count = 0;
     int fraction_count = 0;
     int exponent = 0;
-    int exponent_adjust = 0;
     bool exponent_negative = false;
     bool overflow = false;
     char c;
     int digit;
-    int64_t value = 0;
+    scm_obj_t value = MAKEFIXNUM(0);
     while ((c = *p++) != 0) {
         if (c == '0') {
             digit_count++; // new 060323
@@ -4833,29 +4793,11 @@ parse_udecimal(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
     return p;
 parse_integral:
     while ((c = *p++) != 0) {
-#if ENABLE_HASH_IN_NUMBER
-        if (c == '#') {
-            if ((hash_mode == false) & (digit_count == 0)) return p - 1;
-            hash_mode = true;
-            digit_count++;
-            if (!overflow) value = value * 10;
-            else exponent_adjust++;
-            continue;
-        }
-#endif
         if (c == '#') return p - 1;
         if ((c >= '0') & (c <= '9')) {
-#if ENABLE_HASH_IN_NUMBER
-            if (hash_mode) return p - 1;
-#endif
             digit_count++;
-            if (!overflow) {
-                digit = c - '0';
-                value = value * 10 + digit;
-                if (value >= iexpt_2n53) overflow = true;
-            } else {
-                exponent_adjust++;
-            }
+            digit = c - '0';
+            value = arith_add(heap, arith_mul(heap, value, MAKEFIXNUM(10)), MAKEFIXNUM(digit));
             continue;
         }
         if (c == '.') goto parse_fraction;
@@ -4866,31 +4808,12 @@ parse_integral:
     goto parse_done;
 parse_fraction:
     while ((c = *p++) != 0) {
-#if ENABLE_HASH_IN_NUMBER
-        if (c == '#') {
-            if ((hash_mode == false) & (digit_count == 0)) return p - 1;
-            hash_mode = true;
-            digit_count++;
-            if (!overflow) {
-                value = value * 10;
-                if (value >= iexpt_2n53) overflow = true;
-                fraction_count++;
-            }
-            continue;
-        }
-#endif
         if (c == '#') return p - 1;
         if ((c >= '0') & (c <= '9')) {
-#if ENABLE_HASH_IN_NUMBER
-            if (hash_mode) return p - 1;
-#endif
             digit_count++;
-            if (!overflow) {
-                digit = c - '0';
-                value = value * 10 + digit;
-                if (value >= iexpt_2n53) overflow = true;
-                fraction_count++;
-            }
+            digit = c - '0';
+            value = arith_add(heap, arith_mul(heap, value, MAKEFIXNUM(10)), MAKEFIXNUM(digit));
+            fraction_count++;
             continue;
         }
         if (strchr("esfdlESFDL", c)) goto parse_exponent;
@@ -4937,8 +4860,8 @@ parse_done:
         return p;
     }
     if (exponent_negative) exponent = -exponent;
-    exponent = exponent + exponent_adjust - fraction_count;
-    double estimation = pow10n(value, exponent);
+    exponent = exponent - fraction_count;
+    double estimation = pow10n(real_to_double(value), exponent);
     *ans = make_flonum(heap, algorithmR(heap, value, exponent, estimation));
     return p;
 }
@@ -4946,9 +4869,6 @@ parse_done:
 static const char*
 parse_mantissa(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans, int* digit_count, int *fraction_count)
 {
-#if ENABLE_HASH_IN_NUMBER
-    bool hash_mode = false;
-#endif
     bool first_digit = true;
     bool fraction = false;
     const char* p = s;
@@ -4961,24 +4881,6 @@ parse_mantissa(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans, in
         char c;
         while ((c = *p++) != 0) {
             int digit;
-#if ENABLE_HASH_IN_NUMBER
-            if (c == '#') {
-                if ((hash_mode == false) & first_digit) return p - 1;
-                hash_mode = true;
-                digit = 0;
-            } else {
-                if (c == '.') {
-                    if (fraction) break;
-                    fraction = true;
-                    continue;
-                }
-                if ((c >= '0') & (c <= '9')) digit = c - '0';
-                else if (c >= 'a') digit = c - 'a' + 10;
-                else if (c >= 'A') digit = c - 'A' + 10;
-                else break;
-                if (hash_mode & (digit < radix)) return p - 1;
-            }
-#else
             if (c == '#') return p - 1;
             if (c == '.') {
                 if (fraction) break;
@@ -4989,8 +4891,6 @@ parse_mantissa(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans, in
             else if (c >= 'a') digit = c - 'a' + 10;
             else if (c >= 'A') digit = c - 'A' + 10;
             else break;
-#endif
-
             first_digit = false;
             if (digit < radix) {
                 if (fraction) *fraction_count = *fraction_count + 1;
@@ -5228,12 +5128,6 @@ parse_number(object_heap_t* heap, const char* s, int prefix, int radix)
         s += 2;
     }
     if (radix == 0) radix = 10;
-#if ENABLE_HASH_IN_NUMBER
-    if (!exact && strchr(s, '#')) {
-        inexact = true;
-        exact = false;
-    }
-#endif
     if (s[0] == '-') {
         s++;
         if ((s[0] == 'i') | (s[0] == 'I')) {
