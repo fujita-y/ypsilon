@@ -165,6 +165,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_4C61695534C74FE7A8F3FAA5DDCD48BA"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_5228F897E2094A9C91DA8BABEB1B88E9"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -209,12 +215,6 @@
         {
         "MsmKey" = "8:_67DEF293EFC043AFA76F9AA371CFF43E"
         "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_6AA67DC1873D467C8CAAEC8464AFEBE5"
-        "OwnerKey" = "8:_0F1B1AC3A3D64583BA2449CC213A8F0F"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -299,12 +299,6 @@
         {
         "MsmKey" = "8:_A82305E43E8B442C9613579DA06F3CD7"
         "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_AB84BC105E6B4F91A023636B250C5D51"
-        "OwnerKey" = "8:_6AA67DC1873D467C8CAAEC8464AFEBE5"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1010,6 +1004,26 @@
             "TargetName" = "8:procedural.scm"
             "Tag" = "8:"
             "Folder" = "8:_03B68F00488147479E1A94F73FABC2CC"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4C61695534C74FE7A8F3FAA5DDCD48BA"
+            {
+            "SourcePath" = "8:..\\src\\Ypsilon.ico"
+            "TargetName" = "8:Ypsilon.ico"
+            "Tag" = "8:"
+            "Folder" = "8:_502931E5C5AB47DA9156A56B38185DA5"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -2120,7 +2134,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Ypsilon 0.9.6"
         "ProductCode" = "8:{68268D70-7844-43D7-9434-C4935F7E6295}"
-        "PackageCode" = "8:{BD6849F7-8373-488B-9A04-D20FC92C5C38}"
+        "PackageCode" = "8:{991D5363-4E82-4F18-80F5-122112D5A832}"
         "UpgradeCode" = "8:{01D426C4-6337-4BEC-8503-1D2A23232AE7}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
@@ -2250,7 +2264,7 @@
             "Target" = "8:_0F1B1AC3A3D64583BA2449CC213A8F0F"
             "Folder" = "8:_2958C27843C7412485B27660019ADFA2"
             "WorkingFolder" = "8:_502931E5C5AB47DA9156A56B38185DA5"
-            "Icon" = "8:"
+            "Icon" = "8:_4C61695534C74FE7A8F3FAA5DDCD48BA"
             "Feature" = "8:"
             }
         }
@@ -2592,40 +2606,12 @@
         }
         "MergeModule"
         {
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_6AA67DC1873D467C8CAAEC8464AFEBE5"
-            {
-            "UseDynamicProperties" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "SourcePath" = "8:policy_9_0_Microsoft_VC90_DebugCRT_x86.msm"
-                "Properties"
-                {
-                }
-            "LanguageId" = "3:0"
-            "Exclude" = "11:FALSE"
-            "Folder" = "8:"
-            "Feature" = "8:"
-            "IsolateTo" = "8:"
-            }
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_AB84BC105E6B4F91A023636B250C5D51"
-            {
-            "UseDynamicProperties" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "SourcePath" = "8:microsoft_vc90_debugcrt_x86.msm"
-                "Properties"
-                {
-                }
-            "LanguageId" = "3:0"
-            "Exclude" = "11:FALSE"
-            "Folder" = "8:"
-            "Feature" = "8:"
-            "IsolateTo" = "8:"
-            }
         }
         "ProjectOutput"
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_0F1B1AC3A3D64583BA2449CC213A8F0F"
             {
-            "SourcePath" = "8:..\\build-win32\\Debug\\Ypsilon.exe"
+            "SourcePath" = "8:..\\build-win32\\Release\\Ypsilon.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_502931E5C5AB47DA9156A56B38185DA5"
