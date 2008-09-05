@@ -74,7 +74,7 @@ raise_io_error(VM* vm, const char* who, int operation, const char* message, int 
                     break;
                 default:
                     scm_obj_t irritant = make_list(vm->m_heap, 2, filename, port);
-                    vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-obj-error"),
+                    vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-error"),
                                                 4, arg1, arg2, filename, irritant);
                     break;
             }

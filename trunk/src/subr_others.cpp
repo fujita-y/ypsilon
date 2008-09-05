@@ -1675,7 +1675,7 @@ subr_lookup_process_environment(VM* vm, int argc, scm_obj_t argv[])
                 wchar_t* ucs2_value = new wchar_t [max_bytes / sizeof(wchar_t)];
                 if (GetEnvironmentVariableW(ucs2_key, ucs2_value, max_bytes)) {
                     char* utf8 = new char [max_bytes];
-                    if (WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ucs2_value, -1, utf8, max_bytes, NULL, NULL)) {
+                    if (WideCharToMultiByte(CP_UTF8, 0, ucs2_value, -1, utf8, max_bytes, NULL, NULL)) {
                         scm_obj_t obj = make_string_literal(vm->m_heap, utf8);
                         delete [] utf8;
                         delete [] ucs2_value;
