@@ -42,7 +42,7 @@
 
     bool posixpath(const wchar_t* ucs2, char* utf8, int count)
     {
-        if (WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ucs2, -1, utf8, count, NULL, NULL)) {
+        if (WideCharToMultiByte(CP_UTF8, 0, ucs2, -1, utf8, count, NULL, NULL)) {
             int i = 0;
             while (utf8[i]) {
                 if (utf8[i] == '\\') utf8[i] = '/';
@@ -91,7 +91,7 @@
             HANDLE hdl = FindFirstFileW(ucs2, &data);
             if (hdl != INVALID_HANDLE_VALUE) {
                 scm_obj_t lst = scm_nil;
-                while (WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, data.cFileName, -1, utf8, sizeof(utf8), NULL, NULL)) {
+                while (WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1, utf8, sizeof(utf8), NULL, NULL)) {
                     lst = make_pair(vm->m_heap, make_string_literal(vm->m_heap, utf8), lst);
                     if (FindNextFileW(hdl, &data)) continue;
                     FindClose(hdl);
