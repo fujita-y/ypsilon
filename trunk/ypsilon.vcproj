@@ -468,11 +468,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\src\Ypsilon.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\Ypsilon.rc"
+				RelativePath=".\ypsilon.rc"
 				>
 			</File>
 		</Filter>
