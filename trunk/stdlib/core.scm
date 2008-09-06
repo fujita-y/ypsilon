@@ -152,6 +152,7 @@
     cadddr
     caddr
     cadr
+    call-shared-object->char*
     call-shared-object->double
     call-shared-object->int
     call-shared-object->intptr
@@ -739,6 +740,7 @@
     standard-error-port
     standard-input-port
     standard-output-port
+    stdcall-shared-object->char*
     stdcall-shared-object->double
     stdcall-shared-object->int
     stdcall-shared-object->intptr

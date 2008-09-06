@@ -8,17 +8,14 @@
   (export c-function c-argument
           on-windows on-darwin on-linux on-freebsd on-posix)
 
-  (import (core primitives)
-          (core syntax-case)
-          (core bytevectors)
-          (core lists))
+  (import (core))
 
   (define on-windows (and (string-contains (architecture-feature 'operating-system) "windows") #t))
   (define on-darwin  (and (string-contains (architecture-feature 'operating-system) "darwin")  #t))
   (define on-linux   (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
   (define on-freebsd (and (string-contains (architecture-feature 'operating-system) "freebsd") #t))
   (define on-posix   (not on-windows))
-  
+
   (define assert-int
     (lambda (name n i)
       (cond ((and (integer? i) (exact? i)) i)
@@ -76,6 +73,14 @@
                         (assertion-violation name (format "expected vector of string, but got ~r, as argument ~s" vect n))))
                   lst)
         lst)))
+
+  (define int->bool
+    (lambda (val)
+      (not (= val 0))))
+
+  (define char*->string
+    (lambda (val)
+      (and val (bytevector->string val (make-transcoder (utf-8-codec))))))
 
   (define make-binary-array-of-int
     (lambda argv
@@ -140,20 +145,22 @@
   (define-syntax c-function-stub
     (lambda (x)
       (syntax-case x ()
-        ((_ lib-handle lib-name stub func-name types ...)
+        ((_ lib-handle lib-name (cast stub) func-name types ...)
          (with-syntax (((args ...) (generate-temporaries (syntax (types ...))))
                        ((n ...) (map (lambda (e) (datum->syntax #'k e)) (iota (length (syntax (types ...))) 1))))
            (syntax (let ((loc (lookup-shared-object lib-handle 'func-name)))
                      (if loc
-                         (let () (define func-name 
+                         (let () (define func-name
                                    (lambda (args ...)
-                                     (stub loc (c-argument func-name n types args) ...))) func-name)
-                         (let () (define func-name 
-                                   (lambda x 
-                                     (error 'func-name (format "function not available in ~a" lib-name)))) func-name)))))))))
+                                     (cast (stub loc (c-argument func-name n types args) ...)))) func-name)
+                         (let () (define func-name
+                                   (lambda x
+                                     (error 'func-name (format "function not available in ~a" lib-name)))) func-name))))))
+        ((_ lib-handle lib-name stub func-name types ...)
+         (syntax (c-function-stub lib-handle lib-name ((lambda (x) x) stub) func-name types ...))))))
 
   (define-syntax c-function
-    (syntax-rules (__stdcall void int double void*)
+    (syntax-rules (__stdcall void int double void* bool char*)
       ((_ lib-handle lib-name void __stdcall func-name (types ...))
        (c-function-stub lib-handle lib-name stdcall-shared-object->void func-name types ...))
       ((_ lib-handle lib-name int __stdcall func-name (types ...))
@@ -162,6 +169,10 @@
        (c-function-stub lib-handle lib-name stdcall-shared-object->double func-name types ...))
       ((_ lib-handle lib-name void* __stdcall func-name (types ...))
        (c-function-stub lib-handle lib-name stdcall-shared-object->intptr func-name types ...))
+      ((_ lib-handle lib-name bool __stdcall func-name (types ...))
+       (c-function-stub lib-handle lib-name (int->bool stdcall-shared-object->int) func-name types ...))
+      ((_ lib-handle lib-name char* __stdcall func-name (types ...))
+       (c-function-stub lib-handle lib-name (char*->string stdcall-shared-object->char*) func-name types ...))
       ((_ lib-handle lib-name void func-name (types ...))
        (c-function-stub lib-handle lib-name call-shared-object->void func-name types ...))
       ((_ lib-handle lib-name int func-name (types ...))
@@ -169,6 +180,10 @@
       ((_ lib-handle lib-name double func-name (types ...))
        (c-function-stub lib-handle lib-name call-shared-object->double func-name types ...))
       ((_ lib-handle lib-name void* func-name (types ...))
-       (c-function-stub lib-handle lib-name call-shared-object->intptr func-name types ...))))
+       (c-function-stub lib-handle lib-name call-shared-object->intptr func-name types ...))
+      ((_ lib-handle lib-name bool func-name (types ...))
+       (c-function-stub lib-handle lib-name (int->bool call-shared-object->int) func-name types ...))
+      ((_ lib-handle lib-name char* func-name (types ...))
+       (c-function-stub lib-handle lib-name (char*->string call-shared-object->char*) func-name types ...))))
 
   ) ;[end]
