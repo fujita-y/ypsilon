@@ -433,8 +433,16 @@
                         scheme-error
                         architecture-feature
                         load-shared-object lookup-shared-object
-                        call-shared-object->void call-shared-object->int call-shared-object->intptr call-shared-object->double
-                        stdcall-shared-object->void stdcall-shared-object->int stdcall-shared-object->intptr stdcall-shared-object->double
+                        call-shared-object->void 
+                        call-shared-object->int 
+                        call-shared-object->intptr 
+                        call-shared-object->double
+                        call-shared-object->char*
+                        stdcall-shared-object->void 
+                        stdcall-shared-object->int 
+                        stdcall-shared-object->intptr 
+                        stdcall-shared-object->double
+                        stdcall-shared-object->char*
                         make-callback
                         flonum->float
                         string->cstring

@@ -197,6 +197,44 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// call-shared-object->char*
+scm_obj_t
+subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(intptr_t) == sizeof(int));
+    if (argc >= 1) {
+        void *func = NULL;
+        if (exact_positive_integer_pred(argv[0])) {
+            if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
+                invalid_argument_violation(vm, "call-shared-object->char*", "value out of bound,", argv[0], 0, argc, argv);
+                return scm_undef;
+            }
+        } else {
+            wrong_type_argument_violation(vm, "call-shared-object->char*", 0, "c-function address", argv[0], argc, argv);
+            return scm_undef;
+        }
+        if (argc - 1 <= FFI_MAX_ARGC) {
+            c_stack_frame_t stack(vm);
+            for (int i = 1; i < argc; i++) {
+                const char* err = stack.push(argv[i]);
+                if (err) {
+                    wrong_type_argument_violation(vm, "call-shared-object->char*", i, err, argv[i], argc, argv);
+                    return scm_undef;
+                }
+            }
+            uint8_t* p = (uint8_t*)c_func_stub_intptr(func, stack.m_count, stack.m_frame);
+            if (p == NULL) return scm_false;
+            int n = 0;
+            while (p[n]) n++;
+            return make_bvector_mapping(vm->m_heap, p, n);
+        }
+        invalid_argument_violation(vm, "call-shared-object->char*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "call-shared-object->char*", 1, -1, argc, argv);
+    return scm_undef;
+}
+
 #if _MSC_VER
 
     // stdcall-shared-object->void
@@ -337,6 +375,44 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
         return scm_undef;
     }
 
+    // stdcall-shared-object->char*
+    scm_obj_t
+    subr_stdcall_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
+    {
+        assert(sizeof(intptr_t) == sizeof(int));
+        if (argc >= 1) {
+            void *func = NULL;
+            if (exact_positive_integer_pred(argv[0])) {
+                if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
+                    invalid_argument_violation(vm, "stdcall-shared-object->char*", "value out of bound,", argv[0], 0, argc, argv);
+                    return scm_undef;
+                }
+            } else {
+                wrong_type_argument_violation(vm, "stdcall-shared-object->char*", 0, "c-function address", argv[0], argc, argv);
+                return scm_undef;
+            }
+            if (argc - 1 <= FFI_MAX_ARGC) {
+                c_stack_frame_t stack(vm);
+                for (int i = 1; i < argc; i++) {
+                    const char* err = stack.push(argv[i]);
+                    if (err) {
+                        wrong_type_argument_violation(vm, "stdcall-shared-object->char*", i, err, argv[i], argc, argv);
+                        return scm_undef;
+                    }
+                }
+                uint8_t* p = (uint8_t*)stdcall_func_stub_intptr(func, stack.m_count, stack.m_frame);
+                if (p == NULL) return scm_false;
+                int n = 0;
+                while (p[n]) n++;
+                return make_bvector_mapping(vm->m_heap, p, n);
+            }
+            invalid_argument_violation(vm, "stdcall-shared-object->char*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
+            return scm_undef;
+        }
+        wrong_number_of_arguments_violation(vm, "stdcall-shared-object->char*", 1, -1, argc, argv);
+        return scm_undef;
+    }
+    
 #endif
 
 // make-callback
@@ -396,18 +472,21 @@ void init_subr_ffi(object_heap_t* heap)
     DEFSUBR("call-shared-object->double", subr_call_shared_object_double);
     DEFSUBR("call-shared-object->void*", subr_call_shared_object_intptr);
     DEFSUBR("call-shared-object->intptr", subr_call_shared_object_intptr);
+    DEFSUBR("call-shared-object->char*", subr_call_shared_object_chars);
 #if _MSC_VER
     DEFSUBR("stdcall-shared-object->void", subr_stdcall_shared_object_void);
     DEFSUBR("stdcall-shared-object->int", subr_stdcall_shared_object_int);
     DEFSUBR("stdcall-shared-object->double", subr_stdcall_shared_object_double);
     DEFSUBR("stdcall-shared-object->void*", subr_stdcall_shared_object_intptr);
     DEFSUBR("stdcall-shared-object->intptr", subr_stdcall_shared_object_intptr);
+    DEFSUBR("stdcall-shared-object->char*", subr_stdcall_shared_object_chars);
 #else
     DEFSUBR("stdcall-shared-object->void", subr_call_shared_object_void);
     DEFSUBR("stdcall-shared-object->int", subr_call_shared_object_int);
     DEFSUBR("stdcall-shared-object->double", subr_call_shared_object_double);
     DEFSUBR("stdcall-shared-object->void*", subr_call_shared_object_intptr);
     DEFSUBR("stdcall-shared-object->intptr", subr_call_shared_object_intptr);
+    DEFSUBR("stdcall-shared-object->char*", subr_call_shared_object_chars);
 #endif
     DEFSUBR("make-callback", subr_make_callback);
     DEFSUBR("flonum->float", subr_flonum_to_float);
