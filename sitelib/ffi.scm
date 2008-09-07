@@ -16,6 +16,12 @@
   (define on-freebsd (and (string-contains (architecture-feature 'operating-system) "freebsd") #t))
   (define on-posix   (not on-windows))
 
+  (define assert-bool
+    (lambda (name n i)
+      (cond ((boolean? i) (if i 1 0))
+            (else
+             (assertion-violation name (format "expected #t or #f, but got ~r, as argument ~s" i n))))))
+  
   (define assert-int
     (lambda (name n i)
       (cond ((and (integer? i) (exact? i)) i)
@@ -114,9 +120,11 @@
                (syntax-violation 'c-callback "expected list of int or void* for argument" x)))))))
 
   (define-syntax c-argument
-    (syntax-rules (int void* char* byte* double float c-callback __stdcall)
+    (syntax-rules (int bool void* char* byte* double float c-callback __stdcall)
       ((_ name n int var)
        (assert-int 'name n var))
+      ((_ name n bool var)
+       (assert-bool 'name n var))
       ((_ name n void* var)
        (assert-int 'name n var))
       ((_ name n float var)

@@ -221,7 +221,7 @@ object_slab_cache_t::delete_object(void* obj)
             m_lock.unlock();
             return;
         }
-        // partial->free
+        // partial->empty
         traits->prev->next = traits->next;
         traits->next->prev = traits->prev;
         if (traits == m_vacant) m_vacant = (traits == traits->next) ? NULL : traits->next;
