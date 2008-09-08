@@ -1511,6 +1511,8 @@ subr_get_datum(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
         }
+        wrong_type_argument_violation(vm, "get-datum", 0, "port", argv[0], argc, argv);
+        return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "get-datum", 1, 1, argc, argv);
     return scm_undef;
