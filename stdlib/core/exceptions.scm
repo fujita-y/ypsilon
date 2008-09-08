@@ -44,7 +44,7 @@
                    (lambda ()
                      (let ((var condition))
                        (cond clause ...
-                             (else (handler-k (lambda () (raise condition))))))))))))
+                             (else (handler-k (lambda () (raise-continuable condition))))))))))))
             (lambda ()
               (call-with-values
                (lambda () b1 b2 ...)
