@@ -322,7 +322,7 @@ make_custom_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj_t h
 scm_port_t     
 make_socket_port(object_heap_t* heap, scm_socket_t socket, scm_obj_t transcoder)
 {
-    VERIFY_DATUM(name);
+    VERIFY_DATUM(socket);
     VERIFY_DATUM(transcoder);
 
     scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));

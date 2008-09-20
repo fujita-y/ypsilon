@@ -439,7 +439,11 @@ device_write(scm_port_t port, uint8_t* p, int size, off64_t mark)
     }
 
     if (port->type == SCM_PORT_TYPE_SOCKET) {
+#if _MSC_VER
+        socket_send((scm_socket_t)port_socket(port), p, size, 0);
+#else
         socket_send((scm_socket_t)port_socket(port), p, size, MSG_NOSIGNAL);
+#endif
         return;
     }
     
@@ -2507,6 +2511,6 @@ port_shutdown_output(scm_port_t port)
     port->lock.verify_locked();
     if (port->opened) {
         port_flush_output(port);
-        if (port->type == SCM_PORT_TYPE_SOCKET) socket_shutdown((scm_socket_t)port_socket(port), SHUT_WR);
+        if (port->type == SCM_PORT_TYPE_SOCKET) socket_shutdown((scm_socket_t)port_socket(port), 1);
     }
 }

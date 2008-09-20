@@ -54,6 +54,12 @@ static int opt_heap_limit(int argc, char* const argv[])
     {
         assert(isnan(VALUE_NAN));
         assert(isinf(VALUE_INF));
+        {
+            WSADATA wsd;
+            if(WSAStartup(MAKEWORD(2,0),&wsd) != 0) {
+                fatal("WSAStartup failed");
+            }
+        }
 
         main_command_line_argc = argc;
         main_command_line_argv = argv;

@@ -61,6 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="ws2_32.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -137,6 +138,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="ws2_32.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -248,6 +250,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\socket.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\subr_base.cpp"
 				>
 			</File>
@@ -293,6 +299,10 @@
 			</File>
 			<File
 				RelativePath=".\src\subr_r5rs_arith.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\subr_socket.cpp"
 				>
 			</File>
 			<File
@@ -431,6 +441,10 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\socket.h"
 				>
 			</File>
 			<File

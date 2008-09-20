@@ -44,7 +44,7 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
     hints.ai_next = NULL;
     
     int retval = getaddrinfo(node, service, &hints, &list);
-    if (retval) throw_socket_error(SCM_SOCKET_OPERATION_OPEN, gai_strerror(retval));
+    if (retval) throw_socket_error(SCM_SOCKET_OPERATION_OPEN, gai_strerrorA(retval));
     int first_error = 0;
     if (flags & AI_PASSIVE) {
         for (struct addrinfo* p = list; p != NULL; p = p->ai_next) {
@@ -132,7 +132,7 @@ socket_send(scm_socket_t s, uint8_t* buf, int len, int flags)
     int rest = len;
     int written = 0;
     while (rest > 0) {
-        int n = send(s->fd, p, rest, flags);
+        int n = send(s->fd, (const char*)p, rest, flags);
         if (n < 0) {
             if (errno == EAGAIN) return written;    
             if (errno == EINTR) continue;
@@ -150,9 +150,8 @@ socket_recv(scm_socket_t s, uint8_t* buf, int len, int flags, bool* again)
 {
     s->lock.verify_locked();
     assert(s->fd != INVALID_SOCKET);
-    assert(buf->count >= len);
 loop:
-    int n = recv(s->fd, buf, len, flags);
+    int n = recv(s->fd, (char*)buf, len, flags);
     if (n < 0) {
         if (errno == EAGAIN) {
             if (again == NULL) goto loop;
@@ -177,7 +176,9 @@ loop:
     int fd = accept(s->fd, (sockaddr*)&addr, &addrlen);
     if (fd < 0) {
         if (errno == EAGAIN) return scm_false; 
+#if !_MSC_VER
         if (errno == EWOULDBLOCK) return scm_false;
+#endif
         if (errno == EINTR) goto loop;
         throw_socket_error(SCM_SOCKET_OPERATION_ACCEPT, errno);
     }

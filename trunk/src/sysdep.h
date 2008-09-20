@@ -61,6 +61,8 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #include    <xmmintrin.h>
     #include    <sys/stat.h>
     #include    <limits>
+    #include    <winsock2.h>
+    #include    <ws2tcpip.h>
 
     extern "C" void __cdecl     _dosmaperr(unsigned long);
     #define snprintf            _snprintf
