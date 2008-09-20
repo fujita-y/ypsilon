@@ -659,7 +659,11 @@ VM::boot()
   #if PROFILE_OPCODE
     memset(m_opcode_profile, 0, sizeof(m_opcode_profile));
   #endif
+}
 
+void   
+VM::standalone()
+{
 loop:
     try {
         reset();

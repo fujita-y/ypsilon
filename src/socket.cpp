@@ -44,7 +44,11 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
     hints.ai_next = NULL;
     
     int retval = getaddrinfo(node, service, &hints, &list);
+#if _MSC_VER
     if (retval) throw_socket_error(SCM_SOCKET_OPERATION_OPEN, gai_strerrorA(retval));
+#else
+    if (retval) throw_socket_error(SCM_SOCKET_OPERATION_OPEN, gai_strerror(retval));
+#endif
     int first_error = 0;
     if (flags & AI_PASSIVE) {
         for (struct addrinfo* p = list; p != NULL; p = p->ai_next) {
