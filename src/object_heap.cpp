@@ -249,58 +249,16 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size)
     m_native_transcoder->elts[1] = SCM_PORT_EOL_STYLE_NATIVE;
     m_native_transcoder->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_REPLACE;
 
-    m_architecture_feature = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(24));
-    // edit hashtable size when add new arch parameter
-    scoped_lock lock(m_architecture_feature->lock);
-#define ARCH_FIXNUM_PARAM(name, value)  put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(value))
-#define ARCH_STRING_PARAM(name, value)  put_hashtable(m_architecture_feature, make_symbol(this, #name), make_string_literal(this, value))
-    ARCH_FIXNUM_PARAM(sizeof:char,     sizeof(char));
-    ARCH_FIXNUM_PARAM(sizeof:short,    sizeof(short));
-    ARCH_FIXNUM_PARAM(sizeof:int,      sizeof(int));
-    ARCH_FIXNUM_PARAM(sizeof:long,     sizeof(long));
-    ARCH_FIXNUM_PARAM(sizeof:float,    sizeof(float));
-    ARCH_FIXNUM_PARAM(sizeof:double,   sizeof(double));
-    ARCH_FIXNUM_PARAM(sizeof:size_t,   sizeof(size_t));
-    ARCH_FIXNUM_PARAM(sizeof:intptr_t, sizeof(intptr_t));
-    ARCH_FIXNUM_PARAM(alignof:char,     ALIGNOF(char));
-    ARCH_FIXNUM_PARAM(alignof:short,    ALIGNOF(short));
-    ARCH_FIXNUM_PARAM(alignof:int,      ALIGNOF(int));
-    ARCH_FIXNUM_PARAM(alignof:long,     ALIGNOF(long));
-    ARCH_FIXNUM_PARAM(alignof:float,    ALIGNOF(float));
-    ARCH_FIXNUM_PARAM(alignof:double,   ALIGNOF(double));
-    ARCH_FIXNUM_PARAM(alignof:size_t,   ALIGNOF(size_t));
-    ARCH_FIXNUM_PARAM(alignof:intptr_t, ALIGNOF(intptr_t));
-    ARCH_FIXNUM_PARAM(alignof:int8_t,   ALIGNOF(int8_t));
-    ARCH_FIXNUM_PARAM(alignof:int16_t,  ALIGNOF(int16_t));
-    ARCH_FIXNUM_PARAM(alignof:int32_t,  ALIGNOF(int32_t));
-    ARCH_FIXNUM_PARAM(alignof:int64_t,  ALIGNOF(int64_t));
-
-    ARCH_FIXNUM_PARAM(ypsilon-revision, PROGRAM_REVISION);
-    
-  #if _MSC_VER
-    ARCH_STRING_PARAM(operating-system, "windows");
-  #else
-    {
-        struct utsname buf;
-        uname(&buf);
-        int i = 0;
-        while (buf.sysname[i]) {
-            buf.sysname[i] = tolower(buf.sysname[i]);
-            i++;
-        }
-        ARCH_STRING_PARAM(operating-system, buf.sysname);
-    }
-  #endif
-#undef ARCH_FIXNUM_PARAM
-#undef ARCH_STRING_PARAM
-
+    // trampolines
     m_trampolines = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
 
+    // subr
     init_subr_base(this);
     init_subr_base_arith(this);
     init_subr_r5rs_arith(this);
     init_subr_bvector(this);
     init_subr_port(this);
+    init_subr_socket(this);
     init_subr_unicode(this);
     init_subr_ffi(this);
     init_subr_bitwise(this);
@@ -309,10 +267,16 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size)
     init_subr_hash(this);
     init_subr_list(this);
     init_subr_others(this);
+    
+    // procedure
     intern_system_environment(make_symbol(this, "apply"), scm_proc_apply);
     intern_system_environment(make_symbol(this, "call-with-current-continuation"), scm_proc_callcc);
     intern_system_environment(make_symbol(this, "call/cc"), scm_proc_callcc);
     intern_system_environment(make_symbol(this, "apply-values"), scm_proc_apply_values);
+    
+    // architecture feature
+    init_architecture_feature();
+
     return true;
 }
 
@@ -1607,3 +1571,238 @@ object_heap_t::consistency_check()
 }
 
 #endif
+
+void
+object_heap_t::init_architecture_feature()
+{
+    m_architecture_feature = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(1024));
+    scoped_lock lock(m_architecture_feature->lock);
+    
+    #define ARCH_FIXNUM(name, value)  put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(value))
+
+    ARCH_FIXNUM(sizeof:char,     sizeof(char));
+    ARCH_FIXNUM(sizeof:short,    sizeof(short));
+    ARCH_FIXNUM(sizeof:int,      sizeof(int));
+    ARCH_FIXNUM(sizeof:long,     sizeof(long));
+    ARCH_FIXNUM(sizeof:float,    sizeof(float));
+    ARCH_FIXNUM(sizeof:double,   sizeof(double));
+    ARCH_FIXNUM(sizeof:size_t,   sizeof(size_t));
+    ARCH_FIXNUM(sizeof:intptr_t, sizeof(intptr_t));
+    ARCH_FIXNUM(alignof:char,     ALIGNOF(char));
+    ARCH_FIXNUM(alignof:short,    ALIGNOF(short));
+    ARCH_FIXNUM(alignof:int,      ALIGNOF(int));
+    ARCH_FIXNUM(alignof:long,     ALIGNOF(long));
+    ARCH_FIXNUM(alignof:float,    ALIGNOF(float));
+    ARCH_FIXNUM(alignof:double,   ALIGNOF(double));
+    ARCH_FIXNUM(alignof:size_t,   ALIGNOF(size_t));
+    ARCH_FIXNUM(alignof:intptr_t, ALIGNOF(intptr_t));
+    ARCH_FIXNUM(alignof:int8_t,   ALIGNOF(int8_t));
+    ARCH_FIXNUM(alignof:int16_t,  ALIGNOF(int16_t));
+    ARCH_FIXNUM(alignof:int32_t,  ALIGNOF(int32_t));
+    ARCH_FIXNUM(alignof:int64_t,  ALIGNOF(int64_t));
+    ARCH_FIXNUM(ypsilon-revision, PROGRAM_REVISION);
+    
+    #undef ARCH_FIXNUM
+
+    #define ARCH_STRING(name, value)  put_hashtable(m_architecture_feature, make_symbol(this, #name), make_string_literal(this, value))
+    
+    #if _MSC_VER
+        ARCH_STRING(operating-system, "windows");
+    #else
+        {
+            struct utsname buf;
+            uname(&buf);
+            int i = 0;
+            while (buf.sysname[i]) {
+                buf.sysname[i] = tolower(buf.sysname[i]);
+                i++;
+            }
+            ARCH_STRING(operating-system, buf.sysname);
+        }
+    #endif    
+    
+    #undef ARCH_STRING    
+        
+    #define ARCH_CCONST(name)         put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(name))
+    #define ARCH_CFALSE(name)         put_hashtable(m_architecture_feature, make_symbol(this, #name), scm_false)
+    
+    ////
+    #ifdef AF_UNSPEC
+        ARCH_CCONST(AF_UNSPEC);
+    #else
+        ARCH_CFALSE(AF_UNSPEC);
+    #endif
+    #ifdef AF_INET
+        ARCH_CCONST(AF_INET);
+    #else
+        ARCH_CFALSE(AF_INET);
+    #endif
+    #ifdef AF_INET6
+        ARCH_CCONST(AF_INET6);
+    #else
+        ARCH_CFALSE(AF_INET6);
+    #endif
+    #ifdef SOCK_STREAM
+        ARCH_CCONST(SOCK_STREAM);
+    #else
+        ARCH_CFALSE(SOCK_STREAM);
+    #endif
+    #ifdef SOCK_DGRAM
+        ARCH_CCONST(SOCK_DGRAM);
+    #else
+        ARCH_CFALSE(SOCK_DGRAM);
+    #endif
+    #ifdef SOCK_RAW
+        ARCH_CCONST(SOCK_RAW);
+    #else
+        ARCH_CFALSE(SOCK_RAW);
+    #endif
+    #ifdef SOCK_RDM
+        ARCH_CCONST(SOCK_RDM);
+    #else
+        ARCH_CFALSE(SOCK_RDM);
+    #endif
+    #ifdef SOCK_SEQPACKET
+        ARCH_CCONST(SOCK_SEQPACKET);
+    #else
+        ARCH_CFALSE(SOCK_SEQPACKET);
+    #endif
+    #ifdef AI_PASSIVE
+        ARCH_CCONST(AI_PASSIVE);
+    #else
+        ARCH_CFALSE(AI_PASSIVE);
+    #endif
+    #ifdef AI_CANONNAME
+        ARCH_CCONST(AI_CANONNAME);
+    #else
+        ARCH_CFALSE(AI_CANONNAME);
+    #endif
+    #ifdef AI_NUMERICHOST
+        ARCH_CCONST(AI_NUMERICHOST);
+    #else
+        ARCH_CFALSE(AI_NUMERICHOST);
+    #endif
+    #ifdef AI_V4MAPPED
+        ARCH_CCONST(AI_V4MAPPED);
+    #else
+        ARCH_CFALSE(AI_V4MAPPED);
+    #endif
+    #ifdef AI_ALL
+        ARCH_CCONST(AI_ALL);
+    #else
+        ARCH_CFALSE(AI_ALL);
+    #endif
+    #ifdef AI_ADDRCONFIG
+        ARCH_CCONST(AI_ADDRCONFIG);
+    #else
+        ARCH_CFALSE(AI_ADDRCONFIG);
+    #endif
+    #ifdef SHUT_RD
+        ARCH_CCONST(SHUT_RD);
+    #else
+        ARCH_CFALSE(SHUT_RD);
+    #endif
+    #ifdef SHUT_WR
+        ARCH_CCONST(SHUT_WR);
+    #else
+        ARCH_CFALSE(SHUT_WR);
+    #endif
+    #ifdef SHUT_RDWR
+        ARCH_CCONST(SHUT_RDWR);
+    #else
+        ARCH_CFALSE(SHUT_RDWR);
+    #endif
+    #ifdef MSG_OOB
+        ARCH_CCONST(MSG_OOB);
+    #else
+        ARCH_CFALSE(MSG_OOB);
+    #endif
+    #ifdef MSG_PEEK
+        ARCH_CCONST(MSG_PEEK);
+    #else
+        ARCH_CFALSE(MSG_PEEK);
+    #endif
+    #ifdef MSG_DONTROUTE
+        ARCH_CCONST(MSG_DONTROUTE);
+    #else
+        ARCH_CFALSE(MSG_DONTROUTE);
+    #endif
+    #ifdef MSG_CTRUNC
+        ARCH_CCONST(MSG_CTRUNC);
+    #else
+        ARCH_CFALSE(MSG_CTRUNC);
+    #endif
+    #ifdef MSG_PROBE
+        ARCH_CCONST(MSG_PROBE);
+    #else
+        ARCH_CFALSE(MSG_PROBE);
+    #endif
+    #ifdef MSG_TRUNC
+        ARCH_CCONST(MSG_TRUNC);
+    #else
+        ARCH_CFALSE(MSG_TRUNC);
+    #endif
+    #ifdef MSG_DONTWAIT
+        ARCH_CCONST(MSG_DONTWAIT);
+    #else
+        ARCH_CFALSE(MSG_DONTWAIT);
+    #endif
+    #ifdef MSG_EOR
+        ARCH_CCONST(MSG_EOR);
+    #else
+        ARCH_CFALSE(MSG_EOR);
+    #endif
+    #ifdef MSG_WAITALL
+        ARCH_CCONST(MSG_WAITALL);
+    #else
+        ARCH_CFALSE(MSG_WAITALL);
+    #endif
+    #ifdef MSG_FIN
+        ARCH_CCONST(MSG_FIN);
+    #else
+        ARCH_CFALSE(MSG_FIN);
+    #endif
+    #ifdef MSG_SYN
+        ARCH_CCONST(MSG_SYN);
+    #else
+        ARCH_CFALSE(MSG_SYN);
+    #endif
+    #ifdef MSG_CONFIRM
+        ARCH_CCONST(MSG_CONFIRM);
+    #else
+        ARCH_CFALSE(MSG_CONFIRM);
+    #endif
+    #ifdef MSG_RST
+        ARCH_CCONST(MSG_RST);
+    #else
+        ARCH_CFALSE(MSG_RST);
+    #endif
+    #ifdef MSG_ERRQUEUE
+        ARCH_CCONST(MSG_ERRQUEUE);
+    #else
+        ARCH_CFALSE(MSG_ERRQUEUE);
+    #endif
+    #ifdef MSG_NOSIGNAL
+        ARCH_CCONST(MSG_NOSIGNAL);
+    #else
+        ARCH_CFALSE(MSG_NOSIGNAL);
+    #endif
+    #ifdef MSG_MORE
+        ARCH_CCONST(MSG_MORE);
+    #else
+        ARCH_CFALSE(MSG_MORE);
+    #endif        
+    #ifdef MSG_EOF
+        ARCH_CCONST(MSG_EOF);
+    #else
+        ARCH_CFALSE(MSG_EOF);
+    #endif
+    ////
+    
+    #undef ARCH_CCONST
+    #undef ARCH_CFALSE
+
+    m_architecture_feature = copy_hashtable(this, m_architecture_feature, false);
+        
+}
+

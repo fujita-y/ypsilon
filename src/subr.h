@@ -16,6 +16,7 @@ void init_subr_r5rs_arith(object_heap_t* heap);
 void init_subr_base(object_heap_t* heap);
 void init_subr_bvector(object_heap_t* heap);
 void init_subr_port(object_heap_t* heap);
+void init_subr_socket(object_heap_t* heap);
 void init_subr_bitwise(object_heap_t* heap);
 void init_subr_fixnum(object_heap_t* heap);
 void init_subr_flonum(object_heap_t* heap);

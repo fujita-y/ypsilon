@@ -51,8 +51,12 @@ scm_port_t          make_std_port(object_heap_t* heap, fd_t fd, scm_obj_t name, 
 scm_port_t          make_file_port(object_heap_t* heap, scm_obj_t name, int direction, int file_options, int buffer_mode, scm_obj_t transcoder);
 scm_port_t          make_bytevector_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj_t bytes, scm_obj_t transcoder);
 scm_port_t          make_custom_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj_t handlers, scm_obj_t transcoder);
+scm_port_t          make_socket_port(object_heap_t* heap, scm_socket_t socket, scm_obj_t transcoder);
 scm_port_t          make_transcoded_port(object_heap_t* heap, scm_obj_t name, scm_port_t port, scm_bvector_t transcoder);
 scm_port_t          make_temp_file_port(object_heap_t* heap, scm_obj_t name, int buffer_mode, scm_obj_t transcoder);
+scm_socket_t        make_socket(object_heap_t* heap);
+scm_socket_t        make_socket(object_heap_t* heap, const char* node, const char* service, int family, int type, int protocol, int flags);
+
 
 void    rehash_hashtable(object_heap_t* heap, scm_hashtable_t ht, int n);
 void    rehash_weakhashtable(object_heap_t* heap, scm_weakhashtable_t ht, int n);

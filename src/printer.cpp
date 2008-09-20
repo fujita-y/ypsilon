@@ -9,6 +9,7 @@
 #include "hash.h"
 #include "heap.h"
 #include "port.h"
+#include "socket.h"
 #include "utf8.h"
 #include "ucs4.h"
 #include "arith.h"
@@ -1006,6 +1007,29 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
             scm_weakhashtable_t ht = (scm_weakhashtable_t)obj;
             weakhashtable_rec_t* ht_datum = ht->datum;
             format("#<weak-hashtable eq? %d/%d/%d>",ht_datum->live, ht_datum->used, ht_datum->capacity);
+            return;
+        }
+        case TC_SOCKET: {
+            scm_socket_t socket = (scm_socket_t)obj;
+            scoped_lock lock(socket->lock);
+            switch (socket->mode) {
+                case SCM_SOCKET_MODE_CLIENT: port_puts(m_port, "#<client-socket"); break;
+                case SCM_SOCKET_MODE_SERVER: port_puts(m_port, "#<server-socket"); break;
+                default: port_puts(m_port, "#<socket"); break;
+            }
+            if (socket->fd == INVALID_SOCKET) {
+                port_puts(m_port, " closed>");
+                return;
+            }
+            struct protoent* ent = getprotobynumber(socket->protocol);
+            if (ent) format(" %s", ent->p_name);    
+            switch (socket->socktype) {
+                case SOCK_STREAM: port_puts(m_port, " stream"); break;
+                case SOCK_DGRAM: port_puts(m_port, " dgram"); break;
+                case SOCK_RAW: port_puts(m_port, " raw"); break;
+                default: format(" type(%d)", socket->socktype); break;
+            } 
+            format(" ~a>", socket_name_string(m_vm->m_heap, socket));
             return;
         }
         case TC_PORT: {

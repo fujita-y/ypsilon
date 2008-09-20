@@ -2110,7 +2110,7 @@ subr_make_transcoded_port(VM* vm, int argc, scm_obj_t argv[])
             if (BVECTORP(argv[1])) {
                 scm_bvector_t transcoder = (scm_bvector_t)argv[1];
                 try {
-                    scm_port_t textual = make_transcoded_port(vm->m_heap, make_symbol(vm->m_heap, "transcoded"), port, transcoder);
+                    scm_port_t textual = make_transcoded_port(vm->m_heap, make_list(vm->m_heap, 2, make_symbol(vm->m_heap, "transcoded"), port->name), port, transcoder);
                     return textual;
                 } catch (io_exception_t& e) {
                     raise_io_error(vm, "make-transcoded-port", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -2172,6 +2172,33 @@ subr_set_current_error_port(VM* vm, int argc, scm_obj_t argv[])
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "set-current-error-port!", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// shutdown-output-port
+scm_obj_t
+subr_shutdown_output_port(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
+            scoped_lock lock(port->lock);
+            if (port->type == SCM_PORT_TYPE_SOCKET) {
+                try {
+                    port_shutdown_output(port);
+                    return scm_unspecified;
+                } catch (io_exception_t& e) {
+                    raise_io_error(vm, "shutdown-output-port", e.m_operation, e.m_message, e.m_err, port, scm_false);
+                    return scm_undef;
+                }
+            }
+            wrong_type_argument_violation(vm, "shutdown-output-port", 0, "socket port", argv[0], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "shutdown-output-port", 0, "port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "shutdown-output-port", 1, 1, argc, argv);
     return scm_undef;
 }
 
@@ -2261,4 +2288,6 @@ void init_subr_port(object_heap_t* heap)
     DEFSUBR("set-current-input-port!", subr_set_current_input_port);
     DEFSUBR("set-current-output-port!", subr_set_current_output_port);
     DEFSUBR("set-current-error-port!", subr_set_current_error_port);
+
+    DEFSUBR("shutdown-output-port", subr_shutdown_output_port);
 }

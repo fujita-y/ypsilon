@@ -213,6 +213,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #define MEM_STORE_FENCE     __asm__ __volatile__ ("sfence" ::: "memory")
 
     #define INVALID_FD          (-1)
+    #define INVALID_SOCKET      (-1)
     #define PORT_STDIN_FD       0
     #define PORT_STDOUT_FD      1
     #define PORT_STDERR_FD      2

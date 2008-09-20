@@ -56,8 +56,9 @@
     .... .... .... .... .... .*** *tc7 1010 : scm_hdr_rational
     nnnn nnnn nnnn nnnn nnnn .*** *tc7 1010 : scm_hdr_heapenv
     nnnn nnnn nnnn nnnn nnnn .*** *tc7 1010 : scm_hdr_heapcont
-    .... .... .... .... .... .*** *tc7 1010 : scm_hdr_environment
     .... .... .... .... .... .*** *tc7 1010 : scm_hdr_weakmapping
+    .... .... .... .... .... .*** *tc7 1010 : scm_hdr_environment
+    .... .... .... .... .... .*** *tc7 1010 : scm_hdr_socket
 
 */
 
@@ -111,7 +112,7 @@ const scm_obj_t scm_proc_apply_values   = (scm_obj_t)0xb2;
 #define TC_HEAPCONT         0x4f
 #define TC_WEAKMAPPING      0x5f
 #define TC_ENVIRONMENT      0x6f
-//      TC_RESERVED         0x7f
+#define TC_SOCKET           0x7f
 #define TC_MASKBITS         0x7f
 
 const scm_hdr_t scm_hdr_symbol          = 0x00a | (TC_SYMBOL << 4);
@@ -135,6 +136,7 @@ const scm_hdr_t scm_hdr_tuple           = 0x00a | (TC_TUPLE << 4);
 const scm_hdr_t scm_hdr_weakmapping     = 0x00a | (TC_WEAKMAPPING << 4);
 const scm_hdr_t scm_hdr_weakhashtable   = 0x00a | (TC_WEAKHASHTABLE << 4);
 const scm_hdr_t scm_hdr_bvector         = 0x00a | (TC_BVECTOR << 4);
+const scm_hdr_t scm_hdr_socket          = 0x00a | (TC_SOCKET << 4);
 
 #define TC4_HDR_MASKBITS    0xff
 #define TC7_HDR_MASKBITS    0x7ff
@@ -159,6 +161,7 @@ struct scm_tuple_rec_t;
 struct scm_weakmapping_rec_t;
 struct scm_weakhashtable_rec_t;
 struct scm_bvector_rec_t;
+struct scm_socket_rec_t;
 
 typedef scm_pair_rec_t*             scm_pair_t;
 typedef scm_symbol_rec_t*           scm_symbol_t;
@@ -180,6 +183,7 @@ typedef scm_tuple_rec_t*            scm_tuple_t;
 typedef scm_weakmapping_rec_t*      scm_weakmapping_t;
 typedef scm_weakhashtable_rec_t*    scm_weakhashtable_t;
 typedef scm_bvector_rec_t*          scm_bvector_t;
+typedef scm_socket_rec_t*           scm_socket_t;
 
 struct vm_cont_rec_t;
 struct vm_env_rec_t;
@@ -369,11 +373,23 @@ OBJECT_ALIGNED(scm_gloc_rec_t) {
   #endif
 } END;
 
+OBJECT_ALIGNED(scm_socket_rec_t) {
+    scm_hdr_t   hdr;
+    mutex_t     lock;
+    int         mode;
+    int         fd;
+    int         family;
+    int         socktype;
+    int         protocol;
+    int         addrlen;
+    struct sockaddr_storage addr;
+} END;
+
 #undef OBJECT_ALIGNED
 #undef END
 
 struct vm_cont_rec_t {          // record size is variable
-//  scm_obj_t   args[argc];
+  //scm_obj_t   args[argc];
     scm_obj_t   trace;
     scm_obj_t*  fp;
     scm_obj_t   pc;
@@ -382,7 +398,7 @@ struct vm_cont_rec_t {          // record size is variable
 };
 
 struct vm_env_rec_t {           // record size is variable
-//  scm_obj_t   vars[count];
+  //scm_obj_t   vars[count];
     int         count;
     void*       up;             // 'm_env' and 'up' point here
 };
@@ -431,6 +447,7 @@ struct vm_env_rec_t {           // record size is variable
 #define HEAPCONTP(obj)                      (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_heapcont)
 #define WEAKMAPPINGP(obj)                   (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_weakmapping)
 #define ENVIRONMENTP(obj)                   (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_environment)
+#define SOCKETP(obj)                        (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_socket)
 
 #define BOTHFLONUMP(x, y)                   (CELLP((intptr_t)(x) | (intptr_t)(y)) && ((((scm_flonum_t)(x))->hdr == scm_hdr_flonum) & (((scm_flonum_t)(y))->hdr == scm_hdr_flonum)))
 
