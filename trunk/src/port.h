@@ -13,6 +13,7 @@
 #define SCM_PORT_TYPE_NAMED_FILE                1
 #define SCM_PORT_TYPE_BYTEVECTOR                2
 #define SCM_PORT_TYPE_CUSTOM                    3
+#define SCM_PORT_TYPE_SOCKET                    4
 
 #define SCM_PORT_SUBTYPE_NONE                   0
 #define SCM_PORT_SUBTYPE_CHAR_SPECIAL           1
@@ -74,17 +75,6 @@
 #define SCM_PORT_CODEC_NATIVE                   SCM_PORT_CODEC_UTF8
 #define SCM_PORT_EOL_STYLE_NATIVE               SCM_PORT_EOL_STYLE_LF
 
-#define SCM_PORT_OPERATION_OPEN                 1
-#define SCM_PORT_OPERATION_READ                 2
-#define SCM_PORT_OPERATION_WRITE                3
-#define SCM_PORT_OPERATION_CLOSE                4
-#define SCM_PORT_OPERATION_SEEK                 5
-#define SCM_PORT_OPERATION_STAT                 6
-#define SCM_PORT_OPERATION_SELECT               7
-#define SCM_PORT_OPERATION_ENCODE               8
-#define SCM_PORT_OPERATION_DECODE               9
-
-
 enum {
     SCM_PORT_HANDLER_TEXTUAL = 0,
     SCM_PORT_HANDLER_READ,
@@ -97,7 +87,9 @@ enum {
 void port_open_std(scm_port_t port, fd_t fd, scm_obj_t name, int direction, int file_options, int buffer_mode, scm_obj_t transcoder);
 void port_open_file(scm_port_t port, scm_obj_t name, int direction, int file_options, int buffer_mode, scm_obj_t transcoder);
 void port_open_bytevector(scm_port_t port, scm_obj_t name, int direction, scm_obj_t bytes, scm_obj_t transcoder);
+void port_open_socket(scm_port_t port, fd_t fd, scm_obj_t socket, int buffer_mode, scm_obj_t transcoder);
 void port_make_custom_port(scm_port_t port, scm_obj_t name, int direction, scm_obj_t handlers, scm_obj_t transcoder);
+void port_make_socket_port(scm_port_t port, scm_socket_t socket, scm_obj_t transcoder);
 void port_make_transcoded_port(scm_obj_t name, scm_port_t binary, scm_port_t textual, scm_bvector_t transcoder);
 void port_open_temp_file(scm_port_t port, scm_obj_t name, int buffer_mode, scm_obj_t transcoder);
 void port_flush_output(scm_port_t port);
@@ -135,6 +127,9 @@ scm_obj_t port_get_u8(scm_port_t port);
 int port_output_buffer_mode(scm_port_t port);
 void port_put_char(scm_port_t port, scm_char_t c);
 void port_put_string(scm_port_t port, scm_string_t string);
+
+scm_obj_t port_socket(scm_port_t port);
+void port_shutdown_output(scm_port_t port);
 
 #endif
 

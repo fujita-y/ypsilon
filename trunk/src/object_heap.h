@@ -189,6 +189,8 @@ public:
         assert(SYMBOLP(m_inherents[code]));
         return (scm_symbol_t)m_inherents[code];
     }
+    
+    void                init_architecture_feature();
 
 public:
     relocate_info_t*    relocate(bool pack);

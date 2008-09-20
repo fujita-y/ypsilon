@@ -583,6 +583,7 @@
     make-record-type-descriptor
     make-rectangular
     make-serious-condition
+    make-socket
     make-string
     make-string-hashtable
     make-string-input-port
@@ -733,9 +734,18 @@
     set-current-output-port!
     set-port-position!
     set-top-level-value!
+    shutdown-output-port
     simple-conditions
     sin
     sint-list->bytevector
+    socket->port
+    socket-accept
+    socket-close
+    socket-port
+    socket-recv
+    socket-send
+    socket-shutdown
+    socket?
     sqrt
     standard-error-port
     standard-input-port

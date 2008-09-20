@@ -8,8 +8,9 @@
 #include "hash.h"
 #include "heap.h"
 #include "list.h"
-#include "port.h"
 #include "arith.h"
+#include "port.h"
+#include "socket.h"
 
 template <typename T> void swap(T& lhs, T& rhs) { T tmp = lhs; lhs = rhs; rhs = tmp; }
 
@@ -318,6 +319,20 @@ make_custom_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj_t h
     return obj;
 }
 
+scm_port_t     
+make_socket_port(object_heap_t* heap, scm_socket_t socket, scm_obj_t transcoder)
+{
+    VERIFY_DATUM(name);
+    VERIFY_DATUM(transcoder);
+
+    scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
+    memset(obj, 0, sizeof(scm_port_rec_t));
+    obj->hdr = scm_hdr_port;
+    obj->lock.init(true);
+    scoped_lock lock(obj->lock);
+    port_make_socket_port(obj, socket, transcoder);
+    return obj;
+}
 
 scm_port_t
 make_transcoded_port(object_heap_t* heap, scm_obj_t name, scm_port_t port, scm_bvector_t transcoder)
@@ -635,6 +650,30 @@ make_weakhashtable(object_heap_t* heap, int n)
     return obj;
 }
 
+scm_socket_t
+make_socket(object_heap_t* heap, const char* node, const char* service, int family, int type, int protocol, int flags)
+{
+    scm_socket_t obj = (scm_socket_t)heap->allocate_collectible(sizeof(scm_socket_rec_t));
+    memset(obj, 0 , sizeof(scm_socket_rec_t));
+    obj->hdr = scm_hdr_socket;
+    obj->fd = INVALID_SOCKET;
+    obj->lock.init(true);
+    scoped_lock lock(obj->lock);
+    socket_open(obj, node, service, family, type, protocol, flags);
+    return obj;
+}
+
+scm_socket_t
+make_socket(object_heap_t* heap)
+{
+    scm_socket_t obj = (scm_socket_t)heap->allocate_collectible(sizeof(scm_socket_rec_t));
+    memset(obj, 0 , sizeof(scm_socket_rec_t));
+    obj->hdr = scm_hdr_socket;
+    obj->fd = INVALID_SOCKET;
+    obj->lock.init(true);
+    return obj;
+}
+
 scm_obj_t
 make_list(object_heap_t* heap, int len, ...)
 {
@@ -896,6 +935,15 @@ finalize(object_heap_t* heap, void* obj)
                 // todo: finalizer for custom port
             }
             port->lock.destroy();
+            break;
+        }
+        case TC_SOCKET: {
+            scm_socket_t socket = (scm_socket_t)obj;
+            {
+                scoped_lock lock(socket->lock);
+                socket_close(socket);
+            }
+            socket->lock.destroy();
             break;
         }
     }
