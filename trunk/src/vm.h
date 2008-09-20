@@ -40,8 +40,9 @@ public:
 #endif
 
     bool            init(object_heap_t* heap);
-    void            reset();
     void            boot();
+    void            standalone();
+    void            reset();
     void            run(bool init_dispatch_table);
 
     void            scheme_warning(const char* fmt, ...);

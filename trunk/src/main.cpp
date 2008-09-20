@@ -73,6 +73,7 @@ static int opt_heap_limit(int argc, char* const argv[])
         rootVM.init(heap);
         s_current_vm = &rootVM;
         rootVM.boot();
+        rootVM.standalone();
         
         return 0;
     }
@@ -190,7 +191,7 @@ static int opt_heap_limit(int argc, char* const argv[])
         rootVM.init(heap);
         s_current_vm = &rootVM;
         rootVM.boot();
-        
+        rootVM.standalone();
         return 0;
     }
 
