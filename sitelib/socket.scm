@@ -111,7 +111,6 @@
       (call-with-values
         (lambda () (proc socket))
         (lambda args
-          (socket-shutdown socket SHUT_RDWR) ;; todo: check if this needed?
           (socket-close socket)
           (apply values args)))))
 
