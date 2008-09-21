@@ -98,25 +98,27 @@
 
   (define make-client-socket
     (lambda (node service . options)
-      (let-optionals options ((ai-family AF_UNSPEC) (ai-socktype 0) (ai-flags (+ AI_V4MAPPED AI_ADDRCONFIG)))
-        (make-socket node service ai-family ai-socktype ai-flags 0))))
+      (let-optionals options ((ai-family AF_INET) (ai-socktype SOCK_STREAM) (ai-flags (+ AI_V4MAPPED AI_ADDRCONFIG)) (protocol 0))
+        (make-socket node service ai-family ai-socktype ai-flags protocol))))
 
   (define make-server-socket
     (lambda (service . options)
-      (let-optionals options ((ai-family AF_INET))
-        (make-socket #f service ai-family SOCK_STREAM AI_PASSIVE 0))))
+      (let-optionals options ((ai-family AF_INET) (protocol 0))
+        (make-socket #f service ai-family SOCK_STREAM AI_PASSIVE protocol))))
 
   (define call-with-socket
     (lambda (socket proc)
       (call-with-values
         (lambda () (proc socket))
         (lambda args
+          (socket-shutdown socket SHUT_RDWR) ;; todo: check if this needed?
           (socket-close socket)
           (apply values args)))))
 
   ) ;[end]
 
 #|
+
 ;; server
   (import (core) (socket))
   (call-with-socket (socket-accept (make-server-socket "50000"))
@@ -134,4 +136,31 @@
           (format port "(append '(1 2 3) '(4 5 6))")
           (shutdown-output-port port)
           (read port)))))
+
+;; repl-server
+(import (core) (socket))
+(let ((server (make-server-socket "50000")))
+  (let loop ()
+    (call-with-socket (socket-accept server)
+      (lambda (socket)
+        (format #t "connect: ~s~%" socket)
+        (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
+          (lambda (port)
+            (format port "~s" (eval (read (open-string-input-port (get-string-all port))) (interaction-environment)))))))
+    (loop)))
+
+;; repl-client
+(import (core) (socket))
+(let loop ()
+  (format #t "REPL> ~!")
+  (let ((expr (read)))
+    (call-with-socket (make-client-socket "localhost" "50000")
+      (lambda (socket)
+        (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
+          (lambda (port)
+            (format port "~s" expr)
+            (shutdown-output-port port)
+            (format #t "=> ~s~%~!" (read port)))))))
+  (loop))
+
 |#

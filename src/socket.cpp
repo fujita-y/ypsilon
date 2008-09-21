@@ -180,7 +180,7 @@ loop:
     int fd = accept(s->fd, (sockaddr*)&addr, &addrlen);
     if (fd < 0) {
         if (errno == EAGAIN) return scm_false; 
-#if !_MSC_VER
+#ifdef EWOULDBLOCK
         if (errno == EWOULDBLOCK) return scm_false;
 #endif
         if (errno == EINTR) goto loop;
