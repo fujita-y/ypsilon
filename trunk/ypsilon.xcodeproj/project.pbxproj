@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		8DD76F6A0486A84900D96B5E /* ypsilon.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6859E8B029090EE04C91782 /* ypsilon.1 */; };
 		A568EC510DC8D97200080833 /* ffi_stub_darwin.s in Sources */ = {isa = PBXBuildFile; fileRef = A568EC500DC8D97200080833 /* ffi_stub_darwin.s */; };
+		A575BA7D0E866FED00E7B731 /* subr_socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A575BA7C0E866FED00E7B731 /* subr_socket.cpp */; };
+		A575BA7F0E866FF900E7B731 /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A575BA7E0E866FF900E7B731 /* socket.cpp */; };
 		A57E6E900D55A0D000FC25B1 /* object_heap_compact.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A57E6E8F0D55A0D000FC25B1 /* object_heap_compact.cpp */; };
 		A58676EB0DB5775A005D9B7E /* fasl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A58676EA0DB5775A005D9B7E /* fasl.cpp */; };
 		A598EC850D93A22A00D3B35C /* bit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A598EC840D93A22A00D3B35C /* bit.cpp */; };
@@ -68,6 +70,9 @@
 		A5174CD60DA3CD2000DB5934 /* file.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = file.h; path = src/file.h; sourceTree = "<group>"; };
 		A56726FB0D952D9900C51CDE /* sysdep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sysdep.h; path = src/sysdep.h; sourceTree = "<group>"; };
 		A568EC500DC8D97200080833 /* ffi_stub_darwin.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = ffi_stub_darwin.s; path = src/ffi_stub_darwin.s; sourceTree = "<group>"; };
+		A575BA7B0E866FD700E7B731 /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = socket.h; path = src/socket.h; sourceTree = "<group>"; };
+		A575BA7C0E866FED00E7B731 /* subr_socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = subr_socket.cpp; path = src/subr_socket.cpp; sourceTree = "<group>"; };
+		A575BA7E0E866FF900E7B731 /* socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = socket.cpp; path = src/socket.cpp; sourceTree = "<group>"; };
 		A57BDF1E0DC5BEB4005A526B /* ffi_stub_linux.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = ffi_stub_linux.s; path = src/ffi_stub_linux.s; sourceTree = "<group>"; };
 		A57E6E8F0D55A0D000FC25B1 /* object_heap_compact.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = object_heap_compact.cpp; path = src/object_heap_compact.cpp; sourceTree = "<group>"; };
 		A57EDB520DA90AA900E1F649 /* spinlock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = spinlock.h; path = src/spinlock.h; sourceTree = "<group>"; };
@@ -267,6 +272,7 @@
 				A59D397F0D35F81A00C7B4F9 /* subr_others.cpp */,
 				A59D397E0D35F81A00C7B4F9 /* subr_port.cpp */,
 				A59D397D0D35F81A00C7B4F9 /* subr_r5rs_arith.cpp */,
+				A575BA7C0E866FED00E7B731 /* subr_socket.cpp */,
 				A59D397B0D35F81A00C7B4F9 /* subr_unicode.cpp */,
 			);
 			name = subr;
@@ -302,6 +308,7 @@
 				A59D398B0D35F81A00C7B4F9 /* port.cpp */,
 				A59D398A0D35F81A00C7B4F9 /* printer.cpp */,
 				A59D39890D35F81A00C7B4F9 /* reader.cpp */,
+				A575BA7E0E866FF900E7B731 /* socket.cpp */,
 				A59D397A0D35F81A00C7B4F9 /* ucs4.cpp */,
 				A59D39790D35F81A00C7B4F9 /* utf8.cpp */,
 				A59D39780D35F81A00C7B4F9 /* violation.cpp */,
@@ -331,6 +338,7 @@
 				A59D39640D35F80A00C7B4F9 /* printer.h */,
 				A59D39630D35F80A00C7B4F9 /* queue.h */,
 				A59D39620D35F80A00C7B4F9 /* reader.h */,
+				A575BA7B0E866FD700E7B731 /* socket.h */,
 				A59D39600D35F80A00C7B4F9 /* subr.h */,
 				A59D395F0D35F80A00C7B4F9 /* ucs4.h */,
 				A59D395E0D35F80A00C7B4F9 /* utf8.h */,
@@ -606,6 +614,8 @@
 				A58676EB0DB5775A005D9B7E /* fasl.cpp in Sources */,
 				A5B6A7FA0DC4A20300C4027E /* ffi.cpp in Sources */,
 				A568EC510DC8D97200080833 /* ffi_stub_darwin.s in Sources */,
+				A575BA7D0E866FED00E7B731 /* subr_socket.cpp in Sources */,
+				A575BA7F0E866FF900E7B731 /* socket.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
