@@ -499,6 +499,8 @@
                         socket-send socket-recv socket-accept
                         shutdown-output-port
                         
+                        default-exception-handler
+                        
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))

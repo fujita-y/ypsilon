@@ -422,22 +422,15 @@ subr_port_device_subtype(VM* vm, int argc, scm_obj_t argv[])
         if (PORTP(argv[0])) {
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
-            switch (port->type) {
-            case SCM_PORT_TYPE_NAMED_FILE:
-                switch (port->subtype) {
-                case SCM_PORT_SUBTYPE_NONE:
-                    return make_symbol(vm->m_heap, "none");
-                case SCM_PORT_SUBTYPE_CHAR_SPECIAL:
-                    return make_symbol(vm->m_heap, "char");
-                case SCM_PORT_SUBTYPE_FIFO:
-                    return make_symbol(vm->m_heap, "fifo");
-                default:
-                    fatal("%s:%u unknown port subtype", __FILE__, __LINE__);
-                }
-            case SCM_PORT_TYPE_BYTEVECTOR:
+            switch (port->subtype) {
+            case SCM_PORT_SUBTYPE_NONE:
                 return make_symbol(vm->m_heap, "none");
+            case SCM_PORT_SUBTYPE_CHAR_SPECIAL:
+                return make_symbol(vm->m_heap, "char");
+            case SCM_PORT_SUBTYPE_FIFO:
+                return make_symbol(vm->m_heap, "fifo");
             default:
-                fatal("%s:%u unknown port type", __FILE__, __LINE__);
+                fatal("%s:%u unknown port subtype", __FILE__, __LINE__);
             }
         }
         wrong_type_argument_violation(vm, "port-device-subtype", 0, "port", argv[0], argc, argv);

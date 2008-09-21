@@ -269,6 +269,7 @@
     current-variable-environment
     datum->syntax
     decode-flonum
+    default-exception-handler
     define
     define-condition-type
     define-enumeration
