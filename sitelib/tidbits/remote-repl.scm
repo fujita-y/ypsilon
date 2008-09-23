@@ -5,137 +5,89 @@
 
 (library (tidbits remote-repl)
 
-  (export blocking-repl-server
-          blocking-repl-client)
+  (export make-remote-repl
+          connect-remote-repl)
 
   (import (core) (socket))
 
-  (define blocking-repl-server
+  (define make-remote-repl
     (lambda (service)
-      (define console-in)
-      (define console-out)
-      (define console-err)
-      (define save-console-port
-        (lambda ()
-          (set! console-in (current-input-port))
-          (set! console-out (current-output-port))
-          (set! console-err (current-error-port))))
-      (define restore-console-port
-        (lambda ()
-          (set-current-input-port! console-in)
-          (set-current-output-port! console-out)
-          (set-current-error-port! console-err)))
-      (define set-remote-port!
-        (lambda (port)
-          (set-current-input-port! port)
-          (set-current-output-port! port)
-          (set-current-error-port! port)))
       (let ((server (make-server-socket service)))
-        (format #t "~%blocking-repl-server on: ~s~%send (exit) to terminate server.~%~%" server)
-        (save-console-port)
-        (let loop ()
-          (call/cc
-           (lambda (continue)
-             (restore-console-port)
-             (call-with-socket (socket-accept server)
-               (lambda (socket)
-                 (define resume
-                   (lambda ()
-                     (socket-shutdown socket SHUT_RDWR)
-                     (socket-close socket)
-                     (continue)))
-                 (define process
-                   (lambda ()
-                     (with-exception-handler
-                      (lambda (c)
-                        (format #t "~%exception in server ~s~%" server)
-                        (default-exception-handler c resume))
-                      (lambda ()
-                        (format #t "connect: ~s~%" socket)
-                        (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
+        (format #t "~%remote-repl: session on ~a (~s)~%~%" (gethostname) server)
+        (lambda ()
+          (and (nonblock-byte-ready? (socket-port server))
+               (letrec* ((in (current-input-port))
+                         (out (current-output-port))
+                         (err (current-error-port))
+                         (restore-current-port
+                          (lambda ()
+                            (set-current-input-port! in)
+                            (set-current-output-port! out)
+                            (set-current-error-port! err)))
+                         (set-remote-port!
                           (lambda (port)
-                            (set-remote-port! port)
-                            (pretty-print (eval (read (open-string-input-port (get-string-all port))) (interaction-environment)))))))))
-                 (process)))))
-          (loop)))))
+                            (set-current-input-port! port)
+                            (set-current-output-port! port)
+                            (set-current-error-port! port))))
+                 (call-with-socket (socket-accept server)
+                   (lambda (socket)
+                     (call/cc
+                      (lambda (continue)
+                        (with-exception-handler
+                         (lambda (c)
+                           (format #t "~%error in server: ~a (~s)~%" (gethostname) server)
+                           (default-exception-handler c continue))
+                         (lambda ()
+                           (format #t "~&remote-repl: connect ~s~%" socket)
+                           (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
+                             (lambda (port)
+                               (set-remote-port! port)
+                               (pretty-print (eval (read (open-string-input-port (get-string-all port))) (interaction-environment)))))))))))
+                 (restore-current-port)))))))
 
-  (define blocking-repl-client
+
+  (define connect-remote-repl
     (lambda (node service)
-        (format #t "~%blocking-repl-client connect to: ~s ~s~%enter ^D to prompt to terminate client.~%~%" node service)
-      (let loop ()
-        (call/cc
-         (lambda (continue)
-           (format #t "REPL> ~!")
-           (with-exception-handler
-            (lambda (c)
-              (default-exception-handler c continue))
-            (lambda ()
-              (let ((expr (read)))
-                (if (eof-object? expr)
-                    (exit)
-                    (call-with-socket (make-client-socket node service)
-                      (lambda (socket)
-                        (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
-                          (lambda (port)
-                            (format port "~s" expr)
-                            (shutdown-output-port port)
-                            (format #t "~a~%~!" (get-string-all port))))))))))))
-        (loop))))
+      (format #t "~%connect to: ~a:~a (enter ^D to exit)~%~%" node service)
+      (call/cc
+       (lambda (done)
+         (let loop ()
+           (call/cc
+            (lambda (continue)
+              (format #t "REPL> ~!")
+              (with-exception-handler
+               (lambda (c)
+                 (default-exception-handler c continue))
+               (lambda ()
+                 (let ((expr (read)))
+                   (if (eof-object? expr)
+                       (done)
+                       (call-with-socket (make-client-socket node service)
+                         (lambda (socket)
+                           (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
+                             (lambda (port)
+                               (format port "~s" expr)
+                               (shutdown-output-port port)
+                               (let ((ans (get-string-all port)))
+                                 (if (eof-object? ans)
+                                     (done)
+                                     (format #t "~a~%~!" ans)))))))))))))
+           (loop))))
+      (format #t "~&[exit]~%")
+      (unspecified)))
 
 
   ) ;[end]
-#|
-(import (tidbits remote-repl))
-(blocking-repl-server "50000")
-(import (tidbits remote-repl))
-(blocking-repl-client "localhost" "50000")
-|#
-
 
 #|
 
-;; server
-  (import (core) (socket))
-  (call-with-socket (socket-accept (make-server-socket "50000"))
-    (lambda (socket)
-      (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
-        (lambda (port)
-          (format port "~s" (eval (read (open-string-input-port (get-string-all port))) (interaction-environment)))))))
-  
-;; client
-  (import (core) (socket))
-  (call-with-socket (make-client-socket "localhost" "50000")
-    (lambda (socket)
-      (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
-        (lambda (port)
-          (format port "(append '(1 2 3) '(4 5 6))")
-          (shutdown-output-port port)
-          (read port)))))
+; server test
+(import (core) (tidbits remote-repl))
+(define pump-repl (make-remote-repl "6809")))
+(let loop () (pump-repl) (loop)))
 
-;; repl-server
-(import (core) (socket))
-(let ((server (make-server-socket "50000")))
-  (let loop ()
-    (call-with-socket (socket-accept server)
-      (lambda (socket)
-        (format #t "connect: ~s~%" socket)
-        (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
-          (lambda (port)
-            (format port "~s" (eval (read (open-string-input-port (get-string-all port))) (interaction-environment)))))))
-    (loop)))
-
-;; repl-client
-(import (core) (socket))
-(let loop ()
-  (format #t "REPL> ~!")
-  (let ((expr (read)))
-    (call-with-socket (make-client-socket "localhost" "50000")
-      (lambda (socket)
-        (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
-          (lambda (port)
-            (format port "~s" expr)
-            (shutdown-output-port port)
-            (format #t "=> ~s~%~!" (read port)))))))
-  (loop))
+; client test
+(import (tidbits remote-repl))
+(connect-remote-repl "localhost" "6809")
 
 |#

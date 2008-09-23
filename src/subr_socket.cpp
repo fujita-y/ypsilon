@@ -217,6 +217,7 @@ subr_socket_accept(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "socket-accept", 1, 1, argc, argv);
     return scm_undef;
 }
+
 // socket?
 scm_obj_t
 subr_socket_pred(VM* vm, int argc, scm_obj_t argv[])

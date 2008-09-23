@@ -75,6 +75,7 @@ static int opt_heap_limit(int argc, char* const argv[])
         rootVM.boot();
         rootVM.standalone();
         
+        WSACleanup();
         return 0;
     }
 

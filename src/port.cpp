@@ -948,7 +948,26 @@ port_nonblock_byte_ready(scm_port_t port)
     assert(port->direction & SCM_PORT_DIRECTION_IN);
     if (port->opened) {
         switch (port->type) {
-            case SCM_PORT_TYPE_NAMED_FILE: {
+
+        case SCM_PORT_TYPE_SOCKET: {
+            if (no_input_buffered(port)) {
+                scm_obj_t socket = port_socket(port);
+                assert(SOCKETP(socket));
+                int fd = ((scm_socket_t)socket)->fd;
+                struct timeval tm = { 0, 0 };
+                fd_set fds;
+                FD_ZERO(&fds);
+                FD_SET(fd, &fds);
+                int state = select(fd + 1, &fds, NULL, NULL, &tm);
+                if (state < 0) {
+                     if (errno == EINTR) return false;
+                     throw_io_error(SCM_PORT_OPERATION_SELECT, errno);
+                }
+                return (state != 0);
+            }
+        } break;
+        
+        case SCM_PORT_TYPE_NAMED_FILE: {
 
                 switch (port->subtype) {
 
@@ -1004,6 +1023,24 @@ port_nonblock_byte_ready(scm_port_t port)
     if (port->opened) {
         switch (port->type) {
 
+            case SCM_PORT_TYPE_SOCKET: {
+                if (no_input_buffered(port)) {
+                    scm_obj_t socket = port_socket(port);
+                    assert(SOCKETP(socket));
+                    int fd = ((scm_socket_t)socket)->fd;
+                    struct timeval tm = { 0, 0 };
+                    fd_set fds;
+                    FD_ZERO(&fds);
+                    FD_SET(fd, &fds);
+                    int state = select(fd + 1, &fds, NULL, NULL, &tm);
+                    if (state < 0) {
+                         if (errno == EINTR) return false;
+                         throw_io_error(SCM_PORT_OPERATION_SELECT, errno);
+                     }
+                    return (state != 0);
+                }
+            } break;
+            
             case SCM_PORT_TYPE_NAMED_FILE: {
 
                 switch (port->subtype) {
@@ -1017,10 +1054,9 @@ port_nonblock_byte_ready(scm_port_t port)
                             FD_SET(port->fd, &fds);
                             int state = select(port->fd + 1, &fds, NULL, NULL, &tm);
                             if (state < 0) {
-                                return false;
-                                if (errno == EINTR) return false;
-                                throw_io_error(SCM_PORT_OPERATION_SELECT, errno);
-                            }
+                                 if (errno == EINTR) return false;
+                                 throw_io_error(SCM_PORT_OPERATION_SELECT, errno);
+                             }
                             return (state != 0);
                         }
                     } break;

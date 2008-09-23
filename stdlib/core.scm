@@ -452,6 +452,8 @@
     get-string-n
     get-string-n!
     get-u8
+    getenv
+    gethostname
     greatest-fixnum
     guard
     hashtable->alist
