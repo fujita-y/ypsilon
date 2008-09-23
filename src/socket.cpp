@@ -45,7 +45,13 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
     
     int retval = getaddrinfo(node, service, &hints, &list);
 #if _MSC_VER
-    if (retval) throw_socket_error(SCM_SOCKET_OPERATION_OPEN, gai_strerrorA(retval));
+    if (retval) {
+        char utf8[256];
+        if (!WideCharToMultiByte(CP_UTF8, 0, gai_strerrorW(retval), -1, utf8, sizeof(utf8), NULL, NULL)) {
+            snprintf(utf8, sizeof(utf8), "socket operation failed(%d)", retval);
+        }
+        throw_socket_error(SCM_SOCKET_OPERATION_OPEN, utf8);
+    }
 #else
     if (retval) throw_socket_error(SCM_SOCKET_OPERATION_OPEN, gai_strerror(retval));
 #endif
