@@ -13,7 +13,7 @@
   (define make-remote-repl
     (lambda (service)
       (let ((server (make-server-socket service)))
-        (format #t "~%remote-repl: session on ~a (~s)~%~%" (gethostname) server)
+        (format #t "~%remote-repl: start: ~a (~s)~%~%" (gethostname) server)
         (lambda ()
           (and (nonblock-byte-ready? (socket-port server))
                (letrec* ((in (current-input-port))
@@ -35,10 +35,10 @@
                       (lambda (continue)
                         (with-exception-handler
                          (lambda (c)
-                           (format #t "~%error in server: ~a (~s)~%" (gethostname) server)
+                           (format #t "~%error in ~a (~s)~%" (gethostname) server)
                            (default-exception-handler c continue))
                          (lambda ()
-                           (format #t "~&remote-repl: connect ~s~%" socket)
+                           (format #t "~&remote-repl: connect: ~s~%" socket)
                            (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
                              (lambda (port)
                                (set-remote-port! port)
@@ -48,7 +48,7 @@
 
   (define connect-remote-repl
     (lambda (node service)
-      (format #t "~%connect to: ~a:~a (enter ^D to exit)~%~%" node service)
+      (format #t "~%connect: ~a:~a (enter ^D to exit)~%~%" node service)
       (call/cc
        (lambda (done)
          (let loop ()
