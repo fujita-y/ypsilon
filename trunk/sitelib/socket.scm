@@ -10,7 +10,7 @@
           call-with-socket
           shutdown-output-port
           socket?
-          
+
           make-socket
           socket-port
           socket-accept
@@ -18,7 +18,7 @@
           socket-recv
           socket-shutdown
           socket-close
-          
+
           AF_UNSPEC
           AF_INET
           AF_INET6
@@ -56,45 +56,45 @@
 
   (import (core))
 
-  (define-syntax define-param
-      (syntax-rules ()
-        ((_ name)
-         (define name (architecture-feature 'name)))))
+  (define-syntax define-const
+    (syntax-rules ()
+      ((_ name)
+       (define name (architecture-feature 'name)))))
 
-  (define-param AF_UNSPEC)
-  (define-param AF_INET)
-  (define-param AF_INET6)
-  (define-param SOCK_STREAM)
-  (define-param SOCK_DGRAM)
-  (define-param SOCK_RAW)
-  (define-param SOCK_RDM)
-  (define-param SOCK_SEQPACKET)
-  (define-param AI_PASSIVE)
-  (define-param AI_CANONNAME)
-  (define-param AI_NUMERICHOST)
-  (define-param AI_V4MAPPED)
-  (define-param AI_ALL)
-  (define-param AI_ADDRCONFIG)
-  (define-param SHUT_RD)
-  (define-param SHUT_WR)
-  (define-param SHUT_RDWR)
-  (define-param MSG_OOB)
-  (define-param MSG_PEEK)
-  (define-param MSG_DONTROUTE)
-  (define-param MSG_CTRUNC)
-  (define-param MSG_PROBE)
-  (define-param MSG_TRUNC)
-  (define-param MSG_DONTWAIT)
-  (define-param MSG_EOR)
-  (define-param MSG_WAITALL)
-  (define-param MSG_FIN)
-  (define-param MSG_SYN)
-  (define-param MSG_CONFIRM)
-  (define-param MSG_RST)
-  (define-param MSG_ERRQUEUE)
-  (define-param MSG_NOSIGNAL)
-  (define-param MSG_MORE)
-  (define-param MSG_EOF)
+  (define-const AF_UNSPEC)
+  (define-const AF_INET)
+  (define-const AF_INET6)
+  (define-const SOCK_STREAM)
+  (define-const SOCK_DGRAM)
+  (define-const SOCK_RAW)
+  (define-const SOCK_RDM)
+  (define-const SOCK_SEQPACKET)
+  (define-const AI_PASSIVE)
+  (define-const AI_CANONNAME)
+  (define-const AI_NUMERICHOST)
+  (define-const AI_V4MAPPED)
+  (define-const AI_ALL)
+  (define-const AI_ADDRCONFIG)
+  (define-const SHUT_RD)
+  (define-const SHUT_WR)
+  (define-const SHUT_RDWR)
+  (define-const MSG_OOB)
+  (define-const MSG_PEEK)
+  (define-const MSG_DONTROUTE)
+  (define-const MSG_CTRUNC)
+  (define-const MSG_PROBE)
+  (define-const MSG_TRUNC)
+  (define-const MSG_DONTWAIT)
+  (define-const MSG_EOR)
+  (define-const MSG_WAITALL)
+  (define-const MSG_FIN)
+  (define-const MSG_SYN)
+  (define-const MSG_CONFIRM)
+  (define-const MSG_RST)
+  (define-const MSG_ERRQUEUE)
+  (define-const MSG_NOSIGNAL)
+  (define-const MSG_MORE)
+  (define-const MSG_EOF)
 
   (define make-client-socket
     (lambda (node service . options)

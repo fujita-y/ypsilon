@@ -1701,6 +1701,35 @@ subr_lookup_process_environment(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// getenv
+scm_obj_t
+subr_getenv(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (STRINGP(argv[0])) return subr_lookup_process_environment(vm, argc, argv);
+        wrong_type_argument_violation(vm, "getenv", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "getenv", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// gethostname
+scm_obj_t
+subr_gethostname(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) {
+        char host[HOST_NAME_MAX];
+        if (gethostname(host, sizeof(host))) {
+            raise_error(vm, "gethostname", strerror(errno), errno);
+            return scm_undef;
+        }
+        return make_string_literal(vm->m_heap, host);
+    }
+    wrong_number_of_arguments_violation(vm, "gethostname", 0, 0, argc, argv);
+    return scm_undef;
+}
+
 // system
 scm_obj_t
 subr_system(VM* vm, int argc, scm_obj_t argv[])
@@ -2172,6 +2201,10 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("system",subr_system);
     DEFSUBR("process",subr_process);
     DEFSUBR("process-wait", subr_process_wait);
+
+    DEFSUBR("getenv",subr_getenv);
+    DEFSUBR("gethostname", subr_gethostname);
+
     DEFSUBR("current-library-infix", subr_current_library_infix);
     DEFSUBR("current-library-suffix", subr_current_library_suffix);
     DEFSUBR("current-primitive-prefix", subr_current_primitive_prefix);

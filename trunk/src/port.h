@@ -93,6 +93,7 @@ void port_make_socket_port(scm_port_t port, scm_socket_t socket, scm_obj_t trans
 void port_make_transcoded_port(scm_obj_t name, scm_port_t binary, scm_port_t textual, scm_bvector_t transcoder);
 void port_open_temp_file(scm_port_t port, scm_obj_t name, int buffer_mode, scm_obj_t transcoder);
 void port_flush_output(scm_port_t port);
+void port_shutdown_output(scm_port_t port);
 void port_close(scm_port_t port);
 bool port_nonblock_byte_ready(scm_port_t port);
 bool port_eof(scm_port_t port);
@@ -127,9 +128,7 @@ scm_obj_t port_get_u8(scm_port_t port);
 int port_output_buffer_mode(scm_port_t port);
 void port_put_char(scm_port_t port, scm_char_t c);
 void port_put_string(scm_port_t port, scm_string_t string);
-
 scm_obj_t port_socket(scm_port_t port);
-void port_shutdown_output(scm_port_t port);
 
 #endif
 

@@ -499,6 +499,9 @@
                         socket-send socket-recv socket-accept
                         shutdown-output-port
                         
+                        getenv
+                        gethostname
+                        
                         default-exception-handler
                         
                         ))
