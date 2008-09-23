@@ -109,6 +109,10 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #define PORT_STDOUT_FD      GetStdHandle(STD_OUTPUT_HANDLE)
     #define PORT_STDERR_FD      GetStdHandle(STD_ERROR_HANDLE)
 
+  #ifndef HOST_NAME_MAX
+    #define HOST_NAME_MAX       255
+  #endif
+    
     inline int      isnan(double x) { return _isnan(x); }
     inline int      isinf(double x) { return (!_finite(x) && !_isnan(x)); }
     inline double   round(double x) { return (x >= 0.0) ? floor(x + 0.5) : ceil(x - 0.5); }
@@ -219,6 +223,10 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #define PORT_STDIN_FD       0
     #define PORT_STDOUT_FD      1
     #define PORT_STDERR_FD      2
+
+  #ifndef HOST_NAME_MAX
+    #define HOST_NAME_MAX       _POSIX_HOST_NAME_MAX
+  #endif
 
     #define HEAP_MAP_FAILED     MAP_FAILED
     #define HEAP_UNMAP_FAILED   (-1)
