@@ -73,30 +73,11 @@
             (else
              (char-downcase (char-upcase ch))))))
 
-  (define char-ci=?
-    (lambda (ch1 ch2)
-      (char=? (char-foldcase ch1)
-              (char-foldcase ch2))))
-
-  (define char-ci<?
-    (lambda (ch1 ch2)
-      (char<? (char-foldcase ch1)
-              (char-foldcase ch2))))
-
-  (define char-ci>?
-    (lambda (ch1 ch2)
-      (char>? (char-foldcase ch1)
-              (char-foldcase ch2))))
-
-  (define char-ci<=?
-    (lambda (ch1 ch2)
-      (char<=? (char-foldcase ch1)
-               (char-foldcase ch2))))
-
-  (define char-ci>=?
-    (lambda (ch1 ch2)
-      (char>=? (char-foldcase ch1)
-               (char-foldcase ch2))))
+  (define char-ci=? (lambda lst (apply char=? (map char-foldcase lst))))
+  (define char-ci<? (lambda lst (apply char<? (map char-foldcase lst))))
+  (define char-ci>? (lambda lst (apply char>? (map char-foldcase lst))))
+  (define char-ci<=? (lambda lst (apply char<=? (map char-foldcase lst))))
+  (define char-ci>=? (lambda lst (apply char>=? (map char-foldcase lst))))
 
   (define char-alphabetic?
     (lambda (ch)

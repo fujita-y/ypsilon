@@ -98,13 +98,13 @@
 
   (define make-client-socket
     (lambda (node service . options)
-      (let-optionals options ((ai-family AF_INET) (ai-socktype SOCK_STREAM) (ai-flags (+ AI_V4MAPPED AI_ADDRCONFIG)) (protocol 0))
-        (make-socket node service ai-family ai-socktype ai-flags protocol))))
+      (let-optionals options ((ai-family AF_INET) (ai-socktype SOCK_STREAM) (ai-flags (+ AI_V4MAPPED AI_ADDRCONFIG)) (ai-protocol 0))
+        (make-socket node service ai-family ai-socktype ai-flags ai-protocol))))
 
   (define make-server-socket
     (lambda (service . options)
-      (let-optionals options ((ai-family AF_INET) (protocol 0))
-        (make-socket #f service ai-family SOCK_STREAM AI_PASSIVE protocol))))
+      (let-optionals options ((ai-family AF_INET) (ai-protocol 0))
+        (make-socket #f service ai-family SOCK_STREAM AI_PASSIVE ai-protocol))))
 
   (define call-with-socket
     (lambda (socket proc)
