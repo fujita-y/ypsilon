@@ -13,7 +13,7 @@
   (define make-remote-repl
     (lambda (service)
       (let ((server (make-server-socket service)))
-        (format #t "~%remote-repl: start: ~a (~s)~%~%" (gethostname) server)
+        (format #t "~%remote-repl: ~a ~s~%~%" (gethostname) server)
         (lambda ()
           (and (nonblock-byte-ready? (socket-port server))
                (letrec* ((in (current-input-port))
@@ -38,13 +38,12 @@
                            (format #t "~%error in ~a (~s)~%" (gethostname) server)
                            (default-exception-handler c continue))
                          (lambda ()
-                           (format #t "~&remote-repl: connect: ~s~%" socket)
+                           (format #t "~&remote-repl: connect ~s~%" socket)
                            (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
                              (lambda (port)
                                (set-remote-port! port)
                                (pretty-print (eval (read (open-string-input-port (get-string-all port))) (interaction-environment)))))))))))
                  (restore-current-port)))))))
-
 
   (define connect-remote-repl
     (lambda (node service)
@@ -75,7 +74,6 @@
            (loop))))
       (format #t "~&[exit]~%")
       (unspecified)))
-
 
   ) ;[end]
 

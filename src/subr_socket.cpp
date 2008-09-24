@@ -11,7 +11,7 @@
 #include "subr.h"
 #include "ioerror.h"
 #include "violation.h"
-
+        
 // <string:node> <string:service> <fixnum:family> <fixnum:socktype> <fixnum:protocol> <fixnum:flags>
 // make-socket
 scm_obj_t
@@ -20,17 +20,20 @@ subr_make_socket(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 6) {
         if (argv[0] == scm_false || STRINGP(argv[0])) {
             if (argv[1] == scm_false || STRINGP(argv[1])) {
-                for (int i = 2; i < 6; i++) {
-                    if (FIXNUMP(argv[i])) continue;
-                    wrong_type_argument_violation(vm, "make-socket", i, "fixnum", argv[i], argc, argv);
-                    return scm_undef;
-                }
+                int family;
+                int socktype;
+                int protocol;
+                int flags;
+                CONVERT_TO_MACHINE_INT(2, "make-socket", &family);
+                CONVERT_TO_MACHINE_INT(3, "make-socket", &socktype);
+                CONVERT_TO_MACHINE_INT(4, "make-socket", &protocol);
+                CONVERT_TO_MACHINE_INT(5, "make-socket", &flags);
                 try {
                     const char* node = NULL;
                     const char* service = NULL;
                     if (STRINGP(argv[0])) node = ((scm_string_t)argv[0])->name;
                     if (STRINGP(argv[1])) service = ((scm_string_t)argv[1])->name;
-                    scm_socket_t socket = make_socket(vm->m_heap, node, service, FIXNUM(argv[2]), FIXNUM(argv[3]), FIXNUM(argv[4]), FIXNUM(argv[5])); 
+                    scm_socket_t socket = make_socket(vm->m_heap, node, service, family, socktype, protocol, flags); 
                     return socket;
                 } catch (io_exception_t& e) {
                     raise_io_error(vm, "make-socket", e.m_operation, e.m_message, e.m_err, scm_false, scm_false);
@@ -100,21 +103,19 @@ subr_socket_send(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 3) {
         if (SOCKETP(argv[0])) {
             if (BVECTORP(argv[1])) {
-                if (FIXNUMP(argv[2])) {
-                    scm_socket_t socket = (scm_socket_t)argv[0];
-                    if (socket->fd != INVALID_SOCKET) {
-                        try {
-                            scm_bvector_t bv = (scm_bvector_t)argv[1];
-                            return MAKEFIXNUM(socket_send(socket, bv->elts, bv->count, FIXNUM(argv[2])));
-                        } catch (io_exception_t& e) {
-                            raise_io_error(vm, "socket-send", e.m_operation, e.m_message, e.m_err, socket, scm_false);
-                            return scm_undef;
-                        }
+                int flags;
+                CONVERT_TO_MACHINE_INT(2, "socket-send", &flags);
+                scm_socket_t socket = (scm_socket_t)argv[0];
+                if (socket->fd != INVALID_SOCKET) {
+                    try {
+                        scm_bvector_t bv = (scm_bvector_t)argv[1];
+                        return MAKEFIXNUM(socket_send(socket, bv->elts, bv->count, flags));
+                    } catch (io_exception_t& e) {
+                        raise_io_error(vm, "socket-send", e.m_operation, e.m_message, e.m_err, socket, scm_false);
+                        return scm_undef;
                     }
-                    wrong_type_argument_violation(vm, "socket-send", 0, "connected socket", argv[0], argc, argv);
-                    return scm_undef;
                 }
-                wrong_type_argument_violation(vm, "socket-send", 2, "fixnum", argv[2], argc, argv);
+                wrong_type_argument_violation(vm, "socket-send", 0, "connected socket", argv[0], argc, argv);
                 return scm_undef;
             }
             wrong_type_argument_violation(vm, "socket-send", 1, "bytevector", argv[1], argc, argv);
@@ -132,34 +133,30 @@ subr_socket_recv(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 3) {
         if (SOCKETP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                if (FIXNUMP(argv[2])) {
-                    scm_socket_t socket = (scm_socket_t)argv[0];
-                    if (socket->fd != INVALID_SOCKET) {
-                        try {
-                            scm_bvector_t bv = make_bvector(vm->m_heap, FIXNUM(argv[1]));
-                            bool again = false;
-                            int n = socket_recv(socket, bv->elts, bv->count, FIXNUM(argv[2]), &again);
-                            if (n == 0) {
-                                if (again) return scm_false;
-                                return scm_eof;
-                            }
-                            if (n == FIXNUM(argv[1])) return bv;
-                            scm_bvector_t bv2 = make_bvector(vm->m_heap, n);
-                            memcpy(bv2->elts, bv->elts, n);
-                            return bv2;
-                        } catch (io_exception_t& e) {
-                            raise_io_error(vm, "socket-recv", e.m_operation, e.m_message, e.m_err, socket, scm_false);
-                            return scm_undef;
-                        }
+            int len;
+            int flags;
+            CONVERT_TO_MACHINE_INT(1, "socket-recv", &len);
+            CONVERT_TO_MACHINE_INT(2, "socket-recv", &flags);
+            scm_socket_t socket = (scm_socket_t)argv[0];
+            if (socket->fd != INVALID_SOCKET) {
+                try {
+                    scm_bvector_t bv = make_bvector(vm->m_heap, len);
+                    bool again = false;
+                    int n = socket_recv(socket, bv->elts, bv->count, flags, &again);
+                    if (n == 0) {
+                        if (again) return scm_false;
+                        return scm_eof;
                     }
-                    wrong_type_argument_violation(vm, "socket-recv", 0, "connected socket", argv[0], argc, argv);
+                    if (n == len) return bv;
+                    scm_bvector_t bv2 = make_bvector(vm->m_heap, n);
+                    memcpy(bv2->elts, bv->elts, n);
+                    return bv2;
+                } catch (io_exception_t& e) {
+                    raise_io_error(vm, "socket-recv", e.m_operation, e.m_message, e.m_err, socket, scm_false);
                     return scm_undef;
                 }
-                wrong_type_argument_violation(vm, "socket-recv", 2, "fixnum", argv[2], argc, argv);
-                return scm_undef;
             }
-            wrong_type_argument_violation(vm, "socket-recv", 1, "fixnum", argv[1], argc, argv);
+            wrong_type_argument_violation(vm, "socket-recv", 0, "connected socket", argv[0], argc, argv);
             return scm_undef;
         }
         wrong_type_argument_violation(vm, "socket-recv", 0, "socket", argv[0], argc, argv);
