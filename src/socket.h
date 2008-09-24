@@ -21,7 +21,6 @@ void socket_shutdown(scm_socket_t s, int how);
 int socket_send(scm_socket_t s, uint8_t* buf, int len, int flags);
 int socket_recv(scm_socket_t s, uint8_t* buf, int len, int flags, bool* again);
 scm_obj_t socket_name_string(object_heap_t* heap, scm_socket_t s);
-scm_obj_t socket_port(object_heap_t* heap, scm_socket_t s);
 scm_obj_t socket_accept(object_heap_t* heap, scm_socket_t s);
 
 #endif

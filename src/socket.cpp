@@ -203,10 +203,3 @@ loop:
     return client;
 }
 
-scm_obj_t
-socket_port(object_heap_t* heap, scm_socket_t s)
-{
-    s->lock.verify_locked();
-    assert(s->fd != INVALID_SOCKET);
-    return make_socket_port(heap, s, scm_false);
-}
