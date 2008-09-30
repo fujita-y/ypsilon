@@ -935,8 +935,12 @@ uint64_to_integer(object_heap_t* heap, uint64_t value)
 scm_obj_t
 uint32_to_integer(object_heap_t* heap, uint32_t value)
 {
+#if __LP64__
+    return MAKEFIXNUM(value);
+#else
     if (value <= FIXNUM_MAX) return MAKEFIXNUM(value);
     return uint32_to_bignum(heap, value);
+#endif
 }
 
 scm_obj_t
@@ -1775,7 +1779,7 @@ number_pred(scm_obj_t obj)
 uint32_t
 n_hash(scm_obj_t obj, uint32_t bound)
 {
-    if (FIXNUMP(obj)) return ((uint32_t)obj * 2654435761U) % bound;
+    if (FIXNUMP(obj)) return ((uintptr_t)obj * 2654435761U) % bound;
     if (FLONUMP(obj)) {
         scm_flonum_t flonum = (scm_flonum_t)obj;
         assert(sizeof(flonum->value) == 8);
@@ -2794,9 +2798,9 @@ arith_sub(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 
     if (FIXNUMP(lhs)) {
         if (FIXNUMP(rhs)) {     // fixnum - fixnum -- fixnum or bignum
-            int32_t n = FIXNUM(lhs) - FIXNUM(rhs);
+            intptr_t n = FIXNUM(lhs) - FIXNUM(rhs);
             if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-            return int32_to_bignum(heap, n);
+            return intptr_to_bignum(heap, n);
         }
         if (FLONUMP(rhs)) {     // fixnum - flonum --> flonum
             return make_flonum(heap, (double)FIXNUM(lhs) - ((scm_flonum_t)rhs)->value);
@@ -5059,8 +5063,8 @@ parse_negate(object_heap_t* heap, scm_obj_t obj)
 {
     if (FIXNUMP(obj)) {
         assert(sizeof(intptr_t) == sizeof(int32_t));
-        int n = FIXNUM(obj);
-        if (n == FIXNUM_MIN) return int32_to_integer(heap, -n);
+        intptr_t n = FIXNUM(obj);
+        if (n == FIXNUM_MIN) return intptr_to_integer(heap, -n);
         return MAKEFIXNUM(-n);
     }
     if (FLONUMP(obj)) {

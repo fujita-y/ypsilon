@@ -80,8 +80,13 @@ struct relocate_info_t;
 class object_heap_t {
 public:
     mutex_t             m_lock;
+#if __LP64__
+    object_slab_cache_t m_collectibles[7];  //   16-32-64-128-256-512-1024
+    object_slab_cache_t m_privates[7];      //   16-32-64-128-256-512-1024
+#else
     object_slab_cache_t m_collectibles[8];  // 8-16-32-64-128-256-512-1024
     object_slab_cache_t m_privates[8];      // 8-16-32-64-128-256-512-1024
+#endif
     object_slab_cache_t m_weakmappings;
     object_slab_cache_t m_cons;
     object_slab_cache_t m_flonums;

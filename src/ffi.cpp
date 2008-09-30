@@ -301,6 +301,18 @@ c_stack_frame_t::push(scm_obj_t obj)
         return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
     }
 
+#elif __LP64__
+
+    int c_callback_int(uint32_t uid, uint32_t argc, uint32_t* base)
+    {
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    }
+
+    scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure)
+    {
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    }
+    
 #else
 
     struct trampoline_t {

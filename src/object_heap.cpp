@@ -33,25 +33,51 @@
 #define ENSURE_REALTIME             (1.0)       // in msec (1.0 for 0.0001 second)
 #define TIMEOUT_CHECK_EACH          (100)
 
-inline int
-bytes_to_bucket(int x)
-{
-    int bucket = 0;
-    if (x > 8) {
-        x = x - 1;  // see clp2() in bit.cpp
-        x = x | (x >>  1);
-        x = x | (x >>  2);
-        x = x | (x >>  4);
-        x = x | (x >>  8);
-        x = x | (x >> 16);
-        x = (x + 1) >> 4;
-        while (x) {
-            bucket = bucket + 1;
-            x = x >> 1;
+#if __LP64__
+
+    inline int
+    bytes_to_bucket(int x)
+    {
+        int bucket = 0;
+        if (x > 16) {
+            x = x - 1;  // see clp2() in bit.cpp
+            x = x | (x >>  1);
+            x = x | (x >>  2);
+            x = x | (x >>  4);
+            x = x | (x >>  8);
+            x = x | (x >> 16);
+            x = (x + 1) >> 5;
+            while (x) {
+                bucket = bucket + 1;
+                x = x >> 1;
+            }
         }
+        return bucket;
     }
-    return bucket;
-}
+
+#else
+    
+    inline int
+    bytes_to_bucket(int x)
+    {
+        int bucket = 0;
+        if (x > 8) {
+            x = x - 1;  // see clp2() in bit.cpp
+            x = x | (x >>  1);
+            x = x | (x >>  2);
+            x = x | (x >>  4);
+            x = x | (x >>  8);
+            x = x | (x >> 16);
+            x = (x + 1) >> 4;
+            while (x) {
+                bucket = bucket + 1;
+                x = x >> 1;
+            }
+        }
+        return bucket;
+    }
+
+#endif
 
 object_heap_t::object_heap_t()
     : m_pool(NULL), m_pool_size(0), m_mark_stack(NULL)
@@ -219,8 +245,13 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size)
 
     // slab
     assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
+#if __LP64__
+    for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, 1 << (n + 4), true);
+    for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, 1 << (n + 4), false);
+#else
     for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, 1 << (n + 3), true);
     for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, 1 << (n + 3), false);
+#endif
     m_weakmappings.init(this, clp2(sizeof(scm_weakmapping_rec_t)), true);
     m_cons.init(this, clp2(sizeof(scm_pair_rec_t)), true);
     m_flonums.init(this, clp2(sizeof(scm_flonum_rec_t)), true);

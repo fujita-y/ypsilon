@@ -15,13 +15,13 @@
 uint32_t
 address_hash(void *adrs, uint32_t bound)
 {
-    return (((uint32_t)adrs >> 3) * 2654435761U + ((uint32_t)adrs & 7)) % bound;
+    return (((uintptr_t)adrs >> 3) * 2654435761U + ((uintptr_t)adrs & 7)) % bound;
 }
 
 uint32_t
 address_hash2(void *adrs, uint32_t bound)
 {
-    uint32_t hash = (((uint32_t)adrs >> 3) * 13845163U) % bound;
+    uint32_t hash = (((uintptr_t)adrs >> 3) * 13845163U) % bound;
     return hash + (hash == 0);
 }
 

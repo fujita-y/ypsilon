@@ -60,8 +60,12 @@ int64_to_integer(object_heap_t* heap, int64_t value)
 inline scm_obj_t
 int32_to_integer(object_heap_t* heap, int32_t value)
 {
+#if __LP64__
+    MAKEFIXNUM(value);
+#else
     if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM(value);
     return int32_to_bignum(heap, value);
+#endif
 }
 
 inline scm_obj_t
