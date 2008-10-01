@@ -4430,7 +4430,11 @@ integer_mul10_may_inplace(object_heap_t* heap, scm_obj_t n)
 static int
 integer_ucmp3(scm_obj_t n1, scm_obj_t n2, scm_obj_t n3)
 {
+#if ARCH_LP64
+    int count = 2;
+#else
     int count = 1;
+#endif
     int n;
     if (BIGNUMP(n1)) {
         n = bn_get_count((scm_bignum_t)n1);
