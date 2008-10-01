@@ -77,7 +77,7 @@ inline void*
 new_heapenv_rec(object_heap_t* heap, size_t size)
 {
     scm_hdr_t* hdr = (scm_hdr_t*)heap->allocate_collectible(sizeof(scm_hdr_t) + size);
-    *hdr = scm_hdr_heapenv | (size << HDR_HEAPENV_SIZE_SHIFT);
+    *hdr = scm_hdr_heapenv | ((uintptr_t)size << HDR_HEAPENV_SIZE_SHIFT);
     return hdr + 1;
 }
 
@@ -85,7 +85,7 @@ inline void*
 new_heapcont_rec(object_heap_t* heap, size_t size)
 {
     scm_hdr_t* hdr = (scm_hdr_t*)heap->allocate_collectible(sizeof(scm_hdr_t) + size);
-    *hdr = scm_hdr_heapcont | (size << HDR_HEAPCONT_SIZE_SHIFT);
+    *hdr = scm_hdr_heapcont | ((uintptr_t)size << HDR_HEAPCONT_SIZE_SHIFT);
     return hdr + 1;
 }
 

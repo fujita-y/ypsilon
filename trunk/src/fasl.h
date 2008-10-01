@@ -15,7 +15,7 @@
 
 #define FASL_EOF                    0
 #define FASL_TAG_LOOKUP             1
-#define FASL_TAG_FIXNUM             2
+#define FASL_TAG_FIXNUM32           2
 #define FASL_TAG_PLIST              3
 #define FASL_TAG_DLIST              4
 #define FASL_TAG_VECTOR             5
@@ -31,6 +31,7 @@
 #define FASL_TAG_SYMBOL             15
 #define FASL_TAG_STRING             16
 #define FASL_TAG_UNINTERNED_SYMBOL  17
+#define FASL_TAG_FIXNUM64           18
 
 
 class fasl_printer_t {

@@ -651,7 +651,11 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
     if (HASHTABLEP(ht)) {
         scm_obj_t value = get_hashtable((scm_hashtable_t)ht, obj);
         if (FIXNUMP(value)) {
+#if ARCH_LP64
+            snprintf(buf, sizeof(buf), "#%ld#", FIXNUM(value));
+#else
             snprintf(buf, sizeof(buf), "#%d#", FIXNUM(value));
+#endif
             port_puts(m_port, buf);
             return;
         }
@@ -704,12 +708,20 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
     if (!CELLP(obj)) {
         if (FIXNUMP(obj)) {
             if (m_radix == 10) {
+#if ARCH_LP64
+                snprintf(buf, sizeof(buf), "%ld", FIXNUM(obj));
+#else
                 snprintf(buf, sizeof(buf), "%d", FIXNUM(obj));
+#endif
                 port_puts(m_port, buf);
                 return;
             }
             if (m_radix == 16) {
+#if ARCH_LP64
+                snprintf(buf, sizeof(buf), "%lx", FIXNUM(obj));
+#else
                 snprintf(buf, sizeof(buf), "%x", FIXNUM(obj));
+#endif
                 port_puts(m_port, buf);
                 return;
             }

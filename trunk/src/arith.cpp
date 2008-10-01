@@ -105,40 +105,75 @@ bn_norm(scm_bignum_t bn)
     return 0;
 }
 
-static scm_obj_t
-bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
-{
-    if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
-    assert(bn_norm_pred(bn));
-    assert(bn_get_sign(bn) != 0);
-    if (bn_get_count(bn) == 1) {
-        int64_t n = bn->elts[0];
-        if (bn_get_sign(bn) < 0) n = -n;
 #if ARCH_LP64
-        return MAKEFIXNUM(n);
-#else
-        if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-#endif
-    }
-    return bn_dup(heap, bn);
-}
 
-static scm_obj_t
-bn_demote(scm_bignum_t bn)
-{
-    if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
-    assert(bn_get_sign(bn) != 0);
-    if (bn_get_count(bn) == 1) {
-        int64_t n = bn->elts[0];
-        if (bn_get_sign(bn) < 0) n = -n;
-#if ARCH_LP64
-        return MAKEFIXNUM(n);
-#else
-        if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-#endif
+    static scm_obj_t
+    bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
+    {
+        if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
+        assert(bn_norm_pred(bn));
+        assert(bn_get_sign(bn) != 0);
+        if (bn_get_count(bn) == 1) {
+            int64_t n = bn->elts[0];
+            if (bn_get_sign(bn) < 0) n = -n;
+            return MAKEFIXNUM(n);
+        }
+        if (bn_get_count(bn) == 2) {
+            int128_t n = ((uint128_t)bn->elts[1] << 32) + bn->elts[0];
+            if (bn_get_sign(bn) < 0) n = -n;
+            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
+        }        
+        return bn_dup(heap, bn);
     }
-    return bn;
-}
+    
+    static scm_obj_t
+    bn_demote(scm_bignum_t bn)
+    {
+        if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
+        assert(bn_get_sign(bn) != 0);
+        if (bn_get_count(bn) == 1) {
+            int64_t n = bn->elts[0];
+            if (bn_get_sign(bn) < 0) n = -n;
+            return MAKEFIXNUM(n);
+        }
+        if (bn_get_count(bn) == 2) {
+            int128_t n = ((uint128_t)bn->elts[1] << 32) + bn->elts[0];
+            if (bn_get_sign(bn) < 0) n = -n;
+            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
+        }        
+        return bn;
+    }
+    
+#else
+
+    static scm_obj_t
+    bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
+    {
+        if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
+        assert(bn_norm_pred(bn));
+        assert(bn_get_sign(bn) != 0);
+        if (bn_get_count(bn) == 1) {
+            int64_t n = bn->elts[0];
+            if (bn_get_sign(bn) < 0) n = -n;
+            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
+        }
+        return bn_dup(heap, bn);
+    }
+    
+    static scm_obj_t
+    bn_demote(scm_bignum_t bn)
+    {
+        if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
+        assert(bn_get_sign(bn) != 0);
+        if (bn_get_count(bn) == 1) {
+            int64_t n = bn->elts[0];
+            if (bn_get_sign(bn) < 0) n = -n;
+            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
+        }
+        return bn;
+    }
+    
+#endif
 
 static void
 bn_lognot(scm_bignum_t ans, scm_bignum_t obj)
@@ -1801,7 +1836,7 @@ static
 scm_obj_t
 oprtr_expt(object_heap_t* heap, scm_obj_t lhs, scm_fixnum_t rhs)
 {
-    int n = FIXNUM(rhs);
+    intptr_t n = FIXNUM(rhs);
     if (n == 0) return MAKEFIXNUM(1);
     if (n == 1) return lhs;
     if (n < 0) return arith_inverse(heap, oprtr_expt(heap, lhs, MAKEFIXNUM(-n)));
@@ -1815,7 +1850,7 @@ oprtr_expt(object_heap_t* heap, scm_obj_t lhs, scm_fixnum_t rhs)
     if (lhs == MAKEFIXNUM(0)) return lhs; // new
     if (lhs == MAKEFIXNUM(1)) return lhs; // new
     if (lhs == MAKEFIXNUM(2)) {
-        if (n + 1 <= FIXNUM_BITS - 1) return MAKEFIXNUM(1 << n);
+        if (n + 1 <= FIXNUM_BITS - 1) return MAKEFIXNUM((intptr_t)1 << n);
         int count = ((n + 1) + 31) / 32;
         scm_bignum_t ans = make_bignum(heap, count);
         memset(ans->elts, 0, sizeof(uint32_t) * count);

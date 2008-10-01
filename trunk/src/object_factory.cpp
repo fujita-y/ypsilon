@@ -28,7 +28,7 @@ make_symbol(object_heap_t* heap, const char *name, int len)
             obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
             obj->name = (char*)heap->allocate_private(len + 1);
         }
-        obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) ;
+        obj->hdr = scm_hdr_symbol | MAKEBITS(len, HDR_SYMBOL_SIZE_SHIFT) ;
         memcpy(obj->name, name, len);
         obj->name[len] = 0;
         heap->m_symbol.put(obj);
@@ -49,7 +49,7 @@ make_symbol_uninterned(object_heap_t* heap, const char *name, int len)
         obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
         obj->name = (char*)heap->allocate_private(len + 2);
     }
-    obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) | HDR_SYMBOL_UNINTERNED_BIT;
+    obj->hdr = scm_hdr_symbol | MAKEBITS(len, HDR_SYMBOL_SIZE_SHIFT) | HDR_SYMBOL_UNINTERNED_BIT;
     memcpy(obj->name, name, len);
     obj->name[len] = 0;
     obj->name[len + 1] = len;
@@ -68,7 +68,7 @@ make_symbol_uninterned(object_heap_t* heap, const char *name, int len, int prefi
         obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
         obj->name = (char*)heap->allocate_private(len + 2);
     }
-    obj->hdr = scm_hdr_symbol | (len << HDR_SYMBOL_SIZE_SHIFT) | HDR_SYMBOL_UNINTERNED_BIT;
+    obj->hdr = scm_hdr_symbol | MAKEBITS(len, HDR_SYMBOL_SIZE_SHIFT) | HDR_SYMBOL_UNINTERNED_BIT;
     memcpy(obj->name, name, len);
     obj->name[len] = 0;
     obj->name[len + 1] = prefix;
@@ -90,8 +90,8 @@ make_symbol_inherent(object_heap_t* heap, const char* name, int code)
     scm_symbol_t obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
     int len = strlen(name);
     obj->hdr = scm_hdr_symbol
-                | (len << HDR_SYMBOL_SIZE_SHIFT)
-                | (code << HDR_SYMBOL_CODE_SHIFT)
+                | MAKEBITS(len, HDR_SYMBOL_SIZE_SHIFT)
+                | MAKEBITS(code, HDR_SYMBOL_CODE_SHIFT)
                 | HDR_SYMBOL_INHERENT_BIT;
     obj->name = (char*)heap->allocate_private(len + 1);
     strcpy(obj->name, name);
@@ -143,7 +143,7 @@ make_string_literal(object_heap_t* heap, const char* name, int len)
             obj = (scm_string_t)heap->allocate_collectible(sizeof(scm_string_rec_t));
             obj->name = (char*)heap->allocate_private(len + 1);
         }
-        obj->hdr = scm_hdr_string | (1 << HDR_STRING_LITERAL_SHIFT);
+        obj->hdr = scm_hdr_string | MAKEBITS(1, HDR_STRING_LITERAL_SHIFT);
         obj->size = len;
         memcpy(obj->name, name, len);
         obj->name[len] = 0;
@@ -236,7 +236,7 @@ scm_bvector_t
 make_bvector_mapping(object_heap_t* heap, void* p, int n)
 {
     scm_bvector_t obj = (scm_bvector_t)heap->allocate_collectible(sizeof(scm_bvector_rec_t));
-    obj->hdr = scm_hdr_bvector | (1 << HDR_BVECTOR_MAPPING_SHIFT);
+    obj->hdr = scm_hdr_bvector | MAKEBITS(1, HDR_BVECTOR_MAPPING_SHIFT);
     obj->count = n;
     obj->elts = (uint8_t*)p;
     return obj;
@@ -358,11 +358,11 @@ make_values(object_heap_t* heap, int n)
     scm_values_t obj;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
         obj = (scm_values_t)heap->allocate_collectible(bytes);
-        obj->hdr = scm_hdr_values | (n << HDR_VALUES_COUNT_SHIFT);
+        obj->hdr = scm_hdr_values | MAKEBITS(n, HDR_VALUES_COUNT_SHIFT);
         obj->elts = (scm_obj_t*)((uintptr_t)obj + sizeof(scm_values_rec_t));
     } else {
         obj = (scm_values_t)heap->allocate_collectible(sizeof(scm_values_rec_t));
-        obj->hdr = scm_hdr_values | (n << HDR_VALUES_COUNT_SHIFT);
+        obj->hdr = scm_hdr_values | MAKEBITS(n, HDR_VALUES_COUNT_SHIFT);
         obj->elts = (scm_obj_t*)heap->allocate_private(sizeof(scm_obj_t) * n);
     }
     for (int i = 0; i < n; i++) obj->elts[i] = scm_unspecified;
@@ -478,9 +478,9 @@ make_closure(object_heap_t* heap, int argc, int rest, void* env, scm_obj_t code,
 {
     VERIFY_DATUM(code);
     VERIFY_DATUM(doc);
-    int args = rest ? (-1 - argc) : argc;
+    int args = rest ? (- 1 - argc) : argc;
     scm_closure_t obj = (scm_closure_t)heap->allocate_collectible(sizeof(scm_closure_rec_t));
-    obj->hdr = scm_hdr_closure | (args << HDR_CLOSURE_ARGS_SHIFT);
+    obj->hdr = scm_hdr_closure | MAKEBITS(args, HDR_CLOSURE_ARGS_SHIFT);
     obj->env = env;
     obj->code = code;
     obj->doc = doc;
@@ -539,12 +539,12 @@ make_bignum(object_heap_t* heap, int n)
     scm_bignum_t obj;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
         obj = (scm_bignum_t)heap->allocate_collectible(bytes);
-        obj->hdr = scm_hdr_bignum | (n << HDR_BIGNUM_COUNT_SHIFT);
+        obj->hdr = scm_hdr_bignum | MAKEBITS(n, HDR_BIGNUM_COUNT_SHIFT);
         if (n) obj->elts = (uint32_t*)((uintptr_t)obj + sizeof(scm_bignum_rec_t));
         else obj->elts = NULL;
     } else {
         obj = (scm_bignum_t)heap->allocate_collectible(sizeof(scm_bignum_rec_t));
-        obj->hdr = scm_hdr_bignum | (n << HDR_BIGNUM_COUNT_SHIFT);
+        obj->hdr = scm_hdr_bignum | MAKEBITS(n, HDR_BIGNUM_COUNT_SHIFT);
         if (n) obj->elts = (uint32_t*)heap->allocate_private(sizeof(uint32_t) * n);
         else obj->elts = NULL;
     }
@@ -612,11 +612,11 @@ make_tuple(object_heap_t* heap, int n, scm_obj_t elt)
     scm_tuple_t obj;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
         obj = (scm_tuple_t)heap->allocate_collectible(bytes);
-        obj->hdr = scm_hdr_tuple | (n << HDR_TUPLE_COUNT_SHIFT);
+        obj->hdr = scm_hdr_tuple | MAKEBITS(n, HDR_TUPLE_COUNT_SHIFT);
         obj->elts = (scm_obj_t*)((uintptr_t)obj + sizeof(scm_tuple_rec_t));
     } else {
         obj = (scm_tuple_t)heap->allocate_collectible(sizeof(scm_tuple_rec_t));
-        obj->hdr = scm_hdr_tuple | (n << HDR_TUPLE_COUNT_SHIFT);
+        obj->hdr = scm_hdr_tuple | MAKEBITS(n, HDR_TUPLE_COUNT_SHIFT);
         obj->elts = (scm_obj_t*)heap->allocate_private(sizeof(scm_obj_t) * n);
     }
     for (int i = 0; i < n; i++) obj->elts[i] = elt;
@@ -785,7 +785,7 @@ copy_hashtable(object_heap_t* heap, scm_hashtable_t ht, bool immutable)
         if (ht_datum->elts[i] == scm_hash_deleted) continue;
         put_hashtable(ht2, ht_datum->elts[i], ht_datum->elts[i + nelts]);
     }
-    if (immutable) ht2->hdr |= (1 << HDR_HASHTABLE_IMMUTABLE_SHIFT);
+    if (immutable) ht2->hdr |= MAKEBITS(1, HDR_HASHTABLE_IMMUTABLE_SHIFT);
     return ht2;
 }
 
@@ -806,7 +806,7 @@ copy_weakhashtable(object_heap_t* heap, scm_weakhashtable_t ht, bool immutable)
         if (((scm_weakmapping_t)obj)->key == scm_false) continue;
         put_weakhashtable(ht2, (scm_weakmapping_t)obj);
     }
-    if (immutable) ht2->hdr |= (1 << HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT);
+    if (immutable) ht2->hdr |= MAKEBITS(1, HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT);
     return ht2;
 }
 

@@ -8,6 +8,7 @@ PROG 	 = ypsilon
 PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DDEFAULT_HEAP_LIMIT=32 -DSYSTEM_SHARE_PATH='"$(PREFIX)/share/$(PROG)"'
+#CPPFLAGS = -DDEFAULT_HEAP_LIMIT=32 -DSYSTEM_SHARE_PATH='"$(PREFIX)/share/$(PROG)"'
 
 CXXFLAGS = -x c++ -pthread -msse -mfpmath=sse -O3 -fstrict-aliasing \
 	   -fomit-frame-pointer -momit-leaf-frame-pointer \

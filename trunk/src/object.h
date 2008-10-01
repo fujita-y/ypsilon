@@ -488,8 +488,8 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_WEAKHASHTABLE_IMMUTABLE(hdr)    (((hdr) >> HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT) & 0x01)
 #define HDR_BIGNUM_SIGN(hdr)                (((hdr) >> HDR_BIGNUM_SIGN_SHIFT) & 0x03)
 
-#define HDR_SYMBOL_INHERENT_BIT             (1 << HDR_SYMBOL_INHERENT_SHIFT)
-#define HDR_SYMBOL_UNINTERNED_BIT           (1 << HDR_SYMBOL_UNINTERNED_SHIFT)
+#define HDR_SYMBOL_INHERENT_BIT             ((uintptr_t)1 << HDR_SYMBOL_INHERENT_SHIFT)
+#define HDR_SYMBOL_UNINTERNED_BIT           ((uintptr_t)1 << HDR_SYMBOL_UNINTERNED_SHIFT)
 
 #define OPCODESYMBOLP(obj)                  (CELLP(obj) \
                                                 && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_INHERENT_BIT)) \
@@ -513,6 +513,7 @@ struct vm_env_rec_t {           // record size is variable
 
 #define MAKEFIXNUM(n)                       ((scm_fixnum_t)(((intptr_t)(n) << 1) + 1))
 #define MAKECHAR(n)                         ((scm_char_t)(((uintptr_t)(n) << 8) + 0x02))
+#define MAKEBITS(n, shift)                  (((intptr_t)(n)) << shift)
 
 #define HASH_BUSY_THRESHOLD(n)              ((n) - ((n) >> 3))              // 87.5%
 #define HASH_DENSE_THRESHOLD(n)             ((n) - ((n) >> 2))              // 75%
