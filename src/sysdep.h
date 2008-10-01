@@ -8,11 +8,15 @@
 #define SYSDEP_H_INCLUDED
 
 #if _MSC_VER
-  #define ARCH_BIG_ENDIAN           0
   #define DECLSPEC(x)               __declspec(x)
   #define ATTRIBUTE(x)
   #define ALIGNOF(x)                (sizeof(x) > __alignof(x) ? __alignof(x) : sizeof(x))
+  #define ARCH_BIG_ENDIAN           0
   #define ARCH_LITTLE_ENDIAN        1
+  #define ARCH_IA32                 1
+  #define ARCH_X64                  0
+  #define ARCH_LP32                 1
+  #define ARCH_LP64                 0
 #else
   #define DECLSPEC(x)
   #define ATTRIBUTE(x)              __attribute__ ((x))
@@ -35,6 +39,22 @@
     #endif
   #else
     #error unknown __BYTE_ORDER
+  #endif
+  #if defined(__x86_64__)
+    #define ARCH_IA32               0
+    #define ARCH_X64                1
+  #elif defined(__i386__)
+    #define ARCH_IA32               1
+    #define ARCH_X64                0
+  #else
+    #error unknown processor
+  #endif
+  #if defined(__LP64__)
+    #define ARCH_LP32               0
+    #define ARCH_LP64               1
+  #else
+    #define ARCH_LP32               1
+    #define ARCH_LP64               0
   #endif
 #endif
 
