@@ -424,25 +424,52 @@ bn_copy(scm_bignum_t dst, scm_bignum_t src)
     memcpy(dst->elts, src->elts, sizeof(uint32_t) * count);
 }
 
-static void
-bn_let(scm_bignum_t dst, scm_fixnum_t src)
-{
-    assert(bn_get_count(dst) >= 1);
-    int32_t value = FIXNUM(src);
-    if (value) {
-        bn_set_count(dst, 1);
-        if (value > 0) {
-            dst->elts[0] = value;
-            bn_set_sign(dst, 1);
+#if ARCH_LP64
+    static void
+    bn_let(scm_bignum_t dst, scm_fixnum_t src)
+    {
+        assert(bn_get_count(dst) >= 1);
+        intptr_t value = FIXNUM(src);
+        if (value) {
+            int sign;
+            if (value > 0) {
+                bn_set_sign(dst, 1);
+            } else {
+                bn_set_sign(dst, -1);
+                value = -value;
+            }
+            if ((value >> 32) != 0) {
+                dst->elts[0] = value & 0xffffffff;
+                dst->elts[1] = value >> 32;
+            } else {
+                dst->elts[0] = (uint32_t)value;
+            }
         } else {
-            dst->elts[0] = -value;
-            bn_set_sign(dst, -1);
+            bn_set_count(dst, 0);
+            bn_set_sign(dst, 0);
         }
-    } else {
-        bn_set_count(dst, 0);
-        bn_set_sign(dst, 0);
     }
-}
+#else
+    static void
+    bn_let(scm_bignum_t dst, scm_fixnum_t src)
+    {
+        assert(bn_get_count(dst) >= 1);
+        int32_t value = FIXNUM(src);
+        if (value) {
+            bn_set_count(dst, 1);
+            if (value > 0) {
+                dst->elts[0] = value;
+                bn_set_sign(dst, 1);
+            } else {
+                dst->elts[0] = -value;
+                bn_set_sign(dst, -1);
+            }
+        } else {
+            bn_set_count(dst, 0);
+            bn_set_sign(dst, 0);
+        }
+    }
+#endif
 
 #define DEBUG_BN_DIV 0
 
