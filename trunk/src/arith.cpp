@@ -1152,6 +1152,15 @@ oprtr_inexact_negate(object_heap_t* heap, scm_obj_t obj)
     fatal("%s:%u wrong datum type", __FILE__, __LINE__);
 }
 
+static inline scm_obj_t
+oprtr_norm_integer(object_heap_t* heap, scm_obj_t obj)
+{
+    assert(FIXNUMP(obj) || BIGNUMP(obj));
+    if (BIGNUMP(obj)) return bn_to_integer(heap, (scm_bignum_t)obj);
+    return obj;
+}
+
+/*
 static scm_obj_t
 oprtr_norm_integer(object_heap_t* heap, scm_obj_t obj)
 {
@@ -1170,7 +1179,7 @@ oprtr_norm_integer(object_heap_t* heap, scm_obj_t obj)
     }
     return obj;
 }
-
+*/
 static scm_obj_t
 oprtr_norm_complex(object_heap_t* heap, scm_obj_t real, scm_obj_t imag)
 {
@@ -4382,15 +4391,31 @@ integer_mul10_may_inplace(object_heap_t* heap, scm_obj_t n)
     fatal("%s:%u wrong datum type", __FILE__, __LINE__);
 }
 
-inline static uint32_t
-integer_nth_digit(int n, scm_obj_t obj)
-{
-    assert(FIXNUMP(obj) || BIGNUMP(obj));
-    if (FIXNUMP(obj)) return n == 0 ? FIXNUM(obj) : 0;
-    scm_bignum_t bn = (scm_bignum_t)obj;
-    if (n >= bn_get_count(bn)) return 0;
-    return bn->elts[n];
-}
+#if ARCH_LP64
+    static uint32_t
+    integer_nth_digit(int n, scm_obj_t obj)
+    {
+        assert(FIXNUMP(obj) || BIGNUMP(obj));
+        if (FIXNUMP(obj)) {
+            if (n == 0) return (uint64_t)FIXNUM(obj) & 0xffffffff;
+            if (n == 1) return (uint64_t)FIXNUM(obj) >> 32;
+            return 0;
+        }
+        scm_bignum_t bn = (scm_bignum_t)obj;
+        if (n >= bn_get_count(bn)) return 0;
+        return bn->elts[n];
+    }
+#else
+    static uint32_t
+    integer_nth_digit(int n, scm_obj_t obj)
+    {
+        assert(FIXNUMP(obj) || BIGNUMP(obj));
+        if (FIXNUMP(obj)) return n == 0 ? FIXNUM(obj) : 0;
+        scm_bignum_t bn = (scm_bignum_t)obj;
+        if (n >= bn_get_count(bn)) return 0;
+        return bn->elts[n];
+    }
+#endif
 
 static int
 integer_ucmp3(scm_obj_t n1, scm_obj_t n2, scm_obj_t n3)
@@ -4968,7 +4993,7 @@ parse_precision:
     p = parse_uinteger(heap, p + 1, 10, &precision);
 parse_done:
     if (digit_count == 0) return p; // string looks like `.`, `e`, `+.`, `.e+10`
-    if (value == 0) {
+    if (value == MAKEFIXNUM(0)) {
         *ans = make_flonum(heap, 0.0);
         return p;
     }
