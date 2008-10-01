@@ -2463,7 +2463,6 @@ scm_obj_t
 arith_negate(object_heap_t* heap, scm_obj_t obj)
 {
     if (FIXNUMP(obj)) {
-        assert(sizeof(intptr_t) == sizeof(int32_t));
         intptr_t n = FIXNUM(obj);
         if (n == FIXNUM_MIN) return intptr_to_integer(heap, -n);
         return MAKEFIXNUM(-n);
@@ -5085,7 +5084,6 @@ static scm_obj_t
 parse_negate(object_heap_t* heap, scm_obj_t obj)
 {
     if (FIXNUMP(obj)) {
-        assert(sizeof(intptr_t) == sizeof(int32_t));
         intptr_t n = FIXNUM(obj);
         if (n == FIXNUM_MIN) return intptr_to_integer(heap, -n);
         return MAKEFIXNUM(-n);
