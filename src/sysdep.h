@@ -15,8 +15,9 @@
   #define ARCH_LITTLE_ENDIAN        1
   #define ARCH_IA32                 1
   #define ARCH_X64                  0
-  #define ARCH_LP32                 1
+  #define ARCH_ILP32                1
   #define ARCH_LP64                 0
+  #define ARCH_LLP64                0
 #else
   #define DECLSPEC(x)
   #define ATTRIBUTE(x)              __attribute__ ((x))
@@ -50,11 +51,13 @@
     #error unknown processor
   #endif
   #if defined(__LP64__)
-    #define ARCH_LP32               0
+    #define ARCH_ILP32              0
     #define ARCH_LP64               1
+    #define ARCH_LLP64              0
   #else
-    #define ARCH_LP32               1
+    #define ARCH_ILP32              1
     #define ARCH_LP64               0
+    #define ARCH_LLP64              0
   #endif
 #endif
 
@@ -235,6 +238,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
   #endif
   #if ARCH_LP64
     typedef int int128_t __attribute__((__mode__(TI))); 
+    typedef unsigned int uint128_t __attribute__((__mode__(TI))); 
   #endif
     
     #define VALUE_NAN           __builtin_nan("")   /* strtod("NAN", NULL) */

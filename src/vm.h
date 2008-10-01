@@ -184,7 +184,7 @@ public:
     }
 
     scm_obj_t opcode_to_instruction(int opcode) {
-        return MAKEFIXNUM(opcode << FIXNUM_OPCODE_SHIFT);
+        return MAKEFIXNUM((intptr_t)opcode << FIXNUM_OPCODE_SHIFT);
     }
 
 

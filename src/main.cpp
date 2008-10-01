@@ -141,6 +141,11 @@ static int opt_heap_limit(int argc, char* const argv[])
         struct foo { char i; };
         struct bar { int i; struct foo o; };
         struct hoge { struct bar m; char k; };
+        printf("sizeof(int) %d\n", sizeof(int));
+        printf("sizeof(long) %d\n", sizeof(long));
+        printf("sizeof(long long) %d\n", sizeof(long long));
+        printf("sizeof(void*) %d\n", sizeof(void*));
+
         printf("sizeof(foo) %d\n", sizeof(foo)); // 1
         printf("sizeof(bar) %d\n", sizeof(bar)); // 8
         printf("sizeof(hoge) %d\n", sizeof(hoge));

@@ -55,7 +55,7 @@ scm_obj_t uint32_to_integer(object_heap_t* heap, uint32_t value);
 inline scm_obj_t
 int64_to_integer(object_heap_t* heap, int64_t value)
 {
-    if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM((int32_t)value);
+    if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM(value);
     return int64_to_bignum(heap, value);
 }
 
@@ -84,7 +84,7 @@ uint32_to_integer(object_heap_t* heap, uint32_t value)
 inline scm_obj_t
 uint64_to_integer(object_heap_t* heap, uint64_t value)
 {
-    if (value <= FIXNUM_MAX) return MAKEFIXNUM((intptr_t)value);
+    if (value <= FIXNUM_MAX) return MAKEFIXNUM(value);
     return uint64_to_bignum(heap, value);
 }
 
@@ -227,7 +227,7 @@ inline void
 bn_set_count(scm_bignum_t bn, int count)
 {
     assert(count >= 0);
-    bn->hdr = scm_hdr_bignum | (count << HDR_BIGNUM_COUNT_SHIFT) | (bn->hdr & (0x3 << HDR_BIGNUM_SIGN_SHIFT));
+    bn->hdr = scm_hdr_bignum | MAKEBITS(count, HDR_BIGNUM_COUNT_SHIFT) | (bn->hdr & MAKEBITS(3, HDR_BIGNUM_SIGN_SHIFT));
 }
 
 inline int
@@ -240,7 +240,7 @@ inline void
 bn_set_sign(scm_bignum_t bn, int sign)
 {
     assert(sign == 0 || sign == -1 || sign == 1);
-    bn->hdr = scm_hdr_bignum | (bn->hdr & (-1 << HDR_BIGNUM_COUNT_SHIFT)) | ((sign & 0x3) << HDR_BIGNUM_SIGN_SHIFT);
+    bn->hdr = scm_hdr_bignum | (bn->hdr & MAKEBITS(-1, HDR_BIGNUM_COUNT_SHIFT)) | MAKEBITS((sign & 0x3), HDR_BIGNUM_SIGN_SHIFT);
 }
 
 inline int

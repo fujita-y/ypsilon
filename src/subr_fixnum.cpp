@@ -622,7 +622,7 @@ subr_fx_bit_set_pred(VM* vm, int argc, scm_obj_t argv[])
         if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) {
             intptr_t fx1 = FIXNUM(argv[0]);
             intptr_t fx2 = FIXNUM(argv[1]);
-            if (fx2 >= 0 && fx2 < FIXNUM_BITS) return ((fx1 & (1 << fx2)) != 0) ? scm_true : scm_false;
+            if (fx2 >= 0 && fx2 < FIXNUM_BITS) return ((fx1 & ((intptr_t)1 << fx2)) != 0) ? scm_true : scm_false;
             wrong_type_argument_violation(vm, "fxbit-set?", 1, "non-negative fixnum less than fixnum width", argv[1], argc, argv);
             return scm_undef;
         }
@@ -648,7 +648,7 @@ subr_fx_copy_bit(VM* vm, int argc, scm_obj_t argv[])
             intptr_t fx3 = FIXNUM(argv[2]);
             if (fx2 >= 0 && fx2 < FIXNUM_BITS) {
                 if ((fx3 == 0) | (fx3 == 1)) {
-                    intptr_t mask = (1 << fx2);
+                    intptr_t mask = ((intptr_t)1 << fx2);
                     return MAKEFIXNUM((mask & (fx3 << fx2)) | ((~mask) & fx1));
                 }
                 wrong_type_argument_violation(vm, "fxcopy-bit", 2, "0 or 1", argv[2], argc, argv);
@@ -768,7 +768,7 @@ subr_fx_bit_field(VM* vm, int argc, scm_obj_t argv[])
             if (fx2 >= 0 && fx2 < FIXNUM_BITS) {
                 if (fx3 >= 0 && fx3 < FIXNUM_BITS) {
                     if (fx2 <= fx3) {
-                        intptr_t mask = ~(-1 << fx3);
+                        intptr_t mask = ~((intptr_t)-1 << fx3);
                         return MAKEFIXNUM((fx1 & mask) >> fx2);
                     }
                     invalid_argument_violation(vm, "fxbit-field", "value out of range,", argv[2], 2, argc, argv);
@@ -806,8 +806,8 @@ subr_fx_copy_bit_field(VM* vm, int argc, scm_obj_t argv[])
             if (fx2 >= 0 && fx2 < FIXNUM_BITS) {
                 if (fx3 >= 0 && fx3 < FIXNUM_BITS) {
                     if (fx2 <= fx3) {
-                        intptr_t mask1 = (-1 << fx2);
-                        intptr_t mask2 = ~(-1 << fx3);
+                        intptr_t mask1 = ((intptr_t)-1 << fx2);
+                        intptr_t mask2 = ~((intptr_t)-1 << fx3);
                         intptr_t mask = mask1 & mask2;
                         return MAKEFIXNUM((mask & (fx4 << fx2)) | ((~mask) & fx1));
                     }

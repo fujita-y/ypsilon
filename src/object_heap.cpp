@@ -379,7 +379,7 @@ object_heap_t::allocate(size_t size, bool for_slab, bool for_collectible)
     if (npage == 1) {
         for (int i = m_pool_memo; i < m_pool_watermark; i++) {
             if (m_pool[i] == PTAG_FREE) {
-                void* slab = m_pool + (i << OBJECT_SLAB_SIZE_SHIFT);
+                void* slab = m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT);
                 if (for_collectible) OBJECT_SLAB_TRAITS_OF(slab)->cache = NULL;
                 m_pool[i] = PTAG_USED | attr;
                 m_pool_memo = i + 1;
@@ -399,7 +399,7 @@ object_heap_t::allocate(size_t size, bool for_slab, bool for_collectible)
                             m_pool[head] = PTAG_USED | attr;
                             for (int n = head + 1; n <= tail; n++) m_pool[n] = PTAG_EXTENT | attr;
                             m_pool_usage = m_pool_usage + npage;
-                            return m_pool + (head << OBJECT_SLAB_SIZE_SHIFT);
+                            return m_pool + ((intptr_t)head << OBJECT_SLAB_SIZE_SHIFT);
                         }
                     } else {
                         head = tail;
@@ -675,7 +675,7 @@ object_heap_t::synchronized_collect(object_heap_t& heap)
     object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(heap.m_pool);
     for (int i = 0; i < heap.m_pool_watermark; i++) {
         if (GCSLABP(heap.m_pool[i])) {
-            uint8_t* slab = heap.m_pool + (i << OBJECT_SLAB_SIZE_SHIFT);
+            uint8_t* slab = heap.m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT);
             traits->cache->sweep(slab);
         }
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
@@ -1145,7 +1145,7 @@ object_heap_t::display_object_statistics(scm_port_t port)
     object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_pool);
     for (int i = 0; i < m_pool_watermark; i++) {
         if (GCSLABP(m_pool[i])) {
-            traits->cache->iterate(m_pool + (i << OBJECT_SLAB_SIZE_SHIFT), accumulate_object_count, &count);
+            traits->cache->iterate(m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), accumulate_object_count, &count);
         }
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
     }
@@ -1197,13 +1197,13 @@ object_heap_t::display_heap_statistics(scm_port_t port)
         case PTAG_FREE: port_put_byte(port, ' '); n_free++; break;
         case PTAG_USED: port_put_byte(port, 'P'); n_general++; break;
         case PTAG_USED|PTAG_SLAB:
-            traits = OBJECT_SLAB_TRAITS_OF(m_pool + (n << OBJECT_SLAB_SIZE_SHIFT));
+            traits = OBJECT_SLAB_TRAITS_OF(m_pool + ((intptr_t)n << OBJECT_SLAB_SIZE_SHIFT));
             if (traits->free) port_put_byte(port, 's');
             else port_put_byte(port, 'S');
             n_slab++;
             break;
         case PTAG_USED|PTAG_SLAB|PTAG_GC:
-            traits = OBJECT_SLAB_TRAITS_OF(m_pool + (n << OBJECT_SLAB_SIZE_SHIFT));
+            traits = OBJECT_SLAB_TRAITS_OF(m_pool + ((intptr_t)n << OBJECT_SLAB_SIZE_SHIFT));
             if (traits->refc == 0) {
                 port_put_byte(port, '.');
             } else {
@@ -1364,7 +1364,7 @@ object_heap_t::init_inherents()
     {
         assert(INTERNAL_PRIVATE_THRESHOLD >= sizeof(scm_tuple_rec_t) + sizeof(scm_obj_t));
         scm_tuple_t obj = (scm_tuple_t)allocate_collectible(sizeof(scm_tuple_rec_t) + sizeof(scm_obj_t));
-        obj->hdr = scm_hdr_tuple | (0 << HDR_TUPLE_COUNT_SHIFT);
+        obj->hdr = scm_hdr_tuple;
         obj->elts = (scm_obj_t*)((uintptr_t)obj + sizeof(scm_tuple_rec_t));
         obj->elts[0] = scm_unspecified;
         m_inherents[NIL_TUPLE] = obj;
@@ -1591,7 +1591,7 @@ object_heap_t::consistency_check()
     object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_pool);
     for (int i = 0; i < m_pool_watermark; i++) {
         if (GCSLABP(m_pool[i])) {
-            traits->cache->iterate(m_pool + (i << OBJECT_SLAB_SIZE_SHIFT), check_collectible, this);
+            traits->cache->iterate(m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), check_collectible, this);
         }
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
     }

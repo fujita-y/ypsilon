@@ -819,11 +819,11 @@ static int update_string_type(scm_string_t string)
     if (type == STRING_TYPE_UNKNOWN) {
         for (int i = 0; i < string->size; i++) {
             if ((uint8_t)string->name[i] > 0x7f) {
-                string->hdr = scm_hdr_string | (STRING_TYPE_UTF8 << HDR_STRING_TYPE_SHIFT);
+                string->hdr = scm_hdr_string | MAKEBITS(STRING_TYPE_UTF8, HDR_STRING_TYPE_SHIFT);
                 return STRING_TYPE_UTF8;
             }
         }
-        string->hdr = scm_hdr_string | (STRING_TYPE_ASCII << HDR_STRING_TYPE_SHIFT);
+        string->hdr = scm_hdr_string | MAKEBITS(STRING_TYPE_ASCII, HDR_STRING_TYPE_SHIFT);
         return STRING_TYPE_ASCII;
     }
     return type;
@@ -832,18 +832,18 @@ static int update_string_type(scm_string_t string)
 static int update_string_type(scm_string_t string, int ch)
 {
     if (ch > 0x7f) {
-        string->hdr = scm_hdr_string | (STRING_TYPE_UTF8 << HDR_STRING_TYPE_SHIFT);
+        string->hdr = scm_hdr_string | MAKEBITS(STRING_TYPE_UTF8, HDR_STRING_TYPE_SHIFT);
         return STRING_TYPE_UTF8;
     }
     int type = HDR_STRING_TYPE(string->hdr);
     if (type == STRING_TYPE_UNKNOWN) {
         for (int i = 0; i < string->size; i++) {
             if ((uint8_t)string->name[i] > 0x7f) {
-                string->hdr = scm_hdr_string | (STRING_TYPE_UTF8 << HDR_STRING_TYPE_SHIFT);
+                string->hdr = scm_hdr_string | MAKEBITS(STRING_TYPE_UTF8, HDR_STRING_TYPE_SHIFT);
                 return STRING_TYPE_UTF8;
             }
         }
-        string->hdr = scm_hdr_string | (STRING_TYPE_ASCII << HDR_STRING_TYPE_SHIFT);
+        string->hdr = scm_hdr_string | MAKEBITS(STRING_TYPE_ASCII, HDR_STRING_TYPE_SHIFT);
         return STRING_TYPE_ASCII;
     }
     return type;
