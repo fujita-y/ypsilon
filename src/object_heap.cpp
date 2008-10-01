@@ -110,7 +110,7 @@ object_heap_t::allocate_cons()
 scm_flonum_t
 object_heap_t::allocate_flonum()
 {
-    assert(m_collectibles[1].m_object_size == sizeof(scm_flonum_rec_t));
+    assert(m_flonums.m_object_size == sizeof(scm_flonum_rec_t));
     m_trip_bytes += sizeof(scm_flonum_rec_t);
     if (m_trip_bytes >= m_collect_trip_bytes) collect();
     do {
