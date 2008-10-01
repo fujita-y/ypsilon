@@ -2938,9 +2938,21 @@ arith_mul(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     if (FIXNUMP(lhs)) {
         if (FIXNUM(lhs) == 0) return MAKEFIXNUM(0);
         if (FIXNUMP(rhs)) {     // fixnum * fixnum
+#if ARCH_LP64
+            int128_t n = (int128_t)FIXNUM(lhs) * FIXNUM(rhs);
+            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM((intptr_t)n);
+    		BN_TEMPORARY(bn1);
+    		BN_TEMPORARY(bn2);
+            BN_ALLOC_FIXNUM(bn1);
+            BN_ALLOC_FIXNUM(bn2);
+            bn_let(&bn1, (scm_fixnum_t)rhs);
+            bn_let(&bn2, (scm_fixnum_t)rhs);
+            return oprtr_mul(heap, &bn1, &bn2); 
+#else
             int64_t n = (int64_t)FIXNUM(lhs) * FIXNUM(rhs);
             if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM((int32_t)n);
             return int64_to_bignum(heap, n);
+#endif
         }
         if (FLONUMP(rhs)) {     // fixnum * flonum
             return make_flonum(heap, (double)FIXNUM(lhs) * ((scm_flonum_t)rhs)->value);

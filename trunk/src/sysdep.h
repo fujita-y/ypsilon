@@ -52,6 +52,7 @@
   #if defined(__LP64__)
     #define ARCH_LP32               0
     #define ARCH_LP64               1
+    typedef int int128_t __attribute__((__mode__(TI))); 
   #else
     #define ARCH_LP32               1
     #define ARCH_LP64               0
