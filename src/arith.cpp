@@ -959,6 +959,52 @@ uint64_to_bignum(object_heap_t* heap, uint64_t value)
     return make_bignum(heap, 0);
 }
 
+#if ARCH_LP64
+    scm_obj_t
+    int128_to_bignum(object_heap_t* heap, int128_t value)
+    {
+        if (value) {
+            int sign;
+            if (value > 0) {
+                sign = 1;
+            } else {
+                sign = -1;
+                value = -value;
+            }
+            scm_bignum_t ans;
+            if ((value >> 32) != 0) {
+                if ((value >> 64) != 0) {
+                    if ((value >> 96) != 0) {
+                        ans = make_bignum(heap, 4);
+                        ans->elts[0] = value & 0xffffffff;
+                        ans->elts[1] = (value >> 32) & 0xffffffff;
+                        ans->elts[2] = (value >> 64) & 0xffffffff;
+                        ans->elts[3] = (value >> 96);
+                        bn_set_sign(ans, sign);
+                        return ans;                    
+                    }
+                    ans = make_bignum(heap, 3);
+                    ans->elts[0] = value & 0xffffffff;
+                    ans->elts[1] = (value >> 32) & 0xffffffff;
+                    ans->elts[2] = (value >> 64);
+                    bn_set_sign(ans, sign);
+                    return ans;                    
+                }             
+                ans = make_bignum(heap, 2);
+                ans->elts[0] = value & 0xffffffff;
+                ans->elts[1] = value >> 32;
+                bn_set_sign(ans, sign);
+                return ans;
+            }
+            ans = make_bignum(heap, 1);
+            ans->elts[0] = value;
+            bn_set_sign(ans, sign);
+            return ans;
+        }
+        return make_bignum(heap, 0);
+    }
+#endif
+
 inline scm_obj_t
 intptr_to_bignum(object_heap_t* heap, intptr_t value)
 {
@@ -2941,13 +2987,7 @@ arith_mul(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 #if ARCH_LP64
             int128_t n = (int128_t)FIXNUM(lhs) * FIXNUM(rhs);
             if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM((intptr_t)n);
-    		BN_TEMPORARY(bn1);
-    		BN_TEMPORARY(bn2);
-            BN_ALLOC_FIXNUM(bn1);
-            BN_ALLOC_FIXNUM(bn2);
-            bn_let(&bn1, (scm_fixnum_t)rhs);
-            bn_let(&bn2, (scm_fixnum_t)rhs);
-            return oprtr_mul(heap, &bn1, &bn2); 
+            return int128_to_bignum(heap, n);
 #else
             int64_t n = (int64_t)FIXNUM(lhs) * FIXNUM(rhs);
             if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM((int32_t)n);
