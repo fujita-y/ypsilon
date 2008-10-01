@@ -301,19 +301,7 @@ c_stack_frame_t::push(scm_obj_t obj)
         return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
     }
 
-#elif __LP64__
-
-    int c_callback_int(uint32_t uid, uint32_t argc, uint32_t* base)
-    {
-        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-    }
-
-    scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure)
-    {
-        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-    }
-    
-#else
+#elif ARCH_IA32
 
     struct trampoline_t {
         uint8_t     mov_ecx_imm32;  // B9           : mov ecx, imm16/32
@@ -410,4 +398,33 @@ c_stack_frame_t::push(scm_obj_t obj)
         return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
     }
 
+#else
+
+    int c_callback_int(uint32_t uid, uint32_t argc, uint32_t* base)
+    {
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    }
+
+    scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure)
+    {
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    }
+
+    intptr_t
+    c_func_stub_intptr(void* adrs, int argc, intptr_t argv[])
+    {
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    }
+    
+    double
+    c_func_stub_double(void* adrs, int argc, intptr_t argv[])
+    {
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    }
+    
+    int c_callback_stub_int()
+    {
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    }
+        
 #endif

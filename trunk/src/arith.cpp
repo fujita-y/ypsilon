@@ -928,19 +928,8 @@ intptr_to_bignum(object_heap_t* heap, intptr_t value)
 scm_obj_t
 uint64_to_integer(object_heap_t* heap, uint64_t value)
 {
-    if (value <= FIXNUM_MAX) return MAKEFIXNUM((uint32_t)value);
+    if (value <= FIXNUM_MAX) return MAKEFIXNUM((intptr_t)value);
     return uint64_to_bignum(heap, value);
-}
-
-scm_obj_t
-uint32_to_integer(object_heap_t* heap, uint32_t value)
-{
-#if __LP64__
-    return MAKEFIXNUM(value);
-#else
-    if (value <= FIXNUM_MAX) return MAKEFIXNUM(value);
-    return uint32_to_bignum(heap, value);
-#endif
 }
 
 scm_obj_t
