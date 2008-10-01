@@ -244,11 +244,12 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size)
     collector_init();
 
     // slab
-    assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
 #if ARCH_LP64
+    assert((1 << (array_sizeof(m_collectibles) + 3)) == OBJECT_SLAB_THRESHOLD);
     for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, 1 << (n + 4), true);
     for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, 1 << (n + 4), false);
 #else
+    assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
     for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, 1 << (n + 3), true);
     for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, 1 << (n + 3), false);
 #endif

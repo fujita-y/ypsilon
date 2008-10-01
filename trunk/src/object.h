@@ -412,7 +412,11 @@ struct vm_env_rec_t {           // record size is variable
 
 #define FIXNUM_MAX                          (INTPTR_MAX / 2)
 #define FIXNUM_MIN                          (INTPTR_MIN / 2)
-#define FIXNUM_BITS                         31
+#if ARCH_LP64
+#define FIXNUM_BITS                         (64 - 1)
+#else
+#define FIXNUM_BITS                         (32 - 1)
+#endif
 
 #define FIXNUM(obj)                         ((intptr_t)(obj) >> 1)
 #define CHAR(obj)                           ((uintptr_t)(obj) >> 8)
@@ -507,7 +511,7 @@ struct vm_env_rec_t {           // record size is variable
 #define CADDR(obj)                          (CAR(CDR(CDR(obj))))
 #define CDDDR(obj)                          (CDR(CDR(CDR(obj))))
 
-#define MAKEFIXNUM(n)                       ((scm_fixnum_t)(((n) << 1) + 1))
+#define MAKEFIXNUM(n)                       ((scm_fixnum_t)(((intptr_t)(n) << 1) + 1))
 #define MAKECHAR(n)                         ((scm_char_t)(((uintptr_t)(n) << 8) + 0x02))
 
 #define HASH_BUSY_THRESHOLD(n)              ((n) - ((n) >> 3))              // 87.5%

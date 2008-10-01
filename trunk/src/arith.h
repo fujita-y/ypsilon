@@ -47,6 +47,8 @@ int  n_compare(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 uint32_t  n_hash(scm_obj_t obj, uint32_t bound);
 scm_obj_t int32_to_bignum(object_heap_t* heap, int32_t value);
 scm_obj_t int64_to_bignum(object_heap_t* heap, int64_t value);
+scm_obj_t uint32_to_bignum(object_heap_t* heap, uint32_t value);
+scm_obj_t uint64_to_bignum(object_heap_t* heap, uint64_t value);
 scm_obj_t uint64_to_integer(object_heap_t* heap, uint64_t value);
 scm_obj_t uint32_to_integer(object_heap_t* heap, uint32_t value);
 
@@ -77,6 +79,13 @@ uint32_to_integer(object_heap_t* heap, uint32_t value)
     if (value <= FIXNUM_MAX) return MAKEFIXNUM(value);
     return uint32_to_bignum(heap, value);
 #endif
+}
+
+inline scm_obj_t
+uint64_to_integer(object_heap_t* heap, uint64_t value)
+{
+    if (value <= FIXNUM_MAX) return MAKEFIXNUM((intptr_t)value);
+    return uint64_to_bignum(heap, value);
 }
 
 inline scm_obj_t
