@@ -476,8 +476,10 @@ bn_copy(scm_bignum_t dst, scm_bignum_t src)
             if ((value >> 32) != 0) {
                 dst->elts[0] = value & 0xffffffff;
                 dst->elts[1] = value >> 32;
+                bn_set_count(dst, 2);
             } else {
                 dst->elts[0] = (uint32_t)value;
+                bn_set_count(dst, 1);
             }
         } else {
             bn_set_count(dst, 0);
@@ -2385,7 +2387,7 @@ start_again:
     if (FIXNUMP(lhs)) {
 fixnum_again:
         if (FIXNUMP(rhs)) {     // fixnum | fixnum
-            int n = FIXNUM(lhs) - FIXNUM(rhs);
+            intptr_t n = FIXNUM(lhs) - FIXNUM(rhs);
             if (n == 0) return 0;
             return n > 0 ? 1 : -1;
         }
@@ -4358,11 +4360,19 @@ cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
 static scm_obj_t
 integer_mul10_may_inplace(object_heap_t* heap, scm_obj_t n)
 {
+#if ARCH_LP64
+    if (FIXNUMP(n)) {
+        int128_t n10 = (int128_t)FIXNUM(n) * 10;
+        if ((n10 >= FIXNUM_MIN) & (n10 <= FIXNUM_MAX)) return MAKEFIXNUM((intptr_t)n10);
+        return int128_to_bignum(heap, n10);
+    }
+#else
     if (FIXNUMP(n)) {
         int64_t n10 = (int64_t)FIXNUM(n) * 10;
-        if ((n10 >= FIXNUM_MIN) & (n10 <= FIXNUM_MAX)) return MAKEFIXNUM((int32_t)n10);
+        if ((n10 >= FIXNUM_MIN) & (n10 <= FIXNUM_MAX)) return MAKEFIXNUM((intptr_t)n10);
         return int64_to_bignum(heap, n10);
     }
+#endif
     if (BIGNUMP(n)) {
         scm_bignum_t bn = (scm_bignum_t)n;
         int count = bn_get_count(bn);
@@ -4474,7 +4484,7 @@ cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
 {
     double v = flonum->value;
     char digits[32];
-    char digit_count = 0;
+    int digit_count = 0;
     int exponent;
     int e;
     int sign;
@@ -4871,7 +4881,11 @@ parse_uinteger(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
     int digit_count = 0;
     const char* p = s;
     if (*p) {
+#if ARCH_LP64
+        int128_t value = 0;
+#else
         int64_t value = 0;
+#endif
         char c;
         while ((c = *p++) != 0) {
             int digit;
@@ -4889,7 +4903,7 @@ parse_uinteger(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
             }
             break;
         }
-        if (--p != s) *ans = MAKEFIXNUM((int32_t)value);
+        if (--p != s) *ans = MAKEFIXNUM((intptr_t)value);
         return p;
     }
     return p;
