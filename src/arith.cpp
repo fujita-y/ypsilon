@@ -336,11 +336,50 @@ bn_remainder_uint32(scm_bignum_t numerator, uint32_t denominator)
     int numerator_count = bn_get_count(numerator);
     uint64_t remainder = 0;
     for (int i = numerator_count - 1; i >= 0; i--) {
-        remainder = (remainder << 32) + numerator->elts[i];
-        remainder = remainder % denominator;
+        remainder = ((remainder << 32) + numerator->elts[i]) % denominator;
     }
     return remainder;
 }
+
+#if ARCH_LP64
+    static uint64_t
+    bn_div_uint64(scm_bignum_t quotient, scm_bignum_t numerator, uint64_t denominator)
+    {
+        int numerator_count = bn_get_count(numerator);
+    #ifndef NDEBUG
+        int quotient_count = bn_get_count(quotient);
+        assert(quotient_count >= numerator_count);
+    #endif
+        uint128_t remainder = 0;
+        if (numerator_count & 1) {
+            quotient->elts[numerator_count - 1] = numerator->elts[numerator_count - 1] / denominator;
+            remainder = numerator->elts[numerator_count - 1] % denominator;
+            numerator_count--;
+        }
+        for (int i = numerator_count - 1; i >= 1; i-= 2) {
+            remainder = (remainder << 64) + ((uint64_t)numerator->elts[i] << 32) + numerator->elts[i - 1];
+            quotient->elts[i] = remainder / denominator;
+            remainder = remainder % denominator;
+        }
+        bn_norm(quotient);
+        return remainder;
+    }
+    
+    static uint64_t
+    bn_remainder_uint64(scm_bignum_t numerator, uint64_t denominator)
+    {
+        int numerator_count = bn_get_count(numerator);
+        uint128_t remainder = 0;
+        if (numerator_count & 1) {
+            remainder = numerator->elts[numerator_count - 1] % denominator;
+            numerator_count--;
+        }
+        for (int i = numerator_count - 1; i >= 1; i-=2) {
+            remainder = ((remainder << 64) + ((uint64_t)numerator->elts[i] << 32) + numerator->elts[i - 1]) % denominator;
+        }
+        return remainder;
+    }
+#endif
 
 static int
 bn_cmp(scm_bignum_t lhs, scm_bignum_t rhs)
@@ -1232,6 +1271,89 @@ oprtr_reduce_fixnum_fixnum(object_heap_t* heap, scm_fixnum_t numerator, scm_fixn
 static scm_obj_t
 oprtr_reduce_fixnum_bignum(object_heap_t* heap, scm_fixnum_t numerator, scm_bignum_t denominator)
 {
+    if (numerator == MAKEFIXNUM(0)) return MAKEFIXNUM(0);
+    if (numerator == MAKEFIXNUM(1)) {
+        if (bn_get_sign(denominator) < 0) return make_rational(heap, MAKEFIXNUM(-1), arith_negate(heap, denominator));
+        return make_rational(heap, numerator, denominator);
+    }
+    if (numerator == MAKEFIXNUM(-1)) {
+        if (bn_get_sign(denominator) < 0) return make_rational(heap, MAKEFIXNUM(1), arith_negate(heap, denominator));
+        return make_rational(heap, numerator, denominator);
+    }
+    int ans_sign = 1;
+    intptr_t nume = FIXNUM(numerator);
+    if (nume < 0) {
+        ans_sign = -ans_sign;
+        nume = -nume;
+    }
+    if (bn_get_sign(denominator) < 0) {
+        ans_sign = -ans_sign;
+    }
+#if ARCH_LP64
+    intptr_t n1 = bn_remainder_uint64(denominator, nume);
+#else
+    intptr_t n1 = bn_remainder_uint32(denominator, nume);
+#endif
+    intptr_t n2 = nume;
+    while (n2) { intptr_t t = n2; n2 = n1 % n2; n1 = t; }
+    intptr_t gcd = n1;
+    nume = nume / gcd;
+    if (ans_sign < 0) nume = -nume; 
+    BN_TEMPORARY(quo);
+    int count = bn_get_count(denominator);
+    BN_ALLOC(quo, count);
+    memset(quo.elts, 0, sizeof(uint32_t) * count);
+#if ARCH_LP64
+    bn_div_uint64(&quo, denominator, gcd);
+#else
+    bn_div_uint32(&quo, denominator, gcd);
+#endif
+    bn_set_sign(&quo, 1);
+    return make_rational(heap, intptr_to_integer(heap, nume), bn_to_integer(heap, &quo));
+}
+
+static scm_obj_t
+oprtr_reduce_bignum_fixnum(object_heap_t* heap, scm_bignum_t numerator, scm_fixnum_t denominator)
+{
+    assert(sizeof(intptr_t) == sizeof(int32_t));
+    if (denominator == MAKEFIXNUM(1)) return numerator;
+    if (denominator == MAKEFIXNUM(-1)) return arith_negate(heap, numerator);
+    int ans_sign = 1;
+    intptr_t deno = FIXNUM(denominator);
+    if (bn_get_sign(numerator) < 0) {
+        ans_sign = -ans_sign;
+    }
+    if (deno < 0) {
+        ans_sign = -ans_sign;
+        deno = - deno;
+    }
+#if ARCH_LP64
+    intptr_t n1 = bn_remainder_uint64(numerator, deno);
+#else
+    intptr_t n1 = bn_remainder_uint32(numerator, deno);
+#endif
+    intptr_t n2 = deno;
+    while (n2) { intptr_t t = n2; n2 = n1 % n2; n1 = t; }
+    intptr_t gcd = n1;
+    deno = deno / gcd;
+    BN_TEMPORARY(quo);
+    int count = bn_get_count(numerator);
+    BN_ALLOC(quo, count);
+    memset(quo.elts, 0, sizeof(uint32_t) * count);
+#if ARCH_LP64
+    bn_div_uint64(&quo, numerator, gcd);
+#else
+    bn_div_uint32(&quo, numerator, gcd);
+#endif
+    bn_set_sign(&quo, ans_sign);
+    if (deno == 1) return bn_to_integer(heap, &quo);
+    return make_rational(heap, bn_to_integer(heap, &quo), intptr_to_integer(heap, deno));
+}
+
+/*
+static scm_obj_t
+oprtr_reduce_fixnum_bignum(object_heap_t* heap, scm_fixnum_t numerator, scm_bignum_t denominator)
+{
     assert(sizeof(intptr_t) == sizeof(int32_t));
     if (numerator == MAKEFIXNUM(0)) return MAKEFIXNUM(0);
     if (numerator == MAKEFIXNUM(1)) {
@@ -1294,7 +1416,8 @@ oprtr_reduce_bignum_fixnum(object_heap_t* heap, scm_bignum_t numerator, scm_fixn
     bn_set_sign(&quo, ans_sign);
     if (deno == 1) return bn_to_integer(heap, &quo);
     return make_rational(heap, bn_to_integer(heap, &quo), intptr_to_integer(heap, deno));
-}
+} 
+ */
 
 static scm_obj_t
 oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
