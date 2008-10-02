@@ -532,7 +532,7 @@ bn_copy(scm_bignum_t dst, scm_bignum_t src)
     bn_let(scm_bignum_t dst, scm_fixnum_t src)
     {
         assert(bn_get_count(dst) >= 1);
-        int32_t value = FIXNUM(src);
+        intptr_t value = FIXNUM(src);
         if (value) {
             bn_set_count(dst, 1);
             if (value > 0) {
@@ -943,7 +943,7 @@ bool
 exact_integer_to_int16(scm_obj_t obj, int16_t* ans)
 {
     assert(FIXNUMP(obj));
-    int val = FIXNUM(obj);
+    intptr_t val = FIXNUM(obj);
     if (val >= INT16_MIN && val <= INT16_MAX) {
         *ans = val;
         return true;
@@ -955,7 +955,7 @@ bool
 exact_integer_to_uint16(scm_obj_t obj, uint16_t* ans)
 {
     assert(FIXNUMP(obj));
-    int val = FIXNUM(obj);
+    intptr_t val = FIXNUM(obj);
     if (val >= 0 && val <= UINT16_MAX) {
         *ans = val;
         return true;
@@ -1354,75 +1354,6 @@ oprtr_reduce_bignum_fixnum(object_heap_t* heap, scm_bignum_t numerator, scm_fixn
     return make_rational(heap, bn_to_integer(heap, &quo), intptr_to_integer(heap, deno));
 }
 
-/*
-static scm_obj_t
-oprtr_reduce_fixnum_bignum(object_heap_t* heap, scm_fixnum_t numerator, scm_bignum_t denominator)
-{
-    assert(sizeof(intptr_t) == sizeof(int32_t));
-    if (numerator == MAKEFIXNUM(0)) return MAKEFIXNUM(0);
-    if (numerator == MAKEFIXNUM(1)) {
-        if (bn_get_sign(denominator) < 0) return make_rational(heap, MAKEFIXNUM(-1), arith_negate(heap, denominator));
-        return make_rational(heap, numerator, denominator);
-    }
-    if (numerator == MAKEFIXNUM(-1)) {
-        if (bn_get_sign(denominator) < 0) return make_rational(heap, MAKEFIXNUM(1), arith_negate(heap, denominator));
-        return make_rational(heap, numerator, denominator);
-    }
-    int ans_sign = 1;
-    int32_t nume = FIXNUM(numerator);
-    if (nume < 0) {
-        ans_sign = -ans_sign;
-        nume = -nume;
-    }
-    if (bn_get_sign(denominator) < 0) {
-        ans_sign = -ans_sign;
-    }
-    int32_t n1 = bn_remainder_uint32(denominator, nume);
-    int32_t n2 = nume;
-    while (n2) { intptr_t t = n2; n2 = n1 % n2; n1 = t; }
-    int32_t gcd = n1;
-    nume = nume / gcd;
-    if (ans_sign < 0) nume = -nume; 
-    BN_TEMPORARY(quo);
-    int count = bn_get_count(denominator);
-    BN_ALLOC(quo, count);
-    memset(quo.elts, 0, sizeof(uint32_t) * count);
-    bn_div_uint32(&quo, denominator, gcd);
-    bn_set_sign(&quo, 1);
-    return make_rational(heap, intptr_to_integer(heap, nume), bn_to_integer(heap, &quo));
-}
-
-static scm_obj_t
-oprtr_reduce_bignum_fixnum(object_heap_t* heap, scm_bignum_t numerator, scm_fixnum_t denominator)
-{
-    assert(sizeof(intptr_t) == sizeof(int32_t));
-    if (denominator == MAKEFIXNUM(1)) return numerator;
-    if (denominator == MAKEFIXNUM(-1)) return arith_negate(heap, numerator);
-    int ans_sign = 1;
-    int32_t deno = FIXNUM(denominator);
-    if (bn_get_sign(numerator) < 0) {
-        ans_sign = -ans_sign;
-    }
-    if (deno < 0) {
-        ans_sign = -ans_sign;
-        deno = - deno;
-    }
-    int32_t n1 = bn_remainder_uint32(numerator, deno);
-    int32_t n2 = deno;
-    while (n2) { intptr_t t = n2; n2 = n1 % n2; n1 = t; }
-    int32_t gcd = n1;
-    deno = deno / gcd;
-    BN_TEMPORARY(quo);
-    int count = bn_get_count(numerator);
-    BN_ALLOC(quo, count);
-    memset(quo.elts, 0, sizeof(uint32_t) * count);    
-    bn_div_uint32(&quo, numerator, gcd);
-    bn_set_sign(&quo, ans_sign);
-    if (deno == 1) return bn_to_integer(heap, &quo);
-    return make_rational(heap, bn_to_integer(heap, &quo), intptr_to_integer(heap, deno));
-} 
- */
-
 static scm_obj_t
 oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
 {
@@ -1464,7 +1395,11 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         ans_sign = bn_get_sign((scm_bignum_t)numerator);
     } else {
         BN_ALLOC_FIXNUM(n1);
+#if ARCH_LP64
+        n1_count = 2;
+#else
         n1_count = 1;
+#endif
         bn_let(&n1, (scm_fixnum_t)numerator);
         ans_sign = bn_get_sign(&n1);
     }
@@ -1477,7 +1412,11 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         memcpy(n2.elts, ((scm_bignum_t)denominator)->elts, sizeof(uint32_t) * n2_count);
     } else {
         BN_ALLOC_FIXNUM(n2);
+#if ARCH_LP64
+        n2_count = 2;
+#else
         n2_count = 1;
+#endif
         bn_let(&n2, (scm_fixnum_t)denominator);
         if (bn_get_sign(&n2) == -1) ans_sign = -ans_sign;
     }
@@ -1530,8 +1469,15 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
     if (BIGNUMP(numerator)) {
         memcpy(n1.elts, ((scm_bignum_t)numerator)->elts, sizeof(uint32_t) * n1_count);
     } else {
-        int32_t value = FIXNUM(numerator);
+#if ARCH_LP64
+        intptr_t value = FIXNUM(numerator);
+        if (value < 0) value = -value;
+        n1->elts[0] = value & 0xffffffff;
+        n1->elts[1] = value >> 32;
+#else
+        intptr_t value = FIXNUM(numerator);
         n1.elts[0] = (value > 0) ? value : -value;
+#endif
     }
     
     // denominator-> n2
@@ -1539,8 +1485,15 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
     if (BIGNUMP(denominator)) {
         memcpy(n2.elts, ((scm_bignum_t)denominator)->elts, sizeof(uint32_t) * n2_count);
     } else {
-        int32_t value = FIXNUM(denominator);
+#if ARCH_LP64
+        intptr_t value = FIXNUM(denominator);
+        if (value < 0) value = -value;
+        n2->elts[0] = value & 0xffffffff;
+        n2->elts[1] = value >> 32;
+#else
+        intptr_t value = FIXNUM(denominator);
         n2.elts[0] = (value > 0) ? value : -value;
+#endif
     }
 
     bn_shift_right(&n1, shift);
@@ -2761,7 +2714,7 @@ scm_obj_t
 arith_first_bit_set(object_heap_t* heap, scm_obj_t obj)
 {
     if (FIXNUMP(obj)) {
-        uintptr_t n = FIXNUM(obj);
+        intptr_t n = FIXNUM(obj);
         if (n == 0) return MAKEFIXNUM(-1);
         int bit = 0;
         bit += ntz(n);
@@ -2894,16 +2847,23 @@ scm_obj_t
 arith_logash(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
 {
     assert(FIXNUMP(rhs));
-    int shift = FIXNUM(rhs);
+    intptr_t shift = FIXNUM(rhs);
     if (FIXNUMP(lhs)) {
-        if (sizeof(intptr_t) == 4) {
-            if (shift <= 32) {
-                int64_t n = FIXNUM(lhs);
-                if (shift > 0) n = n << shift;
-                else n = n >> (-shift);
-                if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-            }
+#if ARCH_LP64
+        if (shift <= 64) {
+            int128_t n = FIXNUM(lhs);
+            if (shift > 0) n = n << shift;
+            else n = n >> (-shift);
+            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
         }
+#else
+        if (shift <= 32) {
+            int64_t n = FIXNUM(lhs);
+            if (shift > 0) n = n << shift;
+            else n = n >> (-shift);
+            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
+        }
+#endif
         return oprtr_logash(heap, (scm_bignum_t)intptr_to_bignum(heap, FIXNUM(lhs)), shift);
     }
     if (BIGNUMP(lhs)) {
@@ -3972,7 +3932,7 @@ scm_obj_t
 arith_sqrt(object_heap_t* heap, scm_obj_t obj)
 {
     if (FIXNUMP(obj)) {
-        int value = FIXNUM(obj);
+        intptr_t value = FIXNUM(obj);
         if (value == 0) return MAKEFIXNUM(0);
         if (value > 0) {
             intptr_t iroot = (intptr_t)floor(sqrt((double)value));
@@ -4068,7 +4028,7 @@ arith_exact_integer_sqrt(object_heap_t* heap, scm_obj_t obj)
     exact_integer_sqrt_ans_t ans = { scm_undef, scm_undef };
 
     if (FIXNUMP(obj)) {
-        int value = FIXNUM(obj);
+        intptr_t value = FIXNUM(obj);
         if (value == 0) {
             ans.s = ans.r = MAKEFIXNUM(0);
             return ans;
@@ -4451,7 +4411,7 @@ scm_string_t
 cnvt_fixnum_to_string(object_heap_t* heap, scm_fixnum_t fixnum, int radix)
 {
     char buf[64];
-    int32_t value = FIXNUM(fixnum);
+    intptr_t value = FIXNUM(fixnum);
     if (value) {
         bool negative = false;
         if (value < 0) {
@@ -4702,7 +4662,7 @@ loop:
     mm = eq_mp_mm ? mp : integer_mul10_may_inplace(heap, mm);
     r = integer_mul10_may_inplace(heap, r);
 
-    int dig = '0';
+    intptr_t dig = '0';
     test = n_compare(heap, r, s);
     if (test == 0) {
         dig += 1;
