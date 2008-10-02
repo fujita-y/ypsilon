@@ -594,9 +594,15 @@ subr_num_mul(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 2) {
         if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) {
+#if ARCH_LP64
+            int128_t n128 = (int128_t)FIXNUM(argv[0]) * FIXNUM(argv[1]);
+            if ((n128 >= FIXNUM_MIN) & (n128 <= FIXNUM_MAX)) return MAKEFIXNUM((intptr_t)n128);
+            return int128_to_bignum(vm->m_heap, n128);
+#else
             int64_t n64 = (int64_t)FIXNUM(argv[0]) * FIXNUM(argv[1]);
-            if ((n64 >= FIXNUM_MIN) & (n64 <= FIXNUM_MAX)) return MAKEFIXNUM((int32_t)n64);
+            if ((n64 >= FIXNUM_MIN) & (n64 <= FIXNUM_MAX)) return MAKEFIXNUM((intptr_t)n64);
             return int64_to_bignum(vm->m_heap, n64);
+#endif
         }
         if (BOTHFLONUMP(argv[0], argv[1])) return make_flonum(vm->m_heap, FLONUM(argv[0]) * FLONUM(argv[1]));
         if (number_pred(argv[0])) {
