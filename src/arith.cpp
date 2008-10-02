@@ -358,7 +358,9 @@ bn_remainder_uint32(scm_bignum_t numerator, uint32_t denominator)
         }
         for (int i = numerator_count - 1; i >= 1; i-= 2) {
             remainder = (remainder << 64) + ((uint64_t)numerator->elts[i] << 32) + numerator->elts[i - 1];
-            quotient->elts[i] = remainder / denominator;
+            uint64_t quo = remainder / denominator;
+            quotient->elts[i] = quo >> 32;
+            quotient->elts[i - 1] = quo & 0xffffffff;          
             remainder = remainder % denominator;
         }
         bn_norm(quotient);
@@ -1309,7 +1311,10 @@ oprtr_reduce_fixnum_bignum(object_heap_t* heap, scm_fixnum_t numerator, scm_bign
     bn_div_uint32(&quo, denominator, gcd);
 #endif
     bn_set_sign(&quo, 1);
-    return make_rational(heap, intptr_to_integer(heap, nume), bn_to_integer(heap, &quo));
+    scm_obj_t ans_nume = intptr_to_integer(heap, nume);
+    scm_obj_t ans_deno = bn_to_integer(heap, &quo);
+    if (ans_deno == MAKEFIXNUM(1)) return ans_nume;
+    return make_rational(heap, ans_nume, ans_deno);
 }
 
 static scm_obj_t

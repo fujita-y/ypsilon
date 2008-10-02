@@ -51,6 +51,9 @@ scm_obj_t uint32_to_bignum(object_heap_t* heap, uint32_t value);
 scm_obj_t uint64_to_bignum(object_heap_t* heap, uint64_t value);
 scm_obj_t uint64_to_integer(object_heap_t* heap, uint64_t value);
 scm_obj_t uint32_to_integer(object_heap_t* heap, uint32_t value);
+#if ARCH_LP64
+scm_obj_t int128_to_bignum(object_heap_t* heap, int128_t value);
+#endif
 
 inline scm_obj_t
 int64_to_integer(object_heap_t* heap, int64_t value)
