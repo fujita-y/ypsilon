@@ -1320,7 +1320,6 @@ oprtr_reduce_fixnum_bignum(object_heap_t* heap, scm_fixnum_t numerator, scm_bign
 static scm_obj_t
 oprtr_reduce_bignum_fixnum(object_heap_t* heap, scm_bignum_t numerator, scm_fixnum_t denominator)
 {
-    assert(sizeof(intptr_t) == sizeof(int32_t));
     if (denominator == MAKEFIXNUM(1)) return numerator;
     if (denominator == MAKEFIXNUM(-1)) return arith_negate(heap, numerator);
     int ans_sign = 1;
@@ -2022,7 +2021,15 @@ number_pred(scm_obj_t obj)
 uint32_t
 n_hash(scm_obj_t obj, uint32_t bound)
 {
-    if (FIXNUMP(obj)) return ((uintptr_t)obj * 2654435761U) % bound;
+    if (FIXNUMP(obj)) {
+#if ARCH_LP64
+        uintptr_t n = (uintptr_t)obj;
+        if (n < 0x100000000) return ((uint32_t)n * 2654435761U) % bound;
+        return (n * 2654435761U) % bound;
+#else
+        return ((uintptr_t)obj * 2654435761U) % bound;
+#endif        
+    }
     if (FLONUMP(obj)) {
         scm_flonum_t flonum = (scm_flonum_t)obj;
         assert(sizeof(flonum->value) == 8);
@@ -2031,8 +2038,8 @@ n_hash(scm_obj_t obj, uint32_t bound)
     }
     if (BIGNUMP(obj)) {
         scm_bignum_t bignum = (scm_bignum_t)obj;
-        uint32_t hash = bn_get_sign(bignum);
         int count = bn_get_count(bignum);
+        uint32_t hash = bn_get_sign(bignum) + count * 3;
         for (int i = 0; i < count; i++) hash = hash * 5 + bignum->elts[i];
         return hash % bound;
     }
