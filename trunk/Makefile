@@ -10,7 +10,7 @@ PREFIX 	 = /usr/local
 CPPFLAGS = -DNDEBUG -DDEFAULT_HEAP_LIMIT=32 -DSYSTEM_SHARE_PATH='"$(PREFIX)/share/$(PROG)"'
 #CPPFLAGS = -DDEFAULT_HEAP_LIMIT=32 -DSYSTEM_SHARE_PATH='"$(PREFIX)/share/$(PROG)"'
 
-CXXFLAGS = -x c++ -pthread -msse -mfpmath=sse -O3 -fstrict-aliasing \
+CXXFLAGS = -pipe -x c++ -pthread -msse -mfpmath=sse -O3 -fstrict-aliasing \
 	   -fomit-frame-pointer -momit-leaf-frame-pointer \
 	   -fno-align-labels -fno-align-loops -fno-align-jumps
 
