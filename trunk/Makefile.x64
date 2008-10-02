@@ -59,11 +59,11 @@ all: $(PROG)
 $(PROG): $(OBJS)
 	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
-# VM1.s:
-#	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -fverbose-asm -S src/VM1.cpp
+vm1.s: vm1.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -fverbose-asm -S src/vm1.cpp
 
-VM1.o: VM1.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -c src/VM1.cpp
+vm1.o: vm1.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -c src/vm1.cpp
 
 install: all stdlib sitelib
 	mkdir -pv -m755 $(PREFIX)/bin

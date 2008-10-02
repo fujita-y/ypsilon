@@ -66,8 +66,8 @@ all: $(PROG)
 $(PROG): $(OBJS)
 	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
-# vm1.s:
-#	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -fverbose-asm -S src/vm1.cpp
+vm1.s: vm1.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -fverbose-asm -S src/vm1.cpp
 
 vm1.o: vm1.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -c src/vm1.cpp
