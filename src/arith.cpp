@@ -1472,8 +1472,8 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
 #if ARCH_LP64
         intptr_t value = FIXNUM(numerator);
         if (value < 0) value = -value;
-        n1->elts[0] = value & 0xffffffff;
-        n1->elts[1] = value >> 32;
+        n1.elts[0] = value & 0xffffffff;
+        n1.elts[1] = value >> 32;
 #else
         intptr_t value = FIXNUM(numerator);
         n1.elts[0] = (value > 0) ? value : -value;
@@ -1488,8 +1488,8 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
 #if ARCH_LP64
         intptr_t value = FIXNUM(denominator);
         if (value < 0) value = -value;
-        n2->elts[0] = value & 0xffffffff;
-        n2->elts[1] = value >> 32;
+        n2.elts[0] = value & 0xffffffff;
+        n2.elts[1] = value >> 32;
 #else
         intptr_t value = FIXNUM(denominator);
         n2.elts[0] = (value > 0) ? value : -value;
