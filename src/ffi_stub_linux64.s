@@ -30,7 +30,7 @@ c_func_stub_double_x64:
     movq    %rsp, %rbp
 
 # stack arguments
-    leaq    15(,%rsi,4), %rax   
+    leaq    15(,%rsi,8), %rax   
     andq    $-16, %rax  
     subq    %rax, %rsp          # align to 16 byte
     movq    $0, %r10            # i = 0
@@ -64,7 +64,9 @@ done:
     movq    104(%r10), %r9
 
     call    *%r11
-    leave
+    
+    movq    %rbp, %rsp
+    popq    %rbp
     ret
 
 .section .note.GNU-stack,"",%progbits
