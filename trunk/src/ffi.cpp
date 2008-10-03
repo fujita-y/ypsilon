@@ -10,166 +10,175 @@
 #include "hash.h"
 #include "arith.h"
 
-const char*
-c_stack_frame_ia32_t::push(scm_obj_t obj)
-{
-    if (m_count < array_sizeof(m_frame)) {
-        if (FIXNUMP(obj) || BIGNUMP(obj)) {
-            if (n_positive_pred(obj)) {
-                uintptr_t value;
-                if (exact_integer_to_uintptr(obj, &value)) {
-                    m_frame[m_count++] = value;
-                    return NULL;
-                }
-                return "exact integer between 0 and UINTPTR_MAX";
-            } else {
-                intptr_t value;
-                if (exact_integer_to_intptr(obj, &value)) {
-                    m_frame[m_count++] = value;
-                    return NULL;
-                }
-                return "exact integer between INTPTR_MIN and INTPTR_MAX";
-            }
-        }
-        if (BVECTORP(obj)) {
-            scm_bvector_t bvector = (scm_bvector_t)obj;
-            m_frame[m_count++] = (intptr_t)bvector->elts;
-            return NULL;
-        }
-        if (VECTORP(obj)) {
-            scm_vector_t vector = (scm_vector_t)obj;
-            int n = vector->count;
-            if (n == 0) return "nonempty vector";
-            assert(n);
-            if (!FIXNUMP(vector->elts[0])) return "vector contains fixnum in first element";
-            int ref = FIXNUM(vector->elts[0]);
-            scm_bvector_t bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t) * (n - 1));
-            for (int i = 0; i < n - 1; i++) {
-                if (BVECTORP(vector->elts[i + 1])) {
-                    *(uint8_t**)(bvector->elts + sizeof(intptr_t) * i) = ((scm_bvector_t)vector->elts[i + 1])->elts;
-                } else {
-                    return "vector of bytevector";
-                }
-            }
-            while (ref) {
-                intptr_t datum = (intptr_t)bvector->elts;
-                bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t));
-                *(intptr_t*)(bvector->elts) = datum;
-                ref--;
-            }
-            m_frame[m_count++] = (intptr_t)bvector->elts;
-            return NULL;
-        }
-        if (FLONUMP(obj)) {
-            union {
-                double f64;
-                struct {
-                    uint32_t lo;
-                    uint32_t hi;
-                } u32;
-            } n;
-            scm_flonum_t flonum = (scm_flonum_t)obj;
-            n.f64 = flonum->value;
-            m_frame[m_count++] = n.u32.lo;
-            m_frame[m_count++] = n.u32.hi;
-            return NULL;
-        }
-        return "exact integer";
-    }
-    return "internal error: c function stack frame overflow";
-}
+#if ARCH_IA32
 
-const char*
-c_stack_frame_x64_t::push(scm_obj_t obj)
-{
-    if (m_count < array_sizeof(m_frame) - array_sizeof(m_reg) - array_sizeof(m_sse)) {
-        if (FIXNUMP(obj) || BIGNUMP(obj)) {
-            if (n_positive_pred(obj)) {
-                uintptr_t value;
-                if (exact_integer_to_uintptr(obj, &value)) {
-                    if (m_reg_count < array_sizeof(m_reg)) {
-                        m_reg[m_reg_count++] = value;
-                    } else {
+    const char*
+    c_stack_frame_t::push(scm_obj_t obj)
+    {
+        if (m_count < array_sizeof(m_frame)) {
+            if (FIXNUMP(obj) || BIGNUMP(obj)) {
+                if (n_positive_pred(obj)) {
+                    uintptr_t value;
+                    if (exact_integer_to_uintptr(obj, &value)) {
                         m_frame[m_count++] = value;
+                        return NULL;
                     }
-                    return NULL;
-                }
-                return "exact integer between 0 and UINTPTR_MAX";
-            } else {
-                intptr_t value;
-                if (exact_integer_to_intptr(obj, &value)) {
-                    if (m_reg_count < array_sizeof(m_reg)) {
-                        m_reg[m_reg_count++] = value;
-                    } else {
-                        m_frame[m_count++] = value;
-                    }
-                    return NULL;
-                }
-                return "exact integer between INTPTR_MIN and INTPTR_MAX";
-            }
-        }
-        if (BVECTORP(obj)) {
-            scm_bvector_t bvector = (scm_bvector_t)obj;
-            if (m_reg_count < array_sizeof(m_reg)) {
-                m_reg[m_reg_count++] = (intptr_t)bvector->elts;
-            } else {
-                m_frame[m_count++] = (intptr_t)bvector->elts;
-            }
-            return NULL;
-        }
-        if (VECTORP(obj)) {
-            scm_vector_t vector = (scm_vector_t)obj;
-            int n = vector->count;
-            if (n == 0) return "nonempty vector";
-            assert(n);
-            if (!FIXNUMP(vector->elts[0])) return "vector contains fixnum in first element";
-            int ref = FIXNUM(vector->elts[0]);
-            scm_bvector_t bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t) * (n - 1));
-            for (int i = 0; i < n - 1; i++) {
-                if (BVECTORP(vector->elts[i + 1])) {
-                    *(uint8_t**)(bvector->elts + sizeof(intptr_t) * i) = ((scm_bvector_t)vector->elts[i + 1])->elts;
+                    return "exact integer between 0 and UINTPTR_MAX";
                 } else {
-                    return "vector of bytevector";
+                    intptr_t value;
+                    if (exact_integer_to_intptr(obj, &value)) {
+                        m_frame[m_count++] = value;
+                        return NULL;
+                    }
+                    return "exact integer between INTPTR_MIN and INTPTR_MAX";
                 }
             }
-            while (ref) {
-                intptr_t datum = (intptr_t)bvector->elts;
-                bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t));
-                *(intptr_t*)(bvector->elts) = datum;
-                ref--;
-            }
-            if (m_reg_count < array_sizeof(m_reg)) {
-                m_reg[m_reg_count++] = (intptr_t)bvector->elts;
-            } else {
+            if (BVECTORP(obj)) {
+                scm_bvector_t bvector = (scm_bvector_t)obj;
                 m_frame[m_count++] = (intptr_t)bvector->elts;
+                return NULL;
             }
-            return NULL;
-        }
-        if (FLONUMP(obj)) {
-            union {
-                double f64;
-                uint64_t u64;
-            } n;
-            scm_flonum_t flonum = (scm_flonum_t)obj;
-            n.f64 = flonum->value;
-            if (m_sse_count < array_sizeof(m_sse)) {
-                m_sse[m_sse_count++] = n.u64;
-            } else {
-                m_frame[m_count++] = n.u64;
+            if (VECTORP(obj)) {
+                scm_vector_t vector = (scm_vector_t)obj;
+                int n = vector->count;
+                if (n == 0) return "nonempty vector";
+                assert(n);
+                if (!FIXNUMP(vector->elts[0])) return "vector contains fixnum in first element";
+                int ref = FIXNUM(vector->elts[0]);
+                scm_bvector_t bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t) * (n - 1));
+                for (int i = 0; i < n - 1; i++) {
+                    if (BVECTORP(vector->elts[i + 1])) {
+                        *(uint8_t**)(bvector->elts + sizeof(intptr_t) * i) = ((scm_bvector_t)vector->elts[i + 1])->elts;
+                    } else {
+                        return "vector of bytevector";
+                    }
+                }
+                while (ref) {
+                    intptr_t datum = (intptr_t)bvector->elts;
+                    bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t));
+                    *(intptr_t*)(bvector->elts) = datum;
+                    ref--;
+                }
+                m_frame[m_count++] = (intptr_t)bvector->elts;
+                return NULL;
             }
-            return NULL;
+            if (FLONUMP(obj)) {
+                union {
+                    double f64;
+                    struct {
+                        uint32_t lo;
+                        uint32_t hi;
+                    } u32;
+                } n;
+                scm_flonum_t flonum = (scm_flonum_t)obj;
+                n.f64 = flonum->value;
+                m_frame[m_count++] = n.u32.lo;
+                m_frame[m_count++] = n.u32.hi;
+                return NULL;
+            }
+            return "exact integer";
         }
-        return "exact integer";
+        return "internal error: c function stack frame overflow";
     }
-    return "internal error: c function stack frame overflow";
-}
-
-void
-c_stack_frame_x64_t::compose()
-{
-    for (int i = 0; i < array_sizeof(m_sse); i++) m_frame[m_count++] = m_sse[i];
-    for (int i = 0; i < array_sizeof(m_reg); i++) m_frame[m_count++] = m_reg[i];
-}
+    
+#endif
+    
+#if ARCH_X64
+    
+    const char*
+    c_stack_frame_t::push(scm_obj_t obj)
+    {
+        if (m_count < array_sizeof(m_frame) - array_sizeof(m_reg) - array_sizeof(m_sse)) {
+            if (FIXNUMP(obj) || BIGNUMP(obj)) {
+                if (n_positive_pred(obj)) {
+                    uintptr_t value;
+                    if (exact_integer_to_uintptr(obj, &value)) {
+                        if (m_reg_count < array_sizeof(m_reg)) {
+                            m_reg[m_reg_count++] = value;
+                        } else {
+                            m_frame[m_count++] = value;
+                        }
+                        return NULL;
+                    }
+                    return "exact integer between 0 and UINTPTR_MAX";
+                } else {
+                    intptr_t value;
+                    if (exact_integer_to_intptr(obj, &value)) {
+                        if (m_reg_count < array_sizeof(m_reg)) {
+                            m_reg[m_reg_count++] = value;
+                        } else {
+                            m_frame[m_count++] = value;
+                        }
+                        return NULL;
+                    }
+                    return "exact integer between INTPTR_MIN and INTPTR_MAX";
+                }
+            }
+            if (BVECTORP(obj)) {
+                scm_bvector_t bvector = (scm_bvector_t)obj;
+                if (m_reg_count < array_sizeof(m_reg)) {
+                    m_reg[m_reg_count++] = (intptr_t)bvector->elts;
+                } else {
+                    m_frame[m_count++] = (intptr_t)bvector->elts;
+                }
+                return NULL;
+            }
+            if (VECTORP(obj)) {
+                scm_vector_t vector = (scm_vector_t)obj;
+                int n = vector->count;
+                if (n == 0) return "nonempty vector";
+                assert(n);
+                if (!FIXNUMP(vector->elts[0])) return "vector contains fixnum in first element";
+                int ref = FIXNUM(vector->elts[0]);
+                scm_bvector_t bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t) * (n - 1));
+                for (int i = 0; i < n - 1; i++) {
+                    if (BVECTORP(vector->elts[i + 1])) {
+                        *(uint8_t**)(bvector->elts + sizeof(intptr_t) * i) = ((scm_bvector_t)vector->elts[i + 1])->elts;
+                    } else {
+                        return "vector of bytevector";
+                    }
+                }
+                while (ref) {
+                    intptr_t datum = (intptr_t)bvector->elts;
+                    bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t));
+                    *(intptr_t*)(bvector->elts) = datum;
+                    ref--;
+                }
+                if (m_reg_count < array_sizeof(m_reg)) {
+                    m_reg[m_reg_count++] = (intptr_t)bvector->elts;
+                } else {
+                    m_frame[m_count++] = (intptr_t)bvector->elts;
+                }
+                return NULL;
+            }
+            if (FLONUMP(obj)) {
+                union {
+                    double f64;
+                    uint64_t u64;
+                } n;
+                scm_flonum_t flonum = (scm_flonum_t)obj;
+                n.f64 = flonum->value;
+                if (m_sse_count < array_sizeof(m_sse)) {
+                    m_sse[m_sse_count++] = n.u64;
+                } else {
+                    m_frame[m_count++] = n.u64;
+                }
+                return NULL;
+            }
+            return "exact integer";
+        }
+        return "internal error: c function stack frame overflow";
+    }
+    
+    void
+    c_stack_frame_t::compose()
+    {
+        int dst = m_count;
+        for (int i = 0; i < array_sizeof(m_sse); i++) m_frame[dst++] = m_sse[i];
+        for (int i = 0; i < array_sizeof(m_reg); i++) m_frame[dst++] = m_reg[i];
+    }
+    
+#endif
 
 #if _MSC_VER
 
