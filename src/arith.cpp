@@ -4029,27 +4029,42 @@ arith_exact_integer_sqrt(object_heap_t* heap, scm_obj_t obj)
 
     if (FIXNUMP(obj)) {
         intptr_t value = FIXNUM(obj);
+        assert(value >= 0);
         if (value == 0) {
             ans.s = ans.r = MAKEFIXNUM(0);
             return ans;
         }
-        if (value > 0) {
+#if ARCH_LP64
+        if (value < iexpt_2n53) {
             intptr_t iroot = (intptr_t)floor(sqrt((double)value));
             ans.s = MAKEFIXNUM(iroot);
             ans.r = MAKEFIXNUM(value - iroot * iroot);
             return ans;
         }
-        assert(false);
+        BN_TEMPORARY(workpad);
+        BN_ALLOC_FIXNUM(workpad);
+        bn_let(&workpad, (scm_fixnum_t)obj);
+        bn_set_sign(&workpad, 1);
+        bn_sqrt(heap, &workpad);
+        ans.s = bn_to_integer(heap, &workpad);
+        ans.r = arith_sub(heap, obj, arith_mul(heap, ans.s, ans.s));
+        return ans;
+#else
+        intptr_t iroot = (intptr_t)floor(sqrt((double)value));
+        ans.s = MAKEFIXNUM(iroot);
+        ans.r = MAKEFIXNUM(value - iroot * iroot);
+        return ans;
+#endif        
     }
     if (BIGNUMP(obj)) {
         scm_bignum_t bn = (scm_bignum_t)obj;
+        assert(bn_get_sign(bn) == 1);
         int count = bn_get_count(bn);
         BN_TEMPORARY(workpad);
         BN_ALLOC(workpad, count);
         bn_set_sign(&workpad, 1);
         memcpy(workpad.elts, bn->elts, sizeof(uint32_t) * count);
         bn_sqrt(heap, &workpad);
-        assert(bn_get_sign(bn) == 1);
         ans.s = bn_to_integer(heap, &workpad);
         ans.r = arith_sub(heap, obj, arith_mul(heap, ans.s, ans.s));
         return ans;

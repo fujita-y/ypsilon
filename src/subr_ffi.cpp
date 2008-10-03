@@ -76,7 +76,8 @@ subr_call_shared_object_void(VM* vm, int argc, scm_obj_t argv[])
             return scm_undef;
         }
         if (argc - 1 <= FFI_MAX_ARGC) {
-            c_stack_frame_t stack(vm);
+#if ARCH_IA32            
+            c_stack_frame_ia32_t stack(vm);
             for (int i = 1; i < argc; i++) {
                 const char* err = stack.push(argv[i]);
                 if (err) {
@@ -86,6 +87,21 @@ subr_call_shared_object_void(VM* vm, int argc, scm_obj_t argv[])
             }
             c_func_stub_intptr(func, stack.m_count, stack.m_frame);
             return scm_unspecified;
+#elif ARCH_X64
+            c_stack_frame_x64_t stack(vm);
+            for (int i = 1; i < argc; i++) {
+                const char* err = stack.push(argv[i]);
+                if (err) {
+                    wrong_type_argument_violation(vm, "call-shared-object->void", i, err, argv[i], argc, argv);
+                    return scm_undef;
+                }
+            }
+            stack.compose();
+            c_func_stub_intptr_x64(func, stack.m_count, stack.m_sse_count, stack.m_frame);
+            return scm_unspecified;
+#else
+            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+#endif            
         }
         invalid_argument_violation(vm, "call-shared-object->void", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
@@ -111,7 +127,8 @@ subr_call_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
             return scm_undef;
         }
         if (argc - 1 <= FFI_MAX_ARGC) {
-            c_stack_frame_t stack(vm);
+#if ARCH_IA32
+            c_stack_frame_ia32_t stack(vm);
             for (int i = 1; i < argc; i++) {
                 const char* err = stack.push(argv[i]);
                 if (err) {
@@ -120,6 +137,20 @@ subr_call_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
                 }
             }
             return int_to_integer(vm->m_heap, c_func_stub_intptr(func, stack.m_count, stack.m_frame));
+#elif ARCH_X64
+            c_stack_frame_x64_t stack(vm);
+            for (int i = 1; i < argc; i++) {
+                const char* err = stack.push(argv[i]);
+                if (err) {
+                    wrong_type_argument_violation(vm, "call-shared-object->int", i, err, argv[i], argc, argv);
+                    return scm_undef;
+                }
+            }
+            stack.compose();
+            return int_to_integer(vm->m_heap, c_func_stub_intptr_x64(func, stack.m_count, stack.m_sse_count, stack.m_frame));
+#else
+            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+#endif            
         }
         invalid_argument_violation(vm, "call-shared-object->int", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
@@ -145,7 +176,8 @@ subr_call_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
             return scm_undef;
         }
         if (argc - 1 <= FFI_MAX_ARGC) {
-            c_stack_frame_t stack(vm);
+#if ARCH_IA32
+            c_stack_frame_ia32_t stack(vm);
             for (int i = 1; i < argc; i++) {
                 const char* err = stack.push(argv[i]);
                 if (err) {
@@ -154,6 +186,20 @@ subr_call_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
                 }
             }
             return make_flonum(vm->m_heap, c_func_stub_double(func, stack.m_count, stack.m_frame));
+#elif ARCH_X64
+            c_stack_frame_x64_t stack(vm);
+            for (int i = 1; i < argc; i++) {
+                const char* err = stack.push(argv[i]);
+                if (err) {
+                    wrong_type_argument_violation(vm, "call-shared-object->double", i, err, argv[i], argc, argv);
+                    return scm_undef;
+                }
+            }
+            stack.compose();
+            return make_flonum(vm->m_heap, c_func_stub_double_x64(func, stack.m_count, stack.m_sse_count, stack.m_frame));
+#else
+            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+#endif            
         }
         invalid_argument_violation(vm, "call-shared-object->double", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
@@ -179,7 +225,8 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
             return scm_undef;
         }
         if (argc - 1 <= FFI_MAX_ARGC) {
-            c_stack_frame_t stack(vm);
+#if ARCH_IA32
+            c_stack_frame_ia32_t stack(vm);
             for (int i = 1; i < argc; i++) {
                 const char* err = stack.push(argv[i]);
                 if (err) {
@@ -189,6 +236,21 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
             }
             intptr_t value = c_func_stub_intptr(func, stack.m_count, stack.m_frame);
             return intptr_to_integer(vm->m_heap, value);
+#elif ARCH_X64
+            c_stack_frame_x64_t stack(vm);
+            for (int i = 1; i < argc; i++) {
+                const char* err = stack.push(argv[i]);
+                if (err) {
+                    wrong_type_argument_violation(vm, "call-shared-object->void*", i, err, argv[i], argc, argv);
+                    return scm_undef;
+                }
+            }
+            stack.compose();
+            intptr_t value = c_func_stub_intptr_x64(func, stack.m_count, stack.m_sse_count, stack.m_frame);
+            return intptr_to_integer(vm->m_heap, value);
+#else
+            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+#endif            
         }
         invalid_argument_violation(vm, "call-shared-object->void*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
@@ -214,7 +276,8 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
             return scm_undef;
         }
         if (argc - 1 <= FFI_MAX_ARGC) {
-            c_stack_frame_t stack(vm);
+#if ARCH_IA32
+            c_stack_frame_ia32_t stack(vm);
             for (int i = 1; i < argc; i++) {
                 const char* err = stack.push(argv[i]);
                 if (err) {
@@ -227,6 +290,24 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
             int n = 0;
             while (p[n]) n++;
             return make_bvector_mapping(vm->m_heap, p, n);
+#elif ARCH_X64
+            c_stack_frame_x64_t stack(vm);
+            for (int i = 1; i < argc; i++) {
+                const char* err = stack.push(argv[i]);
+                if (err) {
+                    wrong_type_argument_violation(vm, "call-shared-object->char*", i, err, argv[i], argc, argv);
+                    return scm_undef;
+                }
+            }
+            stack.compose();
+            uint8_t* p = (uint8_t*)c_func_stub_intptr_x64(func, stack.m_count, stack.m_sse_count, stack.m_frame);
+            if (p == NULL) return scm_false;
+            int n = 0;
+            while (p[n]) n++;
+            return make_bvector_mapping(vm->m_heap, p, n);
+#else
+            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+#endif            
         }
         invalid_argument_violation(vm, "call-shared-object->char*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
@@ -254,7 +335,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_t stack(vm);
+                c_stack_frame_ia32_t stack(vm);
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
@@ -289,7 +370,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_t stack(vm);
+                c_stack_frame_ia32_t stack(vm);
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
@@ -323,7 +404,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_t stack(vm);
+                c_stack_frame_ia32_t stack(vm);
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
@@ -357,7 +438,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_t stack(vm);
+                c_stack_frame_ia32_t stack(vm);
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
@@ -392,7 +473,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_t stack(vm);
+                c_stack_frame_ia32_t stack(vm);
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
