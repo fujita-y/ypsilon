@@ -37,6 +37,7 @@ scm_subr_t          make_subr(object_heap_t* heap, subr_proc_t adrs, scm_obj_t d
 scm_closure_t       make_closure(object_heap_t* heap, int nargs, int rest, void* env, scm_obj_t code, scm_obj_t doc);
 scm_closure_t       make_closure(object_heap_t* heap, scm_closure_t tmpl, void* env);
 scm_flonum_t        make_flonum(object_heap_t* heap, double num);
+scm_flonum_t        make_flonum_32bit(object_heap_t* heap, double num);
 scm_bignum_t        make_bignum(object_heap_t* heap, int n);
 scm_bignum_t        make_bignum(object_heap_t* heap, scm_bignum_t bn);
 scm_complex_t       make_complex(object_heap_t* heap, double real, double imag);

@@ -522,6 +522,15 @@ make_flonum(object_heap_t* heap, double num)
     return obj;
 }
 
+scm_flonum_t        
+make_flonum_32bit(object_heap_t* heap, double num)
+{
+    scm_flonum_t obj = heap->allocate_flonum();
+    obj->hdr = scm_hdr_flonum  | MAKEBITS(1, HDR_FLONUM_32BIT_SHIFT);
+    obj->value = num;
+    return obj;
+}
+
 scm_bignum_t
 make_bignum(object_heap_t* heap, scm_bignum_t bn)
 {

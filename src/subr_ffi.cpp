@@ -473,7 +473,7 @@ subr_make_callback(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_flonum_to_float(VM* vm, int argc, scm_obj_t argv[])
 {
-    assert(sizeof(intptr_t) == sizeof(float));
+#if ARCH_IA32
     if (argc == 1) {
         if (FLONUMP(argv[0])) {
             union {
@@ -489,6 +489,20 @@ subr_flonum_to_float(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "flonum->float", 1, 1, argc, argv);
     return scm_undef;
+#elif ARCH_X86
+    if (argc == 1) {
+        if (FLONUMP(argv[0])) {
+            scm_flonum_t flonum = (scm_flonum_t)argv[0];
+            return make_flonum_32bit(vm->m_heap, flonum->value);
+        }
+        wrong_type_argument_violation(vm, "flonum->float", 1, "flonum", argv[1], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "flonum->float", 1, 1, argc, argv);
+    return scm_undef;
+#else
+    fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+#endif
 }
 
 void init_subr_ffi(object_heap_t* heap)

@@ -36,15 +36,15 @@
 
     boxed:
 
-    nnnn nnnn nnnn .... ...U 0000 *tc4 1010 : scm_hdr_symbol        U: uninterned
-    nnnn nnnn nnnn OOOO OOOO I000 *tc4 1010 : scm_hdr_symbol        I: inherent O: S-code
+    nnnn nnnn nnnn 0000 000U 0000 *tc4 1010 : scm_hdr_symbol        U: uninterned
+    nnnn nnnn nnnn SSSS SSSS I000 *tc4 1010 : scm_hdr_symbol        I: inherent S: symbol code
     .... .... .... .... TTTT L000 *tc4 1010 : scm_hdr_string        L: literal T: (0x0 unknown) (0x1 ascii) (0x2 utf8)
     nnnn nnnn nnnn nnnn nnnN Z000 *tc4 1010 : scm_hdr_bignum        NZ: (01 positive) (11 negative) (00 zero)
-    .... .... .... .... .... .000 *tc4 1010 : scm_hdr_flonum
+    .... .... .... .... .... P000 *tc4 1010 : scm_hdr_flonum        P: precision (0 64bit) (1 32bit)
     .... .... .... .... .... .000 *tc4 1010 : scm_hdr_cont
     nnnn nnnn nnnn nnnn .... .000 *tc4 1010 : scm_hdr_closure       if has rest arguments then n == (- 1 - <required argc>)
     .... .... .... .... .... .000 *tc4 1010 : scm_hdr_subr
-    nnnn nnnn nnnn nnnn nnnn .000 *tc4 1010 : scm_hdr_vector
+    .... .... .... .... .... .000 *tc4 1010 : scm_hdr_vector
     .... .... .... .... .... .000 *tc4 1010 : scm_hdr_port
     nnnn nnnn nnnn nnnn nnnn .000 *tc4 1010 : scm_hdr_values
     nnnn nnnn nnnn nnnn nnnn I000 *tc4 1010 : scm_hdr_hashtable     I: immutable
@@ -471,6 +471,7 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_BIGNUM_SIGN_SHIFT               11
 #define HDR_BIGNUM_COUNT_SHIFT              (HDR_BIGNUM_SIGN_SHIFT + 2)
 #define HDR_CLOSURE_ARGS_SHIFT              16
+#define HDR_FLONUM_32BIT_SHIFT              11
 
 #define HDR_TC(hdr)                         (((hdr) >> 4) & TC_MASKBITS)
 #define HDR_CLOSURE_ARGS(hdr)               (((intptr_t)(hdr)) >> HDR_CLOSURE_ARGS_SHIFT)
@@ -487,6 +488,7 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_HASHTABLE_IMMUTABLE(hdr)        (((hdr) >> HDR_HASHTABLE_IMMUTABLE_SHIFT) & 0x01)
 #define HDR_WEAKHASHTABLE_IMMUTABLE(hdr)    (((hdr) >> HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT) & 0x01)
 #define HDR_BIGNUM_SIGN(hdr)                (((hdr) >> HDR_BIGNUM_SIGN_SHIFT) & 0x03)
+#define HDR_FLONUM_32BIT(hdr)               (((hdr) >> HDR_FLONUM_32BIT_SHIFT) & 0x01)
 
 #define HDR_SYMBOL_INHERENT_BIT             ((uintptr_t)1 << HDR_SYMBOL_INHERENT_SHIFT)
 #define HDR_SYMBOL_UNINTERNED_BIT           ((uintptr_t)1 << HDR_SYMBOL_UNINTERNED_SHIFT)
