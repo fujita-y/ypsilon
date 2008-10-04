@@ -153,15 +153,29 @@
             }
             if (FLONUMP(obj)) {
                 union {
-                    double f64;
-                    uint64_t u64;
+                    double      f64;
+                    float       f32;
+                    uint64_t    u64;
                 } n;
                 scm_flonum_t flonum = (scm_flonum_t)obj;
-                n.f64 = flonum->value;
-                if (m_sse_count < array_sizeof(m_sse)) {
-                    m_sse[m_sse_count++] = n.u64;
+                if (HDR_FLONUM_32BIT(flonum->hdr)) {
+                    if (m_sse_count < array_sizeof(m_sse)) {
+                        n.f64 = flonum->value;
+                        m_pre[m_sse_count] = 1;
+                        m_sse[m_sse_count] = n.u64;
+                        m_sse_count++;
+                    } else {
+                        n.u64 = 0;
+                        n.f32 = flonum->value;
+                        m_frame[m_count++] = n.u64;
+                    }                    
                 } else {
-                    m_frame[m_count++] = n.u64;
+                    n.f64 = flonum->value;
+                    if (m_sse_count < array_sizeof(m_sse)) {
+                        m_sse[m_sse_count++] = n.u64;
+                    } else {
+                        m_frame[m_count++] = n.u64;
+                    }
                 }
                 return NULL;
             }
