@@ -76,7 +76,7 @@
 
     .globl  c_func_stub_intptr
     .globl  c_func_stub_double
-    .globl  c_callback_stub_int
+    .globl  c_callback_stub_intptr
 
 c_func_stub_intptr:
 c_func_stub_double:
@@ -85,8 +85,8 @@ c_func_stub_double:
     movl    %esp, %ebp
 
     subl    $8, %esp
-    movl    %esi, (%esp)
-    movl    %edi, 4(%esp)
+    movl    %edi, -8(%ebp)
+    movl    %esi, -4(%ebp)
 
     movl    8(%ebp), %eax       # adrs
     movl    12(%ebp), %ecx      # argc
@@ -100,25 +100,22 @@ c_func_stub_double:
     movl    %esp, %edi
     rep movsb
 
-    movl    %edx, %edi
     call    *%eax
-    movl    %edi, %esp
 
-    movl    (%esp), %esi
-    movl    4(%esp), %edi
-
+    movl    -8(%ebp), %edi
+    movl    -4(%ebp), %esi
     movl    %ebp, %esp
     popl    %ebp
     ret
 
     .align  4,0x90
 
-c_callback_stub_int:
+c_callback_stub_intptr:
 
     pushl   %ebp
     movl    %esp, %ebp
 
-    subl    $40, %esp
+    subl    $24, %esp           # 16 + 8
 
     movl    (%ecx), %eax        # uid
     movl    %eax, (%esp)
@@ -129,7 +126,7 @@ c_callback_stub_int:
     leal    8(%ebp), %eax       # base
     movl    %eax, 8(%esp)
 
-    call    c_callback_int
+    call    c_callback_intptr
 
     movl    %ebp, %esp
     popl    %ebp

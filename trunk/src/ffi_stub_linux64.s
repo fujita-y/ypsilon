@@ -22,6 +22,7 @@
 
     .globl  c_func_stub_intptr_x64
     .globl  c_func_stub_double_x64
+    .globl  c_callback_stub_intptr_x64
 
 c_func_stub_intptr_x64:
 c_func_stub_double_x64:
@@ -69,4 +70,29 @@ done:
     popq    %rbp
     ret
 
+c_callback_stub_intptr_x64:
+    pushq   %rbp
+    movq    %rsp, %rbp
+    subq    $48, %rsp
+    movq    %rdi, (%rsp)
+    movq    %rsi, 8(%rsp)
+    movq    %rdx, 16(%rsp)
+    movq    %rcx, 24(%rsp)
+    movq    %r8, 32(%rsp)
+    movq    %r9, 40(%rsp)
+
+    movq    (%r10), %rdi        # uid
+    movq    8(%r10), %rsi       # argc
+    movq    %rsp, %rdx          # reg
+    leaq    16(%rbp), %rcx      # stack
+
+    call    c_callback_intptr_x64
+
+    movq    %rbp, %rsp
+    popq    %rbp
+    ret
+
 .section .note.GNU-stack,"",%progbits
+
+
+

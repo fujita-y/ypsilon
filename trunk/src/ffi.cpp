@@ -458,7 +458,7 @@
         MEM_STORE_FENCE;
     }
 
-    int c_callback_int(uint32_t uid, uint32_t argc, uint32_t* base)
+    intptr_t c_callback_intptr(intptr_t uid, intptr_t argc, intptr_t* stack)
     {
         scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
         assert(CLOSUREP(obj));
@@ -466,7 +466,7 @@
         try {
             VM* vm = current_vm();
             scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
-            for (int i = 0; i < argc; i++) argv[i] = intptr_to_integer(vm->m_heap, base[i]);
+            for (int i = 0; i < argc; i++) argv[i] = intptr_to_integer(vm->m_heap, stack[i]);
             result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
         } catch (vm_exit_t& e) {
             exit(e.m_code);
@@ -485,7 +485,7 @@
     scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure)
     {
         static intptr_t uid;
-        trampoline_t* thunk = new trampoline_t((intptr_t)c_callback_stub_int, uid, argc);
+        trampoline_t* thunk = new trampoline_t((intptr_t)c_callback_stub_intptr, uid, argc);
         vm->m_heap->write_barrier(closure);
         int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);
         if (nsize) rehash_hashtable(vm->m_heap, vm->m_heap->m_trampolines, nsize);
@@ -496,27 +496,109 @@
 
 #elif ARCH_X64
 
-    int c_callback_int(uint32_t uid, uint32_t argc, uint32_t* base)
+    struct trampoline_t {
+        
+        uint8_t     mov_r10_imm64[2];   // 49 BA                    : mov r10, imm64
+        uint64_t    imm64_uid;          // 00 00 00 00 00 00 00 00
+        uint8_t     mov_r11_imm64[2];   // 49 BB                    : mov r11, imm64
+        uint64_t    imm64_stub;         // 00 00 00 00 00 00 00 00
+        uint8_t     jmp_r11[3];         // 41 FF 23                 : jmp [r11]
+        uint8_t     ud2[2];             // 0F 0B
+        
+        intptr_t    m_stub;
+        uint64_t    m_uid;
+        uint64_t    m_argc;
+
+        static uint8_t* s_pool;
+        static uint8_t* s_pool_limit;
+        static int s_pool_alloc_size;
+
+        void* operator new(size_t size);
+        trampoline_t(intptr_t stub, intptr_t uid, int argc);
+
+    } __attribute__((packed));
+
+    uint8_t* trampoline_t::s_pool;
+    uint8_t* trampoline_t::s_pool_limit;
+    int trampoline_t::s_pool_alloc_size;
+
+    void* trampoline_t::operator new(size_t size)
     {
-        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+        if (s_pool == NULL) {
+            s_pool_alloc_size = getpagesize();
+        }
+        assert(size < s_pool_alloc_size);
+        if (s_pool + size > s_pool_limit) {
+            s_pool = (uint8_t*)valloc(s_pool_alloc_size);
+            if (mprotect(s_pool, s_pool_alloc_size, PROT_READ | PROT_WRITE |PROT_EXEC)) {
+                fatal("%s:%u mprotect failed %d", __FILE__, __LINE__, errno);
+            }
+            s_pool_limit = s_pool + s_pool_alloc_size;
+        }
+        void* p = s_pool;
+        s_pool += size;
+        return p;
+    }
+
+    trampoline_t::trampoline_t(intptr_t stub, intptr_t uid, int argc)
+    {
+        m_stub = stub;
+        m_uid = uid;
+        m_argc = argc;
+        mov_r10_imm64[0] = 0x49;
+        mov_r10_imm64[1] = 0xBA;
+        imm64_uid = (uint64_t)&m_uid;
+        mov_r11_imm64[0] = 0x49;
+        mov_r11_imm64[1] = 0xBB;
+        imm64_stub = (uint64_t)&m_stub;
+        jmp_r11[0] = 0x41;
+        jmp_r11[1] = 0xFF;
+        jmp_r11[2] = 0x23;
+        ud2[0] = 0x0F;
+        ud2[1] = 0x0B;
+        MEM_STORE_FENCE;
+    }
+
+    intptr_t c_callback_intptr_x64(intptr_t uid, intptr_t argc, intptr_t* reg, intptr_t* stack)
+    {
+        scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
+        assert(CLOSUREP(obj));
+        scm_obj_t result;
+        try {
+            VM* vm = current_vm();
+            scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
+            for (int i = 0; i < argc; i++) {
+                if (i < 6) argv[i] = intptr_to_integer(vm->m_heap, reg[i]);
+                else argv[i] = intptr_to_integer(vm->m_heap, stack[i - 6]);
+            }
+            result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
+        } catch (vm_exit_t& e) {
+            exit(e.m_code);
+        } catch (...) {
+            fatal("fatal: unhandled exception in callback\n[exit]\n");
+        }
+        if (exact_integer_pred(result)) {
+            intptr_t value;
+            if (exact_integer_to_intptr(result, &value) == false) return 0;
+            return value;
+        } else {
+            return 0;
+        }
     }
 
     scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure)
     {
-        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+        static intptr_t uid;
+        trampoline_t* thunk = new trampoline_t((intptr_t)c_callback_stub_intptr_x64, uid, argc);
+        vm->m_heap->write_barrier(closure);
+        int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);
+        if (nsize) rehash_hashtable(vm->m_heap, vm->m_heap->m_trampolines, nsize);
+        uid++;
+        assert(uid < FIXNUM_MAX);
+        return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
     }
-
-    int c_callback_stub_int()
-    {
-        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-    }
-
+    
 #else
-
-    int c_callback_int(uint32_t uid, uint32_t argc, uint32_t* base)
-    {
-        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-    }
 
     scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure)
     {
@@ -534,10 +616,5 @@
     {
         fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
     }
-    
-    int c_callback_stub_int()
-    {
-        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-    }
-        
+            
 #endif

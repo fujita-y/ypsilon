@@ -1640,6 +1640,7 @@ object_heap_t::init_architecture_feature()
     
     #if _MSC_VER
         ARCH_STRING(operating-system, "windows");
+        ARCH_STRING(machine-hardware, "ia32");
     #else
         {
             struct utsname buf;
@@ -1650,6 +1651,11 @@ object_heap_t::init_architecture_feature()
                 i++;
             }
             ARCH_STRING(operating-system, buf.sysname);
+            while (buf.machine[i]) {
+                buf.machine[i] = tolower(buf.machine[i]);
+                i++;
+            }
+            ARCH_STRING(machine-hardware, buf.machine);
         }
     #endif    
     
