@@ -6,7 +6,7 @@
 (library (ffi)
 
   (export c-function c-argument
-          on-windows on-darwin on-linux on-freebsd on-posix)
+          on-windows on-darwin on-linux on-freebsd on-posix on-ia32 on-x64)
 
   (import (core))
 
@@ -15,7 +15,10 @@
   (define on-linux   (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
   (define on-freebsd (and (string-contains (architecture-feature 'operating-system) "freebsd") #t))
   (define on-posix   (not on-windows))
-
+  
+  (define on-x64     (and (string-contains (architecture-feature 'machine-hardware) "x86_64")  #t))
+  (define on-ia32    (not on-x64))
+  
   (define assert-bool
     (lambda (name n i)
       (cond ((boolean? i) (if i 1 0))
@@ -30,7 +33,7 @@
 
   (define assert-float
     (lambda (name n f)
-      (cond ((flonum? f) (flonum->float f))
+      (cond ((flonum? f) (if on-x64 f (flonum->float f)))
             (else
              (assertion-violation name (format "expected flonum, but got ~r, as argument ~s" f n))))))
 
