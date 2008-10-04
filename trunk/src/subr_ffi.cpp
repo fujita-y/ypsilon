@@ -284,7 +284,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_ia32_t stack(vm);
+                c_stack_frame_t stack(vm);
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
@@ -292,7 +292,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
-                stdcall_func_stub_intptr(func, stack.m_count, stack.m_frame);
+                stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 return scm_unspecified;
             }
             invalid_argument_violation(vm, "stdcall-shared-object->void", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
@@ -319,7 +319,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_ia32_t stack(vm);
+                c_stack_frame_t stack(vm);
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
@@ -327,7 +327,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
-                return int_to_integer(vm->m_heap, stdcall_func_stub_intptr(func, stack.m_count, stack.m_frame));
+                return int_to_integer(vm->m_heap, stdcall_func_stub_intptr(func, stack.count(), stack.frame()));
             }
             invalid_argument_violation(vm, "stdcall-shared-object->int", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
             return scm_undef;
@@ -353,7 +353,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_ia32_t stack(vm);
+                c_stack_frame_t stack(vm);
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
@@ -361,7 +361,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
-                return make_flonum(vm->m_heap, stdcall_func_stub_double(func, stack.m_count, stack.m_frame));
+                return make_flonum(vm->m_heap, stdcall_func_stub_double(func, stack.count(), stack.frame()));
             }
             invalid_argument_violation(vm, "stdcall-shared-object->double", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
             return scm_undef;
@@ -387,7 +387,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_ia32_t stack(vm);
+                c_stack_frame_t stack(vm);
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
@@ -395,7 +395,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
-                intptr_t value = stdcall_func_stub_intptr(func, stack.m_count, stack.m_frame);
+                intptr_t value = stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 return intptr_to_integer(vm->m_heap, value);
             }
             invalid_argument_violation(vm, "stdcall-shared-object->void*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
@@ -422,7 +422,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_ia32_t stack(vm);
+                c_stack_frame_t stack(vm);
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
@@ -430,7 +430,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
-                uint8_t* p = (uint8_t*)stdcall_func_stub_intptr(func, stack.m_count, stack.m_frame);
+                uint8_t* p = (uint8_t*)stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 if (p == NULL) return scm_false;
                 int n = 0;
                 while (p[n]) n++;
