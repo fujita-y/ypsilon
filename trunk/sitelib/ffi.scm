@@ -33,7 +33,7 @@
 
   (define assert-float
     (lambda (name n f)
-      (cond ((flonum? f) (if on-x64 f (flonum->float f)))
+      (cond ((flonum? f) (flonum->float f))
             (else
              (assertion-violation name (format "expected flonum, but got ~r, as argument ~s" f n))))))
 

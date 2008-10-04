@@ -489,7 +489,7 @@ subr_flonum_to_float(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "flonum->float", 1, 1, argc, argv);
     return scm_undef;
-#elif ARCH_X86
+#elif ARCH_X64
     if (argc == 1) {
         if (FLONUMP(argv[0])) {
             scm_flonum_t flonum = (scm_flonum_t)argv[0];

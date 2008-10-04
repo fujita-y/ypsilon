@@ -36,30 +36,28 @@
 
     boxed:
 
-    nnnn nnnn nnnn 0000 000U 0000 *tc4 1010 : scm_hdr_symbol        U: uninterned
-    nnnn nnnn nnnn SSSS SSSS I000 *tc4 1010 : scm_hdr_symbol        I: inherent S: symbol code
-    .... .... .... .... TTTT L000 *tc4 1010 : scm_hdr_string        L: literal T: (0x0 unknown) (0x1 ascii) (0x2 utf8)
-    nnnn nnnn nnnn nnnn nnnN Z000 *tc4 1010 : scm_hdr_bignum        NZ: (01 positive) (11 negative) (00 zero)
-    .... .... .... .... .... P000 *tc4 1010 : scm_hdr_flonum        P: precision (0 64bit) (1 32bit)
-    .... .... .... .... .... .000 *tc4 1010 : scm_hdr_cont
-    nnnn nnnn nnnn nnnn .... .000 *tc4 1010 : scm_hdr_closure       if has rest arguments then n == (- 1 - <required argc>)
-    .... .... .... .... .... .000 *tc4 1010 : scm_hdr_subr
-    .... .... .... .... .... .000 *tc4 1010 : scm_hdr_vector
-    .... .... .... .... .... .000 *tc4 1010 : scm_hdr_port
-    nnnn nnnn nnnn nnnn nnnn .000 *tc4 1010 : scm_hdr_values
-    nnnn nnnn nnnn nnnn nnnn I000 *tc4 1010 : scm_hdr_hashtable     I: immutable
-    .... .... .... .... .... .000 *tc4 1010 : scm_hdr_gloc
-    nnnn nnnn nnnn nnnn nnnn .000 *tc4 1010 : scm_hdr_tuple
-    .... .... .... .... .... I000 *tc4 1010 : scm_hdr_weakhashtable I: immutable
-    .... .... .... .... .... M000 *tc4 1010 : scm_hdr_bvector       M: mapped
-    .... .... .... .... .... .*** *tc7 1010 : scm_hdr_complex
-    .... .... .... .... .... .*** *tc7 1010 : scm_hdr_rational
-    nnnn nnnn nnnn nnnn nnnn .*** *tc7 1010 : scm_hdr_heapenv
-    nnnn nnnn nnnn nnnn nnnn .*** *tc7 1010 : scm_hdr_heapcont
-    .... .... .... .... .... .*** *tc7 1010 : scm_hdr_weakmapping
-    .... .... .... .... .... .*** *tc7 1010 : scm_hdr_environment
-    .... .... .... .... .... .*** *tc7 1010 : scm_hdr_socket
-
+    nnnn nnnn nnnn SSSS SSSS IU-- ---- 1010 : scm_hdr_symbol        I: inherent U: uninterned S: symbol code
+    .... .... .... .... TTTT L.-- ---- 1010 : scm_hdr_string        L: literal T: (0x0 unknown) (0x1 ascii) (0x2 utf8)
+    nnnn nnnn nnnn nnnn .... NZ-- ---- 1010 : scm_hdr_bignum        NZ: (01 positive) (11 negative) (00 zero)
+    .... .... .... .... .... P.-- ---- 1010 : scm_hdr_flonum        P: precision (0 64bit) (1 32bit)
+    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_cont
+    nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_closure       if has rest arguments then n == (- 1 - <required argc>)
+    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_subr
+    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_vector
+    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_port
+    nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_values
+    .... .... .... .... .... I.-- ---- 1010 : scm_hdr_hashtable     I: immutable
+    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_gloc
+    nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_tuple
+    .... .... .... .... .... I.-- ---- 1010 : scm_hdr_weakhashtable I: immutable
+    .... .... .... .... .... M.-- ---- 1010 : scm_hdr_bvector       M: mapped
+    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_complex
+    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_rational
+    nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_heapenv
+    nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_heapcont
+    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_weakmapping
+    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_environment
+    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_socket
 */
 
 #define OBJECT_DATUM_ALIGN              8
@@ -87,8 +85,8 @@ const scm_obj_t scm_proc_callcc         = (scm_obj_t)0xa2;
 const scm_obj_t scm_proc_apply_values   = (scm_obj_t)0xb2;
 
 // primitive
-#define TC_FLONUM           0x00        // 4 bits
-#define TC_BVECTOR          0x01        //   :
+#define TC_FLONUM           0x00        
+#define TC_BVECTOR          0x01        
 // finalize only
 #define TC_BIGNUM           0x02
 #define TC_SYMBOL           0x03
@@ -106,14 +104,14 @@ const scm_obj_t scm_proc_apply_values   = (scm_obj_t)0xb2;
 #define TC_GLOC             0x0d
 #define TC_SUBR             0x0e
 // trace only (2)
-#define TC_COMPLEX          0x1f        // 7 bits
-#define TC_RATIONAL         0x2f        //   :
-#define TC_HEAPENV          0x3f
-#define TC_HEAPCONT         0x4f
-#define TC_WEAKMAPPING      0x5f
-#define TC_ENVIRONMENT      0x6f
-#define TC_SOCKET           0x7f
-#define TC_MASKBITS         0x7f
+#define TC_COMPLEX          0x0f        
+#define TC_RATIONAL         0x10       
+#define TC_HEAPENV          0x11
+#define TC_HEAPCONT         0x12
+#define TC_WEAKMAPPING      0x13
+#define TC_ENVIRONMENT      0x14
+#define TC_SOCKET           0x15
+#define TC_MASKBITS         0x3f
 
 const scm_hdr_t scm_hdr_symbol          = 0x00a | (TC_SYMBOL << 4);
 const scm_hdr_t scm_hdr_string          = 0x00a | (TC_STRING << 4);
@@ -138,8 +136,7 @@ const scm_hdr_t scm_hdr_weakhashtable   = 0x00a | (TC_WEAKHASHTABLE << 4);
 const scm_hdr_t scm_hdr_bvector         = 0x00a | (TC_BVECTOR << 4);
 const scm_hdr_t scm_hdr_socket          = 0x00a | (TC_SOCKET << 4);
 
-#define TC4_HDR_MASKBITS    0xff
-#define TC7_HDR_MASKBITS    0x7ff
+#define HDR_TC_MASKBITS    0x3ff
 
 struct scm_pair_rec_t;
 struct scm_symbol_rec_t;
@@ -430,46 +427,44 @@ struct vm_env_rec_t {           // record size is variable
 #define CHARP(obj)                          ((BITS(obj) & 0xff) == 0x02)
 #define PAIRP(obj)                          (CELLP(obj) && (HDR(obj) & 0xf) != 0xa)
 
-#define FLONUMP(obj)                        (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_flonum)
-#define BVECTORP(obj)                       (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_bvector)
-#define BIGNUMP(obj)                        (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_bignum)
-#define SYMBOLP(obj)                        (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_symbol)
-#define STRINGP(obj)                        (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_string)
-#define VECTORP(obj)                        (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_vector)
-#define TUPLEP(obj)                         (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_tuple)
-#define VALUESP(obj)                        (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_values)
-#define HASHTABLEP(obj)                     (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_hashtable)
-#define WEAKHASHTABLEP(obj)                 (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_weakhashtable)
-#define PORTP(obj)                          (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_port)
-#define CLOSUREP(obj)                       (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_closure)
-#define CONTP(obj)                          (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_cont)
-#define GLOCP(obj)                          (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_gloc)
-#define SUBRP(obj)                          (CELLP(obj) && (HDR(obj) & TC4_HDR_MASKBITS) == scm_hdr_subr)
-#define COMPLEXP(obj)                       (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_complex)
-#define RATIONALP(obj)                      (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_rational)
-#define HEAPENVP(obj)                       (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_heapenv)
-#define HEAPCONTP(obj)                      (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_heapcont)
-#define WEAKMAPPINGP(obj)                   (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_weakmapping)
-#define ENVIRONMENTP(obj)                   (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_environment)
-#define SOCKETP(obj)                        (CELLP(obj) && (HDR(obj) & TC7_HDR_MASKBITS) == scm_hdr_socket)
-
-#define BOTHFLONUMP(x, y)                   (CELLP((intptr_t)(x) | (intptr_t)(y)) && ((((scm_flonum_t)(x))->hdr == scm_hdr_flonum) & (((scm_flonum_t)(y))->hdr == scm_hdr_flonum)))
+#define FLONUMP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_flonum)
+#define BVECTORP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_bvector)
+#define BIGNUMP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_bignum)
+#define SYMBOLP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_symbol)
+#define STRINGP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_string)
+#define VECTORP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_vector)
+#define TUPLEP(obj)                         (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_tuple)
+#define VALUESP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_values)
+#define HASHTABLEP(obj)                     (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_hashtable)
+#define WEAKHASHTABLEP(obj)                 (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_weakhashtable)
+#define PORTP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_port)
+#define CLOSUREP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_closure)
+#define CONTP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_cont)
+#define GLOCP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_gloc)
+#define SUBRP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_subr)
+#define COMPLEXP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_complex)
+#define RATIONALP(obj)                      (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_rational)
+#define HEAPENVP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_heapenv)
+#define HEAPCONTP(obj)                      (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_heapcont)
+#define WEAKMAPPINGP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_weakmapping)
+#define ENVIRONMENTP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_environment)
+#define SOCKETP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_socket)
 
 #define HDR_SYMBOL_INHERENT_SHIFT           11
-#define HDR_SYMBOL_UNINTERNED_SHIFT         12
+#define HDR_SYMBOL_UNINTERNED_SHIFT         10
 #define HDR_SYMBOL_CODE_SHIFT               12
 #define HDR_SYMBOL_SIZE_SHIFT               20
 #define HDR_STRING_LITERAL_SHIFT            11
 #define HDR_STRING_TYPE_SHIFT               12
-#define HDR_VALUES_COUNT_SHIFT              12
-#define HDR_TUPLE_COUNT_SHIFT               12
-#define HDR_HEAPENV_SIZE_SHIFT              12
-#define HDR_HEAPCONT_SIZE_SHIFT             12
+#define HDR_VALUES_COUNT_SHIFT              16
+#define HDR_TUPLE_COUNT_SHIFT               16
+#define HDR_HEAPENV_SIZE_SHIFT              16
+#define HDR_HEAPCONT_SIZE_SHIFT             16
 #define HDR_HASHTABLE_IMMUTABLE_SHIFT       11
 #define HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT   11
 #define HDR_BVECTOR_MAPPING_SHIFT           11
-#define HDR_BIGNUM_SIGN_SHIFT               11
-#define HDR_BIGNUM_COUNT_SHIFT              (HDR_BIGNUM_SIGN_SHIFT + 2)
+#define HDR_BIGNUM_SIGN_SHIFT               10
+#define HDR_BIGNUM_COUNT_SHIFT              16
 #define HDR_CLOSURE_ARGS_SHIFT              16
 #define HDR_FLONUM_32BIT_SHIFT              11
 
@@ -497,8 +492,9 @@ struct vm_env_rec_t {           // record size is variable
                                                 && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_INHERENT_BIT)) \
                                                 && (HDR_SYMBOL_CODE(HDR(obj)) < VMOP_INSTRUCTION_COUNT))
 #define UNINTERNEDSYMBOLP(obj)              (CELLP(obj) \
-                                                && ((HDR(obj) & 0xfff) == scm_hdr_symbol) \
-                                                && (HDR(obj) & HDR_SYMBOL_UNINTERNED_BIT))
+                                                && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_UNINTERNED_BIT)))
+#define BOTHFLONUMP(x, y)                   (CELLP((intptr_t)(x) | (intptr_t)(y)) \
+                                                && ((((scm_flonum_t)(x))->hdr == scm_hdr_flonum) & (((scm_flonum_t)(y))->hdr == scm_hdr_flonum)))
 
 #define STRING_TYPE_UNKNOWN                 0x0
 #define STRING_TYPE_ASCII                   0x1
