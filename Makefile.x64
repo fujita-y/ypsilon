@@ -47,6 +47,7 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
   ASFLAGS = --64
   LDFLAGS = -m64
   LDLIBS = -pthread
+  SRCS += ffi_stub_freebsd64.s
 endif
 
 OBJS =	$(patsubst %.cpp, %.o, $(filter %.cpp, $(SRCS))) $(patsubst %.s, %.o, $(filter %.s, $(SRCS)))
