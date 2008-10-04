@@ -26,9 +26,10 @@
 #if ARCH_X64
 
     class c_stack_frame_t {
-        intptr_t m_frame[FFI_MAX_ARGC + 8 + 6];
+        intptr_t m_frame[FFI_MAX_ARGC + 8 + 8 + 6];
         int m_count;
         intptr_t m_sse[8];
+        intptr_t m_pre[8];
         intptr_t m_reg[6];
         int m_reg_count;
         int m_sse_count;
@@ -38,6 +39,7 @@
         c_stack_frame_t(VM* vm) 
             : m_vm(vm), m_count(0), m_reg_count(0), m_sse_count(0) {
             memset(m_sse, 0, sizeof(m_sse));
+            memset(m_pre, 0, sizeof(m_pre));
             memset(m_reg, 0, sizeof(m_reg));
         }
         const char* push(scm_obj_t obj);

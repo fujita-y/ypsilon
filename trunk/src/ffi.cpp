@@ -175,6 +175,7 @@
     {
         int dst = m_count;
         for (int i = 0; i < array_sizeof(m_sse); i++) m_frame[dst++] = m_sse[i];
+        for (int i = 0; i < array_sizeof(m_pre); i++) m_frame[dst++] = m_pre[i];
         for (int i = 0; i < array_sizeof(m_reg); i++) m_frame[dst++] = m_reg[i];
     }
     

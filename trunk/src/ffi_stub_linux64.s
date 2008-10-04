@@ -7,6 +7,7 @@
     argv[] : {
         long stack_args[nstack];
         long sse_args[8]; // %xmm0 - %xmm7
+        long sse_precisions[8]; 0 for double, 1 for float
         long reg_args[6]; // %rdi, %rsi, %rdx, %rcx, %r8, %r9
     }
     
@@ -27,42 +28,84 @@
 c_func_stub_intptr_x64:
 c_func_stub_double_x64:
 
-    pushq   %rbp
-    movq    %rsp, %rbp
+    pushq       %rbp
+    movq        %rsp, %rbp
 
 # stack arguments
-    leaq    15(,%rsi,8), %rax   
-    andq    $-16, %rax  
-    subq    %rax, %rsp          # align to 16 byte
-    movq    $0, %r10            # i = 0
+    leaq        (,%rsi,8), %rax   
+    andq        $-16, %rax  
+    subq        %rax, %rsp          # align to 16 byte
+    movq        $0, %r10            # i = 0
 loop:
-    cmpq    %r10, %rsi
-    je      done
-    movq   (%rcx,%r10,8), %rax    
-    movq    %rax, (%rsp,%r10,8)
-    addq    $1, %r10
-    jmp     loop
+    cmpq        %r10, %rsi
+    je          done
+    movq        (%rcx,%r10,8), %rax    
+    movq        %rax, (%rsp,%r10,8)
+    addq        $1, %r10
+    jmp         loop
 done:
     
-# sse and reg arguments
-    leaq    (%rcx, %rsi, 8), %r10
-    movq    %rdx, %rax
-    movq    %rdi, %r11
+    leaq        (%rcx, %rsi, 8), %r10
     
-    movsd      (%r10), %xmm0
-    movsd     8(%r10), %xmm1
-    movsd    16(%r10), %xmm2
-    movsd    24(%r10), %xmm3
-    movsd    32(%r10), %xmm4
-    movsd    40(%r10), %xmm5
-    movsd    48(%r10), %xmm6
-    movsd    56(%r10), %xmm7
-    movq     64(%r10), %rdi
-    movq     72(%r10), %rsi
-    movq     80(%r10), %rdx
-    movq     88(%r10), %rcx
-    movq     96(%r10), %r8
-    movq    104(%r10), %r9
+# sse arguments        
+    movsd         (%r10), %xmm0
+    movsd        8(%r10), %xmm1
+    movsd       16(%r10), %xmm2
+    movsd       24(%r10), %xmm3
+    movsd       32(%r10), %xmm4
+    movsd       40(%r10), %xmm5
+    movsd       48(%r10), %xmm6
+    movsd       56(%r10), %xmm7
+
+    leaq        64(%r10), %r10
+
+# sse precisions    
+L0:
+    cmpq        $0, (%r10)
+    je          L1
+    cvtsd2ss    %xmm0, %xmm0
+L1:
+    cmpq        $0, 8(%r10)
+    je          L2
+    cvtsd2ss    %xmm1, %xmm1
+L2:    
+    cmpq        $0, 16(%r10)
+    je          L3
+    cvtsd2ss    %xmm2, %xmm2
+L3:    
+    cmpq        $0, 24(%r10)
+    je          L4
+    cvtsd2ss    %xmm3, %xmm3
+L4:    
+    cmpq        $0, 32(%r10)
+    je          L5
+    cvtsd2ss    %xmm4, %xmm4
+L5:    
+    cmpq        $0, 40(%r10)
+    je          L6
+    cvtsd2ss    %xmm5, %xmm5    
+L6:    
+    cmpq        $0, 48(%r10)
+    je          L7
+    cvtsd2ss    %xmm6, %xmm6 
+L7:    
+    cmpq        $0, 56(%r10)
+    je          L8
+    cvtsd2ss    %xmm7, %xmm7
+L8:                
+    
+    leaq        64(%r10), %r10
+
+# reg argumuments
+    movq        %rdx, %rax
+    movq        %rdi, %r11
+    
+    movq          (%r10), %rdi
+    movq         8(%r10), %rsi
+    movq        16(%r10), %rdx
+    movq        24(%r10), %rcx
+    movq        32(%r10), %r8
+    movq        40(%r10), %r9
 
     call    *%r11
     
