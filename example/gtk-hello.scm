@@ -1,12 +1,11 @@
 #!/usr/bin/env ypsilon
 #!r6rs
+   
 ;; gtk-hello.scm:
-;;   GTK test
+;;   GTK hello world
 ;;
 ;; Requirements:
-;;   Windows: 
-;;   Darwin:  
-;;   Linux:   libgtk-x11-2.0.so.0  
+;;   Linux:   libgtk-x11-2.0.so.0
                
 (import (rnrs) (ffi) (only (core) format load-shared-object))
 
