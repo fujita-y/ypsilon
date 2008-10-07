@@ -16,7 +16,8 @@
           unsyntax-splicing
           syntax-violation
           _
-          ...)
+          ...
+          datum)
 
   (import (core primitives))
 
@@ -28,6 +29,10 @@
     (lambda (x)
       (syntax-violation (and (pair? x) (car x)) "misplaced auxiliary syntactic keyword" x)))
 
+  (define-syntax datum 
+    (syntax-rules ()
+      ((_ x) (syntax->datum (syntax x)))))
+  
   (define-syntax with-syntax
     (lambda (x)
       (syntax-case x ()

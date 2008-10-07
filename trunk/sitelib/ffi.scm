@@ -5,7 +5,7 @@
 
 (library (ffi)
 
-  (export c-function c-argument
+  (export c-function c-argument load-shared-object
           on-windows on-darwin on-linux on-freebsd on-posix on-ia32 on-x64)
 
   (import (core))
@@ -15,16 +15,16 @@
   (define on-linux   (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
   (define on-freebsd (and (string-contains (architecture-feature 'operating-system) "freebsd") #t))
   (define on-posix   (not on-windows))
-  
+
   (define on-x64     (and (string-contains (architecture-feature 'machine-hardware) "x86_64")  #t))
   (define on-ia32    (not on-x64))
-  
+
   (define assert-bool
     (lambda (name n i)
       (cond ((boolean? i) (if i 1 0))
             (else
              (assertion-violation name (format "expected #t or #f, but got ~r, as argument ~s" i n))))))
-  
+
   (define assert-int
     (lambda (name n i)
       (cond ((and (integer? i) (exact? i)) i)
@@ -91,6 +91,10 @@
     (lambda (val)
       (and val (bytevector->string val (make-transcoder (utf-8-codec))))))
 
+  (define string->utf8-n-nul
+    (lambda (s)
+      (string->utf8 (string-append s "\x0;"))))
+
   (define make-binary-array-of-int
     (lambda argv
       (let ((step (architecture-feature 'alignof:int))
@@ -111,7 +115,7 @@
     (lambda (ref . argv)
       (apply vector
              ref
-             (map (lambda (value) (string->cstring value)) argv))))
+             (map (lambda (value) (string->utf8-n-nul value)) argv))))
 
   (define-syntax c-callback-arguments
     (lambda (x)
@@ -137,7 +141,7 @@
       ((_ name n byte* var)
        (assert-bytevector 'name n var))
       ((_ name n char* var)
-       (string->cstring (assert-string 'name n var)))
+       (string->utf8-n-nul (assert-string 'name n var)))
       ((_ name n [int] var)
        (apply make-binary-array-of-int (assert-int-vector 'name n var)))
       ((_ name n [char*] var)
@@ -161,12 +165,16 @@
                        ((n ...) (map (lambda (e) (datum->syntax #'k e)) (iota (length (syntax (types ...))) 1))))
            (syntax (let ((loc (lookup-shared-object lib-handle 'func-name)))
                      (if loc
-                         (let () (define func-name
-                                   (lambda (args ...)
-                                     (cast (stub loc (c-argument func-name n types args) ...)))) func-name)
-                         (let () (define func-name
-                                   (lambda x
-                                     (error 'func-name (format "function not available in ~a" lib-name)))) func-name))))))
+                         (let ()
+                           (define func-name
+                             (lambda (args ...)
+                               (cast (stub loc (c-argument func-name n types args) ...))))
+                           func-name)
+                         (let ()
+                           (define func-name
+                             (lambda x
+                               (error 'func-name (format "function not available in ~a" lib-name))))
+                           func-name))))))
         ((_ lib-handle lib-name stub func-name types ...)
          (syntax (c-function-stub lib-handle lib-name ((lambda (x) x) stub) func-name types ...))))))
 

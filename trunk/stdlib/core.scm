@@ -252,7 +252,6 @@
     coreform-optimize
     cos
     create-directory
-    cstring->string
     current-after-expansion-hook
     current-directory
     current-dynamic-environment
@@ -267,6 +266,7 @@
     current-rename-delimiter
     current-source-comments
     current-variable-environment
+    datum
     datum->syntax
     decode-flonum
     default-exception-handler
@@ -760,7 +760,6 @@
     stdcall-shared-object->void
     string
     string->bytevector
-    string->cstring
     string->list
     string->number
     string->symbol
