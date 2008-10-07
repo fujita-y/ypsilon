@@ -445,8 +445,6 @@
                         stdcall-shared-object->char*
                         make-callback
                         flonum->float
-                        string->cstring
-                        cstring->string
                         collect collect-notify collect-stack-notify collect-trip-bytes display-heap-statistics display-object-statistics
                         backtrace expansion-backtrace backtrace-line-length display-backtrace
                         warning-level
