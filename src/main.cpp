@@ -9,7 +9,12 @@
 
 int             main_command_line_argc;
 char* const*    main_command_line_argv;
-VM*             s_current_vm;
+
+#if _MSC_VER
+__declspec(thread) VM* s_current_vm;
+#else
+__thread VM* s_current_vm;
+#endif
 
 // --heap-limit=32   -> 32MB (default)
 // --heap-limit=1024 -> 1GB

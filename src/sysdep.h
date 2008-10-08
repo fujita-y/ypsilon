@@ -186,7 +186,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
 
     inline VM* current_vm()
     {
-        extern VM* s_current_vm;
+        extern __declspec(thread) VM* s_current_vm;
         return s_current_vm;
     }
 
@@ -277,7 +277,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
 
     inline VM* current_vm()
     {
-        extern VM* s_current_vm;
+        extern __thread VM* s_current_vm;
         return s_current_vm;
     }
 
