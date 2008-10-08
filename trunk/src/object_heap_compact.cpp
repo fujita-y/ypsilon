@@ -242,7 +242,7 @@ resolve_collectible(void* obj, int size, void* desc)
             break;
         }
         case TC_HEAPENV: {
-            int nbytes = HDR(obj) >> 12;
+            int nbytes = HDR_HEAPENV_SIZE(HDR(obj));
             uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
             vm_env_t env = (vm_env_t)(top + nbytes - sizeof(vm_env_rec_t));
             env->up = heap->interior_forward(env->up);
@@ -250,7 +250,7 @@ resolve_collectible(void* obj, int size, void* desc)
             break;
         }
         case TC_HEAPCONT: {
-            int nbytes = HDR(obj) >> 12;
+            int nbytes = HDR_HEAPCONT_SIZE(HDR(obj));
             uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
             vm_cont_t cont = (vm_cont_t)(top + nbytes - sizeof(vm_cont_rec_t));
             cont->up = heap->interior_forward(cont->up);
