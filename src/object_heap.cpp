@@ -25,6 +25,9 @@
   #define   GC_TRACE(fmt)   ((void)0)
 #endif
 
+#define NEW_WRITE_BARRIER           1
+#define NEW_ENQUEUE_ROOT            1
+
 #define DEBUG_CONCURRENT_COLLECT    0
 
 #define SYNCHRONIZE_THRESHOLD(x)    ((x) - (x) / 4)
@@ -541,6 +544,9 @@ object_heap_t::write_barrier(scm_obj_t rhs)
                     if (m_stop_the_world) {
                         m_collector_lock.lock();
                         m_collector_wake.signal();
+#if NEW_WRITE_BARRIER
+                        m_mutator_wake.wait(m_collector_lock);
+#endif
                         m_collector_lock.unlock();
                     } else {
 #if _MSC_VER
@@ -620,6 +626,9 @@ object_heap_t::enqueue_root(scm_obj_t obj)
         if (m_shade_queue.wait_lock_try_put(obj) == false) {
             m_collector_lock.lock();
             m_collector_wake.signal(); // kick now
+#if NEW_ENQUEUE_ROOT
+            m_mutator_wake.wait(m_collector_lock);
+#endif
             m_collector_lock.unlock();
             GC_TRACE(";; [shade queue overflow while queueing root set]\n");
             m_shade_queue.put(obj);
