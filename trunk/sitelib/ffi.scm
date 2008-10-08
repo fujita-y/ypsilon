@@ -146,7 +146,7 @@
        (apply make-binary-array-of-int (assert-int-vector 'name n var)))
       ((_ name n [char*] var)
        (apply make-binary-array-of-char* 0 (assert-string-vector 'name n var)))
-      ((_ name n (*[char*]) var)
+      ((_ name n (* [char*]) var)
        (apply make-binary-array-of-char* 1 (assert-string-vector 'name n var)))
       ((_ name n [c-callback void (args ...)] var)
        (make-callback 0 (c-callback-arguments args ...) (assert-closure 'name n var)))

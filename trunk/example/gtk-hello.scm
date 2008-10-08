@@ -19,7 +19,7 @@
     ((_ ret name args)
      (define name (c-function libgtk libgtk-name ret name args)))))
 
-(define-function void  gtk_init ([int] (*[char*])))
+(define-function void  gtk_init ([int] (* [char*])))
 (define-function void* gtk_window_new (int))
 (define-function void  gtk_window_set_title (void* char*))
 (define-function void  gtk_window_resize (void* int int))
