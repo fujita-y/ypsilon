@@ -12,6 +12,8 @@ char* const*    main_command_line_argv;
 
 #if _MSC_VER
 __declspec(thread) VM* s_current_vm;
+#elif __APPLE_CC__
+pthread_key_t s_current_vm;
 #else
 __thread VM* s_current_vm;
 #endif
@@ -200,7 +202,12 @@ static int opt_heap_limit(int argc, char* const argv[])
         
         VM rootVM;
         rootVM.init(heap);
+#if __APPLE_CC__
+        MTVERIFY(pthread_key_create(&s_current_vm, NULL));
+        MTVERIFY(pthread_setspecific(s_current_vm, &rootVM));
+#else
         s_current_vm = &rootVM;
+#endif
         rootVM.boot();
         rootVM.standalone();
         return 0;

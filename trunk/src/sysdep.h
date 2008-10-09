@@ -275,11 +275,19 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         return (tv.tv_sec * 1000000.0 + tv.tv_usec) / 1000.0;
     }
 
+  #if __APPLE_CC__
+    inline VM* current_vm()
+    {
+        extern pthread_key_t s_current_vm;
+        return (VM*)pthread_getspecific(s_current_vm);
+    }
+  #else
     inline VM* current_vm()
     {
         extern __thread VM* s_current_vm;
         return s_current_vm;
     }
+  #endif
 
   #if MTDEBUG
     #define MTVERIFY(expr)                                                                                              \

@@ -5,13 +5,18 @@
 ;;   GTK hello world
 ;;
 ;; Requirements:
+;;   Darwin:  Gtk.framework
 ;;   Linux:   libgtk-x11-2.0.so.0
-               
+   
 (import (rnrs) (ffi) (only (core) format load-shared-object))
 
 ; minimal bindings for GTK hello world
 
-(define libgtk-name "libgtk-x11-2.0.so.0")
+(define libgtk-name (cond (on-linux "libgtk-x11-2.0.so.0")
+                          (on-darwin "Gtk.framework/Gtk")
+                          (else 
+                           (assertion-violation #f "can not locate GTK library, unknown operating system"))))
+
 (define libgtk (load-shared-object libgtk-name))
 
 (define-syntax define-function
