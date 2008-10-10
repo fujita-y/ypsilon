@@ -7,7 +7,7 @@
 
   (export define-inline)
 
-  (import (core))
+  (import (rnrs))
 
   (define-syntax define-inline-assistant
     (syntax-rules ()

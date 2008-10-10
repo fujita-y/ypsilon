@@ -7,7 +7,7 @@
   
   (export dotimes)
   
-  (import (core))
+  (import (rnrs))
 
   (define-syntax dotimes
     (syntax-rules ()
