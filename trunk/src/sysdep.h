@@ -275,30 +275,6 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         return (tv.tv_sec * 1000000.0 + tv.tv_usec) / 1000.0;
     }
 
-  #if __APPLE_CC__
-    inline VM* current_vm()
-    {
-        extern pthread_key_t s_current_vm;
-        return (VM*)pthread_getspecific(s_current_vm);
-    }
-    inline void set_current_vm(VM* vm)
-    {
-        extern pthread_key_t s_current_vm;
-        MTVERIFY(pthread_setspecific(s_current_vm, vm));
-    }
-  #else
-    inline VM* current_vm()
-    {
-        extern __thread VM* s_current_vm;
-        return s_current_vm;
-    }
-    inline void set_current_vm(VM* vm)
-    {
-        extern __thread VM* s_current_vm;
-        s_current_vm = vm;
-    }
-  #endif
-
   #if MTDEBUG
     #define MTVERIFY(expr)                                                                                              \
         do {                                                                                                            \
@@ -311,6 +287,36 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
             int __RETVAL__ = (expr);            \
             if (__RETVAL__) throw __RETVAL__;   \
         } while(0)
+  #endif
+
+  #if __APPLE_CC__
+    
+    inline VM* current_vm()
+    {
+        extern pthread_key_t s_current_vm;
+        return (VM*)pthread_getspecific(s_current_vm);
+    }
+    
+    inline void set_current_vm(VM* vm)
+    {
+        extern pthread_key_t s_current_vm;
+        MTVERIFY(pthread_setspecific(s_current_vm, vm));
+    }
+    
+  #else
+    
+    inline VM* current_vm()
+    {
+        extern __thread VM* s_current_vm;
+        return s_current_vm;
+    }
+    
+    inline void set_current_vm(VM* vm)
+    {
+        extern __thread VM* s_current_vm;
+        s_current_vm = vm;
+    }
+    
   #endif
 
     inline void thread_start(void* (*func)(void*), void* param)
