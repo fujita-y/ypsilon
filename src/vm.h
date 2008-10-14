@@ -214,12 +214,16 @@ public:
 
 #endif
     
+#if USE_PARALLEL_VM
+    
     pthread_t spawn(scm_closure_t proc, scm_obj_t arg);
     scm_obj_t pmap(scm_closure_t proc, scm_obj_t args);
-#if _MSC_VER
+  #if _MSC_VER
     static unsigned int __stdcall mutator_thread(void* param);
-#else
+  #else
     static void*    mutator_thread(void* param);
+  #endif
+    
 #endif
     
 } ATTRIBUTE(aligned(16));
