@@ -7,6 +7,8 @@
 #include "core.h"
 #include "vm.h"
 
+#define MULTI_VM_TEST   0
+
 int             main_command_line_argc;
 char* const*    main_command_line_argv;
 
@@ -55,6 +57,22 @@ static int opt_heap_limit(int argc, char* const argv[])
     return value;
 }
 
+#if MULTI_VM_TEST
+
+static void*
+multi_vm_test(void* param)
+{
+    VM* vm = (VM*)param;
+    printf("sub_vm: %x\n", vm);
+    s_current_vm = vm;
+    vm->boot();
+    vm->standalone();
+    printf("sub_vm: %x terminated\n", vm);
+    return 0;    
+}
+
+#endif
+
 #if _MSC_VER
 
     int main(int argc, char* argv[])
@@ -75,7 +93,6 @@ static int opt_heap_limit(int argc, char* const argv[])
         int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
         int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
         heap->init(heap_limit, heap_init);
-        
         VM rootVM;
         rootVM.init(heap);
         s_current_vm = &rootVM;
@@ -199,7 +216,6 @@ static int opt_heap_limit(int argc, char* const argv[])
 #endif
         
         heap->init(heap_limit, heap_init);
-        
         VM rootVM;
         rootVM.init(heap);
 #if __APPLE_CC__
@@ -208,6 +224,20 @@ static int opt_heap_limit(int argc, char* const argv[])
 #else
         s_current_vm = &rootVM;
 #endif
+        
+#if MULTI_VM_TEST
+        VM subVM;
+        {
+            object_heap_t* sub_heap = new object_heap_t;
+            int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
+            int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
+            sub_heap->init(heap_limit, heap_init);
+            subVM.init(sub_heap);
+            pthread_t tid;
+            MTVERIFY(pthread_create(&tid, NULL, multi_vm_test, &subVM));
+            MTVERIFY(pthread_detach(tid));
+        }
+#endif        
         rootVM.boot();
         rootVM.standalone();
         return 0;

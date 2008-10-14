@@ -36,6 +36,7 @@
                      (lookup-process-environment "HOME")))))
       (and (file-exists? path) path))))
 
+#;
 (define apply-scheme-proc-assistant
   (lambda (proc . args)
     (let ((done #f) (throw #f))
@@ -49,6 +50,24 @@
             (raise c))
           (lambda ()
             (let ((obj (apply proc args))) (set! done #t) obj))))
+       (lambda ()
+         (and throw (escape)))))))
+
+(define apply-scheme-proc-assistant
+  (lambda (proc . args)
+    (let ((throw #f) (level (recursion-level)))
+      (dynamic-wind
+       (lambda ()
+         (or (= level (recursion-level))
+             (assertion-violation #f "scheme continuation interleave with c/c++ continuation"))
+         (set! throw #f))
+       (lambda ()
+         (with-exception-handler
+          (lambda (c)
+            (set! throw #t)
+            (raise c))
+          (lambda () 
+            (apply proc args))))
        (lambda ()
          (and throw (escape)))))))
 

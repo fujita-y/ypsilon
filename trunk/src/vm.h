@@ -32,9 +32,10 @@ public:
 
     scm_obj_t*          m_to_stack_top;
     scm_obj_t*          m_to_stack_limit;
-    int                 m_stack_size;
-    bool                m_stack_busy;
 
+    int                 m_stack_size;
+    int                 m_stack_busy;
+    
 #if USE_GCC_EXTENSION
     void*               m_dispatch_table[VMOP_INSTRUCTION_COUNT];
 #endif
@@ -69,6 +70,7 @@ public:
     scm_obj_t           m_current_dynamic_wind_record;
     scm_obj_t           m_current_exception_handler;
     scm_obj_t           m_current_source_comments;
+    int                 m_recursion_level;
 
     scm_closure_t       lookup_system_closure(const char* name);
     scm_obj_t           lookup_current_environment(scm_symbol_t symbol);
@@ -149,6 +151,9 @@ public:
         for (int i = 0; i < array_sizeof(m_dispatch_table); i++) {
             if ((uintptr_t)m_dispatch_table[i] == adrs) return i;
         }
+#ifndef NDEBUG
+        printf("bad instruction 0x%x\n", obj);
+#endif
         assert(false);
         return 0;
     }
@@ -208,6 +213,15 @@ public:
     }
 
 #endif
+    
+    pthread_t spawn(scm_closure_t proc, scm_obj_t arg);
+    scm_obj_t pmap(scm_closure_t proc, scm_obj_t args);
+#if _MSC_VER
+    static unsigned int __stdcall mutator_thread(void* param);
+#else
+    static void*    mutator_thread(void* param);
+#endif
+    
 } ATTRIBUTE(aligned(16));
 
 #endif

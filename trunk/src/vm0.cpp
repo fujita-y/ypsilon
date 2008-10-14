@@ -123,6 +123,7 @@ VM::init(object_heap_t* heap)
         m_current_exception_handler = scm_false;
         m_current_dynamic_environment = make_weakhashtable(m_heap, lookup_mutable_hashtable_size(0));
         m_current_dynamic_wind_record = scm_nil;
+        m_recursion_level = 0;
 #if BOOT_R6RS_COMPLIANT_SYNTAX
         flags.m_extend_lexical_syntax = scm_false;
 #else
@@ -476,6 +477,7 @@ VM::reset()
     m_cont = NULL;
     m_env = NULL;
     m_sp = m_fp = m_stack_top;
+    m_stack_busy = false;
     m_value = scm_unspecified;
     m_trace = scm_unspecified;
     m_trace_tail = scm_unspecified;

@@ -971,6 +971,15 @@ subr_escape(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// recursion-level
+scm_obj_t
+subr_recursion_level(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return MAKEFIXNUM(vm->m_recursion_level);
+    wrong_number_of_arguments_violation(vm, "recursion-level", 0, 0, argc, argv);
+    return scm_undef;
+}
+
 // command-line
 scm_obj_t
 subr_command_line(VM* vm, int argc, scm_obj_t argv[])
@@ -2120,6 +2129,48 @@ subr_uninterned_symbol_suffix(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "uninterned-symbol-suffix", 1, 1, argc, argv);
     return scm_undef;
 }
+/*
+// spawn
+scm_obj_t
+subr_spawn(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (CLOSUREP(argv[0])) {
+            scm_closure_t closure = (scm_closure_t)argv[0];
+            if (HDR_CLOSURE_ARGS(closure->hdr) == 0) {
+                vm->spawn(closure);
+                return scm_unspecified;
+            }
+            wrong_type_argument_violation(vm, "spawn", 0, "nullary closure", argv[0], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "spawn", 0, "closure", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "spawn", 1, 1, argc, argv);
+    return scm_undef;
+}
+*/
+#if USE_PARALLEL_VM
+// pmap
+scm_obj_t
+subr_pmap(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 2) {
+        if (CLOSUREP(argv[0])) {
+            if (listp(argv[1])) {
+                return vm->pmap((scm_closure_t)argv[0], (scm_pair_t)argv[1]);
+            }
+            wrong_type_argument_violation(vm, "pmap", 1, "proper list", argv[1], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "pmap", 0, "closure", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "pmap", 2, 2, argc, argv);
+    return scm_undef;
+}
+#endif
 
 void
 init_subr_others(object_heap_t* heap)
@@ -2194,7 +2245,6 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("make-environment", subr_make_environment);
     DEFSUBR("architecture-feature", subr_architecture_feature);
     DEFSUBR("lookup-process-environment", subr_lookup_process_environment);
-    DEFSUBR("escape", subr_escape);
     DEFSUBR("command-line", subr_command_line);
     DEFSUBR("command-line-shift", subr_command_line_shift);
     DEFSUBR("system-share-path", subr_system_share_path);
@@ -2215,6 +2265,12 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("uninterned-symbol-prefix", subr_uninterned_symbol_prefix);
     DEFSUBR("uninterned-symbol-suffix", subr_uninterned_symbol_suffix);
 
+    DEFSUBR("escape", subr_escape);
+    DEFSUBR("recursion-level", subr_recursion_level);
+
+#if USE_PARALLEL_VM
+    DEFSUBR("pmap", subr_pmap);
+#endif
     #undef DEFSUBR
 
 }
