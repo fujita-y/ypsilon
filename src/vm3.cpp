@@ -194,8 +194,12 @@ VM::call_scheme_argv(scm_obj_t proc, int argc, scm_obj_t argv[])
     param[0] = proc;
     for (int i = 0; i < argc; i++) param[i + 1] = argv[i];
     try {
-        return call_scheme_stub(assistant, argc + 1, param);
+        m_recursion_level++;
+        scm_obj_t obj = call_scheme_stub(assistant, argc + 1, param);
+        m_recursion_level--;
+        return obj;
     } catch (vm_escape_t& e) {
+        m_recursion_level--;
         if (CDR(m_pc) == scm_nil) throw vm_continue_t();
         fatal("fatal in apply: <#subr escape> should be at tail position");
     } catch (vm_continue_t& e) {
@@ -231,8 +235,12 @@ VM::call_scheme(scm_obj_t proc, int argc, ...)
     va_end(ap);
 
     try {
-        return call_scheme_stub(assistant, argc + 1, param);
+        m_recursion_level++;
+        scm_obj_t obj = call_scheme_stub(assistant, argc + 1, param);
+        m_recursion_level--;
+        return obj;
     } catch (vm_escape_t& e) {
+        m_recursion_level--;
         if (CDR(m_pc) == scm_nil) throw vm_continue_t();
         fatal("fatal in apply: <#subr escape> should be at tail position");
     } catch (vm_continue_t& e) {

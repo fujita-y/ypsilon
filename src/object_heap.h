@@ -135,7 +135,10 @@ public:
     scm_hashtable_t     m_trampolines;
     scm_obj_t           m_inherents[INHERENT_TOTAL_COUNT];
     collector_usage_t   m_usage;
-
+    
+#if USE_PARALLEL_VM
+    object_heap_t*      m_primordial_heap;
+#endif
 public:
                         object_heap_t();
                         ~object_heap_t();

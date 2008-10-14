@@ -215,6 +215,9 @@ object_heap_t::allocated_size(void* obj)
 bool
 object_heap_t::init(size_t pool_size, size_t initial_datum_size)
 {
+#if USE_PARALLEL_VM
+    m_primordial_heap = this;
+#endif
     assert(getpagesize() == OBJECT_SLAB_SIZE);                  // for optimal performance
     assert(pool_size >= OBJECT_SLAB_SIZE + OBJECT_SLAB_SIZE);   // check minimum (1 directory slab + 1 datum slab = 2)
 
@@ -318,6 +321,15 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size)
 scm_obj_t
 object_heap_t::lookup_system_environment(scm_symbol_t symbol)
 {
+#if USE_PARALLEL_VM
+    scoped_lock lock(m_primordial_heap->m_system_environment->variable->lock);
+    scm_obj_t obj = get_hashtable(m_primordial_heap->m_system_environment->variable, symbol);
+    if (obj != scm_undef) {
+        assert(GLOCP(obj));
+        return ((scm_gloc_t)obj)->value;
+    }
+    return scm_undef;    
+#else
     scoped_lock lock(m_system_environment->variable->lock);
     scm_obj_t obj = get_hashtable(m_system_environment->variable, symbol);
     if (obj != scm_undef) {
@@ -325,6 +337,7 @@ object_heap_t::lookup_system_environment(scm_symbol_t symbol)
         return ((scm_gloc_t)obj)->value;
     }
     return scm_undef;
+#endif
 }
 
 void
@@ -458,34 +471,46 @@ object_heap_t::shade(scm_obj_t obj)
 {
     if (CELLP(obj)) {
         assert(obj);
-        if (OBJECT_SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
-            if (m_mark_sp < m_mark_stack + m_mark_stack_size) {
+#if USE_PARALLEL_VM
+        if (in_heap(obj)) {
+#endif
+            if (OBJECT_SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
+                if (m_mark_sp < m_mark_stack + m_mark_stack_size) {
+                    *m_mark_sp++ = obj;
+                    return;
+                }
+                m_usage.m_expand_mark_stack++;
+                int newsize = m_mark_stack_size + MARK_STACK_SIZE_GROW;
+                m_mark_stack = (scm_obj_t*)realloc(m_mark_stack, sizeof(scm_obj_t) * newsize);
+                if (m_mark_stack == NULL) {
+                    fatal("%s:%u memory overflow on realloc mark stack", __FILE__, __LINE__);
+                }
+                m_mark_sp = m_mark_stack + m_mark_stack_size;
+                m_mark_stack_size = newsize;
                 *m_mark_sp++ = obj;
-                return;
             }
-            m_usage.m_expand_mark_stack++;
-            int newsize = m_mark_stack_size + MARK_STACK_SIZE_GROW;
-            m_mark_stack = (scm_obj_t*)realloc(m_mark_stack, sizeof(scm_obj_t) * newsize);
-            if (m_mark_stack == NULL) {
-                fatal("%s:%u memory overflow on realloc mark stack", __FILE__, __LINE__);
-            }
-            m_mark_sp = m_mark_stack + m_mark_stack_size;
-            m_mark_stack_size = newsize;
-            *m_mark_sp++ = obj;
+#if USE_PARALLEL_VM
         }
+#endif
     }
 }
 
 void
 object_heap_t::interior_shade(void* ref)
 {
+#if USE_PARALLEL_VM
+    if (in_heap(ref)) {
+#else
     if (ref) {
+#endif
+        
 #ifndef NDEBUG
         int i = ((uint8_t*)ref - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         assert(i >= 0 && i < m_pool_watermark);
         assert(GCSLABP(m_pool[i]));
 #endif
         shade(OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref));
+        
     }
 }
 

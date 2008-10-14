@@ -72,6 +72,7 @@
 #define USE_FLONUM_CONST            1
 #define USE_FAST_DYNAMIC_WIND       1
 #define USE_EXTENDED_BVECTOR_SYNTAX 0
+#define USE_PARALLEL_VM             0
 
 #if USE_GCC_EXTENSION
     #define USE_SYMBOL_THREAD       0

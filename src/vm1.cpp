@@ -450,7 +450,7 @@ VM::run(bool init_dispatch_table)
 
     scm_obj_t operand_trace;
     scm_obj_t obj;
-
+    
     bool fresh_start = true;
     goto begin;
 

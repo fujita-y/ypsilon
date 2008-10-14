@@ -281,11 +281,21 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         extern pthread_key_t s_current_vm;
         return (VM*)pthread_getspecific(s_current_vm);
     }
+    inline void set_current_vm(VM* vm)
+    {
+        extern pthread_key_t s_current_vm;
+        MTVERIFY(pthread_setspecific(s_current_vm, vm));
+    }
   #else
     inline VM* current_vm()
     {
         extern __thread VM* s_current_vm;
         return s_current_vm;
+    }
+    inline void set_current_vm(VM* vm)
+    {
+        extern __thread VM* s_current_vm;
+        s_current_vm = vm;
     }
   #endif
 
@@ -305,11 +315,26 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
 
     inline void thread_start(void* (*func)(void*), void* param)
     {
-        pthread_t tid;
-        MTVERIFY(pthread_create(&tid, NULL, func, param));
-        MTVERIFY(pthread_detach(tid));
+        pthread_t th;
+        MTVERIFY(pthread_create(&th, NULL, func, param));
+        MTVERIFY(pthread_detach(th));
+    }
+    
+    inline pthread_t thread_call(void* (*func)(void*), void* param)
+    {
+        pthread_t th;
+        MTVERIFY(pthread_create(&th, NULL, func, param));
+        return th;
     }
 
+    inline void* thread_join(pthread_t th)
+    {
+        void* obj;
+        MTVERIFY(pthread_join(th, &obj));
+        return obj;
+    }
+
+    
 #endif
 
 #endif  // SYSDEP_H_INCLUDED

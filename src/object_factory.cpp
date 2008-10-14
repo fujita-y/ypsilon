@@ -17,6 +17,9 @@ template <typename T> void swap(T& lhs, T& rhs) { T tmp = lhs; lhs = rhs; rhs = 
 scm_symbol_t
 make_symbol(object_heap_t* heap, const char *name, int len)
 {
+#if USE_PARALLEL_VM
+    heap = heap->m_primordial_heap;
+#endif    
     heap->m_symbol.lock();
     scm_symbol_t obj = (scm_symbol_t)heap->m_symbol.get(name, len);
     if (obj == scm_undef) {
@@ -132,6 +135,9 @@ make_string(object_heap_t* heap, const char *name)
 scm_string_t
 make_string_literal(object_heap_t* heap, const char* name, int len)
 {
+#if USE_PARALLEL_VM
+    heap = heap->m_primordial_heap;
+#endif    
     heap->m_string.lock();
     scm_string_t obj = (scm_string_t)heap->m_string.get(name, len);
     if (obj == scm_undef) {
