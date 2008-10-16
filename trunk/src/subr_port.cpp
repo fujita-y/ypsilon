@@ -122,6 +122,23 @@ subr_output_port_pred(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// port-closed?
+scm_obj_t
+subr_port_closed_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (PORTP(argv[0])) {
+            scm_port_t port = (scm_port_t)argv[0];
+            scoped_lock lock(port->lock);
+            return port_open_pred(port) ? scm_false : scm_true;
+        }
+        wrong_type_argument_violation(vm, "port-closed?", 0, "port", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "port-closed?", 1, 1, argc, argv);
+    return scm_undef;
+}
+
 // output-port-buffer-mode
 scm_obj_t
 subr_output_port_buffer_mode(VM* vm, int argc, scm_obj_t argv[])
@@ -2283,4 +2300,6 @@ void init_subr_port(object_heap_t* heap)
     DEFSUBR("set-current-error-port!", subr_set_current_error_port);
 
     DEFSUBR("shutdown-output-port", subr_shutdown_output_port);
+    DEFSUBR("port-closed?", subr_port_closed_pred);
+    
 }

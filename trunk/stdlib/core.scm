@@ -654,6 +654,7 @@
     parameterize
     partition
     peek-char
+    port-closed?
     port-device-subtype
     port-eof?
     port-has-port-position?

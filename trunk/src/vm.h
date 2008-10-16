@@ -221,7 +221,7 @@ public:
   #if _MSC_VER
     static unsigned int __stdcall mutator_thread(void* param);
   #else
-    static void*    mutator_thread(void* param);
+    static void* mutator_thread(void* param);
   #endif
     
 #endif
