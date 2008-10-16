@@ -201,8 +201,11 @@ multi_vm_test(void* param)
         sigset_t set;
         sigemptyset(&set);
         sigaddset(&set, SIGINT);
+        sigaddset(&set, SIGPIPE);
         MTVERIFY(pthread_sigmask(SIG_BLOCK, &set, NULL));
-
+        
+        sigemptyset(&set);
+        sigaddset(&set, SIGINT);
         pthread_t tid;
         MTVERIFY(pthread_create(&tid, NULL, signal_waiter, &set));
         MTVERIFY(pthread_detach(tid));

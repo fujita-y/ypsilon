@@ -496,6 +496,7 @@
                         make-socket socket-shutdown socket-close socket->port socket-port
                         socket-send socket-recv socket-accept
                         shutdown-output-port
+                        port-closed?
                         
                         getenv
                         gethostname
