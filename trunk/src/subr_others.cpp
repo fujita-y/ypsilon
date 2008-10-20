@@ -1823,6 +1823,9 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
                            NULL, NULL, TRUE, 0, NULL, NULL,
                            &startup, 
                            &process) == 0) goto create_fail;
+        CloseHandle(pipe0[0]);
+        CloseHandle(pipe1[1]);
+        CloseHandle(pipe2[1]);
         CloseHandle(process.hThread);
         return make_list(vm->m_heap, 
                          4,
@@ -1998,6 +2001,7 @@ subr_process_wait(VM* vm, int argc, scm_obj_t argv[])
                     DWORD exitcode;
                     sysfunc = "GetExitCodeProcess";
                     if (GetExitCodeProcess(hdl, &exitcode) == 0) goto exit_fail;
+                    CloseHandle(hdl);
                     return uint32_to_integer(vm->m_heap, exitcode);
                 }
                 goto wait_fail;
