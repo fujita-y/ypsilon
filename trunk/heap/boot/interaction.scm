@@ -37,11 +37,11 @@
       (and (file-exists? path) path))))
 
 (define process-shell-command
-  (lambda args
+  (lambda (command)
     (cond ((string-contains (architecture-feature 'operating-system) "windows")
-           (apply process (or (getenv "COMSPEC") "cmd.exe") "/c" args))
+           (process (or (getenv "COMSPEC") "cmd.exe") "/c" command))
           (else
-           (apply process (or (getenv "SHELL") "/bin/sh") "-c" args)))))
+           (process (or (getenv "SHELL") "/bin/sh") "-c" command)))))
     
 #;
 (define apply-scheme-proc-assistant
