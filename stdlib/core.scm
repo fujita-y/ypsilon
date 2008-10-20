@@ -671,6 +671,7 @@
     pretty-print-unwrap-syntax
     procedure?
     process
+    process-shell-command
     process-wait
     put-byte
     put-bytevector
