@@ -479,7 +479,6 @@
                         decode-flonum
                         load
                         system-share-path
-                        system process process-wait
                         lookup-process-environment
                         set-current-input-port! set-current-output-port! set-current-error-port!
                         open-builtin-data-input-port
@@ -500,6 +499,10 @@
                         
                         getenv
                         gethostname
+                        system 
+                        process 
+                        process-wait
+                        process-shell-command
                         
                         default-exception-handler
                         

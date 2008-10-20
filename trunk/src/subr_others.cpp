@@ -1866,7 +1866,7 @@ create_fail:
     if (pipe2[1] != INVALID_HANDLE_VALUE) CloseHandle(pipe2[1]);
     raise_error(vm, "process", message, errno, argc, argv);
     return scm_undef;
-
+    
 #else
 
     int pipe0[2] = { -1, -1 };
@@ -1940,7 +1940,7 @@ create_fail:
                                           SCM_PORT_DIRECTION_IN,
                                           SCM_PORT_FILE_OPTION_NONE,
                                           SCM_PORT_BUFFER_MODE_BLOCK,
-                                        scm_false));
+                                          scm_false));
         }
     }
     wrong_number_of_arguments_violation(vm, "process", 1, -1, argc, argv);
@@ -1966,7 +1966,7 @@ fork_fail:
 close_fail:
 dup_fail: 
 exec_fail: 
-     exit(EXIT_FAILURE);
+     exit(127);
 
 #endif
 }

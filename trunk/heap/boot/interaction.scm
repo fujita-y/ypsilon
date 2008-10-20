@@ -36,6 +36,13 @@
                      (lookup-process-environment "HOME")))))
       (and (file-exists? path) path))))
 
+(define process-shell-command
+  (lambda args
+    (cond ((string-contains (architecture-feature 'operating-system) "windows")
+           (apply process (or (getenv "COMSPEC") "cmd.exe") "/c" args))
+          (else
+           (apply process (or (getenv "SHELL") "/bin/sh") "-c" args)))))
+    
 #;
 (define apply-scheme-proc-assistant
   (lambda (proc . args)

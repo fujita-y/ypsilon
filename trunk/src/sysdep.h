@@ -230,7 +230,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #include <dlfcn.h>
     #include <netdb.h>
     #include <dirent.h>
-
+    
     typedef int     fd_t;
 
   #ifndef __off64_t_defined
