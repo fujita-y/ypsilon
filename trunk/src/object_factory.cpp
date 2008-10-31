@@ -18,11 +18,50 @@ scm_symbol_t
 make_symbol(object_heap_t* heap, const char *name, int len)
 {
 #if USE_PARALLEL_VM
-    heap = heap->m_primordial_heap;
-#endif    
     heap->m_symbol.lock();
     scm_symbol_t obj = (scm_symbol_t)heap->m_symbol.get(name, len);
     if (obj == scm_undef) {
+        if (heap != heap->m_primordial) {
+            heap->m_primordial->m_symbol.lock();
+            obj = (scm_symbol_t)heap->m_primordial->m_symbol.get(name, len);
+            heap->m_primordial->m_symbol.unlock();
+            if (obj != scm_undef) {
+                heap->m_symbol.unlock();
+                return obj;    
+            }
+        }
+/*
+        object_heap_t* parent = heap->m_parent;
+        while (parent) {
+            parent->m_symbol.lock();
+            obj = (scm_symbol_t)parent->m_symbol.get(name, len);
+            parent->m_symbol.unlock();
+            if (obj != scm_undef) {
+                heap->m_symbol.unlock();
+                return obj;    
+            }
+            parent = parent->m_parent;
+        }
+*/
+        int bytes = sizeof(scm_symbol_rec_t) + len + 1;
+        if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+            obj = (scm_symbol_t)heap->allocate_collectible(bytes);
+            obj->name = (char*)((uintptr_t)obj + sizeof(scm_symbol_rec_t));
+        } else {
+            obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
+            obj->name = (char*)heap->allocate_private(len + 1);
+        }
+        obj->hdr = scm_hdr_symbol | MAKEBITS(len, HDR_SYMBOL_SIZE_SHIFT) ;
+        memcpy(obj->name, name, len);
+        obj->name[len] = 0;
+        heap->m_symbol.put(obj);
+    }
+    heap->m_symbol.unlock();
+    return obj;    
+#else
+    heap->m_symbol.lock();
+    scm_symbol_t obj = (scm_symbol_t)heap->m_symbol.get(name, len);
+    if (obj == scm_undef) {   
         int bytes = sizeof(scm_symbol_rec_t) + len + 1;
         if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
             obj = (scm_symbol_t)heap->allocate_collectible(bytes);
@@ -38,6 +77,7 @@ make_symbol(object_heap_t* heap, const char *name, int len)
     }
     heap->m_symbol.unlock();
     return obj;
+#endif
 }
 
 scm_symbol_t
@@ -135,9 +175,6 @@ make_string(object_heap_t* heap, const char *name)
 scm_string_t
 make_string_literal(object_heap_t* heap, const char* name, int len)
 {
-#if USE_PARALLEL_VM
-    heap = heap->m_primordial_heap;
-#endif    
     heap->m_string.lock();
     scm_string_t obj = (scm_string_t)heap->m_string.get(name, len);
     if (obj == scm_undef) {
@@ -638,6 +675,17 @@ make_tuple(object_heap_t* heap, int n, scm_obj_t elt)
     return obj;
 }
 
+scm_tuple_t
+make_tuple(object_heap_t* heap, int len, ...)
+{
+    va_list ap;
+    va_start(ap, len);
+    scm_tuple_t tuple = make_tuple(heap, len, scm_unspecified);
+    for (int i = 0; i < len; i++) tuple->elts[i] = va_arg(ap, scm_obj_t);
+    va_end(ap);
+    return tuple;
+}
+
 scm_weakmapping_t
 make_weakmapping(object_heap_t* heap, scm_obj_t key, scm_obj_t value)
 {
@@ -687,6 +735,15 @@ make_socket(object_heap_t* heap)
     obj->fd = INVALID_SOCKET;
     obj->lock.init(true);
     return obj;
+}
+
+scm_sharedqueue_t
+make_sharedqueue(object_heap_t* heap)
+{
+    scm_sharedqueue_t obj = (scm_sharedqueue_t)heap->allocate_collectible(sizeof(scm_sharedqueue_rec_t));
+    obj->hdr = scm_hdr_sharedqueue;
+    obj->queue.init();
+    return obj;    
 }
 
 scm_obj_t
@@ -820,6 +877,28 @@ copy_weakhashtable(object_heap_t* heap, scm_weakhashtable_t ht, bool immutable)
         assert(WEAKMAPPINGP(obj));
         if (((scm_weakmapping_t)obj)->key == scm_false) continue;
         put_weakhashtable(ht2, (scm_weakmapping_t)obj);
+    }
+    if (immutable) ht2->hdr |= MAKEBITS(1, HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT);
+    return ht2;
+}
+
+scm_weakhashtable_t
+clone_weakhashtable(object_heap_t* heap, scm_weakhashtable_t ht, bool immutable)
+{
+    assert(WEAKHASHTABLEP(ht));
+    ht->lock.verify_locked();
+    weakhashtable_rec_t* ht_datum = ht->datum;
+    int nelts = ht_datum->capacity;
+    scm_weakhashtable_t ht2 = make_weakhashtable(heap, lookup_immutable_hashtable_size(HASH_IMMUTABLE_SIZE(ht_datum->live)));
+    scoped_lock lock(ht2->lock);
+    for (int i = 0; i < nelts; i++) {
+        scm_obj_t obj = ht_datum->elts[i];
+        if (obj == scm_hash_free) continue;
+        if (obj == scm_hash_deleted) continue;
+        assert(WEAKMAPPINGP(obj));
+        scm_weakmapping_t wmap = (scm_weakmapping_t)obj;
+        if (wmap->key == scm_false) continue;
+        put_weakhashtable(ht2, make_weakmapping(heap, wmap->key, wmap->value));
     }
     if (immutable) ht2->hdr |= MAKEBITS(1, HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT);
     return ht2;
@@ -959,6 +1038,55 @@ finalize(object_heap_t* heap, void* obj)
                 socket_close(socket);
             }
             socket->lock.destroy();
+            break;
+        }
+        case TC_SHAREDQUEUE: {
+            scm_sharedqueue_t queue = (scm_sharedqueue_t)obj;
+            queue->queue.destroy();
+            break;
+        }
+    }
+}
+
+void
+renounce(void* obj, int size, void* refcon)
+{
+    if (PAIRP(obj)) return;
+    int tc = HDR_TC(HDR(obj));
+    assert(tc >= 0);
+    assert(tc <= TC_MASKBITS);
+    switch (tc) {
+        case TC_HASHTABLE: {
+            scm_hashtable_t ht = (scm_hashtable_t)obj;
+            ht->lock.destroy();
+            break;
+        }
+        case TC_WEAKHASHTABLE: {
+            scm_weakhashtable_t ht = (scm_weakhashtable_t)obj;
+            ht->lock.destroy();
+            break;
+        }
+        case TC_PORT: {
+            scm_port_t port = (scm_port_t)obj;
+            {
+                scoped_lock lock(port->lock);
+                if (port->type != SCM_PORT_TYPE_CUSTOM) port_close(port);
+            }
+            port->lock.destroy();
+            break;
+        }
+        case TC_SOCKET: {
+            scm_socket_t socket = (scm_socket_t)obj;
+            {
+                scoped_lock lock(socket->lock);
+                socket_close(socket);
+            }
+            socket->lock.destroy();
+            break;
+        }
+        case TC_SHAREDQUEUE: {
+            scm_sharedqueue_t queue = (scm_sharedqueue_t)obj;
+            queue->queue.destroy();
             break;
         }
     }

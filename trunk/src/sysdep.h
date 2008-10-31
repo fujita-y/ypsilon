@@ -204,11 +204,18 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         } while(0)
   #endif
 
+    typedef unsigned int __stdcall thread_main_t
+
     inline void thread_start(unsigned int (__stdcall *func)(void*), void* param)
     {
         MTVERIFY(_beginthreadex(NULL, 0, func, param, 0, NULL));
     }
-
+    
+    inline void thread_yield()
+    {
+        Sleep(0);
+    }
+    
 #else
 
     #include <pthread.h>
@@ -318,7 +325,10 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     }
     
   #endif
-
+    
+    typedef pthread_t   thread_t;
+    typedef void*       thread_main_t;
+    
     inline void thread_start(void* (*func)(void*), void* param)
     {
         pthread_t th;
@@ -326,20 +336,11 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         MTVERIFY(pthread_detach(th));
     }
     
-    inline pthread_t thread_call(void* (*func)(void*), void* param)
+    inline void thread_yield()
     {
-        pthread_t th;
-        MTVERIFY(pthread_create(&th, NULL, func, param));
-        return th;
+        sched_yield();
     }
-
-    inline void* thread_join(pthread_t th)
-    {
-        void* obj;
-        MTVERIFY(pthread_join(th, &obj));
-        return obj;
-    }
-
+    
     
 #endif
 

@@ -19,8 +19,9 @@
 (define ellipsis-quote?
   (lambda (form)
     (and (pair? form)
-         (pair? (car form))
-         (eq? (caar form) '...))))
+         (eq? (car form) '...)
+         (pair? (cdr form))
+         (null? (cddr form)))))
 
 (define collect-unique-ids ; exclude '...
   (lambda (expr)

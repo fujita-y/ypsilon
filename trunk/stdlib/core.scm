@@ -287,6 +287,7 @@
     display-backtrace
     display-heap-statistics
     display-object-statistics
+    display-thread-status
     div
     div-and-mod
     div0
@@ -586,6 +587,7 @@
     make-record-type-descriptor
     make-rectangular
     make-serious-condition
+    make-shared-queue
     make-socket
     make-string
     make-string-hashtable
@@ -739,6 +741,8 @@
     set-current-output-port!
     set-port-position!
     set-top-level-value!
+    shared-queue-pop!
+    shared-queue-push!
     shutdown-output-port
     simple-conditions
     sin
@@ -751,6 +755,7 @@
     socket-send
     socket-shutdown
     socket?
+    spawn
     sqrt
     standard-error-port
     standard-input-port

@@ -18,6 +18,9 @@
 #include "list.h"
 #include "printer.h"
 #include "violation.h"
+#if USE_PARALLEL_VM
+#include "interpreter.h"
+#endif
 
 #define DEFAULT_GENSYM_PREFIX   ".G"
 
@@ -587,6 +590,14 @@ subr_collect_stack_notify(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_collect(VM* vm, int argc, scm_obj_t argv[])
 {
+#if USE_PARALLEL_VM
+    if (argc == 0) {
+        vm->m_heap->collect();
+        return scm_unspecified;
+    }
+    wrong_number_of_arguments_violation(vm, "collect", 0, 0, argc, argv);
+    return scm_undef;
+#else    
     bool pack = false;
     if (argc == 0 || argc == 1) {
         if (argc == 1) {
@@ -621,6 +632,7 @@ subr_collect(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "collect", 0, 1, argc, argv);
     return scm_undef;
+#endif
 }
 
 // collect-trip-bytes
@@ -2133,48 +2145,100 @@ subr_uninterned_symbol_suffix(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "uninterned-symbol-suffix", 1, 1, argc, argv);
     return scm_undef;
 }
-/*
+
 // spawn
 scm_obj_t
 subr_spawn(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 1) {
-        if (CLOSUREP(argv[0])) {
-            scm_closure_t closure = (scm_closure_t)argv[0];
-            if (HDR_CLOSURE_ARGS(closure->hdr) == 0) {
-                vm->spawn(closure);
-                return scm_unspecified;
-            }
-            wrong_type_argument_violation(vm, "spawn", 0, "nullary closure", argv[0], argc, argv);
-            return scm_undef;
-        }
+#if USE_PARALLEL_VM
+    if (argc >= 1) {
+        if (CLOSUREP(argv[0])) return MAKEFIXNUM(vm->m_interp->spawn(vm, (scm_closure_t)argv[0], argc - 1, argv + 1));
         wrong_type_argument_violation(vm, "spawn", 0, "closure", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "spawn", 1, 1, argc, argv);
+    wrong_number_of_arguments_violation(vm, "spawn", 1, -1, argc, argv);
+    return scm_undef;
+#else
+    fatal("%s:%u spawn not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
+// display-thread-status
+scm_obj_t
+subr_display_thread_status(VM* vm, int argc, scm_obj_t argv[])
+{
+
+#if USE_PARALLEL_VM
+    if (argc == 0) {
+        vm->m_interp->display_status(vm);
+        return scm_unspecified;
+    }
+    wrong_number_of_arguments_violation(vm, "display-thread-status", 0, 0, argc, argv);
+    return scm_undef;    
+#else
+    fatal("%s:%u display-thread-status not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
+// make-shared-queue
+scm_obj_t
+subr_make_shared_queue(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) {
+        return make_sharedqueue(vm->m_heap);
+    }
+    wrong_number_of_arguments_violation(vm, "make-shared-queue", 0, 0, argc, argv);
     return scm_undef;
 }
-*/
-#if USE_PARALLEL_VM
-// pmap
+
+// shared-queue?
 scm_obj_t
-subr_pmap(VM* vm, int argc, scm_obj_t argv[])
+subr_shared_queue_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) return SHAREDQUEUEP(argv[0]) ? scm_true : scm_false;
+    wrong_number_of_arguments_violation(vm, "shared-queue?", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+
+// shared-queue-push!
+scm_obj_t
+subr_shared_queue_push(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 2) {
-        if (CLOSUREP(argv[0])) {
-            if (listp(argv[1])) {
-                return vm->pmap((scm_closure_t)argv[0], (scm_pair_t)argv[1]);
+        if (SHAREDQUEUEP(argv[0])) {
+            if (FIXNUMP(argv[1])) {
+                scm_sharedqueue_t queue = (scm_sharedqueue_t)argv[0];
+                queue->queue.put(argv[1]);
+                return scm_unspecified;
             }
-            wrong_type_argument_violation(vm, "pmap", 1, "proper list", argv[1], argc, argv);
+            wrong_type_argument_violation(vm, "shared-queue-push!", 1, "fixnum", argv[1], argc, argv);
             return scm_undef;
         }
-        wrong_type_argument_violation(vm, "pmap", 0, "closure", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "shared-queue-push!", 0, "shared queue", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "pmap", 2, 2, argc, argv);
+    wrong_number_of_arguments_violation(vm, "shared-queue-push!", 2, 2, argc, argv);
     return scm_undef;
 }
-#endif
+
+// shared-queue-pop!
+scm_obj_t
+subr_shared_queue_pop(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (SHAREDQUEUEP(argv[0])) {
+            scm_sharedqueue_t queue = (scm_sharedqueue_t)argv[0];
+            scm_obj_t obj;
+            queue->queue.get(&obj);
+            return obj;
+        }
+        wrong_type_argument_violation(vm, "shared-queue-pop!", 0, "shared queue", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "shared-queue-pop!", 1, 1, argc, argv);
+    return scm_undef;
+}
 
 void
 init_subr_others(object_heap_t* heap)
@@ -2272,9 +2336,12 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("escape", subr_escape);
     DEFSUBR("recursion-level", subr_recursion_level);
 
-#if USE_PARALLEL_VM
-    DEFSUBR("pmap", subr_pmap);
-#endif
+    DEFSUBR("spawn", subr_spawn);
+    DEFSUBR("display-thread-status", subr_display_thread_status);
+    DEFSUBR("make-shared-queue", subr_make_shared_queue);
+    DEFSUBR("shared-queue-push!", subr_shared_queue_push);
+    DEFSUBR("shared-queue-pop!", subr_shared_queue_pop);
+    DEFSUBR("shared-queue?", subr_shared_queue_pred);
     #undef DEFSUBR
 
 }

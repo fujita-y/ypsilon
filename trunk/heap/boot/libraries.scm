@@ -506,6 +506,12 @@
                         
                         default-exception-handler
                         
+                        make-shared-queue
+                        shared-queue-push!
+                        shared-queue-pop!
+                        
+                        spawn
+                        display-thread-status
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))

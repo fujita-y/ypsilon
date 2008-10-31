@@ -6,6 +6,7 @@
 
 #include "core.h"
 #include "vm.h"
+#include "interpreter.h"
 
 #define MULTI_VM_TEST   0
 
@@ -88,7 +89,7 @@ multi_vm_test(void* param)
 
         main_command_line_argc = argc;
         main_command_line_argv = argv;
-        
+                
         object_heap_t* heap = new object_heap_t;
         int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
         int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
@@ -241,8 +242,15 @@ multi_vm_test(void* param)
             MTVERIFY(pthread_detach(tid));
         }
 #endif        
+#if USE_PARALLEL_VM
+        Interpreter interp;
+        interp.init(&rootVM, 128);
         rootVM.boot();
         rootVM.standalone();
+#else
+        rootVM.boot();
+        rootVM.standalone();
+#endif
         return 0;
     }
 

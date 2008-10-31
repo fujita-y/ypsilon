@@ -73,16 +73,28 @@
         (make-temporary-symbol (format "~a~a~a" id (current-rename-delimiter) count) (string-length (uninterned-symbol-prefix id)))
         (make-temporary-symbol (format "~a~a~a" id (current-rename-delimiter) count) (string-length (symbol->string id))))))
 
+(define renamed-id?
+  (lambda (id)
+    (and (uninterned-symbol? id)
+         (string-contains (uninterned-symbol-suffix id) (current-rename-delimiter)))))
+
+(define rename-variable-id
+  (lambda (id count)
+    (if (uninterned-symbol? id)
+        (make-temporary-symbol (format "~a~a~a*" id (current-rename-delimiter) count) (string-length (uninterned-symbol-prefix id)))
+        (make-temporary-symbol (format "~a~a~a*" id (current-rename-delimiter) count) (string-length (symbol->string id))))))
+  
+(define renamed-variable-id?
+  (lambda (id)
+    (and (uninterned-symbol? id)
+         (string-contains (uninterned-symbol-suffix id) (current-rename-delimiter))
+         (string-contains (uninterned-symbol-suffix id) #\*))))
+
 (define compose-id
   (lambda (id suffix)
     (if (uninterned-symbol? id)
         (make-temporary-symbol (format "~a~a" id suffix) (string-length (uninterned-symbol-prefix id)))
         (make-temporary-symbol (format "~a~a" id suffix) (string-length (symbol->string id))))))
-
-(define renamed-id?
-  (lambda (id)
-    (and (uninterned-symbol? id)
-         (string-contains (uninterned-symbol-suffix id) (current-rename-delimiter)))))
 
 (define original-id
   (lambda (id)
