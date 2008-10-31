@@ -68,7 +68,13 @@
 
     (if (symbol? id)
         (let ((deno (env-lookup env id)))
-          (cond ((uninterned-symbol? deno) deno)
+          (cond ((uninterned-symbol? deno) ; deno)
+                 (cond ((local-macro-symbol? deno) deno)
+                       ((renamed-variable-id? deno) deno)
+                       ((eq? id deno) 
+                        (unrename-primitive-id (original-id id)))
+                       (else
+                        (lookup-topmost-subst deno env))))
                 ((symbol? deno) 
                  (unrename-primitive-id deno))
                 ((unbound? deno) 

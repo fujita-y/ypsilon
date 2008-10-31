@@ -315,7 +315,7 @@
     int callback_int(uint32_t uid, uint32_t argc, uint32_t* base)
     {
         scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
-        assert(CLOSUREP(obj));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
         scm_obj_t result;
         try {
             VM* vm = current_vm();
@@ -405,8 +405,11 @@
             thunk = new trampoline_t((intptr_t)c_callback_stub_int, uid, argc);
         }
         vm->m_heap->write_barrier(closure);
-        int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);
-        if (nsize) rehash_hashtable(vm->m_heap, vm->m_heap->m_trampolines, nsize);
+        {
+            scoped_lock lock(vm->m_heap->m_trampolines->lock);
+            int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);
+            if (nsize) rehash_hashtable(vm->m_heap, vm->m_heap->m_trampolines, nsize);
+        }
         uid++;
         assert(uid < FIXNUM_MAX);
         return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
@@ -476,7 +479,7 @@
     intptr_t c_callback_intptr(intptr_t uid, intptr_t argc, intptr_t* stack)
     {
         scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
-        assert(CLOSUREP(obj));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
         scm_obj_t result;
         try {
             VM* vm = current_vm();
@@ -502,8 +505,11 @@
         static intptr_t uid;
         trampoline_t* thunk = new trampoline_t((intptr_t)c_callback_stub_intptr, uid, argc);
         vm->m_heap->write_barrier(closure);
-        int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);
-        if (nsize) rehash_hashtable(vm->m_heap, vm->m_heap->m_trampolines, nsize);
+        {
+            scoped_lock lock(vm->m_heap->m_trampolines->lock);
+            int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);
+            if (nsize) rehash_hashtable(vm->m_heap, vm->m_heap->m_trampolines, nsize);
+        }
         uid++;
         assert(uid < FIXNUM_MAX);
         return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
@@ -577,7 +583,7 @@
     intptr_t c_callback_intptr_x64(intptr_t uid, intptr_t argc, intptr_t* reg, intptr_t* stack)
     {
         scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
-        assert(CLOSUREP(obj));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
         scm_obj_t result;
         try {
             VM* vm = current_vm();
@@ -606,8 +612,11 @@
         static intptr_t uid;
         trampoline_t* thunk = new trampoline_t((intptr_t)c_callback_stub_intptr_x64, uid, argc);
         vm->m_heap->write_barrier(closure);
-        int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);
-        if (nsize) rehash_hashtable(vm->m_heap, vm->m_heap->m_trampolines, nsize);
+        {
+            scoped_lock lock(vm->m_heap->m_trampolines->lock);
+            int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);
+            if (nsize) rehash_hashtable(vm->m_heap, vm->m_heap->m_trampolines, nsize);
+        }
         uid++;
         assert(uid < FIXNUM_MAX);
         return intptr_to_integer(vm->m_heap, (intptr_t)thunk);

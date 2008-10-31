@@ -49,6 +49,7 @@ scm_complex_t       make_complex(object_heap_t* heap, scm_obj_t real, scm_obj_t 
 scm_rational_t      make_rational(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator);
 scm_gloc_t          make_gloc(object_heap_t* heap, scm_environment_t environment, scm_symbol_t symbol);
 scm_tuple_t         make_tuple(object_heap_t* heap, int n, scm_obj_t obj);
+scm_tuple_t         make_tuple(object_heap_t* heap, int len, ...);
 scm_weakmapping_t   make_weakmapping(object_heap_t* heap, scm_obj_t key, scm_obj_t value);
 scm_weakhashtable_t make_weakhashtable(object_heap_t* heap, int n);
 scm_obj_t           make_list(object_heap_t* heap, int len, ...);
@@ -61,6 +62,7 @@ scm_port_t          make_transcoded_port(object_heap_t* heap, scm_obj_t name, sc
 scm_port_t          make_temp_file_port(object_heap_t* heap, scm_obj_t name, int buffer_mode, scm_obj_t transcoder);
 scm_socket_t        make_socket(object_heap_t* heap);
 scm_socket_t        make_socket(object_heap_t* heap, const char* node, const char* service, int family, int type, int protocol, int flags);
+scm_sharedqueue_t   make_sharedqueue(object_heap_t* heap);
 
 
 void    rehash_hashtable(object_heap_t* heap, scm_hashtable_t ht, int n);
@@ -74,9 +76,11 @@ void    clear_volatile_weakhashtable(scm_weakhashtable_t ht);
 void*   new_heapenv_rec(object_heap_t* heap, size_t size);
 void*   new_heapcont_rec(object_heap_t* heap, size_t size);
 void    finalize(object_heap_t* heap, void* obj);
+void    renounce(void* obj, int size, void* refcon);
 
 scm_hashtable_t     copy_hashtable(object_heap_t* heap, scm_hashtable_t ht, bool immutable);
 scm_weakhashtable_t copy_weakhashtable(object_heap_t* heap, scm_weakhashtable_t ht, bool immutable);
+scm_weakhashtable_t clone_weakhashtable(object_heap_t* heap, scm_weakhashtable_t ht, bool immutable);
 
 inline void*
 new_heapenv_rec(object_heap_t* heap, size_t size)

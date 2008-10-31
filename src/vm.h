@@ -12,6 +12,10 @@
 
 class printer_t;
 
+#if USE_PARALLEL_VM
+class Interpreter;
+#endif
+
 class DECLSPEC(align(16)) VM {
 public:
     scm_obj_t           m_trace;
@@ -215,15 +219,7 @@ public:
 #endif
     
 #if USE_PARALLEL_VM
-    
-    pthread_t spawn(scm_closure_t proc, scm_obj_t arg);
-    scm_obj_t pmap(scm_closure_t proc, scm_obj_t args);
-  #if _MSC_VER
-    static unsigned int __stdcall mutator_thread(void* param);
-  #else
-    static void* mutator_thread(void* param);
-  #endif
-    
+    Interpreter* m_interp;    
 #endif
     
 } ATTRIBUTE(aligned(16));

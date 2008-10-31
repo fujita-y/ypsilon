@@ -9,6 +9,7 @@
 
 #include "core.h"
 #include "mutex.h"
+#include "queue.h"
 
 /*
     immediate:
@@ -64,6 +65,7 @@
 #define OBJECT_DATUM_ALIGN_MASK         (OBJECT_DATUM_ALIGN - 1)
 
 #define PORT_LOOKAHEAD_SIZE             6
+#define SHAREDQUEUE_SIZE                32
 
 typedef void*       scm_obj_t;
 typedef uintptr_t   scm_hdr_t;
@@ -111,6 +113,7 @@ const scm_obj_t scm_proc_apply_values   = (scm_obj_t)0xb2;
 #define TC_WEAKMAPPING      0x13
 #define TC_ENVIRONMENT      0x14
 #define TC_SOCKET           0x15
+#define TC_SHAREDQUEUE      0x16
 #define TC_MASKBITS         0x3f
 
 const scm_hdr_t scm_hdr_symbol          = 0x00a | (TC_SYMBOL << 4);
@@ -135,6 +138,7 @@ const scm_hdr_t scm_hdr_weakmapping     = 0x00a | (TC_WEAKMAPPING << 4);
 const scm_hdr_t scm_hdr_weakhashtable   = 0x00a | (TC_WEAKHASHTABLE << 4);
 const scm_hdr_t scm_hdr_bvector         = 0x00a | (TC_BVECTOR << 4);
 const scm_hdr_t scm_hdr_socket          = 0x00a | (TC_SOCKET << 4);
+const scm_hdr_t scm_hdr_sharedqueue     = 0x00a | (TC_SHAREDQUEUE << 4);
 
 #define HDR_TC_MASKBITS    0x3ff
 
@@ -159,6 +163,7 @@ struct scm_weakmapping_rec_t;
 struct scm_weakhashtable_rec_t;
 struct scm_bvector_rec_t;
 struct scm_socket_rec_t;
+struct scm_sharedqueue_rec_t;
 
 typedef scm_pair_rec_t*             scm_pair_t;
 typedef scm_symbol_rec_t*           scm_symbol_t;
@@ -181,6 +186,7 @@ typedef scm_weakmapping_rec_t*      scm_weakmapping_t;
 typedef scm_weakhashtable_rec_t*    scm_weakhashtable_t;
 typedef scm_bvector_rec_t*          scm_bvector_t;
 typedef scm_socket_rec_t*           scm_socket_t;
+typedef scm_sharedqueue_rec_t*      scm_sharedqueue_t;
 
 struct vm_cont_rec_t;
 struct vm_env_rec_t;
@@ -382,6 +388,11 @@ OBJECT_ALIGNED(scm_socket_rec_t) {
     struct sockaddr_storage addr;
 } END;
 
+OBJECT_ALIGNED(scm_sharedqueue_rec_t) {
+    scm_hdr_t   hdr;
+    queue_t<void*, SHAREDQUEUE_SIZE> queue;
+} END;
+
 #undef OBJECT_ALIGNED
 #undef END
 
@@ -449,6 +460,7 @@ struct vm_env_rec_t {           // record size is variable
 #define WEAKMAPPINGP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_weakmapping)
 #define ENVIRONMENTP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_environment)
 #define SOCKETP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_socket)
+#define SHAREDQUEUEP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_sharedqueue)
 
 #define HDR_SYMBOL_INHERENT_SHIFT           11
 #define HDR_SYMBOL_UNINTERNED_SHIFT         10

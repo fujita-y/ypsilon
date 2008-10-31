@@ -10,7 +10,29 @@
 #include "port.h"
 #include "reader.h"
 #include "printer.h"
+#if USE_PARALLEL_VM
+#include "interpreter.h"
+#endif
+/*
+#if USE_PARALLEL_VM
 
+static mutex_t s_spawn_lock;
+static int s_spawn_id = 0;
+
+int
+VM::spawn_id()
+{
+    if (s_spawn_id == 0) s_spawn_lock.init();
+    int id;
+    s_spawn_lock.lock();
+    s_spawn_id = s_spawn_id + 1;
+    id = s_spawn_id;    
+    s_spawn_lock.unlock();
+    return id;
+}
+
+#endif
+*/
 scm_obj_t
 VM::lookup_current_environment(scm_symbol_t symbol)
 {
@@ -804,6 +826,19 @@ VM::stop()
             m_heap->enqueue_root(OBJECT_SLAB_TRAITS_OF(m_env)->cache->lookup(m_env));
         }
     }
+#if USE_PARALLEL_VM
+    if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) {
+        scoped_lock lock(m_interp->m_lock);
+        int id = m_interp->vm_id(this);
+        for (int i = 0; i < m_interp->m_count; i++) {
+            switch (m_interp->m_table[i]->state) {
+            case Interpreter::VM_STATE_START: case Interpreter::VM_STATE_RUNNING:
+                if (m_interp->m_table[i]->parent == id) m_heap->enqueue_root(m_interp->m_table[i]->param);
+                break;
+            }
+        }
+    }
+#endif    
     m_heap->m_collector_lock.lock();
     while (m_heap->m_stop_the_world) {
         m_heap->m_mutator_stopped = true;

@@ -7,7 +7,7 @@
     (cond ((> (safe-length form) 2)
            (let ((vars (collect-lambda-formals (cadr form) form)))
              (let* ((suffix (fresh-rename-count))
-                    (renames (map cons vars (map (lambda (id) (rename-id id suffix)) vars)))
+                    (renames (map cons vars (map (lambda (id) (rename-variable-id id suffix)) vars)))
                     (body (expand-body form (cddr form) (extend-env renames env))))
                (if (null? body)
                    (syntax-violation 'lambda "empty body" form)

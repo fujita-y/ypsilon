@@ -34,7 +34,7 @@
          (let ((vars (map car bindings))
                (inits (map (lambda (a) (expand-form (cadr a) env)) bindings))
                (suffix (fresh-rename-count)))
-           (let* ((renames (map (lambda (id) (rename-id id suffix)) vars))
+           (let* ((renames (map (lambda (id) (rename-variable-id id suffix)) vars))
                   (body (expand-body form (cddr form) (extend-env (map cons vars renames) env))))
              (cond ((null? body)
                     (syntax-violation (car form) "empty body" form))
@@ -56,7 +56,7 @@
        (begin
          (check-let-bindings form bindings)
          (let ((vars (map car bindings)) (suffix (fresh-rename-count)))
-           (let* ((renames (map (lambda (id) (rename-id id suffix)) vars))
+           (let* ((renames (map (lambda (id) (rename-variable-id id suffix)) vars))
                   (env (extend-env (map cons vars renames) env)))
              (let ((inits (map (lambda (a) (expand-form (cadr a) env)) bindings))
                    (body (expand-body form (cddr form) env)))
@@ -80,7 +80,7 @@
        (begin
          (check-let-bindings form bindings)
          (let ((vars (map car bindings)) (suffix (fresh-rename-count)))
-           (let* ((renames (map (lambda (id) (rename-id id suffix)) vars))
+           (let* ((renames (map (lambda (id) (rename-variable-id id suffix)) vars))
                   (env (extend-env (map cons vars renames) env)))
              (let ((inits (map (lambda (a) (expand-form (cadr a) env)) bindings))
                    (body (expand-body form (cddr form) env)))
@@ -140,7 +140,7 @@
                           (let* ((suffix (fresh-rename-count))
                                  (renames (map cons
                                                vars
-                                               (map (lambda (id) (rename-id id suffix))
+                                               (map (lambda (id) (rename-variable-id id suffix))
                                                     vars))))    
                             `(.call-with-values
                               (lambda () ,(expand-form init init-env))

@@ -408,6 +408,9 @@ object_heap_t::resolve(relocate_info_t* info)
     m_architecture_feature = (scm_hashtable_t)forward(m_architecture_feature);
     m_native_transcoder = (scm_bvector_t)forward(m_native_transcoder);
     m_trampolines = (scm_hashtable_t)forward(m_trampolines);
+#if USE_PARALLEL_VM
+    m_thread_context = (scm_hashtable_t)forward(m_thread_context);
+#endif
     m_system_environment = (scm_environment_t)forward(m_system_environment);
     m_interaction_environment = (scm_environment_t)forward(m_interaction_environment);
     m_hidden_variables = (scm_weakhashtable_t)forward(m_hidden_variables);
