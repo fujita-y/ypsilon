@@ -204,7 +204,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         } while(0)
   #endif
 
-    typedef unsigned int __stdcall thread_main_t
+	#define thread_main_t unsigned int __stdcall
 
     inline void thread_start(unsigned int (__stdcall *func)(void*), void* param)
     {
