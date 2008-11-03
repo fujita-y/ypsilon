@@ -93,7 +93,7 @@ multi_vm_test(void* param)
         object_heap_t* heap = new object_heap_t;
         int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
         int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
-        heap->init(heap_limit, heap_init);
+        heap->init_primordial(heap_limit, heap_init);
         VM rootVM;
         rootVM.init(heap);
         s_current_vm = &rootVM;
