@@ -141,7 +141,7 @@
       (apply format port args)
       (format port "~%")
       (display-backtrace)
-      (format port "~%[exit]~%")
+      (format port "~%[exit]~%~!")
       (exit #f))))
 
 (define raise-i/o-filename-error

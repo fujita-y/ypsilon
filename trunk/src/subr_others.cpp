@@ -90,7 +90,7 @@ subr_core_read(VM* vm, int argc, scm_obj_t argv[])
         try {
             return reader_t(vm, port).read(note);
         } catch (reader_exception_t& exception) {
-            raise_lexical_violation(vm, who, exception.m_message);
+            lexical_violation(vm, who, exception.m_message);
             return scm_undef;
         } catch (io_exception_t& e) {
             raise_io_error(vm, who->name, e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1076,6 +1076,12 @@ subr_tuple_set(VM* vm, int argc, scm_obj_t argv[])
                 scm_tuple_t tuple = (scm_tuple_t)argv[0];
                 int n = FIXNUM(argv[1]);
                 if (n >= 0 && n < HDR_TUPLE_COUNT(tuple->hdr)) {
+#if USE_PARALLEL_VM
+                    if (!vm->m_heap->in_heap(tuple)) {
+                        thread_object_access_violation(vm, "tuple-set!",argc, argv);
+                        return scm_undef;
+                    }
+#endif
                     vm->m_heap->write_barrier(argv[2]);
                     tuple->elts[FIXNUM(argv[1])] = argv[2];
                     return scm_unspecified;
@@ -1524,6 +1530,12 @@ subr_copy_environment_variables(VM* vm, int argc, scm_obj_t argv[])
             if (ENVIRONMENTP(argv[1])) {
                 scm_environment_t from = (scm_environment_t)argv[0];
                 scm_environment_t to = (scm_environment_t)argv[1];
+#if USE_PARALLEL_VM
+                if (!vm->m_heap->in_heap(to)) {
+                    thread_object_access_violation(vm, "copy-environment-variables!" ,argc, argv);
+                    return scm_undef;
+                }
+#endif
                 scoped_lock lock(to->variable->lock);
                 scm_obj_t lst = argv[2];
                 while (PAIRP(lst)) {
@@ -1582,6 +1594,12 @@ subr_copy_environment_macros(VM* vm, int argc, scm_obj_t argv[])
             if (ENVIRONMENTP(argv[1])) {
                 scm_environment_t from = (scm_environment_t)argv[0];
                 scm_environment_t to = (scm_environment_t)argv[1];
+#if USE_PARALLEL_VM
+                if (!vm->m_heap->in_heap(to)) {
+                    thread_object_access_violation(vm, "copy-environment-macros!" ,argc, argv);
+                    return scm_undef;
+                }
+#endif
                 scoped_lock lock(to->macro->lock);
                 scm_obj_t lst = argv[2];
                 while (PAIRP(lst)) {
@@ -2152,7 +2170,10 @@ subr_spawn(VM* vm, int argc, scm_obj_t argv[])
 {
 #if USE_PARALLEL_VM
     if (argc >= 1) {
-        if (CLOSUREP(argv[0])) return MAKEFIXNUM(vm->m_interp->spawn(vm, (scm_closure_t)argv[0], argc - 1, argv + 1));
+        if (CLOSUREP(argv[0])) {
+            vm->m_interp->spawn(vm, (scm_closure_t)argv[0], argc - 1, argv + 1);
+            return scm_unspecified;
+        }
         wrong_type_argument_violation(vm, "spawn", 0, "closure", argv[0], argc, argv);
         return scm_undef;
     }
@@ -2160,6 +2181,52 @@ subr_spawn(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 #else
     fatal("%s:%u spawn not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
+// thread-self
+scm_obj_t
+subr_thread_self(VM* vm, int argc, scm_obj_t argv[])
+{
+#if USE_PARALLEL_VM
+    if (argc == 0) return make_tuple(vm->m_heap, 2, make_symbol(vm->m_heap, "type:thread"), MAKEFIXNUM(vm->m_interp->vm_id(vm)));
+    wrong_number_of_arguments_violation(vm, "thread-self", 0, 0, argc, argv);
+    return scm_undef;
+#else
+    if (argc == 0) return make_tuple(vm->m_heap, 2, make_symbol(vm->m_heap, "type:thread"), MAKEFIXNUM(0));
+    wrong_number_of_arguments_violation(vm, "thread-self", 0, 0, argc, argv);
+    return scm_undef;
+#endif
+}
+
+// thread-primordial?
+scm_obj_t
+subr_thread_primordial_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+#if USE_PARALLEL_VM
+    if (argc == 1) {
+        if (TUPLEP(argv[0])) {
+            scm_tuple_t tuple = (scm_tuple_t)argv[0];            
+            const char* type_name = get_tuple_type_name(tuple);
+            if (strcmp(type_name, "thread") == 0) return vm->m_interp->vm_primordial(FIXNUM(tuple->elts[1])) ? scm_true : scm_false;
+        }
+        wrong_type_argument_violation(vm, "thread-primordial?", 0, "thread", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "thread-primordial?", 1, 1, argc, argv);
+    return scm_undef;
+#else
+    if (argc == 1) {
+        if (TUPLEP(argv[0])) {
+            scm_tuple_t tuple = (scm_tuple_t)argv[0];            
+            const char* type_name = get_tuple_type_name(tuple);
+            if (strcmp(type_name, "thread") == 0) return scm_true;
+        }
+        wrong_type_argument_violation(vm, "thread-primordial?", 0, "thread", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "thread-primordial?", 1, 1, argc, argv);
+    return scm_undef;
 #endif
 }
 
@@ -2184,53 +2251,74 @@ subr_display_thread_status(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_make_shared_queue(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 0) {
-        return make_sharedqueue(vm->m_heap);
+#if USE_PARALLEL_VM
+    if (argc == 0) return make_sharedqueue(vm->m_heap, 1);
+    if (argc == 1) {
+        if (FIXNUMP(argv[0])) return make_sharedqueue(vm->m_heap, FIXNUM(argv[0]));
+        wrong_type_argument_violation(vm, "make-shared-queue", 1, "fixnum", argv[0], argc, argv);
+        return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "make-shared-queue", 0, 0, argc, argv);
+    wrong_number_of_arguments_violation(vm, "make-shared-queue", 0, 1, argc, argv);
     return scm_undef;
+#else
+    fatal("%s:%u make-shared-queue not supported on this build", __FILE__, __LINE__);
+#endif
 }
 
 // shared-queue?
 scm_obj_t
 subr_shared_queue_pred(VM* vm, int argc, scm_obj_t argv[])
 {
+#if USE_PARALLEL_VM
     if (argc == 1) return SHAREDQUEUEP(argv[0]) ? scm_true : scm_false;
     wrong_number_of_arguments_violation(vm, "shared-queue?", 1, 1, argc, argv);
     return scm_undef;
+#else
+    fatal("%s:%u shared-queue? not supported on this build", __FILE__, __LINE__);
+#endif
 }
-
 
 // shared-queue-push!
 scm_obj_t
 subr_shared_queue_push(VM* vm, int argc, scm_obj_t argv[])
 {
+#if USE_PARALLEL_VM
     if (argc == 2) {
         if (SHAREDQUEUEP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
+//          if (FIXNUMP(argv[1])) {
                 scm_sharedqueue_t queue = (scm_sharedqueue_t)argv[0];
+                if (queue->queue.wait_lock_try_put(argv[1])) return scm_unspecified;
+                vm->m_interp->update_thread_state(vm, Interpreter::VM_STATE_BLOCK);        
                 queue->queue.put(argv[1]);
+                vm->m_interp->update_thread_state(vm, Interpreter::VM_STATE_RUN);        
                 return scm_unspecified;
-            }
-            wrong_type_argument_violation(vm, "shared-queue-push!", 1, "fixnum", argv[1], argc, argv);
-            return scm_undef;
+//          }
+//          wrong_type_argument_violation(vm, "shared-queue-push!", 1, "fixnum", argv[1], argc, argv);
+//          return scm_undef;
         }
         wrong_type_argument_violation(vm, "shared-queue-push!", 0, "shared queue", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "shared-queue-push!", 2, 2, argc, argv);
     return scm_undef;
+#else
+    fatal("%s:%u shared-queue-push! not supported on this build", __FILE__, __LINE__);
+#endif
 }
 
 // shared-queue-pop!
 scm_obj_t
 subr_shared_queue_pop(VM* vm, int argc, scm_obj_t argv[])
 {
+#if USE_PARALLEL_VM
     if (argc == 1) {
         if (SHAREDQUEUEP(argv[0])) {
             scm_sharedqueue_t queue = (scm_sharedqueue_t)argv[0];
             scm_obj_t obj;
+            if (queue->queue.wait_lock_try_get(&obj)) return obj;
+            vm->m_interp->update_thread_state(vm, Interpreter::VM_STATE_BLOCK);
             queue->queue.get(&obj);
+            vm->m_interp->update_thread_state(vm, Interpreter::VM_STATE_RUN);        
             return obj;
         }
         wrong_type_argument_violation(vm, "shared-queue-pop!", 0, "shared queue", argv[0], argc, argv);
@@ -2238,6 +2326,9 @@ subr_shared_queue_pop(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "shared-queue-pop!", 1, 1, argc, argv);
     return scm_undef;
+#else
+    fatal("%s:%u shared-queue-pop! not supported on this build", __FILE__, __LINE__);
+#endif
 }
 
 void
@@ -2342,6 +2433,8 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("shared-queue-push!", subr_shared_queue_push);
     DEFSUBR("shared-queue-pop!", subr_shared_queue_pop);
     DEFSUBR("shared-queue?", subr_shared_queue_pred);
+    DEFSUBR("thread-self", subr_thread_self);
+    DEFSUBR("thread-primordial?", subr_thread_primordial_pred);
     #undef DEFSUBR
 
 }

@@ -22,7 +22,8 @@
               (format #t "REPL> ~!")
               (with-exception-handler
                (lambda (c)
-                 (default-exception-handler c continue))
+                 ((current-exception-printer) c)
+                 (continue))
                (lambda ()
                  (let ((expr (read)))
                    (if (eof-object? expr)
@@ -66,7 +67,8 @@
                         (with-exception-handler
                          (lambda (c)
                            (format #t "~%error in ~a (~s)~%" (gethostname) server)
-                           (default-exception-handler c continue))
+                           ((current-exception-printer) c)
+                           (continue))
                          (lambda ()
                            (format #t "~&remote-repl: connect ~s~%" socket)
                            (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
@@ -95,7 +97,8 @@
                  (with-exception-handler
                   (lambda (c)
                     (format #t "~%error in ~a (~s)~%" (gethostname) server)
-                    (default-exception-handler c continue))
+                    ((current-exception-printer) c)
+                    (continue))
                   (lambda ()
                     (format #t "~&blocking-remote-repl: connect ~s~%" socket)
                     (call-with-port (transcoded-port (socket-port socket) (native-transcoder))

@@ -242,7 +242,7 @@
                      (cond ((core-hashtable-ref (scheme-library-exports) library-id #f)
                             => (lambda (lst) (append lst imports)))
                            (else
-                            (syntax-violation 'import "attempt to import undefined library" (abbreviated-take-form form 4 8) name))))))))
+                            (syntax-violation 'import (format "attempt to import undefined library ~s" name) (abbreviated-take-form form 4 8)))))))))
         (_
          (syntax-violation 'import "malformed import set" (abbreviated-take-form form 4 8) (car spec)))))))
 

@@ -37,7 +37,7 @@ raise_implementation_restriction_violation(VM* vm, scm_obj_t who, scm_string_t m
 }
 
 void
-raise_undefined_violation(VM* vm, scm_obj_t who, scm_string_t message)
+undefined_violation(VM* vm, scm_obj_t who, scm_string_t message)
 {
     assert(who);
     vm->backtrace_seek();
@@ -60,7 +60,7 @@ raise_undefined_violation(VM* vm, scm_obj_t who, scm_string_t message)
 }
 
 void
-raise_letrec_violation(VM* vm)
+letrec_violation(VM* vm)
 {
     vm->backtrace_seek();
     scm_obj_t proc = vm->lookup_system_closure(".@assertion-violation");
@@ -72,7 +72,7 @@ raise_letrec_violation(VM* vm)
 }
 
 void
-raise_lexical_violation(VM* vm, scm_obj_t who, scm_string_t message)
+lexical_violation(VM* vm, scm_obj_t who, scm_string_t message)
 {
     assert(who);
     assert(message);
@@ -298,4 +298,34 @@ void raise_error(VM* vm, const char* who, const char* description, int code, int
         while (--last >= 0) irritants = make_pair(vm->m_heap, argv[last], irritants);
         vm->apply_scheme(proc, 3, (who ? make_symbol(vm->m_heap, who) : scm_false), message, irritants);
     }
+}
+
+void thread_global_access_violation(VM* vm, scm_obj_t obj, scm_obj_t value)
+{
+    vm->backtrace_seek();
+    raise_assertion_violation(vm,
+                              make_symbol(vm->m_heap, "thread"), 
+                              make_string(vm->m_heap, "attempt to modify top-level variable"), 
+                              make_list(vm->m_heap, 3, make_symbol(vm->m_heap, "set!"), obj, value));
+}
+
+void thread_lexical_access_violation(VM* vm)
+{
+    vm->backtrace_seek();
+    raise_assertion_violation(vm, 
+                              make_symbol(vm->m_heap, "thread"),
+                              make_string(vm->m_heap, "attempt to modify free variable"), 
+                              NULL);
+}
+
+void thread_object_access_violation(VM* vm, const char* subr, int argc, scm_obj_t argv[])
+{
+    vm->backtrace_seek();
+    scm_obj_t irritants = scm_nil;
+    int last = argc;
+    while (--last >= 0) irritants = make_pair(vm->m_heap, argv[last], irritants);    
+    raise_assertion_violation(vm,
+                              make_symbol(vm->m_heap, "thread"), 
+                              make_string(vm->m_heap, "attempt to modify shared object"),
+                              make_pair(vm->m_heap, vm->m_heap->lookup_system_environment(make_symbol(vm->m_heap, subr)), irritants));
 }

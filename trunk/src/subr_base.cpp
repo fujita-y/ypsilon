@@ -921,12 +921,24 @@ subr_string_set(VM* vm, int argc, scm_obj_t argv[])
                     int type = update_string_type(string, ch);
                     if (type == STRING_TYPE_ASCII) {
                         if (index >= 0 && index < string->size) {
+#if USE_PARALLEL_VM
+                            if (!vm->m_heap->in_heap(string)) {
+                                thread_object_access_violation(vm, "string-set!" , argc, argv);
+                                return scm_undef;
+                            }
+#endif
                             string->name[index] = ch;
                             return scm_unspecified;
                         }
                     } else {                    
                         if (index >= 0 && index < string->size) {
                             if (HDR_STRING_LITERAL(string->hdr) == 0) {
+#if USE_PARALLEL_VM
+                                if (!vm->m_heap->in_heap(string)) {
+                                    thread_object_access_violation(vm, "string-set!" , argc, argv);
+                                    return scm_undef;
+                                }
+#endif
                                 if (utf8_string_set(vm->m_heap, string, index, ch)) return scm_unspecified;
                             } else {
                                 invalid_argument_violation(vm, "string-set!", "immutable string,", argv[0], 0, argc, argv);
@@ -1202,6 +1214,12 @@ subr_string_fill(VM* vm, int argc, scm_obj_t argv[])
         if (STRINGP(argv[0])) {
             if (CHARP(argv[1])) {
                 scm_string_t string = (scm_string_t)argv[0];
+#if USE_PARALLEL_VM
+                if (!vm->m_heap->in_heap(string)) {
+                    thread_object_access_violation(vm, "string-fill!" ,argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int ucs4 = CHAR(argv[1]);
                 int len = utf8_string_length(string);
                 int bsize = len * utf8_sizeof_ucs4(ucs4);
@@ -1350,6 +1368,12 @@ subr_vector_set(VM* vm, int argc, scm_obj_t argv[])
             if (FIXNUMP(argv[1])) {
                 int n = FIXNUM(argv[1]);
                 if (n >= 0 && n < vector->count) {
+#if USE_PARALLEL_VM
+                    if (!vm->m_heap->in_heap(vector)) {
+                        thread_object_access_violation(vm, "vector-set!" ,argc, argv);
+                        return scm_undef;
+                    }
+#endif
                     vm->m_heap->write_barrier(argv[2]);
                     vector->elts[n] = argv[2];
                     return scm_unspecified;
@@ -1421,6 +1445,12 @@ subr_vector_fill(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 2) {
         if (VECTORP(argv[0])) {
             scm_vector_t vector = (scm_vector_t)argv[0];
+#if USE_PARALLEL_VM
+            if (!vm->m_heap->in_heap(vector)) {
+                thread_object_access_violation(vm, "vector-fill!" ,argc, argv);
+                return scm_undef;
+            }
+#endif
             int n = vector->count;
             vm->m_heap->write_barrier(argv[1]);
             for (int i = 0; i < n ; i++) vector->elts[i] = argv[1];

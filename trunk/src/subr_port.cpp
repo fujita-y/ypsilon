@@ -1517,7 +1517,7 @@ subr_get_datum(VM* vm, int argc, scm_obj_t argv[])
                 raise_io_codec_error(vm, "get-datum", e.m_operation, e.m_message, port, e.m_ch);
                 return scm_undef;
             } catch (reader_exception_t& exception) {
-                raise_lexical_violation(vm, make_symbol(vm->m_heap, "get-datum"), exception.m_message);
+                lexical_violation(vm, make_symbol(vm->m_heap, "get-datum"), exception.m_message);
                 return scm_undef;
             }
         }
@@ -2100,7 +2100,7 @@ subr_read(VM* vm, int argc, scm_obj_t argv[])
             raise_io_codec_error(vm, "read", e.m_operation, e.m_message, port, e.m_ch);
             return scm_undef;
         } catch (reader_exception_t& exception) {
-            raise_lexical_violation(vm, make_symbol(vm->m_heap, "read"), exception.m_message);
+            lexical_violation(vm, make_symbol(vm->m_heap, "read"), exception.m_message);
             return scm_undef;
         }
     }

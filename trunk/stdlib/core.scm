@@ -257,6 +257,7 @@
     current-dynamic-environment
     current-environment
     current-error-port
+    current-exception-printer
     current-input-port
     current-library-infix
     current-library-suffix
@@ -269,7 +270,6 @@
     datum
     datum->syntax
     decode-flonum
-    default-exception-handler
     define
     define-condition-type
     define-enumeration

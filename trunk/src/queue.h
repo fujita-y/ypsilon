@@ -13,7 +13,7 @@
 
     #if USE_CRITICAL_SECTION
 
-        template< typename T, int nelts >
+        template< typename T >
         class queue_t {
 
             queue_t(const queue_t&);
@@ -36,7 +36,7 @@
 
             queue_t() { }
 
-            void init()
+            void init(int nelts)
             {
                 terminating = false;
                 n = head = tail = n_more_get = n_more_put = 0;
@@ -180,6 +180,11 @@
                 return n;
             }
 
+            int limit()
+            {
+                return capacity;
+            }
+            
             void terminate()
             {
                 terminating = true;
@@ -194,7 +199,7 @@
 
     #else
 
-        template< typename T, int nelts >
+        template< typename T >
         class queue_t {
 
             queue_t(const queue_t&);
@@ -217,7 +222,7 @@
 
             queue_t() { }
 
-            void init()
+            void init(int nelts)
             {
                 terminating = false;
                 n = head = tail = n_more_get = n_more_put = 0;
@@ -340,6 +345,22 @@
                 return true;
             }
 
+            bool wait_lock_try_get(element_t* datum)
+            {
+                if (terminating) warning("warning:%s:%u queue_t::wait_lock_try_get after terminate\n", __FILE__, __LINE__);
+                if (WaitForSingleObject(lock, INFINITE) != WAIT_OBJECT_0) return false;
+                if (n == 0 || terminating) {
+                    MTVERIFY(ReleaseMutex(lock));
+                    return false;
+                }
+                *datum = buf[head++];
+                n--;
+                if (head == capacity) head = 0;
+                if (n_more_put) MTVERIFY(SetEvent(maybe_put));
+                MTVERIFY(ReleaseMutex(lock));
+                return true;
+            }
+            
             // not tested
             void clear()
             {
@@ -361,6 +382,11 @@
                 return n;
             }
 
+            int limit()
+            {
+                return capacity;
+            }
+            
             void terminate()
             {
                 WaitForSingleObject(lock, INFINITE);
@@ -376,7 +402,7 @@
 
 #else
 
-    template< typename T, int nelts >
+    template< typename T >
     class queue_t {
 
         queue_t(const queue_t&);
@@ -399,7 +425,7 @@
 
         queue_t() { }
 
-        void init()
+        void init(int nelts)
         {
             terminating = false;
             n = head = tail = n_more_get = n_more_put = 0;
@@ -517,6 +543,22 @@
             return true;
         }
 
+        bool wait_lock_try_get(element_t* datum)
+        {
+            if (terminating) warning("warning:%s:%u queue_t::wait_lock_try_get after terminate\n", __FILE__, __LINE__);
+            MTVERIFY(pthread_mutex_lock(&lock));
+            if (n == 0 || terminating) {
+                MTVERIFY(pthread_mutex_unlock(&lock));
+                return false;
+            }
+            *datum = buf[head++];
+            n--;
+            if (head == capacity) head = 0;
+            if (n_more_put) MTVERIFY(pthread_cond_signal(&maybe_put));
+            MTVERIFY(pthread_mutex_unlock(&lock));
+            return true;
+        }
+        
         // not tested
         void clear()
         {
@@ -538,6 +580,11 @@
             return n;
         }
 
+        int limit()
+        {
+            return capacity;
+        }
+        
         void terminate()
         {
             MTVERIFY(pthread_mutex_lock(&lock));

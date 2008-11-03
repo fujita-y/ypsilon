@@ -29,7 +29,7 @@ Interpreter::init(VM* root, int n)
     }
     root->m_interp = this;
     m_table[0]->interp = this;
-    m_table[0]->state = VM_STATE_RUNNING;
+    m_table[0]->state = VM_STATE_RUN;
     m_table[0]->vm = root;
     m_table[0]->parent = VM_PARENT_NONE;
     m_table[0]->param = scm_nil;
@@ -45,6 +45,12 @@ Interpreter::vm_id(VM* vm)
     fatal("%s:%u internal error: unknown vm", __FILE__, __LINE__);
 }
 
+bool
+Interpreter::vm_primordial(int id)
+{
+    return (m_table[id]->parent == VM_PARENT_NONE);
+}
+
 int
 Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
 {
@@ -55,7 +61,7 @@ Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
             object_heap_t* heap = new object_heap_t;
             int heap_limit = DEFAULT_HEAP_LIMIT * 1024 * 1024;
             int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
-            heap->init(heap_limit, heap_init, parent->m_heap);
+            heap->init_child(heap_limit, heap_init, parent->m_heap);
 
             VM* vm = new VM;
             vm->m_heap = heap;
@@ -69,7 +75,7 @@ Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
 
             vm->m_interp = parent->m_interp;
             vm->m_bootport = (scm_port_t)scm_unspecified;
-            vm->m_current_environment = vm->m_heap->m_interaction_environment;
+            vm->m_current_environment = parent->m_current_environment;
             vm->m_current_input = parent->m_current_input;
             vm->m_current_output = parent->m_current_output;
             vm->m_current_error = parent->m_current_error;
@@ -94,15 +100,22 @@ Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
             m_table[i]->parent = vm_id(parent);
             m_table[i]->vm = vm;
             m_table[i]->id = i;
-            m_table[i]->state = VM_STATE_START;
+            m_table[i]->state = VM_STATE_NEW;
             thread_start(mutator_thread, m_table[i]);
+            scm_obj_t context = scm_nil;
             if (argc > 0) {
-                scm_obj_t obj = scm_nil;
-                for (int n = argc - 1; n >= 0; n--) obj = make_pair(parent->m_heap, argv[n], obj);
-                m_table[i]->param = make_pair(parent->m_heap, func, obj);
+                for (int n = argc - 1; n >= 0; n--) context = make_pair(parent->m_heap, argv[n], context);
+                context = make_pair(parent->m_heap, func, context);
             } else {
-                m_table[i]->param = make_list(parent->m_heap, 1, func);
+                context = make_list(parent->m_heap, 1, func);
             }
+            m_table[i]->param = make_list(parent->m_heap, 
+                                          5, 
+                                          context,
+                                          parent->m_current_environment,
+                                          parent->m_current_input,
+                                          parent->m_current_output,
+                                          parent->m_current_error);            
             return i;
         }
     }
@@ -117,7 +130,7 @@ Interpreter::mutator_thread(void* param)
     interp->m_lock.lock();
     VM& vm = *table_rec->vm;
     set_current_vm(&vm);
-    table_rec->state = VM_STATE_RUNNING;
+    table_rec->state = VM_STATE_RUN;
     interp->m_lock.unlock();
 
 loop:
@@ -173,9 +186,10 @@ wait_again:
             switch (interp->m_table[i]->state) {
             case VM_STATE_FREE:
                 break;
-            case VM_STATE_START:
+            case VM_STATE_NEW:
+            case VM_STATE_RUN:
+            case VM_STATE_BLOCK:
             case VM_STATE_SYNC:
-            case VM_STATE_RUNNING:
                 if (interp->m_table[i]->parent == table_rec->id) {
                     table_rec->state = VM_STATE_SYNC;
                     table_rec->notify.wait(interp->m_lock);
@@ -198,29 +212,48 @@ wait_again:
 }
 
 void
+Interpreter::update_thread_state(VM* vm, int state)
+{
+    Interpreter* interp = vm->m_interp;
+    scoped_lock lock(interp->m_lock);
+    vm_table_rec_t** table = interp->m_table;
+    for (int i = 0; i < interp->m_count; i++) {
+        vm_table_rec_t* rec = table[i];
+        if (rec->vm == vm) {
+            rec->state = state;
+            break;
+        }
+    }
+}
+
+void
 Interpreter::display_status(VM* vm)
 {
     scm_port_t port = vm->m_current_output;
     scoped_lock lock1(port->lock);
     Interpreter* interp = vm->m_interp;
     scoped_lock lock2(interp->m_lock);
-    Interpreter::vm_table_rec_t** table = interp->m_table;
+    vm_table_rec_t** table = interp->m_table;
 
     port_puts(port, "\n  ID ADRS       STATUS\n");
     for (int i = 0; i < interp->m_count; i++) {
-        Interpreter::vm_table_rec_t* rec = table[i];
+        vm_table_rec_t* rec = table[i];
         const char* stat = "unknown";
         scm_obj_t param = scm_nil;
         switch (rec->state) {
             case VM_STATE_FREE:
                 continue;
-            case VM_STATE_START:
-            case VM_STATE_RUNNING:
+            case VM_STATE_NEW:
+            case VM_STATE_RUN:
                 stat = "active";
                 param = rec->param;
                 break;
+            case VM_STATE_BLOCK:
+                stat = "block";
+                param = rec->param;
+                break;
             case VM_STATE_SYNC:
-                stat = "sync";
+                stat = "wait";
                 param = rec->param;
                 break;
             default: break;
@@ -229,14 +262,10 @@ Interpreter::display_status(VM* vm)
             port_format(port, "  %2d 0x%08lx active\n", i, rec->vm);
         } else {
             port_format(port, "  %2d 0x%08lx %-6s", i, rec->vm, stat);
-            if (param != scm_nil) printer_t(vm, port).format(" ~r", param);
+            if (param != scm_nil) printer_t(vm, port).format(" ~r", CAR(param));
             port_format(port, "\n");
         }
     }
 }
-
-// make-shared-queue
-// shared-queue-set!
-// shared-queue-get
 
 #endif

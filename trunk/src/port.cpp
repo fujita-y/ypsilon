@@ -909,7 +909,7 @@ port_flush_output(scm_port_t port)
     assert(PORTP(port));
     port->lock.verify_locked();
     if (port->opened) {
-        if (no_output_buffered(port)) return;
+        if (no_output_buffered(port)) return;        
         int n = port->buf_tail - port->buf_head;
         device_write(port, port->buf_head, n, port->mark - n);
         port->buf_head = port->buf_tail = port->buf;

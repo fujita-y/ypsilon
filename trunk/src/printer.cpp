@@ -560,20 +560,6 @@ printer_t::write_ucs4(uint32_t c)
     for (int i = 0; i < n; i++) port_put_byte(m_port, utf8[i]);
 }
 
-const char*
-printer_t::get_tuple_type_name(scm_obj_t obj)
-{
-    if (TUPLEP(obj)) {
-        scm_tuple_t tuple = (scm_tuple_t)obj;
-        scm_obj_t e0 = tuple->elts[0];
-        if (SYMBOLP(e0)) {
-            scm_symbol_t type = (scm_symbol_t)e0;
-            if (strncmp(type->name, "type:", 5) == 0) return type->name + 5;
-        }
-    }
-    return NULL;
-}
-
 void
 printer_t::scan(scm_hashtable_t ht, scm_obj_t obj)
 {
@@ -1045,7 +1031,8 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
             return;
         }
         case TC_SHAREDQUEUE: {
-            format("#<shared-queue 0x%x>", obj);
+            scm_sharedqueue_t queue = (scm_sharedqueue_t)obj;
+            format("#<shared-queue %d/%d 0x%x>", queue->queue.count(), queue->queue.limit(), queue);
             return;
         }
         case TC_PORT: {

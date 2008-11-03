@@ -118,7 +118,7 @@ public:
     cond_t              m_mutator_wake;
     int                 m_mutator_stopped;
 
-    queue_t<scm_obj_t,SHADE_QUEUE_SIZE> m_shade_queue;
+    queue_t<scm_obj_t>  m_shade_queue;
     int                 m_collector_ready;
     int                 m_collector_terminating;
     int                 m_collector_kicked;
@@ -134,20 +134,22 @@ public:
     scm_bvector_t       m_native_transcoder;
     scm_hashtable_t     m_architecture_feature;
     scm_hashtable_t     m_trampolines;
-    scm_obj_t           m_inherents[INHERENT_TOTAL_COUNT];
+    scm_obj_t*          m_inherents;
     collector_usage_t   m_usage;
-    
+
 #if USE_PARALLEL_VM
     object_heap_t*      m_primordial;
     object_heap_t*      m_parent;
-    scm_hashtable_t     m_thread_context;
+//    scm_hashtable_t     m_thread_context;
 #endif
+
     
+    void                init_common(size_t pool_size, size_t initial_datum_size);
+
 public:
                         object_heap_t();
-
-    bool                init(size_t pool_size, size_t initial_datum_size);
-    bool                init(size_t pool_size, size_t initial_datum_size, object_heap_t* parent);
+    void                init_primordial(size_t pool_size, size_t initial_datum_size);
+    void                init_child(size_t pool_size, size_t initial_datum_size, object_heap_t* parent);
     void                destroy();
 
     void*               allocate(size_t size, bool slab, bool gc);
@@ -187,8 +189,7 @@ public:
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         assert(index >= 0 && index < m_pool_watermark);
         return (m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
-    }
-
+    }    
 
     scm_obj_t           lookup_system_environment(scm_symbol_t symbol);
     void                intern_system_environment(scm_symbol_t symbol, scm_obj_t value);
@@ -197,11 +198,11 @@ public:
     void                init_inherents();
 
     scm_symbol_t inherent_symbol(int code) const {
-        assert(code < array_sizeof(m_inherents));
+        assert(code < INHERENT_TOTAL_COUNT);
         assert(SYMBOLP(m_inherents[code]));
         return (scm_symbol_t)m_inherents[code];
     }
-    
+
     void                init_architecture_feature();
 
 public:
@@ -234,9 +235,6 @@ public:
     void            concurrent_marking();
     bool            serial_marking();
     void            write_barrier(scm_obj_t rhs);
-#if USE_PARALLEL_VM
-    bool            heap_barrier(void* dst, scm_obj_t rhs);
-#endif
     void            trace(scm_obj_t obj);
     void            dequeue_root();
     void            enqueue_root(scm_obj_t obj);
@@ -247,8 +245,7 @@ public:
 #if HPDEBUG
     void            consistency_check();
 #endif
-    
+
 };
 
 #endif
-

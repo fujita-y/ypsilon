@@ -201,6 +201,12 @@ subr_set_car(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 2) {
         if (PAIRP(argv[0])) {
+#if USE_PARALLEL_VM
+            if (!vm->m_heap->in_heap(argv[0])) {
+                thread_object_access_violation(vm, "set-car!" ,argc, argv);
+                return scm_undef;
+            }
+#endif
             vm->m_heap->write_barrier(argv[1]);
             CAR(argv[0]) = argv[1];
             return scm_unspecified;
@@ -218,6 +224,12 @@ subr_set_cdr(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 2) {
         if (PAIRP(argv[0])) {
+#if USE_PARALLEL_VM
+            if (!vm->m_heap->in_heap(argv[0])) {
+                thread_object_access_violation(vm, "set-cdr!" ,argc, argv);
+                return scm_undef;
+            }
+#endif
             vm->m_heap->write_barrier(argv[1]);
             CDR(argv[0]) = argv[1];
             return scm_unspecified;

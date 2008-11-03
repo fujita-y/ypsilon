@@ -330,8 +330,10 @@ VM::run(bool init_dispatch_table)
         PIN(ERROR_CALLCC_WRONG_NUMBER_ARGS);
         PIN(ERROR_INVALID_APPLICATION);
         PIN(ERROR_BAD_INSTRUCTION);
-        PIN(BACK_TO_LOOP);
-        PIN(BACK_TO_TRACE_N_LOOP);
+      #if USE_PARALLEL_VM
+        PIN(ERROR_SET_GLOC_BAD_CONTEXT);
+        PIN(ERROR_SET_ILOC_BAD_CONTEXT);
+      #endif
     #endif
         for (int i = 0; i < array_sizeof(m_dispatch_table); i++) m_dispatch_table[i] = &&ERROR_BAD_INSTRUCTION;
         LABEL(VMOP_EXTEND_ENCLOSE);
@@ -492,10 +494,14 @@ apply:
             scm_subr_t subr = (scm_subr_t)m_value;
             int argc = m_sp - m_fp;
             m_value = (*subr->adrs)(this, argc, m_fp);
+            if (m_value == scm_undef) goto BACK_TO_TRACE_N_LOOP;
+            goto pop_cont;
+/*
             if (m_value != scm_undef) goto pop_cont;
             m_sp = m_fp;
             m_pc = CDR(m_pc);
             goto trace_n_loop;
+*/
         }
 
         goto APPLY_SPECIAL;
@@ -768,11 +774,15 @@ loop:
   #endif
                 int argc = m_sp - m_fp;
                 m_value = (*subr->adrs)(this, argc, m_fp);
-                m_sp = m_fp;
                 assert(m_value != scm_undef || ((m_value == scm_undef) && (CAR(m_pc) == scm_unspecified)));
+                if (m_value == scm_undef) goto BACK_TO_TRACE_N_LOOP;
+                goto pop_cont;
+/*
                 if (m_value != scm_undef) goto pop_cont;
+                m_sp = m_fp;
                 m_pc = CDR(m_pc);
                 goto trace_n_loop;
+*/
             }
 
             CASE(VMOP_APPLY_ILOC) {
@@ -948,11 +958,16 @@ loop:
 
             CASE(VMOP_GLOC) {
                 m_value = ((scm_gloc_t)OPERANDS)->value;
+                if (m_value == scm_undef) goto ERROR_GLOC;
+                m_pc = CDR(m_pc);
+                goto loop;
+/*                
                 if (m_value != scm_undef) {
                     m_pc = CDR(m_pc);
                     goto loop;
                 }
                 goto ERROR_GLOC;
+*/
             }
 
             CASE(VMOP_ILOC) {
@@ -1191,6 +1206,9 @@ loop:
             CASE(VMOP_SET_GLOC) {
                 scm_gloc_t gloc = (scm_gloc_t)OPERANDS;
                 assert(GLOCP(gloc));
+#if USE_PARALLEL_VM
+                if (!m_heap->in_heap(gloc)) goto ERROR_SET_GLOC_BAD_CONTEXT;
+#endif
                 m_heap->write_barrier(m_value);
                 gloc->value = m_value;
                 m_pc = CDR(m_pc);
@@ -1199,7 +1217,12 @@ loop:
 
             CASE(VMOP_SET_ILOC) {
                 scm_obj_t* slot = lookup_iloc(OPERANDS);
-                if (!STACKP(slot)) m_heap->write_barrier(m_value);
+                if (!STACKP(slot)) {
+#if USE_PARALLEL_VM
+                    if (!m_heap->in_heap(slot)) goto ERROR_SET_ILOC_BAD_CONTEXT;
+#endif
+                    m_heap->write_barrier(m_value);
+                }
                 *slot = m_value;
                 m_pc = CDR(m_pc);
                 goto loop;
@@ -1886,23 +1909,20 @@ ERROR_GLOC:
 ERROR_RET_GLOC:
 ERROR_PUSH_GLOC:
 ERROR_TOUCH_GLOC:
-        raise_undefined_violation(this, ((scm_gloc_t)OPERANDS)->variable, NULL);
-        m_sp = m_fp;
+        undefined_violation(this, ((scm_gloc_t)OPERANDS)->variable, NULL);
         goto BACK_TO_LOOP;
 
 ERROR_RET_ILOC:
 ERROR_APPLY_ILOC:
-        raise_letrec_violation(this);
-        m_sp = m_fp;
+        letrec_violation(this);
         goto BACK_TO_LOOP;
 
 ERROR_LETREC_VIOLATION:
-        raise_letrec_violation(this);
+        letrec_violation(this);
         goto BACK_TO_LOOP;
 
 ERROR_APPLY_GLOC:
-        raise_undefined_violation(this, ((scm_gloc_t)CAR(OPERANDS))->variable, NULL);
-        m_sp = m_fp;
+        undefined_violation(this, ((scm_gloc_t)CAR(OPERANDS))->variable, NULL);
         goto BACK_TO_TRACE_N_LOOP;
 
 ERROR_APPLY_WRONG_NUMBER_ARGS:
@@ -1917,7 +1937,6 @@ ERROR_APPLY_WRONG_NUMBER_ARGS:
             if (rest) wrong_number_of_arguments_violation(this, m_value, args, -1, m_sp - m_fp, m_fp);
             else wrong_number_of_arguments_violation(this, m_value, args, args, m_sp - m_fp, m_fp);
             assert(CAR(m_pc) == scm_unspecified);
-            m_sp = m_fp;
             goto BACK_TO_TRACE_N_LOOP;
         }
 
@@ -1945,7 +1964,20 @@ ERROR_INVALID_APPLICATION:
         invalid_application_violation(this, m_value, m_sp - m_fp, m_fp);
         goto BACK_TO_TRACE_N_LOOP;
 
+#if USE_PARALLEL_VM
+        
+ERROR_SET_GLOC_BAD_CONTEXT:
+        thread_global_access_violation(this, ((scm_gloc_t)OPERANDS)->variable, m_value);
+        goto BACK_TO_LOOP;
+
+ERROR_SET_ILOC_BAD_CONTEXT:
+        thread_lexical_access_violation(this);
+        goto BACK_TO_LOOP;
+        
+#endif
+
 BACK_TO_LOOP:
+        m_sp = m_fp;
         m_pc = CDR(m_pc);
         goto loop;
 
