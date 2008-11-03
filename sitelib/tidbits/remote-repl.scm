@@ -23,7 +23,7 @@
               (with-exception-handler
                (lambda (c)
                  ((current-exception-printer) c)
-                 (continue))
+                 (and (serious-condition? c) (continue)))
                (lambda ()
                  (let ((expr (read)))
                    (if (eof-object? expr)
@@ -68,7 +68,7 @@
                          (lambda (c)
                            (format #t "~%error in ~a (~s)~%" (gethostname) server)
                            ((current-exception-printer) c)
-                           (continue))
+                           (and (serious-condition? c) (continue)))
                          (lambda ()
                            (format #t "~&remote-repl: connect ~s~%" socket)
                            (call-with-port (transcoded-port (socket-port socket) (native-transcoder))
