@@ -76,7 +76,7 @@
             (else
              (wrong-type rtd obj))))))
 
-(define describe-condition
+#;(define describe-condition
   (lambda (port c)
 
     (define list-parents
@@ -105,6 +105,47 @@
                                           (and (pair? lst)
                                                (begin
                                                  (format buf "~%     ~a: ~r" (car lst) ((record-accessor rtd i) rec))
+                                                 (loop (+ i 1) (cdr lst)))))))))))
+                         lst))
+             (format buf "~%   >")
+             (format port "~a~!" (extract-accumulated-string buf))))
+          (else 
+           (format port "~r~!" c)))))
+
+(define describe-condition
+  (lambda (port c)
+
+    (define list-parents
+      (lambda (rtd)
+        (let loop ((rtd rtd) (lst '()))
+          (cond ((record-type-parent rtd)
+                 => (lambda (p) (loop p (cons (record-type-name p) lst))))
+                (else (reverse (cdr lst)))))))
+
+    (cond ((condition? c)
+           (let ((buf (make-string-output-port)))
+             (format buf "  #<condition~!")
+             (let ((lst (simple-conditions c)))
+               (for-each (lambda (rec)
+                           (let ((rtd (record-rtd rec)))
+                             (let ((name (record-type-name rtd))
+                                   (parents (list-parents rtd))
+                                   (count (vector-length (record-type-field-names rtd))))
+                               (format buf "~%    ~a" name)
+                               (and (pair? parents) (format buf " ~r" parents))
+                               (cond ((= count 1)
+                                      (let ((obj ((record-accessor rtd 0) rec)))
+                                        (if (string? obj)
+                                            (format buf ": ~a" ((record-accessor rtd 0) rec))
+                                            (format buf ": ~r" ((record-accessor rtd 0) rec)))))
+                                     ((> count 1)
+                                      (let ((lst (vector->list (record-type-field-names rtd))))
+                                        (let loop ((i 0) (lst lst))
+                                          (and (pair? lst)
+                                               (let ((obj ((record-accessor rtd i) rec)))
+                                                 (if (string? obj)
+                                                     (format buf "~%     ~a: ~a" (car lst) obj)
+                                                     (format buf "~%     ~a: ~r" (car lst) obj))
                                                  (loop (+ i 1) (cdr lst)))))))))))
                          lst))
              (format buf "~%   >")

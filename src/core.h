@@ -66,7 +66,7 @@
 
 #define USE_DEBUG_BOOT              0
 #define USE_DEBUG_CORE              0
-#define USE_INTERNED_CORE           1  //
+#define USE_INTERNED_CORE           1  // 1
 #define USE_SNPRINT_FOR_FLONUM      0
 #define USE_INLINED_CXR             0
 #define USE_FLONUM_CONST            1

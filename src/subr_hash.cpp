@@ -212,6 +212,12 @@ subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[])
         if (HASHTABLEP(argv[0])) {
             scm_hashtable_t ht = (scm_hashtable_t)argv[0];
             if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
+#if USE_PARALLEL_VM
+                if (!vm->m_heap->in_heap(ht)) {
+                    thread_object_access_violation(vm, "core-hashtable-set!" ,argc, argv);
+                    return scm_undef;
+                }
+#endif                
                 vm->m_heap->write_barrier(argv[1]);
                 vm->m_heap->write_barrier(argv[2]);
                 scoped_lock lock(ht->lock);
@@ -231,6 +237,12 @@ subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[])
         if (WEAKHASHTABLEP(argv[0])) {
             scm_weakhashtable_t ht = (scm_weakhashtable_t)argv[0];
             if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
+#if USE_PARALLEL_VM
+                if (!vm->m_heap->in_heap(ht)) {
+                    thread_object_access_violation(vm, "core-hashtable-set!" ,argc, argv);
+                    return scm_undef;
+                }
+#endif
                 scoped_lock lock(ht->lock);
                 scm_obj_t ref = lookup_weakhashtable(ht, argv[1]);
                 if (ref == scm_undef) {
@@ -296,6 +308,12 @@ subr_core_hashtable_delete(VM* vm, int argc, scm_obj_t argv[])
         if (HASHTABLEP(argv[0])) {
             scm_hashtable_t ht = (scm_hashtable_t)argv[0];
             if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
+#if USE_PARALLEL_VM
+                if (!vm->m_heap->in_heap(ht)) {
+                    thread_object_access_violation(vm, "core-hashtable-delete!" ,argc, argv);
+                    return scm_undef;
+                }
+#endif
                 scoped_lock lock(ht->lock);
                 if (ht->handlers == scm_false) {
                     int nsize = remove_hashtable(ht, argv[1]);
@@ -313,6 +331,12 @@ subr_core_hashtable_delete(VM* vm, int argc, scm_obj_t argv[])
         if (WEAKHASHTABLEP(argv[0])) {
             scm_weakhashtable_t ht = (scm_weakhashtable_t)argv[0];
             if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
+#if USE_PARALLEL_VM
+                if (!vm->m_heap->in_heap(ht)) {
+                    thread_object_access_violation(vm, "core-hashtable-delete!" ,argc, argv);
+                    return scm_undef;
+                }
+#endif
                 scoped_lock lock(ht->lock);
                 int nsize = remove_weakhashtable(ht, argv[1]);
                 if (nsize) rehash_weakhashtable(vm->m_heap, ht, nsize);
@@ -348,6 +372,12 @@ subr_core_hashtable_clear(VM* vm, int argc, scm_obj_t argv[])
             if (HASHTABLEP(argv[0])) {
                 scm_hashtable_t ht = (scm_hashtable_t)argv[0];
                 if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
+#if USE_PARALLEL_VM
+                    if (!vm->m_heap->in_heap(ht)) {
+                        thread_object_access_violation(vm, "core-hashtable-clear!" ,argc, argv);
+                        return scm_undef;
+                    }
+#endif
                     scoped_lock lock(ht->lock);
                     if (ht->handlers == scm_false) {
                         clear_hashtable(vm->m_heap, ht, nsize);
@@ -363,6 +393,12 @@ subr_core_hashtable_clear(VM* vm, int argc, scm_obj_t argv[])
             }
             if (WEAKHASHTABLEP(argv[0])) {
                 scm_weakhashtable_t ht = (scm_weakhashtable_t)argv[0];
+#if USE_PARALLEL_VM
+                if (!vm->m_heap->in_heap(ht)) {
+                    thread_object_access_violation(vm, "core-hashtable-clear!" ,argc, argv);
+                    return scm_undef;
+                }
+#endif
                 if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
                     scoped_lock lock(ht->lock);
                     clear_weakhashtable(vm->m_heap, ht, nsize);

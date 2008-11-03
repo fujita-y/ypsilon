@@ -115,7 +115,7 @@ VM::init(object_heap_t* heap)
                                              make_string_literal(m_heap, "/dev/stderr"),
                                              SCM_PORT_DIRECTION_OUT,
                                              SCM_PORT_FILE_OPTION_NO_FAIL,
-                                             SCM_PORT_BUFFER_MODE_NONE,
+                                             SCM_PORT_BUFFER_MODE_LINE,
                                              (GetFileType(PORT_STDERR_FD) == FILE_TYPE_CHAR && GetConsoleCP() == 932) ? cp932 : utf8);
         #else
             m_current_input  = make_std_port(m_heap,
@@ -137,7 +137,7 @@ VM::init(object_heap_t* heap)
                                              make_string_literal(m_heap, "/dev/stderr"),
                                              SCM_PORT_DIRECTION_OUT,
                                              SCM_PORT_FILE_OPTION_NO_FAIL,
-                                             SCM_PORT_BUFFER_MODE_NONE,
+                                             SCM_PORT_BUFFER_MODE_LINE,
                                              scm_true);
         #endif
 
@@ -832,7 +832,8 @@ VM::stop()
         int id = m_interp->vm_id(this);
         for (int i = 0; i < m_interp->m_count; i++) {
             switch (m_interp->m_table[i]->state) {
-            case Interpreter::VM_STATE_START: case Interpreter::VM_STATE_RUNNING:
+            case Interpreter::VM_STATE_NEW: 
+            case Interpreter::VM_STATE_RUN:
                 if (m_interp->m_table[i]->parent == id) m_heap->enqueue_root(m_interp->m_table[i]->param);
                 break;
             }

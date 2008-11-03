@@ -4,6 +4,143 @@
 
 (define dump-condition (make-parameter #f))
 
+(define default-exception-printer
+  (lambda (c)
+    (current-exception-handler #f)
+    (let ((port (make-string-output-port)))
+      (parameterize ((pretty-print-line-length (backtrace-line-length))
+                     (pretty-print-maximum-lines 10)
+                     (pretty-print-unwrap-syntax #t))
+
+        (define output-who-message
+          (lambda ()
+            (format port "error")
+            (and (who-condition? c)
+                 (format port " in ~u" (condition-who c)))
+            (and (message-condition? c)
+                 (format port ": ~a" (condition-message c)))))
+
+        (define output-irritants
+          (lambda ()
+            (cond ((and (irritants-condition? c) (pair? (condition-irritants c)))
+                   (format port "~%~%irritants:")
+                   (for-each (lambda (e)
+                               (format port "~% ")
+                               (cond ((list? e)
+                                      (format port " (")
+                                      (let loop ((lst (map (lambda (e) (format "~r" e)) e)))
+                                        (cond ((pair? lst)
+                                               (format port "~a" (car lst))
+                                               (cond ((pair? (cdr lst))
+                                                      (format port " ")
+                                                      (loop (cdr lst)))
+                                                     (else
+                                                      (format port ")")))))))
+                                     (else (format port " ~r" e))))
+                             (condition-irritants c))))))
+
+        (define output-expansion
+          (lambda ()
+            (and (expansion-backtrace)
+                 (current-macro-expression)
+                 (cond ((and (syntax-violation? c)
+                             (null? (expansion-trace-stack))
+                             (equal? (syntax-violation-form c)
+                                     (unrename-private-primitives (current-macro-expression)))))
+                       (else
+                        (parameterize ((pretty-print-initial-indent 7))
+                          (format port "~%~%expanding:~%  >  ")
+                          (pretty-print (unrename-private-primitives (current-macro-expression)) port)
+                          (format port "~%  ~n" (current-macro-expression))
+                          (for-each (lambda (e)
+                                      (format port "~%  *  ")
+                                      (pretty-print (unrename-private-primitives e) port)
+                                      (format port "~%  ~n" e))
+                                    (expansion-trace-stack))))))))
+
+        (define output-condition
+          (lambda (c)
+            (and (dump-condition)
+                 (format port "~%~%")
+                 (describe-condition port c))))
+
+        (cond ((syntax-violation? c)
+               (output-who-message)
+               (cond ((syntax-violation-form c)
+                      => (lambda (form)
+                           (parameterize ((pretty-print-initial-indent 5))
+                             (format port "~%  >  ")
+                             (pretty-print (unrename-private-primitives form) port)
+                             (and (pair? form) (format port "~%  ~n" form))))))
+               (cond ((syntax-violation-subform c)
+                      => (lambda (form)
+                           (parameterize ((pretty-print-initial-indent 5))
+                             (format port "~%  @  ")
+                             (pretty-print (unrename-private-primitives form) port)
+                             (and (pair? form) (format port "~%  ~n" form))))))
+               (output-condition c)
+               (or (and (null? (expansion-trace-stack))
+                        (or (eq? (current-macro-expression) (syntax-violation-form c))
+                            (eq? (current-macro-expression) (syntax-violation-subform c))))
+                   (output-expansion)))
+
+              ((undefined-violation? c)
+               (format port "error: unbound variable")
+               (and (who-condition? c)
+                    (format port " ~u" (condition-who c)))
+               (and (message-condition? c)
+                    (format port ", ~a" (condition-message c)))
+               (output-irritants)
+               (output-condition c)
+               (output-expansion))
+
+              ((error? c)
+               (output-who-message)
+               (output-irritants)
+               (output-condition c)
+               (output-expansion))
+
+              ((violation? c)
+               (output-who-message)
+               (output-irritants)
+               (output-condition c)
+               (output-expansion))
+
+              ((warning? c)
+               (format port "warning")
+               (and (who-condition? c)
+                    (format port " in ~u" (condition-who c)))
+               (and (message-condition? c)
+                    (format port ": ~a" (condition-message c)))
+               (output-irritants)
+               (output-condition c)
+               (output-expansion))
+
+              ((condition? c)
+               (format port "error: unknown type of exception caught~%~%irritants:~%~a" (describe-condition #f c))
+               (output-irritants)
+               (output-expansion))
+
+              (else
+               (format port "error: unknown type of exception caught, ~a" c)
+               (output-irritants)
+               (output-expansion))))
+
+      (format port "~%")
+      (let ((plugged (or (lookup-process-environment "EMACS") (not (eq? (port-device-subtype (current-input-port)) 'char)))))
+        (and (serious-condition? c) (display-backtrace port))
+        (if plugged
+            (format (current-error-port) "~a~!" (extract-accumulated-string port))
+            (format (current-error-port) "~%~a~%~!" (extract-accumulated-string port)))))))
+
+(define current-exception-printer (make-parameter
+                                   default-exception-printer
+                                   (lambda (x)
+                                     (cond ((not x) values)
+                                           ((procedure? x) x)
+                                           (else
+                                            (assertion-violation 'current-exception-printer (format "expected procedure or #f, but got ~s" x)))))))
+
 (define add-load-path
   (lambda (path)
     (cond ((string? path)
@@ -13,7 +150,7 @@
                      (scheme-load-paths (cons path (scheme-load-paths))))))
            (scheme-load-paths))
           (else
-           (assertion-violation 'add-load-path (format "expected string but got ~s" path))))))
+           (assertion-violation 'add-load-path (format "expected string, but got ~s" path))))))
 
 (define add-library-path
   (lambda (path)
@@ -24,7 +161,7 @@
                      (scheme-library-paths (cons path (scheme-library-paths))))))
            (scheme-library-paths))
           (else
-           (assertion-violation 'add-library-path (format "expected string but got ~s" path))))))
+           (assertion-violation 'add-library-path (format "expected string, but got ~s" path))))))
 
 (define home-directory
   (lambda ()
@@ -42,23 +179,6 @@
            (process (or (getenv "COMSPEC") "cmd.exe") "/c" command))
           (else
            (process (or (getenv "SHELL") "/bin/sh") "-c" command)))))
-    
-#;
-(define apply-scheme-proc-assistant
-  (lambda (proc . args)
-    (let ((done #f) (throw #f))
-      (dynamic-wind
-       (lambda ()
-         (and done (assertion-violation 'apply-scheme-proc-assistant "scheme continuation interleave with c/c++ continuation")))
-       (lambda ()
-         (with-exception-handler
-          (lambda (c)
-            (set! throw #t)
-            (raise c))
-          (lambda ()
-            (let ((obj (apply proc args))) (set! done #t) obj))))
-       (lambda ()
-         (and throw (escape)))))))
 
 (define apply-scheme-proc-assistant
   (lambda (proc . args)
@@ -73,7 +193,7 @@
           (lambda (c)
             (set! throw #t)
             (raise c))
-          (lambda () 
+          (lambda ()
             (apply proc args))))
        (lambda ()
          (and throw (escape)))))))
@@ -87,6 +207,13 @@
          (get-char (current-input-port))
          (nonblock-skip-whitespace))))
 
+(define nonblock-input-wait
+  (lambda ()
+    (cond ((nonblock-byte-ready? (current-input-port)))
+          (else
+           (usleep 10000)
+           (nonblock-input-wait)))))
+
 (define read-eval-print-loop
   (lambda ()
     (let ((plugged (or (lookup-process-environment "EMACS") (not (eq? (port-device-subtype (current-input-port)) 'char)))))
@@ -96,12 +223,14 @@
            (with-exception-handler
             (lambda (c)
               (flush-output-port (current-output-port))
-              (default-exception-handler c continue))
+              ((current-exception-printer) c)
+              (and (serious-condition? c) (continue)))
             (lambda ()
               (nonblock-skip-whitespace)
               (if (eq? (current-environment) (interaction-environment))
                   (format #t "~&> ~!")
                   (format #t "~&~a: ~!" (current-environment)))
+              (nonblock-input-wait)
               (current-macro-expression #f)
               (current-source-comments (make-core-hashtable))
               (current-temporaries (make-core-hashtable 'string=?))
@@ -126,9 +255,11 @@
          (with-exception-handler
           (lambda (c)
             (flush-output-port (current-output-port))
-            (default-exception-handler c (lambda () (exit #f))))
+            ((current-exception-printer) c)
+            (and (serious-condition? c) (exit #f)))
           (lambda ()
             (nonblock-skip-whitespace)
+            (nonblock-input-wait)
             (current-macro-expression #f)
             (current-source-comments (make-core-hashtable))
             (current-temporaries (make-core-hashtable 'string=?))
@@ -202,138 +333,6 @@
           (if plugged
               (format (current-error-port) "~a~!" (extract-accumulated-string port))
               (format (current-error-port) "~%~a~!" (extract-accumulated-string port))))))))
-
-(define default-exception-handler
-  (lambda (condition continue)
-    (current-exception-handler #f)
-    (let ((port (make-string-output-port)))
-      (parameterize ((pretty-print-line-length (backtrace-line-length))
-                     (pretty-print-maximum-lines 10)
-                     (pretty-print-unwrap-syntax #t))
-
-        (define output-who-message
-          (lambda ()
-            (format port "error")
-            (and (who-condition? condition)
-                 (format port " in ~u" (condition-who condition)))
-            (and (message-condition? condition)
-                 (format port ": ~a" (condition-message condition)))))
-
-        (define output-irritants
-          (lambda ()
-            (cond ((and (irritants-condition? condition) (pair? (condition-irritants condition)))
-                   (format port "~%~%irritants:")
-                   (for-each (lambda (e)
-                               (format port "~% ")
-                               (cond ((list? e)
-                                      (format port " (")
-                                      (let loop ((lst (map (lambda (e) (format "~r" e)) e)))
-                                        (cond ((pair? lst)
-                                               (format port "~a" (car lst))
-                                               (cond ((pair? (cdr lst))
-                                                      (format port " ")
-                                                      (loop (cdr lst)))
-                                                     (else
-                                                      (format port ")")))))))
-                                     (else (format port " ~r" e))))
-                             (condition-irritants condition))))))
-
-        (define output-expansion
-          (lambda ()
-            (and (expansion-backtrace)
-                 (current-macro-expression)
-                 (parameterize ((pretty-print-initial-indent 7))
-                   (format port "~%~%expanding:~%  >  ")
-                   (pretty-print (unrename-private-primitives (current-macro-expression)) port)
-                   (format port "~%  ~n" (current-macro-expression))
-                   (for-each (lambda (e)
-                               (format port "~%  *  ")
-                               (pretty-print (unrename-private-primitives e) port)
-                               (format port "~%  ~n" e))
-                             (expansion-trace-stack))))))
-
-        (define output-condition
-          (lambda (c)
-            (and (dump-condition)
-                 (format port "~%~%")
-                 (describe-condition port c))))
-
-        (cond ((syntax-violation? condition)
-               (output-who-message)
-               (cond ((syntax-violation-form condition)
-                      => (lambda (form)
-                           (parameterize ((pretty-print-initial-indent 5))
-                             (format port "~%  >  ")
-                             (pretty-print (unrename-private-primitives form) port)
-                             (and (pair? form) (format port "~%  ~n" form))))))
-               (cond ((syntax-violation-subform condition)
-                      => (lambda (form)
-                           (parameterize ((pretty-print-initial-indent 5))
-                             (format port "~%  @  ")
-                             (pretty-print (unrename-private-primitives form) port)
-                             (and (pair? form) (format port "~%  ~n" form))))))
-               (output-condition condition)
-               (or (and (null? (expansion-trace-stack))
-                        (or (eq? (current-macro-expression) (syntax-violation-form condition))
-                            (eq? (current-macro-expression) (syntax-violation-subform condition))))
-                   (output-expansion)))
-
-              ((undefined-violation? condition)
-               (format port "error: unbound variable")
-               (and (who-condition? condition)
-                    (format port " ~u" (condition-who condition)))
-               (and (message-condition? condition)
-                    (format port ", ~a" (condition-message condition)))
-               (output-irritants)
-               (output-condition condition)
-               (output-expansion))
-
-              ((error? condition)
-               (output-who-message)
-               (output-irritants)
-               (output-condition condition)
-               (output-expansion))
-
-              ((violation? condition)
-               (output-who-message)
-               (output-irritants)
-               (output-condition condition)
-               (output-expansion))
-
-              ((warning? condition)
-               (format port "warning")
-               (and (who-condition? condition)
-                    (format port " in ~u" (condition-who condition)))
-               (and (message-condition? condition)
-                    (format port ": ~a" (condition-message condition)))
-               (output-irritants)
-               (output-condition condition)
-               (output-expansion))
-
-              ((condition? condition)
-               (format port "error: unknown type of exception caught~%~%irritants:~%~a" (describe-condition #f condition))
-               (output-irritants)
-               (output-expansion))
-
-              (else
-               (format port "error: unknown type of exception caught, ~a" condition)
-               (output-irritants)
-               (output-expansion))))
-
-      (format port "~%")
-      (let ((plugged (or (lookup-process-environment "EMACS") (not (eq? (port-device-subtype (current-input-port)) 'char)))))
-        (cond ((serious-condition? condition)
-               (display-backtrace port)
-               (if plugged
-                   (format (current-error-port) "~a~!" (extract-accumulated-string port))
-                   (format (current-error-port) "~%~a~%~!" (extract-accumulated-string port)))
-               (usleep 10000) ; make console happy
-               (and continue (continue)))
-              (else
-               (if plugged
-                   (format (current-error-port) "~a~!" (extract-accumulated-string port))
-                   (format (current-error-port) "~%~a~!" (extract-accumulated-string port)))
-               (usleep 10000))))))) ; make console happy
 
 (define start-scheme-session
   (lambda ()
@@ -487,7 +486,8 @@
                  (with-exception-handler
                   (lambda (c)
                     (flush-output-port (current-output-port))
-                    (default-exception-handler c exec-repl))
+                    ((current-exception-printer) c)
+                    (and (serious-condition? c) (exec-repl)))
                   (lambda ()
                     (auto-compile-cache-update)
                     (load path))))
@@ -495,7 +495,8 @@
                  (with-exception-handler
                   (lambda (c)
                     (flush-output-port (current-output-port))
-                    (default-exception-handler c (lambda () (exit #f))))
+                    ((current-exception-printer) c)
+                    (and (serious-condition? c) (exit #f)))
                   (lambda ()
                     (auto-compile-cache-update)
                     (cond ((or r6rs-program (load-file-has-r6rs-comment? path))

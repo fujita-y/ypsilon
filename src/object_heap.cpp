@@ -84,7 +84,7 @@
 #endif
 
 object_heap_t::object_heap_t()
-    : m_pool(NULL), m_pool_size(0), m_mark_stack(NULL)
+    : m_pool(NULL), m_pool_size(0), m_mark_stack(NULL), m_inherents(NULL)
 {
     m_lock.init();
     m_gensym_lock.init();
@@ -206,14 +206,9 @@ object_heap_t::allocated_size(void* obj)
     }
 }
 
-bool
-object_heap_t::init(size_t pool_size, size_t initial_datum_size, object_heap_t* parent)
+void
+object_heap_t::init_common(size_t pool_size, size_t initial_datum_size)
 {
-#if USE_PARALLEL_VM
-    m_parent = parent;
-    if (parent) m_primordial = parent->m_primordial;
-    else m_primordial = this;
-#endif
     assert(getpagesize() == OBJECT_SLAB_SIZE);                  // for optimal performance
     assert(pool_size >= OBJECT_SLAB_SIZE + OBJECT_SLAB_SIZE);   // check minimum (1 directory slab + 1 datum slab = 2)
 
@@ -222,9 +217,8 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size, object_heap_t* 
     m_pool_size = (pool_size + OBJECT_SLAB_SIZE - 1) & ~(OBJECT_SLAB_SIZE - 1);
     m_pool = (uint8_t*)heap_map(NULL, m_pool_size);
     if (m_pool == HEAP_MAP_FAILED) {
-        fatal("%s:%u mmap() failed: %s",__FILE__ , __LINE__, strerror(errno));
         m_pool = NULL;
-        return false;
+        fatal("%s:%u mmap() failed: %s",__FILE__ , __LINE__, strerror(errno));
     }
 
     // ptag
@@ -265,82 +259,22 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size, object_heap_t* 
     m_weakmappings.m_cache_limit = base_cache_limit >> 3;
     for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].m_cache_limit = base_cache_limit >> 3;
 
+    // hash
+    m_symbol.init(this);
+    m_string.init(this);
+}
+
+void
+object_heap_t::init_primordial(size_t pool_size, size_t initial_datum_size)
+{
 #if USE_PARALLEL_VM
-    // hash
-    m_symbol.init(this);
-    m_string.init(this);
-
-    if (m_primordial == this) {
-        // inherents
-        for (int i = 0; i < array_sizeof(m_inherents); i++) m_inherents[i] = scm_undef;
-        init_inherents();
-
-        // global shared
-        m_interaction_environment = make_environment(this, "interaction");
-        m_system_environment = make_environment(this, "system");
-        m_hidden_variables = make_weakhashtable(this, lookup_mutable_hashtable_size(0));
-        m_gensym_counter = 1;
-        m_native_transcoder = make_bvector(this, 3);
-        m_native_transcoder->elts[0] = SCM_PORT_CODEC_NATIVE;
-        m_native_transcoder->elts[1] = SCM_PORT_EOL_STYLE_NATIVE;
-        m_native_transcoder->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_REPLACE;
-
-        // trampolines
-        m_trampolines = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
-
-        // subr
-        init_subr_base(this);
-        init_subr_base_arith(this);
-        init_subr_r5rs_arith(this);
-        init_subr_bvector(this);
-        init_subr_port(this);
-        init_subr_socket(this);
-        init_subr_unicode(this);
-        init_subr_ffi(this);
-        init_subr_bitwise(this);
-        init_subr_fixnum(this);
-        init_subr_flonum(this);
-        init_subr_hash(this);
-        init_subr_list(this);
-        init_subr_others(this);
-
-        // procedure
-        intern_system_environment(make_symbol(this, "apply"), scm_proc_apply);
-        intern_system_environment(make_symbol(this, "call-with-current-continuation"), scm_proc_callcc);
-        intern_system_environment(make_symbol(this, "call/cc"), scm_proc_callcc);
-        intern_system_environment(make_symbol(this, "apply-values"), scm_proc_apply_values);
-
-        // architecture feature
-        init_architecture_feature();
-    } else {
-        // inherents
-        memcpy(m_inherents, m_primordial->m_inherents, sizeof(m_inherents));
-
-        // global shared
-        m_interaction_environment = m_primordial->m_interaction_environment;// make_environment(this, "thread-local"); //m_primordial->m_interaction_environment;
-        m_system_environment = m_primordial->m_system_environment;
-        m_hidden_variables = make_weakhashtable(this, lookup_mutable_hashtable_size(0));
-        m_gensym_counter = 1;
-        m_native_transcoder = m_primordial->m_native_transcoder;
-
-        // trampolines
-        m_trampolines = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
-        // todo: check if it ok
-
-        // architecture feature
-        m_architecture_feature = m_primordial->m_architecture_feature;
-    }
-    m_thread_context = make_hashtable(this, SCM_HASHTABLE_TYPE_EQV, lookup_mutable_hashtable_size(0));
-
-#else
-    // hash
-    m_symbol.init(this);
-    m_string.init(this);
-
+    m_parent = NULL;
+    m_primordial = this;
+#endif
+    // common
+    init_common(pool_size, initial_datum_size);
     // inherents
-    for (int i = 0; i < array_sizeof(m_inherents); i++) m_inherents[i] = scm_undef;
     init_inherents();
-
     // global shared
     m_interaction_environment = make_environment(this, "interaction");
     m_system_environment = make_environment(this, "system");
@@ -350,10 +284,6 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size, object_heap_t* 
     m_native_transcoder->elts[0] = SCM_PORT_CODEC_NATIVE;
     m_native_transcoder->elts[1] = SCM_PORT_EOL_STYLE_NATIVE;
     m_native_transcoder->elts[2] = SCM_PORT_ERROR_HANDLING_MODE_REPLACE;
-
-    // trampolines
-    m_trampolines = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
-
     // subr
     init_subr_base(this);
     init_subr_base_arith(this);
@@ -369,25 +299,43 @@ object_heap_t::init(size_t pool_size, size_t initial_datum_size, object_heap_t* 
     init_subr_hash(this);
     init_subr_list(this);
     init_subr_others(this);
-
     // procedure
     intern_system_environment(make_symbol(this, "apply"), scm_proc_apply);
     intern_system_environment(make_symbol(this, "call-with-current-continuation"), scm_proc_callcc);
     intern_system_environment(make_symbol(this, "call/cc"), scm_proc_callcc);
     intern_system_environment(make_symbol(this, "apply-values"), scm_proc_apply_values);
-
     // architecture feature
     init_architecture_feature();
-#endif
-
-    return true;
+    // trampolines
+    m_trampolines = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
+    //#if USE_PARALLEL_VM
+    //m_thread_context = make_hashtable(this, SCM_HASHTABLE_TYPE_EQV, lookup_mutable_hashtable_size(0));    
+    //#endif
 }
 
-bool
-object_heap_t::init(size_t pool_size, size_t initial_datum_size)
+#if USE_PARALLEL_VM
+void
+object_heap_t::init_child(size_t pool_size, size_t initial_datum_size, object_heap_t* parent)
 {
-    return init(pool_size, initial_datum_size, NULL);
+    m_parent = parent;
+    m_primordial = parent->m_primordial;
+    // common
+    init_common(pool_size, initial_datum_size);
+    // inherents
+    m_inherents = m_primordial->m_inherents;
+    // global shared
+    m_interaction_environment = m_primordial->m_interaction_environment;
+    m_system_environment = m_primordial->m_system_environment;
+    m_hidden_variables = make_weakhashtable(this, lookup_mutable_hashtable_size(0));
+    m_gensym_counter = 1;
+    m_native_transcoder = m_primordial->m_native_transcoder;
+    // architecture feature
+    m_architecture_feature = m_primordial->m_architecture_feature;
+    // trampolines
+    m_trampolines = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
+    //m_thread_context = make_hashtable(this, SCM_HASHTABLE_TYPE_EQV, lookup_mutable_hashtable_size(0));
 }
+#endif
 
 scm_obj_t
 object_heap_t::lookup_system_environment(scm_symbol_t symbol)
@@ -454,6 +402,15 @@ object_heap_t::destroy()
         m_pool = NULL;
         m_pool_size = 0;
     }
+#if USE_PARALLEL_VM
+    if (this == m_primordial) {
+        free(m_inherents);
+        m_inherents = NULL;
+    }
+#else
+    free(m_inherents);
+    m_inherents = NULL;
+#endif
 }
 
 void*
@@ -682,19 +639,6 @@ object_heap_t::interior_shade(void* ref)
 
 #endif
 
-#if USE_PARALLEL_VM
-bool
-object_heap_t::heap_barrier(void* dst, scm_obj_t rhs)
-{
-    if (CELLP(rhs)) {
-        if (in_heap(dst)) return false;
-        if (m_primordial->in_heap(rhs)) return false;
-        return true;
-    }
-    return false;
-}
-#endif
-
 void
 object_heap_t::write_barrier(scm_obj_t rhs)
 {
@@ -752,7 +696,7 @@ object_heap_t::collector_init()
 
     m_usage.clear();
 
-    m_shade_queue.init();
+    m_shade_queue.init(SHAREDQUEUE_SIZE);
     m_collector_lock.init();
     m_mutator_wake.init();
     m_collector_wake.init();
@@ -807,10 +751,10 @@ object_heap_t::synchronized_collect(object_heap_t& heap)
     heap.shade(heap.m_architecture_feature);
     heap.shade(heap.m_native_transcoder);
     heap.shade(heap.m_trampolines);
-#if USE_PARALLEL_VM
-    heap.shade(heap.m_thread_context);
-#endif
-    for (int i = 0; i < array_sizeof(heap.m_inherents); i++) heap.shade(heap.m_inherents[i]);
+    //#if USE_PARALLEL_VM
+    //heap.shade(heap.m_thread_context);
+    //#endif
+    for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) heap.shade(heap.m_inherents[i]);
 
     // mark
     assert(heap.m_mutator_stopped == false);
@@ -910,11 +854,11 @@ object_heap_t::concurrent_collect(object_heap_t& heap)
     heap.shade(heap.m_architecture_feature);
     heap.shade(heap.m_native_transcoder);
     heap.shade(heap.m_trampolines);
-#if USE_PARALLEL_VM
-    heap.shade(heap.m_thread_context);
-#endif
+    //#if USE_PARALLEL_VM
+    //heap.shade(heap.m_thread_context);
+    //#endif
     
-    for (int i = 0; i < array_sizeof(heap.m_inherents); i++) heap.shade(heap.m_inherents[i]);
+    for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) heap.shade(heap.m_inherents[i]);
     heap.concurrent_marking();
 
     // mark phase 2
@@ -1402,6 +1346,8 @@ object_heap_t::display_heap_statistics(scm_port_t port)
 void
 object_heap_t::init_inherents()
 {
+    m_inherents = (scm_obj_t*)malloc(sizeof(scm_obj_t) * INHERENT_TOTAL_COUNT);
+    for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) m_inherents[i] = scm_undef;
     make_symbol_inherent(this, "const", VMOP_CONST);
     make_symbol_inherent(this, "const.unspec", VMOP_CONST_UNSPEC);
     make_symbol_inherent(this, "const.undef", VMOP_CONST_UNDEF);
@@ -1545,19 +1491,19 @@ object_heap_t::init_inherents()
     }
 #if USE_FLONUM_CONST
     {
-        scm_flonum_t obj = (scm_flonum_t)allocate_collectible(sizeof(scm_flonum_rec_t));
+        scm_flonum_t obj = (scm_flonum_t)allocate_flonum();
         obj->hdr = scm_hdr_flonum;
         obj->value = 0.0;
         m_inherents[FL_POSITIVE_ZERO] = obj;
     }
     {
-        scm_flonum_t obj = (scm_flonum_t)allocate_collectible(sizeof(scm_flonum_rec_t));
+        scm_flonum_t obj = (scm_flonum_t)allocate_flonum();
         obj->hdr = scm_hdr_flonum;
         obj->value = - 0.0;
         m_inherents[FL_NEGATIVE_ZERO] = obj;
     }
     {
-        scm_flonum_t obj = (scm_flonum_t)allocate_collectible(sizeof(scm_flonum_rec_t));
+        scm_flonum_t obj = (scm_flonum_t)allocate_flonum();
         obj->hdr = scm_hdr_flonum;
         obj->value = VALUE_NAN;
         m_inherents[FL_NAN] = obj;

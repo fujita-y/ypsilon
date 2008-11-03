@@ -31,8 +31,9 @@ public:
 
     enum {
         VM_STATE_FREE,
-        VM_STATE_START,
-        VM_STATE_RUNNING,
+        VM_STATE_NEW,
+        VM_STATE_RUN,
+        VM_STATE_BLOCK,
         VM_STATE_SYNC
     };
 
@@ -42,8 +43,10 @@ public:
 
     void init(VM* root, int n);
     int  vm_id(VM* vm);
+    bool vm_primordial(int id);
     int  spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[]);
     void display_status(VM* vm);
+    void update_thread_state(VM* vm, int state);
 };
 
 #endif

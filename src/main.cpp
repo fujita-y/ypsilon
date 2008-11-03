@@ -219,7 +219,7 @@ multi_vm_test(void* param)
         printf("heap_limit %d heap_init %d\n", heap_limit, heap_init);
 #endif
         
-        heap->init(heap_limit, heap_init);
+        heap->init_primordial(heap_limit, heap_init);
         VM rootVM;
         rootVM.init(heap);
 #if __APPLE_CC__

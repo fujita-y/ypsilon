@@ -390,7 +390,7 @@ OBJECT_ALIGNED(scm_socket_rec_t) {
 
 OBJECT_ALIGNED(scm_sharedqueue_rec_t) {
     scm_hdr_t   hdr;
-    queue_t<void*, SHAREDQUEUE_SIZE> queue;
+    queue_t<void*> queue;
 } END;
 
 #undef OBJECT_ALIGNED

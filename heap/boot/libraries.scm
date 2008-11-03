@@ -504,7 +504,8 @@
                         process-wait
                         process-shell-command
                         
-                        default-exception-handler
+                        ;default-exception-handler
+                        current-exception-printer
                         
                         make-shared-queue
                         shared-queue-push!

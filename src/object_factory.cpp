@@ -128,7 +128,7 @@ scm_symbol_t
 make_symbol_inherent(object_heap_t* heap, const char* name, int code)
 {
     assert(code < 256);
-    assert(code < array_sizeof(heap->m_inherents));
+    assert(code < INHERENT_TOTAL_COUNT);
     assert(heap->m_inherents[code] == scm_undef);
     scm_symbol_t obj = (scm_symbol_t)heap->allocate_collectible(sizeof(scm_symbol_rec_t));
     int len = strlen(name);
@@ -738,11 +738,11 @@ make_socket(object_heap_t* heap)
 }
 
 scm_sharedqueue_t
-make_sharedqueue(object_heap_t* heap)
+make_sharedqueue(object_heap_t* heap, int n)
 {
     scm_sharedqueue_t obj = (scm_sharedqueue_t)heap->allocate_collectible(sizeof(scm_sharedqueue_rec_t));
     obj->hdr = scm_hdr_sharedqueue;
-    obj->queue.init();
+    obj->queue.init(n);
     return obj;    
 }
 
@@ -1090,4 +1090,18 @@ renounce(void* obj, int size, void* refcon)
             break;
         }
     }
+}
+
+const char*
+get_tuple_type_name(scm_obj_t obj)
+{
+    if (TUPLEP(obj)) {
+        scm_tuple_t tuple = (scm_tuple_t)obj;
+        scm_obj_t e0 = tuple->elts[0];
+        if (SYMBOLP(e0)) {
+            scm_symbol_t type = (scm_symbol_t)e0;
+            if (strncmp(type->name, "type:", 5) == 0) return type->name + 5;
+        }
+    }
+    return NULL;
 }
