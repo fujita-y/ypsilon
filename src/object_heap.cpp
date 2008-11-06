@@ -60,7 +60,7 @@
     }
 
 #else
-    
+
     inline int
     bytes_to_bucket(int x)
     {
@@ -309,7 +309,7 @@ object_heap_t::init_primordial(size_t pool_size, size_t initial_datum_size)
     // trampolines
     m_trampolines = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
     //#if USE_PARALLEL_VM
-    //m_thread_context = make_hashtable(this, SCM_HASHTABLE_TYPE_EQV, lookup_mutable_hashtable_size(0));    
+    //m_thread_context = make_hashtable(this, SCM_HASHTABLE_TYPE_EQV, lookup_mutable_hashtable_size(0));
     //#endif
 }
 
@@ -394,7 +394,7 @@ object_heap_t::destroy()
     m_collector_wake.destroy();
     m_mutator_wake.destroy();
     m_shade_queue.destroy();
-    
+
     if (m_mark_stack) free(m_mark_stack);
     m_mark_stack = NULL;
     if (m_pool) {
@@ -536,14 +536,14 @@ object_heap_t::interior_shade(void* ref)
 #else
     if (ref) {
 #endif
-        
+
 #ifndef NDEBUG
         int i = ((uint8_t*)ref - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         assert(i >= 0 && i < m_pool_watermark);
         assert(GCSLABP(m_pool[i]));
 #endif
         shade(OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref));
-        
+
     }
 }
 
@@ -569,7 +569,7 @@ object_heap_t::interior_shade(void* ref)
             assert(p < (uint8_t*)traits);
         }
     }
-*/        
+*/
     void
     object_heap_t::break_weakmapping(object_slab_traits_t* traits)
     {
@@ -594,7 +594,7 @@ object_heap_t::interior_shade(void* ref)
     }
 
 #else
-/*    
+/*
     void
     object_heap_t::mark_weakmapping(object_slab_traits_t* traits)
     {
@@ -615,7 +615,7 @@ object_heap_t::interior_shade(void* ref)
             assert(p < (uint8_t*)traits);
         }
     }
-*/    
+*/
     void
     object_heap_t::break_weakmapping(object_slab_traits_t* traits)
     {
@@ -857,7 +857,7 @@ object_heap_t::concurrent_collect(object_heap_t& heap)
     //#if USE_PARALLEL_VM
     //heap.shade(heap.m_thread_context);
     //#endif
-    
+
     for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) heap.shade(heap.m_inherents[i]);
     heap.concurrent_marking();
 
@@ -945,12 +945,12 @@ fallback:
     while (i < capacity) {
         int memo = heap.m_pool_usage;
         if (GCSLABP(heap.m_pool[i])) {
-            
+
             if (OBJECT_SLAB_TRAITS_OF(slab)->cache == NULL) {
 #if HPDEBUG
                 printf(";; [collector: wait for mutator complete slab init]\n");
                 fflush(stdout);
-#endif                
+#endif
                 thread_yield();
                 continue;
             }
@@ -1006,7 +1006,7 @@ finish:
 #endif
 #if HPDEBUG
     heap.consistency_check();
-#endif    
+#endif
 }
 
 thread_main_t
@@ -1050,7 +1050,7 @@ object_heap_t::trace(scm_obj_t obj)
 #if HPDEBUG
         printf(";; [collector: duplicate objects in mark stack]\n");
         fflush(stdout);
-#endif                
+#endif
         return;
     }
     if (PAIRP(obj)) {
@@ -1546,7 +1546,7 @@ check_collectible(void* obj, int size, void* refcon)
             const char* msg = verify_obj((OBJ)->SLOT, heap); \
             if (msg) fatal("bad %s 0x%x %s->%s 0x%x %s\n", #OBJ, OBJ, #OBJ, #SLOT, (OBJ)->SLOT, msg); \
         } while (false);
-        
+
     #define VERIFY_INTERIOR_OBJ(OBJ, SLOT) \
     do { \
         const char* msg = verify_interior_obj((OBJ)->SLOT, heap); \
@@ -1558,9 +1558,9 @@ check_collectible(void* obj, int size, void* refcon)
         const char* msg = verify_obj(ELT, heap); \
         if (msg) fatal("bad %s 0x%x %s 0x%x %s\n", #OBJ, OBJ, #ELT, ELT, msg); \
     } while (false);
-    
+
     object_heap_t* heap = (object_heap_t*)refcon;
-    
+
     if (!CELLP(obj)) return;
     if (!heap->is_collectible(obj)) {
         fatal("object 0x%x out of GCSLAB\n", obj);
@@ -1647,7 +1647,7 @@ check_collectible(void* obj, int size, void* refcon)
         case TC_HEAPCONT: {
              int nbytes = HDR(obj) >> HDR_HEAPCONT_SIZE_SHIFT;
              uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
-             vm_cont_t cont = (vm_cont_t)(top + nbytes - sizeof(vm_cont_rec_t));            
+             vm_cont_t cont = (vm_cont_t)(top + nbytes - sizeof(vm_cont_rec_t));
              VERIFY_INTERIOR_OBJ(cont, up);
              VERIFY_INTERIOR_OBJ(cont, env);
              VERIFY_OBJ(cont, pc);
@@ -1663,7 +1663,7 @@ check_collectible(void* obj, int size, void* refcon)
             VERIFY_OBJ(environment, name);
         } return;
         case TC_GLOC: {
-            scm_gloc_t gloc = (scm_gloc_t)obj;            
+            scm_gloc_t gloc = (scm_gloc_t)obj;
             VERIFY_OBJ(gloc, variable);
             VERIFY_OBJ(gloc, value);
         } return;
@@ -1729,7 +1729,7 @@ object_heap_t::init_architecture_feature()
 {
     m_architecture_feature = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(1024));
     scoped_lock lock(m_architecture_feature->lock);
-    
+
     #define ARCH_FIXNUM(name, value)  put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(value))
 
     ARCH_FIXNUM(sizeof:char,     sizeof(char));
@@ -1753,11 +1753,11 @@ object_heap_t::init_architecture_feature()
     ARCH_FIXNUM(alignof:int32_t,  ALIGNOF(int32_t));
     ARCH_FIXNUM(alignof:int64_t,  ALIGNOF(int64_t));
     ARCH_FIXNUM(ypsilon-revision, PROGRAM_REVISION);
-    
+
     #undef ARCH_FIXNUM
 
     #define ARCH_STRING(name, value)  put_hashtable(m_architecture_feature, make_symbol(this, #name), make_string_literal(this, value))
-    
+
     #if _MSC_VER
         ARCH_STRING(operating-system, "windows");
         ARCH_STRING(machine-hardware, "ia32");
@@ -1777,13 +1777,13 @@ object_heap_t::init_architecture_feature()
             }
             ARCH_STRING(machine-hardware, buf.machine);
         }
-    #endif    
-    
-    #undef ARCH_STRING    
-        
+    #endif
+
+    #undef ARCH_STRING
+
     #define ARCH_CCONST(name)         put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(name))
     #define ARCH_CFALSE(name)         put_hashtable(m_architecture_feature, make_symbol(this, #name), scm_false)
-    
+
     ////
     #ifdef AF_UNSPEC
         ARCH_CCONST(AF_UNSPEC);
@@ -1949,18 +1949,17 @@ object_heap_t::init_architecture_feature()
         ARCH_CCONST(MSG_MORE);
     #else
         ARCH_CFALSE(MSG_MORE);
-    #endif        
+    #endif
     #ifdef MSG_EOF
         ARCH_CCONST(MSG_EOF);
     #else
         ARCH_CFALSE(MSG_EOF);
     #endif
     ////
-    
+
     #undef ARCH_CCONST
     #undef ARCH_CFALSE
 
     m_architecture_feature = copy_hashtable(this, m_architecture_feature, false);
-        
-}
 
+}

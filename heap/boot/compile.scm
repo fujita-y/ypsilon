@@ -355,10 +355,10 @@
     (let ((body (compile-expression (caddr form) cte #f #f))
           (retval (if tail (list (list 'ret.const.unspec)) '())))
       (cond ((iloc? (cadr form) cte)
-             `(,@body (set.iloc ,@(make-iloc-operand (cadr form) cte)) ,@retval))
+             `(,@body (set.iloc ,(make-iloc-operand (cadr form) cte) . ,(make-application-comment form)) ,@retval))
             (else
              (let ((touch (if (backtrace) (compile-touch (cadr form) cte) '())))
-               `(,@body ,@touch (set.gloc.of ,(cadr form)) ,@retval)))))))
+               `(,@body ,@touch (set.gloc.of ,(cadr form) . ,(make-application-comment form)) ,@retval)))))))
 
 (define compile-expression-lambda
   (lambda (form cte discard tail)
@@ -413,7 +413,7 @@
                                        (values (reverse front) lst)))))))
                (let ((cte (cte-extend-iloc (map car bindings) cte)))
                  (let ((front-code (compile-argument-each (map cadr front) cte))
-                       (back-code (apply append (map (lambda (iloc expr) `(,@expr (set.iloc ,@iloc)))
+                       (back-code (apply append (map (lambda (iloc expr) `(,@expr (set.iloc ,iloc)))
                                                      (iloc-iota 0 (length front) (length back))
                                                      (map (lambda (e) (compile-expression (cadr e) cte #f #f)) back))))
                        (body-code (compile-expression-seq (cddr form) cte #f #t)))

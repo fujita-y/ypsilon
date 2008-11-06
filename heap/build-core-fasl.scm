@@ -80,11 +80,13 @@
           (rnrs eval)
           (rnrs))
 
+  (define put-fasl (parameterize ((current-environment (system-environment))) (top-level-value 'put-fasl)))
+  
   (define source-directory (format "~a/../stdlib" (current-directory)))
   (add-library-path source-directory)
 
   (define target-file-name "coreimage.vmi")
-
+  
   (define files
     '("./core/exceptions.scm"
       "./core/parameters.scm"

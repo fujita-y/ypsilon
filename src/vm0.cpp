@@ -26,7 +26,7 @@ VM::spawn_id()
     int id;
     s_spawn_lock.lock();
     s_spawn_id = s_spawn_id + 1;
-    id = s_spawn_id;    
+    id = s_spawn_id;
     s_spawn_lock.unlock();
     return id;
 }
@@ -685,7 +685,7 @@ VM::boot()
   #endif
 }
 
-void   
+void
 VM::standalone()
 {
 loop:
@@ -827,19 +827,8 @@ VM::stop()
         }
     }
 #if USE_PARALLEL_VM
-    if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) {
-        scoped_lock lock(m_interp->m_lock);
-        int id = m_interp->vm_id(this);
-        for (int i = 0; i < m_interp->m_count; i++) {
-            switch (m_interp->m_table[i]->state) {
-            case Interpreter::VM_STATE_NEW: 
-            case Interpreter::VM_STATE_RUN:
-                if (m_interp->m_table[i]->parent == id) m_heap->enqueue_root(m_interp->m_table[i]->param);
-                break;
-            }
-        }
-    }
-#endif    
+    if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) m_interp->snapshot(this);
+#endif
     m_heap->m_collector_lock.lock();
     while (m_heap->m_stop_the_world) {
         m_heap->m_mutator_stopped = true;
@@ -862,7 +851,7 @@ VM::stop()
             double d = t2 - t1;
             if (d > m_heap->m_usage.m_pause3) m_heap->m_usage.m_pause3 = d;
         } break;
-        
+
     }
 }
 

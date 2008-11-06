@@ -80,11 +80,11 @@
         }
         return "internal error: c function stack frame overflow";
     }
-    
+
 #endif
-    
+
 #if ARCH_X64
-    
+
     const char*
     c_stack_frame_t::push(scm_obj_t obj)
     {
@@ -168,7 +168,7 @@
                         n.u64 = 0;
                         n.f32 = flonum->value;
                         m_frame[m_count++] = n.u64;
-                    }                    
+                    }
                 } else {
                     n.f64 = flonum->value;
                     if (m_sse_count < array_sizeof(m_sse)) {
@@ -183,7 +183,7 @@
         }
         return "internal error: c function stack frame overflow";
     }
-    
+
     void
     c_stack_frame_t::compose()
     {
@@ -192,7 +192,7 @@
         for (int i = 0; i < array_sizeof(m_pre); i++) m_frame[dst++] = m_pre[i];
         for (int i = 0; i < array_sizeof(m_reg); i++) m_frame[dst++] = m_reg[i];
     }
-    
+
 #endif
 
 #if _MSC_VER
@@ -518,14 +518,14 @@
 #elif ARCH_X64
 
     struct trampoline_t {
-        
+
         uint8_t     mov_r10_imm64[2];   // 49 BA                    : mov r10, imm64
         uint64_t    imm64_uid;          // 00 00 00 00 00 00 00 00
         uint8_t     mov_r11_imm64[2];   // 49 BB                    : mov r11, imm64
         uint64_t    imm64_stub;         // 00 00 00 00 00 00 00 00
         uint8_t     jmp_r11[3];         // 41 FF 23                 : jmp [r11]
         uint8_t     ud2[2];             // 0F 0B
-        
+
         intptr_t    m_stub;
         uint64_t    m_uid;
         uint64_t    m_argc;
@@ -621,7 +621,7 @@
         assert(uid < FIXNUM_MAX);
         return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
     }
-    
+
 #else
 
     scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure)
@@ -634,11 +634,11 @@
     {
         fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
     }
-    
+
     double
     c_func_stub_double(void* adrs, int argc, intptr_t argv[])
     {
         fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
     }
-            
+
 #endif

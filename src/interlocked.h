@@ -96,4 +96,3 @@ i386_atomic_or(volatile uint8_t* the_value, uint8_t bits)
 }
 
 */
-

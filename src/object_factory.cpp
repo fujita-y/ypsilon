@@ -27,7 +27,7 @@ make_symbol(object_heap_t* heap, const char *name, int len)
             heap->m_primordial->m_symbol.unlock();
             if (obj != scm_undef) {
                 heap->m_symbol.unlock();
-                return obj;    
+                return obj;
             }
         }
 /*
@@ -38,7 +38,7 @@ make_symbol(object_heap_t* heap, const char *name, int len)
             parent->m_symbol.unlock();
             if (obj != scm_undef) {
                 heap->m_symbol.unlock();
-                return obj;    
+                return obj;
             }
             parent = parent->m_parent;
         }
@@ -57,11 +57,11 @@ make_symbol(object_heap_t* heap, const char *name, int len)
         heap->m_symbol.put(obj);
     }
     heap->m_symbol.unlock();
-    return obj;    
+    return obj;
 #else
     heap->m_symbol.lock();
     scm_symbol_t obj = (scm_symbol_t)heap->m_symbol.get(name, len);
-    if (obj == scm_undef) {   
+    if (obj == scm_undef) {
         int bytes = sizeof(scm_symbol_rec_t) + len + 1;
         if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
             obj = (scm_symbol_t)heap->allocate_collectible(bytes);
@@ -155,7 +155,7 @@ make_string(object_heap_t* heap, const char *name, int len)
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
         obj = (scm_string_t)heap->allocate_collectible(bytes);
         obj->name = (char*)((uintptr_t)obj + sizeof(scm_string_rec_t));
-    } else {        
+    } else {
         obj = (scm_string_t)heap->allocate_collectible(sizeof(scm_string_rec_t));
         obj->name = (char*)heap->allocate_private(len + 1);
     }
@@ -362,7 +362,7 @@ make_custom_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj_t h
     return obj;
 }
 
-scm_port_t     
+scm_port_t
 make_socket_port(object_heap_t* heap, scm_socket_t socket, scm_obj_t transcoder)
 {
     VERIFY_DATUM(socket);
@@ -565,7 +565,7 @@ make_flonum(object_heap_t* heap, double num)
     return obj;
 }
 
-scm_flonum_t        
+scm_flonum_t
 make_flonum_32bit(object_heap_t* heap, double num)
 {
     scm_flonum_t obj = heap->allocate_flonum();
@@ -742,8 +742,9 @@ make_sharedqueue(object_heap_t* heap, int n)
 {
     scm_sharedqueue_t obj = (scm_sharedqueue_t)heap->allocate_collectible(sizeof(scm_sharedqueue_rec_t));
     obj->hdr = scm_hdr_sharedqueue;
+    obj->buf.init(n);
     obj->queue.init(n);
-    return obj;    
+    return obj;
 }
 
 scm_obj_t
@@ -1042,6 +1043,7 @@ finalize(object_heap_t* heap, void* obj)
         }
         case TC_SHAREDQUEUE: {
             scm_sharedqueue_t queue = (scm_sharedqueue_t)obj;
+            queue->buf.destroy();
             queue->queue.destroy();
             break;
         }
@@ -1086,6 +1088,7 @@ renounce(void* obj, int size, void* refcon)
         }
         case TC_SHAREDQUEUE: {
             scm_sharedqueue_t queue = (scm_sharedqueue_t)obj;
+            queue->buf.destroy();
             queue->queue.destroy();
             break;
         }

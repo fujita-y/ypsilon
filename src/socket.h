@@ -24,5 +24,3 @@ scm_obj_t socket_name_string(object_heap_t* heap, scm_socket_t s);
 scm_obj_t socket_accept(object_heap_t* heap, scm_socket_t s);
 
 #endif
-
-

@@ -39,7 +39,7 @@ public:
 
     int                 m_stack_size;
     int                 m_stack_busy;
-    
+
 #if USE_GCC_EXTENSION
     void*               m_dispatch_table[VMOP_INSTRUCTION_COUNT];
 #endif
@@ -217,11 +217,11 @@ public:
     }
 
 #endif
-    
+
 #if USE_PARALLEL_VM
-    Interpreter* m_interp;    
+    Interpreter* m_interp;
 #endif
-    
+
 } ATTRIBUTE(aligned(16));
 
 #endif

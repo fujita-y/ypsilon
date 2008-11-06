@@ -53,7 +53,7 @@ static int opt_heap_limit(int argc, char* const argv[])
                 exit(EXIT_FAILURE);
             }
         }
-        
+
     }
     return value;
 }
@@ -69,7 +69,7 @@ multi_vm_test(void* param)
     vm->boot();
     vm->standalone();
     printf("sub_vm: %x terminated\n", vm);
-    return 0;    
+    return 0;
 }
 
 #endif
@@ -89,7 +89,7 @@ multi_vm_test(void* param)
 
         main_command_line_argc = argc;
         main_command_line_argv = argv;
-                
+
         object_heap_t* heap = new object_heap_t;
         int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
         int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
@@ -99,7 +99,7 @@ multi_vm_test(void* param)
         s_current_vm = &rootVM;
         rootVM.boot();
         rootVM.standalone();
-        
+
         WSACleanup();
         return 0;
     }
@@ -161,7 +161,7 @@ multi_vm_test(void* param)
     {
         main_command_line_argc = argc;
         main_command_line_argv = argv;
-        
+
     #ifndef NDEBUG
         struct foo { char i; };
         struct bar { int i; struct foo o; };
@@ -182,7 +182,7 @@ multi_vm_test(void* param)
         printf("sizeof(pthread_mutex_t) %d\n", sizeof(pthread_mutex_t));
         printf("sizeof(pthread_cond_t) %d\n", sizeof(pthread_cond_t));
     #endif
-        
+
     #if MTDEBUG
         puts(";; MTDEBUG ON");
     #endif
@@ -198,13 +198,13 @@ multi_vm_test(void* param)
     #if HPDEBUG
         puts(";; HPDEBUG ON");
     #endif
-                
+
         sigset_t set;
         sigemptyset(&set);
         sigaddset(&set, SIGINT);
         sigaddset(&set, SIGPIPE);
         MTVERIFY(pthread_sigmask(SIG_BLOCK, &set, NULL));
-        
+
         sigemptyset(&set);
         sigaddset(&set, SIGINT);
         pthread_t tid;
@@ -214,11 +214,11 @@ multi_vm_test(void* param)
         object_heap_t* heap = new object_heap_t;
         int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
         int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
-        
+
 #ifndef NDEBUG
         printf("heap_limit %d heap_init %d\n", heap_limit, heap_init);
 #endif
-        
+
         heap->init_primordial(heap_limit, heap_init);
         VM rootVM;
         rootVM.init(heap);
@@ -228,7 +228,7 @@ multi_vm_test(void* param)
 #else
         s_current_vm = &rootVM;
 #endif
-        
+
 #if MULTI_VM_TEST
         VM subVM;
         {
@@ -241,7 +241,7 @@ multi_vm_test(void* param)
             MTVERIFY(pthread_create(&tid, NULL, multi_vm_test, &subVM));
             MTVERIFY(pthread_detach(tid));
         }
-#endif        
+#endif
 #if USE_PARALLEL_VM
         Interpreter interp;
         interp.init(&rootVM, 128);

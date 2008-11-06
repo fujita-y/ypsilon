@@ -143,7 +143,7 @@ public:
 //    scm_hashtable_t     m_thread_context;
 #endif
 
-    
+
     void                init_common(size_t pool_size, size_t initial_datum_size);
 
 public:
@@ -189,7 +189,7 @@ public:
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         assert(index >= 0 && index < m_pool_watermark);
         return (m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
-    }    
+    }
 
     scm_obj_t           lookup_system_environment(scm_symbol_t symbol);
     void                intern_system_environment(scm_symbol_t symbol, scm_obj_t value);

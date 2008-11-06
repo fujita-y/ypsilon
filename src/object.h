@@ -87,8 +87,8 @@ const scm_obj_t scm_proc_callcc         = (scm_obj_t)0xa2;
 const scm_obj_t scm_proc_apply_values   = (scm_obj_t)0xb2;
 
 // primitive
-#define TC_FLONUM           0x00        
-#define TC_BVECTOR          0x01        
+#define TC_FLONUM           0x00
+#define TC_BVECTOR          0x01
 // finalize only
 #define TC_BIGNUM           0x02
 #define TC_SYMBOL           0x03
@@ -106,8 +106,8 @@ const scm_obj_t scm_proc_apply_values   = (scm_obj_t)0xb2;
 #define TC_GLOC             0x0d
 #define TC_SUBR             0x0e
 // trace only (2)
-#define TC_COMPLEX          0x0f        
-#define TC_RATIONAL         0x10       
+#define TC_COMPLEX          0x0f
+#define TC_RATIONAL         0x10
 #define TC_HEAPENV          0x11
 #define TC_HEAPCONT         0x12
 #define TC_WEAKMAPPING      0x13
@@ -388,9 +388,23 @@ OBJECT_ALIGNED(scm_socket_rec_t) {
     struct sockaddr_storage addr;
 } END;
 
+//struct sharedqueue_handle_t {
+//    uint8_t*    bmem;
+//    int         bsize;
+//    int         bgap;
+//};
+
 OBJECT_ALIGNED(scm_sharedqueue_rec_t) {
     scm_hdr_t   hdr;
-    queue_t<void*> queue;
+//    mutex_t     lock;
+//    uint8_t*    buf_top;
+//    uint8_t*    buf_bottom;
+//    uint8_t*    buf_head;
+//    uint8_t*    buf_tail;
+//    sharedqueue_handle_t* handle_datum;
+//    int         handle_count;
+    fifo_buffer_t   buf;
+    queue_t<int>    queue;
 } END;
 
 #undef OBJECT_ALIGNED
@@ -519,6 +533,7 @@ struct vm_env_rec_t {           // record size is variable
 #define CDAR(obj)                           (CDR(CAR(obj)))
 #define CDDR(obj)                           (CDR(CDR(obj)))
 #define CADDR(obj)                          (CAR(CDR(CDR(obj))))
+#define CADAR(obj)                          (CAR(CDR(CAR(obj))))
 #define CDDDR(obj)                          (CDR(CDR(CDR(obj))))
 
 #define MAKEFIXNUM(n)                       ((scm_fixnum_t)(((intptr_t)(n) << 1) + 1))

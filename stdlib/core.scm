@@ -88,6 +88,7 @@
     break
     buffer-mode
     buffer-mode?
+    bytevector->object
     bytevector->sint-list
     bytevector->string
     bytevector->u8-list
@@ -636,6 +637,7 @@
     number->string
     number?
     numerator
+    object->bytevector
     odd?
     open-builtin-data-input-port
     open-bytevector-input-port
@@ -679,7 +681,6 @@
     put-bytevector
     put-char
     put-datum
-    put-fasl
     put-string
     put-u8
     quasiquote

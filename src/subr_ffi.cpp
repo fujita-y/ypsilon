@@ -84,12 +84,12 @@ subr_call_shared_object_void(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
             }
-#if ARCH_IA32            
+#if ARCH_IA32
             c_func_stub_intptr(func, stack.count(), stack.frame());
 #elif ARCH_X64
             c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
 #else
-            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);            
+            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
 #endif
             return scm_unspecified;
         }
@@ -131,7 +131,7 @@ subr_call_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
             return int_to_integer(vm->m_heap, c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame()));
 #else
             fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-#endif            
+#endif
         }
         invalid_argument_violation(vm, "call-shared-object->int", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
@@ -171,7 +171,7 @@ subr_call_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
             return make_flonum(vm->m_heap, c_func_stub_double_x64(func, stack.count(), stack.sse_use(), stack.frame()));
 #else
             fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-#endif            
+#endif
         }
         invalid_argument_violation(vm, "call-shared-object->double", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
@@ -211,7 +211,7 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
             intptr_t value = c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
 #else
             fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-#endif            
+#endif
             return intptr_to_integer(vm->m_heap, value);
         }
         invalid_argument_violation(vm, "call-shared-object->void*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
@@ -252,7 +252,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
             uint8_t* p = (uint8_t*)c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
 #else
             fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-#endif            
+#endif
             if (p == NULL) return scm_false;
             int n = 0;
             while (p[n]) n++;
@@ -442,7 +442,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
         wrong_number_of_arguments_violation(vm, "stdcall-shared-object->char*", 1, -1, argc, argv);
         return scm_undef;
     }
-    
+
 #endif
 
 // make-callback

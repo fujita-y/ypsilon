@@ -111,7 +111,7 @@ VM::prebind_list(scm_obj_t code)
                 scm_gloc_t gloc = prebind_gloc(CAR(operands));
                 CAAR(code) = m_heap->inherent_symbol(VMOP_SET_GLOC);
                 m_heap->write_barrier(gloc);
-                CDAR(code) = gloc;
+                CADAR(code) = gloc;
             } break;
 
             case VMOP_APPLY_GLOC_OF: {
@@ -282,4 +282,3 @@ VM::prebind(scm_obj_t code)
     prebind_list(code);
 //  printf("prebind: m_heap->m_hidden_variables->datum->live %d\n", m_heap->m_hidden_variables->datum->live);
 }
-

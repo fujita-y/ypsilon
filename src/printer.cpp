@@ -25,7 +25,7 @@ public:
     r6rs_param_t(printer_t* printer, bool mode) { m_printer = printer; m_save = printer->r6rs(mode); }
     ~r6rs_param_t() { m_printer->r6rs(m_save); }
 };
-    
+
 printer_t::printer_t(VM* vm, scm_port_t port)
 {
     m_vm = vm;
@@ -33,7 +33,7 @@ printer_t::printer_t(VM* vm, scm_port_t port)
     m_shared_tag = 1;
     m_column_limit = 0; // no limit
     m_tuple_nest = 0;
-    m_tuple_nest_limit = FIXNUM(vm->flags.m_record_print_nesting_limit);    
+    m_tuple_nest_limit = FIXNUM(vm->flags.m_record_print_nesting_limit);
     m_flush = false;
     m_r6rs = true;
 }
@@ -144,7 +144,7 @@ printer_t::write_pretty_symbol(const uint8_t* utf8, int n)
     int i = 0;
     while (i < n) {
         if (utf8[i] < 128) {
-            int c = utf8[i];    
+            int c = utf8[i];
             if (c == '|') {
                 port_put_byte(m_port, '\\');
                 port_put_byte(m_port, c);
@@ -184,7 +184,7 @@ printer_t::write_r6rs_symbol(const uint8_t* utf8, int n)
         if ((i == 0 && ucs4_constituent(cp)) || (i > 0 && ucs4_subsequent(cp))) {
             write_ucs4(cp);
         } else {
-            // ... 
+            // ...
             if (i == 0) {
                 if (n == 1) {
                     if (utf8[0] == '+' || utf8[0] == '-') {
@@ -858,7 +858,7 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
         }
         case TC_TUPLE: {
             r6rs_param_t no_r6rs(this, false);
-            scm_tuple_t tuple = (scm_tuple_t)obj;            
+            scm_tuple_t tuple = (scm_tuple_t)obj;
             int n = HDR_TUPLE_COUNT(tuple->hdr);
             {
                 if (TUPLEP(tuple->elts[0])) {
@@ -868,7 +868,7 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
                             scm_tuple_t rtd = (scm_tuple_t)tuple->elts[0];
                             scm_obj_t name = rtd->elts[1];
                             scm_obj_t opaque = rtd->elts[5];
-                                                        
+
                             if (opaque == scm_true) {
                                 format("#<opaque-record ~a>", name);
                                 return;
@@ -886,7 +886,7 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
                                 port_put_byte(m_port, ' ');
                                 write(ht, *e);
                             }
-                            m_tuple_nest--;                                
+                            m_tuple_nest--;
                             m_escape = save_escape;
                             port_put_byte(m_port, '>');
                             return;
@@ -1020,13 +1020,13 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
                 return;
             }
             struct protoent* ent = getprotobynumber(socket->protocol);
-            if (ent) format(" %s", ent->p_name);    
+            if (ent) format(" %s", ent->p_name);
             switch (socket->socktype) {
                 case SOCK_STREAM: port_puts(m_port, " stream"); break;
                 case SOCK_DGRAM: port_puts(m_port, " dgram"); break;
                 case SOCK_RAW: port_puts(m_port, " raw"); break;
                 default: format(" type(%d)", socket->socktype); break;
-            } 
+            }
             format(" ~a>", socket_name_string(m_vm->m_heap, socket));
             return;
         }

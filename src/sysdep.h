@@ -135,7 +135,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
   #ifndef HOST_NAME_MAX
     #define HOST_NAME_MAX       255
   #endif
-    
+
     inline int      isnan(double x) { return _isnan(x); }
     inline int      isinf(double x) { return (!_finite(x) && !_isnan(x)); }
     inline double   round(double x) { return (x >= 0.0) ? floor(x + 0.5) : ceil(x - 0.5); }
@@ -204,18 +204,18 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         } while(0)
   #endif
 
-	#define thread_main_t unsigned int __stdcall
+        #define thread_main_t unsigned int __stdcall
 
     inline void thread_start(unsigned int (__stdcall *func)(void*), void* param)
     {
         MTVERIFY(_beginthreadex(NULL, 0, func, param, 0, NULL));
     }
-    
+
     inline void thread_yield()
     {
         Sleep(0);
     }
-    
+
 #else
 
     #include <pthread.h>
@@ -237,17 +237,17 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #include <dlfcn.h>
     #include <netdb.h>
     #include <dirent.h>
-    
+
     typedef int     fd_t;
 
   #ifndef __off64_t_defined
     typedef off_t   off64_t;
   #endif
   #if ARCH_LP64
-    typedef int int128_t __attribute__((__mode__(TI))); 
-    typedef unsigned int uint128_t __attribute__((__mode__(TI))); 
+    typedef int int128_t __attribute__((__mode__(TI)));
+    typedef unsigned int uint128_t __attribute__((__mode__(TI)));
   #endif
-    
+
     #define VALUE_NAN           __builtin_nan("")   /* strtod("NAN", NULL) */
     #define VALUE_INF           __builtin_inf()     /* strtod("INF", NULL) */
     #define MEM_STORE_FENCE     __asm__ __volatile__ ("sfence" ::: "memory")
@@ -297,53 +297,51 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
   #endif
 
   #if __APPLE_CC__
-    
+
     inline VM* current_vm()
     {
         extern pthread_key_t s_current_vm;
         return (VM*)pthread_getspecific(s_current_vm);
     }
-    
+
     inline void set_current_vm(VM* vm)
     {
         extern pthread_key_t s_current_vm;
         MTVERIFY(pthread_setspecific(s_current_vm, vm));
     }
-    
+
   #else
-    
+
     inline VM* current_vm()
     {
         extern __thread VM* s_current_vm;
         return s_current_vm;
     }
-    
+
     inline void set_current_vm(VM* vm)
     {
         extern __thread VM* s_current_vm;
         s_current_vm = vm;
     }
-    
+
   #endif
-    
+
     typedef pthread_t   thread_t;
     typedef void*       thread_main_t;
-    
+
     inline void thread_start(void* (*func)(void*), void* param)
     {
         pthread_t th;
         MTVERIFY(pthread_create(&th, NULL, func, param));
         MTVERIFY(pthread_detach(th));
     }
-    
+
     inline void thread_yield()
     {
         sched_yield();
     }
-    
-    
+
+
 #endif
 
 #endif  // SYSDEP_H_INCLUDED
-
-

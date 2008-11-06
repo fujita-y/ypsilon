@@ -1540,7 +1540,7 @@ subr_put_u8(VM* vm, int argc, scm_obj_t argv[])
             CHECK_OCTET(1, "put-u8");
             try {
                 port_put_byte(port, FIXNUM(argv[1]));
-                if (port->force_sync) port_flush_output(port);                
+                if (port->force_sync) port_flush_output(port);
                 return scm_unspecified;
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "put-u8", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1566,7 +1566,7 @@ subr_put_byte(VM* vm, int argc, scm_obj_t argv[])
             CHECK_OCTET(1, "put-byte");
             try {
                 port_put_byte(port, FIXNUM(argv[1]));
-                if (port->force_sync) port_flush_output(port);                
+                if (port->force_sync) port_flush_output(port);
                 return scm_unspecified;
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "put-byte", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1605,7 +1605,7 @@ subr_put_bytevector(VM* vm, int argc, scm_obj_t argv[])
                 if (start + count <= bvector->count) {
                     try {
                         for (int i = 0; i < count; i++) port_put_byte(port, bvector->elts[start + i]);
-                        if (port->force_sync) port_flush_output(port);                
+                        if (port->force_sync) port_flush_output(port);
                         return scm_unspecified;
                     } catch (io_exception_t& e) {
                         raise_io_error(vm, "put-bytevector", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1642,7 +1642,7 @@ subr_put_char(VM* vm, int argc, scm_obj_t argv[])
             if (CHARP(argv[1])) {
                 try {
                     port_put_char(port, argv[1]);
-                    if (port->force_sync) port_flush_output(port);                
+                    if (port->force_sync) port_flush_output(port);
                     return scm_unspecified;
                 } catch (io_exception_t& e) {
                     raise_io_error(vm, "put-char", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1676,7 +1676,7 @@ subr_put_string(VM* vm, int argc, scm_obj_t argv[])
                 if (argc == 2) {
                     try {
                         port_put_string(port, string);
-                        if (port->force_sync) port_flush_output(port);                
+                        if (port->force_sync) port_flush_output(port);
                         return scm_unspecified;
                     } catch (io_exception_t& e) {
                         raise_io_error(vm, "put-string", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1709,7 +1709,7 @@ subr_put_string(VM* vm, int argc, scm_obj_t argv[])
                             invalid_object_violation(vm, "put-string", "properly encoded string", string, argc, argv);
                             return scm_undef;
                         }
-                        if (port->force_sync) port_flush_output(port);                
+                        if (port->force_sync) port_flush_output(port);
                         return scm_unspecified;
                     } catch (io_exception_t& e) {
                         raise_io_error(vm, "put-string", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1756,7 +1756,7 @@ subr_put_datum(VM* vm, int argc, scm_obj_t argv[])
                     printer_t prt(vm, buf);
                     prt.format("~s", argv[1]);
                     port_put_string(port, port_extract_string(vm->m_heap, buf));
-                    if (port->force_sync) port_flush_output(port);                
+                    if (port->force_sync) port_flush_output(port);
                 }
                 return scm_unspecified;
             } catch (io_exception_t& e) {
@@ -1787,10 +1787,15 @@ subr_put_fasl(VM* vm, int argc, scm_obj_t argv[])
             scoped_lock lock(port->lock);
             CHECK_OPENED_OUTPUT_PORT(0, "put-fasl");
             try {
-                fasl_printer_t(vm, port).put(argv[1]);
+                port_puts(port, "\n#!fasl0\n");
+                scm_obj_t bad = fasl_printer_t(vm, port).put(argv[1]);
+                if (bad) {
+                    non_serializable_object_violation(vm, "put-fasl", bad, argc, argv);
+                    return scm_undef;
+                }
                 return scm_unspecified;
             } catch (io_codec_exception_t& e) {
-                raise_io_codec_error(vm, "get-fasl", e.m_operation, e.m_message, port, e.m_ch);
+                raise_io_codec_error(vm, "put-fasl", e.m_operation, e.m_message, port, e.m_ch);
                 return scm_undef;
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "put-fasl", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1840,7 +1845,7 @@ subr_write(VM* vm, int argc, scm_obj_t argv[])
                 prt.format("~s", argv[0]);
                 port_put_string(port, port_extract_string(vm->m_heap, buf));
             }
-            if (port->force_sync) port_flush_output(port);                
+            if (port->force_sync) port_flush_output(port);
             return scm_unspecified;
         } catch (io_exception_t& e) {
             raise_io_error(vm, "write", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1888,7 +1893,7 @@ subr_display(VM* vm, int argc, scm_obj_t argv[])
                 printer_t(vm, buf).format("~a", argv[0]);
                 port_put_string(port, port_extract_string(vm->m_heap, buf));
             }
-            if (port->force_sync) port_flush_output(port);                
+            if (port->force_sync) port_flush_output(port);
             return scm_unspecified;
         } catch (io_exception_t& e) {
             raise_io_error(vm, "display", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -1929,7 +1934,7 @@ subr_newline(VM* vm, int argc, scm_obj_t argv[])
         }
         try {
             printer_t(vm, port).format("~%", argv[1]);
-            if (port->force_sync) port_flush_output(port);                
+            if (port->force_sync) port_flush_output(port);
             return scm_unspecified;
         } catch (io_exception_t& e) {
             raise_io_error(vm, "newline", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -2049,7 +2054,7 @@ subr_write_char(VM* vm, int argc, scm_obj_t argv[])
         if (CHARP(argv[0])) {
             try {
                 port_put_char(port, argv[0]);
-                if (port->force_sync) port_flush_output(port);                
+                if (port->force_sync) port_flush_output(port);
                 return scm_unspecified;
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "write-char", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -2301,5 +2306,5 @@ void init_subr_port(object_heap_t* heap)
 
     DEFSUBR("shutdown-output-port", subr_shutdown_output_port);
     DEFSUBR("port-closed?", subr_port_closed_pred);
-    
+
 }

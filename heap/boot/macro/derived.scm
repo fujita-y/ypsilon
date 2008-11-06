@@ -344,7 +344,11 @@
     (destructuring-match (desugar-define-macro form)
       ((_ name body)
        (let ((x (generate-temporary-symbol)))
-         (annotate `(.DEFINE-SYNTAX ,name (.LAMBDA (,x) (.APPLY ,body (.CDR ,x)))) form))))))
+         (annotate `(.DEFINE-SYNTAX ,name 
+                      (.LAMBDA (,x)
+                        (.AND (.SYMBOL? ,x) (.SYNTAX-VIOLATION ',name "misplaced syntactic keyword" #f #f))
+                        (.APPLY ,body (.CDR ,x))))
+                   form))))))
 
 (define expand-define-macro
   (lambda (form env)

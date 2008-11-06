@@ -5,8 +5,8 @@
 */
 
 
-#ifndef	IOERROR_H_INCLUDED
-#define	IOERROR_H_INCLUDED
+#ifndef IOERROR_H_INCLUDED
+#define IOERROR_H_INCLUDED
 
 #include "core.h"
 #include "object.h"

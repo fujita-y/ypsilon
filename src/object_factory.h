@@ -13,7 +13,7 @@
 #define INTERNAL_PRIVATE_THRESHOLD      (OBJECT_SLAB_THRESHOLD / 2)
 
 #if USE_PARALLEL_VM
-  #define VERIFY_DATUM(x)       
+  #define VERIFY_DATUM(x)
 #else
   #define VERIFY_DATUM(x)     do { assert(!CELLP(x) || heap->is_collectible(x)); } while(0)
 #endif

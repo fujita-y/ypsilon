@@ -59,7 +59,7 @@ r5rs_equal_pred(scm_obj_t lst1, scm_obj_t lst2)
 {
 
 top:
-    
+
     if (lst1 == lst2) return true;
     if (PAIRP(lst1)) {
         if (PAIRP(lst2)) {
@@ -135,7 +135,7 @@ terminal_listp(scm_obj_t maybe_list)
         fast = CDR(fast);
         if (!PAIRP(fast)) return count;
         scm_obj_t elt = CAR(fast);
-        if (PAIRP(elt) || VECTORP(elt) || TUPLEP(elt)) return 0;        
+        if (PAIRP(elt) || VECTORP(elt) || TUPLEP(elt)) return 0;
         fast = CDR(fast);
         slow = CDR(slow);
         if (slow == fast) return 0;

@@ -320,7 +320,7 @@ append2(object_heap_t* heap, scm_obj_t lst1, scm_obj_t lst2)
         CDR(tail) = make_pair(heap, CAR(lst1), scm_nil);
         tail = CDR(tail);
         lst1 = CDR(lst1);
-    }    
+    }
     CDR(tail) = lst2;
     return head;
 }
@@ -930,7 +930,7 @@ subr_string_set(VM* vm, int argc, scm_obj_t argv[])
                             string->name[index] = ch;
                             return scm_unspecified;
                         }
-                    } else {                    
+                    } else {
                         if (index >= 0 && index < string->size) {
                             if (HDR_STRING_LITERAL(string->hdr) == 0) {
 #if USE_PARALLEL_VM
@@ -1228,7 +1228,7 @@ subr_string_fill(VM* vm, int argc, scm_obj_t argv[])
                 if (string->name == (char*)((uintptr_t)string + sizeof(scm_string_rec_t))) {
                     limit = limit - sizeof(scm_string_rec_t);
                     compound = true;
-                }                
+                }
                 if (limit < bsize + 1) {
                     uint8_t* prev = (uint8_t*)string->name;
                     uint8_t* datum = (uint8_t*)vm->m_heap->allocate_private(bsize + 1);

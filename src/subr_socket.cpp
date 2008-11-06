@@ -11,7 +11,7 @@
 #include "subr.h"
 #include "ioerror.h"
 #include "violation.h"
-        
+
 // <string:node> <string:service> <fixnum:family> <fixnum:socktype> <fixnum:protocol> <fixnum:flags>
 // make-socket
 scm_obj_t
@@ -33,7 +33,7 @@ subr_make_socket(VM* vm, int argc, scm_obj_t argv[])
                     const char* service = NULL;
                     if (STRINGP(argv[0])) node = ((scm_string_t)argv[0])->name;
                     if (STRINGP(argv[1])) service = ((scm_string_t)argv[1])->name;
-                    scm_socket_t socket = make_socket(vm->m_heap, node, service, family, socktype, protocol, flags); 
+                    scm_socket_t socket = make_socket(vm->m_heap, node, service, family, socktype, protocol, flags);
                     return socket;
                 } catch (io_exception_t& e) {
                     raise_io_error(vm, "make-socket", e.m_operation, e.m_message, e.m_err, scm_false, scm_false);
@@ -205,7 +205,7 @@ subr_socket_accept(VM* vm, int argc, scm_obj_t argv[])
                 } catch (io_exception_t& e) {
                     raise_io_error(vm, "socket-accept", e.m_operation, e.m_message, e.m_err, socket, scm_false);
                     return scm_undef;
-                }                
+                }
             }
             wrong_type_argument_violation(vm, "socket-accept", 0, "opened socket", argv[0], argc, argv);
             return scm_undef;
