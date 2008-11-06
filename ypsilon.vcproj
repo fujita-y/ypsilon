@@ -206,6 +206,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\interpreter.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\ioerror.cpp"
 				>
 			</File>
@@ -247,6 +251,10 @@
 			</File>
 			<File
 				RelativePath=".\src\reader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\serialize.cpp"
 				>
 			</File>
 			<File
@@ -392,6 +400,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\interpreter.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\ioerror.h"
 				>
 			</File>
@@ -441,6 +453,10 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\serialize.h"
 				>
 			</File>
 			<File

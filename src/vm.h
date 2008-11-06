@@ -16,7 +16,7 @@ class printer_t;
 class Interpreter;
 #endif
 
-class DECLSPEC(align(16)) VM {
+class VM {
 public:
     scm_obj_t           m_trace;
     scm_obj_t*          m_fp;

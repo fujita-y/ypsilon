@@ -160,6 +160,22 @@
                 return true;
             }
 
+            bool wait_lock_try_get(element_t* datum)
+            {
+                if (terminating) warning("warning:%s:%u queue_t::try_get after terminate\n", __FILE__, __LINE__);
+                EnterCriticalSection(&lock);
+                if (n == 0 || terminating) {
+                    LeaveCriticalSection(&lock);
+                    return false;
+                }
+                *datum = buf[head++];
+                n--;
+                if (head == capacity) head = 0;
+                if (n_more_put) MTVERIFY(SetEvent(maybe_put));
+                LeaveCriticalSection(&lock);
+                return true;
+            }
+
             void clear()
             {
                 if (terminating) warning("warning:%s:%u queue_t::clear after terminate\n", __FILE__, __LINE__);
