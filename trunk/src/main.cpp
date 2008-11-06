@@ -97,8 +97,15 @@ multi_vm_test(void* param)
         VM rootVM;
         rootVM.init(heap);
         s_current_vm = &rootVM;
+#if USE_PARALLEL_VM
+        Interpreter interp;
+        interp.init(&rootVM, 128);
         rootVM.boot();
         rootVM.standalone();
+#else
+        rootVM.boot();
+        rootVM.standalone();
+#endif
 
         WSACleanup();
         return 0;

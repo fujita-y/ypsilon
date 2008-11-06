@@ -190,6 +190,12 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         return s_current_vm;
     }
 
+    inline void set_current_vm(VM* vm)
+    {
+        extern __declspec(thread) VM* s_current_vm;
+        s_current_vm = vm;
+    }
+
   #if MTDEBUG
     #define MTVERIFY(expr)                                                                                              \
         do {                                                                                                            \
