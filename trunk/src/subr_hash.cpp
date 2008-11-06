@@ -217,7 +217,7 @@ subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[])
                     thread_object_access_violation(vm, "core-hashtable-set!" ,argc, argv);
                     return scm_undef;
                 }
-#endif                
+#endif
                 vm->m_heap->write_barrier(argv[1]);
                 vm->m_heap->write_barrier(argv[2]);
                 scoped_lock lock(ht->lock);

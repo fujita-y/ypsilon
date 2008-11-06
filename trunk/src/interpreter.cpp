@@ -109,13 +109,13 @@ Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
             } else {
                 context = make_list(parent->m_heap, 1, func);
             }
-            m_table[i]->param = make_list(parent->m_heap, 
-                                          5, 
+            m_table[i]->param = make_list(parent->m_heap,
+                                          5,
                                           context,
                                           parent->m_current_environment,
                                           parent->m_current_input,
                                           parent->m_current_output,
-                                          parent->m_current_error);            
+                                          parent->m_current_error);
             return i;
         }
     }
@@ -264,6 +264,22 @@ Interpreter::display_status(VM* vm)
             port_format(port, "  %2d 0x%08lx %-6s", i, rec->vm, stat);
             if (param != scm_nil) printer_t(vm, port).format(" ~r", CAR(param));
             port_format(port, "\n");
+        }
+    }
+}
+
+void
+Interpreter::snapshot(VM* vm)
+{
+    scoped_lock lock(m_lock);
+    int id = vm_id(vm);
+    for (int i = 0; i < m_count; i++) {
+        switch (m_table[i]->state) {
+        case VM_STATE_NEW:
+        case VM_STATE_RUN:
+        case VM_STATE_BLOCK:
+            if (m_table[i]->parent == id) vm->m_heap->enqueue_root(m_table[i]->param);
+            break;
         }
     }
 }

@@ -381,7 +381,7 @@ reader_t::read_radix(int exactness)
     }
     int c = get_ucs4();
     switch (c) {
-    case 'b': case 'B': case 'o': case 'O': case 'd': case 'D': case 'x': case 'X': 
+    case 'b': case 'B': case 'o': case 'O': case 'd': case 'D': case 'x': case 'X':
         return c;
     case EOF:
         lexical_error("unexpected end-of-file while reading number");
@@ -509,10 +509,10 @@ reader_t::read_string()
         if (c == '"') {
             buf[i] = 0;
             return make_string_literal(m_vm->m_heap, buf, i);
-        }        
+        }
         if (c == '\\') {
             c = get_ucs4();
-            
+
             if (ucs4_intraline_whitespace(c)) {
                 do {
                     c = get_ucs4();
@@ -530,7 +530,7 @@ reader_t::read_string()
                 do { c = get_ucs4(); } while (ucs4_intraline_whitespace(c));
                 unget_ucs4();
                 continue;
-            }          
+            }
             switch (c) {
             case SCM_PORT_UCS4_CR:
                 c = get_ucs4();
@@ -539,7 +539,7 @@ reader_t::read_string()
                 do { c = get_ucs4(); } while (ucs4_intraline_whitespace(c));
                 unget_ucs4();
                 continue;
-            }            
+            }
             unget_ucs4();
             c = read_escape_sequence();
             i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
@@ -806,7 +806,7 @@ top:
         case ')':   return S_RPAREN;
         case '[':   return S_LBRACK;
         case ']':   return S_RBRACK;
-        case '\'': { 
+        case '\'': {
             scm_obj_t obj = read_expr();
             if (obj == scm_eof) lexical_error("unexpected end-of-file following quotation-mark(')");
             return list2(S_QUOTE, obj);
@@ -887,9 +887,9 @@ top:
                 case 'x': case 'X': return read_prefixed_number(read_exactness(c), c, true);
                 case 'i': case 'I': return read_prefixed_number(c, read_radix(c), false);
                 case 'e': case 'E': return read_prefixed_number(c, read_radix(c), false);
-                case '\'': 
+                case '\'':
                     return list2(S_SYNTAX, read_expr());
-                case '`': 
+                case '`':
                     return list2(S_QUASISYNTAX, read_expr());
                 case ',':
                     c = get_ucs4();

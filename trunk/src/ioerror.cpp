@@ -108,15 +108,13 @@ raise_io_error(VM* vm, const char* who, int operation, const char* message, int 
             vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-error"), 2, arg1, arg2);
         } break;
         case SCM_SOCKET_OPERATION_READ:
-        case SCM_SOCKET_OPERATION_WRITE: 
+        case SCM_SOCKET_OPERATION_WRITE:
         case SCM_SOCKET_OPERATION_ACCEPT: {
             vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-error"), 3, arg1, arg2, io);
             break;
         }
-        
+
         default: fatal("%s:%u wrong port operation code", __FILE__, __LINE__);
 
     }
 }
-
-

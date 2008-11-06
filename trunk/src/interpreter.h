@@ -47,6 +47,7 @@ public:
     int  spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[]);
     void display_status(VM* vm);
     void update_thread_state(VM* vm, int state);
+    void snapshot(VM* vm);
 };
 
 #endif

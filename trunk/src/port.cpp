@@ -362,7 +362,7 @@ throw_codec_error(int operation, const char* message, scm_obj_t ch)
 
 static ssize_t
 device_read(scm_port_t port, uint8_t* p, int size, off64_t mark)
-{    
+{
     if (port->type == SCM_PORT_TYPE_NAMED_FILE) {
         ssize_t n;
         while (true) {
@@ -389,7 +389,7 @@ device_read(scm_port_t port, uint8_t* p, int size, off64_t mark)
     if (port->type == SCM_PORT_TYPE_SOCKET) {
         return socket_recv((scm_socket_t)port_socket(port), p, size, 0, NULL);
     }
-    
+
     if (port->type == SCM_PORT_TYPE_CUSTOM) {
         assert(size <= SCM_PORT_CUSTOM_BUFFER_SIZE);
         VM* vm = current_vm();
@@ -403,9 +403,9 @@ device_read(scm_port_t port, uint8_t* p, int size, off64_t mark)
         if (FIXNUMP(result)) return FIXNUM(result);
         throw_io_error(SCM_PORT_OPERATION_READ, "custom port read! procedure return invalid value");
     }
-    
+
     fatal("%s:%u wrong port type", __FILE__, __LINE__);
-    
+
 }
 
 static void
@@ -446,7 +446,7 @@ device_write(scm_port_t port, uint8_t* p, int size, off64_t mark)
 #endif
         return;
     }
-    
+
     if (port->type == SCM_PORT_TYPE_CUSTOM) {
         assert(size <= SCM_PORT_CUSTOM_BUFFER_SIZE);
         VM* vm = current_vm();
@@ -466,8 +466,8 @@ device_write(scm_port_t port, uint8_t* p, int size, off64_t mark)
             offset += written;
         }
         return;
-    } 
-        
+    }
+
     fatal("%s:%u wrong port type", __FILE__, __LINE__);
 }
 
@@ -817,7 +817,7 @@ port_make_socket_port(scm_port_t port, scm_socket_t socket, scm_obj_t transcoder
     port->buffer_mode = SCM_PORT_BUFFER_MODE_BLOCK;
     port->file_options = SCM_PORT_FILE_OPTION_NONE;
     port->force_sync = false;
-    
+
     init_port_tracking(port);
     init_port_transcoder(port);
     init_port_buffer(port);
@@ -846,13 +846,13 @@ port_make_custom_port(scm_port_t port, scm_obj_t name, int direction, scm_obj_t 
     port->transcoder = transcoder;
     port->buffer_mode = SCM_PORT_BUFFER_MODE_BLOCK;
     port->file_options = SCM_PORT_FILE_OPTION_NONE;
-    
+
 #if CUSTOM_PORT_FORCE_SYNC
     port->force_sync = true;
 #else
     port->force_sync = false;
 #endif
-    
+
     init_port_tracking(port);
     init_port_transcoder(port);
     init_port_buffer(port);
@@ -909,7 +909,7 @@ port_flush_output(scm_port_t port)
     assert(PORTP(port));
     port->lock.verify_locked();
     if (port->opened) {
-        if (no_output_buffered(port)) return;        
+        if (no_output_buffered(port)) return;
         int n = port->buf_tail - port->buf_head;
         device_write(port, port->buf_head, n, port->mark - n);
         port->buf_head = port->buf_tail = port->buf;
@@ -966,7 +966,7 @@ port_nonblock_byte_ready(scm_port_t port)
                 return (state != 0);
             }
         } break;
-        
+
         case SCM_PORT_TYPE_NAMED_FILE: {
 
                 switch (port->subtype) {
@@ -1040,7 +1040,7 @@ port_nonblock_byte_ready(scm_port_t port)
                     return (state != 0);
                 }
             } break;
-            
+
             case SCM_PORT_TYPE_NAMED_FILE: {
 
                 switch (port->subtype) {
@@ -1152,7 +1152,7 @@ port_eof(scm_port_t port)
 
             case SCM_PORT_TYPE_CUSTOM: break;
             case SCM_PORT_TYPE_SOCKET: break;
-            
+
             default:
                 fatal("%s:%u wrong port type", __FILE__, __LINE__);
 

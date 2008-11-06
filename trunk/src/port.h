@@ -131,5 +131,3 @@ void port_put_string(scm_port_t port, scm_string_t string);
 scm_obj_t port_socket(scm_port_t port);
 
 #endif
-
-

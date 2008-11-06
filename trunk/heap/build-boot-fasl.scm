@@ -11,11 +11,12 @@
             (core io)
             (core files))
 
-
+    (define put-fasl (parameterize ((current-environment (system-environment))) (top-level-value 'put-fasl)))
+    
     (define target-file-name "bootimage.vmi")
 
     (define prefix-file '("./boot/first-load.scm"))
-
+    
     (define files
       '("./boot/r6rs-aux.scm"
         "./boot/common.scm"

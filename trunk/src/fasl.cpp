@@ -18,6 +18,7 @@ fasl_printer_t::fasl_printer_t(VM* vm, scm_port_t port) {
     m_stack = (scm_obj_t*)malloc(sizeof(scm_obj_t) * depth);
     m_stack_limit = m_stack + depth;
     m_sp = m_stack;
+    m_bad = NULL;
 }
 
 fasl_printer_t::~fasl_printer_t() {
@@ -31,7 +32,6 @@ loop:
     if (obj == scm_nil) return;
     if (SYMBOLP(obj) || STRINGP(obj)) {
         if (get_hashtable(m_lites, obj) != scm_undef) return;
-        m_vm->m_heap->write_barrier(obj);
         int nsize = put_hashtable(m_lites, obj, MAKEFIXNUM(m_lites->datum->live));
         if (nsize) rehash_hashtable(m_vm->m_heap, m_lites, nsize);
         return;
@@ -50,7 +50,7 @@ loop:
         return;
     }
     if (CHARP(obj) || BVECTORP(obj) || BOOLP(obj) || FIXNUMP(obj) || FLONUMP(obj) || BIGNUMP(obj) || RATIONALP(obj) || COMPLEXP(obj)) return;
-    fatal("%s:%u datum not supported in fasl", __FILE__, __LINE__);
+    if (m_bad == NULL) m_bad = obj;
 }
 
 void
@@ -228,14 +228,15 @@ fasl_printer_t::put_lites()
     free(lites);
 }
 
-void
+scm_obj_t
 fasl_printer_t::put(scm_obj_t obj)
 {
     scoped_lock lock(m_lites->lock);
     scan(obj);
-    port_puts(m_port, "\n#!fasl0\n");
+    if (m_bad != NULL) return m_bad;
     put_lites();
     put_datum(obj);
+    return NULL;
 }
 
 scm_obj_t
@@ -243,8 +244,6 @@ fasl_reader_t::get_datum()
 {
     uint8_t octet = fetch_u8();
     switch (octet) {
-    case FASL_EOF:
-        return scm_eof;
     case FASL_TAG_LOOKUP: {
         uint32_t uid = fetch_u32();
         return m_lites[uid];
@@ -290,7 +289,6 @@ fasl_reader_t::get_datum()
         scm_obj_t deno = get_datum();
         return make_rational(m_vm->m_heap, nume, deno);
     }
-
     case FASL_TAG_COMPLEX: {
         scm_obj_t real = get_datum();
         scm_obj_t imag = get_datum();
@@ -321,26 +319,23 @@ fasl_reader_t::get_datum()
             int128_t n = ((uint128_t)bn->elts[1] << 32) + bn->elts[0];
             if (sign < 0) n = -n;
             if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-        }        
+        }
         return bn;
 #else
         return bn;
 #endif
-        }
+    }
     case FASL_TAG_BVECTOR: {
         uint32_t count = fetch_u32();
         scm_bvector_t bv = make_bvector(m_vm->m_heap, count);
         for (int i = 0; i < count; i++) bv->elts[i] = fetch_u8();
         return bv;
     }
-    case FASL_TAG_CHAR:
-        return MAKECHAR(fetch_u32());
-    case FASL_TAG_NIL:
-        return scm_nil;
-    case FASL_TAG_T:
-        return scm_true;
-    case FASL_TAG_F:
-        return scm_false;
+    case FASL_TAG_CHAR: return MAKECHAR(fetch_u32());
+    case FASL_TAG_NIL: return scm_nil;
+    case FASL_TAG_T: return scm_true;
+    case FASL_TAG_F: return scm_false;
+    case FASL_EOF: return scm_eof;
     case FASL_TAG_SYMBOL:
     case FASL_TAG_STRING:
     case FASL_TAG_UNINTERNED_SYMBOL:

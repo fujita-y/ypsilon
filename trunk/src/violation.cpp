@@ -67,7 +67,7 @@ letrec_violation(VM* vm)
     if (vm->flags.m_warning_level == scm_false) {
         vm->apply_scheme(proc, 2, scm_false, make_string_literal(vm->m_heap, "binding construct attempt to reference uninitialized variable, use '--warning' to perform expansion time check"));
     } else {
-        vm->apply_scheme(proc, 2, scm_false, make_string_literal(vm->m_heap, "binding construct attempt to reference uninitialized variable, check warning messages"));       
+        vm->apply_scheme(proc, 2, scm_false, make_string_literal(vm->m_heap, "binding construct attempt to reference uninitialized variable, check warning messages"));
     }
 }
 
@@ -300,22 +300,34 @@ void raise_error(VM* vm, const char* who, const char* description, int code, int
     }
 }
 
-void thread_global_access_violation(VM* vm, scm_obj_t obj, scm_obj_t value)
+void thread_global_access_violation(VM* vm, scm_obj_t name, scm_obj_t value)
 {
     vm->backtrace_seek();
     raise_assertion_violation(vm,
-                              make_symbol(vm->m_heap, "thread"), 
-                              make_string(vm->m_heap, "attempt to modify top-level variable"), 
-                              make_list(vm->m_heap, 3, make_symbol(vm->m_heap, "set!"), obj, value));
+                              make_symbol(vm->m_heap, "thread"),
+                              make_string(vm->m_heap, "attempt to modify read-only variable"),
+                              make_list(vm->m_heap, 2, name, value));
 }
 
-void thread_lexical_access_violation(VM* vm)
+void thread_lexical_access_violation(VM* vm, scm_obj_t name, scm_obj_t value)
 {
     vm->backtrace_seek();
-    raise_assertion_violation(vm, 
+    scm_obj_t irritants = NULL;
+    if (name) {
+        if (UNINTERNEDSYMBOLP(name)) {
+            scm_symbol_t symbol = (scm_symbol_t)name;
+            int len = HDR_SYMBOL_SIZE(symbol->hdr);
+            irritants = make_list(vm->m_heap, 2, make_symbol(vm->m_heap, symbol->name, (uint8_t)symbol->name[len + 1]), value);
+        } else {
+            irritants = make_list(vm->m_heap, 2, name, value);
+        }
+    } else {
+        irritants = make_list(vm->m_heap, 1, value);
+    }
+    raise_assertion_violation(vm,
                               make_symbol(vm->m_heap, "thread"),
-                              make_string(vm->m_heap, "attempt to modify free variable"), 
-                              NULL);
+                              make_string(vm->m_heap, "attempt to modify read-only variable"),
+                              irritants);
 }
 
 void thread_object_access_violation(VM* vm, const char* subr, int argc, scm_obj_t argv[])
@@ -323,9 +335,43 @@ void thread_object_access_violation(VM* vm, const char* subr, int argc, scm_obj_
     vm->backtrace_seek();
     scm_obj_t irritants = scm_nil;
     int last = argc;
-    while (--last >= 0) irritants = make_pair(vm->m_heap, argv[last], irritants);    
+    while (--last >= 0) irritants = make_pair(vm->m_heap, argv[last], irritants);
     raise_assertion_violation(vm,
-                              make_symbol(vm->m_heap, "thread"), 
-                              make_string(vm->m_heap, "attempt to modify shared object"),
+                              make_symbol(vm->m_heap, "thread"),
+                              make_string(vm->m_heap, "attempt to modify read-only object"),
                               make_pair(vm->m_heap, vm->m_heap->lookup_system_environment(make_symbol(vm->m_heap, subr)), irritants));
+}
+
+void non_serializable_object_violation(VM* vm, const char* who, scm_obj_t obj, int argc, scm_obj_t argv[])
+{
+    vm->backtrace_seek();
+    scm_port_t port = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
+    scoped_lock lock(port->lock);
+    printer_t(vm, port).format("encountered non-serializable object ~r", obj);
+    scm_string_t message = port_extract_string(vm->m_heap, port);
+    if (argc < 2) {
+        raise_assertion_violation(vm, make_symbol(vm->m_heap, who), message, NULL);
+    } else {
+        scm_obj_t irritants = scm_nil;
+        int last = argc;
+        while (--last >= 0) irritants = make_pair(vm->m_heap, argv[last], irritants);
+        raise_assertion_violation(vm, make_symbol(vm->m_heap, who), message, irritants);
+    }
+}
+
+void invalid_serialized_object_violation(VM* vm, const char* who, scm_obj_t obj, int argc, scm_obj_t argv[])
+{
+    vm->backtrace_seek();
+    scm_port_t port = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
+    scoped_lock lock(port->lock);
+    printer_t(vm, port).format("expected serialized object data, but ~r is not", obj);
+    scm_string_t message = port_extract_string(vm->m_heap, port);
+    if (argc < 2) {
+        raise_assertion_violation(vm, make_symbol(vm->m_heap, who), message, NULL);
+    } else {
+        scm_obj_t irritants = scm_nil;
+        int last = argc;
+        while (--last >= 0) irritants = make_pair(vm->m_heap, argv[last], irritants);
+        raise_assertion_violation(vm, make_symbol(vm->m_heap, who), message, irritants);
+    }
 }

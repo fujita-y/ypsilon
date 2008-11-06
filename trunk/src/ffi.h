@@ -36,7 +36,7 @@
         VM* m_vm;
         void compose();
     public:
-        c_stack_frame_t(VM* vm) 
+        c_stack_frame_t(VM* vm)
             : m_vm(vm), m_count(0), m_reg_count(0), m_sse_count(0) {
             memset(m_sse, 0, sizeof(m_sse));
             memset(m_pre, 0, sizeof(m_pre));
@@ -61,7 +61,7 @@ extern "C" {
     intptr_t    c_callback_stub_intptr();
     intptr_t    c_callback_intptr(intptr_t uid, intptr_t argc, intptr_t* stack);
 #endif
-#if ARCH_X64    
+#if ARCH_X64
     double      c_func_stub_double_x64(void* func, intptr_t nstack, intptr_t nsse, intptr_t argv[]);
     intptr_t    c_func_stub_intptr_x64(void* func, intptr_t nstack, intptr_t nsse, intptr_t argv[]);
     intptr_t    c_callback_stub_intptr_x64();
@@ -70,4 +70,3 @@ extern "C" {
 }
 
 scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure);
-

@@ -388,7 +388,6 @@
                         string->utf8
                         utf8->string
                         ; extensions
-                        put-fasl
                         put-byte
                         make-string-output-port
                         make-string-input-port
@@ -513,6 +512,9 @@
                         
                         spawn
                         display-thread-status
+                        
+                        object->bytevector
+                        bytevector->object
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))

@@ -33,7 +33,7 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
     s->lock.verify_locked();
     struct addrinfo hints;
     struct addrinfo* list;
-    
+
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = family;
     hints.ai_socktype = type;
@@ -42,7 +42,7 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
     hints.ai_canonname = NULL;
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
-    
+
     int retval = getaddrinfo(node, service, &hints, &list);
 #if _MSC_VER
     if (retval) {
@@ -98,7 +98,7 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
             CLOSE_SOCKET(fd);
         }
     }
-    freeaddrinfo(list); 
+    freeaddrinfo(list);
     throw_socket_error(SCM_SOCKET_OPERATION_OPEN, first_error);
 }
 
@@ -115,11 +115,11 @@ socket_close(scm_socket_t s)
 {
     s->lock.verify_locked();
     if (s->fd == INVALID_SOCKET) return;
-    CLOSE_SOCKET(s->fd);    
+    CLOSE_SOCKET(s->fd);
     s->fd = INVALID_SOCKET;
 }
 
-scm_obj_t 
+scm_obj_t
 socket_name_string(object_heap_t* heap, scm_socket_t s)
 {
     char hbuf[NI_MAXHOST];
@@ -144,7 +144,7 @@ socket_send(scm_socket_t s, uint8_t* buf, int len, int flags)
     while (rest > 0) {
         int n = send(s->fd, (const char*)p, rest, flags);
         if (n < 0) {
-            if (errno == EAGAIN) return written;    
+            if (errno == EAGAIN) return written;
             if (errno == EINTR) continue;
             throw_socket_error(SCM_SOCKET_OPERATION_WRITE, errno);
         }
@@ -185,7 +185,7 @@ socket_accept(object_heap_t* heap, scm_socket_t s)
 loop:
     int fd = accept(s->fd, (sockaddr*)&addr, &addrlen);
     if (fd < 0) {
-        if (errno == EAGAIN) return scm_false; 
+        if (errno == EAGAIN) return scm_false;
 #ifdef EWOULDBLOCK
         if (errno == EWOULDBLOCK) return scm_false;
 #endif
@@ -202,4 +202,3 @@ loop:
     memcpy(&client->addr, &addr, addrlen);
     return client;
 }
-

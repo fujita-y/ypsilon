@@ -184,7 +184,7 @@
             {
                 return capacity;
             }
-            
+
             void terminate()
             {
                 terminating = true;
@@ -360,8 +360,7 @@
                 MTVERIFY(ReleaseMutex(lock));
                 return true;
             }
-            
-            // not tested
+
             void clear()
             {
                 if (terminating) warning("warning:%s:%u queue_t::clear after terminate\n", __FILE__, __LINE__);
@@ -386,7 +385,7 @@
             {
                 return capacity;
             }
-            
+
             void terminate()
             {
                 WaitForSingleObject(lock, INFINITE);
@@ -558,8 +557,7 @@
             MTVERIFY(pthread_mutex_unlock(&lock));
             return true;
         }
-        
-        // not tested
+
         void clear()
         {
             if (terminating) warning("warning:%s:%u queue_t::clear after terminate\n", __FILE__, __LINE__);
@@ -584,7 +582,7 @@
         {
             return capacity;
         }
-        
+
         void terminate()
         {
             MTVERIFY(pthread_mutex_lock(&lock));
@@ -596,5 +594,169 @@
     };
 
 #endif
+
+    class fifo_buffer_t {
+
+        struct tag_t {
+            uint8_t*    buf;
+            int         bytes;
+            int         bound;
+        };
+
+        mutex_t     lock;
+        tag_t*      tags;
+        int         count;
+        uint8_t*    top;
+        uint8_t*    bottom;
+        uint8_t*    head;
+        uint8_t*    tail;
+
+        int add_tag(uint8_t* buf, int bytes)
+        {
+            lock.verify_locked();
+            for (int i = 0; i < count; i++) {
+                if (tags[i].buf == NULL) {
+                    tags[i].buf = buf;
+                    tags[i].bytes = tags[i].bound = bytes;
+                    return i;
+                }
+            }
+            int prev = count;
+            count = prev + prev / 2 + 1;
+            tags = (tag_t*)realloc(tags, sizeof(tag_t) * count);
+            if (tags == NULL) fatal("%s:%u memory overflow", __FILE__, __LINE__);
+            for (int i = prev; i < count; i++) tags[i].buf = NULL;
+            return add_tag(buf, bytes);
+        }
+
+        void remove(int id)
+        {
+            lock.verify_locked();
+            uint8_t* buf = tags[id].buf;
+            tags[id].buf = NULL;
+            if (buf == head) {
+                head = fixup(head + tags[id].bound);
+                return;
+            }
+            for (int i = 0; i < count; i++) {
+                if (tags[i].buf && fixup(tags[i].buf + tags[i].bound) == buf) {
+                    tags[i].bound = tags[i].bound + tags[id].bound;
+                    return;
+                }
+            }
+        }
+
+        int expand_buf(int req)
+        {
+            lock.verify_locked();
+            int psize = bottom - top;
+            int nsize = psize + psize / 2 + req;
+            uint8_t* p = (uint8_t*)realloc(top, nsize);
+            if (p == NULL) fatal("%s:%u memory overflow", __FILE__, __LINE__);
+            int offset = p - top;
+            top = p;
+            bottom = p + nsize;
+            tail = tail + offset;
+            head = head + offset;
+            for (int i = 0; i < count; i++) tags[i].buf = (tags[i].buf ? tags[i].buf + offset : NULL);
+            if (tail < head) {
+                int n = nsize - psize;
+                for (int i = 0; i < count; i++) tags[i].buf = (tags[i].buf >= head ? tags[i].buf + n : tags[i].buf);
+                memmove(head + n, head, (bottom - head) - n);
+                head = head + n;
+            }
+        }
+
+        int add_datum(uint8_t* datum, int datum_size)
+        {
+            lock.verify_locked();
+            if (tail == head) {
+                head = top;
+                tail = top;
+            }
+            uint8_t* prev = tail;
+            if (tail >= head) {
+                if (bottom - tail > datum_size) {
+                    memcpy(tail, datum, datum_size);
+                    tail = tail + datum_size;
+                } else if ((bottom - tail) + (head - top) > datum_size) {
+                    memcpy(tail, datum, bottom - tail);
+                    memcpy(top, datum + (bottom - tail), datum_size - (bottom - tail));
+                    tail = top + datum_size - (bottom - tail);
+                } else {
+                    expand_buf(datum_size);
+                    return add_datum(datum, datum_size);
+                }
+            } else if (head - tail > datum_size) {
+                memcpy(tail, datum, datum_size);
+                tail += datum_size;
+            } else {
+                expand_buf(datum_size);
+                return add_datum(datum, datum_size);
+            }
+            return add_tag(prev, datum_size);
+        }
+
+        inline uint8_t* fixup(uint8_t* p)
+        {
+            return (p > bottom) ? top + (p - bottom) : p;
+        }
+
+    public:
+
+        void init(int n) {
+            count = n;
+            tags = (tag_t*)malloc(sizeof(tag_t) * count);
+            if (tags == NULL) fatal("%s:%u memory overflow", __FILE__, __LINE__);
+            memset(tags, 0, sizeof(tag_t) * count);
+            int bufsize = 4096;
+            top = (uint8_t*)malloc(bufsize);
+            bottom = top + bufsize;
+            head = top;
+            tail = top;
+            lock.init();
+        }
+
+        int put(uint8_t* datum, int datum_size)
+        {
+            lock.lock();
+            int id = add_datum(datum, datum_size);
+            lock.unlock();
+            return id;
+        }
+
+        int size(int id)
+        {
+            lock.lock();
+            assert(tags[id].buf);
+            int n = tags[id].bytes;
+            lock.unlock();
+            return n;
+        }
+
+        void get(int id, uint8_t* datum)
+        {
+            lock.lock();
+            assert(datum);
+            assert(tags[id].buf);
+            if (tags[id].buf + tags[id].bytes > bottom) {
+                int n = bottom - tags[id].buf;
+                memcpy(datum, tags[id].buf, n);
+                memcpy(datum + n, top, tags[id].bytes - n);
+            } else {
+                memcpy(datum, tags[id].buf, tags[id].bytes);
+            }
+            remove(id);
+            lock.unlock();
+        }
+
+        void destroy()
+        {
+            free(tags);
+            free(top);
+            lock.destroy();
+        }
+
+    };
 
 #endif

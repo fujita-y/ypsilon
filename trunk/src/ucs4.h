@@ -47,7 +47,7 @@ inline bool
 ucs4_subsequent(uint32_t ucs4)
 {
     int offset = ucs4 / 8;
-    int bit = 1 << (ucs4 & 7);    
+    int bit = 1 << (ucs4 & 7);
     return (s_subsequent[offset] & bit) != 0;
 }
 

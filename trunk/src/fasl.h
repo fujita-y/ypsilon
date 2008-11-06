@@ -41,6 +41,7 @@ class fasl_printer_t {
     scm_obj_t*      m_stack;
     scm_obj_t*      m_stack_limit;
     scm_obj_t*      m_sp;
+    scm_obj_t       m_bad;
 
     void scan(scm_obj_t obj);
     void put_lites();
@@ -101,7 +102,7 @@ class fasl_printer_t {
 public:
     fasl_printer_t(VM* vm, scm_port_t port);
     ~fasl_printer_t();
-    void put(scm_obj_t obj);
+    scm_obj_t put(scm_obj_t obj);
 };
 
 class fasl_reader_t {
