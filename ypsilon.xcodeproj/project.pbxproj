@@ -49,6 +49,7 @@
 		A59D39BB0D35F81A00C7B4F9 /* arith.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A59D39970D35F81A00C7B4F9 /* arith.cpp */; };
 		A5B6A7FA0DC4A20300C4027E /* ffi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5B6A7F90DC4A20300C4027E /* ffi.cpp */; };
 		A5C33EBD0DA367B0001D04BE /* file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5C33EBC0DA367B0001D04BE /* file.cpp */; };
+		A5DE31AA0EC3119300FE1968 /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5DE31A90EC3119200FE1968 /* serialize.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -215,6 +216,8 @@
 		A5BA27480DCDEA30006A136A /* r6rs-aux.scm */ = {isa = PBXFileReference; fileEncoding = 3; lastKnownFileType = text; path = "r6rs-aux.scm"; sourceTree = "<group>"; };
 		A5BA27490DCDEA30006A136A /* record.scm */ = {isa = PBXFileReference; fileEncoding = 3; lastKnownFileType = text; path = record.scm; sourceTree = "<group>"; };
 		A5C33EBC0DA367B0001D04BE /* file.cpp */ = {isa = PBXFileReference; fileEncoding = 3; lastKnownFileType = sourcecode.cpp.cpp; name = file.cpp; path = src/file.cpp; sourceTree = "<group>"; };
+		A5DE31A90EC3119200FE1968 /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = serialize.cpp; path = src/serialize.cpp; sourceTree = "<group>"; };
+		A5DE31AB0EC3119900FE1968 /* serialize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = serialize.h; path = src/serialize.h; sourceTree = "<group>"; };
 		C6859E8B029090EE04C91782 /* ypsilon.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = ypsilon.1; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -308,6 +311,7 @@
 				A59D398B0D35F81A00C7B4F9 /* port.cpp */,
 				A59D398A0D35F81A00C7B4F9 /* printer.cpp */,
 				A59D39890D35F81A00C7B4F9 /* reader.cpp */,
+				A5DE31A90EC3119200FE1968 /* serialize.cpp */,
 				A575BA7E0E866FF900E7B731 /* socket.cpp */,
 				A59D397A0D35F81A00C7B4F9 /* ucs4.cpp */,
 				A59D39790D35F81A00C7B4F9 /* utf8.cpp */,
@@ -338,6 +342,7 @@
 				A59D39640D35F80A00C7B4F9 /* printer.h */,
 				A59D39630D35F80A00C7B4F9 /* queue.h */,
 				A59D39620D35F80A00C7B4F9 /* reader.h */,
+				A5DE31AB0EC3119900FE1968 /* serialize.h */,
 				A575BA7B0E866FD700E7B731 /* socket.h */,
 				A59D39600D35F80A00C7B4F9 /* subr.h */,
 				A59D395F0D35F80A00C7B4F9 /* ucs4.h */,
@@ -616,6 +621,7 @@
 				A568EC510DC8D97200080833 /* ffi_stub_darwin.s in Sources */,
 				A575BA7D0E866FED00E7B731 /* subr_socket.cpp in Sources */,
 				A575BA7F0E866FF900E7B731 /* socket.cpp in Sources */,
+				A5DE31AA0EC3119300FE1968 /* serialize.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
