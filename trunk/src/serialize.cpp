@@ -476,7 +476,6 @@ deserializer_t::get_lites()
 {
     int buflen = MAX_READ_STRING_LENGTH;
     char* buf = (char*)malloc(buflen + 1);
-    scm_obj_t obj;
     int count = fetch_u32();
     if (count < 0) throw true;
     m_lites = (scm_obj_t*)calloc(count, sizeof(scm_obj_t));
