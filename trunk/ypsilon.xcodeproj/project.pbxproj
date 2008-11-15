@@ -47,6 +47,7 @@
 		A59D39B90D35F81A00C7B4F9 /* equiv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A59D39950D35F81A00C7B4F9 /* equiv.cpp */; };
 		A59D39BA0D35F81A00C7B4F9 /* list.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A59D39960D35F81A00C7B4F9 /* list.cpp */; };
 		A59D39BB0D35F81A00C7B4F9 /* arith.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A59D39970D35F81A00C7B4F9 /* arith.cpp */; };
+		A5AE66340ECF1B900053FC5B /* interpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5AE66330ECF1B900053FC5B /* interpreter.cpp */; };
 		A5B6A7FA0DC4A20300C4027E /* ffi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5B6A7F90DC4A20300C4027E /* ffi.cpp */; };
 		A5C33EBD0DA367B0001D04BE /* file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5C33EBC0DA367B0001D04BE /* file.cpp */; };
 		A5DE31AA0EC3119300FE1968 /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5DE31A90EC3119200FE1968 /* serialize.cpp */; };
@@ -139,6 +140,8 @@
 		A59D39950D35F81A00C7B4F9 /* equiv.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = equiv.cpp; path = src/equiv.cpp; sourceTree = "<group>"; };
 		A59D39960D35F81A00C7B4F9 /* list.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = list.cpp; path = src/list.cpp; sourceTree = "<group>"; };
 		A59D39970D35F81A00C7B4F9 /* arith.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = arith.cpp; path = src/arith.cpp; sourceTree = "<group>"; };
+		A5AE66330ECF1B900053FC5B /* interpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = interpreter.cpp; path = src/interpreter.cpp; sourceTree = "<group>"; };
+		A5AE66350ECF1BA80053FC5B /* interpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = interpreter.h; path = src/interpreter.h; sourceTree = "<group>"; };
 		A5B6A7F90DC4A20300C4027E /* ffi.cpp */ = {isa = PBXFileReference; fileEncoding = 3; lastKnownFileType = sourcecode.cpp.cpp; name = ffi.cpp; path = src/ffi.cpp; sourceTree = "<group>"; };
 		A5BA072F0D3E1537004B706F /* INSTALL.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = INSTALL.txt; sourceTree = "<group>"; };
 		A5BA26940DCDEA0F006A136A /* arithmetic.scm */ = {isa = PBXFileReference; fileEncoding = 3; lastKnownFileType = text; path = arithmetic.scm; sourceTree = "<group>"; };
@@ -306,6 +309,7 @@
 				A58676EA0DB5775A005D9B7E /* fasl.cpp */,
 				A5C33EBC0DA367B0001D04BE /* file.cpp */,
 				A59D39910D35F81A00C7B4F9 /* hash.cpp */,
+				A5AE66330ECF1B900053FC5B /* interpreter.cpp */,
 				A59D39900D35F81A00C7B4F9 /* ioerror.cpp */,
 				A59D39960D35F81A00C7B4F9 /* list.cpp */,
 				A59D398B0D35F81A00C7B4F9 /* port.cpp */,
@@ -332,6 +336,7 @@
 				A59D396D0D35F80A00C7B4F9 /* hash.h */,
 				A588D4AB0D57399E000E9A2C /* inherent.h */,
 				A59D396C0D35F80A00C7B4F9 /* interlocked.h */,
+				A5AE66350ECF1BA80053FC5B /* interpreter.h */,
 				A59D396B0D35F80A00C7B4F9 /* ioerror.h */,
 				A59D396A0D35F80A00C7B4F9 /* mutex.h */,
 				A59D396F0D35F80A00C7B4F9 /* object_factory.h */,
@@ -622,6 +627,7 @@
 				A575BA7D0E866FED00E7B731 /* subr_socket.cpp in Sources */,
 				A575BA7F0E866FF900E7B731 /* socket.cpp in Sources */,
 				A5DE31AA0EC3119300FE1968 /* serialize.cpp in Sources */,
+				A5AE66340ECF1B900053FC5B /* interpreter.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
