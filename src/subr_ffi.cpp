@@ -266,7 +266,6 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
 }
 
 #if _MSC_VER
-
     // stdcall-shared-object->void
     scm_obj_t
     subr_stdcall_shared_object_void(VM* vm, int argc, scm_obj_t argv[])

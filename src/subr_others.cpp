@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 #include "core.h"
 #include "vm.h"
@@ -15,7 +15,6 @@
 #include "arith.h"
 #include "reader.h"
 #include "ioerror.h"
-#include "list.h"
 #include "printer.h"
 #include "violation.h"
 #include "serialize.h"
@@ -24,17 +23,6 @@
 #endif
 
 #define DEFAULT_GENSYM_PREFIX   ".G"
-
-// circular-tree?
-/*
-scm_obj_t
-subr_circular_tree_pred(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 1) return infinite_listp(vm->m_heap, argv[0]) ? scm_true : scm_false;
-    wrong_number_of_arguments_violation(vm, "circular-tree?", 1, 1, argc, argv);
-    return scm_undef;
-}
-*/
 
 // circular-list?
 scm_obj_t
@@ -139,7 +127,7 @@ subr_format(VM* vm, int argc, scm_obj_t argv[])
         output_string = true;
         argp = 1;
         goto output;
-   }
+    }
     if (PORTP(argv[0])) {
         if (argc < 2) {
             wrong_number_of_arguments_violation(vm, "format", 2, -1, argc, argv);
@@ -271,7 +259,6 @@ output:
         raise_io_codec_error(vm, "format", e.m_operation, e.m_message, port, e.m_ch);
         return scm_undef;
     }
-
 }
 
 // top-level-bound? (no option environment)
@@ -592,13 +579,15 @@ scm_obj_t
 subr_collect(VM* vm, int argc, scm_obj_t argv[])
 {
 #if USE_PARALLEL_VM
-    if (argc == 0) {
-        vm->m_heap->collect();
-        return scm_unspecified;
+    if (vm->m_child > 0) {
+        if (argc == 0) {
+            vm->m_heap->collect();
+            return scm_unspecified;
+        }
+        wrong_number_of_arguments_violation(vm, "collect", 0, 0, argc, argv);
+        return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "collect", 0, 0, argc, argv);
-    return scm_undef;
-#else
+#endif
     bool pack = false;
     if (argc == 0 || argc == 1) {
         if (argc == 1) {
@@ -609,7 +598,6 @@ subr_collect(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
         }
-
         do {
             vm->m_heap->collect();
             usleep(100);
@@ -618,7 +606,6 @@ subr_collect(VM* vm, int argc, scm_obj_t argv[])
             if (vm->m_heap->m_stop_the_world) vm->stop();
             usleep(100);
         } while (vm->m_heap->m_collector_kicked);
-
         relocate_info_t* info = vm->m_heap->relocate(false);
         vm->resolve();
         vm->m_heap->resolve(info);
@@ -633,7 +620,6 @@ subr_collect(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "collect", 0, 1, argc, argv);
     return scm_undef;
-#endif
 }
 
 // collect-trip-bytes
@@ -701,9 +687,18 @@ subr_time_usage(VM* vm, int argc, scm_obj_t argv[])
         GetSystemTimeAsFileTime(&real_time);
         if (GetProcessTimes(GetCurrentProcess(), &creation_time, &exit_time, &kernel_time, &user_time)) {
             scm_values_t values = make_values(vm->m_heap, 3);
-            values->elts[0] = make_flonum(vm->m_heap, ((double)real_time.dwLowDateTime + (double)real_time.dwHighDateTime * (double)UINT32_MAX) / 10000000.0);
-            values->elts[1] = make_flonum(vm->m_heap, ((double)user_time.dwLowDateTime + (double)user_time.dwHighDateTime * (double)UINT32_MAX) / 10000000.0);
-            values->elts[2] = make_flonum(vm->m_heap, ((double)kernel_time.dwLowDateTime + (double)kernel_time.dwHighDateTime * (double)UINT32_MAX) / 10000000.0);
+            values->elts[0] = make_flonum(vm->m_heap,
+                                          ((double)real_time.dwLowDateTime
+                                           + (double)real_time.dwHighDateTime
+                                           * (double)UINT32_MAX) / 10000000.0);
+            values->elts[1] = make_flonum(vm->m_heap,
+                                          ((double)user_time.dwLowDateTime
+                                           + (double)user_time.dwHighDateTime
+                                           * (double)UINT32_MAX) / 10000000.0);
+            values->elts[2] = make_flonum(vm->m_heap,
+                                          ((double)kernel_time.dwLowDateTime
+                                           + (double)kernel_time.dwHighDateTime
+                                           * (double)UINT32_MAX) / 10000000.0);
             return values;
         }
         return scm_false;
@@ -1000,7 +995,7 @@ subr_command_line(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 0) {
         scm_obj_t lst = scm_nil;
         for (int i = main_command_line_argc - 1; i >= 0; i--) {
-           lst = make_pair(vm->m_heap, make_string(vm->m_heap, main_command_line_argv[i]), lst);
+            lst = make_pair(vm->m_heap, make_string(vm->m_heap, main_command_line_argv[i]), lst);
         }
         return lst;
     }
@@ -1078,13 +1073,16 @@ subr_tuple_set(VM* vm, int argc, scm_obj_t argv[])
                 int n = FIXNUM(argv[1]);
                 if (n >= 0 && n < HDR_TUPLE_COUNT(tuple->hdr)) {
 #if USE_PARALLEL_VM
-                    if (!vm->m_heap->in_heap(tuple)) {
-                        thread_object_access_violation(vm, "tuple-set!",argc, argv);
-                        return scm_undef;
+                    if (vm->m_interp->concurrency() > 1) {
+                        if (!vm->m_heap->in_heap(tuple)) {
+                            thread_object_access_violation(vm, "tuple-set!",argc, argv);
+                            return scm_undef;
+                        }
+                        if (vm->m_child > 0) vm->m_interp->remember(tuple->elts[n], argv[2]);
                     }
 #endif
                     vm->m_heap->write_barrier(argv[2]);
-                    tuple->elts[FIXNUM(argv[1])] = argv[2];
+                    tuple->elts[n] = argv[2];
                     return scm_unspecified;
                 }
                 // FALL THROUGH
@@ -1335,6 +1333,7 @@ subr_symbol_contains(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "symbol-contains", 2, 2, argc, argv);
     return scm_undef;
 }
+
 // write-with-shared-structure (srfi-38)
 scm_obj_t
 subr_write_with_shared_structure(VM* vm, int argc, scm_obj_t argv[])
@@ -1532,9 +1531,11 @@ subr_copy_environment_variables(VM* vm, int argc, scm_obj_t argv[])
                 scm_environment_t from = (scm_environment_t)argv[0];
                 scm_environment_t to = (scm_environment_t)argv[1];
 #if USE_PARALLEL_VM
-                if (!vm->m_heap->in_heap(to)) {
-                    thread_object_access_violation(vm, "copy-environment-variables!" ,argc, argv);
-                    return scm_undef;
+                if (vm->m_interp->concurrency() > 1) {
+                    if (!vm->m_heap->in_heap(to)) {
+                        thread_object_access_violation(vm, "copy-environment-variables!" ,argc, argv);
+                        return scm_undef;
+                    }
                 }
 #endif
                 scoped_lock lock(to->variable->lock);
@@ -1562,6 +1563,11 @@ subr_copy_environment_variables(VM* vm, int argc, scm_obj_t argv[])
                         scm_gloc_t from_gloc = (scm_gloc_t)obj;
                         scm_gloc_t to_gloc = make_gloc(vm->m_heap, to, to_symbol);
                         to_gloc->value = from_gloc->value;
+#if USE_PARALLEL_VM
+                        if (vm->m_interp->concurrency() > 1 && vm->m_child > 0) {
+                            vm->m_interp->remember(get_hashtable(to->variable, to_symbol), to_gloc);
+                        }
+#endif
                         vm->m_heap->write_barrier(to_symbol);
                         vm->m_heap->write_barrier(to_gloc);
                         int nsize = put_hashtable(to->variable, to_symbol, to_gloc);
@@ -1596,9 +1602,11 @@ subr_copy_environment_macros(VM* vm, int argc, scm_obj_t argv[])
                 scm_environment_t from = (scm_environment_t)argv[0];
                 scm_environment_t to = (scm_environment_t)argv[1];
 #if USE_PARALLEL_VM
-                if (!vm->m_heap->in_heap(to)) {
-                    thread_object_access_violation(vm, "copy-environment-macros!" ,argc, argv);
-                    return scm_undef;
+                if (vm->m_interp->concurrency() > 1) {
+                    if (!vm->m_heap->in_heap(to)) {
+                        thread_object_access_violation(vm, "copy-environment-macros!" ,argc, argv);
+                        return scm_undef;
+                    }
                 }
 #endif
                 scoped_lock lock(to->macro->lock);
@@ -1623,6 +1631,11 @@ subr_copy_environment_macros(VM* vm, int argc, scm_obj_t argv[])
                         obj = get_hashtable(from->macro, from_symbol);
                     }
                     if (obj != scm_undef) {
+#if USE_PARALLEL_VM
+                        if (vm->m_interp->concurrency() > 1 && vm->m_child > 0) {
+                            vm->m_interp->remember(get_hashtable(to->macro, to_symbol), obj);
+                        }
+#endif
                         vm->m_heap->write_barrier(to_symbol);
                         vm->m_heap->write_barrier(obj);
                         int nsize = put_hashtable(to->macro, to_symbol, obj);
@@ -1797,7 +1810,6 @@ scm_obj_t
 subr_process(VM* vm, int argc, scm_obj_t argv[])
 {
 #if _MSC_VER
-
     HANDLE pipe0[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
     HANDLE pipe1[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
     HANDLE pipe2[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
@@ -1809,7 +1821,6 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
         }
-
         wchar_t command_line_ucs2[MAX_PATH] = { 0 };
         wchar_t module_name_ucs2[MAX_PATH] = { 0 };
         {
@@ -1828,7 +1839,6 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
             }
             MultiByteToWideChar(CP_UTF8, 0, ((scm_string_t)argv[0])->name, -1, module_name_ucs2, array_sizeof(module_name_ucs2));
         }
-
         SECURITY_ATTRIBUTES sa;
         sa.nLength = sizeof(SECURITY_ATTRIBUTES);
         sa.lpSecurityDescriptor = NULL;
@@ -1837,7 +1847,6 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
         if (CreatePipe(&pipe0[0], &pipe0[1], &sa, 0) == 0) goto pipe_fail;
         if (CreatePipe(&pipe1[0], &pipe1[1], &sa, 0) == 0) goto pipe_fail;
         if (CreatePipe(&pipe2[0], &pipe2[1], &sa, 0) == 0) goto pipe_fail;
-
         STARTUPINFO startup;
         memset(&startup, 0, sizeof(STARTUPINFO));
         startup.cb = sizeof(STARTUPINFO);
@@ -1846,7 +1855,6 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
         startup.hStdInput = pipe0[0];
         startup.hStdOutput = pipe1[1];
         startup.hStdError = pipe2[1];
-
         sysfunc = "CreateProcess";
         PROCESS_INFORMATION process;
         if (CreateProcessW(NULL,
@@ -1868,21 +1876,20 @@ subr_process(VM* vm, int argc, scm_obj_t argv[])
                                        SCM_PORT_FILE_OPTION_NONE,
                                        SCM_PORT_BUFFER_MODE_BLOCK,
                                        scm_false),
-                        make_std_port(vm->m_heap,
-                                      pipe1[0],
-                                      make_string_literal(vm->m_heap, "process-stdout"),
-                                      SCM_PORT_DIRECTION_IN,
-                                      SCM_PORT_FILE_OPTION_NONE,
-                                      SCM_PORT_BUFFER_MODE_BLOCK,
-                                      scm_false),
-                        make_std_port(vm->m_heap,
-                                      pipe2[0],
-                                      make_string_literal(vm->m_heap, "process-stderr"),
-                                      SCM_PORT_DIRECTION_IN,
-                                      SCM_PORT_FILE_OPTION_NONE,
-                                      SCM_PORT_BUFFER_MODE_BLOCK,
-                                    scm_false));
-
+                         make_std_port(vm->m_heap,
+                                       pipe1[0],
+                                       make_string_literal(vm->m_heap, "process-stdout"),
+                                       SCM_PORT_DIRECTION_IN,
+                                       SCM_PORT_FILE_OPTION_NONE,
+                                       SCM_PORT_BUFFER_MODE_BLOCK,
+                                       scm_false),
+                         make_std_port(vm->m_heap,
+                                       pipe2[0],
+                                       make_string_literal(vm->m_heap, "process-stderr"),
+                                       SCM_PORT_DIRECTION_IN,
+                                       SCM_PORT_FILE_OPTION_NONE,
+                                       SCM_PORT_BUFFER_MODE_BLOCK,
+                                       scm_false));
     }
     wrong_number_of_arguments_violation(vm, "process", 1, -1, argc, argv);
     return scm_undef;
@@ -1900,9 +1907,7 @@ create_fail:
     if (pipe2[1] != INVALID_HANDLE_VALUE) CloseHandle(pipe2[1]);
     raise_error(vm, "process", message, errno, argc, argv);
     return scm_undef;
-
 #else
-
     int pipe0[2] = { -1, -1 };
     int pipe1[2] = { -1, -1 };
     int pipe2[2] = { -1, -1 };
@@ -1961,20 +1966,20 @@ create_fail:
                                            SCM_PORT_FILE_OPTION_NONE,
                                            SCM_PORT_BUFFER_MODE_BLOCK,
                                            scm_false),
-                            make_std_port(vm->m_heap,
-                                          pipe1[0],
-                                          make_string_literal(vm->m_heap, "process-stdout"),
-                                          SCM_PORT_DIRECTION_IN,
-                                          SCM_PORT_FILE_OPTION_NONE,
-                                          SCM_PORT_BUFFER_MODE_BLOCK,
-                                          scm_false),
-                            make_std_port(vm->m_heap,
-                                          pipe2[0],
-                                          make_string_literal(vm->m_heap, "process-stderr"),
-                                          SCM_PORT_DIRECTION_IN,
-                                          SCM_PORT_FILE_OPTION_NONE,
-                                          SCM_PORT_BUFFER_MODE_BLOCK,
-                                          scm_false));
+                             make_std_port(vm->m_heap,
+                                           pipe1[0],
+                                           make_string_literal(vm->m_heap, "process-stdout"),
+                                           SCM_PORT_DIRECTION_IN,
+                                           SCM_PORT_FILE_OPTION_NONE,
+                                           SCM_PORT_BUFFER_MODE_BLOCK,
+                                           scm_false),
+                             make_std_port(vm->m_heap,
+                                           pipe2[0],
+                                           make_string_literal(vm->m_heap, "process-stderr"),
+                                           SCM_PORT_DIRECTION_IN,
+                                           SCM_PORT_FILE_OPTION_NONE,
+                                           SCM_PORT_BUFFER_MODE_BLOCK,
+                                           scm_false));
         }
     }
     wrong_number_of_arguments_violation(vm, "process", 1, -1, argc, argv);
@@ -2000,8 +2005,7 @@ fork_fail:
 close_fail:
 dup_fail:
 exec_fail:
-     exit(127);
-
+    exit(127);
 #endif
 }
 
@@ -2010,7 +2014,6 @@ scm_obj_t
 subr_process_wait(VM* vm, int argc, scm_obj_t argv[])
 {
 #if _MSC_VER
-
     const char* sysfunc = NULL;
     uint32_t timeout = 0;
     if (argc == 2) {
@@ -2190,7 +2193,7 @@ scm_obj_t
 subr_thread_self(VM* vm, int argc, scm_obj_t argv[])
 {
 #if USE_PARALLEL_VM
-    if (argc == 0) return make_tuple(vm->m_heap, 2, make_symbol(vm->m_heap, "type:thread"), MAKEFIXNUM(vm->m_interp->vm_id(vm)));
+    if (argc == 0) return make_tuple(vm->m_heap, 2, make_symbol(vm->m_heap, "type:thread"), MAKEFIXNUM(vm->m_id));
     wrong_number_of_arguments_violation(vm, "thread-self", 0, 0, argc, argv);
     return scm_undef;
 #else
@@ -2209,7 +2212,7 @@ subr_thread_primordial_pred(VM* vm, int argc, scm_obj_t argv[])
         if (TUPLEP(argv[0])) {
             scm_tuple_t tuple = (scm_tuple_t)argv[0];
             const char* type_name = get_tuple_type_name(tuple);
-            if (strcmp(type_name, "thread") == 0) return vm->m_interp->vm_primordial(FIXNUM(tuple->elts[1])) ? scm_true : scm_false;
+            if (strcmp(type_name, "thread") == 0) return vm->m_interp->primordial(FIXNUM(tuple->elts[1])) ? scm_true : scm_false;
         }
         wrong_type_argument_violation(vm, "thread-primordial?", 0, "thread", argv[0], argc, argv);
         return scm_undef;
@@ -2235,7 +2238,6 @@ subr_thread_primordial_pred(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_display_thread_status(VM* vm, int argc, scm_obj_t argv[])
 {
-
 #if USE_PARALLEL_VM
     if (argc == 0) {
         vm->m_interp->display_status(vm);
@@ -2253,9 +2255,15 @@ scm_obj_t
 subr_make_shared_queue(VM* vm, int argc, scm_obj_t argv[])
 {
 #if USE_PARALLEL_VM
-    if (argc == 0) return make_sharedqueue(vm->m_heap, 1);
+    if (argc == 0) {
+        scm_sharedqueue_t queue = make_sharedqueue(vm->m_heap, 1);
+        return queue;
+    }
     if (argc == 1) {
-        if (FIXNUMP(argv[0])) return make_sharedqueue(vm->m_heap, FIXNUM(argv[0]));
+        if (FIXNUMP(argv[0])) {
+            scm_sharedqueue_t queue = make_sharedqueue(vm->m_heap, FIXNUM(argv[0]));
+            return queue;
+        }
         wrong_type_argument_violation(vm, "make-shared-queue", 1, "fixnum", argv[0], argc, argv);
         return scm_undef;
     }
@@ -2291,10 +2299,10 @@ subr_shared_queue_push(VM* vm, int argc, scm_obj_t argv[])
                 scm_bvector_t bvector = (scm_bvector_t)argv[1];
                 int id = queue->buf.put(bvector->elts, bvector->count);
                 if (queue->queue.wait_lock_try_put(id)) return scm_unspecified;
-                vm->m_interp->update_thread_state(vm, Interpreter::VM_STATE_BLOCK);
-                queue->queue.put(id);
-                vm->m_interp->update_thread_state(vm, Interpreter::VM_STATE_RUN);
-                return scm_unspecified;
+                vm->m_interp->update(vm, VM_STATE_BLOCK);
+                bool succ = queue->queue.put(id);
+                vm->m_interp->update(vm, VM_STATE_ACTIVE);
+                return succ ? scm_true : scm_false;
             }
             wrong_type_argument_violation(vm, "shared-queue-push!", 1, "bytevector", argv[1], argc, argv);
             return scm_undef;
@@ -2312,55 +2320,71 @@ subr_shared_queue_push(VM* vm, int argc, scm_obj_t argv[])
 // shared-queue-pop!
 scm_obj_t subr_shared_queue_pop(VM* vm, int argc, scm_obj_t argv[]) {
 #if USE_PARALLEL_VM
-    if (argc == 1) {
+    if (argc == 1 || argc == 2) {
         if (SHAREDQUEUEP(argv[0])) {
+            int timeout = 0;
+            if (argc == 2) {
+                if (FIXNUMP(argv[1]) && FIXNUM(argv[1]) >= 0) {
+                    timeout = FIXNUM(argv[1]);
+                } else {
+                    wrong_type_argument_violation(vm, "shared-queue-pop!", 1, "non-negative fixnum", argv[1], argc, argv);
+                    return scm_undef;
+                }
+            }
             scm_sharedqueue_t queue = (scm_sharedqueue_t)argv[0];
             int id;
+            bool succ;
             if (queue->queue.wait_lock_try_get(&id)) goto receive;
-            vm->m_interp->update_thread_state(vm, Interpreter::VM_STATE_BLOCK);
-            queue->queue.get(&id);
-            vm->m_interp->update_thread_state(vm, Interpreter::VM_STATE_RUN);
+            if (argc == 2) {
+                if (timeout == 0) goto timeout;
+                vm->m_interp->update(vm, VM_STATE_BLOCK);
+                succ = queue->queue.get(&id, timeout);
+                vm->m_interp->update(vm, VM_STATE_ACTIVE);
+                if (!succ) goto timeout;
+            } else {
+                vm->m_interp->update(vm, VM_STATE_BLOCK);
+                succ = queue->queue.get(&id);
+                vm->m_interp->update(vm, VM_STATE_ACTIVE);
+                if (!succ) return scm_false;
+            }
         receive:
-            scm_bvector_t obj = make_bvector(vm->m_heap, queue->buf.size(id));
-            queue->buf.get(id, obj->elts);
-            return obj;
+            {
+                scm_bvector_t obj = make_bvector(vm->m_heap, queue->buf.size(id));
+                queue->buf.get(id, obj->elts);
+                return obj;
+            }
+        timeout:
+            if (queue->queue.no_more_get()) return scm_false;
+            return scm_timeout;
         }
         wrong_type_argument_violation(vm, "shared-queue-pop!", 0, "shared queue", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "shared-queue-pop!", 1, 1, argc, argv);
+    wrong_number_of_arguments_violation(vm, "shared-queue-pop!", 1, 2, argc, argv);
     return scm_undef;
 #else
     fatal("%s:%u shared-queue-pop! not supported on this build",__FILE__ , __LINE__);
 #endif
 }
 
-/*
-// shared-queue-pop!
-scm_obj_t
-subr_shared_queue_pop(VM* vm, int argc, scm_obj_t argv[])
-{
+// shared-queue-shutdown
+scm_obj_t subr_shared_queue_shutdown(VM* vm, int argc, scm_obj_t argv[]) {
 #if USE_PARALLEL_VM
     if (argc == 1) {
         if (SHAREDQUEUEP(argv[0])) {
             scm_sharedqueue_t queue = (scm_sharedqueue_t)argv[0];
-            int tag;
-            if (queue->queue.wait_lock_try_get(&tag)) return shared_queue_datum_pop(vm, queue, tag);
-            vm->m_interp->update_thread_state(vm, Interpreter::VM_STATE_BLOCK);
-            queue->queue.get(&tag);
-            vm->m_interp->update_thread_state(vm, Interpreter::VM_STATE_RUN);
-            return shared_queue_datum_pop(vm, queue, tag);
+            queue->queue.shutdown();
+            return scm_unspecified;
         }
-        wrong_type_argument_violation(vm, "shared-queue-pop!", 0, "shared queue", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "shared-queue-shutdown", 0, "shared queue", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "shared-queue-pop!", 1, 1, argc, argv);
+    wrong_number_of_arguments_violation(vm, "shared-queue-shutdown", 1, 1, argc, argv);
     return scm_undef;
 #else
-    fatal("%s:%u shared-queue-pop! not supported on this build", __FILE__, __LINE__);
+    fatal("%s:%u shared-queue-shutdown not supported on this build",__FILE__ , __LINE__);
 #endif
 }
-*/
 
 // object->bytevetor
 scm_obj_t
@@ -2394,14 +2418,25 @@ subr_bytevector_object(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// timeout-object?
+scm_obj_t
+subr_timeout_object_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+#if USE_PARALLEL_VM
+    if (argc == 1) return argv[0] == scm_timeout ? scm_true : scm_false;
+    wrong_number_of_arguments_violation(vm, "timeout-object?", 1, 1, argc, argv);
+    return scm_undef;
+#else
+    fatal("%s:%u timeout-object? not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
 void
 init_subr_others(object_heap_t* heap)
 {
-    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
+#define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
-//  DEFSUBR("circular-tree?", subr_circular_tree_pred);
     DEFSUBR("circular-list?", subr_circular_list_pred);
-
     DEFSUBR("core-read", subr_core_read);
     DEFSUBR("interaction-environment", subr_interaction_environment);
     DEFSUBR("format", subr_format);
@@ -2473,34 +2508,28 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("system",subr_system);
     DEFSUBR("process",subr_process);
     DEFSUBR("process-wait", subr_process_wait);
-
     DEFSUBR("getenv",subr_getenv);
     DEFSUBR("gethostname", subr_gethostname);
-
     DEFSUBR("current-library-infix", subr_current_library_infix);
     DEFSUBR("current-library-suffix", subr_current_library_suffix);
     DEFSUBR("current-primitive-prefix", subr_current_primitive_prefix);
     DEFSUBR("current-rename-delimiter", subr_current_rename_delimiter);
-
     DEFSUBR("string->uninterned-symbol", subr_string_uninterned_symbol);
     DEFSUBR("uninterned-symbol?", subr_uninterned_symbol_pred);
     DEFSUBR("uninterned-symbol-prefix", subr_uninterned_symbol_prefix);
     DEFSUBR("uninterned-symbol-suffix", subr_uninterned_symbol_suffix);
-
     DEFSUBR("escape", subr_escape);
     DEFSUBR("recursion-level", subr_recursion_level);
-
     DEFSUBR("spawn", subr_spawn);
     DEFSUBR("display-thread-status", subr_display_thread_status);
     DEFSUBR("make-shared-queue", subr_make_shared_queue);
+    DEFSUBR("shared-queue-shutdown", subr_shared_queue_shutdown);
     DEFSUBR("shared-queue-push!", subr_shared_queue_push);
     DEFSUBR("shared-queue-pop!", subr_shared_queue_pop);
     DEFSUBR("shared-queue?", subr_shared_queue_pred);
     DEFSUBR("thread-self", subr_thread_self);
     DEFSUBR("thread-primordial?", subr_thread_primordial_pred);
-
+    DEFSUBR("timeout-object?", subr_timeout_object_pred);
     DEFSUBR("object->bytevector", subr_object_bytevector);
     DEFSUBR("bytevector->object", subr_bytevector_object);
-
-    #undef DEFSUBR
 }

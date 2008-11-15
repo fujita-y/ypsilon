@@ -10,6 +10,8 @@
 #include "core.h"
 #include "object.h"
 
+class object_heap_t;
+
 #if PARALLEL_COLLECT
 #include "interlocked.h"
 #endif
@@ -41,11 +43,11 @@ struct object_slab_traits_t {       // <- locate to bottom of each slab
 typedef void (*object_iter_proc_t)(void* obj, int size, void* refcon);
 
 struct object_slab_cache_t {
-  #if USE_SPINLOCK
+#if USE_SPINLOCK
     spinlock_t              m_lock;
-  #else
+#else
     mutex_t                 m_lock;
-  #endif
+#endif
     int                     m_object_size;
     int                     m_object_size_shift;
     int                     m_bitmap_size;
@@ -57,20 +59,15 @@ struct object_slab_cache_t {
 
     object_slab_cache_t();
     ~object_slab_cache_t();
-
     bool    init(object_heap_t* object_heap, int object_size, bool gc);
     void    destroy();
-
     void*   new_collectible_object();
-
     void*   new_object();
     void    delete_object(void* obj);
-
     void    attach(void* slab);
     void    detach(void* slab);
     void    sweep(void *slab);
     void    iterate(void* slab, object_iter_proc_t proc, void* desc);
-
     void    init_freelist(uint8_t* top, uint8_t* bottom, object_slab_traits_t* traits);
     void    unload_filled(object_slab_traits_t* traits);
 
@@ -96,11 +93,11 @@ struct object_slab_cache_t {
         uint8_t* bitmap = (uint8_t*)OBJECT_SLAB_TRAITS_OF(obj) - m_bitmap_size;
         int bit_n = ((intptr_t)obj & (OBJECT_SLAB_SIZE - 1)) >> m_object_size_shift;
         assert(bit_n < m_bitmap_size * 8);
-      #if PARALLEL_COLLECT
+#if PARALLEL_COLLECT
         interlocked_or_uint8(bitmap + (bit_n >> 3), 1 << (bit_n & 7));
-      #else
+#else
         bitmap[bit_n >> 3] |= (1 << (bit_n & 7));
-      #endif
+#endif
     }
 
     bool test_and_mark(void* obj)
@@ -112,11 +109,11 @@ struct object_slab_cache_t {
         uint8_t bit = (1 << (bit_n & 7));
         uint8_t* p = bitmap + (bit_n >> 3);
         if (*p & bit) return true;
-      #if PARALLEL_COLLECT
+#if PARALLEL_COLLECT
         interlocked_or_uint8(p, bit);
-      #else
+#else
         *p |= bit;
-      #endif
+#endif
         return false;
     }
 };

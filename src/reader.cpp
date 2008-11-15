@@ -177,28 +177,17 @@ reader_t::skip_line()
     }
     return scm_eof;
 }
-/*
-void
-reader_t::skip_intraline_whitespace()
-{
-    int c;
-    do {
-        c = get_ucs4();
-        if (c == EOF) lexical_error("unexpected end-of-file while reading intraline whitespeace");
-    } while (ucs4_intraline_whitespace(c));
-    if (c != '\n') lexical_error("unexpected charactor %U while reading intraline whitespeace", c);
-    do { c = get_ucs4(); } while (ucs4_intraline_whitespace(c));
-    unget_ucs4();
-}
-*/
+
 scm_obj_t
 reader_t::skip_srfi30()
 {
     int c1;
     int c2;
     int nest = 0;
+
 seek_c1:
     c1 = get_ucs4();
+
 seek_c2:
     c2 = get_ucs4();
     if (c2 == EOF) {
@@ -427,7 +416,6 @@ reader_t::read_char()
         { "space",      0x0020 },
         { "delete",     0x007F }
     };
-
     int c = get_ucs4();
     if (c == 'x') {
         c = lookahead_ucs4();
@@ -435,9 +423,7 @@ reader_t::read_char()
         if (delimited(c)) return MAKECHAR('x');
         return MAKECHAR(read_hex_scalar_value());
     }
-
     char buf[32];
-
     if (c == '(') {
         c = lookahead_ucs4();
         if (c == EOF) return MAKECHAR('(');
@@ -445,10 +431,8 @@ reader_t::read_char()
         read_thing(buf, sizeof(buf));
         lexical_error("invalid lexical syntax #\\(%s", buf);
     }
-
     unget_ucs4();
     read_thing(buf, sizeof(buf));
-
     if (buf[0] == 0) {
         c = get_ucs4();
         if (c == EOF) lexical_error("unexpected end-of-file while reading character");
@@ -639,62 +623,7 @@ reader_t::read_symbol()
     }
     lexical_error("token buffer overflow while reading identifier");
 }
-/*
-scm_obj_t
-reader_t::read_symbol()
-{
-    char buf[MAX_READ_SYMBOL_LENGTH];
-    int i = 0;
-    while (i + 4 < array_sizeof(buf)) {
-        int c = get_ucs4();
-        if (c == EOF) {
-            buf[i] = 0;
-            return make_symbol(m_vm->m_heap, buf, i);
-        }
-        if (delimited(c)) {
-            unget_ucs4();
-            buf[i] = 0;
-            return make_symbol(m_vm->m_heap, buf, i);
-        }
-        if (c == '\\') {
-            c = get_ucs4();
-            if (c == 'x') {
-                unget_ucs4();
-                c = read_escape_sequence();
-                i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
-                continue;
-            } else {
-                lexical_error("invalid character '\\' while reading identifier");
-            }
-        }
-        if (c > 127) {
-            i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
-            continue;
-        }
-        if (m_vm->flags.m_extend_lexical_syntax == scm_true) {
-            if (SYMBOL_CHARP(c)) {
-                buf[i++] = c;
-                continue;
-            }
-        } else {
-            if (i == 0) {
-                if (INITIAL_CHARP(c)) {
-                    buf[i++] = c;
-                    continue;
-                }
-            } else {
-                if (SYMBOL_CHARP(c)) {
-                    buf[i++] = c;
-                    continue;
-                }
-            }
-        }
-        lexical_error("invalid character %U while reading identifier", c);
-    }
-    lexical_error("token buffer overflow while reading identifier");
-}
 
-*/
 static scm_obj_t
 encode_source_comment(int line, int column, bool file)
 {
@@ -711,7 +640,6 @@ reader_t::read_list(bool bracketed)
     int line_begin = m_in->line;
     int column_begin = m_in->column - 1;
     if (column_begin < 1) column_begin = 1;
-
     while ((token = read_token()) != scm_eof) {
         if (token == S_RPAREN) {
             if (bracketed) {
@@ -782,18 +710,16 @@ reader_t::read_list(bool bracketed)
     lexical_error("unexpected end-of-file while reading list");
 }
 
-
 scm_obj_t
 reader_t::read_token()
 {
     int c;
+
 top:
     c = get_ucs4();
     if (c == EOF) return scm_eof;
     if (ucs4_whitespace(c)) goto top;
-
     parsing_line(m_in->line);
-
     if (c < 128 && isdigit(c)) {
         unget_ucs4();
         return read_number();

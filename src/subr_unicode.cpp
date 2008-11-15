@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 
 #include "core.h"
@@ -124,7 +124,7 @@ subr_char_whitespace_pred(VM* vm, int argc, scm_obj_t argv[])
 
 void init_subr_unicode(object_heap_t* heap)
 {
-    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
+#define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("char-whitespace?", subr_char_whitespace_pred);
     DEFSUBR("open-builtin-data-input-port", subr_open_builtin_data_input_port);

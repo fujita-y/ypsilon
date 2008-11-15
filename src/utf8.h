@@ -10,6 +10,8 @@
 #include "core.h"
 #include "object.h"
 
+class object_heap_t;
+
 #define BAD_UTF8_STRING_REF_DATUM       (-1)
 #define BAD_UTF8_STRING_REF_INDEX       (-2)
 
@@ -26,6 +28,5 @@ bool utf8_decode_test(scm_bvector_t obj);
 bool string_eq_pred(scm_obj_t obj1, scm_obj_t obj2);
 bool string_ci_eq_pred(scm_obj_t obj1, scm_obj_t obj2);
 int string_compare(scm_obj_t obj1, scm_obj_t obj2);
-
 
 #endif

@@ -12,12 +12,10 @@
 #if _MSC_VER
 
     class cond_t {
-
         cond_t(const cond_t&);
         cond_t& operator=(const cond_t&);
 
     public:
-
         HANDLE  ev;
 
         cond_t() { /* should be blank */ }
@@ -49,18 +47,15 @@
                 MTVERIFY(WaitForSingleObject(mutex.mutex, INFINITE) != WAIT_FAILED);
             #endif
         }
-
     };
 
 #else
 
     class cond_t {
-
         cond_t(const cond_t&);
         cond_t& operator=(const cond_t&);
 
     public:
-
         pthread_cond_t  cv;
 
         cond_t() { /* should be blank */ }
@@ -84,7 +79,6 @@
         {
             MTVERIFY(pthread_cond_wait(&cv, &mutex.mutex));
         }
-
     };
 
 #endif

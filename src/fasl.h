@@ -33,7 +33,6 @@
 #define FASL_TAG_UNINTERNED_SYMBOL  17
 #define FASL_TAG_FIXNUM64           18
 
-
 class fasl_printer_t {
     VM*             m_vm;
     scm_port_t      m_port;
@@ -48,13 +47,11 @@ class fasl_printer_t {
     void put_list(scm_obj_t obj);
     void put_datum(scm_obj_t obj);
 
-    void emit_u8(uint8_t octet)
-    {
+    void emit_u8(uint8_t octet) {
         port_put_byte(m_port, octet);
     }
 
-    void emit_u32(uint32_t n)
-    {
+    void emit_u32(uint32_t n) {
         for (int i = 0; i < 5; i++) {
             int code = n & 0x7f;
             n = n >> 7;
@@ -67,16 +64,14 @@ class fasl_printer_t {
         }
     }
 
-    void emit_u64(uint64_t n)
-    {
+    void emit_u64(uint64_t n) {
         for (int i = 0; i < 8; i++) {
             emit_u8(n & 0xff);
             n = n >> 8;
         }
     }
 
-    void emit_bytes(const char* s, int n)
-    {
+    void emit_bytes(const char* s, int n) {
         for (int i = 0; i < n; i++) emit_u8(s[i]);
     }
 
@@ -110,13 +105,11 @@ class fasl_reader_t {
     scm_port_t      m_port;
     scm_obj_t*      m_lites;
 
-    uint8_t fetch_u8()
-    {
+    uint8_t fetch_u8() {
        return port_get_byte(m_port);
     }
 
-    uint32_t fetch_u32()
-    {
+    uint32_t fetch_u32() {
         uint32_t value = 0;
         int shift = 0;
         while (true) {
@@ -127,8 +120,7 @@ class fasl_reader_t {
         }
     }
 
-    uint64_t fetch_u64()
-    {
+    uint64_t fetch_u64() {
         uint64_t value = 0;
         int shift = 0;
         for (int i = 0; i < 8; i++) {
@@ -152,6 +144,6 @@ public:
     }
 
     scm_obj_t get();
-
 };
+
 #endif

@@ -47,10 +47,10 @@
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_vector
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_port
     nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_values
-    .... .... .... .... .... I.-- ---- 1010 : scm_hdr_hashtable     I: immutable
+    .... .... .... .... .... IU-- ---- 1010 : scm_hdr_hashtable     I: immutable U: unsafe
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_gloc
     nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_tuple
-    .... .... .... .... .... I.-- ---- 1010 : scm_hdr_weakhashtable I: immutable
+    .... .... .... .... .... IU-- ---- 1010 : scm_hdr_weakhashtable I: immutable U: unsafe
     .... .... .... .... .... M.-- ---- 1010 : scm_hdr_bvector       M: mapped
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_complex
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_rational
@@ -80,11 +80,12 @@ const scm_obj_t scm_nil                 = (scm_obj_t)0x32;
 const scm_obj_t scm_undef               = (scm_obj_t)0x42;  // unbound variable
 const scm_obj_t scm_unspecified         = (scm_obj_t)0x52;
 const scm_obj_t scm_eof                 = (scm_obj_t)0x62;
-const scm_obj_t scm_hash_free           = (scm_obj_t)0x72;  // internal use
-const scm_obj_t scm_hash_deleted        = (scm_obj_t)0x82;  // internal use
-const scm_obj_t scm_proc_apply          = (scm_obj_t)0x92;
-const scm_obj_t scm_proc_callcc         = (scm_obj_t)0xa2;
-const scm_obj_t scm_proc_apply_values   = (scm_obj_t)0xb2;
+const scm_obj_t scm_timeout             = (scm_obj_t)0x72;
+const scm_obj_t scm_hash_free           = (scm_obj_t)0x82;  // internal use
+const scm_obj_t scm_hash_deleted        = (scm_obj_t)0x92;  // internal use
+const scm_obj_t scm_proc_apply          = (scm_obj_t)0xa2;
+const scm_obj_t scm_proc_callcc         = (scm_obj_t)0xb2;
+const scm_obj_t scm_proc_apply_values   = (scm_obj_t)0xc2;
 
 // primitive
 #define TC_FLONUM           0x00
@@ -140,7 +141,7 @@ const scm_hdr_t scm_hdr_bvector         = 0x00a | (TC_BVECTOR << 4);
 const scm_hdr_t scm_hdr_socket          = 0x00a | (TC_SOCKET << 4);
 const scm_hdr_t scm_hdr_sharedqueue     = 0x00a | (TC_SHAREDQUEUE << 4);
 
-#define HDR_TC_MASKBITS    0x3ff
+#define HDR_TYPE_MASKBITS    0x3ff
 
 struct scm_pair_rec_t;
 struct scm_symbol_rec_t;
@@ -277,25 +278,19 @@ OBJECT_ALIGNED(scm_weakmapping_rec_t) {
 OBJECT_ALIGNED(scm_port_rec_t) {
     scm_hdr_t       hdr;
     mutex_t         lock;
-
     scm_obj_t       handlers;
     scm_obj_t       bytes;
-
     uint8_t         lookahead[PORT_LOOKAHEAD_SIZE];
     int             lookahead_size;
-
     uint8_t*        buf;
     uint8_t*        buf_head;
     uint8_t*        buf_tail;
     int             buf_size;
     int             buf_state;
-
     off64_t         mark;
     int             line;
     int             column;
-
     fd_t            fd;
-
     scm_obj_t       name;
     scm_obj_t       transcoder;
     uint8_t         codec;
@@ -371,9 +366,9 @@ OBJECT_ALIGNED(scm_gloc_rec_t) {
     scm_hdr_t       hdr;
     scm_obj_t       value;
     scm_obj_t       variable;       // for error message
- #if GLOC_DEBUG_INFO
+#if GLOC_DEBUG_INFO
     scm_obj_t       environment;
-  #endif
+#endif
 } END;
 
 OBJECT_ALIGNED(scm_socket_rec_t) {
@@ -388,21 +383,8 @@ OBJECT_ALIGNED(scm_socket_rec_t) {
     struct sockaddr_storage addr;
 } END;
 
-//struct sharedqueue_handle_t {
-//    uint8_t*    bmem;
-//    int         bsize;
-//    int         bgap;
-//};
-
 OBJECT_ALIGNED(scm_sharedqueue_rec_t) {
-    scm_hdr_t   hdr;
-//    mutex_t     lock;
-//    uint8_t*    buf_top;
-//    uint8_t*    buf_bottom;
-//    uint8_t*    buf_head;
-//    uint8_t*    buf_tail;
-//    sharedqueue_handle_t* handle_datum;
-//    int         handle_count;
+    scm_hdr_t       hdr;
     fifo_buffer_t   buf;
     queue_t<int>    queue;
 } END;
@@ -435,9 +417,9 @@ struct vm_env_rec_t {           // record size is variable
 #define FIXNUM_MAX                          (INTPTR_MAX / 2)
 #define FIXNUM_MIN                          (INTPTR_MIN / 2)
 #if ARCH_LP64
-#define FIXNUM_BITS                         (64 - 1)
+  #define FIXNUM_BITS                         (64 - 1)
 #else
-#define FIXNUM_BITS                         (32 - 1)
+  #define FIXNUM_BITS                         (32 - 1)
 #endif
 
 #define FIXNUM(obj)                         ((intptr_t)(obj) >> 1)
@@ -451,30 +433,29 @@ struct vm_env_rec_t {           // record size is variable
 #define CELLP(obj)                          ((BITS(obj) & 0x7) == 0)
 #define CHARP(obj)                          ((BITS(obj) & 0xff) == 0x02)
 #define PAIRP(obj)                          (CELLP(obj) && (HDR(obj) & 0xf) != 0xa)
-
-#define FLONUMP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_flonum)
-#define BVECTORP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_bvector)
-#define BIGNUMP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_bignum)
-#define SYMBOLP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_symbol)
-#define STRINGP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_string)
-#define VECTORP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_vector)
-#define TUPLEP(obj)                         (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_tuple)
-#define VALUESP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_values)
-#define HASHTABLEP(obj)                     (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_hashtable)
-#define WEAKHASHTABLEP(obj)                 (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_weakhashtable)
-#define PORTP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_port)
-#define CLOSUREP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_closure)
-#define CONTP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_cont)
-#define GLOCP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_gloc)
-#define SUBRP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_subr)
-#define COMPLEXP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_complex)
-#define RATIONALP(obj)                      (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_rational)
-#define HEAPENVP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_heapenv)
-#define HEAPCONTP(obj)                      (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_heapcont)
-#define WEAKMAPPINGP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_weakmapping)
-#define ENVIRONMENTP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_environment)
-#define SOCKETP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_socket)
-#define SHAREDQUEUEP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TC_MASKBITS) == scm_hdr_sharedqueue)
+#define FLONUMP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_flonum)
+#define BVECTORP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_bvector)
+#define BIGNUMP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_bignum)
+#define SYMBOLP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_symbol)
+#define STRINGP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_string)
+#define VECTORP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_vector)
+#define TUPLEP(obj)                         (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_tuple)
+#define VALUESP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_values)
+#define HASHTABLEP(obj)                     (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_hashtable)
+#define WEAKHASHTABLEP(obj)                 (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_weakhashtable)
+#define PORTP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_port)
+#define CLOSUREP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_closure)
+#define CONTP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_cont)
+#define GLOCP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_gloc)
+#define SUBRP(obj)                          (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_subr)
+#define COMPLEXP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_complex)
+#define RATIONALP(obj)                      (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_rational)
+#define HEAPENVP(obj)                       (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_heapenv)
+#define HEAPCONTP(obj)                      (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_heapcont)
+#define WEAKMAPPINGP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_weakmapping)
+#define ENVIRONMENTP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_environment)
+#define SOCKETP(obj)                        (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_socket)
+#define SHAREDQUEUEP(obj)                   (CELLP(obj) && (HDR(obj) & HDR_TYPE_MASKBITS) == scm_hdr_sharedqueue)
 
 #define HDR_SYMBOL_INHERENT_SHIFT           11
 #define HDR_SYMBOL_UNINTERNED_SHIFT         10
@@ -486,7 +467,9 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_TUPLE_COUNT_SHIFT               16
 #define HDR_HEAPENV_SIZE_SHIFT              16
 #define HDR_HEAPCONT_SIZE_SHIFT             16
+#define HDR_HASHTABLE_SHARED_SHIFT          10
 #define HDR_HASHTABLE_IMMUTABLE_SHIFT       11
+#define HDR_WEAKHASHTABLE_SHARED_SHIFT      10
 #define HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT   11
 #define HDR_BVECTOR_MAPPING_SHIFT           11
 #define HDR_BIGNUM_SIGN_SHIFT               10
@@ -506,7 +489,9 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_SYMBOL_SIZE(hdr)                (((uintptr_t)(hdr)) >> HDR_SYMBOL_SIZE_SHIFT)
 #define HDR_SYMBOL_CODE(hdr)                (((hdr) >> HDR_SYMBOL_CODE_SHIFT) & 0xff)
 #define HDR_BVECTOR_MAPPING(hdr)            (((hdr) >> HDR_BVECTOR_MAPPING_SHIFT) & 0x01)
+#define HDR_HASHTABLE_SHARED(hdr)           (((hdr) >> HDR_HASHTABLE_SHARED_SHIFT) & 0x01)
 #define HDR_HASHTABLE_IMMUTABLE(hdr)        (((hdr) >> HDR_HASHTABLE_IMMUTABLE_SHIFT) & 0x01)
+#define HDR_WEAKHASHTABLE_SHARED(hdr)       (((hdr) >> HDR_WEAKHASHTABLE_SHARED_SHIFT) & 0x01)
 #define HDR_WEAKHASHTABLE_IMMUTABLE(hdr)    (((hdr) >> HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT) & 0x01)
 #define HDR_BIGNUM_SIGN(hdr)                (((hdr) >> HDR_BIGNUM_SIGN_SHIFT) & 0x03)
 #define HDR_FLONUM_32BIT(hdr)               (((hdr) >> HDR_FLONUM_32BIT_SHIFT) & 0x01)
@@ -545,7 +530,7 @@ struct vm_env_rec_t {           // record size is variable
 #define HASH_SPARSE_THRESHOLD(n)            ((n) >> 2)                      // 25%
 #define HASH_IMMUTABLE_SIZE(n)              ((n) + ((n) >> 3))              // 112.5%
 #define HASH_MUTABLE_SIZE(n)                ((n) + ((n) >> 1) + ((n) >> 2)) // 175%
-#define HASH_BOUND_MAX                      524309
+#define HASH_BOUND_MAX                      FIXNUM_MAX
 
 #define OBJECT_SLAB_SIZE                    4096
 #define OBJECT_SLAB_SIZE_SHIFT              12
@@ -601,6 +586,18 @@ struct vm_continue_t {
     vm_continue_t() {}
 };
 
-class object_heap_t;
+inline const char*
+get_tuple_type_name(scm_obj_t obj)
+{
+    if (TUPLEP(obj)) {
+        scm_tuple_t tuple = (scm_tuple_t)obj;
+        scm_obj_t e0 = tuple->elts[0];
+        if (SYMBOLP(e0)) {
+            scm_symbol_t type = (scm_symbol_t)e0;
+            if (strncmp(type->name, "type:", 5) == 0) return type->name + 5;
+        }
+    }
+    return NULL;
+}
 
 #endif

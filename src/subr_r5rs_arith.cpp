@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 
 #include "core.h"
@@ -82,11 +82,9 @@ subr_modulo(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-///
-
 void init_subr_r5rs_arith(object_heap_t* heap)
 {
-    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
+#define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("quotient", subr_quotient);
     DEFSUBR("remainder", subr_remainder);

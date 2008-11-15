@@ -10,21 +10,16 @@
 #include "core.h"
 
 #if _MSC_VER
-
-    #if USE_CRITICAL_SECTION
-
+  #if USE_CRITICAL_SECTION
         class mutex_t {
-
             mutex_t(const mutex_t&);
             mutex_t& operator=(const mutex_t&);
 
         public:
-
             CRITICAL_SECTION mutex;
-
-          #if MTDEBUG
+  #if MTDEBUG
             int lock_count;
-          #endif
+  #endif
 
             mutex_t() { /* should be blank */ }
 
@@ -49,9 +44,9 @@
             void lock()
             {
                 EnterCriticalSection(&mutex);
-              #if MTDEBUG
+  #if MTDEBUG
                 lock_count++;
-              #endif
+  #endif
             }
 
             void unlock()
@@ -72,21 +67,16 @@
               #endif
             }
         };
-
-    #else
-
+  #else
         class mutex_t {
-
             mutex_t(const mutex_t&);
             mutex_t& operator=(const mutex_t&);
 
         public:
-
             HANDLE mutex;
-
-          #if MTDEBUG
+  #if MTDEBUG
             int lock_count;
-          #endif
+  #endif
 
             mutex_t() { /* should be blank */ }
 
@@ -101,75 +91,70 @@
 
             void destroy()
             {
-              #if MTDEBUG
+  #if MTDEBUG
                 if (lock_count) {
                     fatal("internal error:%s:%u destroy() lock held(%d)", __FILE__, __LINE__, lock_count);
                 }
-              #endif
+  #endif
                 MTVERIFY(CloseHandle(mutex));
             }
 
             void lock()
             {
                 MTVERIFY(WaitForSingleObject(mutex, INFINITE) != WAIT_FAILED);
-              #if MTDEBUG
+  #if MTDEBUG
                 lock_count++;
-              #endif
+  #endif
             }
 
             void unlock()
             {
-              #if MTDEBUG
+  #if MTDEBUG
                 lock_count--;
                 assert(lock_count >= 0);
-              #endif
+  #endif
                 MTVERIFY(ReleaseMutex(mutex));
             }
 
             void verify_locked()
             {
-              #if MTDEBUG
+  #if MTDEBUG
                 if (lock_count == 0) {
                     fatal("internal error:%s:%u verify_locked() failed.", __FILE__, __LINE__);
                 }
-              #endif
+  #endif
             }
         };
 
-    #endif
-
+   #endif
 #else
-
     class mutex_t {
-
         mutex_t(const mutex_t&);
         mutex_t& operator=(const mutex_t&);
 
     public:
-
         pthread_mutex_t mutex;
-
-      #if MTDEBUG
+  #if MTDEBUG
         int lock_count;
-      #endif
+  #endif
 
         mutex_t() { /* should be blank */ }
 
         void init(bool recursive = false)
         {
-          #if MTDEBUG
+  #if MTDEBUG
             lock_count = 0;
-          #endif
+  #endif
             pthread_mutexattr_t attr;
             MTVERIFY(pthread_mutexattr_init(&attr));
             if (recursive) {
                 MTVERIFY(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE));
             } else {
-              #if MTDEBUG
+  #if MTDEBUG
                 MTVERIFY(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK));
-              #else
+  #else
                 MTVERIFY(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL));
-              #endif
+  #endif
             }
             MTVERIFY(pthread_mutex_init(&mutex, &attr));
             MTVERIFY(pthread_mutexattr_destroy(&attr));
@@ -177,41 +162,40 @@
 
         void destroy()
         {
-          #if MTDEBUG
+  #if MTDEBUG
             if (lock_count) {
                 fatal("internal error:%s:%u destroy() lock held(%d)", __FILE__, __LINE__, lock_count);
             }
-          #endif
+  #endif
             MTVERIFY(pthread_mutex_destroy(&mutex));
         }
 
         void lock()
         {
             MTVERIFY(pthread_mutex_lock(&mutex));
-          #if MTDEBUG
+  #if MTDEBUG
             lock_count++;
-          #endif
+  #endif
         }
 
         void unlock()
         {
-          #if MTDEBUG
+  #if MTDEBUG
             lock_count--;
             assert(lock_count >= 0);
-          #endif
+  #endif
             MTVERIFY(pthread_mutex_unlock(&mutex));
         }
 
         void verify_locked()
         {
-          #if MTDEBUG
+  #if MTDEBUG
             if (lock_count == 0) {
                 fatal("internal error:%s:%u verify_locked() failed.", __FILE__, __LINE__);
             }
-          #endif
+  #endif
         }
     };
-
 #endif
 
 class scoped_lock {
@@ -223,4 +207,4 @@ public:
     ~scoped_lock() { m_lock.unlock(); }
 };
 
-#endif // MUTEX_H_INCLUDED
+#endif

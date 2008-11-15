@@ -72,7 +72,7 @@
 #define USE_FLONUM_CONST            1
 #define USE_FAST_DYNAMIC_WIND       1
 #define USE_EXTENDED_BVECTOR_SYNTAX 0
-#define USE_PARALLEL_VM             0
+#define USE_PARALLEL_VM             1
 
 #if USE_GCC_EXTENSION
     #define USE_SYMBOL_THREAD       0
@@ -94,19 +94,22 @@
 
 #ifndef SYSTEM_SHARE_PATH
   #if _MSC_VER
-    #define SYSTEM_SHARE_PATH         "C:/Program Files/Ypsilon"
+    #define SYSTEM_SHARE_PATH       "C:/Program Files/Ypsilon"
   #else
-    #define SYSTEM_SHARE_PATH         "/usr/local/share/ypsilon"
+    #define SYSTEM_SHARE_PATH       "/usr/local/share/ypsilon"
   #endif
 #endif
+
+#define MAX_VIRTUAL_MACHINE         32
 
 class VM;
 
 #include "sysdep.h"
 
-extern int                  main_command_line_argc;
-extern char* const*         main_command_line_argv;
-extern void                 fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
-extern void                 warning(const char* fmt, ...);
-extern void                 trace(const char* fmt, ...);
+extern int          main_command_line_argc;
+extern char* const* main_command_line_argv;
+extern void         fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
+extern void         warning(const char* fmt, ...);
+extern void         trace(const char* fmt, ...);
+
 #endif

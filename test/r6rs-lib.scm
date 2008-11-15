@@ -903,6 +903,9 @@
                     (hashtable-set! h 2 'two)
                     (hashtable-set! h 3 'three)
                     (hashtable-entries h)))
-                list)
-            => (#(2 3 1) #(two three one)))
+                (lambda (k v)
+                  (list-sort (lambda (a b) (< (car a) (car b)))
+                   (map cons (vector->list k) (vector->list v)))))
+
+            => ((1 . one) (2 . two) (3 . three)))
 (test-end)

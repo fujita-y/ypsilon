@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 
 #include "core.h"
@@ -263,59 +263,7 @@ subr_current_error_port(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "current-error-port", 0, 0, argc, argv);
     return scm_undef;
 }
-/*
-// current-input-port
-scm_obj_t
-subr_current_input_port(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 0) return vm->m_current_input;
-    if (argc == 1) {
-        if (PORTP(argv[0])) {
-            vm->m_current_input = (scm_port_t)argv[0];
-            return scm_unspecified;
-        }
-        wrong_type_argument_violation(vm, "current-input-port", 0, "port", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "current-input-port", 0, 1, argc, argv);
-    return scm_undef;
-}
 
-// current-output-port
-scm_obj_t
-subr_current_output_port(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 0) return vm->m_current_output;
-    if (argc == 1) {
-        if (PORTP(argv[0])) {
-            vm->m_current_output = (scm_port_t)argv[0];
-            return scm_unspecified;
-        }
-        wrong_type_argument_violation(vm, "current-output-port", 0, "port", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "current-output-port", 0, 1, argc, argv);
-    return scm_undef;
-}
-
-// current-error-port
-scm_obj_t
-subr_current_error_port(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 0) return vm->m_current_error;
-    if (argc == 1) {
-        if (PORTP(argv[0])) {
-            vm->m_current_error = (scm_port_t)argv[0];
-            return scm_unspecified;
-        }
-        wrong_type_argument_violation(vm, "current-error-port", 0, "port", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "current-error-port", 0, 1, argc, argv);
-    return scm_undef;
-}
-
- */
 // standard-input-port
 scm_obj_t
 subr_standard_input_port(VM* vm, int argc, scm_obj_t argv[])
@@ -330,9 +278,21 @@ subr_standard_input_port(VM* vm, int argc, scm_obj_t argv[])
                 raise_io_error(vm, "standard-input-port", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, scm_false);
                 return scm_undef;
             }
-            port = make_std_port(vm->m_heap, hdl, make_string_literal(vm->m_heap, "/dev/stdin"), SCM_PORT_DIRECTION_IN, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_false);
+            port = make_std_port(vm->m_heap,
+                                 hdl,
+                                 make_string_literal(vm->m_heap, "/dev/stdin"),
+                                 SCM_PORT_DIRECTION_IN,
+                                 0,
+                                 SCM_PORT_BUFFER_MODE_BLOCK,
+                                 scm_false);
 #else
-            port = make_std_port(vm->m_heap, dup(PORT_STDIN_FD), make_string_literal(vm->m_heap, "/dev/stdin"), SCM_PORT_DIRECTION_IN, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_false);
+            port = make_std_port(vm->m_heap,
+                                 dup(PORT_STDIN_FD),
+                                 make_string_literal(vm->m_heap, "/dev/stdin"),
+                                 SCM_PORT_DIRECTION_IN,
+                                 0,
+                                 SCM_PORT_BUFFER_MODE_BLOCK,
+                                 scm_false);
 #endif
             port->mark = std_port_position(PORT_STDIN_FD);
             return port;
@@ -359,9 +319,21 @@ subr_standard_output_port(VM* vm, int argc, scm_obj_t argv[])
                 raise_io_error(vm, "standard-output-port", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, scm_false);
                 return scm_undef;
             }
-            port = make_std_port(vm->m_heap, hdl, make_string_literal(vm->m_heap, "/dev/stdout"), SCM_PORT_DIRECTION_OUT, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_false);
+            port = make_std_port(vm->m_heap,
+                                 hdl,
+                                 make_string_literal(vm->m_heap, "/dev/stdout"),
+                                 SCM_PORT_DIRECTION_OUT,
+                                 0,
+                                 SCM_PORT_BUFFER_MODE_BLOCK,
+                                 scm_false);
 #else
-            port = make_std_port(vm->m_heap, dup(PORT_STDOUT_FD), make_string_literal(vm->m_heap, "/dev/stdout"), SCM_PORT_DIRECTION_OUT, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_false);
+            port = make_std_port(vm->m_heap,
+                                 dup(PORT_STDOUT_FD),
+                                 make_string_literal(vm->m_heap, "/dev/stdout"),
+                                 SCM_PORT_DIRECTION_OUT,
+                                 0,
+                                 SCM_PORT_BUFFER_MODE_BLOCK,
+                                 scm_false);
 #endif
             port->mark = std_port_position(PORT_STDOUT_FD);
             return port;
@@ -388,9 +360,21 @@ subr_standard_error_port(VM* vm, int argc, scm_obj_t argv[])
                 raise_io_error(vm, "standard-error-port", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, scm_false);
                 return scm_undef;
             }
-            port = make_std_port(vm->m_heap, hdl, make_string_literal(vm->m_heap, "/dev/stderr"), SCM_PORT_DIRECTION_OUT, 0, SCM_PORT_BUFFER_MODE_NONE, scm_false);
+            port = make_std_port(vm->m_heap,
+                                 hdl,
+                                 make_string_literal(vm->m_heap, "/dev/stderr"),
+                                 SCM_PORT_DIRECTION_OUT,
+                                 0,
+                                 SCM_PORT_BUFFER_MODE_NONE,
+                                 scm_false);
 #else
-            port = make_std_port(vm->m_heap, dup(PORT_STDERR_FD), make_string_literal(vm->m_heap, "/dev/stderr"), SCM_PORT_DIRECTION_OUT, 0, SCM_PORT_BUFFER_MODE_NONE, scm_false);
+            port = make_std_port(vm->m_heap,
+                                 dup(PORT_STDERR_FD),
+                                 make_string_literal(vm->m_heap, "/dev/stderr"),
+                                 SCM_PORT_DIRECTION_OUT,
+                                 0,
+                                 SCM_PORT_BUFFER_MODE_NONE,
+                                 scm_false);
 #endif
             port->mark = std_port_position(PORT_STDERR_FD);
             return port;
@@ -440,14 +424,14 @@ subr_port_device_subtype(VM* vm, int argc, scm_obj_t argv[])
             scm_port_t port = (scm_port_t)argv[0];
             scoped_lock lock(port->lock);
             switch (port->subtype) {
-            case SCM_PORT_SUBTYPE_NONE:
-                return make_symbol(vm->m_heap, "none");
-            case SCM_PORT_SUBTYPE_CHAR_SPECIAL:
-                return make_symbol(vm->m_heap, "char");
-            case SCM_PORT_SUBTYPE_FIFO:
-                return make_symbol(vm->m_heap, "fifo");
-            default:
-                fatal("%s:%u unknown port subtype", __FILE__, __LINE__);
+                case SCM_PORT_SUBTYPE_NONE:
+                    return make_symbol(vm->m_heap, "none");
+                case SCM_PORT_SUBTYPE_CHAR_SPECIAL:
+                    return make_symbol(vm->m_heap, "char");
+                case SCM_PORT_SUBTYPE_FIFO:
+                    return make_symbol(vm->m_heap, "fifo");
+                default:
+                    fatal("%s:%u unknown port subtype", __FILE__, __LINE__);
             }
         }
         wrong_type_argument_violation(vm, "port-device-subtype", 0, "port", argv[0], argc, argv);
@@ -517,6 +501,7 @@ subr_get_accumulated_string(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// make-string-output-port
 scm_obj_t
 subr_make_string_output_port(VM* vm, int argc, scm_obj_t argv[])
 {
@@ -531,6 +516,7 @@ subr_make_string_output_port(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// make-string-input-port
 scm_obj_t
 subr_make_string_input_port(VM* vm, int argc, scm_obj_t argv[])
 {
@@ -558,7 +544,6 @@ scm_obj_t
 subr_open_port(VM* vm, int argc, scm_obj_t argv[])
 {
     int type = 0;
-
     if (FIXNUMP(argv[0])) {
         type = FIXNUM(argv[0]);
         switch (type) {
@@ -573,9 +558,7 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "open-port", 0, "fixnum", argv[0], argc, argv);
         return scm_undef;
     }
-
     int direction = 0;
-
     if (FIXNUMP(argv[1])) {
         direction = FIXNUM(argv[1]);
         switch (type) {
@@ -590,20 +573,15 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "open-port", 1, "fixnum", argv[1], argc, argv);
         return scm_undef;
     }
-
     scm_obj_t name = argv[2];
     if (!(STRINGP(name) || SYMBOLP(name))) {
         wrong_type_argument_violation(vm, "open-port", 2, "string or symbol", argv[2], argc, argv);
         return scm_undef;
     }
-
     switch (type) {
-
         case SCM_PORT_TYPE_NAMED_FILE: {
             if (STRINGP(name)) {
-
                 int file_options;
-
                 if (FIXNUMP(argv[3])) {
                     file_options = FIXNUM(argv[3]);
                 } else if (argv[3] == scm_false) {
@@ -612,13 +590,14 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
                     wrong_type_argument_violation(vm, "open-port", 3, "#f or fixnum", argv[3], argc, argv);
                     return scm_undef;
                 }
-                if (file_options & ~(SCM_PORT_FILE_OPTION_NONE | SCM_PORT_FILE_OPTION_NO_CREATE | SCM_PORT_FILE_OPTION_NO_FAIL | SCM_PORT_FILE_OPTION_NO_TRUNCATE)) {
+                if (file_options & ~(SCM_PORT_FILE_OPTION_NONE |
+                                     SCM_PORT_FILE_OPTION_NO_CREATE |
+                                     SCM_PORT_FILE_OPTION_NO_FAIL |
+                                     SCM_PORT_FILE_OPTION_NO_TRUNCATE)) {
                     invalid_argument_violation(vm, "open-port", "bad file options,", argv[3], 3, argc, argv);
                     return scm_undef;
                 }
-
                 int buffer_mode;
-
                 if (FIXNUMP(argv[4])) {
                     buffer_mode = FIXNUM(argv[4]);
                 } else if (argv[4] == scm_false) {
@@ -634,9 +613,7 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
                         invalid_argument_violation(vm, "open-port", "bad buffer mode,", argv[4], 4, argc, argv);
                         return scm_undef;
                 }
-
                 scm_obj_t transcoder;
-
                 if (BOOLP(argv[5]) || BVECTORP(argv[5])) {
                     transcoder = argv[5];
                 } else {
@@ -653,14 +630,11 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
             }
             wrong_type_argument_violation(vm, "open-port", 2, "string", argv[2], argc, argv);
             return scm_undef;
-
         } break;
 
         case SCM_PORT_TYPE_BYTEVECTOR: {
             if (SYMBOLP(name)) {
-
                 scm_obj_t bytes;
-
                 if (BVECTORP(argv[3])) {
                     if (direction == SCM_PORT_DIRECTION_OUT) {
                         wrong_type_argument_violation(vm, "open-port", 3, "#f for bytevector output port", argv[3], argc, argv);
@@ -679,21 +653,17 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
                     wrong_type_argument_violation(vm, "open-port", 3, "#f or bytevector", argv[3], argc, argv);
                     return scm_undef;
                 }
-
                 if (argv[4] != scm_false) {
                     wrong_type_argument_violation(vm, "open-port", 4, "#f for bytevector port", argv[3], argc, argv);
                     return scm_undef;
                 }
-
                 scm_obj_t transcoder;
-
                 if (BOOLP(argv[5]) || BVECTORP(argv[5])) {
                     transcoder = argv[5];
                 } else {
                     wrong_type_argument_violation(vm, "open-port", 5, "#f, #t, or bytevector", argv[5], argc, argv);
                     return scm_undef;
                 }
-
                 try {
                     return make_bytevector_port(vm->m_heap, name, direction, bytes, transcoder);
                 } catch (io_exception_t& e) {
@@ -701,7 +671,6 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
                 return scm_unspecified;
-
             }
             wrong_type_argument_violation(vm, "open-port", 2, "symbol", argv[2], argc, argv);
             return scm_undef;
@@ -709,30 +678,24 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
 
         case SCM_PORT_TYPE_CUSTOM: {
             if (STRINGP(name)) {
-
                 scm_obj_t handlers;
-
                 if (VECTORP(argv[3])) {
                     handlers = argv[3];
                 } else {
                     wrong_type_argument_violation(vm, "open-port", 3, "vector", argv[3], argc, argv);
                     return scm_undef;
                 }
-
                 if (argv[4] != scm_false) {
                     wrong_type_argument_violation(vm, "open-port", 4, "#f for custom port", argv[3], argc, argv);
                     return scm_undef;
                 }
-
                 scm_obj_t transcoder;
-
                 if (BOOLP(argv[5])) {
                     transcoder = argv[5];
                 } else {
                     wrong_type_argument_violation(vm, "open-port", 5, "#f or #t for custom port", argv[5], argc, argv);
                     return scm_undef;
                 }
-
                 try {
                     return make_custom_port(vm->m_heap, name, direction, handlers, transcoder);
                 } catch (io_exception_t& e) {
@@ -740,13 +703,13 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
                 return scm_unspecified;
-
             }
             wrong_type_argument_violation(vm, "open-port", 2, "string", argv[2], argc, argv);
             return scm_undef;
         } break;
 
         default: assert(false);
+
     }
     return scm_unspecified;
 }
@@ -839,7 +802,12 @@ subr_make_file_output_port(VM* vm, int argc, scm_obj_t argv[])
         if (STRINGP(argv[0])) {
             scm_port_t port = NULL;
             try {
-                port = make_file_port(vm->m_heap, (scm_string_t)argv[0], SCM_PORT_DIRECTION_OUT, SCM_PORT_FILE_OPTION_NO_FAIL, SCM_PORT_BUFFER_MODE_BLOCK, scm_true);
+                port = make_file_port(vm->m_heap,
+                                      (scm_string_t)argv[0],
+                                      SCM_PORT_DIRECTION_OUT,
+                                      SCM_PORT_FILE_OPTION_NO_FAIL,
+                                      SCM_PORT_BUFFER_MODE_BLOCK,
+                                      scm_true);
                 assert(PORTP(port));
                 return port;
             } catch (io_exception_t& e) {
@@ -1052,7 +1020,7 @@ subr_set_port_position(VM* vm, int argc, scm_obj_t argv[])
                         } else {
                             invalid_argument_violation(vm, "set-port-position!", "index out of bounds,", argv[1], 1, argc, argv);
                             return scm_undef;
-                       }
+                        }
                     } catch (io_exception_t& e) {
                         raise_io_error(vm, "set-port-position!", e.m_operation, e.m_message, e.m_err, port, scm_false);
                         return scm_undef;
@@ -1246,7 +1214,7 @@ subr_get_bytevector_n_ex(VM* vm, int argc, scm_obj_t argv[])
                                 return MAKEFIXNUM(i);
                             }
                             bvector->elts[start + i] = c;
-                       }
+                        }
                         return MAKEFIXNUM(count);
                     } catch (io_exception_t& e) {
                         raise_io_error(vm, "get-bytevector-n!", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -2125,7 +2093,10 @@ subr_make_transcoded_port(VM* vm, int argc, scm_obj_t argv[])
             if (BVECTORP(argv[1])) {
                 scm_bvector_t transcoder = (scm_bvector_t)argv[1];
                 try {
-                    scm_port_t textual = make_transcoded_port(vm->m_heap, make_list(vm->m_heap, 2, make_symbol(vm->m_heap, "transcoded"), port->name), port, transcoder);
+                    scm_port_t textual = make_transcoded_port(vm->m_heap,
+                                                              make_list(vm->m_heap, 2, make_symbol(vm->m_heap, "transcoded"), port->name),
+                                                              port,
+                                                              transcoder);
                     return textual;
                 } catch (io_exception_t& e) {
                     raise_io_error(vm, "make-transcoded-port", e.m_operation, e.m_message, e.m_err, port, scm_false);
@@ -2219,7 +2190,7 @@ subr_shutdown_output_port(VM* vm, int argc, scm_obj_t argv[])
 
 void init_subr_port(object_heap_t* heap)
 {
-    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
+#define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("port?", subr_port_pred);
     DEFSUBR("input-port?", subr_input_port_pred);
@@ -2233,45 +2204,35 @@ void init_subr_port(object_heap_t* heap)
     DEFSUBR("standard-input-port", subr_standard_input_port);
     DEFSUBR("standard-output-port", subr_standard_output_port);
     DEFSUBR("standard-error-port", subr_standard_error_port);
-
     DEFSUBR("flush-output-port", subr_flush_output_port);
     DEFSUBR("output-port-buffer-mode", subr_output_port_buffer_mode);
-
     DEFSUBR("set-port-current-line!", subr_set_port_current_line);
     DEFSUBR("set-port-current-column!", subr_set_port_current_column);
     DEFSUBR("port-device-subtype", subr_port_device_subtype);
-
     DEFSUBR("native-transcoder-descriptor", subr_native_transcoder_descriptor);
     DEFSUBR("port-transcoder-descriptor", subr_port_transcoder_descriptor);
-
     DEFSUBR("extract-accumulated-bytevector", subr_extract_accumulated_bytevector);
     DEFSUBR("extract-accumulated-string", subr_extract_accumulated_string);
     DEFSUBR("get-accumulated-string", subr_get_accumulated_string);
     DEFSUBR("make-string-output-port", subr_make_string_output_port);
     DEFSUBR("make-string-input-port", subr_make_string_input_port);
-
     DEFSUBR("open-script-input-port", subr_open_script_input_port);
     DEFSUBR("make-file-input-port", subr_make_file_input_port);
     DEFSUBR("make-file-output-port", subr_make_file_output_port);
     DEFSUBR("make-temporary-file-port", subr_make_temporary_file_port);
-
     DEFSUBR("open-port", subr_open_port);
-
     DEFSUBR("nonblock-byte-ready?", subr_nonblock_byte_ready_pred);
     DEFSUBR("get-char", subr_get_char);
     DEFSUBR("lookahead-char", subr_lookahead_char);
-
     DEFSUBR("port-has-port-position?", subr_port_has_port_position_pred);
     DEFSUBR("port-position", subr_port_position);
     DEFSUBR("port-has-set-port-position!?", subr_port_has_set_port_position_pred);
     DEFSUBR("set-port-position!", subr_set_port_position);
     DEFSUBR("port-eof?", subr_port_eof_pred);
-
     DEFSUBR("get-u8", subr_get_u8);
     DEFSUBR("get-byte", subr_get_byte);
     DEFSUBR("lookahead-u8", subr_lookahead_u8);
     DEFSUBR("lookahead-byte", subr_lookahead_byte);
-
     DEFSUBR("get-bytevector-n", subr_get_bytevector_n);
     DEFSUBR("get-bytevector-n!", subr_get_bytevector_n_ex);
     DEFSUBR("get-bytevector-some", subr_get_bytevector_some);
@@ -2281,16 +2242,13 @@ void init_subr_port(object_heap_t* heap)
     DEFSUBR("get-string-all", subr_get_string_all);
     DEFSUBR("get-line", subr_get_line);
     DEFSUBR("get-datum", subr_get_datum);
-
     DEFSUBR("put-u8", subr_put_u8);
     DEFSUBR("put-byte", subr_put_byte);
     DEFSUBR("put-bytevector", subr_put_bytevector);
-
     DEFSUBR("put-char", subr_put_char);
     DEFSUBR("put-string", subr_put_string);
     DEFSUBR("put-datum", subr_put_datum);
     DEFSUBR("put-fasl", subr_put_fasl);
-
     DEFSUBR("display", subr_display);
     DEFSUBR("write", subr_write);
     DEFSUBR("newline", subr_newline);
@@ -2298,13 +2256,10 @@ void init_subr_port(object_heap_t* heap)
     DEFSUBR("read-char", subr_read_char);
     DEFSUBR("write-char", subr_write_char);
     DEFSUBR("read", subr_read);
-
     DEFSUBR("make-transcoded-port", subr_make_transcoded_port);
     DEFSUBR("set-current-input-port!", subr_set_current_input_port);
     DEFSUBR("set-current-output-port!", subr_set_current_output_port);
     DEFSUBR("set-current-error-port!", subr_set_current_error_port);
-
     DEFSUBR("shutdown-output-port", subr_shutdown_output_port);
     DEFSUBR("port-closed?", subr_port_closed_pred);
-
 }

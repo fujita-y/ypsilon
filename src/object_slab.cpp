@@ -144,7 +144,7 @@ object_slab_cache_t::new_collectible_object()
         if (synchronize) {
             if ((uintptr_t)obj >= (uintptr_t)m_heap->m_sweep_wavefront) {
                 mark(obj);
-                if (DETAILED_STATISTIC) m_heap->m_usage.m_barriered_alloc++; //m_alloc_barrier_count++;
+                if (DETAILED_STATISTIC) m_heap->m_usage.m_barriered_alloc++;
             }
             m_lock.unlock();
         }
@@ -164,7 +164,7 @@ object_slab_cache_t::new_collectible_object()
         if (synchronize) {
             if ((uintptr_t)slab >= (uintptr_t)m_heap->m_sweep_wavefront) {
                 mark(slab);
-                if (DETAILED_STATISTIC) m_heap->m_usage.m_barriered_alloc++; //m_heap->m_alloc_barrier_count++;
+                if (DETAILED_STATISTIC) m_heap->m_usage.m_barriered_alloc++;
             }
             m_lock.unlock();
         }
@@ -317,7 +317,6 @@ object_slab_cache_t::sweep(void* slab)
         }
     }
     m_lock.unlock();
-
     if (traits->refc == 0) {
         if (m_cache_count > m_cache_limit) {
             m_heap->deallocate(slab);
@@ -325,7 +324,6 @@ object_slab_cache_t::sweep(void* slab)
             return;
         }
     }
-
     size_t step = (m_object_size + OBJECT_DATUM_ALIGN_MASK) & ~OBJECT_DATUM_ALIGN_MASK;
     uint8_t* bitmap = (uint8_t*)traits - m_bitmap_size;
     uint8_t* limit = bitmap - step;

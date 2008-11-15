@@ -8,17 +8,15 @@
 #include "vm.h"
 #include "interpreter.h"
 
-#define MULTI_VM_TEST   0
-
 int             main_command_line_argc;
 char* const*    main_command_line_argv;
 
 #if _MSC_VER
-__declspec(thread) VM* s_current_vm;
+  __declspec(thread) VM* s_current_vm;
 #elif __APPLE_CC__
-pthread_key_t s_current_vm;
+  pthread_key_t s_current_vm;
 #else
-__thread VM* s_current_vm;
+  __thread VM* s_current_vm;
 #endif
 
 // --heap-limit=32   -> 32MB (default)
@@ -31,7 +29,6 @@ static int opt_heap_limit(int argc, char* const argv[])
         const int strlen_mlimit = strlen("--heap-limit=");
         const char* opt = argv[i];
         const char* param = NULL;
-
         if (strcmp(opt, "--") == 0) {
              break;
         } else if ((strlen(argv[i]) >= strlen_mlimit) && (memcmp(opt, "--heap-limit=", strlen_mlimit) == 0)) {
@@ -53,29 +50,11 @@ static int opt_heap_limit(int argc, char* const argv[])
                 exit(EXIT_FAILURE);
             }
         }
-
     }
     return value;
 }
 
-#if MULTI_VM_TEST
-
-static void*
-multi_vm_test(void* param)
-{
-    VM* vm = (VM*)param;
-    printf("sub_vm: %x\n", vm);
-    s_current_vm = vm;
-    vm->boot();
-    vm->standalone();
-    printf("sub_vm: %x terminated\n", vm);
-    return 0;
-}
-
-#endif
-
 #if _MSC_VER
-
     int main(int argc, char* argv[])
     {
         assert(isnan(VALUE_NAN));
@@ -86,33 +65,28 @@ multi_vm_test(void* param)
                 fatal("WSAStartup failed");
             }
         }
-
         main_command_line_argc = argc;
         main_command_line_argv = argv;
-
         object_heap_t* heap = new object_heap_t;
         int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
-        int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
+        int heap_init = 4 * 1024 * 1024;
         heap->init_primordial(heap_limit, heap_init);
         VM rootVM;
         rootVM.init(heap);
         s_current_vm = &rootVM;
-#if USE_PARALLEL_VM
+  #if USE_PARALLEL_VM
         Interpreter interp;
         interp.init(&rootVM, 128);
         rootVM.boot();
         rootVM.standalone();
-#else
+  #else
         rootVM.boot();
         rootVM.standalone();
-#endif
-
+  #endif
         WSACleanup();
         return 0;
     }
-
 #else
-
     static void*
     signal_waiter(void* param)
     {
@@ -168,8 +142,7 @@ multi_vm_test(void* param)
     {
         main_command_line_argc = argc;
         main_command_line_argv = argv;
-
-    #ifndef NDEBUG
+  #ifndef NDEBUG
         struct foo { char i; };
         struct bar { int i; struct foo o; };
         struct hoge { struct bar m; char k; };
@@ -188,79 +161,58 @@ multi_vm_test(void* param)
         printf("FIXNUM_MIN %d %x\n", FIXNUM_MIN, FIXNUM_MIN);
         printf("sizeof(pthread_mutex_t) %d\n", sizeof(pthread_mutex_t));
         printf("sizeof(pthread_cond_t) %d\n", sizeof(pthread_cond_t));
-    #endif
-
-    #if MTDEBUG
+  #endif
+  #if MTDEBUG
         puts(";; MTDEBUG ON");
-    #endif
-    #if GCDEBUG
+  #endif
+  #if GCDEBUG
         puts(";; GCDEBUG ON");
-    #endif
-    #if SCDEBUG
+  #endif
+  #if SCDEBUG
         puts(";; SCDEBUG ON");
-    #endif
-    #if STDEBUG
+  #endif
+  #if STDEBUG
         puts(";; STDEBUG ON");
-    #endif
-    #if HPDEBUG
+  #endif
+  #if HPDEBUG
         puts(";; HPDEBUG ON");
-    #endif
-
+  #endif
         sigset_t set;
         sigemptyset(&set);
         sigaddset(&set, SIGINT);
         sigaddset(&set, SIGPIPE);
         MTVERIFY(pthread_sigmask(SIG_BLOCK, &set, NULL));
-
         sigemptyset(&set);
         sigaddset(&set, SIGINT);
         pthread_t tid;
         MTVERIFY(pthread_create(&tid, NULL, signal_waiter, &set));
         MTVERIFY(pthread_detach(tid));
-
         object_heap_t* heap = new object_heap_t;
         int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
-        int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
-
-#ifndef NDEBUG
+        int heap_init = 4 * 1024 * 1024;
+  #ifndef NDEBUG
         printf("heap_limit %d heap_init %d\n", heap_limit, heap_init);
-#endif
-
+  #endif
         heap->init_primordial(heap_limit, heap_init);
         VM rootVM;
         rootVM.init(heap);
-#if __APPLE_CC__
+  #if __APPLE_CC__
         MTVERIFY(pthread_key_create(&s_current_vm, NULL));
         MTVERIFY(pthread_setspecific(s_current_vm, &rootVM));
-#else
+  #else
         s_current_vm = &rootVM;
-#endif
-
-#if MULTI_VM_TEST
-        VM subVM;
-        {
-            object_heap_t* sub_heap = new object_heap_t;
-            int heap_limit = opt_heap_limit(argc, argv) * 1024 * 1024;
-            int heap_init = heap_limit > 8388608 ? 8388608 : heap_limit;
-            sub_heap->init(heap_limit, heap_init);
-            subVM.init(sub_heap);
-            pthread_t tid;
-            MTVERIFY(pthread_create(&tid, NULL, multi_vm_test, &subVM));
-            MTVERIFY(pthread_detach(tid));
-        }
-#endif
-#if USE_PARALLEL_VM
+  #endif
+  #if USE_PARALLEL_VM
         Interpreter interp;
         interp.init(&rootVM, 128);
         rootVM.boot();
         rootVM.standalone();
-#else
+  #else
         rootVM.boot();
         rootVM.standalone();
-#endif
+  #endif
         return 0;
     }
-
 #endif
 
 void fatal(const char* fmt, ...)

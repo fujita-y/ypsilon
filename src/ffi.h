@@ -9,7 +9,6 @@
 #define FFI_MAX_ARGC    32
 
 #if ARCH_IA32
-
     class c_stack_frame_t {
         intptr_t m_frame[FFI_MAX_ARGC];
         int m_count;
@@ -20,11 +19,9 @@
         intptr_t* frame() { return m_frame; }
         int count() { return m_count; }
     };
-
 #endif
 
 #if ARCH_X64
-
     class c_stack_frame_t {
         intptr_t m_frame[FFI_MAX_ARGC + 8 + 8 + 6];
         int m_count;
@@ -47,7 +44,6 @@
         int count() { return m_count; }
         int sse_use() { return m_sse_count; }
     };
-
 #endif
 
 extern "C" {

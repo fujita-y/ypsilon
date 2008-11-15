@@ -14,11 +14,11 @@
 scm_gloc_t
 VM::prebind_gloc(scm_obj_t variable)
 {
-  #ifndef NDEBUG
+#ifndef NDEBUG
     if (!SYMBOLP(variable)) {
         printf("invalid gloc variable: %x\n", variable);
     }
-  #endif
+#endif
     assert(SYMBOLP(variable));
     scm_symbol_t symbol = (scm_symbol_t)variable;
     if (UNINTERNEDSYMBOLP(symbol)) {
@@ -66,21 +66,16 @@ VM::prebind_list(scm_obj_t code)
 {
 
     while (PAIRP(code)) {
-
-  #if USE_DIRECT_THREAD
+#if USE_DIRECT_THREAD
         assert(!VMINSTP(CAAR(code)));
-  #endif
-
-  #if USE_FIXNUM_THREAD
+#endif
+#if USE_FIXNUM_THREAD
         assert(!FIXNUMP(CAAR(code)));
-  #endif
-
+#endif
         scm_symbol_t symbol = (scm_symbol_t)CAAR(code);
-
-  #ifndef NDEBUG
+#ifndef NDEBUG
         if (!OPCODESYMBOLP(symbol)) printf("invalid instruction: %s\n", symbol->name);
-  #endif
-
+#endif
         assert(OPCODESYMBOLP(symbol));
         int opcode = HDR_SYMBOL_CODE(symbol->hdr);
         scm_obj_t operands = (scm_obj_t)CDAR(code);
@@ -158,12 +153,14 @@ VM::prebind_list(scm_obj_t code)
 
             case VMOP_SUBR_GLOC_OF: {
                 scm_gloc_t gloc = prebind_gloc(CAR(operands));
-  #ifndef NDEBUG
+#ifndef NDEBUG
                 if (!SUBRP(gloc->value)) {
-                    if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %x, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name, gloc->value);
+                    if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %x, maybe forward reference\n",
+                                                        ((scm_symbol_t)gloc->variable)->name,
+                                                        gloc->value);
                     else printf("** warning: expect gloc %x contain SUBR but got %x, maybe forward reference\n", gloc, gloc->value);
                 }
-  #endif
+#endif
                 if (SUBRP(gloc->value)) {
                     CAAR(code) = m_heap->inherent_symbol(VMOP_SUBR);
                     m_heap->write_barrier(gloc->value);
@@ -179,12 +176,14 @@ VM::prebind_list(scm_obj_t code)
 
             case VMOP_RET_SUBR_GLOC_OF: {
                 scm_gloc_t gloc = prebind_gloc(CAR(operands));
-            #ifndef NDEBUG
+#ifndef NDEBUG
                 if (!SUBRP(gloc->value)) {
-                    if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %x, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name, gloc->value);
+                    if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %x, maybe forward reference\n",
+                                                        ((scm_symbol_t)gloc->variable)->name,
+                                                        gloc->value);
                     else printf("** warning: expect gloc %x contain SUBR but got %x, maybe forward reference\n", gloc, gloc->value);
                 }
-            #endif
+#endif
                 if (SUBRP(gloc->value)) {
                     CAAR(code) = m_heap->inherent_symbol(VMOP_RET_SUBR);
                     m_heap->write_barrier(gloc->value);
@@ -200,9 +199,9 @@ VM::prebind_list(scm_obj_t code)
 
             case VMOP_PUSH_CLOSE_LOCAL:
             case VMOP_EXTEND_ENCLOSE_LOCAL:
-  #if USE_SYMBOL_THREAD
+#if USE_SYMBOL_THREAD
                 if (SYMBOLP(CAAR(operands))) break;
-  #endif
+#endif
                 prebind_list(CDR(operands));
                 m_heap->write_barrier(CDR(operands));
                 CDAR(code) = CDR(operands);
@@ -215,16 +214,16 @@ VM::prebind_list(scm_obj_t code)
             case VMOP_RET_CLOSE:
             case VMOP_PUSH_CLOSE:
             case VMOP_EXTEND_ENCLOSE: {
-  #if USE_SYMBOL_THREAD
+#if USE_SYMBOL_THREAD
                 if (CLOSUREP(operands)) break;
-  #endif
+#endif
                 prebind_list(CDR(operands));
-  #if PREBIND_CLOSE
+#if PREBIND_CLOSE
                 scm_obj_t spec = CAR(operands);
                 scm_closure_t closure = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), NULL, CDR(operands), CDDR(spec));
                 m_heap->write_barrier(closure);
                 CDAR(code) = closure;
-  #endif
+#endif
             } break;
 
             case VMOP_IF_TRUE:
@@ -271,14 +270,11 @@ VM::prebind_list(scm_obj_t code)
 void
 VM::prebind(scm_obj_t code)
 {
-  #if USE_DIRECT_THREAD
+#if USE_DIRECT_THREAD
     if (VMINSTP(CAAR(code))) return;
-  #endif
-
-  #if USE_FIXNUM_THREAD
+#endif
+#if USE_FIXNUM_THREAD
     if (FIXNUMP(CAAR(code))) return;
-  #endif
-
+#endif
     prebind_list(code);
-//  printf("prebind: m_heap->m_hidden_variables->datum->live %d\n", m_heap->m_hidden_variables->datum->live);
 }

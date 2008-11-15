@@ -19,13 +19,11 @@ class serializer_t {
     void emit_u8(uint8_t octet);
     void emit_u32(uint32_t n);
     void emit_u64(uint64_t n);
-    void emit_bytes(const char* s, int n);
-
+    void emit_bytes(const uint8_t* s, int n);
     void expand();
     void scan(scm_obj_t obj);
     void push(scm_obj_t obj);
     scm_obj_t pop();
-
     void put_lites();
     void put_list(scm_obj_t obj);
     void put_datum(scm_obj_t obj);
@@ -42,12 +40,12 @@ class deserializer_t {
     uint8_t*        m_buf;
     uint8_t*        m_buf_tail;
 
-    uint8_t fetch_u8();
-    uint32_t fetch_u32();
-    uint64_t fetch_u64();
-
-    void get_lites();
-    scm_obj_t get_datum();
+    uint8_t     fetch_u8();
+    uint32_t    fetch_u32();
+    uint64_t    fetch_u64();
+    void        fetch_bytes(uint8_t* p, int n);
+    void        get_lites();
+    scm_obj_t   get_datum();
 
 public:
     deserializer_t(object_heap_t* heap);

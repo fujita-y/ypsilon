@@ -86,7 +86,6 @@ public:
     void                resolve();
 
 private:
-
     scm_gloc_t          prebind_gloc(scm_obj_t variable);
     void                prebind_list(scm_obj_t code);
 
@@ -121,7 +120,6 @@ public:
 #endif
 
 #if PROFILE_OPCODE
-
     struct opcode_profile_t {
         int         opcode;
         uint64_t    count;
@@ -130,17 +128,13 @@ public:
     opcode_profile_t m_opcode_profile[VMOP_INSTRUCTION_COUNT];
     static int comp_profile_rec(const void* a1, const void* a2);
     void display_opcode_profile();
-
 #endif
 
 #if PROFILE_SUBR
-
     void display_subr_profile();
-
 #endif
 
 #if USE_DIRECT_THREAD
-
     scm_obj_t symbol_to_instruction(scm_obj_t obj) {
         assert(OPCODESYMBOLP(obj));
         scm_symbol_t symbol = (scm_symbol_t)obj;
@@ -155,9 +149,9 @@ public:
         for (int i = 0; i < array_sizeof(m_dispatch_table); i++) {
             if ((uintptr_t)m_dispatch_table[i] == adrs) return i;
         }
-#ifndef NDEBUG
+  #ifndef NDEBUG
         printf("bad instruction 0x%x\n", obj);
-#endif
+  #endif
         assert(false);
         return 0;
     }
@@ -176,7 +170,6 @@ public:
 #endif
 
 #if USE_FIXNUM_THREAD
-
     #define FIXNUM_OPCODE_SHIFT 7
 
     scm_obj_t symbol_to_instruction(scm_obj_t obj) {
@@ -195,12 +188,8 @@ public:
     scm_obj_t opcode_to_instruction(int opcode) {
         return MAKEFIXNUM((intptr_t)opcode << FIXNUM_OPCODE_SHIFT);
     }
-
-
 #endif
-
 #if USE_SYMBOL_THREAD
-
     scm_obj_t symbol_to_instruction(scm_obj_t obj) {
         assert(OPCODESYMBOLP(obj));
         return obj;
@@ -215,11 +204,13 @@ public:
         assert(opcode >= 0 && opcode < VMOP_INSTRUCTION_COUNT);
         return m_heap->inherent_symbol(opcode);
     }
-
 #endif
 
 #if USE_PARALLEL_VM
-    Interpreter* m_interp;
+    Interpreter*    m_interp;
+    VM*             m_parent;
+    int             m_id;
+    int             m_child;
 #endif
 
 } ATTRIBUTE(aligned(16));

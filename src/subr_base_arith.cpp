@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 
 #include "core.h"
@@ -805,7 +805,6 @@ subr_denominator(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-
 // floor
 scm_obj_t
 subr_floor(VM* vm, int argc, scm_obj_t argv[])
@@ -1131,8 +1130,8 @@ subr_expt(VM* vm, int argc, scm_obj_t argv[])
         if (number_pred(argv[0])) {
             if (number_pred(argv[1])) {
                 if (argv[0] == MAKEFIXNUM(1)) {
-                   if (n_exact_pred(argv[1])) return MAKEFIXNUM(1);
-                   return make_flonum(vm->m_heap, 1.0);
+                    if (n_exact_pred(argv[1])) return MAKEFIXNUM(1);
+                    return make_flonum(vm->m_heap, 1.0);
                 }
                 if (argv[0] == MAKEFIXNUM(-1) && n_exact_pred(argv[1])) {
                     if (n_even_pred(argv[1])) return MAKEFIXNUM(1);
@@ -1281,10 +1280,10 @@ subr_number_to_string(VM* vm, int argc, scm_obj_t argv[])
             if (FIXNUMP(argv[1])) {
                 radix = FIXNUM(argv[1]);
                 switch (radix) {
-                case 2: case 8: case 10: case 16: break;
-                default:
-                    invalid_argument_violation(vm, "number->string", "radix must be either 2, 8, 10 or 16, but got", argv[1], 1, argc, argv);
-                    return scm_undef;
+                    case 2: case 8: case 10: case 16: break;
+                    default:
+                        invalid_argument_violation(vm, "number->string", "radix must be either 2, 8, 10 or 16, but got", argv[1], 1, argc, argv);
+                        return scm_undef;
                 }
             } else {
                 if (exact_non_negative_integer_pred(argv[1])) {
@@ -1325,10 +1324,10 @@ subr_string_to_number(VM* vm, int argc, scm_obj_t argv[])
             if (FIXNUMP(argv[1])) {
                 radix = FIXNUM(argv[1]);
                 switch (radix) {
-                case 2: case 8: case 10: case 16: break;
-                default:
-                    invalid_argument_violation(vm, "string->number", "radix must be either 2, 8, 10 or 16, but got", argv[1], 1, argc, argv);
-                    return scm_undef;
+                    case 2: case 8: case 10: case 16: break;
+                    default:
+                        invalid_argument_violation(vm, "string->number", "radix must be either 2, 8, 10 or 16, but got", argv[1], 1, argc, argv);
+                        return scm_undef;
                 }
             } else {
                 if (exact_non_negative_integer_pred(argv[1])) {
@@ -1352,10 +1351,9 @@ subr_string_to_number(VM* vm, int argc, scm_obj_t argv[])
 
 ///
 
-
 void init_subr_base_arith(object_heap_t* heap)
 {
-    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
+#define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("number?", subr_number_pred);
     DEFSUBR("complex?", subr_complex_pred);
@@ -1367,10 +1365,8 @@ void init_subr_base_arith(object_heap_t* heap)
     DEFSUBR("integer-valued?", subr_integer_valued_pred);
     DEFSUBR("exact?", subr_exact_pred);
     DEFSUBR("inexact?", subr_inexact_pred);
-
     DEFSUBR("inexact", subr_inexact);
     DEFSUBR("exact", subr_exact);
-
     DEFSUBR("=", subr_num_eq);
     DEFSUBR("<", subr_num_lt);
     DEFSUBR(">", subr_num_gt);

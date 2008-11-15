@@ -36,7 +36,6 @@
 
 #define SCM_CHAR_LF             MAKECHAR(SCM_PORT_UCS4_LF)
 #define SCM_CHAR_OCTET_MAX      4
-
 #define CUSTOM_PORT_FORCE_SYNC  1
 
 static void throw_io_error(int operation, int code)
@@ -467,14 +466,12 @@ device_write(scm_port_t port, uint8_t* p, int size, off64_t mark)
         }
         return;
     }
-
     fatal("%s:%u wrong port type", __FILE__, __LINE__);
 }
 
 static void
 device_set_mark(scm_port_t port, off64_t offset)
 {
-
     if (port->type == SCM_PORT_TYPE_NAMED_FILE) {
         switch (port->subtype) {
 
@@ -523,7 +520,6 @@ device_close(scm_port_t port)
         port->fd = INVALID_FD;
         return;
     }
-
     if (port->type == SCM_PORT_TYPE_CUSTOM) {
         VM* vm = current_vm();
         assert(VECTORP(port->handlers));
@@ -606,9 +602,7 @@ port_open_std(scm_port_t port, fd_t fd, scm_obj_t name, int direction, int file_
 {
     assert(PORTP(port));
     assert(STRINGP(name));
-
     port->lock.verify_locked();
-
     port->fd = fd;
     port->opened = true;
     port->type = SCM_PORT_TYPE_NAMED_FILE;
@@ -621,7 +615,6 @@ port_open_std(scm_port_t port, fd_t fd, scm_obj_t name, int direction, int file_
     port->buffer_mode = buffer_mode;
     port->file_options = file_options;
     port->force_sync = false;
-
     init_port_tracking(port);
     init_port_transcoder(port);
     init_port_buffer(port);
@@ -654,11 +647,8 @@ port_open_file(scm_port_t port, scm_obj_t name, int direction, int file_options,
 {
     assert(PORTP(port));
     assert(STRINGP(name));
-
     const char* path = ((scm_string_t)name)->name;
-
     port->lock.verify_locked();
-
     port->fd = INVALID_FD;
     port->opened = false;
     port->type = SCM_PORT_TYPE_NAMED_FILE;
@@ -671,12 +661,9 @@ port_open_file(scm_port_t port, scm_obj_t name, int direction, int file_options,
     port->buffer_mode = buffer_mode;
     port->file_options = file_options;
     port->force_sync = false;
-
     int options = 0;
     switch (port->subtype) {
-
         case SCM_PORT_SUBTYPE_NONE: {
-
             switch (port->direction) {
                 case SCM_PORT_DIRECTION_IN:
                     options = O_RDONLY;
@@ -688,7 +675,6 @@ port_open_file(scm_port_t port, scm_obj_t name, int direction, int file_options,
                     options = O_CREAT | O_TRUNC | O_EXCL | O_RDWR;
                     break;
             }
-
             if (SCM_PORT_FILE_OPTION_NO_CREATE & file_options) options &= (~O_CREAT);
             if (SCM_PORT_FILE_OPTION_NO_FAIL & file_options) options &= (~O_EXCL);
             if (SCM_PORT_FILE_OPTION_NO_TRUNCATE & file_options) options &= (~O_TRUNC);
@@ -708,20 +694,16 @@ port_open_file(scm_port_t port, scm_obj_t name, int direction, int file_options,
                     options = O_RDWR;
                     break;
             }
-
         } break;
 
-        default:
-            fatal("%s:%u wrong port subtype", __FILE__, __LINE__);
+        default: fatal("%s:%u wrong port subtype", __FILE__, __LINE__);
 
     }
     port->fd = io_open(path, options, (S_IRUSR | S_IWUSR));
     if (port->fd == INVALID_FD) throw_io_error(SCM_PORT_OPERATION_OPEN, errno);
-
     init_port_tracking(port);
     init_port_transcoder(port);
     init_port_buffer(port);
-
     port->opened = true;
 }
 
@@ -730,9 +712,7 @@ port_open_temp_file(scm_port_t port, scm_obj_t name, int buffer_mode, scm_obj_t 
 {
     assert(PORTP(port));
     assert(STRINGP(name));
-
     port->lock.verify_locked();
-
     port->fd = INVALID_FD;
     port->opened = false;
     port->type = SCM_PORT_TYPE_NAMED_FILE;
@@ -745,15 +725,12 @@ port_open_temp_file(scm_port_t port, scm_obj_t name, int buffer_mode, scm_obj_t 
     port->buffer_mode = buffer_mode;
     port->file_options = SCM_PORT_FILE_OPTION_NONE;
     port->force_sync = false;
-
     char tmpl[256] = "/tmp/scm_temp_XXXXXX";
     port->fd = io_mkstemp(tmpl);
     if (port->fd == INVALID_FD) throw_io_error(SCM_PORT_OPERATION_OPEN, errno);
-
     init_port_tracking(port);
     init_port_transcoder(port);
     init_port_buffer(port);
-
     port->opened = true;
 }
 
@@ -765,34 +742,27 @@ port_open_bytevector(scm_port_t port, scm_obj_t name, int direction, scm_obj_t b
     assert((bytes == scm_false) || BVECTORP(bytes));
     assert(direction != SCM_PORT_DIRECTION_BOTH);
     assert((direction & SCM_PORT_DIRECTION_OUT) || BVECTORP(bytes));
-
     port->lock.verify_locked();
-
     port->fd = INVALID_FD;
     port->opened = false;
     port->type = SCM_PORT_TYPE_BYTEVECTOR;
     port->subtype = SCM_PORT_SUBTYPE_NONE;
     port->handlers = scm_false;
-
     if (port->direction & SCM_PORT_DIRECTION_OUT) port->bytes = scm_false;
     else port->bytes = bytes;
-
     port->name = name;
     port->direction = direction;
     port->transcoder = transcoder;
     port->buffer_mode = SCM_PORT_BUFFER_MODE_NONE;
     port->file_options = SCM_PORT_FILE_OPTION_NONE;
     port->force_sync = false;
-
     init_port_tracking(port);
     init_port_transcoder(port);
-
     port->buf = NULL;
     port->buf_head = NULL;
     port->buf_tail = NULL;
     port->buf_size = 0;
     port->buf_state = (port->direction & SCM_PORT_DIRECTION_OUT) ? SCM_PORT_BUF_STATE_ACCUMULATE : SCM_PORT_BUF_STATE_UNSPECIFIED;
-
     port->opened = true;
 }
 
@@ -801,27 +771,22 @@ port_make_socket_port(scm_port_t port, scm_socket_t socket, scm_obj_t transcoder
 {
     assert(PORTP(port));
     assert(SOCKETP(socket));
-
     port->lock.verify_locked();
-
     port->fd = INVALID_FD;
     port->opened = false;
     port->type = SCM_PORT_TYPE_SOCKET;
     port->subtype = SCM_PORT_SUBTYPE_NONE;
     port->handlers = scm_false;
     port->bytes = scm_false;
-
     port->name = socket;
     port->direction = SCM_PORT_DIRECTION_BOTH;
     port->transcoder = transcoder;
     port->buffer_mode = SCM_PORT_BUFFER_MODE_BLOCK;
     port->file_options = SCM_PORT_FILE_OPTION_NONE;
     port->force_sync = false;
-
     init_port_tracking(port);
     init_port_transcoder(port);
     init_port_buffer(port);
-
     port->opened = true;
 }
 
@@ -831,32 +796,26 @@ port_make_custom_port(scm_port_t port, scm_obj_t name, int direction, scm_obj_t 
     assert(PORTP(port));
     assert(STRINGP(name));
     assert(VECTORP(handlers));
-
     port->lock.verify_locked();
-
     port->fd = INVALID_FD;
     port->opened = false;
     port->type = SCM_PORT_TYPE_CUSTOM;
     port->subtype = SCM_PORT_SUBTYPE_NONE;
     port->handlers = handlers;
     port->bytes = make_bvector(current_vm()->m_heap, SCM_PORT_CUSTOM_BUFFER_SIZE);
-
     port->name = name;
     port->direction = direction;
     port->transcoder = transcoder;
     port->buffer_mode = SCM_PORT_BUFFER_MODE_BLOCK;
     port->file_options = SCM_PORT_FILE_OPTION_NONE;
-
 #if CUSTOM_PORT_FORCE_SYNC
     port->force_sync = true;
 #else
     port->force_sync = false;
 #endif
-
     init_port_tracking(port);
     init_port_transcoder(port);
     init_port_buffer(port);
-
     port->opened = true;
 }
 
@@ -864,7 +823,6 @@ void
 port_make_transcoded_port(scm_obj_t name, scm_port_t binary, scm_port_t textual, scm_bvector_t transcoder)
 {
     assert(BVECTORP(transcoder));
-
     binary->lock.verify_locked();
     textual->lock.verify_locked();
     textual->bytes = binary->bytes;
@@ -893,7 +851,6 @@ port_make_transcoded_port(scm_obj_t name, scm_port_t binary, scm_port_t textual,
     textual->track_line_column = binary->track_line_column;
     textual->opened = binary->opened;
     textual->force_sync = binary->force_sync;
-
     binary->fd = INVALID_FD;
     binary->opened = false;
     binary->buf = NULL;
@@ -948,29 +905,26 @@ port_nonblock_byte_ready(scm_port_t port)
     assert(port->direction & SCM_PORT_DIRECTION_IN);
     if (port->opened) {
         switch (port->type) {
-
-        case SCM_PORT_TYPE_SOCKET: {
-            if (no_input_buffered(port)) {
-                scm_obj_t socket = port_socket(port);
-                assert(SOCKETP(socket));
-                int fd = ((scm_socket_t)socket)->fd;
-                struct timeval tm = { 0, 0 };
-                fd_set fds;
-                FD_ZERO(&fds);
-                FD_SET(fd, &fds);
-                int state = select(fd + 1, &fds, NULL, NULL, &tm);
-                if (state < 0) {
-                     if (errno == EINTR) return false;
-                     throw_io_error(SCM_PORT_OPERATION_SELECT, errno);
+            case SCM_PORT_TYPE_SOCKET: {
+                if (no_input_buffered(port)) {
+                    scm_obj_t socket = port_socket(port);
+                    assert(SOCKETP(socket));
+                    int fd = ((scm_socket_t)socket)->fd;
+                    struct timeval tm = { 0, 0 };
+                    fd_set fds;
+                    FD_ZERO(&fds);
+                    FD_SET(fd, &fds);
+                    int state = select(fd + 1, &fds, NULL, NULL, &tm);
+                    if (state < 0) {
+                        if (errno == EINTR) return false;
+                        throw_io_error(SCM_PORT_OPERATION_SELECT, errno);
+                    }
+                    return (state != 0);
                 }
-                return (state != 0);
-            }
-        } break;
+            } break;
 
-        case SCM_PORT_TYPE_NAMED_FILE: {
-
+            case SCM_PORT_TYPE_NAMED_FILE: {
                 switch (port->subtype) {
-
                     case SCM_PORT_SUBTYPE_FIFO: {
                         if (no_input_buffered(port)) {
                             DWORD bytes;
@@ -992,11 +946,9 @@ port_nonblock_byte_ready(scm_port_t port)
                         }
                     } break;
 
-                    case SCM_PORT_SUBTYPE_NONE:
-                        return false;
+                    case SCM_PORT_SUBTYPE_NONE: return false;
 
-                    default:
-                        fatal("%s:%u wrong port subtype", __FILE__, __LINE__);
+                    default: fatal("%s:%u wrong port subtype", __FILE__, __LINE__);
 
                 }
 
@@ -1008,21 +960,16 @@ port_nonblock_byte_ready(scm_port_t port)
 
             default:
                 fatal("%s:%u wrong port type", __FILE__, __LINE__);
-
         }
     }
-
     return true;
-
 #else
-
     assert(PORTP(port));
     port->lock.verify_locked();
     assert(port->opened);
     assert(port->direction & SCM_PORT_DIRECTION_IN);
     if (port->opened) {
         switch (port->type) {
-
             case SCM_PORT_TYPE_SOCKET: {
                 if (no_input_buffered(port)) {
                     scm_obj_t socket = port_socket(port);
@@ -1036,7 +983,7 @@ port_nonblock_byte_ready(scm_port_t port)
                     if (state < 0) {
                          if (errno == EINTR) return false;
                          throw_io_error(SCM_PORT_OPERATION_SELECT, errno);
-                     }
+                    }
                     return (state != 0);
                 }
             } break;
@@ -1615,8 +1562,7 @@ port_lookahead_utf16(scm_port_t port)
                 }
             } break;
 
-            default:
-                fatal("%s:%u wrong port type", __FILE__, __LINE__);
+            default: fatal("%s:%u wrong port type", __FILE__, __LINE__);
 
         }
     }
@@ -1728,7 +1674,6 @@ hit_eof:
         port->lock.verify_locked();
         assert(port->direction & SCM_PORT_DIRECTION_IN);
         uint8_t cp932[2];
-
         if (port->opened) {
         top:
             int b = port_lookahead_byte(port);
@@ -1767,7 +1712,10 @@ hit_eof:
                             } else {
                                 assert(port->buf == NULL);
                                 while (port->lookahead_size < code_length) {
-                                    int n = device_read(port, port->lookahead + port->lookahead_size, code_length - port->lookahead_size, port->mark + port->lookahead_size);
+                                    int n = device_read(port,
+                                                        port->lookahead + port->lookahead_size,
+                                                        code_length - port->lookahead_size,
+                                                        port->mark + port->lookahead_size);
                                     port->lookahead_size += n;
                                     if (n == 0) goto hit_eof;
                                 }
@@ -1775,8 +1723,7 @@ hit_eof:
                             }
                         } break;
 
-                        default:
-                            fatal("%s:%u wrong port type", __FILE__, __LINE__);
+                        default: fatal("%s:%u wrong port type", __FILE__, __LINE__);
 
                     }
                 }
@@ -1827,7 +1774,6 @@ hit_eof:
         port->lock.verify_locked();
         assert(port->direction & SCM_PORT_DIRECTION_IN);
         uint8_t cp932[2];
-
         if (port->opened) {
 
         top:
@@ -1907,8 +1853,7 @@ port_set_mark(scm_port_t port, off64_t offset)
                 device_set_mark(port, offset);
             } break;
 
-            default:
-                fatal("%s:%u wrong port type", __FILE__, __LINE__);
+            default: fatal("%s:%u wrong port type", __FILE__, __LINE__);
 
         }
         port->track_line_column = false;
@@ -1983,8 +1928,7 @@ port_put_byte(scm_port_t port, int byte)
                 return;
             } break;
 
-            default:
-                fatal("%s:%u wrong port type", __FILE__, __LINE__);
+            default: fatal("%s:%u wrong port type", __FILE__, __LINE__);
 
         }
     }
@@ -2442,8 +2386,7 @@ port_putc(scm_port_t port, int32_t ucs4)
             }
         }
 
-        default:
-            throw_codec_error(SCM_PORT_OPERATION_ENCODE, "utf-16 codec not supported", scm_eof);
+        default: throw_codec_error(SCM_PORT_OPERATION_ENCODE, "utf-16 codec not supported", scm_eof);
     }
 }
 
@@ -2508,7 +2451,6 @@ port_format(scm_port_t port, const char *fmt, ...)
     assert(PORTP(port));
     char buf[128];
     va_list ap;
-
     va_start(ap, fmt);
     int n = vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);

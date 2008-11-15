@@ -520,7 +520,7 @@
             (else
              (rewrite-body body (reverse defs) (reverse macros) renames))))))
 
-(define import-top-level-bindings
+#;(define import-top-level-bindings
   (lambda (bindings)
     (for-each (lambda (binding)
                 (let ((intern (car binding)) (extern (cddr binding)))
@@ -531,6 +531,20 @@
                         (cond ((core-hashtable-ref (current-macro-environment) extern #f)
                                => (lambda (deno) (core-hashtable-set! (current-macro-environment) intern deno)))
                               (else (set-top-level-value! intern (top-level-value extern))))))))
+              bindings)))
+
+(define import-top-level-bindings
+  (lambda (bindings)
+    (for-each (lambda (binding)
+                (let ((intern (car binding)) (extern (cddr binding)))
+                  (or (eq? intern extern)
+                      (cond ((core-hashtable-ref (current-macro-environment) extern #f)
+                             => (lambda (deno)
+                                  (if (top-level-bound? intern) (set-top-level-value! intern .&UNDEF))
+                                  (core-hashtable-set! (current-macro-environment) intern deno)))
+                            (else
+                             (core-hashtable-delete! (current-macro-environment) intern)
+                             (set-top-level-value! intern (top-level-value extern)))))))
               bindings)))
 
 (define expand-import

@@ -588,6 +588,7 @@
     make-record-type-descriptor
     make-rectangular
     make-serious-condition
+    make-shared-core-hashtable
     make-shared-queue
     make-socket
     make-string
@@ -607,6 +608,7 @@
     make-weak-core-hashtable
     make-weak-hashtable
     make-weak-mapping
+    make-weak-shared-core-hashtable
     make-who-condition
     map
     max
@@ -744,6 +746,8 @@
     set-top-level-value!
     shared-queue-pop!
     shared-queue-push!
+    shared-queue-shutdown
+    shared-queue?
     shutdown-output-port
     simple-conditions
     sin
@@ -826,6 +830,7 @@
     tan
     textual-port?
     time-usage
+    timeout-object?
     top-level-bound?
     top-level-value
     transcoded-port

@@ -7,7 +7,6 @@
 #ifndef OBJECT_HEAP_H_INCLUDED
 #define OBJECT_HEAP_H_INCLUDED
 
-// prime (127, 251, 509, 1021, 2039, 4093, 8191, 16381, 32749, 65521)
 #define KEYWORD_TABLE_SIZE_INIT     127
 #define STRING_TABLE_SIZE_INIT      1021
 #define GLOC_TABLE_SIZE_INIT        8191
@@ -31,8 +30,9 @@
 #define ROOT_SNAPSHOT_GLOBALS           0
 #define ROOT_SNAPSHOT_LOCALS            1
 #define ROOT_SNAPSHOT_EVERYTHING        2
+#define ROOT_SNAPSHOT_RETRY             3
 #if HPDEBUG
-#define ROOT_SNAPSHOT_CONSISTENCY_CHECK 3
+  #define ROOT_SNAPSHOT_CONSISTENCY_CHECK 4
 #endif
 
 #define PTAG_FREE       0x00
@@ -92,23 +92,19 @@ public:
     object_slab_cache_t m_flonums;
 
 public:
-
     int                 m_trip_bytes;
     int                 m_collect_trip_bytes;
     int                 m_stop_the_world;
-
     uint8_t*            m_sweep_wavefront;
     int                 m_write_barrier;
     int                 m_read_barrier;
     int                 m_alloc_barrier;
-
     uint8_t*            m_pool;
     size_t              m_pool_size;
     int                 m_pool_watermark;
     int                 m_pool_memo;
     int                 m_pool_usage;
     int                 m_pool_threshold;
-
     scm_obj_t*          m_mark_stack;
     scm_obj_t*          m_mark_sp;
     int                 m_mark_stack_size;
@@ -117,13 +113,11 @@ public:
     cond_t              m_collector_wake;
     cond_t              m_mutator_wake;
     int                 m_mutator_stopped;
-
     queue_t<scm_obj_t>  m_shade_queue;
     int                 m_collector_ready;
     int                 m_collector_terminating;
     int                 m_collector_kicked;
     int                 m_root_snapshot;
-
     object_set_t        m_symbol;
     object_set_t        m_string;
     scm_environment_t   m_system_environment;
@@ -136,13 +130,10 @@ public:
     scm_hashtable_t     m_trampolines;
     scm_obj_t*          m_inherents;
     collector_usage_t   m_usage;
-
 #if USE_PARALLEL_VM
     object_heap_t*      m_primordial;
     object_heap_t*      m_parent;
-//    scm_hashtable_t     m_thread_context;
 #endif
-
 
     void                init_common(size_t pool_size, size_t initial_datum_size);
 
@@ -151,10 +142,8 @@ public:
     void                init_primordial(size_t pool_size, size_t initial_datum_size);
     void                init_child(size_t pool_size, size_t initial_datum_size, object_heap_t* parent);
     void                destroy();
-
     void*               allocate(size_t size, bool slab, bool gc);
     void                deallocate(void* p);
-
     scm_obj_t           allocate_collectible(size_t size);
     scm_pair_t          allocate_cons();
     scm_flonum_t        allocate_flonum();
@@ -162,7 +151,6 @@ public:
     void*               allocate_private(size_t size);
     void                deallocate_private(void* obj);
     int                 allocated_size(void* obj);
-
 
     bool in_slab(void* obj) {
         assert(obj);
@@ -178,8 +166,7 @@ public:
         return (m_pool[index] & PTAG_SLAB) && OBJECT_SLAB_TRAITS_OF(obj)->free != NULL;
     }
 
-    bool in_heap(void* obj) {
-        // note: include vm stack
+    bool in_heap(void* obj) { // note: include vm stack
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         return (index >= 0 && index < m_pool_watermark);
     }
@@ -194,16 +181,14 @@ public:
     scm_obj_t           lookup_system_environment(scm_symbol_t symbol);
     void                intern_system_environment(scm_symbol_t symbol, scm_obj_t value);
     void                intern_system_subr(const char *name, subr_proc_t proc);
-
     void                init_inherents();
+    void                init_architecture_feature();
 
     scm_symbol_t inherent_symbol(int code) const {
         assert(code < INHERENT_TOTAL_COUNT);
         assert(SYMBOLP(m_inherents[code]));
         return (scm_symbol_t)m_inherents[code];
     }
-
-    void                init_architecture_feature();
 
 public:
     relocate_info_t*    relocate(bool pack);
@@ -214,38 +199,28 @@ public:
     void                compact_pool();
 
 private:
-
     bool                extend_pool(size_t extend_size);
-
     void                shade(scm_obj_t obj);
     void                interior_shade(void* obj);
-
-//    void                mark_weakmapping(object_slab_traits_t* traits);
     void                break_weakmapping(object_slab_traits_t* traits);
 
 public:
-
     void            collect();
     void            collector_init();
-
     static thread_main_t collector_thread(void* param);
     static void     concurrent_collect(object_heap_t& heap);
     static void     synchronized_collect(object_heap_t& heap);
-
     void            concurrent_marking();
     bool            serial_marking();
     void            write_barrier(scm_obj_t rhs);
     void            trace(scm_obj_t obj);
     void            dequeue_root();
     void            enqueue_root(scm_obj_t obj);
-
     void            display_object_statistics(scm_port_t port);
     void            display_heap_statistics(scm_port_t port);
-
 #if HPDEBUG
     void            consistency_check();
 #endif
-
 };
 
 #endif
