@@ -10,9 +10,9 @@
 #include "socket.h"
 
 #if _MSC_VER
-    #define CLOSE_SOCKET closesocket
+  #define CLOSE_SOCKET closesocket
 #else
-    #define CLOSE_SOCKET close
+  #define CLOSE_SOCKET close
 #endif
 
 static void
@@ -33,7 +33,6 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
     s->lock.verify_locked();
     struct addrinfo hints;
     struct addrinfo* list;
-
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = family;
     hints.ai_socktype = type;
@@ -42,7 +41,6 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
     hints.ai_canonname = NULL;
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
-
     int retval = getaddrinfo(node, service, &hints, &list);
 #if _MSC_VER
     if (retval) {
@@ -160,6 +158,7 @@ socket_recv(scm_socket_t s, uint8_t* buf, int len, int flags, bool* again)
 {
     s->lock.verify_locked();
     assert(s->fd != INVALID_SOCKET);
+
 loop:
     int n = recv(s->fd, (char*)buf, len, flags);
     if (n < 0) {
@@ -182,6 +181,7 @@ socket_accept(object_heap_t* heap, scm_socket_t s)
     assert(s->fd != INVALID_SOCKET);
     struct sockaddr_storage addr;
     socklen_t addrlen = sizeof(addr);
+
 loop:
     int fd = accept(s->fd, (sockaddr*)&addr, &addrlen);
     if (fd < 0) {

@@ -347,7 +347,6 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         sched_yield();
     }
 
-
 #endif
 
 #endif  // SYSDEP_H_INCLUDED

@@ -23,16 +23,12 @@ public:
 public:
                     object_set_t();
                     ~object_set_t();
-
     void            init(object_heap_t* heap);
-
     scm_obj_t       get(const char* name, int len);
     void            put(scm_obj_t obj);
     void            remove(scm_obj_t obj);
-
     void            lock();
     void            unlock();
-
     void            sweep();
     void            inplace_rehash();
     void            resolve();

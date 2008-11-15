@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 
 #include "core.h"
@@ -1898,70 +1898,7 @@ subr_utf8_string(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "utf8->string", 1, 1, argc, argv);
     return scm_undef;
 }
-/*
-// string->cstring
-scm_obj_t
-subr_string_cstring(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 1) {
-        if (STRINGP(argv[0])) {
-            scm_string_t string = (scm_string_t)argv[0];
-            int size = string->size;
-            scm_bvector_t bvector = make_bvector(vm->m_heap, size + 1);
-            memcpy(bvector->elts, string->name, size);
-            bvector->elts[size] = 0;
-            return bvector;
-        }
-        wrong_type_argument_violation(vm, "string->cstring", 0, "string", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "string->cstring", 1, 1, argc, argv);
-    return scm_undef;
-}
 
-// string->utf8+nul
-scm_obj_t
-subr_string_utf8_nul(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 1) {
-        if (STRINGP(argv[0])) {
-            scm_string_t string = (scm_string_t)argv[0];
-            int size = string->size;
-            scm_bvector_t bvector = make_bvector(vm->m_heap, size + 1);
-            memcpy(bvector->elts, string->name, size);
-            bvector->elts[size] = 0;
-            return bvector;
-        }
-        wrong_type_argument_violation(vm, "string->utf8+nul", 0, "string", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "string->utf8+nul", 1, 1, argc, argv);
-    return scm_undef;
-}
-
-// cstring->string
-scm_obj_t
-subr_cstring_string(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 1) {
-        if (BVECTORP(argv[0])) {
-            scm_bvector_t bvector = (scm_bvector_t)argv[0];
-            int count = bvector->count;
-            int n;
-            for (n = 0; n < count; n++) {
-                if (bvector->elts[n]) continue;
-            }
-            scm_string_t string = make_string(vm->m_heap, n, ' ');
-            memcpy(string->name, bvector->elts, n);
-            return string;
-        }
-        wrong_type_argument_violation(vm, "cstring->string", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "cstring->string", 1, 1, argc, argv);
-    return scm_undef;
-}
-*/
 // make-bytevector-mapping
 scm_obj_t
 subr_make_bytevector_mapping(VM* vm, int argc, scm_obj_t argv[])
@@ -1991,43 +1928,10 @@ subr_make_bytevector_mapping(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "make-bytevector-mapping", 2, 2, argc, argv);
     return scm_undef;
 }
-/*
-// make-bytevector-mapping
-scm_obj_t
-subr_make_bytevector_mapping(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 2) {
-        if (FIXNUMP(argv[1])) {
-            int size = FIXNUM(argv[1]);
-            if (exact_non_negative_integer_pred(argv[0])) {
-                if (sizeof(intptr_t) == sizeof(uint32_t)) {
-                    uint32_t adrs;
-                    if (exact_integer_to_uint32(argv[0], &adrs)) return make_bvector_mapping(vm->m_heap, (void*)adrs, size);
-                    invalid_argument_violation(vm, "make-bytevector-mapping", "value out of bounds,", argv[0], 0, argc, argv);
-                    return scm_undef;
-                }
-                if (sizeof(intptr_t) == sizeof(uint64_t)) {
-                    uint64_t adrs;
-                    if (exact_integer_to_uint64(argv[0], &adrs)) return make_bvector_mapping(vm->m_heap, (void*)adrs, size);
-                    invalid_argument_violation(vm, "make-bytevector-mapping", "value out of bounds,", argv[0], 0, argc, argv);
-                    return scm_undef;
-                }
-                assert(false);
-            }
-            wrong_type_argument_violation(vm, "make-bytevector-mapping", 0, "exact non-negative integer", argv[0], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "make-bytevector-mapping", 1, "fixnum", argv[1], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "make-bytevector-mapping", 2, 2, argc, argv);
-    return scm_undef;
-}
 
-*/
 void init_subr_bvector(object_heap_t* heap)
 {
-    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
+#define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("native-endianness", subr_native_endianness);
     DEFSUBR("bytevector?", subr_bytevector_pred);
@@ -2075,13 +1979,7 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector-ieee-double-native-ref", subr_bytevector_ieee_double_native_ref);
     DEFSUBR("bytevector-ieee-double-set!", subr_bytevector_ieee_double_set);
     DEFSUBR("bytevector-ieee-double-native-set!", subr_bytevector_ieee_double_native_set);
-
-//  DEFSUBR("string->cstring", subr_string_cstring);
-//  DEFSUBR("cstring->string", subr_cstring_string);
-
-//  DEFSUBR("string->utf8+nul", subr_string_utf8_nul);
     DEFSUBR("string->utf8", subr_string_utf8);
     DEFSUBR("utf8->string", subr_utf8_string);
-
     DEFSUBR("make-bytevector-mapping", subr_make_bytevector_mapping);
 }

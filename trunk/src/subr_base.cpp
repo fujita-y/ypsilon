@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 
 #include "core.h"
@@ -18,6 +18,7 @@
 #include "ioerror.h"
 #include "printer.h"
 #include "violation.h"
+#include "interpreter.h"
 
 // 9.6 Equivalence predicates
 
@@ -302,12 +303,12 @@ subr_length(VM* vm, int argc, scm_obj_t argv[])
 // append
 
 /*
-static scm_obj_t
-append2(object_heap_t* heap, scm_obj_t lst1, scm_obj_t lst2)
-{
-    if (lst1 == scm_nil) return lst2;
-    return make_pair(heap, CAR(lst1), append2(heap, CDR(lst1), lst2));
-}
+  static scm_obj_t
+  append2(object_heap_t* heap, scm_obj_t lst1, scm_obj_t lst2)
+  {
+  if (lst1 == scm_nil) return lst2;
+  return make_pair(heap, CAR(lst1), append2(heap, CDR(lst1), lst2));
+  }
 */
 static scm_obj_t
 append2(object_heap_t* heap, scm_obj_t lst1, scm_obj_t lst2)
@@ -922,9 +923,11 @@ subr_string_set(VM* vm, int argc, scm_obj_t argv[])
                     if (type == STRING_TYPE_ASCII) {
                         if (index >= 0 && index < string->size) {
 #if USE_PARALLEL_VM
-                            if (!vm->m_heap->in_heap(string)) {
-                                thread_object_access_violation(vm, "string-set!" , argc, argv);
-                                return scm_undef;
+                            if (vm->m_interp->concurrency() > 1) {
+                                if (!vm->m_heap->in_heap(string)) {
+                                    thread_object_access_violation(vm, "string-set!" , argc, argv);
+                                    return scm_undef;
+                                }
                             }
 #endif
                             string->name[index] = ch;
@@ -934,9 +937,11 @@ subr_string_set(VM* vm, int argc, scm_obj_t argv[])
                         if (index >= 0 && index < string->size) {
                             if (HDR_STRING_LITERAL(string->hdr) == 0) {
 #if USE_PARALLEL_VM
-                                if (!vm->m_heap->in_heap(string)) {
-                                    thread_object_access_violation(vm, "string-set!" , argc, argv);
-                                    return scm_undef;
+                                if (vm->m_interp->concurrency() > 1) {
+                                    if (!vm->m_heap->in_heap(string)) {
+                                        thread_object_access_violation(vm, "string-set!" , argc, argv);
+                                        return scm_undef;
+                                    }
                                 }
 #endif
                                 if (utf8_string_set(vm->m_heap, string, index, ch)) return scm_unspecified;
@@ -1215,9 +1220,11 @@ subr_string_fill(VM* vm, int argc, scm_obj_t argv[])
             if (CHARP(argv[1])) {
                 scm_string_t string = (scm_string_t)argv[0];
 #if USE_PARALLEL_VM
-                if (!vm->m_heap->in_heap(string)) {
-                    thread_object_access_violation(vm, "string-fill!" ,argc, argv);
-                    return scm_undef;
+                if (vm->m_interp->concurrency() > 1) {
+                    if (!vm->m_heap->in_heap(string)) {
+                        thread_object_access_violation(vm, "string-fill!" ,argc, argv);
+                        return scm_undef;
+                    }
                 }
 #endif
                 int ucs4 = CHAR(argv[1]);
@@ -1369,9 +1376,12 @@ subr_vector_set(VM* vm, int argc, scm_obj_t argv[])
                 int n = FIXNUM(argv[1]);
                 if (n >= 0 && n < vector->count) {
 #if USE_PARALLEL_VM
-                    if (!vm->m_heap->in_heap(vector)) {
-                        thread_object_access_violation(vm, "vector-set!" ,argc, argv);
-                        return scm_undef;
+                    if (vm->m_interp->concurrency() > 1) {
+                        if (!vm->m_heap->in_heap(vector)) {
+                            thread_object_access_violation(vm, "vector-set!" ,argc, argv);
+                            return scm_undef;
+                        }
+                        if (vm->m_child > 0) vm->m_interp->remember(vector->elts[n], argv[2]);
                     }
 #endif
                     vm->m_heap->write_barrier(argv[2]);
@@ -1445,13 +1455,18 @@ subr_vector_fill(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 2) {
         if (VECTORP(argv[0])) {
             scm_vector_t vector = (scm_vector_t)argv[0];
+            int n = vector->count;
 #if USE_PARALLEL_VM
-            if (!vm->m_heap->in_heap(vector)) {
-                thread_object_access_violation(vm, "vector-fill!" ,argc, argv);
-                return scm_undef;
+            if (vm->m_interp->concurrency() > 1) {
+                if (!vm->m_heap->in_heap(vector)) {
+                    thread_object_access_violation(vm, "vector-fill!" ,argc, argv);
+                    return scm_undef;
+                }
+                if (vm->m_child > 0) {
+                    for (int i = 0; i < n; i++) vm->m_interp->remember(vector->elts[i], argv[1]);
+                }
             }
 #endif
-            int n = vector->count;
             vm->m_heap->write_barrier(argv[1]);
             for (int i = 0; i < n ; i++) vector->elts[i] = argv[1];
             return scm_unspecified;
@@ -1475,7 +1490,6 @@ subr_vector_fill(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_values(VM* vm, int argc, scm_obj_t argv[])
 {
-//    if (argc == 0) return scm_unspecified;
     if (argc == 1) return argv[0];
     scm_values_t values = make_values(vm->m_heap, argc);
     for (int i = 0; i < argc; i++) values->elts[i] = argv[i];
@@ -1491,152 +1505,152 @@ subr_values(VM* vm, int argc, scm_obj_t argv[])
 
 #if USE_INLINED_CXR
 
-    #define DEF_CARS_N_CDRS3(NAME, MC)              \
-    scm_obj_t                                       \
-    subr_##NAME(VM* vm, int argc, scm_obj_t argv[]) \
-    {                                               \
-        static const int mc[] = MC;                 \
-        if (argc == 1) {                            \
-            scm_obj_t obj = argv[0];                \
-            if (PAIRP(obj)) {                       \
+#define DEF_CARS_N_CDRS3(NAME, MC)                                      \
+    scm_obj_t                                                           \
+    subr_##NAME(VM* vm, int argc, scm_obj_t argv[])                     \
+    {                                                                   \
+        static const int mc[] = MC;                                     \
+        if (argc == 1) {                                                \
+            scm_obj_t obj = argv[0];                                    \
+            if (PAIRP(obj)) {                                           \
                 obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[0]));          \
                 if (PAIRP(obj)) {                                       \
                     obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[1]));      \
                     if (PAIRP(obj)) {                                   \
                         obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[2]));  \
                         return obj;                                     \
-                    } \
-                } \
-            } \
+                    }                                                   \
+                }                                                       \
+            }                                                           \
             wrong_type_argument_violation(vm, #NAME, 0, "appropriate list structure", argv[0], argc, argv); \
-            return scm_undef;                                               \
-        }                                                                   \
-        wrong_number_of_arguments_violation(vm, #NAME, 1, 1, argc, argv);   \
-        return scm_undef;                                                   \
+            return scm_undef;                                           \
+        }                                                               \
+        wrong_number_of_arguments_violation(vm, #NAME, 1, 1, argc, argv); \
+        return scm_undef;                                               \
     }
 
-    #define DEF_CARS_N_CDRS4(NAME, MC)              \
-    scm_obj_t                                       \
-    subr_##NAME(VM* vm, int argc, scm_obj_t argv[]) \
-    {                                               \
-        static const int mc[] = MC;                 \
-        if (argc == 1) {                            \
-            scm_obj_t obj = argv[0];                \
-            if (PAIRP(obj)) {                       \
-                obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[0]));              \
-                if (PAIRP(obj)) {                                           \
-                    obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[1]));          \
-                    if (PAIRP(obj)) {                                       \
-                        obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[2]));      \
-                        if (PAIRP(obj)) {                                   \
-                            obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[3]));  \
-                            return obj;                                     \
-                        } \
-                    } \
-                } \
-            } \
+#define DEF_CARS_N_CDRS4(NAME, MC)                                      \
+    scm_obj_t                                                           \
+    subr_##NAME(VM* vm, int argc, scm_obj_t argv[])                     \
+    {                                                                   \
+        static const int mc[] = MC;                                     \
+        if (argc == 1) {                                                \
+            scm_obj_t obj = argv[0];                                    \
+            if (PAIRP(obj)) {                                           \
+                obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[0]));          \
+                if (PAIRP(obj)) {                                       \
+                    obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[1]));      \
+                    if (PAIRP(obj)) {                                   \
+                        obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[2]));  \
+                        if (PAIRP(obj)) {                               \
+                            obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[3])); \
+                            return obj;                                 \
+                        }                                               \
+                    }                                                   \
+                }                                                       \
+            }                                                           \
             wrong_type_argument_violation(vm, #NAME, 0, "appropriate list structure", argv[0], argc, argv); \
-            return scm_undef;                                               \
-        }                                                                   \
-        wrong_number_of_arguments_violation(vm, #NAME, 1, 1, argc, argv);   \
-        return scm_undef;                                                   \
+            return scm_undef;                                           \
+        }                                                               \
+        wrong_number_of_arguments_violation(vm, #NAME, 1, 1, argc, argv); \
+        return scm_undef;                                               \
     }
 
-    #define MCODE3(M1, M2, M3)      { M3, M2, M1 }
-    #define MCODE4(M1, M2, M3, M4)  { M4, M3, M2, M1 }
+#define MCODE3(M1, M2, M3)      { M3, M2, M1 }
+#define MCODE4(M1, M2, M3, M4)  { M4, M3, M2, M1 }
 
-    DEF_CARS_N_CDRS3( caaar  ,MCODE3(0, 0, 0) )
-    DEF_CARS_N_CDRS3( caadr  ,MCODE3(0, 0, 1) )
-    DEF_CARS_N_CDRS3( cadar  ,MCODE3(0, 1, 0) )
+DEF_CARS_N_CDRS3( caaar  ,MCODE3(0, 0, 0) )
+DEF_CARS_N_CDRS3( caadr  ,MCODE3(0, 0, 1) )
+DEF_CARS_N_CDRS3( cadar  ,MCODE3(0, 1, 0) )
 //  DEF_CARS_N_CDRS3( caddr  ,MCODE3(0, 1, 1) )
-    DEF_CARS_N_CDRS3( cdaar  ,MCODE3(1, 0, 0) )
-    DEF_CARS_N_CDRS3( cdadr  ,MCODE3(1, 0, 1) )
-    DEF_CARS_N_CDRS3( cddar  ,MCODE3(1, 1, 0) )
-    DEF_CARS_N_CDRS3( cdddr  ,MCODE3(1, 1, 1) )
-    DEF_CARS_N_CDRS4( caaaar ,MCODE4(0, 0, 0, 0) )
-    DEF_CARS_N_CDRS4( caaadr ,MCODE4(0, 0, 0, 1) )
-    DEF_CARS_N_CDRS4( caadar ,MCODE4(0, 0, 1, 0) )
-    DEF_CARS_N_CDRS4( caaddr ,MCODE4(0, 0, 1, 1) )
-    DEF_CARS_N_CDRS4( cadaar ,MCODE4(0, 1, 0, 0) )
-    DEF_CARS_N_CDRS4( cadadr ,MCODE4(0, 1, 0, 1) )
-    DEF_CARS_N_CDRS4( caddar ,MCODE4(0, 1, 1, 0) )
-    DEF_CARS_N_CDRS4( cadddr ,MCODE4(0, 1, 1, 1) )
-    DEF_CARS_N_CDRS4( cdaaar ,MCODE4(1, 0, 0, 0) )
-    DEF_CARS_N_CDRS4( cdaadr ,MCODE4(1, 0, 0, 1) )
-    DEF_CARS_N_CDRS4( cdadar ,MCODE4(1, 0, 1, 0) )
-    DEF_CARS_N_CDRS4( cdaddr ,MCODE4(1, 0, 1, 1) )
-    DEF_CARS_N_CDRS4( cddaar ,MCODE4(1, 1, 0, 0) )
-    DEF_CARS_N_CDRS4( cddadr ,MCODE4(1, 1, 0, 1) )
-    DEF_CARS_N_CDRS4( cdddar ,MCODE4(1, 1, 1, 0) )
-    DEF_CARS_N_CDRS4( cddddr ,MCODE4(1, 1, 1, 1) )
+DEF_CARS_N_CDRS3( cdaar  ,MCODE3(1, 0, 0) )
+DEF_CARS_N_CDRS3( cdadr  ,MCODE3(1, 0, 1) )
+DEF_CARS_N_CDRS3( cddar  ,MCODE3(1, 1, 0) )
+DEF_CARS_N_CDRS3( cdddr  ,MCODE3(1, 1, 1) )
+DEF_CARS_N_CDRS4( caaaar ,MCODE4(0, 0, 0, 0) )
+DEF_CARS_N_CDRS4( caaadr ,MCODE4(0, 0, 0, 1) )
+DEF_CARS_N_CDRS4( caadar ,MCODE4(0, 0, 1, 0) )
+DEF_CARS_N_CDRS4( caaddr ,MCODE4(0, 0, 1, 1) )
+DEF_CARS_N_CDRS4( cadaar ,MCODE4(0, 1, 0, 0) )
+DEF_CARS_N_CDRS4( cadadr ,MCODE4(0, 1, 0, 1) )
+DEF_CARS_N_CDRS4( caddar ,MCODE4(0, 1, 1, 0) )
+DEF_CARS_N_CDRS4( cadddr ,MCODE4(0, 1, 1, 1) )
+DEF_CARS_N_CDRS4( cdaaar ,MCODE4(1, 0, 0, 0) )
+DEF_CARS_N_CDRS4( cdaadr ,MCODE4(1, 0, 0, 1) )
+DEF_CARS_N_CDRS4( cdadar ,MCODE4(1, 0, 1, 0) )
+DEF_CARS_N_CDRS4( cdaddr ,MCODE4(1, 0, 1, 1) )
+DEF_CARS_N_CDRS4( cddaar ,MCODE4(1, 1, 0, 0) )
+DEF_CARS_N_CDRS4( cddadr ,MCODE4(1, 1, 0, 1) )
+DEF_CARS_N_CDRS4( cdddar ,MCODE4(1, 1, 1, 0) )
+DEF_CARS_N_CDRS4( cddddr ,MCODE4(1, 1, 1, 1) )
 
-    #undef MCODE3
-    #undef MCODE4
-    #undef DEF_CARS_N_CDRS3
-    #undef DEF_CARS_N_CDRS4
+#undef MCODE3
+#undef MCODE4
+#undef DEF_CARS_N_CDRS3
+#undef DEF_CARS_N_CDRS4
 
 #else
 
-    static
-    scm_obj_t
-    n_car_n_cdr(scm_obj_t obj, const int n, const int mc[])
-    {
-        for (int i = 0; i < n; i++) {
-            if (PAIRP(obj)) {
-                obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[i]));
-                continue;
-            }
-            return NULL;
+static
+scm_obj_t
+n_car_n_cdr(scm_obj_t obj, const int n, const int mc[])
+{
+    for (int i = 0; i < n; i++) {
+        if (PAIRP(obj)) {
+            obj = (scm_obj_t)(*((scm_obj_t*)obj + mc[i]));
+            continue;
         }
-        return obj;
+        return NULL;
     }
+    return obj;
+}
 
-    #define DEF_CARS_N_CDRS(NAME, MC)               \
-    scm_obj_t                                       \
-    subr_##NAME(VM* vm, int argc, scm_obj_t argv[]) \
-    {                                               \
-        static const int mc[] = MC;                 \
-        if (argc == 1) {                            \
-            scm_obj_t obj = n_car_n_cdr(argv[0], array_sizeof(mc), mc);     \
-            if (obj != NULL) return obj;                                    \
+#define DEF_CARS_N_CDRS(NAME, MC)                                       \
+    scm_obj_t                                                           \
+    subr_##NAME(VM* vm, int argc, scm_obj_t argv[])                     \
+    {                                                                   \
+        static const int mc[] = MC;                                     \
+        if (argc == 1) {                                                \
+            scm_obj_t obj = n_car_n_cdr(argv[0], array_sizeof(mc), mc); \
+            if (obj != NULL) return obj;                                \
             wrong_type_argument_violation(vm, #NAME, 0, "appropriate list structure", argv[0], argc, argv); \
-            return scm_undef;                                               \
-        }                                                                   \
-        wrong_number_of_arguments_violation(vm, #NAME, 1, 1, argc, argv);   \
-        return scm_undef;                                                   \
+            return scm_undef;                                           \
+        }                                                               \
+        wrong_number_of_arguments_violation(vm, #NAME, 1, 1, argc, argv); \
+        return scm_undef;                                               \
     }
 
-    #define MCODE3(M1, M2, M3)      { M3, M2, M1 }
-    #define MCODE4(M1, M2, M3, M4)  { M4, M3, M2, M1 }
+#define MCODE3(M1, M2, M3)      { M3, M2, M1 }
+#define MCODE4(M1, M2, M3, M4)  { M4, M3, M2, M1 }
 
-    DEF_CARS_N_CDRS( caaar  ,MCODE3(0, 0, 0) )
-    DEF_CARS_N_CDRS( caadr  ,MCODE3(0, 0, 1) )
-    DEF_CARS_N_CDRS( cadar  ,MCODE3(0, 1, 0) )
+DEF_CARS_N_CDRS( caaar  ,MCODE3(0, 0, 0) )
+DEF_CARS_N_CDRS( caadr  ,MCODE3(0, 0, 1) )
+DEF_CARS_N_CDRS( cadar  ,MCODE3(0, 1, 0) )
 //  DEF_CARS_N_CDRS( caddr  ,MCODE3(0, 1, 1) )
-    DEF_CARS_N_CDRS( cdaar  ,MCODE3(1, 0, 0) )
-    DEF_CARS_N_CDRS( cdadr  ,MCODE3(1, 0, 1) )
-    DEF_CARS_N_CDRS( cddar  ,MCODE3(1, 1, 0) )
-    DEF_CARS_N_CDRS( cdddr  ,MCODE3(1, 1, 1) )
-    DEF_CARS_N_CDRS( caaaar ,MCODE4(0, 0, 0, 0) )
-    DEF_CARS_N_CDRS( caaadr ,MCODE4(0, 0, 0, 1) )
-    DEF_CARS_N_CDRS( caadar ,MCODE4(0, 0, 1, 0) )
-    DEF_CARS_N_CDRS( caaddr ,MCODE4(0, 0, 1, 1) )
-    DEF_CARS_N_CDRS( cadaar ,MCODE4(0, 1, 0, 0) )
-    DEF_CARS_N_CDRS( cadadr ,MCODE4(0, 1, 0, 1) )
-    DEF_CARS_N_CDRS( caddar ,MCODE4(0, 1, 1, 0) )
-    DEF_CARS_N_CDRS( cadddr ,MCODE4(0, 1, 1, 1) )
-    DEF_CARS_N_CDRS( cdaaar ,MCODE4(1, 0, 0, 0) )
-    DEF_CARS_N_CDRS( cdaadr ,MCODE4(1, 0, 0, 1) )
-    DEF_CARS_N_CDRS( cdadar ,MCODE4(1, 0, 1, 0) )
-    DEF_CARS_N_CDRS( cdaddr ,MCODE4(1, 0, 1, 1) )
-    DEF_CARS_N_CDRS( cddaar ,MCODE4(1, 1, 0, 0) )
-    DEF_CARS_N_CDRS( cddadr ,MCODE4(1, 1, 0, 1) )
-    DEF_CARS_N_CDRS( cdddar ,MCODE4(1, 1, 1, 0) )
-    DEF_CARS_N_CDRS( cddddr ,MCODE4(1, 1, 1, 1) )
+DEF_CARS_N_CDRS( cdaar  ,MCODE3(1, 0, 0) )
+DEF_CARS_N_CDRS( cdadr  ,MCODE3(1, 0, 1) )
+DEF_CARS_N_CDRS( cddar  ,MCODE3(1, 1, 0) )
+DEF_CARS_N_CDRS( cdddr  ,MCODE3(1, 1, 1) )
+DEF_CARS_N_CDRS( caaaar ,MCODE4(0, 0, 0, 0) )
+DEF_CARS_N_CDRS( caaadr ,MCODE4(0, 0, 0, 1) )
+DEF_CARS_N_CDRS( caadar ,MCODE4(0, 0, 1, 0) )
+DEF_CARS_N_CDRS( caaddr ,MCODE4(0, 0, 1, 1) )
+DEF_CARS_N_CDRS( cadaar ,MCODE4(0, 1, 0, 0) )
+DEF_CARS_N_CDRS( cadadr ,MCODE4(0, 1, 0, 1) )
+DEF_CARS_N_CDRS( caddar ,MCODE4(0, 1, 1, 0) )
+DEF_CARS_N_CDRS( cadddr ,MCODE4(0, 1, 1, 1) )
+DEF_CARS_N_CDRS( cdaaar ,MCODE4(1, 0, 0, 0) )
+DEF_CARS_N_CDRS( cdaadr ,MCODE4(1, 0, 0, 1) )
+DEF_CARS_N_CDRS( cdadar ,MCODE4(1, 0, 1, 0) )
+DEF_CARS_N_CDRS( cdaddr ,MCODE4(1, 0, 1, 1) )
+DEF_CARS_N_CDRS( cddaar ,MCODE4(1, 1, 0, 0) )
+DEF_CARS_N_CDRS( cddadr ,MCODE4(1, 1, 0, 1) )
+DEF_CARS_N_CDRS( cdddar ,MCODE4(1, 1, 1, 0) )
+DEF_CARS_N_CDRS( cddddr ,MCODE4(1, 1, 1, 1) )
 
-    #undef MCODE3
-    #undef MCODE4
-    #undef DEF_CARS_N_CDRS
+#undef MCODE3
+#undef MCODE4
+#undef DEF_CARS_N_CDRS
 
 #endif
 
@@ -1644,21 +1658,17 @@ subr_values(VM* vm, int argc, scm_obj_t argv[])
 
 void init_subr_base(object_heap_t* heap)
 {
-    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
+#define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("eq?", subr_eq_pred);
     DEFSUBR("eqv?", subr_eqv_pred);
     DEFSUBR("equal?", subr_equal_pred);
-
     DEFSUBR("procedure?", subr_procedure_pred);
-
     DEFSUBR("unspecified", subr_unspecified);
     DEFSUBR("unspecified?", subr_unspecified_pred);
-
     DEFSUBR("not", subr_not);
     DEFSUBR("boolean?", subr_boolean_pred);
     DEFSUBR("boolean=?", subr_boolean_eq_pred);
-
     DEFSUBR("pair?", subr_pair_pred);
     DEFSUBR("cons", subr_cons);
     DEFSUBR("car", subr_car);
@@ -1704,7 +1714,6 @@ void init_subr_base(object_heap_t* heap)
     DEFSUBR("symbol=?", subr_symbol_eq_pred);
     DEFSUBR("symbol->string", subr_symbol_string);
     DEFSUBR("string->symbol", subr_string_symbol);
-
     DEFSUBR("char?", subr_char_pred);
     DEFSUBR("char->integer", subr_char_integer);
     DEFSUBR("integer->char", subr_integer_char);
@@ -1713,7 +1722,6 @@ void init_subr_base(object_heap_t* heap)
     DEFSUBR("char>?", subr_char_gt_pred);
     DEFSUBR("char<=?", subr_char_le_pred);
     DEFSUBR("char>=?", subr_char_ge_pred);
-
     DEFSUBR("string?", subr_string_pred);
     DEFSUBR("make-string", subr_make_string);
     DEFSUBR("string", subr_string);
@@ -1730,7 +1738,6 @@ void init_subr_base(object_heap_t* heap)
     DEFSUBR("string-copy", subr_string_copy);
     DEFSUBR("string-fill!", subr_string_fill);
     DEFSUBR("substring",subr_substring);
-
     DEFSUBR("vector?", subr_vector_pred);
     DEFSUBR("make-vector", subr_make_vector);
     DEFSUBR("vector", subr_vector);
@@ -1741,5 +1748,4 @@ void init_subr_base(object_heap_t* heap)
     DEFSUBR("vector->list", subr_vector_list);
     DEFSUBR("vector-fill!", subr_vector_fill);
     DEFSUBR("values", subr_values);
-
 }

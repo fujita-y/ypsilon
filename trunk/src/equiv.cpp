@@ -18,8 +18,8 @@ bool
 eqv_pred(scm_obj_t obj1, scm_obj_t obj2)
 {
     if (obj1 == obj2) return true;
-    if (FIXNUMP(obj1)) return false;
-    if (FIXNUMP(obj2)) return false;
+    if (!CELLP(obj1)) return false;
+    if (!CELLP(obj2)) return false;
     if (number_pred(obj1)) {
         if (number_pred(obj2)) {
             if (n_exact_pred(obj1)) {
@@ -50,16 +50,13 @@ eqv_pred(scm_obj_t obj1, scm_obj_t obj2)
         }
         return false;
     }
-
     return false;
 }
 
 bool
 r5rs_equal_pred(scm_obj_t lst1, scm_obj_t lst2)
 {
-
 top:
-
     if (lst1 == lst2) return true;
     if (PAIRP(lst1)) {
         if (PAIRP(lst2)) {
@@ -89,26 +86,6 @@ top:
         }
         return false;
     }
-/*
-    if (TUPLEP(lst1)) {
-        if (TUPLEP(lst2)) {
-            scm_tuple_t tuple1 = (scm_tuple_t)lst1;
-            scm_tuple_t tuple2 = (scm_tuple_t)lst2;
-            int n1 = HDR_TUPLE_COUNT(tuple1->hdr);
-            int n2 = HDR_TUPLE_COUNT(tuple2->hdr);
-            if (n1 == n2) {
-                scm_obj_t* elts1 = tuple1->elts;
-                scm_obj_t* elts2 = tuple2->elts;
-                for (int i = 0; i < n1; i++) {
-                    if (r5rs_equal_pred(elts1[i], elts2[i])) continue;
-                    return false;
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-*/
     if (BVECTORP(lst1)) {
         if (BVECTORP(lst2)) {
             scm_bvector_t bvector1 = (scm_bvector_t)lst1;
@@ -168,11 +145,9 @@ find_and_merge_opponent(object_heap_t* heap, scm_hashtable_t visited, scm_obj_t 
 bool
 equal_pred(object_heap_t* heap, scm_hashtable_t visited, scm_obj_t lst1, scm_obj_t lst2)
 {
-
 #if USE_R5RS_EQUAL
     return r5rs_equal_pred(lst1, lst2);
 #endif
-
     int c1 = terminal_listp(lst1);
     if (c1) {
         if (c1 == terminal_listp(lst2)) return r5rs_equal_pred(lst1, lst2);
@@ -182,7 +157,6 @@ equal_pred(object_heap_t* heap, scm_hashtable_t visited, scm_obj_t lst1, scm_obj
     }
 
 top:
-
     if (lst1 == lst2) return true;
     if (PAIRP(lst1)) {
         if (PAIRP(lst2)) {
@@ -214,27 +188,6 @@ top:
         }
         return false;
     }
-/*
-    if (TUPLEP(lst1)) {
-        if (TUPLEP(lst2)) {
-            if (find_and_merge_opponent(heap, visited, lst1, lst2)) return true;
-            scm_tuple_t tuple1 = (scm_tuple_t)lst1;
-            scm_tuple_t tuple2 = (scm_tuple_t)lst2;
-            int n1 = HDR_TUPLE_COUNT(tuple1->hdr);
-            int n2 = HDR_TUPLE_COUNT(tuple2->hdr);
-            if (n1 == n2) {
-                scm_obj_t* elts1 = tuple1->elts;
-                scm_obj_t* elts2 = tuple2->elts;
-                for (int i = 0; i < n1; i++) {
-                    if (equal_pred(heap, visited, elts1[i], elts2[i])) continue;
-                    return false;
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-*/
     if (BVECTORP(lst1)) {
         if (BVECTORP(lst2)) {
             scm_bvector_t bvector1 = (scm_bvector_t)lst1;
@@ -250,43 +203,40 @@ top:
 }
 
 /*
-
  R6RS
-
- (define equal?
- (lambda (lst1 lst2)
- (let ((visited (make-core-hashtable)))
- (let loop ((lst1 lst1) (lst2 lst2))
- (or (eq? lst1 lst2)
- (cond ((pair? lst1)
- (and (pair? lst2)
- (cond ((core-hashtable-ref visited lst1 #f)
- => (lambda (opponents)
- (cond ((memq lst2 opponents) #t)
- (else
- (core-hashtable-set! visited lst1 (cons lst2 opponents))
- (and (loop (car lst1) (car lst2))
- (loop (cdr lst1) (cdr lst2)))))))
- (else
- (core-hashtable-set! visited lst1 '())
- (and (loop (car lst1) (car lst2))
- (loop (cdr lst1) (cdr lst2)))))))
- ((vector? lst1)
- (and (vector? lst2)
- (cond ((core-hashtable-ref visited lst1 #f)
- => (lambda (opponents)
- (cond ((memq lst2 opponents) #t)
- (else
- (core-hashtable-set! visited lst1 (cons lst2 opponents))
- (and (= (vector-length lst1) (vector-length lst2))
- (every2 loop (vector->list lst1) (vector->list lst2)))))))
- (else
- (core-hashtable-set! visited lst1 '())
- (and (= (vector-length lst1) (vector-length lst2))
- (every2 loop (vector->list lst1) (vector->list lst2)))))))
- ((string? lst1)
- (and (string? lst2) (string=? lst1 lst2)))
- (else
- (eqv? lst1 lst2))))))))
-
+(define equal?
+  (lambda (lst1 lst2)
+    (let ((visited (make-core-hashtable)))
+      (let loop ((lst1 lst1) (lst2 lst2))
+        (or (eq? lst1 lst2)
+            (cond ((pair? lst1)
+                   (and (pair? lst2)
+                        (cond ((core-hashtable-ref visited lst1 #f)
+                               => (lambda (opponents)
+                                    (cond ((memq lst2 opponents) #t)
+                                          (else
+                                           (core-hashtable-set! visited lst1 (cons lst2 opponents))
+                                           (and (loop (car lst1) (car lst2))
+                                                (loop (cdr lst1) (cdr lst2)))))))
+                              (else
+                               (core-hashtable-set! visited lst1 '())
+                               (and (loop (car lst1) (car lst2))
+                                    (loop (cdr lst1) (cdr lst2)))))))
+                  ((vector? lst1)
+                   (and (vector? lst2)
+                        (cond ((core-hashtable-ref visited lst1 #f)
+                               => (lambda (opponents)
+                                    (cond ((memq lst2 opponents) #t)
+                                          (else
+                                           (core-hashtable-set! visited lst1 (cons lst2 opponents))
+                                           (and (= (vector-length lst1) (vector-length lst2))
+                                                (every2 loop (vector->list lst1) (vector->list lst2)))))))
+                              (else
+                               (core-hashtable-set! visited lst1 '())
+                               (and (= (vector-length lst1) (vector-length lst2))
+                                    (every2 loop (vector->list lst1) (vector->list lst2)))))))
+                  ((string? lst1)
+                   (and (string? lst2) (string=? lst1 lst2)))
+                  (else
+                   (eqv? lst1 lst2))))))))
  */

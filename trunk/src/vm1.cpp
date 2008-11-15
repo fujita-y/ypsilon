@@ -9,6 +9,7 @@
 #include "arith.h"
 #include "printer.h"
 #include "violation.h"
+#include "interpreter.h"
 
 #define FOLD_TAIL_CALL_TRACE    1
 #define UNWRAP_BACKTRACE        1
@@ -1206,9 +1207,12 @@ loop:
             CASE(VMOP_SET_GLOC) {
                 scm_gloc_t gloc = (scm_gloc_t)CAR(OPERANDS);
                 assert(GLOCP(gloc));
-#if USE_PARALLEL_VM
-                if (!m_heap->in_heap(gloc)) goto ERROR_SET_GLOC_BAD_CONTEXT;
-#endif
+  #if USE_PARALLEL_VM
+                if (m_interp->concurrency() > 1) {
+                    if (!m_heap->in_heap(gloc)) goto ERROR_SET_GLOC_BAD_CONTEXT;
+                    m_interp->remember(gloc->value, m_value);
+                }
+  #endif
                 m_heap->write_barrier(m_value);
                 gloc->value = m_value;
                 m_pc = CDR(m_pc);
@@ -1218,9 +1222,12 @@ loop:
             CASE(VMOP_SET_ILOC) {
                 scm_obj_t* slot = lookup_iloc(CAR(OPERANDS));
                 if (!STACKP(slot)) {
-#if USE_PARALLEL_VM
-                    if (!m_heap->in_heap(slot)) goto ERROR_SET_ILOC_BAD_CONTEXT;
-#endif
+  #if USE_PARALLEL_VM
+                    if (m_interp->concurrency() > 1) {
+                        if (!m_heap->in_heap(slot)) goto ERROR_SET_ILOC_BAD_CONTEXT;
+                        if (m_child > 0) m_interp->remember(*slot, m_value);
+                    }
+  #endif
                     m_heap->write_barrier(m_value);
                 }
                 *slot = m_value;

@@ -75,11 +75,9 @@ object_set_t::get(const char* name, int len)
 {
     assert(m_heap);
     m_lock.verify_locked();
-
-    int hash = string_hash(name, m_count);
+    int hash1 = string_hash1(name, m_count);
     int hash2 = string_hash2(name, m_count);
-    assert(hash2);
-    int index = hash;
+    int index = hash1;
     do {
         scm_obj_t entry = m_elts[index];
         if (entry == scm_hash_free) break;
@@ -97,7 +95,7 @@ object_set_t::get(const char* name, int len)
         }
         index += hash2;
         if (index >= m_count) index -= m_count;
-    } while (index != hash);
+    } while (index != hash1);
     return scm_undef;
 }
 
@@ -106,12 +104,10 @@ object_set_t::put(scm_obj_t obj)
 {
     assert(m_heap);
     m_lock.verify_locked();
-
     const char* name = get_name(obj);
-    int hash = string_hash(name, m_count);
+    int hash1 = string_hash1(name, m_count);
     int hash2 = string_hash2(name, m_count);
-    assert(hash2);
-    int index = hash;
+    int index = hash1;
     do {
         scm_obj_t entry = m_elts[index];
         if (entry == scm_hash_free || entry == scm_hash_deleted) {
@@ -122,7 +118,7 @@ object_set_t::put(scm_obj_t obj)
         }
         index += hash2;
         if (index >= m_count) index -= m_count;
-    } while (index != hash);
+    } while (index != hash1);
     fatal("%s:%u HashSet overflow", __FILE__, __LINE__);
 }
 
@@ -131,12 +127,10 @@ object_set_t::remove(scm_obj_t obj)
 {
     assert(m_heap);
     m_lock.verify_locked();
-
     const char* name = get_name(obj);
-    int hash = string_hash(name, m_count);
+    int hash1 = string_hash1(name, m_count);
     int hash2 = string_hash2(name, m_count);
-    assert(hash2);
-    int index = hash;
+    int index = hash1;
     do {
         if (m_elts[index] == obj) {
             m_elts[index] = scm_hash_deleted;
@@ -148,7 +142,7 @@ object_set_t::remove(scm_obj_t obj)
         }
         index += hash2;
         if (index >= m_count) index -= m_count;
-    } while (index != hash);
+    } while (index != hash1);
     fatal("%s:%u HashSet unintern failed.", __FILE__, __LINE__);
 }
 
@@ -157,7 +151,6 @@ object_set_t::rehash(int ncount)
 {
     assert(m_heap);
     m_lock.verify_locked();
-
     assert(ncount >= m_live);
     int save_count = m_count;
     scm_obj_t* save_elts = m_elts;
@@ -170,10 +163,9 @@ object_set_t::rehash(int ncount)
         if (obj == scm_hash_deleted) continue;
         assert(SYMBOLP(obj) || STRINGP(obj));
         const char* name = get_name(obj);
-        int hash = string_hash(name, m_count);
+        int hash1 = string_hash1(name, m_count);
         int hash2 = string_hash2(name, m_count);
-        int index = hash;
-        assert(hash2);
+        int index = hash1;
         do {
             scm_obj_t entry = m_elts[index];
             if (entry == scm_hash_free) {
@@ -182,7 +174,7 @@ object_set_t::rehash(int ncount)
             }
             index += hash2;
             if (index >= m_count) index -= m_count;
-            assert(index != hash);
+            assert(index != hash1);
         } while (1);
     }
     m_heap->deallocate_private(save_elts);
@@ -201,10 +193,9 @@ object_set_t::inplace_rehash()
         if (obj == scm_hash_free) continue;
         if (obj == scm_hash_deleted) continue;
         const char* name = get_name(obj);
-        int hash = string_hash(name, m_count);
+        int hash1 = string_hash1(name, m_count);
         int hash2 = string_hash2(name, m_count);
-        int index = hash;
-        assert(hash2);
+        int index = hash1;
         do {
             scm_obj_t entry = m_elts[index];
             if (entry == scm_hash_free) {
@@ -213,7 +204,7 @@ object_set_t::inplace_rehash()
             }
             index += hash2;
             if (index >= m_count) index -= m_count;
-            assert(index != hash);
+            assert(index != hash1);
         } while (1);
     }
     free(save_elts);

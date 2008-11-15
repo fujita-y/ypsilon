@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 
 #include "core.h"
@@ -12,7 +12,6 @@
 #include "ioerror.h"
 #include "violation.h"
 
-// <string:node> <string:service> <fixnum:family> <fixnum:socktype> <fixnum:protocol> <fixnum:flags>
 // make-socket
 scm_obj_t
 subr_make_socket(VM* vm, int argc, scm_obj_t argv[])
@@ -50,6 +49,7 @@ subr_make_socket(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// socket-shutdown
 scm_obj_t
 subr_socket_shutdown(VM* vm, int argc, scm_obj_t argv[])
 {
@@ -77,6 +77,7 @@ subr_socket_shutdown(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// socket-close
 scm_obj_t
 subr_socket_close(VM* vm, int argc, scm_obj_t argv[])
 {
@@ -97,6 +98,7 @@ subr_socket_close(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// socket-send
 scm_obj_t
 subr_socket_send(VM* vm, int argc, scm_obj_t argv[])
 {
@@ -128,6 +130,7 @@ subr_socket_send(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// socket-recv
 scm_obj_t
 subr_socket_recv(VM* vm, int argc, scm_obj_t argv[])
 {
@@ -166,6 +169,7 @@ subr_socket_recv(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// socket-port
 scm_obj_t
 subr_socket_port(VM* vm, int argc, scm_obj_t argv[])
 {
@@ -231,7 +235,7 @@ subr_socket_pred(VM* vm, int argc, scm_obj_t argv[])
 
 void init_subr_socket(object_heap_t* heap)
 {
-    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
+#define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("socket?", subr_socket_pred);
     DEFSUBR("make-socket", subr_make_socket);

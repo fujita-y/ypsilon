@@ -75,29 +75,6 @@ listp(scm_obj_t maybe_list)
     }
     return fast == scm_nil;
 }
-/*
-(define circular-tree?
-  (lambda (lst)
-    (let ((ht (make-core-hashtable)))
-      (and (let loop ((lst lst) (ancestor '()))
-             (or (and (core-hashtable-ref ht lst #f)
-                      (memq lst ancestor))
-                 (cond ((pair? lst)
-                        (core-hashtable-set! ht lst #t)
-                        (let ((ancestor (cons lst ancestor)))
-                          (or (loop (car lst) ancestor)
-                              (loop (cdr lst) ancestor))))
-                       ((vector? lst)
-                        (core-hashtable-set! ht lst #t)
-                        (let ((ancestor (cons lst ancestor)))
-                          (any1 (lambda (e) (loop e ancestor)) (vector->list lst))))
-                       ((tuple? lst)
-                        (core-hashtable-set! ht lst #t)
-                        (let ((ancestor (cons lst ancestor)))
-                          (any1 (lambda (e) (loop e ancestor)) (tuple->list lst))))
-                       (else #f))))
-           #t))))
-*/
 
 static bool
 infinite_list_test(scm_obj_t lst, scm_obj_t ancestor, scm_hashtable_t ht, object_heap_t* heap)

@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 
 #include "core.h"
@@ -653,7 +653,7 @@ subr_fx_copy_bit(VM* vm, int argc, scm_obj_t argv[])
                 }
                 wrong_type_argument_violation(vm, "fxcopy-bit", 2, "0 or 1", argv[2], argc, argv);
                 return scm_undef;
-           }
+            }
             wrong_type_argument_violation(vm, "fxcopy-bit", 1, "non-negative fixnum less than fixnum width", argv[1], argc, argv);
             return scm_undef;
         }
@@ -683,7 +683,12 @@ subr_fx_arithmetic_shift(VM* vm, int argc, scm_obj_t argv[])
                 if (fx2 > 0) n = fx1 << fx2;
                 else n = fx1 >> (-fx2);
                 if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-                implementation_restriction_violation(vm, "fxarithmetic-shift", "return value out of fixnum range", intptr_to_integer(vm->m_heap, n), argc, argv);
+                implementation_restriction_violation(vm,
+                                                     "fxarithmetic-shift",
+                                                     "return value out of fixnum range",
+                                                     intptr_to_integer(vm->m_heap, n),
+                                                     argc,
+                                                     argv);
                 return scm_undef;
             }
             wrong_type_argument_violation(vm, "fxarithmetic-shift", 1, "absolute value less than fixnum width", argv[1], argc, argv);
@@ -711,7 +716,12 @@ subr_fx_arithmetic_shift_left(VM* vm, int argc, scm_obj_t argv[])
             if (fx2 >= 0 && fx2 < FIXNUM_BITS) {
                 intptr_t n = fx1 << fx2;
                 if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-                implementation_restriction_violation(vm, "fxarithmetic-shift-left", "return value out of fixnum range", intptr_to_integer(vm->m_heap, n), argc, argv);
+                implementation_restriction_violation(vm,
+                                                     "fxarithmetic-shift-left",
+                                                     "return value out of fixnum range",
+                                                     intptr_to_integer(vm->m_heap, n),
+                                                     argc,
+                                                     argv);
                 return scm_undef;
             }
             wrong_type_argument_violation(vm, "fxarithmetic-shift-left", 1, "non-negative fixnum less than fixnum width", argv[1], argc, argv);
@@ -739,7 +749,12 @@ subr_fx_arithmetic_shift_right(VM* vm, int argc, scm_obj_t argv[])
             if (fx2 >= 0 && fx2 < FIXNUM_BITS) {
                 intptr_t n = fx1 >> fx2;
                 if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-                implementation_restriction_violation(vm, "fxarithmetic-shift-right", "return value out of fixnum range", intptr_to_integer(vm->m_heap, n), argc, argv);
+                implementation_restriction_violation(vm,
+                                                     "fxarithmetic-shift-right",
+                                                     "return value out of fixnum range",
+                                                     intptr_to_integer(vm->m_heap, n),
+                                                     argc,
+                                                     argv);
                 return scm_undef;
             }
             wrong_type_argument_violation(vm, "fxarithmetic-shift-right", 1, "non-negative fixnum less than fixnum width", argv[1], argc, argv);
@@ -773,7 +788,7 @@ subr_fx_bit_field(VM* vm, int argc, scm_obj_t argv[])
                     }
                     invalid_argument_violation(vm, "fxbit-field", "value out of range,", argv[2], 2, argc, argv);
                     return scm_undef;
-               }
+                }
                 wrong_type_argument_violation(vm, "fxbit-field", 2, "non-negative fixnum less than fixnum width", argv[2], argc, argv);
                 return scm_undef;
             }
@@ -813,7 +828,7 @@ subr_fx_copy_bit_field(VM* vm, int argc, scm_obj_t argv[])
                     }
                     invalid_argument_violation(vm, "fxcopy-bit-field", "value out of range,", argv[2], 2, argc, argv);
                     return scm_undef;
-               }
+                }
                 wrong_type_argument_violation(vm, "fxcopy-bit-field", 2, "non-negative fixnum less than fixnum width", argv[2], argc, argv);
                 return scm_undef;
             }
@@ -835,7 +850,7 @@ raise_bad:
 
 void init_subr_fixnum(object_heap_t* heap)
 {
-    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
+#define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("fixnum?", subr_fixnum_pred);
     DEFSUBR("fixnum-width", subr_fixnum_width);

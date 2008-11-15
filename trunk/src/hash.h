@@ -35,21 +35,22 @@ enum {
     SCM_HASHTABLE_HANDLER_ALIST
 };
 
-int lookup_mutable_hashtable_size(int n);
-int lookup_immutable_hashtable_size(int n);
-
-uint32_t    address_hash(void *adrs, uint32_t bound);
-uint32_t    string_hash(const char *str, uint32_t bound);
-uint32_t    eqv_hash(scm_obj_t obj, uint32_t bound);
-uint32_t    string_hash(scm_obj_t obj, uint32_t bound);
-uint32_t    equal_hash(scm_obj_t obj, uint32_t bound);
-uint32_t    relocation_safe_equal_hash(scm_obj_t obj, uint32_t bound);
+uint32_t    address_hash1(void *adrs, uint32_t bound);
 uint32_t    address_hash2(void *adrs, uint32_t bound);
+uint32_t    string_hash1(const char *str, uint32_t bound);
 uint32_t    string_hash2(const char *str, uint32_t bound);
+
+uint32_t    eqv_hash(scm_obj_t obj, uint32_t bound);
+uint32_t    equal_hash(scm_obj_t obj, uint32_t bound);
+uint32_t    string_hash(scm_obj_t obj, uint32_t bound);
+uint32_t    symbol_hash(scm_obj_t obj, uint32_t bound);
 
 bool        eqv_hash_equiv(scm_obj_t obj1, scm_obj_t obj2);
 bool        equal_hash_equiv(scm_obj_t obj1, scm_obj_t obj2);
 bool        string_hash_equiv(scm_obj_t obj1, scm_obj_t obj2);
+
+int         lookup_mutable_hashtable_size(int n);
+int         lookup_immutable_hashtable_size(int n);
 
 int         put_hashtable(scm_hashtable_t ht, scm_obj_t key, scm_obj_t value);
 scm_obj_t   get_hashtable(scm_hashtable_t ht, scm_obj_t key);

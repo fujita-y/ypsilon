@@ -36,7 +36,7 @@
 #define SCM_PORT_CODEC_UTF8                     2
 #define SCM_PORT_CODEC_UTF16                    3
 #if _MSC_VER
-  #define SCM_PORT_CODEC_CP932                  4
+#define SCM_PORT_CODEC_CP932                    4
 #endif
 
 #define SCM_PORT_EOL_STYLE_NONE                 1

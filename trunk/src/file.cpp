@@ -13,7 +13,6 @@
 #include "violation.h"
 
 #if _MSC_VER
-
     bool win32path(scm_string_t path, wchar_t* ucs2, int count)
     {
         if (MultiByteToWideChar(CP_UTF8, 0, path->name, -1, ucs2, count)) {
@@ -203,9 +202,7 @@
                         NULL);
         return s_last_message;
     }
-
 #else
-
     scm_obj_t file_exists(VM* vm, scm_string_t path)
     {
         return (access(path->name, F_OK) == 0) ? scm_true : scm_false;
@@ -312,5 +309,4 @@
     {
         return dlerror();
     }
-
 #endif

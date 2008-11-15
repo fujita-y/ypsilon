@@ -13,7 +13,6 @@
 
     intptr_t c_func_stub_intptr_x64(intptr_t adrs_rdi, intptr_t nstack_rsi, intptr_t nsse_rdx, intptr_t argv_rcx[])
     double   c_func_stub_double_x64(intptr_t adrs_rdi, intptr_t nstack_rsi, intptr_t nsse_rdx, intptr_t argv_rcx[])
-
 */
 
     .file   "ffi_stub.s"

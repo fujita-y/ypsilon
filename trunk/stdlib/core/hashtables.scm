@@ -9,7 +9,7 @@
           make-eqv-hashtable
           make-string-hashtable
           make-hashtable
-          (rename (make-weak-core-hashtable make-weak-hashtable)
+          (rename (make-weak-shared-core-hashtable make-weak-hashtable)
                   (weak-core-hashtable? weak-hashtable?))
           (rename (core-hashtable? hashtable?)
                   (core-hashtable-size hashtable-size)
@@ -31,7 +31,9 @@
   (import (core intrinsics)
           (only (core primitives) 
                 make-core-hashtable 
+                make-shared-core-hashtable 
                 make-weak-core-hashtable 
+                make-weak-shared-core-hashtable 
                 weak-core-hashtable?
                 core-hashtable?
                 core-hashtable-size
@@ -166,17 +168,17 @@
   (define make-eq-hashtable
     (lambda opt
       (let-optionals opt ((k 0))
-        (make-core-hashtable 'eq? k))))
+        (make-shared-core-hashtable 'eq? k))))
 
   (define make-eqv-hashtable
     (lambda opt
       (let-optionals opt ((k 0))
-        (make-core-hashtable 'eqv? k))))
+        (make-shared-core-hashtable 'eqv? k))))
 
   (define make-string-hashtable
     (lambda opt
       (let-optionals opt ((k 0))
-        (make-core-hashtable 'string=? k))))
+        (make-shared-core-hashtable 'string=? k))))
   
   (define hashtable-update!
     (lambda (ht key proc default)

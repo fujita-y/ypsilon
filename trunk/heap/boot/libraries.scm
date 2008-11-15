@@ -417,8 +417,8 @@
                         write-with-shared-structure
                         tuple tuple? make-tuple tuple-ref tuple-set! tuple-length tuple-index tuple->list
                         make-weak-mapping weak-mapping? weak-mapping-key weak-mapping-value
-                        make-core-hashtable core-hashtable?
-                        make-weak-core-hashtable weak-core-hashtable?
+                        make-core-hashtable core-hashtable? make-shared-core-hashtable
+                        make-weak-core-hashtable weak-core-hashtable? make-weak-shared-core-hashtable
                         core-hashtable-contains?
                         core-hashtable-ref core-hashtable-set! core-hashtable-delete! core-hashtable-clear!
                         core-hashtable->alist core-hashtable-size
@@ -507,8 +507,12 @@
                         current-exception-printer
                         
                         make-shared-queue
+                        shared-queue?
+                        shared-queue-shutdown
                         shared-queue-push!
                         shared-queue-pop!
+                        
+                        timeout-object?
                         
                         spawn
                         display-thread-status

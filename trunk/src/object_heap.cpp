@@ -34,17 +34,16 @@
 #define SYNCHRONIZE_THRESHOLD(x)    ((x) - (x) / 4)
 #define DEFALUT_COLLECT_TRIP_BYTES  (2 * 1024 * 1024)
 
-#define ENSURE_REALTIME             (1.0)       // in msec (1.0 for 0.0001 second)
+#define ENSURE_REALTIME             (1.0)       // in msec (1.0 == 0.001sec)
 #define TIMEOUT_CHECK_EACH          (100)
 
 #if ARCH_LP64
-
     inline int
-    bytes_to_bucket(int x)
+    bytes_to_bucket(int x) // see clp2() in bit.cpp
     {
         int bucket = 0;
         if (x > 16) {
-            x = x - 1;  // see clp2() in bit.cpp
+            x = x - 1;  
             x = x | (x >>  1);
             x = x | (x >>  2);
             x = x | (x >>  4);
@@ -58,15 +57,13 @@
         }
         return bucket;
     }
-
 #else
-
     inline int
-    bytes_to_bucket(int x)
+    bytes_to_bucket(int x) // see clp2() in bit.cpp
     {
         int bucket = 0;
         if (x > 8) {
-            x = x - 1;  // see clp2() in bit.cpp
+            x = x - 1;
             x = x | (x >>  1);
             x = x | (x >>  2);
             x = x | (x >>  4);
@@ -80,7 +77,6 @@
         }
         return bucket;
     }
-
 #endif
 
 object_heap_t::object_heap_t()
@@ -207,11 +203,12 @@ object_heap_t::allocated_size(void* obj)
 }
 
 void
-object_heap_t::init_common(size_t pool_size, size_t initial_datum_size)
+object_heap_t::init_common(size_t pool_size, size_t init_size)
 {
-    assert(getpagesize() == OBJECT_SLAB_SIZE);                  // for optimal performance
-    assert(pool_size >= OBJECT_SLAB_SIZE + OBJECT_SLAB_SIZE);   // check minimum (1 directory slab + 1 datum slab = 2)
-
+    assert((OBJECT_SLAB_SIZE % getpagesize()) == 0);     // for optimal performance
+    assert(pool_size >= OBJECT_SLAB_SIZE * 2);           // check minimum (1 directory + 1 datum)
+    pool_size = pool_size < 2 ? 2 : pool_size;
+    init_size = init_size < pool_size ? init_size : pool_size;
     // pool
     assert(m_pool == NULL);
     m_pool_size = (pool_size + OBJECT_SLAB_SIZE - 1) & ~(OBJECT_SLAB_SIZE - 1);
@@ -220,25 +217,22 @@ object_heap_t::init_common(size_t pool_size, size_t initial_datum_size)
         m_pool = NULL;
         fatal("%s:%u mmap() failed: %s",__FILE__ , __LINE__, strerror(errno));
     }
-
     // ptag
     int n_tag = m_pool_size / OBJECT_SLAB_SIZE;
     int n_slab = (n_tag + OBJECT_SLAB_SIZE - 1) / OBJECT_SLAB_SIZE;
     memset(m_pool, PTAG_FREE, n_slab * OBJECT_SLAB_SIZE);
     for (int i = 0; i < n_slab; i++) m_pool[i] = PTAG_USED;
-    m_pool_watermark = (initial_datum_size >> OBJECT_SLAB_SIZE_SHIFT);
+    m_pool_watermark = (init_size >> OBJECT_SLAB_SIZE_SHIFT);
     if (m_pool_watermark <= n_slab || m_pool_watermark >= (m_pool_size >> OBJECT_SLAB_SIZE_SHIFT)) {
-        fatal("%s:%u bad object_heap_t::init() parameter, pool_size:%d init_datum_size:%d", __FILE__, __LINE__, pool_size, initial_datum_size);
+        fatal("%s:%u object_heap_t::init() bad parameter, pool_size:%d init_datum_size:%d", __FILE__, __LINE__, pool_size, init_size);
     }
     m_pool_memo = 0;
     m_pool_usage = 0;
     m_pool_threshold = SYNCHRONIZE_THRESHOLD(n_tag);
-
     // collector
     m_trip_bytes = 0;
     m_collect_trip_bytes = ((m_pool_size / 16) < DEFALUT_COLLECT_TRIP_BYTES) ? (m_pool_size / 16) : DEFALUT_COLLECT_TRIP_BYTES;
     collector_init();
-
     // slab
 #if ARCH_LP64
     assert((1 << (array_sizeof(m_collectibles) + 3)) == OBJECT_SLAB_THRESHOLD);
@@ -252,27 +246,26 @@ object_heap_t::init_common(size_t pool_size, size_t initial_datum_size)
     m_weakmappings.init(this, clp2(sizeof(scm_weakmapping_rec_t)), true);
     m_cons.init(this, clp2(sizeof(scm_pair_rec_t)), true);
     m_flonums.init(this, clp2(sizeof(scm_flonum_rec_t)), true);
-
+    // cache
     int base_cache_limit = m_collect_trip_bytes / OBJECT_SLAB_SIZE;
     m_cons.m_cache_limit = base_cache_limit;
     m_flonums.m_cache_limit = base_cache_limit >> 1;
     m_weakmappings.m_cache_limit = base_cache_limit >> 3;
     for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].m_cache_limit = base_cache_limit >> 3;
-
     // hash
     m_symbol.init(this);
     m_string.init(this);
 }
 
 void
-object_heap_t::init_primordial(size_t pool_size, size_t initial_datum_size)
+object_heap_t::init_primordial(size_t pool_size, size_t init_size)
 {
 #if USE_PARALLEL_VM
     m_parent = NULL;
     m_primordial = this;
 #endif
     // common
-    init_common(pool_size, initial_datum_size);
+    init_common(pool_size, init_size);
     // inherents
     init_inherents();
     // global shared
@@ -308,19 +301,16 @@ object_heap_t::init_primordial(size_t pool_size, size_t initial_datum_size)
     init_architecture_feature();
     // trampolines
     m_trampolines = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
-    //#if USE_PARALLEL_VM
-    //m_thread_context = make_hashtable(this, SCM_HASHTABLE_TYPE_EQV, lookup_mutable_hashtable_size(0));
-    //#endif
 }
 
 #if USE_PARALLEL_VM
 void
-object_heap_t::init_child(size_t pool_size, size_t initial_datum_size, object_heap_t* parent)
+object_heap_t::init_child(size_t pool_size, size_t init_size, object_heap_t* parent)
 {
     m_parent = parent;
     m_primordial = parent->m_primordial;
     // common
-    init_common(pool_size, initial_datum_size);
+    init_common(pool_size, init_size);
     // inherents
     m_inherents = m_primordial->m_inherents;
     // global shared
@@ -333,7 +323,6 @@ object_heap_t::init_child(size_t pool_size, size_t initial_datum_size, object_he
     m_architecture_feature = m_primordial->m_architecture_feature;
     // trampolines
     m_trampolines = make_hashtable(this, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
-    //m_thread_context = make_hashtable(this, SCM_HASHTABLE_TYPE_EQV, lookup_mutable_hashtable_size(0));
 }
 #endif
 
@@ -387,14 +376,12 @@ object_heap_t::destroy()
         }
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
     }
-
     m_lock.destroy();
     m_gensym_lock.destroy();
     m_collector_lock.destroy();
     m_collector_wake.destroy();
     m_mutator_wake.destroy();
     m_shade_queue.destroy();
-
     if (m_mark_stack) free(m_mark_stack);
     m_mark_stack = NULL;
     if (m_pool) {
@@ -543,33 +530,10 @@ object_heap_t::interior_shade(void* ref)
         assert(GCSLABP(m_pool[i]));
 #endif
         shade(OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref));
-
     }
 }
 
 #if USE_PARALLEL_VM
-/*
-    void
-    object_heap_t::mark_weakmapping(object_slab_traits_t* traits)
-    {
-        int count = traits->refc;
-        int size = traits->cache->m_object_size;
-        uint8_t* p = OBJECT_SLAB_TOP_OF(traits);
-        while (count) {
-            scm_obj_t obj = p;
-            if (WEAKMAPPINGP(obj)) {
-                if (traits->cache->state(obj)) {
-                    scm_weakmapping_t wp = (scm_weakmapping_t)obj;
-                    scm_obj_t key = wp->key;
-                    if (CELLP(key) && OBJECT_SLAB_TRAITS_OF(key)->cache->state(key) == true) shade(wp->value);
-                }
-                count--;
-            }
-            p += size;
-            assert(p < (uint8_t*)traits);
-        }
-    }
-*/
     void
     object_heap_t::break_weakmapping(object_slab_traits_t* traits)
     {
@@ -594,28 +558,6 @@ object_heap_t::interior_shade(void* ref)
     }
 
 #else
-/*
-    void
-    object_heap_t::mark_weakmapping(object_slab_traits_t* traits)
-    {
-        int count = traits->refc;
-        int size = traits->cache->m_object_size;
-        uint8_t* p = OBJECT_SLAB_TOP_OF(traits);
-        while (count) {
-            scm_obj_t obj = p;
-            if (WEAKMAPPINGP(obj)) {
-                if (traits->cache->state(obj)) {
-                    scm_weakmapping_t wp = (scm_weakmapping_t)obj;
-                    scm_obj_t key = wp->key;
-                    if (CELLP(key) && OBJECT_SLAB_TRAITS_OF(key)->cache->state(key) == true) shade(wp->value);
-                }
-                count--;
-            }
-            p += size;
-            assert(p < (uint8_t*)traits);
-        }
-    }
-*/
     void
     object_heap_t::break_weakmapping(object_slab_traits_t* traits)
     {
@@ -636,7 +578,6 @@ object_heap_t::interior_shade(void* ref)
             assert(p < (uint8_t*)traits);
         }
     }
-
 #endif
 
 void
@@ -646,7 +587,6 @@ object_heap_t::write_barrier(scm_obj_t rhs)
     if (m_write_barrier) {
         if (CELLP(rhs)) {
             if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
-//              MEM_STORE_FENCE;
                 while (m_shade_queue.wait_lock_try_put(rhs) == false) {
                     if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
                     if (m_stop_the_world) {
@@ -693,14 +633,11 @@ object_heap_t::collector_init()
     m_mark_stack_size = MARK_STACK_SIZE_INIT;
     m_mark_stack = m_mark_sp = (scm_obj_t*)malloc(sizeof(scm_obj_t) * m_mark_stack_size);
     assert(m_mark_stack);
-
     m_usage.clear();
-
     m_shade_queue.init(SHAREDQUEUE_SIZE);
     m_collector_lock.init();
     m_mutator_wake.init();
     m_collector_wake.init();
-
     m_write_barrier = false;
     m_read_barrier = false;
     m_alloc_barrier = false;
@@ -728,15 +665,17 @@ object_heap_t::enqueue_root(scm_obj_t obj)
 {
     assert(m_stop_the_world);
     if (CELLP(obj)) {
-        if (m_shade_queue.wait_lock_try_put(obj) == false) {
-            m_collector_lock.lock();
-            m_collector_wake.signal(); // kick now
-#if NEW_ENQUEUE_ROOT
-            m_mutator_wake.wait(m_collector_lock);
-#endif
-            m_collector_lock.unlock();
-            GC_TRACE(";; [shade queue overflow while queueing root set]\n");
-            m_shade_queue.put(obj);
+        if (in_heap(obj)) {
+            if (m_shade_queue.wait_lock_try_put(obj) == false) {
+                m_collector_lock.lock();
+                m_collector_wake.signal(); // kick now
+    #if NEW_ENQUEUE_ROOT
+                m_mutator_wake.wait(m_collector_lock);
+    #endif
+                m_collector_lock.unlock();
+                GC_TRACE(";; [shade queue overflow while queueing root set]\n");
+                m_shade_queue.put(obj);
+            }
         }
     }
 }
@@ -873,6 +812,7 @@ object_heap_t::concurrent_collect(object_heap_t& heap)
         }
     }
 
+    heap.m_root_snapshot = ROOT_SNAPSHOT_EVERYTHING;
 fallback:
     heap.m_stop_the_world = false;
     heap.m_mutator_wake.signal();
@@ -883,10 +823,9 @@ fallback:
     GC_TRACE(";; [collector: concurrent-marking phase 2]\n");
     heap.concurrent_marking();
     double t3 = msec();
-
+    
     // final mark
     assert(heap.m_mutator_stopped == false);
-    heap.m_root_snapshot = ROOT_SNAPSHOT_EVERYTHING;
     heap.m_stop_the_world = true;
     GC_TRACE(";; [collector: stop-the-world final]\n");
 
@@ -908,6 +847,7 @@ fallback:
         puts("serial_marking() timeout, resume mutator and restart concurrent_marking");
         #endif
         heap.m_write_barrier = true;
+        heap.m_root_snapshot = ROOT_SNAPSHOT_RETRY;
         goto fallback;
     }
 #else

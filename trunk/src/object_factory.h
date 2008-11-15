@@ -35,7 +35,10 @@ scm_bvector_t       make_bvector_mapping(object_heap_t* heap, void* p, int n);
 scm_values_t        make_values(object_heap_t* heap, int n);
 scm_cont_t          make_cont(object_heap_t* heap, scm_obj_t rec, void* cont);
 scm_hashtable_t     make_hashtable(object_heap_t* heap, int type, int n);
+scm_weakhashtable_t make_weakhashtable(object_heap_t* heap, int n);
 scm_hashtable_t     make_generic_hashtable(object_heap_t* heap, scm_vector_t handlers);
+scm_hashtable_t     make_shared_hashtable(object_heap_t* heap, int type, int n);
+scm_weakhashtable_t make_shared_weakhashtable(object_heap_t* heap, int n);
 scm_environment_t   make_environment(object_heap_t* heap, const char* name);
 scm_subr_t          make_subr(object_heap_t* heap, subr_proc_t adrs, scm_obj_t doc);
 scm_closure_t       make_closure(object_heap_t* heap, int nargs, int rest, void* env, scm_obj_t code, scm_obj_t doc);
@@ -51,7 +54,6 @@ scm_gloc_t          make_gloc(object_heap_t* heap, scm_environment_t environment
 scm_tuple_t         make_tuple(object_heap_t* heap, int n, scm_obj_t obj);
 scm_tuple_t         make_tuple(object_heap_t* heap, int len, ...);
 scm_weakmapping_t   make_weakmapping(object_heap_t* heap, scm_obj_t key, scm_obj_t value);
-scm_weakhashtable_t make_weakhashtable(object_heap_t* heap, int n);
 scm_obj_t           make_list(object_heap_t* heap, int len, ...);
 scm_port_t          make_std_port(object_heap_t* heap, fd_t fd, scm_obj_t name, int direction, int file_options, int buffer_mode, scm_obj_t transcoder);
 scm_port_t          make_file_port(object_heap_t* heap, scm_obj_t name, int direction, int file_options, int buffer_mode, scm_obj_t transcoder);
@@ -77,8 +79,6 @@ void*   new_heapenv_rec(object_heap_t* heap, size_t size);
 void*   new_heapcont_rec(object_heap_t* heap, size_t size);
 void    finalize(object_heap_t* heap, void* obj);
 void    renounce(void* obj, int size, void* refcon);
-
-const char* get_tuple_type_name(scm_obj_t obj);
 
 scm_hashtable_t     copy_hashtable(object_heap_t* heap, scm_hashtable_t ht, bool immutable);
 scm_weakhashtable_t copy_weakhashtable(object_heap_t* heap, scm_weakhashtable_t ht, bool immutable);

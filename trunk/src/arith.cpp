@@ -40,9 +40,9 @@
             } while(0);
 
 #if ARCH_LP64
-#define BN_ALLOC_FIXNUM(VAR)    BN_ALLOC(VAR, 2)
+  #define BN_ALLOC_FIXNUM(VAR)    BN_ALLOC(VAR, 2)
 #else
-#define BN_ALLOC_FIXNUM(VAR)    BN_ALLOC(VAR, 1)
+  #define BN_ALLOC_FIXNUM(VAR)    BN_ALLOC(VAR, 1)
 #endif
 
 static const int64_t iexpt_2n52 = 0x10000000000000LL; // 2^(53-1)
@@ -53,20 +53,20 @@ struct bn_div_ans_t {
     scm_obj_t   remainder;      // #t: alloc new and set, #f: no need, scm_bignum_t: overwrite
 };
 
-static inline bool
+static bool
 bn_norm_pred(scm_bignum_t bn)
 {
     int bn_count = bn_get_count(bn);
     return (bn_count == 0) || (bn->elts[bn_count - 1] != 0);
 }
 
-static inline scm_bignum_t
+static scm_bignum_t
 bn_dup(object_heap_t* heap, scm_bignum_t bn)
 {
     return make_bignum(heap, bn);
 }
 
-static inline void
+static void
 bn_subsection(scm_bignum_t subsec, scm_bignum_t original, int offset)
 {
     *subsec = *original;
@@ -106,7 +106,6 @@ bn_norm(scm_bignum_t bn)
 }
 
 #if ARCH_LP64
-
     static scm_obj_t
     bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
     {
@@ -143,9 +142,7 @@ bn_norm(scm_bignum_t bn)
         }
         return bn;
     }
-
 #else
-
     static scm_obj_t
     bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
     {
@@ -172,7 +169,6 @@ bn_norm(scm_bignum_t bn)
         }
         return bn;
     }
-
 #endif
 
 static void
@@ -298,7 +294,7 @@ bn_mul(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs)
 static void
 bn_mul_add_uint32(scm_bignum_t ans, scm_bignum_t lhs, uint32_t rhs, uint32_t addend)
 {
-    // this func don't clear ans->elts[] in the case of (ans == lhs)
+    // note: this func do not clear ans->elts[] if (ans == lhs)
     int lhs_count = bn_get_count(lhs);
     assert(bn_get_count(ans) > lhs_count);
     uint64_t acc = addend;
@@ -346,10 +342,10 @@ bn_remainder_uint32(scm_bignum_t numerator, uint32_t denominator)
     bn_div_uint64(scm_bignum_t quotient, scm_bignum_t numerator, uint64_t denominator)
     {
         int numerator_count = bn_get_count(numerator);
-    #ifndef NDEBUG
+  #ifndef NDEBUG
         int quotient_count = bn_get_count(quotient);
         assert(quotient_count >= numerator_count);
-    #endif
+  #endif
         uint128_t remainder = 0;
         if (numerator_count & 1) {
             quotient->elts[numerator_count - 1] = numerator->elts[numerator_count - 1] / denominator;
@@ -549,32 +545,19 @@ bn_copy(scm_bignum_t dst, scm_bignum_t src)
     }
 #endif
 
-#define DEBUG_BN_DIV 0
-
-#if DEBUG_BN_DIV
-#include "vm.h"
-#include "printer.h"
-#endif
-
 static void
 bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bignum_t denominator)
 {
-#if DEBUG_BN_DIV
-    printer_t prt(current_vm(), current_vm()->m_current_output);
-#endif
     assert(bn_norm_pred(numerator));
     assert(bn_norm_pred(denominator));
     assert(bn_get_count(numerator));
     assert(bn_get_count(denominator));
-
     int denominator_count = bn_get_count(denominator);
     int numerator_count = bn_get_count(numerator);
-
     uint32_t bits = denominator->elts[denominator_count - 1];
     int shift = 0;
     while ((int32_t)bits > 0) { bits <<= 1; shift++; }
     bn_shift_left(denominator, shift);
-
     int remainder_count = numerator_count + 1;
     BN_TEMPORARY(remainder);
     BN_ALLOC(remainder, remainder_count);
@@ -582,44 +565,19 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
     remainder.elts[remainder_count - 1] = 0;
     bn_shift_left(&remainder, shift);
     remainder_count = bn_norm(&remainder);
-
     int quotient_count = remainder_count - denominator_count + 1;
     BN_TEMPORARY(quotient);
     BN_ALLOC(quotient, quotient_count);
     memset(quotient.elts, 0, sizeof(uint32_t) * quotient_count);
-
     int workpad_count = denominator_count + 1;
     BN_TEMPORARY(workpad);
     BN_ALLOC(workpad, workpad_count);
-
     int qt_index = quotient_count - 1;
     int rd_index = remainder_count - 1;
     int de_index = denominator_count - 1;
-
-#if DEBUG_BN_DIV
-    prt.format("numerator: ~x~%", numerator);
-    prt.format("shift: %d~%", shift);
-    prt.format("remainder: ~x~%", &remainder);
-    prt.format("denominator: ~x~%", denominator);
-#endif
-
     while (qt_index >= 0) {
-
-#if DEBUG_BN_DIV
-        prt.format("loop: quotient   : ~x~%", &quotient);
-        prt.format("      remainder  : ~x~%", &remainder);
-#endif
-
         assert(rd_index >= 0);
         if (remainder.elts[rd_index] >= denominator->elts[de_index]) {
-
-#if DEBUG_BN_DIV
-            prt.format("-- path1: remainder.elts[%d]   : %x ~%", rd_index, remainder.elts[rd_index]);
-            prt.format("          denominator->elts[%d]: %x ~%", de_index, denominator->elts[de_index]);
-            prt.format("          remainder  : ~x~%", &remainder);
-            prt.format("          denominator: ~x~%", denominator);
-#endif
-
             BN_TEMPORARY(subsec);
             bn_subsection(&subsec, &remainder, rd_index - de_index);
             if (bn_sub(&subsec, &subsec, denominator)) {
@@ -631,25 +589,13 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
         if (qt_index > 0) {
             assert(rd_index > 0);
             uint64_t n = ((uint64_t)remainder.elts[rd_index] << 32) + remainder.elts[rd_index - 1];
-
-#if DEBUG_BN_DIV
-            prt.format("-- path2: n                   : ~x\n", uint64_to_integer(heap, n));
-            prt.format("          denominator->elts[%d]: %x\n", de_index, denominator->elts[de_index]);
-#endif
-
             if (n > denominator->elts[de_index]) {
                 uint32_t qt = 0;
                 if (remainder.elts[rd_index] < denominator->elts[de_index]) {
                     qt = n / denominator->elts[de_index];
-#if DEBUG_BN_DIV
-                    prt.format("-- path5: qt: %x\n", qt);
-#endif
                     bn_set_count(&workpad, workpad_count);
                     bn_mul_add_uint32(&workpad, denominator, qt, 0);
                 } else {
-#if DEBUG_BN_DIV
-                    prt.format("-- path6: qt: 0 (overflow)\n");
-#endif
                     assert(remainder.elts[rd_index] == denominator->elts[de_index]);
                     bn_set_count(&workpad, workpad_count);
                     memcpy(workpad.elts, denominator->elts, sizeof(uint32_t) * denominator_count);
@@ -695,7 +641,8 @@ bn_quotient(object_heap_t* heap, scm_bignum_t quotient, scm_bignum_t lhs, scm_bi
     bn_div(heap, &ans, lhs, rhs);
 }
 
-static int bn_bitsize(scm_bignum_t obj)
+static int
+bn_bitsize(scm_bignum_t obj)
 {
     int last = bn_get_count(obj) - 1;
     assert(last >= 0);
@@ -709,22 +656,17 @@ bn_sqrt(object_heap_t* heap, scm_bignum_t obj)
 {
     if (bn_get_sign(obj) == 0) return;
     int count = bn_get_count(obj);
-
     BN_TEMPORARY(s);
     BN_ALLOC(s, count);
     bn_set_sign(&s, 1);
     memcpy(s.elts, obj->elts, sizeof(uint32_t) * count);
-
     int workpad_count = count + 1;
     BN_TEMPORARY(workpad);
     BN_ALLOC(workpad, workpad_count);
     bn_set_sign(&workpad, 1);
-
     int bitsize = bn_bitsize(obj);
-
     bn_shift_right(&s, (bitsize - 1) / 2);
     bn_norm(&s);
-
     while (true) {
         memset(workpad.elts, 0, sizeof(uint32_t) * workpad_count);
         bn_set_count(&workpad, workpad_count);
@@ -774,7 +716,6 @@ bignum_shift_right_to_double(scm_bignum_t obj, int shift)
     }
     return bn_get_sign(obj) > 0 ? ans : -ans;
 }
-
 
 static double
 rational_to_double(scm_rational_t obj)
@@ -1083,7 +1024,7 @@ uint64_to_bignum(object_heap_t* heap, uint64_t value)
     }
 #endif
 
-inline scm_obj_t
+scm_obj_t
 intptr_to_bignum(object_heap_t* heap, intptr_t value)
 {
     if (sizeof(intptr_t) == sizeof(int32_t)) return int32_to_bignum(heap, value);
@@ -1127,7 +1068,7 @@ decode_double(double n, int* exp, int* sign)
     if (isnan(n)) {
         *exp = 972;
         *sign = 1;
-        return 0x18000000000000LL; //(uint64_t)0x180000 << 32;
+        return 0x18000000000000LL; // (uint64_t)0x180000 << 32;
     }
     if (isinf(n)) {
         *exp = 972;
@@ -1147,14 +1088,12 @@ pow10n(double value, int n)
     assert(value != 0.0);
     assert(DBL_MAX_10_EXP <= 511);
     assert(DBL_MIN_10_EXP >= -511);
-
     static const double bigtens[] = {
             1.0e+16, 1.0e+32, 1.0e+64, 1.0e+128, 1.0e+256 };
     static const double tens[] = {
             1.0,    1.0e+1, 1.0e+2,  1.0e+3,  1.0e+4,  1.0e+5,  1.0e+6,  1.0e+7,
             1.0e+8, 1.0e+9, 1.0e+10, 1.0e+11, 1.0e+12, 1.0e+13, 1.0e+14, 1.0e+15,
             1.0e+16,1.0e+17,1.0e+18, 1.0e+19, 1.0e+20, 1.0e+21, 1.0e+22 };
-
     assert(array_sizeof(tens) == P_EXP10 + 1);
     bool inflate = true;
     if (n < 0) {
@@ -1179,8 +1118,6 @@ pow10n(double value, int n)
     return value;
 }
 
-/////
-
 static scm_obj_t
 oprtr_inexact_negate(object_heap_t* heap, scm_obj_t obj)
 {
@@ -1195,7 +1132,7 @@ oprtr_inexact_negate(object_heap_t* heap, scm_obj_t obj)
     fatal("%s:%u wrong datum type", __FILE__, __LINE__);
 }
 
-static inline scm_obj_t
+static scm_obj_t
 oprtr_norm_integer(object_heap_t* heap, scm_obj_t obj)
 {
     assert(FIXNUMP(obj) || BIGNUMP(obj));
@@ -1203,26 +1140,6 @@ oprtr_norm_integer(object_heap_t* heap, scm_obj_t obj)
     return obj;
 }
 
-/*
-static scm_obj_t
-oprtr_norm_integer(object_heap_t* heap, scm_obj_t obj)
-{
-    assert(FIXNUMP(obj) || BIGNUMP(obj));
-    if (BIGNUMP(obj)) {
-        scm_bignum_t bn = (scm_bignum_t)obj;
-        if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
-        assert(bn_norm_pred(bn));
-        assert(bn_get_sign(bn) != 0);
-        if (bn_get_count(bn) == 1) {
-            int64_t n = bn->elts[0];
-            if (bn_get_sign(bn) < 0) n = -n;
-            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-        }
-        return bn_dup(heap, bn);
-    }
-    return obj;
-}
-*/
 static scm_obj_t
 oprtr_norm_complex(object_heap_t* heap, scm_obj_t real, scm_obj_t imag)
 {
@@ -1360,7 +1277,6 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
     assert(FIXNUMP(numerator) || BIGNUMP(numerator));
     assert(FIXNUMP(denominator) || BIGNUMP(denominator));
     assert(n_zero_pred(denominator) == false);
-
     if (FIXNUMP(numerator)) {
         if (FIXNUMP(denominator)) return oprtr_reduce_fixnum_fixnum(heap, (scm_fixnum_t)numerator, (scm_fixnum_t)denominator);
         return oprtr_reduce_fixnum_bignum(heap, (scm_fixnum_t)numerator, (scm_bignum_t)denominator);
@@ -1379,12 +1295,11 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         if (n_negative_pred(denominator)) return make_rational(heap, MAKEFIXNUM(1), arith_negate(heap, denominator));
         return make_rational(heap, MAKEFIXNUM(-1), denominator);
     }
-    int ans_sign;
     BN_TEMPORARY(n1);
     BN_TEMPORARY(n2);
+    int ans_sign;
     int n1_count;
     int n2_count;
-
     if (BIGNUMP(numerator)) {
         assert(bn_norm_pred((scm_bignum_t)numerator));
         assert(bn_get_count((scm_bignum_t)numerator) != 0);
@@ -1420,11 +1335,9 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         bn_let(&n2, (scm_fixnum_t)denominator);
         if (bn_get_sign(&n2) == -1) ans_sign = -ans_sign;
     }
-
     BN_TEMPORARY(divisor);
     int divisor_count = (n1_count > n2_count) ? n1_count : n2_count;
     BN_ALLOC(divisor, divisor_count);
-
     int shift = 0;
     while (((n1.elts[0] | n2.elts[0]) & 1) == 0) {
         bn_shift_right(&n1, 1);
@@ -1460,10 +1373,8 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         }
         return make_rational(heap, numerator, denominator);
     }
-
     // n2 -> divisor
     bn_copy(&divisor, &n2);
-
     // numerator -> n1
     bn_set_count(&n1, n1_count);
     if (BIGNUMP(numerator)) {
@@ -1479,7 +1390,6 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         n1.elts[0] = (value > 0) ? value : -value;
 #endif
     }
-
     // denominator-> n2
     bn_set_count(&n2, n2_count);
     if (BIGNUMP(denominator)) {
@@ -1495,7 +1405,6 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         n2.elts[0] = (value > 0) ? value : -value;
 #endif
     }
-
     bn_shift_right(&n1, shift);
     bn_norm(&n1);
     bn_quotient(heap, &n1, &n1, &divisor);
@@ -1872,7 +1781,6 @@ oprtr_quotient(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     BN_TEMPORARY(quotient);
     int count = bn_get_count(lhs);
     BN_ALLOC(quotient, count);
-
     bn_div_ans_t ans;
     ans.quotient = &quotient;
     ans.remainder = scm_false;
@@ -1900,11 +1808,9 @@ oprtr_remainder(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
     int test = bn_cmp(lhs, rhs);
     if (test < 0) return oprtr_norm_integer(heap, lhs);
     if (test == 0) return MAKEFIXNUM(0);
-
     BN_TEMPORARY(remainder);
     int count = bn_get_count(lhs);
     BN_ALLOC(remainder, count);
-
     bn_div_ans_t ans;
     ans.quotient = scm_false;
     ans.remainder = &remainder;
@@ -1931,13 +1837,11 @@ oprtr_expt(object_heap_t* heap, scm_obj_t lhs, scm_fixnum_t rhs)
     if (n == 0) return MAKEFIXNUM(1);
     if (n == 1) return lhs;
     if (n < 0) return arith_inverse(heap, oprtr_expt(heap, lhs, MAKEFIXNUM(-n)));
-
     if (!COMPLEXP(lhs) && n_negative_pred(lhs)) { // new
         scm_obj_t ans = oprtr_expt(heap, arith_negate(heap, lhs), rhs);
         if (n & 1) return arith_negate(heap, ans);
         return ans;
     }
-
     if (lhs == MAKEFIXNUM(0)) return lhs; // new
     if (lhs == MAKEFIXNUM(1)) return lhs; // new
     if (lhs == MAKEFIXNUM(2)) {
@@ -1968,50 +1872,16 @@ oprtr_expt(object_heap_t* heap, scm_obj_t lhs, scm_fixnum_t rhs)
 bool
 number_pred(scm_obj_t obj)
 {
-    return (FIXNUMP(obj) || FLONUMP(obj) || BIGNUMP(obj) || RATIONALP(obj) || COMPLEXP(obj));
+    if (FIXNUMP(obj)) return true;
+    if (CELLP(obj)) {
+        int type = HDR(obj) & HDR_TYPE_MASKBITS;
+        return (type == scm_hdr_flonum) | (type == scm_hdr_bignum) | (type == scm_hdr_rational) | (type == scm_hdr_complex);
+    }
+    return false;
 }
 
-uint32_t
-n_hash(scm_obj_t obj, uint32_t bound)
-{
-    if (FIXNUMP(obj)) {
-#if ARCH_LP64
-        uintptr_t n = (uintptr_t)obj;
-        if (n < 0x100000000) return ((uint32_t)n * 2654435761U) % bound;
-        return (n * 2654435761U) % bound;
-#else
-        return ((uintptr_t)obj * 2654435761U) % bound;
-#endif
-    }
-    if (FLONUMP(obj)) {
-        scm_flonum_t flonum = (scm_flonum_t)obj;
-        assert(sizeof(flonum->value) == 8);
-        uint32_t* datum = (uint32_t*)(&flonum->value);
-        return (datum[0] + datum[1]) % bound;
-    }
-    if (BIGNUMP(obj)) {
-        scm_bignum_t bignum = (scm_bignum_t)obj;
-        int count = bn_get_count(bignum);
-        uint32_t hash = bn_get_sign(bignum) + count * 3;
-        for (int i = 0; i < count; i++) hash = hash * 5 + bignum->elts[i];
-        return hash % bound;
-    }
-    if (RATIONALP(obj)) {
-        scm_rational_t rational = (scm_rational_t)obj;
-        uint32_t hash;
-        hash = n_hash(rational->nume, bound) * 5 - n_hash(rational->deno, bound);
-        return hash % bound;
-    }
-    if (COMPLEXP(obj)) {
-        scm_complex_t complex = (scm_complex_t)obj;
-        uint32_t hash;
-        hash = n_hash(complex->real, bound) * 5 + n_hash(complex->imag, bound);
-        return hash % bound;
-    }
-    fatal("%s:%u wrong datum type", __FILE__, __LINE__);
-}
-
-bool integer_pred(scm_obj_t obj)
+bool
+integer_pred(scm_obj_t obj)
 {
     if (FIXNUMP(obj) || BIGNUMP(obj)) return true;
     if (RATIONALP(obj)) return false;
@@ -2024,7 +1894,8 @@ bool integer_pred(scm_obj_t obj)
     return false;
 }
 
-bool integer_valued_pred(scm_obj_t obj)
+bool
+integer_valued_pred(scm_obj_t obj)
 {
     if (integer_pred(obj)) return true;
     if (COMPLEXP(obj)) {
@@ -2033,7 +1904,8 @@ bool integer_valued_pred(scm_obj_t obj)
     return false;
 }
 
-bool rational_pred(scm_obj_t obj)
+bool
+rational_pred(scm_obj_t obj)
 {
     if (FIXNUMP(obj) || BIGNUMP(obj) || RATIONALP(obj)) return true;
     if (FLONUMP(obj)) {
@@ -2045,7 +1917,8 @@ bool rational_pred(scm_obj_t obj)
     return false;
 }
 
-bool rational_valued_pred(scm_obj_t obj)
+bool
+rational_valued_pred(scm_obj_t obj)
 {
     if (rational_pred(obj)) return true;
     if (COMPLEXP(obj)) {
@@ -2055,7 +1928,8 @@ bool rational_valued_pred(scm_obj_t obj)
     return false;
 }
 
-bool real_pred(scm_obj_t obj)
+bool
+real_pred(scm_obj_t obj)
 {
     if (FIXNUMP(obj) || FLONUMP(obj) || BIGNUMP(obj) || RATIONALP(obj)) return true;
     return false;
@@ -2691,7 +2565,6 @@ arith_bit_count(object_heap_t* heap, scm_obj_t obj)
     fatal("%s:%u wrong datum type", __FILE__, __LINE__);
 }
 
-
 scm_obj_t
 arith_bit_length(object_heap_t* heap, scm_obj_t obj)
 {
@@ -3004,7 +2877,6 @@ arith_sub(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     BN_TEMPORARY(bn);
     scm_obj_t real;
     scm_obj_t imag;
-
     if (FIXNUMP(lhs)) {
         if (FIXNUMP(rhs)) {     // fixnum - fixnum -- fixnum or bignum
             intptr_t n = FIXNUM(lhs) - FIXNUM(rhs);
@@ -3280,7 +3152,8 @@ arith_div(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
             real = ((scm_complex_t)rhs)->real;
             imag = ((scm_complex_t)rhs)->imag;
             scm_obj_t r2 = arith_add(heap, arith_mul(heap, real, real), arith_mul(heap, imag, imag));
-            return make_complex(heap, arith_div(heap, arith_mul(heap, real, lhs), r2), arith_negate(heap, arith_div(heap, arith_mul(heap, lhs, imag), r2)));
+            return make_complex(heap, arith_div(heap, arith_mul(heap, real, lhs), r2),
+                                      arith_negate(heap, arith_div(heap, arith_mul(heap, lhs, imag), r2)));
         }
     }
     if (FLONUMP(lhs)) {
@@ -3301,7 +3174,8 @@ flonum_again:
             real = ((scm_complex_t)rhs)->real;
             imag = ((scm_complex_t)rhs)->imag;
             scm_obj_t r2 = arith_add(heap, arith_mul(heap, real, real), arith_mul(heap, imag, imag));
-            return make_complex(heap, arith_div(heap, arith_mul(heap, real, lhs), r2), arith_negate(heap, arith_div(heap, arith_mul(heap, lhs, imag), r2)));
+            return make_complex(heap, arith_div(heap, arith_mul(heap, real, lhs), r2),
+                                      arith_negate(heap, arith_div(heap, arith_mul(heap, lhs, imag), r2)));
         }
     }
     if (BIGNUMP(lhs)) {
@@ -3322,7 +3196,8 @@ flonum_again:
             real = ((scm_complex_t)rhs)->real;
             imag = ((scm_complex_t)rhs)->imag;
             scm_obj_t r2 = arith_add(heap, arith_mul(heap, real, real), arith_mul(heap, imag, imag));
-            return make_complex(heap, arith_div(heap, arith_mul(heap, real, lhs), r2), arith_negate(heap, arith_div(heap, arith_mul(heap, lhs, imag), r2)));
+            return make_complex(heap, arith_div(heap, arith_mul(heap, real, lhs), r2),
+                                      arith_negate(heap, arith_div(heap, arith_mul(heap, lhs, imag), r2)));
         }
     }
     if (RATIONALP(lhs)) {
@@ -3344,7 +3219,8 @@ flonum_again:
             real = ((scm_complex_t)rhs)->real;
             imag = ((scm_complex_t)rhs)->imag;
             scm_obj_t r2 = arith_add(heap, arith_mul(heap, real, real), arith_mul(heap, imag, imag));
-            return make_complex(heap, arith_div(heap, arith_mul(heap, real, lhs), r2), arith_negate(heap, arith_div(heap, arith_mul(heap, lhs, imag), r2)));
+            return make_complex(heap, arith_div(heap, arith_mul(heap, real, lhs), r2),
+                                      arith_negate(heap, arith_div(heap, arith_mul(heap, lhs, imag), r2)));
         }
     }
     if (COMPLEXP(lhs)) {
@@ -3380,7 +3256,6 @@ arith_quotient(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     BN_TEMPORARY(bn);
     scm_obj_t real;
     scm_obj_t imag;
-
 start_again:
     if (FIXNUMP(lhs)) {
         if (FIXNUM(lhs) == 0) return MAKEFIXNUM(0);
@@ -3510,7 +3385,6 @@ arith_remainder(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     BN_TEMPORARY(bn);
     scm_obj_t real;
     scm_obj_t imag;
-
 start_again:
     if (FIXNUMP(lhs)) {
         if (FIXNUM(lhs) == 0) return MAKEFIXNUM(0);
@@ -3640,7 +3514,6 @@ arith_modulo(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     BN_TEMPORARY(bn);
     scm_obj_t real;
     scm_obj_t imag;
-
 start_again:
     if (FIXNUMP(lhs)) {
         if (FIXNUM(lhs) == 0) return MAKEFIXNUM(0);
@@ -4026,7 +3899,6 @@ exact_integer_sqrt_ans_t
 arith_exact_integer_sqrt(object_heap_t* heap, scm_obj_t obj)
 {
     exact_integer_sqrt_ans_t ans = { scm_undef, scm_undef };
-
     if (FIXNUMP(obj)) {
         intptr_t value = FIXNUM(obj);
         assert(value >= 0);
@@ -4262,8 +4134,6 @@ arith_integer_div0(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     return arith_sub(heap, div, MAKEFIXNUM(1));
 }
 
-////
-
 scm_obj_t
 cnvt_to_inexact(object_heap_t* heap, scm_obj_t obj)
 {
@@ -4465,7 +4335,7 @@ cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
     return make_string(heap, buf);
 }
 
-#else // USE_SNPRINT_FOR_FLONUM
+#else
 
 static scm_obj_t
 integer_mul10_may_inplace(object_heap_t* heap, scm_obj_t n)
@@ -4602,12 +4472,10 @@ cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
     int exponent;
     int e;
     int sign;
-
     int64_t f = decode_double(v, &e, &sign);
     if (v == 0.0) return make_string(heap, (sign > 0) ? "0.0" : "-0.0");
     if (isnan(v)) return make_string(heap, (sign > 0) ? "+nan.0" : "-nan.0");
     if (isinf(v)) return make_string(heap, (sign > 0) ? "+inf.0" : "-inf.0");
-
     if (sign == -1) v = -v;
     bool meven = ((f & 1) == 0);
     bool eq_mp_mm = true;
@@ -4616,7 +4484,6 @@ cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
     scm_obj_t s;
     scm_obj_t mp;
     scm_obj_t mm;
-
     if (e >= 0) {
         scm_obj_t be = arith_expt(heap, MAKEFIXNUM(2), MAKEFIXNUM(e));
         if (f != iexpt_2n52) {
@@ -4646,7 +4513,6 @@ cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
             eq_mp_mm = false;
         }
     }
-
     // scale
     int est = (int)(ceil(log10(v) - 0.1));
     if (est > 0) {
@@ -4657,7 +4523,6 @@ cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
         mp = arith_mul(heap, mp, scale10);
         mm = eq_mp_mm ? mp : arith_mul(heap, mm, scale10);
     }
-
     // fixup
     test = integer_ucmp3(r, mp, s);
     if (test > 0 || (meven && test == 0)) {
@@ -4666,7 +4531,6 @@ cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
     } else {
         exponent = est;
     }
-
     // generate
     BN_TEMPORARY(bn_q);
     BN_TEMPORARY(bn_s);
@@ -4676,7 +4540,6 @@ loop:
     mp = integer_mul10_may_inplace(heap, mp);
     mm = eq_mp_mm ? mp : integer_mul10_may_inplace(heap, mm);
     r = integer_mul10_may_inplace(heap, r);
-
     intptr_t dig = '0';
     test = n_compare(heap, r, s);
     if (test == 0) {
@@ -4730,7 +4593,6 @@ loop:
             }
         }
     }
-
     // todo: support misc format
     char out[32];
     int out_count = 0;
@@ -4770,10 +4632,9 @@ loop:
         snprintf(&out[out_count], sizeof(out) - out_count, "e%d", exponent-1);
     }
     return make_string(heap, out);
-
 }
 
-#endif // USE_SNPRINT_FOR_FLONUM
+#endif
 
 scm_obj_t
 cnvt_number_to_string(object_heap_t* heap, scm_obj_t obj, int radix)
@@ -4847,13 +4708,6 @@ prevfloat(double z)
 //  How to read floating point numbers accurately
 //  Proceedings of the ACM SIGPLAN 1990 conference on Programming language design and implementation, p.92-101, June 1990
 
-#define DEBUG_ALGOR    0
-
-#if DEBUG_ALGOR
-#include "vm.h"
-#include "printer.h"
-#endif
-
 static double
 algorithmR(object_heap_t* heap, scm_obj_t f, const int e, const double z0)
 {
@@ -4867,16 +4721,6 @@ algorithmR(object_heap_t* heap, scm_obj_t f, const int e, const double z0)
         x0 = scm_unspecified;
         pow10e = arith_expt(heap, MAKEFIXNUM(10), MAKEFIXNUM(-e));
     }
-#if DEBUG_ALGOR
-    {
-        printer_t prt(current_vm(), current_vm()->m_current_output);
-        prt.format("f      ~s ~%", f);
-        prt.format("e      ~s ~%", int32_to_integer(heap, e));
-        prt.format("z0     ~s ~%", make_flonum(heap, z0));
-        prt.format("x0     ~s ~%", x0);
-        prt.format("pow10e ~s ~%", pow10e);
-    }
-#endif
     while (1) {
         if (isinf(z)) return z;
         int k;
@@ -4909,17 +4753,6 @@ algorithmR(object_heap_t* heap, scm_obj_t f, const int e, const double z0)
             if (BIGNUMP(D2)) bn_set_sign((scm_bignum_t)D2, -bn_get_sign((scm_bignum_t)D2));
             else D2 = MAKEFIXNUM(-FIXNUM(D2));
         }
-#if DEBUG_ALGOR
-        {
-            printer_t prt(current_vm(), current_vm()->m_current_output);
-            prt.format("e  ~s ~%", int32_to_integer(heap, e));
-            prt.format("k  ~s ~%", int32_to_integer(heap, k));
-            prt.format("x  ~s ~%", x);
-            prt.format("y  ~s ~%", y);
-            prt.format("D  ~s ~%", D);
-            prt.format("D2 ~s ~%", D2);
-        }
-#endif
         int test = n_compare(heap, D2, y);
         if (test < 0) {
             if (negD && m == iexpt_2n52 && integer_ucmp3(D2, D2, y) > 0) {
@@ -5047,7 +4880,7 @@ parse_udecimal(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
     scm_obj_t value = MAKEFIXNUM(0);
     while ((c = *p++) != 0) {
         if (c == '0') {
-            digit_count++; // new 060323
+            digit_count++;
             continue;
         }
         p--;
@@ -5356,7 +5189,6 @@ parse_negate(object_heap_t* heap, scm_obj_t obj)
     } else {
         fatal("%s:%u not number.", __FILE__, __LINE__);
     }
-    //return obj;
 }
 
 scm_obj_t
@@ -5364,12 +5196,10 @@ parse_number(object_heap_t* heap, const char* s, int prefix, int radix)
 {
     // prefix should be { e | E | i | I | 0 },
     // radix should be { b | B | o | O | d | D | x | X | 16 | 10 | 8 | 2 | 0 }
-
     bool negative = false;
     bool nosign = true;
     bool exact = false;
     bool inexact = false;
-
     switch (prefix) {
         case 'e': case 'E': exact = true; break;
         case 'i': case 'I': inexact = true; break;

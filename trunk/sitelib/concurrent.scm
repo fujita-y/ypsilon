@@ -9,58 +9,70 @@
           shared-queue-push!
           shared-queue-pop!
           make-mailbox
+          shutdown-mailbox
           mailbox?
           send
           receive
           spawn
           call-with-spawn
-          call-with-spawn-quiet
+          call-with-quiet-spawn
           current-exception-printer)
 
   (import (core))
 
   (define call-with-spawn
-    (lambda (call recv)
-      (spawn
-       (lambda ()
-         (recv
-          (call/cc
-           (lambda (resume)
-             (with-exception-handler
-              (lambda (c)
-                ((current-exception-printer) c)
-                (and (serious-condition? c) (resume c)))
-              (lambda () (call))))))))))
+    (lambda (body . finally)
+      (let ((finally (or (and (pair? finally) (car finally)) values)))
+        (spawn
+         (lambda ()
+           (finally
+            (call/cc
+             (lambda (resume)
+               (with-exception-handler
+                (lambda (c)
+                  ((current-exception-printer) c)
+                  (and (serious-condition? c) (resume c)))
+                (lambda () (body)))))))))))
 
-  (define call-with-spawn-quiet
-    (lambda (call recv)
-      (spawn
-       (lambda ()
-         (recv
-          (call/cc
-           (lambda (resume)
-             (with-exception-handler
-              (lambda (c)
-                (and (serious-condition? c) (resume c)))
-              (lambda () (call))))))))))
-
-  (define make-mailbox
-    (lambda n
-      (tuple 'type:mailbox (apply make-shared-queue n))))
+  (define call-with-quiet-spawn
+    (lambda (body . finally)
+      (let ((finally (or (and (pair? finally) (car finally)) values)))
+        (spawn
+         (lambda ()
+           (finally
+            (call/cc
+             (lambda (resume)
+               (with-exception-handler
+                (lambda (c)
+                  (and (serious-condition? c) (resume c)))
+                (lambda () (body)))))))))))
 
   (define mailbox?
     (lambda (x)
       (eq? (tuple-ref x 0) 'type:mailbox)))
 
+  (define make-mailbox
+    (lambda n
+      (tuple 'type:mailbox (apply make-shared-queue n))))
+
+  (define shutdown-mailbox
+    (lambda (mbox)
+      (assert (mailbox? mbox))
+      (shared-queue-shutdown (tuple-ref mbox 1))))
+
   (define send
     (lambda (mbox obj)
       (assert (mailbox? mbox))
-      (shared-queue-push! (tuple-ref mbox 1) (object->bytevector obj))))
+      (or (shared-queue-push! (tuple-ref mbox 1) (object->bytevector obj))
+          (assertion-violation 'send "mailbox is shutdowned" (list mbox obj)))))
 
   (define receive
-    (lambda (mbox)
+    (lambda (mbox . timeout)
       (assert (mailbox? mbox))
-      (bytevector->object (shared-queue-pop! (tuple-ref mbox 1)))))
+      (let ((obj (apply shared-queue-pop! (tuple-ref mbox 1) timeout)))
+        (cond ((bytevector? obj) (bytevector->object obj))
+              ((timeout-object? obj) obj)
+              (else (assertion-violation 'receive "mailbox is shutdowned" (list mbox obj)))))))
 
   ) ;[end]
 
@@ -83,7 +95,8 @@
             (loop))
            (else "invalid message"))))
      (lambda (retval)
-       (close-mailbox mbox) ;; should be added
+       (shutdown-mailbox out)
+       (shutdown-mailbox mbox)
        (format (current-error-port) "## thread terminated~%")))
     mbox))
 
@@ -91,18 +104,24 @@
 (define request (start answer))
 
 (send request '(reverse (1 2 3)))
-(receive answer) 
+(receive answer)
 ;=> ("reverse" 3 2 1)
 (send request '(set "REVERSE"))
 (send request '(reverse (a b c)))
 (receive answer) 
 ;=> ("REVERSE" c b a)
-(send request '(reverse 1)) 
+(receive answer 1000)
+; #<timeout>
+(send request '(reverse 1))
 ;=> print backtrace and "## thread terminated"
-(send request '(reverse (a b c)))
+(send request '(reverse (a b c))) 
+; error in send: mailbox is shutdowned
 (receive answer)
-;=> wait forever (should be error reported)
+; error in receive: mailbox is shutdowned
+(receive answer 0)
+(receive answer 10)
+; error in receive: mailbox is shutdowned
+(display-thread-status)
 |#
-
 
 

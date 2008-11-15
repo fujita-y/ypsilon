@@ -10,6 +10,8 @@
 #include "core.h"
 #include "object.h"
 
+class object_heap_t;
+
 struct exact_integer_sqrt_ans_t {
     scm_obj_t   s;
     scm_obj_t   r;
@@ -21,18 +23,15 @@ struct div_and_mod_ans_t {
 };
 
 bool number_pred(scm_obj_t obj);
-
 bool integer_pred(scm_obj_t obj);
 bool rational_pred(scm_obj_t obj);
 bool real_pred(scm_obj_t obj);
 bool integer_valued_pred(scm_obj_t obj);
 bool rational_valued_pred(scm_obj_t obj);
 bool real_valued_pred(scm_obj_t obj);
-
 bool exact_integer_pred(scm_obj_t obj);
 bool exact_non_negative_integer_pred(scm_obj_t obj);
 bool exact_positive_integer_pred(scm_obj_t obj);
-
 bool n_zero_pred(scm_obj_t obj);
 bool n_negative_pred(scm_obj_t obj);
 bool n_positive_pred(scm_obj_t obj);
@@ -43,8 +42,6 @@ bool n_equal_pred(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 bool n_exact_equal_pred(scm_obj_t lhs, scm_obj_t rhs);
 bool n_inexact_equal_pred(scm_obj_t lhs, scm_obj_t rhs);
 int  n_compare(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
-
-uint32_t  n_hash(scm_obj_t obj, uint32_t bound);
 scm_obj_t int32_to_bignum(object_heap_t* heap, int32_t value);
 scm_obj_t int64_to_bignum(object_heap_t* heap, int64_t value);
 scm_obj_t uint32_to_bignum(object_heap_t* heap, uint32_t value);
@@ -167,19 +164,16 @@ exact_integer_to_int(scm_obj_t obj, int* ans)
 
 scm_obj_t double_to_inexact(object_heap_t* heap, double value);
 double real_to_double(scm_obj_t obj);
-
 bool bignum_to_int32(scm_bignum_t bn, int32_t* ans);
 bool bignum_to_uint32(scm_bignum_t bn, uint32_t* ans);
 bool bignum_to_int64(scm_bignum_t bn, int64_t* ans);
 bool bignum_to_uint64(scm_bignum_t bn, uint64_t* ans);
-
 scm_string_t cnvt_bignum_to_string(object_heap_t* heap, scm_bignum_t bn, int radix);
 scm_string_t cnvt_fixnum_to_string(object_heap_t* heap, scm_fixnum_t bn, int radix);
 scm_string_t cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t bn);
 scm_obj_t cnvt_number_to_string(object_heap_t* heap, scm_obj_t obj, int radix);
 scm_obj_t cnvt_to_exact(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t cnvt_to_inexact(object_heap_t* heap, scm_obj_t obj);
-
 scm_obj_t arith_negate(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_inverse(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_add(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);

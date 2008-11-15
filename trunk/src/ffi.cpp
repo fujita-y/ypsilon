@@ -11,7 +11,6 @@
 #include "arith.h"
 
 #if ARCH_IA32
-
     const char*
     c_stack_frame_t::push(scm_obj_t obj)
     {
@@ -80,11 +79,9 @@
         }
         return "internal error: c function stack frame overflow";
     }
-
 #endif
 
 #if ARCH_X64
-
     const char*
     c_stack_frame_t::push(scm_obj_t obj)
     {
@@ -192,11 +189,9 @@
         for (int i = 0; i < array_sizeof(m_pre); i++) m_frame[dst++] = m_pre[i];
         for (int i = 0; i < array_sizeof(m_reg); i++) m_frame[dst++] = m_reg[i];
     }
-
 #endif
 
 #if _MSC_VER
-
     intptr_t
     stdcall_func_stub_intptr(void* adrs, int argc, intptr_t argv[])
     {
@@ -414,9 +409,7 @@
         assert(uid < FIXNUM_MAX);
         return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
     }
-
 #elif ARCH_IA32
-
     struct trampoline_t {
         uint8_t     mov_ecx_imm32;  // B9           : mov ecx, imm16/32
         uint32_t    imm32_uid;      // 00 00 00 00
@@ -424,18 +417,14 @@
         uint32_t    imm32_stub;     // 00 00 00 00
         uint8_t     jmp_eax[2];     // FF 20        ; jmp [eax]
         uint8_t     ud2[2];         // 0F 0B
-
         intptr_t    m_stub;
         uint32_t    m_uid;
         uint32_t    m_argc;
-
         static uint8_t* s_pool;
         static uint8_t* s_pool_limit;
         static int s_pool_alloc_size;
-
         void* operator new(size_t size);
         trampoline_t(intptr_t stub, intptr_t uid, int argc);
-
     } __attribute__((packed));
 
     uint8_t* trampoline_t::s_pool;
@@ -514,29 +503,22 @@
         assert(uid < FIXNUM_MAX);
         return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
     }
-
 #elif ARCH_X64
-
     struct trampoline_t {
-
         uint8_t     mov_r10_imm64[2];   // 49 BA                    : mov r10, imm64
         uint64_t    imm64_uid;          // 00 00 00 00 00 00 00 00
         uint8_t     mov_r11_imm64[2];   // 49 BB                    : mov r11, imm64
         uint64_t    imm64_stub;         // 00 00 00 00 00 00 00 00
         uint8_t     jmp_r11[3];         // 41 FF 23                 : jmp [r11]
         uint8_t     ud2[2];             // 0F 0B
-
         intptr_t    m_stub;
         uint64_t    m_uid;
         uint64_t    m_argc;
-
         static uint8_t* s_pool;
         static uint8_t* s_pool_limit;
         static int s_pool_alloc_size;
-
         void* operator new(size_t size);
         trampoline_t(intptr_t stub, intptr_t uid, int argc);
-
     } __attribute__((packed));
 
     uint8_t* trampoline_t::s_pool;
@@ -621,9 +603,7 @@
         assert(uid < FIXNUM_MAX);
         return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
     }
-
 #else
-
     scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure)
     {
         fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
@@ -640,5 +620,4 @@
     {
         fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
     }
-
 #endif

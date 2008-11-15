@@ -13,26 +13,7 @@
 #if USE_PARALLEL_VM
 #include "interpreter.h"
 #endif
-/*
-#if USE_PARALLEL_VM
 
-static mutex_t s_spawn_lock;
-static int s_spawn_id = 0;
-
-int
-VM::spawn_id()
-{
-    if (s_spawn_id == 0) s_spawn_lock.init();
-    int id;
-    s_spawn_lock.lock();
-    s_spawn_id = s_spawn_id + 1;
-    id = s_spawn_id;
-    s_spawn_lock.unlock();
-    return id;
-}
-
-#endif
-*/
 scm_obj_t
 VM::lookup_current_environment(scm_symbol_t symbol)
 {
@@ -61,6 +42,12 @@ VM::intern_current_environment(scm_symbol_t symbol, scm_obj_t value)
     scm_obj_t obj = get_hashtable(ht, symbol);
     if (obj != scm_undef) {
         assert(GLOCP(obj));
+#if USE_PARALLEL_VM
+        if (m_interp->concurrency() > 1) {
+            assert(m_heap->in_heap(obj));
+            m_interp->remember(((scm_gloc_t)obj)->value, value);
+        }
+#endif
         m_heap->write_barrier(value);
         ((scm_gloc_t)obj)->value = value;
         return;
@@ -507,7 +494,6 @@ VM::reset()
 }
 
 #if PROFILE_SUBR
-
     void
     VM::display_subr_profile()
     {
@@ -535,7 +521,6 @@ VM::reset()
             }
         }
     }
-
 #endif
 
 #if PROFILE_OPCODE
@@ -588,8 +573,7 @@ void
 VM::boot()
 {
     try {
-
-  #if USE_DEBUG_BOOT
+#if USE_DEBUG_BOOT
         {
             char load_path[] = "heap/debug-boot.vmi";
             m_bootport = make_file_port(m_heap, make_string_literal(m_heap, load_path), SCM_PORT_DIRECTION_IN, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_true);
@@ -606,7 +590,7 @@ VM::boot()
             }
             port_close(m_bootport);
         }
-  #else
+#else
         {
             scm_bvector_t bv = make_bvector_mapping(m_heap, (void*)s_bootimage, sizeof(s_bootimage));
             m_bootport = make_bytevector_port(m_heap, make_symbol(m_heap, "bootimage"), SCM_PORT_DIRECTION_IN, bv, scm_true);
@@ -621,12 +605,10 @@ VM::boot()
             }
             port_close(m_bootport);
         }
-  #endif
-
+#endif
         m_bootport = (scm_port_t)scm_unspecified;
         m_current_environment = m_heap->m_interaction_environment;
-
-  #if USE_DEBUG_CORE
+#if USE_DEBUG_CORE
         {
             char load_path[] = "heap/debug-core.vmi";
             m_bootport = make_file_port(m_heap, make_string_literal(m_heap, load_path), SCM_PORT_DIRECTION_IN, 0, SCM_PORT_BUFFER_MODE_BLOCK, scm_true);
@@ -643,7 +625,7 @@ VM::boot()
             }
             port_close(m_bootport);
         }
-  #elif USE_INTERNED_CORE
+#elif USE_INTERNED_CORE
         {
             scm_bvector_t bv = make_bvector_mapping(m_heap, (void*)s_coreimage, sizeof(s_coreimage));
             m_bootport = make_bytevector_port(m_heap, make_symbol(m_heap, "bootimage"), SCM_PORT_DIRECTION_IN, bv, scm_true);
@@ -658,10 +640,8 @@ VM::boot()
             }
             port_close(m_bootport);
         }
-  #endif
-
+#endif
         m_bootport = (scm_port_t)scm_unspecified;
-
     } catch (vm_exception_t& e) {
         fatal("fatal in boot: unexpected vm_exception_t");
     } catch (reader_exception_t& e) {
@@ -679,7 +659,6 @@ VM::boot()
     } catch (...) {
         fatal("fatal in boot: unknown exception");
     }
-
   #if PROFILE_OPCODE
     memset(m_opcode_profile, 0, sizeof(m_opcode_profile));
   #endif
@@ -696,12 +675,12 @@ loop:
         prebind(m_pc);
         run(false);
     } catch (vm_exit_t& e) {
-  #if PROFILE_OPCODE
+#if PROFILE_OPCODE
         display_opcode_profile();
-  #endif
-  #if PROFILE_SUBR
+#endif
+#if PROFILE_SUBR
         display_subr_profile();
-  #endif
+#endif
         exit(e.m_code);
     } catch (vm_exception_t& e) {
         backtrace(m_current_error);
@@ -761,7 +740,6 @@ VM::stop()
                              m_heap->m_usage.m_pause1,
                              m_heap->m_usage.m_pause2,
                              m_heap->m_usage.m_pause3);
-
                 }
             }
             scoped_lock lock(m_current_output->lock);
@@ -785,12 +763,13 @@ VM::stop()
         }
     }
     if (m_heap->m_usage.m_recorded) m_heap->m_usage.clear();
-
     double t1 = msec();
 #if HPDEBUG
     if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_CONSISTENCY_CHECK) save_stack();
 #endif
-    if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING || m_heap->m_root_snapshot == ROOT_SNAPSHOT_GLOBALS) {
+    if ((m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) ||
+        (m_heap->m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
+        (m_heap->m_root_snapshot == ROOT_SNAPSHOT_GLOBALS)) {
         m_heap->enqueue_root(m_bootport);
         m_heap->enqueue_root(m_current_input);
         m_heap->enqueue_root(m_current_output);
@@ -801,7 +780,9 @@ VM::stop()
         m_heap->enqueue_root(m_current_dynamic_wind_record);
         m_heap->enqueue_root(m_current_source_comments);
     }
-    if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING || m_heap->m_root_snapshot == ROOT_SNAPSHOT_LOCALS) {
+    if ((m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) ||
+        (m_heap->m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
+        (m_heap->m_root_snapshot == ROOT_SNAPSHOT_LOCALS)) {
         save_stack();
         m_heap->enqueue_root(m_pc);
         m_heap->enqueue_root(m_value);
@@ -827,7 +808,10 @@ VM::stop()
         }
     }
 #if USE_PARALLEL_VM
-    if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) m_interp->snapshot(this);
+    if (m_interp->concurrency() > 1) {
+        if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) m_interp->snapshot(this, false);
+        if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_RETRY) m_interp->snapshot(this, true);
+    }
 #endif
     m_heap->m_collector_lock.lock();
     while (m_heap->m_stop_the_world) {
@@ -839,7 +823,6 @@ VM::stop()
     m_heap->m_collector_wake.signal();
     m_heap->m_collector_lock.unlock();
     double t2 = msec();
-
     switch (m_heap->m_root_snapshot) {
         case ROOT_SNAPSHOT_GLOBALS:
             m_heap->m_usage.m_pause1 = t2 - t1;
@@ -847,11 +830,11 @@ VM::stop()
         case ROOT_SNAPSHOT_LOCALS:
             m_heap->m_usage.m_pause2 = t2 - t1;
             break;
+        case ROOT_SNAPSHOT_RETRY:
         case ROOT_SNAPSHOT_EVERYTHING: {
             double d = t2 - t1;
             if (d > m_heap->m_usage.m_pause3) m_heap->m_usage.m_pause3 = d;
         } break;
-
     }
 }
 

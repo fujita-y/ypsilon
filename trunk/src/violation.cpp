@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 
 #include "core.h"
@@ -41,15 +41,11 @@ undefined_violation(VM* vm, scm_obj_t who, scm_string_t message)
 {
     assert(who);
     vm->backtrace_seek();
-
-  #ifndef NDEBUG
-
+#ifndef NDEBUG
     const char* var_name = NULL;
     if (STRINGP(who)) var_name = ((scm_string_t)who)->name;
     if (SYMBOLP(who)) var_name = ((scm_symbol_t)who)->name;
-
-  #endif
-
+#endif
     if (!(STRINGP(who) || SYMBOLP(who))) who = scm_false;
     scm_obj_t proc = vm->lookup_system_closure(".@undefined-violation");
     if (message != NULL) {
@@ -65,9 +61,11 @@ letrec_violation(VM* vm)
     vm->backtrace_seek();
     scm_obj_t proc = vm->lookup_system_closure(".@assertion-violation");
     if (vm->flags.m_warning_level == scm_false) {
-        vm->apply_scheme(proc, 2, scm_false, make_string_literal(vm->m_heap, "binding construct attempt to reference uninitialized variable, use '--warning' to perform expansion time check"));
+        vm->apply_scheme(proc, 2, scm_false, make_string_literal(vm->m_heap,
+                         "binding construct attempt to reference uninitialized variable, use '--warning' to perform expansion time check"));
     } else {
-        vm->apply_scheme(proc, 2, scm_false, make_string_literal(vm->m_heap, "binding construct attempt to reference uninitialized variable, check warning messages"));
+        vm->apply_scheme(proc, 2, scm_false, make_string_literal(vm->m_heap,
+                         "binding construct attempt to reference uninitialized variable, check warning messages"));
     }
 }
 
@@ -181,10 +179,8 @@ wrong_number_of_arguments_violation(VM* vm, scm_obj_t proc, int required_min, in
     scm_port_t port = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
     scoped_lock lock(port->lock);
     printer_t prt(vm, port);
-
     char plural[] = "s";
     if (argc < 2) plural[0] = 0;
-
     if (required_max < 0) {
         prt.format("~s required at least %d, but %d argument%s given", proc, required_min, argc, plural);
     } else if (required_min == required_max) {
@@ -214,10 +210,8 @@ wrong_number_of_arguments_violation(VM* vm, const char* who, int required_min, i
     scm_port_t port = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
     scoped_lock lock(port->lock);
     printer_t prt(vm, port);
-
     char plural[] = "s";
     if (argc < 2) plural[0] = 0;
-
     if (required_max < 0) {
         prt.format("required at least %d, but %d argument%s given", required_min, argc, plural);
     } else if (required_min == required_max) {
@@ -229,7 +223,6 @@ wrong_number_of_arguments_violation(VM* vm, const char* who, int required_min, i
             prt.format("expected %d to %d, but %d argument%s given", required_min, required_max, argc, plural);
         }
     }
-
     scm_string_t message = port_extract_string(vm->m_heap, port);
     if (argc == 0) {
         raise_assertion_violation(vm, make_symbol(vm->m_heap, who), message, NULL);
@@ -304,8 +297,8 @@ void thread_global_access_violation(VM* vm, scm_obj_t name, scm_obj_t value)
 {
     vm->backtrace_seek();
     raise_assertion_violation(vm,
-                              make_symbol(vm->m_heap, "thread"),
-                              make_string(vm->m_heap, "attempt to modify read-only variable"),
+                              scm_false,
+                              make_string(vm->m_heap, "child thread attempt to modify global variable"),
                               make_list(vm->m_heap, 2, name, value));
 }
 
@@ -325,8 +318,8 @@ void thread_lexical_access_violation(VM* vm, scm_obj_t name, scm_obj_t value)
         irritants = make_list(vm->m_heap, 1, value);
     }
     raise_assertion_violation(vm,
-                              make_symbol(vm->m_heap, "thread"),
-                              make_string(vm->m_heap, "attempt to modify read-only variable"),
+                              scm_false,
+                              make_string(vm->m_heap, "child thread attempt to modify immutable parent variable"),
                               irritants);
 }
 
@@ -337,8 +330,8 @@ void thread_object_access_violation(VM* vm, const char* subr, int argc, scm_obj_
     int last = argc;
     while (--last >= 0) irritants = make_pair(vm->m_heap, argv[last], irritants);
     raise_assertion_violation(vm,
-                              make_symbol(vm->m_heap, "thread"),
-                              make_string(vm->m_heap, "attempt to modify read-only object"),
+                              scm_false,
+                              make_string(vm->m_heap, "child thread attempt to modify parent object"),
                               make_pair(vm->m_heap, vm->m_heap->lookup_system_environment(make_symbol(vm->m_heap, subr)), irritants));
 }
 

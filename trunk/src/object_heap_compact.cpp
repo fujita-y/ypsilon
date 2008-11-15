@@ -92,48 +92,48 @@ relocate_collectible(void* obj, int size, void* desc)
                     scm_bignum_t bignum_to = (scm_bignum_t)to;
                     bignum_to->elts = (uint32_t*)((uintptr_t)bignum_to + sizeof(scm_bignum_rec_t));
                 }
-                break;
-            }
+            } break;
+
             case TC_SYMBOL: {
                 scm_symbol_t symbol_from = (scm_symbol_t)from;
                 if (symbol_from->name == (char*)((uintptr_t)symbol_from + sizeof(scm_symbol_rec_t))) {
                     scm_symbol_t symbol_to = (scm_symbol_t)to;
                     symbol_to->name = (char*)((uintptr_t)symbol_to + sizeof(scm_symbol_rec_t));
                 }
-                break;
-            }
+            } break;
+
             case TC_STRING: {
                 scm_string_t string_from = (scm_string_t)from;
                 if (string_from->name == (char*)((uintptr_t)string_from + sizeof(scm_string_rec_t))) {
                     scm_string_t string_to = (scm_string_t)to;
                     string_to->name = (char*)((uintptr_t)string_to + sizeof(scm_string_rec_t));
                 }
-                break;
-            }
+            } break;
+
             case TC_VECTOR: {
                 scm_vector_t vector_from = (scm_vector_t)from;
                 if (vector_from->elts == (scm_obj_t*)((uintptr_t)vector_from + sizeof(scm_vector_rec_t))) {
                     scm_vector_t vector_to = (scm_vector_t)to;
                     vector_to->elts = (scm_obj_t*)((uintptr_t)vector_to + sizeof(scm_vector_rec_t));
                 }
-                break;
-            }
+            } break;
+
             case TC_TUPLE: {
                 scm_tuple_t tuple_from = (scm_tuple_t)from;
                 if (tuple_from->elts == (scm_obj_t*)((uintptr_t)tuple_from + sizeof(scm_tuple_rec_t))) {
                     scm_tuple_t tuple_to = (scm_tuple_t)to;
                     tuple_to->elts = (scm_obj_t*)((uintptr_t)tuple_to + sizeof(scm_tuple_rec_t));
                 }
-                break;
-            }
+            } break;
+
             case TC_VALUES: {
                 scm_values_t values_from = (scm_values_t)from;
                 if (values_from->elts == (scm_obj_t*)((uintptr_t)values_from + sizeof(scm_values_rec_t))) {
                     scm_values_t values_to = (scm_values_t)to;
                     values_to->elts = (scm_obj_t*)((uintptr_t)values_to + sizeof(scm_values_rec_t));
                 }
-                break;
-            }
+            } break;
+
         }
     }
 #ifndef NDEBUG
@@ -160,20 +160,20 @@ resolve_collectible(void* obj, int size, void* desc)
             scm_vector_t vector = (scm_vector_t)obj;
             int count = vector->count;
             for (int i = 0; i < count; i++) vector->elts[i] = heap->forward(vector->elts[i]);
-            break;
-        }
+        } break;
+
         case TC_TUPLE: {
             scm_tuple_t tuple = (scm_tuple_t)obj;
             int count = HDR_TUPLE_COUNT(tuple->hdr);
             for (int i = 0; i < count; i++) tuple->elts[i] = heap->forward(tuple->elts[i]);
-            break;
-        }
+        } break;
+
         case TC_VALUES: {
             scm_values_t values = (scm_values_t)obj;
             int count = HDR_VALUES_COUNT(values->hdr);
             for (int i = 0; i < count; i++) values->elts[i] = heap->forward(values->elts[i]);
-            break;
-        }
+        } break;
+
         case TC_HASHTABLE: {
             scm_hashtable_t ht = (scm_hashtable_t)obj;
             scoped_lock lock(ht->lock);
@@ -193,8 +193,8 @@ resolve_collectible(void* obj, int size, void* desc)
                     ht_datum->elts[i + nsize] = p;
                 }
             }
-            break;
-        }
+        } break;
+
         case TC_WEAKHASHTABLE: {
             scm_weakhashtable_t ht = (scm_weakhashtable_t)obj;
             scoped_lock lock(ht->lock);
@@ -206,49 +206,49 @@ resolve_collectible(void* obj, int size, void* desc)
                 if (ht_datum->elts[i] != p) rehash = true;
                 ht_datum->elts[i] = p;
             }
-            break;
-        }
+        } break;
+
         case TC_PORT: {
             scm_port_t port = (scm_port_t)obj;
             port->bytes = heap->forward(port->bytes);
             port->name = heap->forward(port->name);
             port->transcoder = heap->forward(port->transcoder);
             port->handlers = heap->forward(port->handlers);
-            break;
-        }
+        } break;
+
         case TC_COMPLEX: {
             scm_complex_t complex = (scm_complex_t)obj;
             complex->imag = heap->forward(complex->imag);
             complex->real = heap->forward(complex->real);
-            break;
-        }
+        } break;
+
         case TC_RATIONAL: {
             scm_rational_t rational = (scm_rational_t)obj;
             rational->nume = heap->forward(rational->nume);
             rational->deno = heap->forward(rational->deno);
-            break;
-        }
+        } break;
+
         case TC_CLOSURE: {
             scm_closure_t closure = (scm_closure_t)obj;
             closure->code = heap->forward(closure->code);
             closure->doc = heap->forward(closure->doc);
             closure->env = heap->interior_forward(closure->env);
-            break;
-        }
+        } break;
+
         case TC_CONT: {
             scm_cont_t cont = (scm_cont_t)obj;
             cont->wind_rec = heap->forward(cont->wind_rec);
             cont->cont = heap->interior_forward(cont->cont);
-            break;
-        }
+        } break;
+
         case TC_HEAPENV: {
             int nbytes = HDR_HEAPENV_SIZE(HDR(obj));
             uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
             vm_env_t env = (vm_env_t)(top + nbytes - sizeof(vm_env_rec_t));
             env->up = heap->interior_forward(env->up);
             for (scm_obj_t* vars = (scm_obj_t*)top; vars < (scm_obj_t*)env; vars++) *vars = heap->forward(*vars);
-            break;
-        }
+        } break;
+
         case TC_HEAPCONT: {
             int nbytes = HDR_HEAPCONT_SIZE(HDR(obj));
             uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
@@ -259,15 +259,15 @@ resolve_collectible(void* obj, int size, void* desc)
             cont->pc = heap->forward(cont->pc);
             cont->trace = heap->forward(cont->trace);
             for (scm_obj_t* args = (scm_obj_t*)top; args < (scm_obj_t*)cont; args++) *args = heap->forward(*args);
-            break;
-        }
+        } break;
+
         case TC_ENVIRONMENT: {
             scm_environment_t environment = (scm_environment_t)obj;
             environment->variable = (scm_hashtable_t)heap->forward(environment->variable);
             environment->macro = (scm_hashtable_t)heap->forward(environment->macro);
             environment->name = (scm_string_t)heap->forward(environment->name);
-            break;
-        }
+        } break;
+
         case TC_GLOC: {
             scm_gloc_t gloc = (scm_gloc_t)obj;
             gloc->variable = heap->forward(gloc->variable);
@@ -275,19 +275,19 @@ resolve_collectible(void* obj, int size, void* desc)
             gloc->environment = heap->forward(gloc->environment);
   #endif
             gloc->value = heap->forward(gloc->value);
-            break;
-        }
+        } break;
+
         case TC_SUBR: {
             scm_subr_t subr = (scm_subr_t)obj;
             subr->doc = heap->forward(subr->doc);
-            break;
-        }
+        } break;
+
         case TC_WEAKMAPPING: {
             scm_weakmapping_t wmap = (scm_weakmapping_t)obj;
             wmap->key = heap->forward(wmap->key);
             wmap->value = heap->forward(wmap->value);
-            break;
-        }
+        } break;
+
     }
 }
 
@@ -306,15 +306,14 @@ rehash_collectible(void* obj, int size, void* desc)
                 scoped_lock lock(ht->lock);
                 hashtable_rec_t* ht_datum = ht->datum;
                 if (ht_datum && ht_datum->capacity) inplace_rehash_hashtable(heap, ht);
-                break;
-            }
+            } break;
+
             case TC_WEAKHASHTABLE: {
                 scm_weakhashtable_t ht = (scm_weakhashtable_t)obj;
                 scoped_lock lock(ht->lock);
                 weakhashtable_rec_t* ht_datum = ht->datum;
                 if (ht_datum && ht_datum->capacity) inplace_rehash_weakhashtable(heap, ht);
-                break;
-            }
+            } break;
         }
     }
 }
@@ -323,12 +322,10 @@ relocate_info_t*
 object_heap_t::relocate(bool pack)
 {
     relocate_info_t* info = new relocate_info_t(m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
-
     object_slab_traits_t* first_traits = OBJECT_SLAB_TRAITS_OF(m_pool);
     object_slab_traits_t* traits;
     uint8_t* first_slab = m_pool;
     uint8_t* slab;
-
     if (pack) {
         int used_count = 0;
         for (int i = 0; i < m_pool_watermark; i++) {
@@ -364,7 +361,6 @@ object_heap_t::relocate(bool pack)
             traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
         }
     }
-
     slab = first_slab;
     traits = first_traits;
     for (int i = 0; i < m_pool_watermark; i++) {
@@ -382,7 +378,6 @@ object_heap_t::resolve(relocate_info_t* info)
     object_slab_traits_t* traits;
     uint8_t* first_slab = m_pool;
     uint8_t* slab;
-
     slab = first_slab;
     traits = first_traits;
     for (int i = 0; i < m_pool_watermark; i++) {
@@ -392,7 +387,6 @@ object_heap_t::resolve(relocate_info_t* info)
     }
     m_symbol.resolve();
     m_string.resolve();
-
     slab = first_slab;
     traits = first_traits;
     for (int i = 0; i < m_pool_watermark; i++) {
@@ -400,21 +394,15 @@ object_heap_t::resolve(relocate_info_t* info)
         slab += OBJECT_SLAB_SIZE;
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
     }
-
     m_symbol.inplace_rehash();
     m_string.inplace_rehash();
-
     for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) m_inherents[i] = forward(m_inherents[i]);
     m_architecture_feature = (scm_hashtable_t)forward(m_architecture_feature);
     m_native_transcoder = (scm_bvector_t)forward(m_native_transcoder);
     m_trampolines = (scm_hashtable_t)forward(m_trampolines);
-    //#if USE_PARALLEL_VM
-    //m_thread_context = (scm_hashtable_t)forward(m_thread_context);
-    //#endif
     m_system_environment = (scm_environment_t)forward(m_system_environment);
     m_interaction_environment = (scm_environment_t)forward(m_interaction_environment);
     m_hidden_variables = (scm_weakhashtable_t)forward(m_hidden_variables);
-
     slab = first_slab;
     traits = first_traits;
     for (int i = 0; i < m_pool_watermark; i++) {
@@ -422,7 +410,6 @@ object_heap_t::resolve(relocate_info_t* info)
         slab += OBJECT_SLAB_SIZE;
         traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
     }
-
     delete info;
 }
 
@@ -484,60 +471,59 @@ relocate_private(void* obj, int size, void* desc)
                 if (bignum->elts != (uint32_t*)((uintptr_t)bignum + sizeof(scm_bignum_rec_t))) {
                     bignum->elts = (uint32_t*)copy_proc(heap, bignum->elts);
                 }
-                break;
-            }
+            } break;
+
             case TC_SYMBOL: {
                 scm_symbol_t symbol = (scm_symbol_t)obj;
                 if (symbol->name != (char*)((uintptr_t)symbol + sizeof(scm_symbol_rec_t))) {
                     symbol->name = (char*)copy_proc(heap, symbol->name);
                 }
-                break;
-            }
+            } break;
+
             case TC_STRING: {
                 scm_string_t string = (scm_string_t)obj;
                 if (string->name != (char*)((uintptr_t)string + sizeof(scm_string_rec_t))) {
                     string->name = (char*)copy_proc(heap, string->name);
                 }
-                break;
-            }
+            } break;
+
             case TC_VECTOR: {
                 scm_vector_t vector = (scm_vector_t)obj;
                 if (vector->elts != (scm_obj_t*)((uintptr_t)vector + sizeof(scm_vector_rec_t))) {
                     vector->elts = (scm_obj_t*)copy_proc(heap, vector->elts);
                 }
-                break;
-            }
+            } break;
+
             case TC_BVECTOR: {
                 scm_bvector_t bvector = (scm_bvector_t)obj;
                 if (HDR_BVECTOR_MAPPING(bvector->hdr) == 0) {
                     bvector->elts = (uint8_t*)copy_proc(heap, bvector->elts);
                 }
-                break;
-            }
+            } break;
+
             case TC_TUPLE: {
                 scm_tuple_t tuple = (scm_tuple_t)obj;
                 if (tuple->elts != (scm_obj_t*)((uintptr_t)tuple + sizeof(scm_tuple_rec_t))) {
                     tuple->elts = (scm_obj_t*)copy_proc(heap, tuple->elts);
                 }
-                break;
-            }
+            } break;
+
             case TC_VALUES: {
                 scm_values_t values = (scm_values_t)obj;
                 if (values->elts != (scm_obj_t*)((uintptr_t)values + sizeof(scm_values_rec_t))) {
                     values->elts = (scm_obj_t*)copy_proc(heap, values->elts);
                 }
-                break;
-            }
+            } break;
+
             case TC_HASHTABLE: {
                 scm_hashtable_t ht = (scm_hashtable_t)obj;
                 ht->datum = (hashtable_rec_t*)copy_proc(heap, ht->datum);
-                break;
-            }
+            } break;
+
             case TC_WEAKHASHTABLE: {
                 scm_weakhashtable_t ht = (scm_weakhashtable_t)obj;
                 ht->datum = (weakhashtable_rec_t*)copy_proc(heap, ht->datum);
-                break;
-            }
+            } break;
         }
     }
 }
@@ -550,7 +536,6 @@ object_heap_t::relocate_privates(bool pack)
     object_slab_traits_t* traits;
     uint8_t* first_slab = m_pool;
     uint8_t* slab;
-
     if (pack) {
         slab = first_slab;
         traits = first_traits;
@@ -574,7 +559,6 @@ object_heap_t::relocate_privates(bool pack)
             traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
         }
     }
-
     relocate_desc_t desc;
     desc.heap = this;
     desc.proc = (pack ? copy_every_private : copy_slab_private);
@@ -587,7 +571,6 @@ object_heap_t::relocate_privates(bool pack)
     }
     m_symbol.relocate(pack);
     m_string.relocate(pack);
-
     slab = first_slab;
     traits = first_traits;
     for (int i = 0; i < m_pool_watermark; i++) {

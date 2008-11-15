@@ -23,14 +23,14 @@ raise_io_codec_error(VM* vm, const char* who, int operation, const char* message
     scm_string_t arg2 = make_string(vm->m_heap, message);
 
     switch (operation) {
-       case SCM_PORT_OPERATION_ENCODE: {
-             vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-encoding-error"),
-                                        4, arg1, arg2, io, ch);
+        case SCM_PORT_OPERATION_ENCODE: {
+            vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-encoding-error"),
+                             4, arg1, arg2, io, ch);
         } break;
 
         case SCM_PORT_OPERATION_DECODE: {
-             vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-decoding-error"),
-                                        3, arg1, arg2, io);
+            vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-decoding-error"),
+                             3, arg1, arg2, io);
         } break;
 
         default: fatal("%s:%u wrong port operation code", __FILE__, __LINE__);
@@ -51,7 +51,6 @@ raise_io_error(VM* vm, const char* who, int operation, const char* message, int 
     } else {
         arg2 = make_string(vm->m_heap, message);
     }
-
     switch (operation) {
         case SCM_PORT_OPERATION_OPEN: {
             switch (err) {
@@ -107,6 +106,7 @@ raise_io_error(VM* vm, const char* who, int operation, const char* message, int 
         case SCM_SOCKET_OPERATION_OPEN: {
             vm->apply_scheme(vm->lookup_system_closure(".@raise-i/o-error"), 2, arg1, arg2);
         } break;
+
         case SCM_SOCKET_OPERATION_READ:
         case SCM_SOCKET_OPERATION_WRITE:
         case SCM_SOCKET_OPERATION_ACCEPT: {

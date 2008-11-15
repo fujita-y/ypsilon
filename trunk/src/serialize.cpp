@@ -1,7 +1,7 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
 
 #include "core.h"
@@ -10,53 +10,48 @@
 #include "object_factory.h"
 #include "serialize.h"
 
-#define BVO_TAG_NOUSE              0
-#define BVO_TAG_LOOKUP             1
-#define BVO_TAG_IMMEDIATE          2
-#define BVO_TAG_PLIST              3
-#define BVO_TAG_DLIST              4
-#define BVO_TAG_VECTOR             5
-#define BVO_TAG_RATIONAL           6
-#define BVO_TAG_COMPLEX            7
-#define BVO_TAG_FLONUM             8
-#define BVO_TAG_BIGNUM             9
-#define BVO_TAG_BVECTOR            10
-#define BVO_TAG_SYMBOL             11
-#define BVO_TAG_STRING             12
-#define BVO_TAG_UNINTERNED_SYMBOL  13
-
-#if ARCH_LP64
-  #define MAX_BUNDLE_SIZE           8
-#else
-  #define MAX_BUNDLE_SIZE           4
-#endif
+#define BVO_TAG_NOUSE               0
+#define BVO_TAG_LOOKUP              1
+#define BVO_TAG_IMMEDIATE           2
+#define BVO_TAG_PLIST               3
+#define BVO_TAG_DLIST               4
+#define BVO_TAG_VECTOR              5
+#define BVO_TAG_RATIONAL            6
+#define BVO_TAG_COMPLEX             7
+#define BVO_TAG_FLONUM              8
+#define BVO_TAG_BIGNUM              9
+#define BVO_TAG_BVECTOR             10
+#define BVO_TAG_SYMBOL              11
+#define BVO_TAG_STRING              12
+#define BVO_TAG_UNINTERNED_SYMBOL   13
+#define MAX_BUNDLE_SIZE             sizeof(uint64_t)
 
 serializer_t::serializer_t(object_heap_t* heap)
 {
     m_heap = heap;
     m_lites = make_hashtable(m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
-    int depth = 1024;
-    m_stack = (scm_obj_t*)malloc(sizeof(scm_obj_t) * depth);
+    int depth = 32;
+    m_stack = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * depth);
     m_stack_limit = m_stack + depth;
     m_sp = m_stack;
-    m_buf_size = 4096;
+    m_buf_size = 128;
     m_buf_mark = 0;
-    m_buf = (uint8_t*)malloc(m_buf_size);
+    m_buf = (uint8_t*)m_heap->allocate_private(m_buf_size);
     m_bad = NULL;
 }
 
 serializer_t::~serializer_t()
 {
-    free(m_stack);
-    free(m_buf);
+    m_heap->deallocate_private(m_stack);
+    m_heap->deallocate_private(m_buf);
 }
 
 void
 serializer_t::emit_u8(uint8_t octet)
 {
-    if (m_buf_mark + MAX_BUNDLE_SIZE > m_buf_size) expand();
     m_buf[m_buf_mark] = octet;
     m_buf_mark++;
+    if (m_buf_mark + MAX_BUNDLE_SIZE >= m_buf_size) expand();
 }
 
 void
@@ -66,6 +61,7 @@ serializer_t::emit_u32(uint32_t n)
     assert(sizeof(uint32_t) <= MAX_BUNDLE_SIZE);
     *(uint32_t*)(m_buf + m_buf_mark) = n;
     m_buf_mark += sizeof(uint32_t);
+    if (m_buf_mark + MAX_BUNDLE_SIZE >= m_buf_size) expand();
 #else
     emit_u8((n >> 0) & 0xff);
     emit_u8((n >> 8) & 0xff);
@@ -81,6 +77,7 @@ serializer_t::emit_u64(uint64_t n)
     assert(sizeof(uint64_t) <= MAX_BUNDLE_SIZE);
     *(uint64_t*)(m_buf + m_buf_mark) = n;
     m_buf_mark += sizeof(uint64_t);
+    if (m_buf_mark + MAX_BUNDLE_SIZE >= m_buf_size) expand();
 #else
     emit_u8((n >> 0) & 0xff);
     emit_u8((n >> 8) & 0xff);
@@ -94,29 +91,39 @@ serializer_t::emit_u64(uint64_t n)
 }
 
 void
-serializer_t::emit_bytes(const char* s, int n)
+serializer_t::emit_bytes(const uint8_t* s, int n)
 {
-    for (int i = 0; i < n; i++) emit_u8(s[i]);
+    if (m_buf_mark + MAX_BUNDLE_SIZE + n < m_buf_size) {
+        memcpy(m_buf + m_buf_mark, s, n);
+        m_buf_mark += n;
+    } else {
+        for (int i = 0; i < n; i++) emit_u8(s[i]);
+    }
 }
 
 void
 serializer_t::expand()
 {
-    m_buf_size = m_buf_size + m_buf_size;
-    m_buf = (uint8_t*)realloc(m_buf, m_buf_size);
-    if (m_buf == NULL) fatal("%s:%u memory overflow", __FILE__, __LINE__);
+    uint8_t* prev = m_buf;
+    int n2 = m_buf_size + m_buf_size;
+    m_buf = (uint8_t*)m_heap->allocate_private(n2);
+    memcpy(m_buf, prev, m_buf_size);
+    m_buf_size = n2;
+    m_heap->deallocate_private(prev);
 }
 
 void
 serializer_t::push(scm_obj_t obj)
 {
     if (m_sp == m_stack_limit) {
-        int n = m_sp - m_stack;
-        int depth = (m_stack_limit - m_stack) * 2;
-        m_stack = (scm_obj_t*)realloc(m_stack, sizeof(scm_obj_t) * depth);
-        if (m_stack == NULL) fatal("%s:%u memory overflow on realloc serialize stack", __FILE__, __LINE__);
-        m_stack_limit = m_stack + depth;
+        scm_obj_t* prev = m_stack;
+        int n = m_stack_limit - m_stack;
+        int n2 = n + n;
+        m_stack = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * n2);
+        memcpy(m_stack, prev, sizeof(scm_obj_t) * n);
+        m_stack_limit = m_stack + n2;
         m_sp = m_stack + n;
+        m_heap->deallocate_private(prev);
     }
     m_sp[0] = obj;
     m_sp++;
@@ -133,6 +140,7 @@ serializer_t::pop()
 void
 serializer_t::scan(scm_obj_t obj)
 {
+
 loop:
     if (CELLP(obj)) {
         if (PAIRP(obj)) {
@@ -162,7 +170,7 @@ loop:
 void
 serializer_t::put_lites()
 {
-    scm_obj_t* lites = (scm_obj_t*)calloc(m_lites->datum->live, sizeof(scm_obj_t));
+    scm_obj_t* lites = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * m_lites->datum->live);
     try {
         hashtable_rec_t* ht_datum = m_lites->datum;
         int nsize = m_lites->datum->capacity;
@@ -183,13 +191,13 @@ serializer_t::put_lites()
                     emit_u32(i);
                     int n = HDR_SYMBOL_SIZE(symbol->hdr) + 2;
                     emit_u32(n);
-                    emit_bytes(symbol->name, n);
+                    emit_bytes((uint8_t*)symbol->name, n);
                 } else {
                     emit_u8(BVO_TAG_SYMBOL);
                     emit_u32(i);
                     int n = HDR_SYMBOL_SIZE(symbol->hdr);
                     emit_u32(n);
-                    emit_bytes(symbol->name, n);
+                    emit_bytes((uint8_t*)symbol->name, n);
                 }
                 continue;
             }
@@ -199,15 +207,15 @@ serializer_t::put_lites()
                 emit_u32(i);
                 int n = string->size;
                 emit_u32(n);
-                emit_bytes(string->name, n);
+                emit_bytes((uint8_t*)string->name, n);
                 continue;
             }
         }
     } catch (...) {
-        free(lites);
+        m_heap->deallocate_private(lites);
         throw;
     }
-    free(lites);
+    m_heap->deallocate_private(lites);
 }
 
 void
@@ -270,7 +278,7 @@ serializer_t::put_datum(scm_obj_t obj)
         int count = bv->count;
         emit_u8(BVO_TAG_BVECTOR);
         emit_u32(count);
-        for (int i = 0; i < count; i++) emit_u8(bv->elts[i]);
+        emit_bytes(bv->elts, count);
         return;
     }
     if (FLONUMP(obj)) {
@@ -309,7 +317,7 @@ serializer_t::put_datum(scm_obj_t obj)
         put_datum(comp->imag);
         return;
     }
-    fatal("%s:%u datum not supported in serialized object", __FILE__, __LINE__);
+    fatal("%s:%u internal error: datum not supported in serialized object", __FILE__, __LINE__);
 }
 
 scm_obj_t
@@ -338,13 +346,21 @@ deserializer_t::deserializer_t(object_heap_t* heap)
 
 deserializer_t::~deserializer_t()
 {
-    if (m_lites) free(m_lites);
+    if (m_lites) m_heap->deallocate_private(m_lites);
 }
 
 uint8_t
 deserializer_t::fetch_u8()
 {
     return *m_buf++;
+}
+
+void
+deserializer_t::fetch_bytes(uint8_t* p, int n)
+{
+    memcpy(p, m_buf, n);
+    m_buf += n;
+    if (m_buf > m_buf_tail) throw true;
 }
 
 uint32_t
@@ -394,79 +410,70 @@ deserializer_t::get_datum()
 {
     uint8_t octet = fetch_u8();
     switch (octet) {
-    case BVO_TAG_NOUSE:
-        fatal("%s:%u unknown serialization format", __FILE__, __LINE__);
-    case BVO_TAG_LOOKUP: {
-        uint32_t uid = fetch_u32();
-        return m_lites[uid];
-    }
-    case BVO_TAG_IMMEDIATE: {
+        case BVO_TAG_LOOKUP: {
+            uint32_t uid = fetch_u32();
+            return m_lites[uid];
+        }
+        case BVO_TAG_IMMEDIATE: {
 #if ARCH_LP64
-        return (scm_obj_t)fetch_u64();
+            return (scm_obj_t)fetch_u64();
 #else
-        return (scm_obj_t)fetch_u32();
+            return (scm_obj_t)fetch_u32();
 #endif
-    }
-    case BVO_TAG_PLIST: {
-        int count = fetch_u32();
-        scm_obj_t lst = scm_nil;
-        for (int i = 0; i < count; i++) {
-            lst = make_pair(m_heap, get_datum(), lst);
         }
-        return lst;
-    }
-    case BVO_TAG_DLIST: {
-        int count = fetch_u32();
-        scm_obj_t lst = get_datum();
-        for (int i = 0; i < count; i++) {
-            lst = make_pair(m_heap, get_datum(), lst);
+        case BVO_TAG_PLIST: {
+            int count = fetch_u32();
+            scm_obj_t lst = scm_nil;
+            for (int i = 0; i < count; i++) {
+                lst = make_pair(m_heap, get_datum(), lst);
+            }
+            return lst;
         }
-        return lst;
-    }
-    case BVO_TAG_VECTOR: {
-        int count = fetch_u32();
-        scm_vector_t vector = make_vector(m_heap, count, scm_unspecified);
-        scm_obj_t* elts = vector->elts;
-        for (int i = 0; i < count; i++) elts[i] = get_datum();
-        return vector;
-    }
-    case BVO_TAG_RATIONAL: {
-        scm_obj_t nume = get_datum();
-        scm_obj_t deno = get_datum();
-        return make_rational(m_heap, nume, deno);
-    }
-    case BVO_TAG_COMPLEX: {
-        scm_obj_t real = get_datum();
-        scm_obj_t imag = get_datum();
-        return make_complex(m_heap, real, imag);
-    }
-    case BVO_TAG_FLONUM: {
-        union {
-            double      f64;
-            uint64_t    u64;
-        } n;
-        n.u64 = fetch_u64();
-        return make_flonum(m_heap, n.f64);
-    }
-    case BVO_TAG_BIGNUM: {
-        int sign = (int)fetch_u32();
-        int count = (int)fetch_u32();
-        scm_bignum_t bn = make_bignum(m_heap, count);
-        assert(sizeof(bn->elts[0]) == sizeof(uint32_t));
-        for (int i = 0; i < count; i++) bn->elts[i] = fetch_u32();
-        bn_set_sign(bn, sign);
-        return bn;
-    }
-    case BVO_TAG_BVECTOR: {
-        uint32_t count = fetch_u32();
-        scm_bvector_t bv = make_bvector(m_heap, count);
-        for (int i = 0; i < count; i++) bv->elts[i] = fetch_u8();
-        return bv;
-    }
-    case BVO_TAG_SYMBOL:
-    case BVO_TAG_STRING:
-    case BVO_TAG_UNINTERNED_SYMBOL:
-        break;
+        case BVO_TAG_DLIST: {
+            int count = fetch_u32();
+            scm_obj_t lst = get_datum();
+            for (int i = 0; i < count; i++) {
+                lst = make_pair(m_heap, get_datum(), lst);
+            }
+            return lst;
+        }
+        case BVO_TAG_VECTOR: {
+            int count = fetch_u32();
+            scm_vector_t vector = make_vector(m_heap, count, scm_unspecified);
+            scm_obj_t* elts = vector->elts;
+            for (int i = 0; i < count; i++) elts[i] = get_datum();
+            return vector;
+        }
+        case BVO_TAG_RATIONAL: {
+            scm_obj_t nume = get_datum();
+            scm_obj_t deno = get_datum();
+            return make_rational(m_heap, nume, deno);
+        }
+        case BVO_TAG_COMPLEX: {
+            scm_obj_t real = get_datum();
+            scm_obj_t imag = get_datum();
+            return make_complex(m_heap, real, imag);
+        }
+        case BVO_TAG_FLONUM: {
+            union { double f64; uint64_t u64; } n;
+            n.u64 = fetch_u64();
+            return make_flonum(m_heap, n.f64);
+        }
+        case BVO_TAG_BIGNUM: {
+            int sign = (int)fetch_u32();
+            int count = (int)fetch_u32();
+            scm_bignum_t bn = make_bignum(m_heap, count);
+            assert(sizeof(bn->elts[0]) == sizeof(uint32_t));
+            for (int i = 0; i < count; i++) bn->elts[i] = fetch_u32();
+            bn_set_sign(bn, sign);
+            return bn;
+        }
+        case BVO_TAG_BVECTOR: {
+            uint32_t count = fetch_u32();
+            scm_bvector_t bv = make_bvector(m_heap, count);
+            fetch_bytes(bv->elts, count);
+            return bv;
+        }
     }
     throw true;
 }
@@ -474,11 +481,11 @@ deserializer_t::get_datum()
 void
 deserializer_t::get_lites()
 {
-    int buflen = MAX_READ_STRING_LENGTH;
-    char* buf = (char*)malloc(buflen + 1);
+    int buflen = 128;
+    char* buf = (char*)m_heap->allocate_private(buflen + 1);
     int count = fetch_u32();
     if (count < 0) throw true;
-    m_lites = (scm_obj_t*)calloc(count, sizeof(scm_obj_t));
+    m_lites = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * count);
     for (int i = 0; i < count; i++) {
         uint8_t tag = fetch_u8();
         uint32_t uid = fetch_u32();
@@ -486,28 +493,28 @@ deserializer_t::get_lites()
         if (uid > count) throw true;
         if (m_buf + len > m_buf_tail) throw true;
         if (len > buflen) {
-            free(buf);
-            buf = (char*)malloc(len + 1);
+            m_heap->deallocate_private(buf);
+            buf = (char*)m_heap->allocate_private(len + 1);
             buflen = len;
         }
-        for (int i = 0; i < len; i++) buf[i] = fetch_u8();
+        fetch_bytes((uint8_t*)buf, len);
         buf[len] = 0;
         switch (tag) {
-        case BVO_TAG_SYMBOL:
-            m_lites[uid] = make_symbol(m_heap, buf, len);
-            break;
-        case BVO_TAG_UNINTERNED_SYMBOL:
-            m_lites[uid] = make_symbol_uninterned(m_heap, buf, len - 2, buf[len - 1]);
-            break;
-        case BVO_TAG_STRING:
-            m_lites[uid] = make_string_literal(m_heap, buf, len);
-            break;
-        default:
-            free(buf);
-            throw true;
+            case BVO_TAG_SYMBOL:
+                m_lites[uid] = make_symbol(m_heap, buf, len);
+                break;
+            case BVO_TAG_UNINTERNED_SYMBOL:
+                m_lites[uid] = make_symbol_uninterned(m_heap, buf, len - 2, buf[len - 1]);
+                break;
+            case BVO_TAG_STRING:
+                m_lites[uid] = make_string_literal(m_heap, buf, len);
+                break;
+            default:
+                m_heap->deallocate_private(buf);
+                throw true;
         }
     }
-    free(buf);
+    m_heap->deallocate_private(buf);
 }
 
 scm_obj_t

@@ -12,13 +12,10 @@
 
 class reader_t {
 public:
-                    reader_t(VM* vm, scm_port_t input);
-
+    reader_t(VM* vm, scm_port_t input);
     scm_obj_t       read(scm_hashtable_t note);
 private:
-
     void            lexical_error(const char* fmt, ...) ATTRIBUTE(noreturn);
-
     void            unget_ucs4();
     int             get_ucs4();
     int             lookahead_ucs4();
@@ -58,7 +55,6 @@ private:
     scm_obj_t       m_ungetbuf;
     bool            m_ungetbuf_valid;
     bool            m_file;
-
     static bool     s_char_map_ready;
     static uint8_t  s_char_map[128];
     static void     make_char_map();

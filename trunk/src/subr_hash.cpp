@@ -1,9 +1,8 @@
 /*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
+  Ypsilon Scheme System
+  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
 */
-
 #include "core.h"
 #include "vm.h"
 #include "file.h"
@@ -20,6 +19,27 @@
 #include "ioerror.h"
 #include "printer.h"
 #include "violation.h"
+#include "interpreter.h"
+
+// make-weak-shared-core-hashtable
+scm_obj_t
+subr_make_weak_shared_core_hashtable(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) {
+        int nsize = lookup_mutable_hashtable_size(0);
+        return make_shared_weakhashtable(vm->m_heap, nsize);
+    }
+    if (argc == 1) {
+        if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
+            int nsize = lookup_mutable_hashtable_size(FIXNUM(argv[0]));
+            return make_shared_weakhashtable(vm->m_heap, nsize);
+        }
+        wrong_type_argument_violation(vm, "make-weak-shared-core-hashtable", 0, "non-negative fixnum", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "make-weak-shared-core-hashtable", 0, 1, argc, argv);
+    return scm_undef;
+}
 
 // make-weak-core-hashtable
 scm_obj_t
@@ -49,6 +69,58 @@ subr_weak_core_hashtable_pred(VM* vm, int argc, scm_obj_t argv[])
         return WEAKHASHTABLEP(argv[0]) ? scm_true : scm_false;
     }
     wrong_number_of_arguments_violation(vm, "weak-core-hashtable?", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// make-shared-core-hashtable
+scm_obj_t
+subr_make_shared_core_hashtable(VM* vm, int argc, scm_obj_t argv[])
+{
+    int nsize = lookup_mutable_hashtable_size(0);
+    if (argc == 0) {
+        return make_shared_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQ, nsize);
+    }
+    if (argc == 1 || argc == 2) {
+        if (SYMBOLP(argv[0])) {
+            if (argv[0] == make_symbol(vm->m_heap, "generic")) {
+                if (argc == 2) {
+                    if (VECTORP(argv[1])) {
+                        scm_vector_t vector = (scm_vector_t)argv[1];
+                        if (vector->count == 14) {
+                            return make_generic_hashtable(vm->m_heap, (scm_vector_t)vector);
+                        }
+                    }
+                    wrong_type_argument_violation(vm, "make-shared-core-hashtable", 1, "14 elements vector", argv[1], argc, argv);
+                    return scm_undef;
+                }
+                wrong_type_argument_violation(vm, "make-shared-core-hashtable", 1, "vector", NULL, argc, argv);
+                return scm_undef;
+            }
+            if (argc == 2) {
+                if (FIXNUMP(argv[1])) {
+                    nsize = lookup_mutable_hashtable_size(FIXNUM(argv[1]));
+                } else {
+                    wrong_type_argument_violation(vm, "make-shared-core-hashtable", 1, "fixnum", argv[1], argc, argv);
+                    return scm_undef;
+                }
+            }
+            if (argv[0] == make_symbol(vm->m_heap, "eq?")) {
+                return make_shared_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQ, nsize);
+            }
+            if (argv[0] == make_symbol(vm->m_heap, "eqv?")) {
+                return make_shared_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQV, nsize);
+            }
+            if (argv[0] == make_symbol(vm->m_heap, "equal?")) {
+                return make_shared_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQUAL, nsize);
+            }
+            if (argv[0] == make_symbol(vm->m_heap, "string=?")) {
+                return make_shared_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_STRING, nsize);
+            }
+        }
+        wrong_type_argument_violation(vm, "make-shared-core-hashtable", 0, "eq?, eqv?, equal?, string=?, or generic", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "make-shared-core-hashtable", 0, 1, argc, argv);
     return scm_undef;
 }
 
@@ -135,7 +207,7 @@ subr_core_hashtable_mutable_pred(VM* vm, int argc, scm_obj_t argv[])
             scm_weakhashtable_t ht = (scm_weakhashtable_t)argv[0];
             return HDR_HASHTABLE_IMMUTABLE(ht->hdr) ? scm_false : scm_true;
         }
-        wrong_type_argument_violation(vm, "core-hashtable-mutable?", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable-mutable?", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable-mutable?", 1, 1, argc, argv);
@@ -152,14 +224,14 @@ subr_core_hashtable_equivalence_function(VM* vm, int argc, scm_obj_t argv[])
             scoped_lock lock(ht->lock);
             if (ht->handlers == scm_false) {
                 switch (ht->type) {
-                case SCM_HASHTABLE_TYPE_EQ:
-                    return vm->lookup_current_environment(make_symbol(vm->m_heap, "eq?"));
-                case SCM_HASHTABLE_TYPE_EQV:
-                    return vm->lookup_current_environment(make_symbol(vm->m_heap, "eqv?"));
-                case SCM_HASHTABLE_TYPE_EQUAL:
-                    return vm->lookup_current_environment(make_symbol(vm->m_heap, "equal?"));
-                case SCM_HASHTABLE_TYPE_STRING:
-                    return vm->lookup_current_environment(make_symbol(vm->m_heap, "string=?"));
+                    case SCM_HASHTABLE_TYPE_EQ:
+                        return vm->lookup_current_environment(make_symbol(vm->m_heap, "eq?"));
+                    case SCM_HASHTABLE_TYPE_EQV:
+                        return vm->lookup_current_environment(make_symbol(vm->m_heap, "eqv?"));
+                    case SCM_HASHTABLE_TYPE_EQUAL:
+                        return vm->lookup_current_environment(make_symbol(vm->m_heap, "equal?"));
+                    case SCM_HASHTABLE_TYPE_STRING:
+                        return vm->lookup_current_environment(make_symbol(vm->m_heap, "string=?"));
                 }
                 return scm_false;
             }
@@ -171,7 +243,7 @@ subr_core_hashtable_equivalence_function(VM* vm, int argc, scm_obj_t argv[])
         if (WEAKHASHTABLEP(argv[0])) {
             return vm->lookup_current_environment(make_symbol(vm->m_heap, "eq?"));
         }
-        wrong_type_argument_violation(vm, "core-hashtable-equivalence-function", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable-equivalence-function", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable-equivalence-function", 1, 1, argc, argv);
@@ -197,7 +269,7 @@ subr_core_hashtable_hash_function(VM* vm, int argc, scm_obj_t argv[])
         if (WEAKHASHTABLEP(argv[0])) {
             return scm_false;
         }
-        wrong_type_argument_violation(vm, "core-hashtable-hash-function", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable-hash-function", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable-hash-function", 1, 1, argc, argv);
@@ -212,15 +284,20 @@ subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[])
         if (HASHTABLEP(argv[0])) {
             scm_hashtable_t ht = (scm_hashtable_t)argv[0];
             if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
-#if USE_PARALLEL_VM
-                if (!vm->m_heap->in_heap(ht)) {
-                    thread_object_access_violation(vm, "core-hashtable-set!" ,argc, argv);
-                    return scm_undef;
-                }
-#endif
                 vm->m_heap->write_barrier(argv[1]);
                 vm->m_heap->write_barrier(argv[2]);
                 scoped_lock lock(ht->lock);
+#if USE_PARALLEL_VM
+                if (vm->m_interp->concurrency() > 1) {
+                    if (!vm->m_heap->in_heap(ht)) {
+                        thread_object_access_violation(vm, "core-hashtable-set!" ,argc, argv);
+                        return scm_undef;
+                    }
+                    if (HDR_HASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                        vm->m_interp->remember(get_hashtable(ht, argv[1]), argv[2]);
+                    }
+                }
+#endif
                 if (ht->handlers == scm_false) {
                     int nsize = put_hashtable(ht, argv[1], argv[2]);
                     if (nsize) rehash_hashtable(vm->m_heap, ht, nsize);
@@ -238,9 +315,14 @@ subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[])
             scm_weakhashtable_t ht = (scm_weakhashtable_t)argv[0];
             if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
 #if USE_PARALLEL_VM
-                if (!vm->m_heap->in_heap(ht)) {
-                    thread_object_access_violation(vm, "core-hashtable-set!" ,argc, argv);
-                    return scm_undef;
+                if (vm->m_interp->concurrency() > 1) {
+                    if (!vm->m_heap->in_heap(ht)) {
+                        thread_object_access_violation(vm, "core-hashtable-set!" ,argc, argv);
+                        return scm_undef;
+                    }
+                    if (HDR_WEAKHASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                        vm->m_interp->remember(lookup_weakhashtable(ht, argv[1]), argv[2]);
+                    }
                 }
 #endif
                 scoped_lock lock(ht->lock);
@@ -260,7 +342,7 @@ subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[])
             invalid_object_violation(vm, "core-hashtable-set!", "mutable hashtable", argv[0], argc, argv);
             return scm_undef;
         }
-        wrong_type_argument_violation(vm, "core-hashtable-set!", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable-set!", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable-set!", 3, 3, argc, argv);
@@ -293,7 +375,7 @@ subr_core_hashtable_ref(VM* vm, int argc, scm_obj_t argv[])
             assert(WEAKMAPPINGP(ref));
             return ((scm_weakmapping_t)ref)->value;
         }
-        wrong_type_argument_violation(vm, "core-hashtable-ref", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable-ref", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable-ref", 3, 3, argc, argv);
@@ -308,13 +390,19 @@ subr_core_hashtable_delete(VM* vm, int argc, scm_obj_t argv[])
         if (HASHTABLEP(argv[0])) {
             scm_hashtable_t ht = (scm_hashtable_t)argv[0];
             if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
+                scoped_lock lock(ht->lock);
 #if USE_PARALLEL_VM
-                if (!vm->m_heap->in_heap(ht)) {
-                    thread_object_access_violation(vm, "core-hashtable-delete!" ,argc, argv);
-                    return scm_undef;
+                if (vm->m_interp->concurrency() > 1) {
+                    if (!vm->m_heap->in_heap(ht)) {
+                        thread_object_access_violation(vm, "core-hashtable-delete!" ,argc, argv);
+                        return scm_undef;
+                    }
+                    if (HDR_HASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                        vm->m_interp->remember(argv[1], scm_undef);
+                        vm->m_interp->remember(get_hashtable(ht, argv[1]), scm_undef);
+                    }
                 }
 #endif
-                scoped_lock lock(ht->lock);
                 if (ht->handlers == scm_false) {
                     int nsize = remove_hashtable(ht, argv[1]);
                     if (nsize) rehash_hashtable(vm->m_heap, ht, nsize);
@@ -331,13 +419,19 @@ subr_core_hashtable_delete(VM* vm, int argc, scm_obj_t argv[])
         if (WEAKHASHTABLEP(argv[0])) {
             scm_weakhashtable_t ht = (scm_weakhashtable_t)argv[0];
             if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
+                scoped_lock lock(ht->lock);
 #if USE_PARALLEL_VM
-                if (!vm->m_heap->in_heap(ht)) {
-                    thread_object_access_violation(vm, "core-hashtable-delete!" ,argc, argv);
-                    return scm_undef;
+                if (vm->m_interp->concurrency() > 1) {
+                    if (!vm->m_heap->in_heap(ht)) {
+                        thread_object_access_violation(vm, "core-hashtable-delete!" ,argc, argv);
+                        return scm_undef;
+                    }
+                    if (HDR_WEAKHASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                        vm->m_interp->remember(argv[1], scm_undef);
+                        vm->m_interp->remember(lookup_weakhashtable(ht, argv[1]), scm_undef);
+                    }
                 }
 #endif
-                scoped_lock lock(ht->lock);
                 int nsize = remove_weakhashtable(ht, argv[1]);
                 if (nsize) rehash_weakhashtable(vm->m_heap, ht, nsize);
                 return scm_unspecified;
@@ -345,7 +439,7 @@ subr_core_hashtable_delete(VM* vm, int argc, scm_obj_t argv[])
             invalid_object_violation(vm, "core-hashtable-delete!", "mutable hashtable", argv[0], argc, argv);
             return scm_undef;
         }
-        wrong_type_argument_violation(vm, "core-hashtable-delete!", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable-delete!", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable-delete!", 2, 2, argc, argv);
@@ -372,13 +466,22 @@ subr_core_hashtable_clear(VM* vm, int argc, scm_obj_t argv[])
             if (HASHTABLEP(argv[0])) {
                 scm_hashtable_t ht = (scm_hashtable_t)argv[0];
                 if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
+                    scoped_lock lock(ht->lock);
 #if USE_PARALLEL_VM
-                    if (!vm->m_heap->in_heap(ht)) {
-                        thread_object_access_violation(vm, "core-hashtable-clear!" ,argc, argv);
-                        return scm_undef;
+                    if (vm->m_interp->concurrency() > 1) {
+                        if (!vm->m_heap->in_heap(ht)) {
+                            thread_object_access_violation(vm, "core-hashtable-clear!" ,argc, argv);
+                            return scm_undef;
+                        }
+                        if (ht->handlers == scm_false) {
+                            if (HDR_HASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                                hashtable_rec_t* ht_datum = ht->datum;
+                                int nsize = ht_datum->capacity;
+                                for (int i = 0; i < nsize + nsize; i++) vm->m_interp->remember(ht_datum->elts[i], scm_undef);
+                            }
+                        }
                     }
 #endif
-                    scoped_lock lock(ht->lock);
                     if (ht->handlers == scm_false) {
                         clear_hashtable(vm->m_heap, ht, nsize);
                         return scm_unspecified;
@@ -393,14 +496,21 @@ subr_core_hashtable_clear(VM* vm, int argc, scm_obj_t argv[])
             }
             if (WEAKHASHTABLEP(argv[0])) {
                 scm_weakhashtable_t ht = (scm_weakhashtable_t)argv[0];
+                scoped_lock lock(ht->lock);
 #if USE_PARALLEL_VM
-                if (!vm->m_heap->in_heap(ht)) {
-                    thread_object_access_violation(vm, "core-hashtable-clear!" ,argc, argv);
-                    return scm_undef;
+                if (vm->m_interp->concurrency() > 1) {
+                    if (!vm->m_heap->in_heap(ht)) {
+                        thread_object_access_violation(vm, "core-hashtable-clear!" ,argc, argv);
+                        return scm_undef;
+                    }
+                    if (HDR_WEAKHASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                        weakhashtable_rec_t* ht_datum = ht->datum;
+                        int nsize = ht_datum->capacity;
+                        for (int i = 0; i < nsize; i++) vm->m_interp->remember(ht_datum->elts[i], scm_undef);
+                    }
                 }
 #endif
                 if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
-                    scoped_lock lock(ht->lock);
                     clear_weakhashtable(vm->m_heap, ht, nsize);
                     return scm_unspecified;
                 }
@@ -408,7 +518,7 @@ subr_core_hashtable_clear(VM* vm, int argc, scm_obj_t argv[])
                 return scm_undef;
             }
         }
-        wrong_type_argument_violation(vm, "core-hashtable-clear!", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable-clear!", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable-clear!", 1, 2, argc, argv);
@@ -439,7 +549,7 @@ subr_core_hashtable_size(VM* vm, int argc, scm_obj_t argv[])
                 return MAKEFIXNUM(ht->datum->live);
             }
         }
-        wrong_type_argument_violation(vm, "core-hashtable-size", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable-size", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable-size", 1, 1, argc, argv);
@@ -470,7 +580,7 @@ subr_core_hashtable_contains_pred(VM* vm, int argc, scm_obj_t argv[])
             scm_obj_t ref = lookup_weakhashtable(ht, argv[1]);
             return (ref != scm_undef) ? scm_true : scm_false;
         }
-        wrong_type_argument_violation(vm, "core-hashtable-contains?", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable-contains?", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable-contains?", 2, 2, argc, argv);
@@ -500,7 +610,7 @@ subr_core_hashtable_copy(VM* vm, int argc, scm_obj_t argv[])
             scoped_lock lock(ht->lock);
             return copy_weakhashtable(vm->m_heap, ht, immutable);
         }
-        wrong_type_argument_violation(vm, "core-hashtable-copy", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable-copy", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable-copy", 1, 2, argc, argv);
@@ -546,7 +656,7 @@ subr_core_hashtable_alist(VM* vm, int argc, scm_obj_t argv[])
             }
             return ans;
         }
-        wrong_type_argument_violation(vm, "core-hashtable->alist", 0, "core-hashtable or weak-core-hashtable", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "core-hashtable->alist", 0, "hashtable or weak-hashtable", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "core-hashtable->alist", 1, 1, argc, argv);
@@ -560,7 +670,7 @@ subr_string_hash(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
-            return MAKEFIXNUM(string_hash(string->name, HASH_BOUND_MAX));
+            return MAKEFIXNUM(string_hash(string, HASH_BOUND_MAX));
         }
         wrong_type_argument_violation(vm, "string-hash", 0, "string", argv[0], argc, argv);
         return scm_undef;
@@ -576,7 +686,7 @@ subr_symbol_hash(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 1) {
         if (SYMBOLP(argv[0])) {
             scm_symbol_t symbol = (scm_symbol_t)argv[0];
-            return MAKEFIXNUM(string_hash(symbol->name, HASH_BOUND_MAX));
+            return MAKEFIXNUM(symbol_hash(symbol, HASH_BOUND_MAX));
         }
         wrong_type_argument_violation(vm, "symbol-hash", 0, "symbol", argv[0], argc, argv);
         return scm_undef;
@@ -590,7 +700,7 @@ scm_obj_t
 subr_equal_hash(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
-        return MAKEFIXNUM(relocation_safe_equal_hash(argv[0], HASH_BOUND_MAX));
+        return MAKEFIXNUM(equal_hash(argv[0], HASH_BOUND_MAX));
     }
     wrong_number_of_arguments_violation(vm, "equal-hash", 1, 1, argc, argv);
     return scm_undef;
@@ -599,9 +709,10 @@ subr_equal_hash(VM* vm, int argc, scm_obj_t argv[])
 void
 init_subr_hash(object_heap_t* heap)
 {
-    #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
+#define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("make-core-hashtable", subr_make_core_hashtable);
+    DEFSUBR("make-shared-core-hashtable", subr_make_shared_core_hashtable);
     DEFSUBR("core-hashtable?", subr_core_hashtable_pred);
     DEFSUBR("core-hashtable-ref", subr_core_hashtable_ref);
     DEFSUBR("core-hashtable-set!", subr_core_hashtable_set);
@@ -618,6 +729,7 @@ init_subr_hash(object_heap_t* heap)
     DEFSUBR("symbol-hash", subr_symbol_hash);
     DEFSUBR("equal-hash", subr_equal_hash);
     DEFSUBR("make-weak-core-hashtable", subr_make_weak_core_hashtable);
+    DEFSUBR("make-weak-shared-core-hashtable", subr_make_weak_shared_core_hashtable);
     DEFSUBR("weak-core-hashtable?", subr_weak_core_hashtable_pred);
 
 }

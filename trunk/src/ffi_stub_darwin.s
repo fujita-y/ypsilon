@@ -5,7 +5,6 @@
 */
 
 /*
-
     gcc -O2 -fno-omit-frame-pointer ffi_stub.c
 
     #include "stdio.h"
@@ -66,7 +65,6 @@
             : "=m" (base), "=m" (uid), "=m" (argc) :: "%eax");
         return c_callback_int(uid, argc, base);
     }
-
 */
 
     .file   "ffi_stub_darwin.s"
