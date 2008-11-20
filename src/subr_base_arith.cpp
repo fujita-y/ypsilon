@@ -630,7 +630,7 @@ subr_num_mul(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "*", 0, "number", argv[0], argc, argv);
         return scm_undef;
     }
-    if (argc == 0) return MAKEFIXNUM(1);
+    return MAKEFIXNUM(1);
 }
 
 // /

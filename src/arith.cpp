@@ -4874,7 +4874,6 @@ parse_udecimal(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
     int fraction_count = 0;
     int exponent = 0;
     bool exponent_negative = false;
-    bool overflow = false;
     char c;
     int digit;
     scm_obj_t value = MAKEFIXNUM(0);

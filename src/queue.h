@@ -965,7 +965,7 @@ class fifo_buffer_t {
         }
     }
 
-    int expand_buf(int req)
+    void expand_buf(int req)
     {
         lock.verify_locked();
         int psize = bottom - top;
