@@ -245,7 +245,7 @@ printer_t::format_va_list(const char* fmt, va_list ap)
 
                     case 'r': { // restricted
                         m_escape = true;
-                        m_unwrap = false;
+                        m_unwrap = true;
                         m_radix = 10;
                         int save_limit = m_column_limit;
                         m_column_limit = m_port->column + FIXNUM(m_vm->flags.m_restricted_print_line_length);
