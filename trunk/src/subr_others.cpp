@@ -2600,7 +2600,7 @@ subr_shared_bag_get(VM* vm, int argc, scm_obj_t argv[])
             scm_string_t string = (scm_string_t)argv[1];
             sharedbag_slot_t* slot = lookup_sharedbag((scm_sharedbag_t)argv[0], string->name, string->size);
             assert(slot);                
-            int id;
+            intptr_t id;
             bool succ;
             if (slot->queue.wait_lock_try_get(&id)) goto receive;
             if (argc == 3) {
