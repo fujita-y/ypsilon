@@ -65,7 +65,7 @@ scm_port_t          make_temp_file_port(object_heap_t* heap, scm_obj_t name, int
 scm_socket_t        make_socket(object_heap_t* heap);
 scm_socket_t        make_socket(object_heap_t* heap, const char* node, const char* service, int family, int type, int protocol, int flags);
 scm_sharedqueue_t   make_sharedqueue(object_heap_t* heap, int n);
-
+scm_sharedbag_t     make_sharedbag(object_heap_t* heap, int depth);
 
 void    rehash_hashtable(object_heap_t* heap, scm_hashtable_t ht, int n);
 void    rehash_weakhashtable(object_heap_t* heap, scm_weakhashtable_t ht, int n);

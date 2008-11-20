@@ -511,14 +511,23 @@
                         shared-queue-shutdown
                         shared-queue-push!
                         shared-queue-pop!
+                        make-shared-bag
+                        shared-bag?
+                        shared-bag-put!
+                        shared-bag-get!
                         
                         timeout-object?
+                        shutdown-object?
                         
                         spawn
+                        thread-id
+                        on-primordial-thread?
                         display-thread-status
                         
                         object->bytevector
                         bytevector->object
+                        
+                        make-uuid
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))

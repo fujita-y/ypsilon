@@ -1,5 +1,13 @@
 #!nobacktrace
+#|
 
+    2008-11-20
+    (define *pregexp-space-sensitive?* #t) =>
+    (define-thread-variable *pregexp-space-sensitive?* #t)
+    for multi-thread support. 
+    -- fujita
+
+|#
 (library (pregexp)
   
   (export pregexp
@@ -10,7 +18,7 @@
           pregexp-replace*
           pregexp-quote)
   
-  (import (rnrs) (rnrs mutable-pairs))
+  (import (rnrs) (rnrs mutable-pairs) (concurrent))
 
 ;pregexp.scm
 ;Portable regular expressions for Scheme
@@ -37,8 +45,9 @@
     (integer->char
      (+ 9 *pregexp-nul-char-int*)))
 
-  (define *pregexp-space-sensitive?* #t)
-
+  ;(define *pregexp-space-sensitive?* #t)
+  (define-thread-variable *pregexp-space-sensitive?* #t)
+  
   (define pregexp-reverse!
     ;the useful reverse! isn't R5RS
     (lambda (s)

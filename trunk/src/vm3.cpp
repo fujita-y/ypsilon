@@ -11,25 +11,14 @@
 #define LIST1(e1)       CONS((e1), scm_nil)
 #define LIST2(e1, e2)   CONS((e1), LIST1((e2)))
 
-#if USE_FIXNUM_THREAD
-  #define INST_CALL         (opcode_to_instruction(VMOP_CALL))
-  #define INST_LOAD_CONST   (opcode_to_instruction(VMOP_CONST))
-  #define INST_PUSH_CONST   (opcode_to_instruction(VMOP_PUSH_CONST))
-  #define INST_APPLY        (opcode_to_instruction(VMOP_APPLY))
-  #define INST_PUSH         (opcode_to_instruction(VMOP_PUSH))
-  #define INST_PUSH_SUBR    (opcode_to_instruction(VMOP_PUSH_SUBR))
-  #define INST_RET_CONST    (opcode_to_instruction(VMOP_RET_CONST))
-  #define INST_VM_ESCAPE    (opcode_to_instruction(VMOP_VM_ESCAPE))
-#else
-  #define INST_CALL         (opcode_to_instruction(VMOP_CALL))
-  #define INST_LOAD_CONST   (opcode_to_instruction(VMOP_CONST))
-  #define INST_PUSH_CONST   (opcode_to_instruction(VMOP_PUSH_CONST))
-  #define INST_APPLY        (opcode_to_instruction(VMOP_APPLY))
-  #define INST_PUSH         (opcode_to_instruction(VMOP_PUSH))
-  #define INST_PUSH_SUBR    (opcode_to_instruction(VMOP_PUSH_SUBR))
-  #define INST_RET_CONST    (opcode_to_instruction(VMOP_RET_CONST))
-  #define INST_VM_ESCAPE    (opcode_to_instruction(VMOP_VM_ESCAPE))
-#endif
+#define INST_CALL         (opcode_to_instruction(VMOP_CALL))
+#define INST_LOAD_CONST   (opcode_to_instruction(VMOP_CONST))
+#define INST_PUSH_CONST   (opcode_to_instruction(VMOP_PUSH_CONST))
+#define INST_APPLY        (opcode_to_instruction(VMOP_APPLY))
+#define INST_PUSH         (opcode_to_instruction(VMOP_PUSH))
+#define INST_PUSH_SUBR    (opcode_to_instruction(VMOP_PUSH_SUBR))
+#define INST_RET_CONST    (opcode_to_instruction(VMOP_RET_CONST))
+#define INST_VM_ESCAPE    (opcode_to_instruction(VMOP_VM_ESCAPE))
 
 /*
   apply-scheme

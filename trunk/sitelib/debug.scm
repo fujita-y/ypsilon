@@ -5,7 +5,7 @@
 
 (library (debug)
 
-  (export debug-expand 
+  (export debug-expand
           debug-compile)
 
   (import (core)
@@ -58,7 +58,6 @@
 
       (crawl form)
       (rewrite form)))
-
 
   (define debug-expand
     (lambda (form)

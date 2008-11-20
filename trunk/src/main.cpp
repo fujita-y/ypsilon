@@ -8,8 +8,8 @@
 #include "vm.h"
 #include "interpreter.h"
 
-int             main_command_line_argc;
-char* const*    main_command_line_argv;
+int main_command_line_argc;
+char* const* main_command_line_argv;
 
 #if _MSC_VER
   __declspec(thread) VM* s_current_vm;
@@ -57,6 +57,7 @@ static int opt_heap_limit(int argc, char* const argv[])
 #if _MSC_VER
     int main(int argc, char* argv[])
     {
+        srandom(msec());
         assert(isnan(VALUE_NAN));
         assert(isinf(VALUE_INF));
         {
@@ -140,6 +141,7 @@ static int opt_heap_limit(int argc, char* const argv[])
 
     int main(int argc, char* const argv[])
     {
+        srandom(msec());
         main_command_line_argc = argc;
         main_command_line_argv = argv;
   #ifndef NDEBUG

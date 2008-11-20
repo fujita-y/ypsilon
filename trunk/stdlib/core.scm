@@ -588,6 +588,7 @@
     make-record-type-descriptor
     make-rectangular
     make-serious-condition
+    make-shared-bag
     make-shared-core-hashtable
     make-shared-queue
     make-socket
@@ -601,6 +602,7 @@
     make-transcoder
     make-tuple
     make-undefined-violation
+    make-uuid
     make-variable-transformer
     make-vector
     make-violation
@@ -641,6 +643,7 @@
     numerator
     object->bytevector
     odd?
+    on-primordial-thread?
     open-builtin-data-input-port
     open-bytevector-input-port
     open-bytevector-output-port
@@ -744,10 +747,14 @@
     set-current-output-port!
     set-port-position!
     set-top-level-value!
+    shared-bag-get!
+    shared-bag-put!
+    shared-bag?
     shared-queue-pop!
     shared-queue-push!
     shared-queue-shutdown
     shared-queue?
+    shutdown-object?
     shutdown-output-port
     simple-conditions
     sin
@@ -829,6 +836,7 @@
     take
     tan
     textual-port?
+    thread-id
     time-usage
     timeout-object?
     top-level-bound?

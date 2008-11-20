@@ -8,7 +8,6 @@ PROG 	 = ypsilon
 PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DDEFAULT_HEAP_LIMIT=32 -DSYSTEM_SHARE_PATH='"$(PREFIX)/share/$(PROG)"'
-#CPPFLAGS = -g -DDEFAULT_HEAP_LIMIT=32 -DSYSTEM_SHARE_PATH='"$(PREFIX)/share/$(PROG)"'
 
 CXXFLAGS = -pipe -x c++ -pthread -msse -mfpmath=sse -O3 -fstrict-aliasing \
 	   -fomit-frame-pointer -momit-leaf-frame-pointer \
@@ -17,7 +16,7 @@ CXXFLAGS = -pipe -x c++ -pthread -msse -mfpmath=sse -O3 -fstrict-aliasing \
 SRCS 	 = file.cpp main.cpp vm0.cpp object_heap_compact.cpp subr_flonum.cpp vm1.cpp object_set.cpp \
 	   subr_hash.cpp vm2.cpp object_slab.cpp subr_list.cpp interpreter.cpp serialize.cpp \
            vm3.cpp port.cpp subr_others.cpp arith.cpp printer.cpp subr_port.cpp subr_r5rs_arith.cpp \
-	   equiv.cpp reader.cpp ffi.cpp subr_base.cpp \
+	   equiv.cpp reader.cpp ffi.cpp subr_base.cpp bag.cpp \
            subr_unicode.cpp hash.cpp subr_base_arith.cpp ucs4.cpp ioerror.cpp subr_bitwise.cpp utf8.cpp \
 	   main.cpp subr_bvector.cpp violation.cpp object_factory.cpp \
            subr_ffi.cpp object_heap.cpp subr_fixnum.cpp bit.cpp list.cpp fasl.cpp socket.cpp subr_socket.cpp

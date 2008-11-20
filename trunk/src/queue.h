@@ -82,13 +82,47 @@
                 return true;
             }
 
+            bool put(element_t datum, int msec)
+            {
+    #ifndef NDEBUG
+                if (terminate) warning("warning:%s:%u queue_t::put after shutdown\n", __FILE__, __LINE__);
+    #endif
+                EnterCriticalSection(&lock);
+                if (terminate) {
+                    LeaveCriticalSection(&lock);
+                    return false;
+                }
+                while (n == capacity) {
+                    n_more_put++;
+                    LeaveCriticalSection(&lock);
+                    DWORD retval = WaitForSingleObject(maybe_put, msec);
+                    EnterCriticalSection(&lock);
+                    n_more_put--;
+                    if (retval == WAIT_TIMEOUT) {
+                        LeaveCriticalSection(&lock);
+                        return false;
+                    }
+                    MTVERIFY(retval != WAIT_FAILED);
+                    if (terminate) {
+                        LeaveCriticalSection(&lock);
+                        return false;
+                    }
+                }
+                buf[tail++] = datum;
+                n++;
+                if (tail == capacity) tail = 0;
+                if (n_more_get) MTVERIFY(SetEvent(maybe_get));
+                LeaveCriticalSection(&lock);
+                return true;
+            }
+
             bool get(element_t* datum)
             {
     #ifndef NDEBUG
                 if (terminate) warning("warning:%s:%u queue_t::get after shutdown\n", __FILE__, __LINE__);
     #endif
                 EnterCriticalSection(&lock);
-                if (terminate) {
+                if (n == 0 && terminate) {
                     LeaveCriticalSection(&lock);
                     return false;
                 }
@@ -98,7 +132,7 @@
                     MTVERIFY(WaitForSingleObject(maybe_get, INFINITE) != WAIT_FAILED);
                     EnterCriticalSection(&lock);
                     n_more_get--;
-                    if (terminate) {
+                    if (n == 0 && terminate) {
                         LeaveCriticalSection(&lock);
                         return false;
                     }
@@ -117,7 +151,7 @@
                 if (terminate) warning("warning:%s:%u queue_t::get after shutdown\n", __FILE__, __LINE__);
     #endif
                 EnterCriticalSection(&lock);
-                if (terminate) {
+                if (n == 0 && terminate) {
                     LeaveCriticalSection(&lock);
                     return false;
                 }
@@ -132,7 +166,7 @@
                         return false;
                     }
                     MTVERIFY(retval != WAIT_FAILED);
-                    if (terminate) {
+                    if (n == 0 && terminate) {
                         LeaveCriticalSection(&lock);
                         return false;
                     }
@@ -266,6 +300,11 @@
                 return false;
             }
 
+            bool no_more_put()
+            {
+                return terminate;
+            }
+
         };
 
   #else
@@ -342,6 +381,39 @@
                 return true;
             }
 
+            bool put(element_t datum, int msec)
+            {
+    #ifndef NDEBUG
+                if (terminate) warning("warning:%s:%u queue_t::put after shutdown\n", __FILE__, __LINE__);
+    #endif
+                if (WaitForSingleObject(lock, INFINITE) != WAIT_OBJECT_0) return false;
+                if (terminate) {
+                    ReleaseMutex(lock);
+                    return false;
+                }
+                while (n == capacity) {
+                    n_more_put++;
+                    DWORD retval = SignalObjectAndWait(lock, maybe_put, msec, FALSE);
+                    MTVERIFY(WaitForSingleObject(lock, INFINITE) != WAIT_FAILED);
+                    n_more_put--;
+                    if (retval == WAIT_TIMEOUT) {
+                        MTVERIFY(ReleaseMutex(lock));
+                        return false;
+                    }
+                    MTVERIFY(retval != WAIT_FAILED);
+                    if (terminate) {
+                        MTVERIFY(ReleaseMutex(lock));
+                        return false;
+                    }
+                }
+                buf[tail++] = datum;
+                n++;
+                if (tail == capacity) tail = 0;
+                if (n_more_get) MTVERIFY(SetEvent(maybe_get));
+                MTVERIFY(ReleaseMutex(lock));
+                return true;
+            }
+
             bool get(element_t* datum)
             {
     #ifndef NDEBUG
@@ -357,7 +429,7 @@
                     MTVERIFY(SignalObjectAndWait(lock, maybe_get, INFINITE, FALSE) != WAIT_FAILED);
                     MTVERIFY(WaitForSingleObject(lock, INFINITE) != WAIT_FAILED);
                     n_more_get--;
-                    if (terminate) {
+                    if (n == 0 && terminate) {
                         MTVERIFY(ReleaseMutex(lock));
                         return false;
                     }
@@ -390,7 +462,7 @@
                         return false;
                     }
                     MTVERIFY(retval != WAIT_FAILED);
-                    if (terminate) {
+                    if (n == 0 && terminate) {
                         MTVERIFY(ReleaseMutex(lock));
                         return false;
                     }
@@ -524,6 +596,11 @@
                 return false;
             }
 
+            bool no_more_put()
+            {
+                return terminate;
+            }
+
         };
     #endif
 #else
@@ -608,6 +685,42 @@
             return true;
         }
 
+        bool put(element_t datum, int msec)
+        {
+  #ifndef NDEBUG
+            if (terminate) warning("warning:%s:%u queue_t::put after shutdown\n", __FILE__, __LINE__);
+  #endif
+            MTVERIFY(pthread_mutex_lock(&lock));
+            if (terminate) {
+                MTVERIFY(pthread_mutex_unlock(&lock));
+                return false;
+            }
+            while (n == capacity) {
+                struct timespec abstime;
+                calc_abstime(&abstime, msec);
+                n_more_put++;
+                int retval = pthread_cond_timedwait(&maybe_put, &lock, &abstime);
+                n_more_put--;
+                if (retval != EINTR) {
+                    if (retval == ETIMEDOUT) {
+                        MTVERIFY(pthread_mutex_unlock(&lock));
+                        return false;
+                    }
+                    MTVERIFY(retval);
+                }
+                if (terminate) {
+                    MTVERIFY(pthread_mutex_unlock(&lock));
+                    return false;
+                }
+            }
+            buf[tail++] = datum;
+            n++;
+            if (tail == capacity) tail = 0;
+            if (n_more_get) MTVERIFY(pthread_cond_signal(&maybe_get));
+            MTVERIFY(pthread_mutex_unlock(&lock));
+            return true;
+        }
+
         bool get(element_t* datum)
         {
   #ifndef NDEBUG
@@ -622,7 +735,7 @@
                 n_more_get++;
                 MTVERIFY(pthread_cond_wait(&maybe_get, &lock));
                 n_more_get--;
-                if (terminate) {
+                if (n == 0 && terminate) {
                     MTVERIFY(pthread_mutex_unlock(&lock));
                     return false;
                 }
@@ -658,7 +771,7 @@
                     }
                     MTVERIFY(retval);
                 }
-                if (terminate) {
+                if (n == 0 && terminate) {
                     MTVERIFY(pthread_mutex_unlock(&lock));
                     return false;
                 }
@@ -792,6 +905,11 @@
             return false;
         }
 
+        bool no_more_put()
+        {
+            return terminate;
+        }
+
     };
 
 #endif
@@ -909,7 +1027,8 @@ public:
         tags = (tag_t*)malloc(sizeof(tag_t) * count);
         if (tags == NULL) fatal("%s:%u memory overflow", __FILE__, __LINE__);
         memset(tags, 0, sizeof(tag_t) * count);
-        int bufsize = 4096;
+        int bufsize = 128 * n;
+        if (bufsize > 4096) bufsize = 4096;
         top = (uint8_t*)malloc(bufsize);
         bottom = top + bufsize;
         head = top;
@@ -950,6 +1069,11 @@ public:
         lock.unlock();
     }
 
+    bool empty()
+    {
+        return tail == head;
+    }
+    
     void destroy()
     {
         free(tags);

@@ -634,7 +634,7 @@ object_heap_t::collector_init()
     m_mark_stack = m_mark_sp = (scm_obj_t*)malloc(sizeof(scm_obj_t) * m_mark_stack_size);
     assert(m_mark_stack);
     m_usage.clear();
-    m_shade_queue.init(SHAREDQUEUE_SIZE);
+    m_shade_queue.init(SHADE_QUEUE_SIZE);
     m_collector_lock.init();
     m_mutator_wake.init();
     m_collector_wake.init();
