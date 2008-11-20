@@ -51,6 +51,7 @@
 		A5B6A7FA0DC4A20300C4027E /* ffi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5B6A7F90DC4A20300C4027E /* ffi.cpp */; };
 		A5C33EBD0DA367B0001D04BE /* file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5C33EBC0DA367B0001D04BE /* file.cpp */; };
 		A5DE31AA0EC3119300FE1968 /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5DE31A90EC3119200FE1968 /* serialize.cpp */; };
+		A5E9B00A0ED583FB00CEC528 /* bag.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A5E9B0090ED583FB00CEC528 /* bag.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -221,6 +222,8 @@
 		A5C33EBC0DA367B0001D04BE /* file.cpp */ = {isa = PBXFileReference; fileEncoding = 3; lastKnownFileType = sourcecode.cpp.cpp; name = file.cpp; path = src/file.cpp; sourceTree = "<group>"; };
 		A5DE31A90EC3119200FE1968 /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = serialize.cpp; path = src/serialize.cpp; sourceTree = "<group>"; };
 		A5DE31AB0EC3119900FE1968 /* serialize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = serialize.h; path = src/serialize.h; sourceTree = "<group>"; };
+		A5E9B0080ED583EF00CEC528 /* bag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bag.h; path = src/bag.h; sourceTree = "<group>"; };
+		A5E9B0090ED583FB00CEC528 /* bag.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bag.cpp; path = src/bag.cpp; sourceTree = "<group>"; };
 		C6859E8B029090EE04C91782 /* ypsilon.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = ypsilon.1; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -304,6 +307,7 @@
 				A5E1180A0DE7145500748B45 /* ffi */,
 				A572D00C0D556690006AD5DB /* subr */,
 				A59D39970D35F81A00C7B4F9 /* arith.cpp */,
+				A5E9B0090ED583FB00CEC528 /* bag.cpp */,
 				A598EC840D93A22A00D3B35C /* bit.cpp */,
 				A59D39950D35F81A00C7B4F9 /* equiv.cpp */,
 				A58676EA0DB5775A005D9B7E /* fasl.cpp */,
@@ -328,6 +332,7 @@
 			isa = PBXGroup;
 			children = (
 				A59D39730D35F80A00C7B4F9 /* arith.h */,
+				A5E9B0080ED583EF00CEC528 /* bag.h */,
 				A59D39720D35F80A00C7B4F9 /* list.h */,
 				A598EC830D93A21900D3B35C /* bit.h */,
 				A59D39710D35F80A00C7B4F9 /* cond.h */,
@@ -628,6 +633,7 @@
 				A575BA7F0E866FF900E7B731 /* socket.cpp in Sources */,
 				A5DE31AA0EC3119300FE1968 /* serialize.cpp in Sources */,
 				A5AE66340ECF1B900053FC5B /* interpreter.cpp in Sources */,
+				A5E9B00A0ED583FB00CEC528 /* bag.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
