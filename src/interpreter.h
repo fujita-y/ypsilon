@@ -51,12 +51,14 @@ class Interpreter {
         int             state;
         int             parent;
         scm_obj_t       param;
+        char            name[64];
     };
     mutex_t             m_lock;
     vm_table_rec_t**    m_table;
     int                 m_capacity;
     int                 m_live;
     remember_set_t      m_remember_set;
+    mutex_t             m_uuid_lock;
 
     static thread_main_t mutator_thread(void* param);
 
@@ -71,6 +73,9 @@ public:
     bool    primordial(int id);
     void    display_status(VM* vm);
     int     concurrency() { return m_live; }
+    void    set_thread_name(int id, const char* name);
+    void    get_thread_name(int id, char* name, int len);
+    void    generate_uuid(char* buf, int bufsize);
 };
 
 #endif

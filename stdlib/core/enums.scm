@@ -97,7 +97,7 @@
       (and (enum-set-subset? set2 set1)
            (enum-set-subset? set1 set2)
            #t)))
-  
+
   (define enum-set-union
     (lambda (set1 set2)
       (or (eq? (enum-set-type set1) (enum-set-type set2))
@@ -141,6 +141,7 @@
     (syntax-rules ()
       ((_ type-name (symbol1 ...) constructor-syntax)
        (begin
+         (define constructor (enum-set-constructor (make-enumeration '(symbol1 ...))))
          (define-syntax type-name
            (lambda (x)
              (syntax-case x ()
@@ -155,7 +156,7 @@
                 (or (for-all (lambda (e) (memq e '(symbol1 ...)))
                              (syntax->datum (syntax (symbol3 (... ...)))))
                     (syntax-violation 'constructor-syntax "excpectd symbols which belong to the universe" x))
-                (syntax ((enum-set-constructor (make-enumeration '(symbol1 ...))) '(symbol3 (... ...))))))))))))
+                (syntax (constructor '(symbol3 (... ...))))))))))))
 
   ) ;[end]
 

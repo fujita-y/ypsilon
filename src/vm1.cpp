@@ -104,22 +104,18 @@ VM::collect_stack(int acquire)
             fatal("fatal: vm stack overflow: can not handle more than %d arguments under current configuration", current / sizeof(scm_obj_t));
         }
         m_stack_busy = false;
-
-  #if STDEBUG
+#if STDEBUG
         check_vm_state();
-  #endif
-
+#endif
         if (m_heap->m_stop_the_world) stop();
         return;
     }
-
     int argc = m_sp - m_fp;
     m_fp = m_to_stack_top;
     m_cont = gc_cont(m_cont);
     m_env = gc_env(m_env);
     object_copy(m_fp, m_sp - argc, sizeof(scm_obj_t) * argc);
     m_sp = m_fp + argc;
-
     scm_obj_t *tmp;
     tmp = m_stack_top;
     m_stack_top = m_to_stack_top;
@@ -127,7 +123,6 @@ VM::collect_stack(int acquire)
     tmp = m_stack_limit;
     m_stack_limit = m_to_stack_limit;
     m_to_stack_limit = tmp;
-
     if ((uintptr_t)m_sp + acquire >= (uintptr_t)m_stack_limit) {
         save_stack();
         if (flags.m_collect_stack_notify != scm_false) {
@@ -146,23 +141,18 @@ VM::collect_stack(int acquire)
             printer_t prt(this, m_current_output);
             prt.format("~&;; [collect-stack: %s free]~%~!", buf);
         }
-
         m_stack_busy = (m_sp - m_stack_top) > VM_STACK_BUSY_THRESHOLD(m_stack_limit - m_stack_top);
     }
-
-  #ifndef NDEBUG
+#ifndef NDEBUG
     if ((uintptr_t)m_sp + acquire > (uintptr_t)m_stack_limit) {
         backtrace(m_current_error);
         fatal("%s:%u stack overflow", __FILE__, __LINE__);
     }
-  #endif
-
-  #if STDEBUG
+#endif
+#if STDEBUG
     check_vm_state();
-  #endif
-
+#endif
     if (m_heap->m_stop_the_world) stop();
-
 }
 
 void*
@@ -242,13 +232,20 @@ VM::lookup_iloc(scm_obj_t operands)
                             __asm__ ("nop"); \
                             __asm__ ("nop"); \
                             __asm__ ("/* "#code" */");
-
-    #define LABEL(code)     do { assert(code < array_sizeof(m_dispatch_table)); m_dispatch_table[code] = &&L_##code; s_volatile_stub = &&M_##code;} while(0)
+    #define LABEL(code)     do { \
+                                assert(code < array_sizeof(m_dispatch_table)); \
+                                m_dispatch_table[code] = &&L_##code; \
+                                s_volatile_stub = &&M_##code; \
+                            } while(0)
     #define SWITCH()        goto *instruction_to_adrs(CAAR(m_pc));
   #else
     volatile void* s_volatile_stub;
     #define CASE(code)      M_##code: __asm__ ("/* "#code" */"); L_##code:
-    #define LABEL(code)     do { assert(code < array_sizeof(m_dispatch_table)); m_dispatch_table[code] = &&L_##code; s_volatile_stub = &&M_##code;} while(0)
+    #define LABEL(code)     do { \
+                                assert(code < array_sizeof(m_dispatch_table)); \
+                                m_dispatch_table[code] = &&L_##code; \
+                                s_volatile_stub = &&M_##code; \
+                            } while(0)
     #define SWITCH()        goto *m_dispatch_table[instruction_to_opcode(CAAR(m_pc))];
   #endif
 #else
@@ -259,26 +256,22 @@ VM::lookup_iloc(scm_obj_t operands)
 #define OPERANDS            (CDAR(m_pc))
 
 /*
-
 C-SUBR return state
 
 m_value    CAR(m_pc)*1       special function
 ---------------------------------------------------
 scm_undef  scm_unspecified   call-scheme-proc
 ...        scm_false         call-scheme-modal-proc
-
-*1: debug info
-
+           [*1 debug info]
 */
 
 void
 VM::run(bool init_dispatch_table)
 {
-  #if USE_GCC_EXTENSION
-
+#if USE_GCC_EXTENSION
     if (init_dispatch_table) {
         assert(VMOP_INSTRUCTION_COUNT < 128);
-    #if USE_DIRECT_THREAD
+  #if USE_DIRECT_THREAD
         PIN(ERROR_BAD_INSTRUCTION_ALIGN_STUB);
         PIN(APPLY_ALIGN_STUB);
         PIN(APPLY_APPLY);
@@ -331,11 +324,11 @@ VM::run(bool init_dispatch_table)
         PIN(ERROR_CALLCC_WRONG_NUMBER_ARGS);
         PIN(ERROR_INVALID_APPLICATION);
         PIN(ERROR_BAD_INSTRUCTION);
-      #if USE_PARALLEL_VM
+    #if USE_PARALLEL_VM
         PIN(ERROR_SET_GLOC_BAD_CONTEXT);
         PIN(ERROR_SET_ILOC_BAD_CONTEXT);
-      #endif
     #endif
+  #endif
         for (int i = 0; i < array_sizeof(m_dispatch_table); i++) m_dispatch_table[i] = &&ERROR_BAD_INSTRUCTION;
         LABEL(VMOP_EXTEND_ENCLOSE);
         LABEL(VMOP_EXTEND_ENCLOSE_LOCAL);
@@ -344,7 +337,6 @@ VM::run(bool init_dispatch_table)
         LABEL(VMOP_PUSH_CLOSE_LOCAL);
         LABEL(VMOP_ENCLOSE);
         LABEL(VMOP_EXTEND);
-
         LABEL(VMOP_PUSH);
         LABEL(VMOP_CALL);
         LABEL(VMOP_PUSH_CONST);
@@ -369,7 +361,6 @@ VM::run(bool init_dispatch_table)
         LABEL(VMOP_RET_NULLP);
         LABEL(VMOP_RET_PAIRP);
         LABEL(VMOP_APPLY);
-
         LABEL(VMOP_CONST);
         LABEL(VMOP_SUBR);
         LABEL(VMOP_CAR_ILOC);
@@ -380,21 +371,17 @@ VM::run(bool init_dispatch_table)
         LABEL(VMOP_ILOC);
         LABEL(VMOP_ILOC0);
         LABEL(VMOP_ILOC1);
-
         LABEL(VMOP_IF_TRUE);
         LABEL(VMOP_IF_FALSE_CALL);
         LABEL(VMOP_IF_NULLP);
         LABEL(VMOP_IF_PAIRP);
         LABEL(VMOP_IF_SYMBOLP);
         LABEL(VMOP_IF_EQP);
-
         LABEL(VMOP_RET_CONST);
         LABEL(VMOP_RET_GLOC);
         LABEL(VMOP_RET_ILOC);
-
         LABEL(VMOP_IF_TRUE_RET);
         LABEL(VMOP_IF_FALSE_RET);
-
         LABEL(VMOP_IF_TRUE_RET_CONST);
         LABEL(VMOP_IF_FALSE_RET_CONST);
         LABEL(VMOP_IF_NULLP_RET_CONST);
@@ -405,35 +392,28 @@ VM::run(bool init_dispatch_table)
         LABEL(VMOP_IF_NOT_SYMBOLP_RET_CONST);
         LABEL(VMOP_IF_EQP_RET_CONST);
         LABEL(VMOP_IF_NOT_EQP_RET_CONST);
-
         LABEL(VMOP_EQ_N_ILOC);
         LABEL(VMOP_LT_N_ILOC);
         LABEL(VMOP_LE_N_ILOC);
         LABEL(VMOP_GT_N_ILOC);
         LABEL(VMOP_GE_N_ILOC);
-
         LABEL(VMOP_CLOSE);
         LABEL(VMOP_SET_ILOC);
         LABEL(VMOP_SET_GLOC);
-
         LABEL(VMOP_RET_CLOSE);
-
         LABEL(VMOP_VM_ESCAPE);
         LABEL(VMOP_TOUCH_GLOC);
         LABEL(VMOP_SUBR_GLOC_OF);
         LABEL(VMOP_RET_SUBR_GLOC_OF);
         LABEL(VMOP_PUSH_SUBR_GLOC_OF);
-
         LABEL(VMOP_EQ_ILOC);
         LABEL(VMOP_LT_ILOC);
         LABEL(VMOP_LE_ILOC);
         LABEL(VMOP_GT_ILOC);
         LABEL(VMOP_GE_ILOC);
-
         // workaround for GCC bug
         for (int i = 0; i < array_sizeof(m_dispatch_table); i++) s_volatile_stub = m_dispatch_table[i];
-
-    #if USE_DIRECT_THREAD && !defined(NDEBUG)
+  #if USE_DIRECT_THREAD && !defined(NDEBUG)
         for (int i = 0; i < array_sizeof(m_dispatch_table); i++) {
             if ((uintptr_t)m_dispatch_table[i] & 1) {
                 fatal("%s:%u failed to initialize virtual machine for USE_DIRECT_THREAD", __FILE__, __LINE__);
@@ -442,18 +422,15 @@ VM::run(bool init_dispatch_table)
         if ((uintptr_t)(&&ERROR_BAD_INSTRUCTION) & 1) {
             fatal("%s:%u failed to initialize virtual machine for USE_DIRECT_THREAD", __FILE__, __LINE__);
         }
-    #endif
-
+  #endif
         return;
     }
-  #else
+#else
     if (init_dispatch_table) return;
-  #endif
+#endif
     assert(PAIRP(m_pc));
-
     scm_obj_t operand_trace;
     scm_obj_t obj;
-
     bool fresh_start = true;
     goto begin;
 
@@ -462,19 +439,17 @@ resume:
 
 begin:
     try {
-
         if (fresh_start) goto loop;
         goto pop_cont;
-
 #if USE_GCC_EXTENSION
 APPLY_ALIGN_STUB:
         __asm__ (".p2align 4");
 #endif
 
 apply:
-  #if USE_GCC_EXTENSION
+#if USE_GCC_EXTENSION
         __asm__ ("/* VM APPLY */");
-  #endif
+#endif
         if (CLOSUREP(m_value)) {
             if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) + sizeof(scm_obj_t) < (uintptr_t)m_stack_limit) {
                 scm_closure_t closure = (scm_closure_t)m_value;
@@ -490,31 +465,22 @@ apply:
             }
             goto COLLECT_STACK_ENV_REC_N_ONE_N_APPLY;
         }
-
         if (SUBRP(m_value)) {
             scm_subr_t subr = (scm_subr_t)m_value;
             int argc = m_sp - m_fp;
             m_value = (*subr->adrs)(this, argc, m_fp);
             if (m_value == scm_undef) goto BACK_TO_TRACE_N_LOOP;
             goto pop_cont;
-/*
-            if (m_value != scm_undef) goto pop_cont;
-            m_sp = m_fp;
-            m_pc = CDR(m_pc);
-            goto trace_n_loop;
-*/
         }
-
         goto APPLY_SPECIAL;
 
 trace_n_loop:
-
         if (operand_trace != scm_nil) {
             if (m_trace == scm_unspecified) m_trace = operand_trace;
             else m_trace_tail = operand_trace;
 
-  #ifndef NDEBUG
-    #if 0
+#ifndef NDEBUG
+  #if 0
             {
                 if (CDR(operand_trace) == scm_nil) {
                     // no info
@@ -536,11 +502,9 @@ trace_n_loop:
                     printer_t(this, m_current_output).format("trace: ~s  ... %s line %d~%~!", CAR(operand_trace), string->name, line);
                 }
             }
-    #endif
   #endif
-
+#endif
         }
-
         goto loop;
 
 pop_cont:
@@ -567,24 +531,22 @@ pop_cont:
         }
         m_trace_tail = scm_unspecified;
         if (m_heap->m_stop_the_world) stop();
-  #if USE_GCC_EXTENSION
+#if USE_GCC_EXTENSION
         __asm__ ("/* VM INST DISPATCH */");
-  #endif
+#endif
+
 loop:
-
         assert(m_sp <= m_stack_limit);
-  #if USE_DIRECT_THREAD
+#if USE_DIRECT_THREAD
         assert(VMINSTP(CAAR(m_pc)));
-  #endif
-  #if USE_FIXNUM_THREAD
+#endif
+#if USE_FIXNUM_THREAD
         assert(FIXNUMP(CAAR(m_pc)));
-  #endif
-  #if USE_SYMBOL_THREAD
+#endif
+#if USE_SYMBOL_THREAD
         assert(OPCODESYMBOLP(CAAR(m_pc)));
-  #endif
-
-
-  #if PROFILE_OPCODE
+#endif
+#if PROFILE_OPCODE
         {
             static int last_opecode;
             int opcode = instruction_to_opcode(CAAR(m_pc));
@@ -596,8 +558,7 @@ loop:
             }
             last_opecode = opcode;
         }
-  #endif
-
+#endif
         SWITCH() {
 
             CASE(VMOP_IF_FALSE_CALL) {
@@ -657,9 +618,9 @@ loop:
 
             CASE(VMOP_PUSH_SUBR) {
                 scm_subr_t subr = (scm_subr_t)CAR(OPERANDS);
-  #if PROFILE_SUBR
+#if PROFILE_SUBR
                 subr->c_push++;
-  #endif
+#endif
                 assert(SUBRP(subr));
                 int argc = FIXNUM(CADR(OPERANDS));
                 assert(argc > 0);
@@ -770,20 +731,14 @@ loop:
                 operand_trace = CDR(OPERANDS);
                 assert(SUBRP(CAR(OPERANDS)));
                 scm_subr_t subr = (scm_subr_t)CAR(OPERANDS);
-  #if PROFILE_SUBR
+#if PROFILE_SUBR
                 subr->c_apply++;
-  #endif
+#endif
                 int argc = m_sp - m_fp;
                 m_value = (*subr->adrs)(this, argc, m_fp);
                 assert(m_value != scm_undef || ((m_value == scm_undef) && (CAR(m_pc) == scm_unspecified)));
                 if (m_value == scm_undef) goto BACK_TO_TRACE_N_LOOP;
                 goto pop_cont;
-/*
-                if (m_value != scm_undef) goto pop_cont;
-                m_sp = m_fp;
-                m_pc = CDR(m_pc);
-                goto trace_n_loop;
-*/
             }
 
             CASE(VMOP_APPLY_ILOC) {
@@ -846,19 +801,18 @@ loop:
                     update_cont(m_cont);
                     env = (vm_env_t)((intptr_t)m_env - offsetof(vm_env_rec_t, up));
                     scm_obj_t* slot = (scm_obj_t*)env - 1;
-  #if PREBIND_CLOSE
+#if PREBIND_CLOSE
                     *slot = make_closure(m_heap, (scm_closure_t)OPERANDS, m_env);
-  #else
+#else
                     scm_obj_t spec = CAR(OPERANDS);
                     scm_obj_t code = CDR(OPERANDS);
                     scm_obj_t doc = CDDR(spec);
                     *slot = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), m_env, code, doc);
-  #endif
-
+#endif
                     m_pc = CDR(m_pc);
-  #if STDEBUG
+#if STDEBUG
                     check_vm_state();
-  #endif
+#endif
                     goto loop;
                 }
                 goto COLLECT_STACK_ENV_REC_N_ONE;
@@ -874,9 +828,9 @@ loop:
                     m_sp = m_fp = (scm_obj_t*)(env + 1);
                     m_env = &env->up;
                     m_pc = CDR(m_pc);
-  #if STDEBUG
+#if STDEBUG
                     check_vm_state();
-  #endif
+#endif
                     goto loop;
                 }
                 goto COLLECT_STACK_ENV_REC_N_ONE;
@@ -907,19 +861,19 @@ loop:
                         m_env = save_env(m_env);
                         update_cont(m_cont);
                     }
-  #if PREBIND_CLOSE
+#if PREBIND_CLOSE
                     m_sp[0] = make_closure(m_heap, (scm_closure_t)OPERANDS, m_env);
-  #else
+#else
                     scm_obj_t spec = CAR(OPERANDS);
                     scm_obj_t code = CDR(OPERANDS);
                     scm_obj_t doc = CDDR(spec);
                     m_sp[0] = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), m_env, code, doc);
-  #endif
+#endif
                     m_sp++;
                     m_pc = CDR(m_pc);
-  #if STDEBUG
+#if STDEBUG
                     check_vm_state();
-  #endif
+#endif
                     goto loop;
                 }
                 goto COLLECT_STACK_ONE;
@@ -951,9 +905,9 @@ loop:
                 }
                 m_sp = m_fp;
                 m_pc = CDR(m_pc);
-  #if STDEBUG
+#if STDEBUG
                 check_vm_state();
-  #endif
+#endif
                 goto loop;
             }
 
@@ -962,13 +916,6 @@ loop:
                 if (m_value == scm_undef) goto ERROR_GLOC;
                 m_pc = CDR(m_pc);
                 goto loop;
-/*
-                if (m_value != scm_undef) {
-                    m_pc = CDR(m_pc);
-                    goto loop;
-                }
-                goto ERROR_GLOC;
-*/
             }
 
             CASE(VMOP_ILOC) {
@@ -1006,9 +953,9 @@ loop:
 
             CASE(VMOP_SUBR) {
                 scm_subr_t subr = (scm_subr_t)CAR(OPERANDS);
-  #if PROFILE_SUBR
+#if PROFILE_SUBR
                 subr->c_load++;
-  #endif
+#endif
                 assert(SUBRP(subr));
                 int argc = FIXNUM(CADR(OPERANDS));
                 m_value = (*subr->adrs)(this, argc, m_sp - argc);
@@ -1198,21 +1145,21 @@ loop:
                 scm_obj_t doc = CDDR(spec);
                 m_value = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), m_env, code, doc);
                 m_pc = CDR(m_pc);
-  #if STDEBUG
+#if STDEBUG
                 check_vm_state();
-  #endif
+#endif
                 goto loop;
             }
 
             CASE(VMOP_SET_GLOC) {
                 scm_gloc_t gloc = (scm_gloc_t)CAR(OPERANDS);
                 assert(GLOCP(gloc));
-  #if USE_PARALLEL_VM
+#if USE_PARALLEL_VM
                 if (m_interp->concurrency() > 1) {
                     if (!m_heap->in_heap(gloc)) goto ERROR_SET_GLOC_BAD_CONTEXT;
                     m_interp->remember(gloc->value, m_value);
                 }
-  #endif
+#endif
                 m_heap->write_barrier(m_value);
                 gloc->value = m_value;
                 m_pc = CDR(m_pc);
@@ -1222,12 +1169,12 @@ loop:
             CASE(VMOP_SET_ILOC) {
                 scm_obj_t* slot = lookup_iloc(CAR(OPERANDS));
                 if (!STACKP(slot)) {
-  #if USE_PARALLEL_VM
+#if USE_PARALLEL_VM
                     if (m_interp->concurrency() > 1) {
                         if (!m_heap->in_heap(slot)) goto ERROR_SET_ILOC_BAD_CONTEXT;
                         if (m_child > 0) m_interp->remember(*slot, m_value);
                     }
-  #endif
+#endif
                     m_heap->write_barrier(m_value);
                 }
                 *slot = m_value;
@@ -1266,17 +1213,17 @@ loop:
                     m_env = save_env(m_env);
                     update_cont(m_cont);
                 }
-  #if PREBIND_CLOSE
+#if PREBIND_CLOSE
                 m_value = make_closure(m_heap, (scm_closure_t)OPERANDS, m_env);
-  #else
+#else
                 scm_obj_t spec = CAR(OPERANDS);
                 scm_obj_t code = CDR(OPERANDS);
                 scm_obj_t doc = CDDR(spec);
                 m_value = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), m_env, code, doc);
-  #endif
-  #if STDEBUG
+#endif
+#if STDEBUG
                 check_vm_state();
-  #endif
+#endif
                 goto pop_cont;
             }
 
@@ -1493,8 +1440,7 @@ loop:
                 return;
             }
 
-        } // END OF SWITCH()
-
+        } // SWITCH()
         goto ERROR_BAD_INSTRUCTION;
 
 APPLY_APPLY:
@@ -1534,7 +1480,6 @@ APPLY_VALUES:
             }
         }
         goto ERROR_APPLY_VALUES_WRONG_NUMBER_ARGS;
-
 
 #if USE_FAST_DYNAMIC_WIND
 APPLY_CONT: {
@@ -1587,9 +1532,9 @@ APPLY_CALLCC:
             m_fp = m_stack_top;
             m_sp = m_stack_top + 1;
             m_fp[0] = make_cont(m_heap, m_current_dynamic_wind_record, m_cont);
-  #if STDEBUG
+#if STDEBUG
             check_vm_state();
-  #endif
+#endif
             goto apply;
         }
         goto ERROR_CALLCC_WRONG_NUMBER_ARGS;
@@ -1612,7 +1557,7 @@ APPLY_VARIADIC: {
             int argc = m_sp - m_fp;
             if (rest & (argc >= args)) {
                 scm_obj_t opt = scm_nil;
-                scm_obj_t* first = m_sp - argc + args;  // find first object of rest arg
+                scm_obj_t* first = m_sp - argc + args;
                 scm_obj_t* last = m_sp;
                 while (--last >= first) opt = make_pair(m_heap, *last, opt);
                 *first = opt;
@@ -1972,7 +1917,6 @@ ERROR_INVALID_APPLICATION:
         goto BACK_TO_TRACE_N_LOOP;
 
 #if USE_PARALLEL_VM
-
 ERROR_SET_GLOC_BAD_CONTEXT:
         operand_trace = CDR(OPERANDS);
         thread_global_access_violation(this, ((scm_gloc_t)CAR(OPERANDS))->variable, m_value);
@@ -1986,7 +1930,6 @@ ERROR_SET_ILOC_BAD_CONTEXT:
             thread_lexical_access_violation(this, NULL, m_value);
         }
         goto BACK_TO_TRACE_N_LOOP;
-
 #endif
 
 BACK_TO_LOOP:
@@ -2012,15 +1955,9 @@ ERROR_BAD_INSTRUCTION:
 ERROR_BAD_INSTRUCTION:
 #endif
         system_error("system error: invalid vm instruction %d", instruction_to_opcode(CAAR(m_pc)));
-
     } catch (vm_continue_t& e) {
         goto resume;
     } catch (...) {
         throw;
     }
-
-    #undef PUSH_CONST
-    #undef LOAD_CONST
-    #undef RET_CONST
-    #undef OPERANDS
 }

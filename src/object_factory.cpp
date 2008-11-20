@@ -30,19 +30,6 @@ make_symbol(object_heap_t* heap, const char *name, int len)
                 return obj;
             }
         }
-/*
-        object_heap_t* parent = heap->m_parent;
-        while (parent) {
-            parent->m_symbol.lock();
-            obj = (scm_symbol_t)parent->m_symbol.get(name, len);
-            parent->m_symbol.unlock();
-            if (obj != scm_undef) {
-                heap->m_symbol.unlock();
-                return obj;
-            }
-            parent = parent->m_parent;
-        }
-*/
         int bytes = sizeof(scm_symbol_rec_t) + len + 1;
         if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
             obj = (scm_symbol_t)heap->allocate_collectible(bytes);
@@ -219,7 +206,6 @@ scm_vector_t
 make_vector(object_heap_t* heap, scm_obj_t lst)
 {
     if (lst == scm_nil) return (scm_vector_t)heap->m_inherents[NIL_VECTOR];
-    VERIFY_DATUM(lst);
     int n = list_length(lst);
     int bytes = sizeof(scm_vector_rec_t) + sizeof(scm_obj_t) * n;
     scm_vector_t obj;
@@ -245,7 +231,6 @@ scm_vector_t
 make_vector(object_heap_t* heap, int n, scm_obj_t elt)
 {
     if (n == 0) return (scm_vector_t)heap->m_inherents[NIL_VECTOR];
-    VERIFY_DATUM(elt);
     int bytes = sizeof(scm_vector_rec_t) + sizeof(scm_obj_t) * n;
     scm_vector_t obj;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
@@ -288,9 +273,6 @@ make_bvector_mapping(object_heap_t* heap, void* p, int n)
 scm_port_t
 make_temp_file_port(object_heap_t* heap, scm_obj_t name, int buffer_mode, scm_obj_t transcoder)
 {
-    VERIFY_DATUM(name);
-    VERIFY_DATUM(transcoder);
-
     scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
     memset(obj, 0, sizeof(scm_port_rec_t));
     obj->hdr = scm_hdr_port;
@@ -303,9 +285,6 @@ make_temp_file_port(object_heap_t* heap, scm_obj_t name, int buffer_mode, scm_ob
 scm_port_t
 make_std_port(object_heap_t* heap, fd_t fd, scm_obj_t name, int direction, int file_options, int buffer_mode, scm_obj_t transcoder)
 {
-    VERIFY_DATUM(name);
-    VERIFY_DATUM(transcoder);
-
     scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
     memset(obj, 0, sizeof(scm_port_rec_t));
     obj->hdr = scm_hdr_port;
@@ -318,9 +297,6 @@ make_std_port(object_heap_t* heap, fd_t fd, scm_obj_t name, int direction, int f
 scm_port_t
 make_file_port(object_heap_t* heap, scm_obj_t name, int direction, int file_options, int buffer_mode, scm_obj_t transcoder)
 {
-    VERIFY_DATUM(name);
-    VERIFY_DATUM(transcoder);
-
     scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
     memset(obj, 0, sizeof(scm_port_rec_t));
     obj->hdr = scm_hdr_port;
@@ -333,9 +309,6 @@ make_file_port(object_heap_t* heap, scm_obj_t name, int direction, int file_opti
 scm_port_t
 make_bytevector_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj_t bytes, scm_obj_t transcoder)
 {
-    VERIFY_DATUM(name);
-    VERIFY_DATUM(bytes);
-    VERIFY_DATUM(transcoder);
     assert(SYMBOLP(name));
     scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
     memset(obj, 0, sizeof(scm_port_rec_t));
@@ -349,10 +322,6 @@ make_bytevector_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj
 scm_port_t
 make_custom_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj_t handlers, scm_obj_t transcoder)
 {
-    VERIFY_DATUM(name);
-    VERIFY_DATUM(handlers);
-    VERIFY_DATUM(transcoder);
-
     scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
     memset(obj, 0, sizeof(scm_port_rec_t));
     obj->hdr = scm_hdr_port;
@@ -365,9 +334,6 @@ make_custom_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj_t h
 scm_port_t
 make_socket_port(object_heap_t* heap, scm_socket_t socket, scm_obj_t transcoder)
 {
-    VERIFY_DATUM(socket);
-    VERIFY_DATUM(transcoder);
-
     scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
     memset(obj, 0, sizeof(scm_port_rec_t));
     obj->hdr = scm_hdr_port;
@@ -380,10 +346,6 @@ make_socket_port(object_heap_t* heap, scm_socket_t socket, scm_obj_t transcoder)
 scm_port_t
 make_transcoded_port(object_heap_t* heap, scm_obj_t name, scm_port_t port, scm_bvector_t transcoder)
 {
-    VERIFY_DATUM(name);
-    VERIFY_DATUM(port);
-    VERIFY_DATUM(transcoder);
-
     port->lock.verify_locked();
     scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
     memset(obj, 0, sizeof(scm_port_rec_t));
@@ -519,8 +481,6 @@ make_subr(object_heap_t* heap, subr_proc_t adrs, scm_obj_t doc)
 scm_closure_t
 make_closure(object_heap_t* heap, int argc, int rest, void* env, scm_obj_t code, scm_obj_t doc)
 {
-    VERIFY_DATUM(code);
-    VERIFY_DATUM(doc);
     int args = rest ? (- 1 - argc) : argc;
     scm_closure_t obj = (scm_closure_t)heap->allocate_collectible(sizeof(scm_closure_rec_t));
     obj->hdr = scm_hdr_closure | MAKEBITS(args, HDR_CLOSURE_ARGS_SHIFT);
@@ -616,8 +576,6 @@ make_complex(object_heap_t* heap, double real, double imag)
 scm_complex_t
 make_complex(object_heap_t* heap, scm_obj_t real, scm_obj_t imag)
 {
-    VERIFY_DATUM(real);
-    VERIFY_DATUM(imag);
     assert(!COMPLEXP(real));
     assert(!COMPLEXP(imag));
     scm_complex_t obj = (scm_complex_t)heap->allocate_collectible(sizeof(scm_complex_rec_t));
@@ -630,8 +588,6 @@ make_complex(object_heap_t* heap, scm_obj_t real, scm_obj_t imag)
 scm_rational_t
 make_rational(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
 {
-    VERIFY_DATUM(numerator);
-    VERIFY_DATUM(denominator);
     assert(n_negative_pred(denominator) == false);
     assert(n_exact_pred(numerator));
     assert(n_exact_pred(denominator));
@@ -659,7 +615,6 @@ scm_tuple_t
 make_tuple(object_heap_t* heap, int n, scm_obj_t elt)
 {
     if (n == 0) return (scm_tuple_t)heap->m_inherents[NIL_TUPLE];
-    VERIFY_DATUM(elt);
     int bytes = sizeof(scm_tuple_rec_t) + sizeof(scm_obj_t) * n;
     scm_tuple_t obj;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
@@ -753,6 +708,25 @@ make_sharedqueue(object_heap_t* heap, int n)
     obj->hdr = scm_hdr_sharedqueue;
     obj->buf.init(n + MAX_VIRTUAL_MACHINE);
     obj->queue.init(n);
+    return obj;
+}
+
+scm_sharedbag_t
+make_sharedbag(object_heap_t* heap, int depth)
+{
+    scm_sharedbag_t obj = (scm_sharedbag_t)heap->allocate_collectible(sizeof(scm_sharedbag_rec_t));
+    sharedbag_slot_t** datum = (sharedbag_slot_t**)malloc(sizeof(sharedbag_slot_t*) * MAX_VIRTUAL_MACHINE);
+    for (int i = 0; i < MAX_VIRTUAL_MACHINE; i++) {
+        datum[i] = (sharedbag_slot_t*)malloc(sizeof(sharedbag_slot_t));
+        datum[i]->key = NULL;
+        datum[i]->buf.init(depth + MAX_VIRTUAL_MACHINE);
+        datum[i]->queue.init(depth);
+    }
+    obj->hdr = scm_hdr_sharedbag;
+    obj->capacity = MAX_VIRTUAL_MACHINE;
+    obj->depth = depth;
+    obj->datum = datum;
+    obj->lock.init();
     return obj;
 }
 
@@ -1059,6 +1033,18 @@ finalize(object_heap_t* heap, void* obj)
             queue->queue.destroy();
             break;
         }
+        case TC_SHAREDBAG: {
+            scm_sharedbag_t bag = (scm_sharedbag_t)obj;
+            for (int i = 0; i < bag->capacity; i++) {
+                bag->datum[i]->buf.destroy();
+                bag->datum[i]->queue.destroy();
+                free(bag->datum[i]->key);
+                free(bag->datum[i]);
+            }
+            free(bag->datum);
+            bag->lock.destroy();
+            break;
+        }
     }
 }
 
@@ -1104,6 +1090,17 @@ renounce(void* obj, int size, void* refcon)
             queue->queue.destroy();
             break;
         }
+        case TC_SHAREDBAG: {
+            scm_sharedbag_t bag = (scm_sharedbag_t)obj;
+            for (int i = 0; i < bag->capacity; i++) {
+                bag->datum[i]->buf.destroy();
+                bag->datum[i]->queue.destroy();
+                free(bag->datum[i]->key);
+                free(bag->datum[i]);
+            }
+            free(bag->datum);
+            bag->lock.destroy();
+            break;
+        }
     }
 }
-

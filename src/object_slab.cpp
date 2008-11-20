@@ -367,6 +367,7 @@ object_slab_cache_t::sweep(void* slab)
             p++;
         } while (obj <= limit);
     }
+
 done:
     assert(refc >= 0);
     for (int i = 0; i < m_bitmap_size; i++) bitmap[i] = 0;
