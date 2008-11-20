@@ -171,7 +171,6 @@ utf8_decode_test(scm_bvector_t obj)
 {
     uint8_t* datum = (uint8_t*)obj->elts;
     int end = obj->count;
-    int n = 0;
     for (int n = 0; n < end; n++) {
         uint32_t ucs4;
         if (cnvt_utf8_to_ucs4(datum + n, &ucs4) < 1) return false;

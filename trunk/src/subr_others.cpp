@@ -2112,7 +2112,6 @@ subr_string_uninterned_symbol(VM* vm, int argc, scm_obj_t argv[])
             if (argc == 1) return make_symbol_uninterned(vm->m_heap, string->name, string->size);
             if (argc == 2) {
                 if (FIXNUMP(argv[1])) {
-                    scm_string_t suffix = (scm_string_t)argv[1];
                     int offset = utf8_char_index_to_byte_offset((uint8_t*)string->name, FIXNUM(argv[1]), string->size + 1);
                     return make_symbol_uninterned(vm->m_heap, string->name, string->size, offset);
                 }

@@ -14,7 +14,7 @@ slot_match(const sharedbag_slot_t* datum, const char* key, int len)
     return (*(uint32_t*)(datum->key) == len) && (memcmp((char*)datum->key + sizeof(uint32_t), key, len) == 0);
 }
 
-static inline bool
+static inline void
 slot_allocate(sharedbag_slot_t* datum, const char* key, int len)
 {
     datum->key = (char*)malloc(sizeof(uint32_t) + len);

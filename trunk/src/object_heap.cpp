@@ -713,7 +713,9 @@ object_heap_t::synchronized_collect(object_heap_t& heap)
     while (heap.serial_marking()) continue;
 
     // sweep
+#if DEBUG_CONCURRENT_COLLECT
     double t2 = msec();
+#endif
     GC_TRACE(";; [collector: sweep]\n");
     heap.m_sweep_wavefront = (uint8_t*)heap.m_pool;
     heap.m_symbol.sweep();
@@ -822,8 +824,10 @@ fallback:
     }
     GC_TRACE(";; [collector: concurrent-marking phase 2]\n");
     heap.concurrent_marking();
+#if DEBUG_CONCURRENT_COLLECT
     double t3 = msec();
-    
+#endif
+
     // final mark
     assert(heap.m_mutator_stopped == false);
     heap.m_stop_the_world = true;
