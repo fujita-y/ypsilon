@@ -132,10 +132,9 @@
               (else obj)))))
   ) ;[end]
 
-
+#|
 (import (concurrent))
 (call-with-spawn (lambda () (car 3)) (lambda () 9))
-
 (import (concurrent))
 (define bag (make-messenger-bag 3))
 (messenger-bag-put! bag "c1" '(hello) 100)

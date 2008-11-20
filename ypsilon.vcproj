@@ -182,6 +182,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\bag.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\bit.cpp"
 				>
 			</File>
@@ -353,6 +357,10 @@
 			>
 			<File
 				RelativePath=".\src\arith.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\bag.h"
 				>
 			</File>
 			<File
