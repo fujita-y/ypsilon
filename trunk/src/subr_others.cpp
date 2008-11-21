@@ -2178,7 +2178,10 @@ subr_spawn(VM* vm, int argc, scm_obj_t argv[])
     if (argc >= 1) {
         if (CLOSUREP(argv[0])) {
             int n = vm->m_interp->spawn(vm, (scm_closure_t)argv[0], argc - 1, argv + 1);
-            if (n < 0) return scm_false;
+            if (n < 0) {
+                fatal("fatal: can not spawn more than %d threads simultaneously under current configuration", 32);
+            //  return scm_false;
+            }
             return MAKEFIXNUM(n);
         }
         wrong_type_argument_violation(vm, "spawn", 0, "closure", argv[0], argc, argv);
