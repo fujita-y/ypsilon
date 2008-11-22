@@ -15,19 +15,19 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_01223FCA4B404A72A085E14FC1E84E94"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_02CFE368844540E6B982158E5319F3D0"
+        "MsmKey" = "8:_059D67DC08084AAEA1F9063A22ED629F"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_0A1223B80F2F4BB7B8449ED884F79EDD"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_0E2A4E1969E94A319B50AB780219F9EC"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -99,6 +99,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_2692323E878347B7AEFEB24F877C6F60"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_27604C76DFDE4E019BC3C23BA39126E2"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -111,12 +117,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_2BDB380FC8E54133B044935861027836"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_349A92244423447EA001DEEB8BCC050D"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -124,6 +124,12 @@
         "Entry"
         {
         "MsmKey" = "8:_350BB663911944E595C60A6E7D961621"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_39AC656CEA8642ACBA3A68BB65583BCD"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -142,6 +148,18 @@
         "Entry"
         {
         "MsmKey" = "8:_3FE506F866294DEB9FC11EEE1A1B2C15"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_41727DB904F7471B82B31A644E796F7F"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_4213E2CA87004FB1B56BCCE19F2FA5EC"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -231,13 +249,19 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_70F914F6535B4EEF9C1AC53403A808E5"
+        "MsmKey" = "8:_734FB206E1ED4A1A94FDF39D809D2264"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_793F190D454849D6B4A48FA266D6E453"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_7B00EA9A11754F73B509C102CDC28E0C"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -279,6 +303,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_9EE2991858E3456B8E6E341D7CA11E46"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_A0419C59AAE0481FA7ABDCE1489CCA14"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -309,6 +339,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_ABE99A346FB942FF9F4B9C551324FC8D"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_ACD0B8381B9E4399A979000EB474576E"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -316,6 +352,12 @@
         "Entry"
         {
         "MsmKey" = "8:_AD773F1539824BF0865C5614C452EFF4"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_B6002D0D1CEA473CACB0076CF510ADA1"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -393,6 +435,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_D3BBADBD36B34D0FBDA742031A0FD4E4"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_D9481A1D91BE450FB889D055E1856464"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -460,6 +508,12 @@
         "Entry"
         {
         "MsmKey" = "8:_F6F0D59C3FC24A94847DDA16CBEA78D1"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_FBE4327356144757ABE59E2DE65AE304"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -556,30 +610,10 @@
         }
         "File"
         {
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_01223FCA4B404A72A085E14FC1E84E94"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_059D67DC08084AAEA1F9063A22ED629F"
             {
-            "SourcePath" = "8:..\\sitelib\\srfi\\srfi-26.scm"
-            "TargetName" = "8:srfi-26.scm"
-            "Tag" = "8:"
-            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_02CFE368844540E6B982158E5319F3D0"
-            {
-            "SourcePath" = "8:..\\sitelib\\srfi\\srfi-28.scm"
-            "TargetName" = "8:srfi-28.scm"
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a28.scm"
+            "TargetName" = "8:%3a28.scm"
             "Tag" = "8:"
             "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
             "Condition" = "8:"
@@ -602,6 +636,26 @@
             "TargetName" = "8:records.scm"
             "Tag" = "8:"
             "Folder" = "8:_09FE17C038694EABA8944CAB7A607A78"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_0E2A4E1969E94A319B50AB780219F9EC"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a39.scm"
+            "TargetName" = "8:%3a39.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -816,6 +870,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_2692323E878347B7AEFEB24F877C6F60"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a6.scm"
+            "TargetName" = "8:%3a6.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_27604C76DFDE4E019BC3C23BA39126E2"
             {
             "SourcePath" = "8:..\\sitelib\\debug.scm"
@@ -856,26 +930,6 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_2BDB380FC8E54133B044935861027836"
-            {
-            "SourcePath" = "8:..\\sitelib\\srfi\\srfi-6.scm"
-            "TargetName" = "8:srfi-6.scm"
-            "Tag" = "8:"
-            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_349A92244423447EA001DEEB8BCC050D"
             {
             "SourcePath" = "8:..\\stdlib\\core\\bytevector-transcoders.scm"
@@ -902,6 +956,26 @@
             "TargetName" = "8:destructuring.scm"
             "Tag" = "8:"
             "Folder" = "8:_09FE17C038694EABA8944CAB7A607A78"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_39AC656CEA8642ACBA3A68BB65583BCD"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a8.scm"
+            "TargetName" = "8:%3a8.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -962,6 +1036,46 @@
             "TargetName" = "8:fixnums.scm"
             "Tag" = "8:"
             "Folder" = "8:_166F78D89A38434AB93B8B7A4C39827C"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_41727DB904F7471B82B31A644E796F7F"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\srfi-1.scm"
+            "TargetName" = "8:srfi-1.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4213E2CA87004FB1B56BCCE19F2FA5EC"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a26.scm"
+            "TargetName" = "8:%3a26.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1256,10 +1370,10 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_70F914F6535B4EEF9C1AC53403A808E5"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_734FB206E1ED4A1A94FDF39D809D2264"
             {
-            "SourcePath" = "8:..\\sitelib\\srfi\\srfi-1.scm"
-            "TargetName" = "8:srfi-1.scm"
+            "SourcePath" = "8:..\\sitelib\\srfi\\srfi-98.scm"
+            "TargetName" = "8:srfi-98.scm"
             "Tag" = "8:"
             "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
             "Condition" = "8:"
@@ -1282,6 +1396,26 @@
             "TargetName" = "8:files.scm"
             "Tag" = "8:"
             "Folder" = "8:_09FE17C038694EABA8944CAB7A607A78"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7B00EA9A11754F73B509C102CDC28E0C"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a1.scm"
+            "TargetName" = "8:%3a1.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1416,6 +1550,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9EE2991858E3456B8E6E341D7CA11E46"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\srfi-26.scm"
+            "TargetName" = "8:srfi-26.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A0419C59AAE0481FA7ABDCE1489CCA14"
             {
             "SourcePath" = "8:..\\stdlib\\rnrs\\io\\ports.scm"
@@ -1516,6 +1670,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_ABE99A346FB942FF9F4B9C551324FC8D"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\srfi-6.scm"
+            "TargetName" = "8:srfi-6.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_ACD0B8381B9E4399A979000EB474576E"
             {
             "SourcePath" = "8:..\\stdlib\\rnrs\\io\\simple.scm"
@@ -1542,6 +1716,26 @@
             "TargetName" = "8:control.scm"
             "Tag" = "8:"
             "Folder" = "8:_E37BC4BED2AE4DA0943DAA4E1309D4A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B6002D0D1CEA473CACB0076CF510ADA1"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a98.scm"
+            "TargetName" = "8:%3a98.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1796,6 +1990,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D3BBADBD36B34D0FBDA742031A0FD4E4"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a42.scm"
+            "TargetName" = "8:%3a42.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D9481A1D91BE450FB889D055E1856464"
             {
             "SourcePath" = "8:..\\ypsilon.bat"
@@ -2022,6 +2236,26 @@
             "TargetName" = "8:string-split.scm"
             "Tag" = "8:"
             "Folder" = "8:_C6205E1AFA9948F6AAC514D8551BA58F"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_FBE4327356144757ABE59E2DE65AE304"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\srfi-28.scm"
+            "TargetName" = "8:srfi-28.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
