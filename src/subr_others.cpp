@@ -1773,7 +1773,7 @@ subr_process_environment_alist(VM* vm, int argc, scm_obj_t argv[])
             scm_obj_t obj = scm_nil;
             while (*s) {
                 const char* e = strchr(s, '=');
-                if (e) {
+                if (e && s != e) {
                     obj = make_pair(vm->m_heap, 
                                     make_pair(vm->m_heap, 
                                               make_string_literal(vm->m_heap, s, e - s), 
