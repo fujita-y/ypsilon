@@ -2,19 +2,6 @@
 
 (library (srfi srfi-1)
 
-  #|
-      
-   (define map map/srfi-1)
-   (define map! map!/srfi-1)
-   (define for-each for-each/srfi-1)
-   (define fold-right fold-right/srfi-1)
-   (define member member/srfi-1)
-   (define assoc assoc/srfi-1)
-   (define remove remove/srfi-1)
-   (define remove! emove!/srfi-1)
-   
-  |#
-
   (export
    ;; constructors
    xcons
@@ -29,11 +16,11 @@
    ;; predicates
    pair?                                         ; -> (core intrinsics)
    null?                                         ; -> (core intrinsics)
-   (rename (list? proper-list?))                 ; list? -> (core intrinsics)
+   (rename (list? proper-list?))                 ; -> (core intrinsics)
    circular-list?
    dotted-list?
    not-pair?
-   (rename (null? null-list?))                   ; null? -> (core intrinsics)
+   (rename (null? null-list?))                   ; -> (core intrinsics)
    list=
 
    ;; selectors
@@ -110,8 +97,8 @@
    (rename (filter filter!))
    partition                                     ; -> (core lists)
    (rename (partition partition!))
-   (rename (remp remove/srfi-1))                 ; remp -> (core lists)
-   (rename (remp remove!/srfi-1))                ; remp -> (core lists)
+   (rename (remp remove/srfi-1))                 ; -> (core lists)
+   (rename (remp remove!/srfi-1))                ; -> (core lists)
 
    ;; seaching
    member                                        ; -> (core intrinsics) *r6rs
@@ -698,3 +685,14 @@
               (apply lset-intersection proc lst))))
 
   ) ;[end]
+
+#|
+   (define map        map/srfi-1)
+   (define map!       map!/srfi-1)
+   (define for-each   for-each/srfi-1)
+   (define fold-right fold-right/srfi-1)
+   (define member     member/srfi-1)
+   (define assoc      assoc/srfi-1)
+   (define remove     remove/srfi-1)
+   (define remove!    remove!/srfi-1)   
+|#
