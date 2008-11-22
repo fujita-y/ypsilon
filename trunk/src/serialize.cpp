@@ -460,8 +460,8 @@ deserializer_t::get_datum()
             return make_flonum(m_heap, n.f64);
         }
         case BVO_TAG_BIGNUM: {
-            int sign = (int)fetch_u32();
-            int count = (int)fetch_u32();
+            int sign = (int32_t)fetch_u32();
+            int count = fetch_u32();
             scm_bignum_t bn = make_bignum(m_heap, count);
             assert(sizeof(bn->elts[0]) == sizeof(uint32_t));
             for (int i = 0; i < count; i++) bn->elts[i] = fetch_u32();
@@ -469,7 +469,7 @@ deserializer_t::get_datum()
             return bn;
         }
         case BVO_TAG_BVECTOR: {
-            uint32_t count = fetch_u32();
+            int count = fetch_u32();
             scm_bvector_t bv = make_bvector(m_heap, count);
             fetch_bytes(bv->elts, count);
             return bv;

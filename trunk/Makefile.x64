@@ -7,7 +7,7 @@ PROG 	 = ypsilon
 
 PREFIX 	 = /usr/local
 
-CPPFLAGS = -DNDEBUG -DDEFAULT_HEAP_LIMIT=64 -DSYSTEM_SHARE_PATH='"$(PREFIX)/share/$(PROG)"'
+CPPFLAGS = -DNDEBUG -DDEFAULT_HEAP_LIMIT=64 -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
 
 CXXFLAGS = -pipe -x c++ -pthread -msse -mfpmath=sse -O3 -fstrict-aliasing \
 	   -fomit-frame-pointer -momit-leaf-frame-pointer \
@@ -68,31 +68,31 @@ vm1.o: vm1.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -c src/vm1.cpp
 
 install: all stdlib sitelib
-	mkdir -pv -m755 $(PREFIX)/bin
-	mkdir -pv -m755 $(PREFIX)/share/man/man1
-	cp $(PROG) $(PREFIX)/bin/$(PROG)
-	cp $(PROG).1 $(PREFIX)/share/man/man1/$(PROG).1
-	chmod 755 $(PREFIX)/bin/$(PROG)
-	chmod 644 $(PREFIX)/share/man/man1/$(PROG).1
+	mkdir -pv -m755 $(DESTDIR)$(PREFIX)/bin
+	mkdir -pv -m755 $(DESTDIR)$(PREFIX)/share/man/man1
+	cp $(PROG) $(DESTDIR)$(PREFIX)/bin/$(PROG)
+	cp $(PROG).1 $(DESTDIR)$(PREFIX)/share/man/man1/$(PROG).1
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROG)
+	chmod 644 $(DESTDIR)$(PREFIX)/share/man/man1/$(PROG).1
 
 uninstall:
-	-rm -rf $(PREFIX)/share/$(PROG)/stdlib
-	-rm -rf $(PREFIX)/share/$(PROG)/sitelib
-	-rm -f $(PREFIX)/share/man/man1/$(PROG).1
-	-rm -f $(PREFIX)/bin/$(PROG)
-	-rmdir $(PREFIX)/share/$(PROG)
+	-rm -rf $(DESTDIR)$(PREFIX)/share/$(PROG)/stdlib
+	-rm -rf $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib
+	-rm -f $(DESTDIR)$(PREFIX)/share/man/man1/$(PROG).1
+	-rm -f $(DESTDIR)$(PREFIX)/bin/$(PROG)
+	-rmdir $(DESTDIR)$(PREFIX)/share/$(PROG)
 
 stdlib:
-	mkdir -pv -m755 $(PREFIX)/share/$(PROG)/stdlib
-	find stdlib -type f -name '*.scm' | cpio -pdu $(PREFIX)/share/$(PROG)
-	find $(PREFIX)/share/$(PROG)/stdlib -type d -exec chmod 755 {} \;
-	find $(PREFIX)/share/$(PROG)/stdlib -type f -exec chmod 644 {} \;
+	mkdir -pv -m755 $(DESTDIR)$(PREFIX)/share/$(PROG)/stdlib
+	find stdlib -type f -name '*.scm' | cpio -pdu $(DESTDIR)$(PREFIX)/share/$(PROG)
+	find $(DESTDIR)$(PREFIX)/share/$(PROG)/stdlib -type d -exec chmod 755 {} \;
+	find $(DESTDIR)$(PREFIX)/share/$(PROG)/stdlib -type f -exec chmod 644 {} \;
 
 sitelib:
-	mkdir -pv -m755 $(PREFIX)/share/$(PROG)/sitelib
-	find sitelib -type f -name '*.scm' | cpio -pdu $(PREFIX)/share/$(PROG)
-	find $(PREFIX)/share/$(PROG)/sitelib -type d -exec chmod 755 {} \;
-	find $(PREFIX)/share/$(PROG)/sitelib -type f -exec chmod 644 {} \;
+	mkdir -pv -m755 $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib
+	find sitelib -type f -name '*.scm' | cpio -pdu $(DESTDIR)$(PREFIX)/share/$(PROG)
+	find $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib -type d -exec chmod 755 {} \;
+	find $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib -type f -exec chmod 644 {} \;
 
 check: all
 	@echo '----------------------------------------'

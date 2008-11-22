@@ -3,6 +3,33 @@
 ;;; See license.txt for terms and conditions of use.
 
 (define auto-compile-cache-validation-signature (string->symbol (format "ypsilon-0.9.6/r~a" (architecture-feature 'ypsilon-revision))))
+(define auto-compile-verbose (make-parameter #f))
+(define scheme-load-verbose (make-parameter #f))
+(define scheme-load-paths (make-parameter '()))
+(define library-contains-implicit-main (make-parameter #t))
+
+(define library-extensions
+  (make-parameter
+   (list ".ypsilon.sls"
+         ".ypsilon.ss"
+         ".ypsilon.scm"
+         ".sls"
+         ".ss"
+         ".scm")
+   (lambda (value)
+     (if (and (list? value) (every1 string? value))
+         value
+         (assertion-violation 'library-extensions (format "expected list of strings, but got ~s" value))))))
+
+(define auto-compile-cache
+  (make-parameter
+   #f
+   (lambda (p)
+     (cond ((not p) p)
+           ((and (string? p) (file-exists? (format "~//." p))) (format "~/" p))
+           (else
+            (format (current-error-port) "~&;; warning in auto-compile-cache: directory ~s not exist (temporary disable caching)~!~%" p)
+            #f)))))
 
 (define core-eval
   (lambda (form)
@@ -56,9 +83,6 @@
                            (.set-top-level-value! '.R6RS-EVAL-RESULT .&UNDEF)
                            (.unintern-scheme-library ',(generate-library-id '(.R6RS-EVAL)))
                            result)))))))
-
-(define scheme-load-verbose (make-parameter #f))
-(define scheme-load-paths (make-parameter '()))
 
 (define expand-path
   (lambda (path)
@@ -194,18 +218,6 @@
                       (run-vmi (cons '(1 . 0) form))
                       (loop)))))))))))
 
-(define auto-compile-verbose (make-parameter #f))
-
-(define auto-compile-cache
-  (make-parameter
-   #f
-   (lambda (p)
-     (cond ((not p) p)
-           ((and (string? p) (file-exists? (format "~//." p))) (format "~/" p))
-           (else
-            (format (current-error-port) "~&;; warning in auto-compile-cache: directory ~s not exist (temporary disable caching)~!~%" p)
-            #f)))))
-
 (define auto-compile-cache-clean
   (lambda ()
     (cond ((auto-compile-cache)
@@ -251,14 +263,14 @@
                                                    (timestamp-path (string-append cache-path ".time")))
                                               (cond ((file-exists? timestamp-path)
                                                      (call-with-port
-                                                      (make-file-input-port timestamp-path)
-                                                      (lambda (timestamp-port)
-                                                        (let ((cache-timestamp (get-datum timestamp-port)))
-                                                          (close-port timestamp-port)
-                                                          (cond ((>= cache-timestamp expiration)
-                                                                 (delete-file timestamp-path)
-                                                                 (delete-file cache-path)
-                                                                 (and (auto-compile-verbose) (format #t "~&;; clean ~s~%" cache-path))))))))
+                                                       (make-file-input-port timestamp-path)
+                                                       (lambda (timestamp-port)
+                                                         (let ((cache-timestamp (get-datum timestamp-port)))
+                                                           (close-port timestamp-port)
+                                                           (cond ((>= cache-timestamp expiration)
+                                                                  (delete-file timestamp-path)
+                                                                  (delete-file cache-path)
+                                                                  (and (auto-compile-verbose) (format #t "~&;; clean ~s~%" cache-path))))))))
                                                     (else
                                                      (inconsistent-cache-state cache-lst)))))
                                           cache-lst))
@@ -268,22 +280,22 @@
                                   (timestamp-path (string-append cache-path ".time")))
                              (cond ((file-exists? timestamp-path)
                                     (call-with-port
-                                     (make-file-input-port timestamp-path)
-                                     (lambda (timestamp-port)
-                                       (let* ((cache-timestamp (get-datum timestamp-port))
-                                              (source-timestamp (get-datum timestamp-port))
-                                              (source-path (get-datum timestamp-port))
-                                              (cache-signature (get-datum timestamp-port)))
-                                         (close-port timestamp-port)
-                                         (cond ((not (and (number? cache-timestamp) (number? source-timestamp) (string? source-path) (eq? cache-signature auto-compile-cache-validation-signature) (file-exists? source-path)))
-                                                (inconsistent-cache-state cache-lst))
-                                               ((= (stat-mtime source-path) source-timestamp)
-                                                (loop (cdr lst) expiration))
-                                               (else
-                                                (loop (cdr lst)
-                                                      (cond ((not expiration) cache-timestamp)
-                                                            ((< cache-timestamp expiration) cache-timestamp)
-                                                            (else expiration)))))))))
+                                      (make-file-input-port timestamp-path)
+                                      (lambda (timestamp-port)
+                                        (let* ((cache-timestamp (get-datum timestamp-port))
+                                               (source-timestamp (get-datum timestamp-port))
+                                               (source-path (get-datum timestamp-port))
+                                               (cache-signature (get-datum timestamp-port)))
+                                          (close-port timestamp-port)
+                                          (cond ((not (and (number? cache-timestamp) (number? source-timestamp) (string? source-path) (eq? cache-signature auto-compile-cache-validation-signature) (file-exists? source-path)))
+                                                 (inconsistent-cache-state cache-lst))
+                                                ((= (stat-mtime source-path) source-timestamp)
+                                                 (loop (cdr lst) expiration))
+                                                (else
+                                                 (loop (cdr lst)
+                                                       (cond ((not expiration) cache-timestamp)
+                                                             ((< cache-timestamp expiration) cache-timestamp)
+                                                             (else expiration)))))))))
                                    (else
                                     (delete-file cache-path)
                                     (and (auto-compile-verbose) (format #t "~&;; clean ~s~%" cache-path))
@@ -291,104 +303,136 @@
           (else
            (unspecified)))))
 
-(define library-extensions
-  (make-parameter (list ".ypsilon.sls" ".ypsilon.ss" ".ypsilon.scm" ".sls" ".ss" ".scm")
-                  (lambda (value)
-                    (if (and (list? value) (every1 string? value))
-                        value
-                        (assertion-violation 'library-extensions (format "expected list of strings, but got ~s" value))))))
-
-
 (define load-scheme-library
   (lambda (ref . vital)
     (let ((vital (or (not (pair? vital)) (car vital)))) ; vital default #t
 
+      (define encode-library-ref
+        (lambda (ref)
+          (map (lambda (s)
+                 (let ((utf8 (string->utf8 (symbol->string s))))
+                   (let ((buf (make-string-output-port))
+                         (end (bytevector-length utf8)))
+                     (let loop ((i 0))
+                       (if (= i end)
+                           (string->symbol (extract-accumulated-string buf))
+                           (let ((c (bytevector-u8-ref utf8 i)))
+                             (cond ((or (and (> c #x60) (< c #x7b))       ; a-z
+                                        (and (> c #x2f) (< c #x3a))       ; 0-9 
+                                        (and (> c #x40) (< c #x5b))       ; A-Z
+                                        (= c #x2b) (= c #x2d) (= c #x5f)) ; + - _
+                                    (put-byte buf c)
+                                    (loop (+ i 1)))
+                                   (else
+                                    (format buf "%~x~x" (div c 16) (mod c 16))
+                                    (loop (+ i 1))))))))))
+               ref)))
+
       (define make-cache
         (lambda (src dst source-ref source-time)
           (call-with-port
-           (make-file-output-port dst)
-           (lambda (output)
-             (call-with-port
-              (open-script-input-port src)
-              (lambda (input)
-                (with-exception-handler
-                 (lambda (c)
-                   (close-port input)
-                   (close-port output)
-                   (and dst (file-exists? dst) (delete-file dst))
-                   (raise c))
-                 (lambda ()
-                   (parameterize
-                       ((current-source-comments (current-source-comments))
-                        (current-temporaries (current-temporaries))
-                        (current-environment (current-environment))
-                        (extend-lexical-syntax (extend-lexical-syntax))
-                        (backtrace (backtrace)))
-                     (let loop ()
-                       (current-source-comments (and (backtrace) (make-core-hashtable)))
-                       (current-temporaries (make-core-hashtable 'string=?))
-                       (current-rename-count 0)
-                       (let ((obj (core-read input (current-source-comments) 'load)))
-                         (cond ((eof-object? obj)
-                                (format output "~%")
-                                (close-port input)
-                                (close-port output))
-                               (else
-                                (let ((code
-                                       (parameterize
-                                           ((current-closure-comments (make-core-hashtable)))
-                                         (compile-coreform (macro-expand obj)))))
-                                  (put-fasl output code)
+            (make-file-output-port dst)
+            (lambda (output)
+              (call-with-port
+                (open-script-input-port src)
+                (lambda (input)
+                  (with-exception-handler
+                   (lambda (c)
+                     (close-port input)
+                     (close-port output)
+                     (and dst (file-exists? dst) (delete-file dst))
+                     (raise c))
+                   (lambda ()
+                     (parameterize
+                         ((current-source-comments (current-source-comments))
+                          (current-temporaries (current-temporaries))
+                          (current-environment (current-environment))
+                          (extend-lexical-syntax (extend-lexical-syntax))
+                          (backtrace (backtrace)))
+                       (let loop ()
+                         (current-source-comments (and (backtrace) (make-core-hashtable)))
+                         (current-temporaries (make-core-hashtable 'string=?))
+                         (current-rename-count 0)
+                         (let ((obj (core-read input (current-source-comments) 'load)))
+                           (cond ((eof-object? obj)
                                   (format output "~%")
-                                  (run-vmi (cons '(1 . 0) code))
-                                  (loop)))))))))))))))
+                                  (close-port input)
+                                  (close-port output))
+                                 (else
+                                  (let ((code
+                                         (parameterize
+                                             ((current-closure-comments (make-core-hashtable)))
+                                           (compile-coreform (macro-expand obj)))))
+                                    (put-fasl output code)
+                                    (format output "~%")
+                                    (run-vmi (cons '(1 . 0) code))
+                                    (loop)))))))))))))))
 
       (define locate-source
         (lambda (ref)
-          (let ((path (symbol-list->string ref "/")))
-            (or (any1 (lambda (base)
+
+          (define locate
+            (lambda (ref)
+              (let ((path (symbol-list->string ref "/")))
+                (any1 (lambda (base)
                         (any1 (lambda (ext)
                                 (let ((maybe-path (format "~a/~a~a" base path ext)))
-                                  (and (file-exists? maybe-path) maybe-path)))
+                                  (and (file-exists? maybe-path) (list maybe-path base))))
                               (library-extensions)))
-                      (scheme-library-paths))
-                (and vital
-                     (error 'load-scheme-library (format "~s not found in scheme-library-paths: ~s" path (scheme-library-paths))))))))
+                      (scheme-library-paths)))))
 
+          (let ((safe-ref (encode-library-ref ref)))
+            (or (if (library-contains-implicit-main)
+                    (if (eq? (list-ref safe-ref (- (length safe-ref) 1)) 'main)
+                        (or (locate (append safe-ref '(main))) (locate safe-ref))
+                        (or (locate safe-ref) (locate (append safe-ref '(main)))))
+                    (locate safe-ref))
+                (and vital (error 'load-scheme-library (format "~s not found in scheme-library-paths: ~s" path (scheme-library-paths))))))))
 
       (define locate-cache
         (lambda (ref source-path)
           (and (auto-compile-cache)
-               (let ((cache-path (format "~a/~a.cache" (auto-compile-cache) (symbol-list->string ref "."))))
+               (let ((cache-path (format "~a/~a.cache" (auto-compile-cache) (symbol-list->string (encode-library-ref ref) "."))))
                  (and (file-exists? cache-path)
                       (let ((timestamp-path (string-append cache-path ".time")))
                         (and (file-exists? timestamp-path)
                              (call-with-port
-                              (make-file-input-port timestamp-path)
-                              (lambda (timestamp-port)
-                                (get-datum timestamp-port)
-                                (get-datum timestamp-port)
-                                (cond ((equal? source-path (get-datum timestamp-port)) cache-path)
-                                      (else
-                                       (close-port timestamp-port)
-                                       (auto-compile-cache-clean)
-                                       #f))))))
+                               (make-file-input-port timestamp-path)
+                               (lambda (timestamp-port)
+                                 (get-datum timestamp-port)
+                                 (get-datum timestamp-port)
+                                 (cond ((equal? source-path (get-datum timestamp-port)) cache-path)
+                                       (else
+                                        (close-port timestamp-port)
+                                        (auto-compile-cache-clean)
+                                        #f))))))
                       cache-path)))))
 
-      (or (list? ref)
-          (scheme-error "internal error in load-scheme-library: unrecognized argument: ~s" ref))
+      (define reorder-scheme-library-paths
+        (lambda (top-path)
+          (cons top-path
+                (let loop ((lst (scheme-library-paths)))
+                  (cond ((null? lst) '())
+                        ((equal? (car lst) top-path) (cdr lst))
+                        (else
+                         (cons (car lst)
+                               (loop (cdr lst)))))))))
 
+      (or (list? ref) (scheme-error "internal error in load-scheme-library: unrecognized argument: ~s" ref))
       (cond ((locate-source ref)
-             => (lambda (source-path)
-                  (if (auto-compile-cache)
-                      (let ((cache-path (locate-cache ref source-path)))
-                        (if cache-path
-                            (load-cache cache-path)
-                            (let ((cache-path (format "~a/~a.cache" (auto-compile-cache) (symbol-list->string ref "."))))
-                              (and (auto-compile-verbose) (format #t "~&;; compile ~s~%~!" source-path))
-                              (make-cache source-path cache-path ref (stat-mtime source-path))
-                              (let ((timestamp-path (string-append cache-path ".time")))
-                                (call-with-port
-                                 (make-file-output-port timestamp-path)
-                                 (lambda (output) (format output "~s ~s ~s ~s" (microsecond) (stat-mtime source-path) source-path auto-compile-cache-validation-signature)))))))
-                      (load source-path))))))))
+             => (lambda (location)
+                  (destructuring-bind (source-path base-path) location
+                    (parameterize ((scheme-library-paths (reorder-scheme-library-paths base-path)))
+                      (if (auto-compile-cache)
+                          (let ((cache-path (locate-cache ref source-path)))
+                            (if cache-path
+                                (load-cache cache-path)
+                                (let ((ref (encode-library-ref ref)))
+                                  (let ((cache-path (format "~a/~a.cache" (auto-compile-cache) (symbol-list->string ref "."))))
+                                    (and (auto-compile-verbose) (format #t "~&;; compile ~s~%~!" source-path))
+                                    (make-cache source-path cache-path ref (stat-mtime source-path))
+                                    (let ((timestamp-path (string-append cache-path ".time")))
+                                      (call-with-port
+                                        (make-file-output-port timestamp-path)
+                                        (lambda (output) (format output "~s ~s ~s ~s" (microsecond) (stat-mtime source-path) source-path auto-compile-cache-validation-signature))))))))
+                          (load source-path))))))))))

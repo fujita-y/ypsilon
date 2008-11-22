@@ -1757,6 +1757,61 @@ subr_lookup_process_environment(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// process-environment->alist
+scm_obj_t
+subr_process_environment_alist(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) {
+#if _MSC_VER
+        wchar_t* ucs2_environ = GetEnvironmentStrings();
+        int ucs2_len = 2;
+        const wchar_t* p = ucs2_environ;
+        while (p[0] != 0 || p[1] != 0) { p++; ucs2_len++; }
+        int max_bytes = ucs2_len * 4;
+        char* s = new char [max_bytes];
+        if (WideCharToMultiByte(CP_UTF8, 0, ucs2_environ, ucs2_len, s, max_bytes, NULL, NULL)) {
+            scm_obj_t obj = scm_nil;
+            while (*s) {
+                const char* e = strchr(s, '=');
+                if (e) {
+                    obj = make_pair(vm->m_heap, 
+                                    make_pair(vm->m_heap, 
+                                              make_string_literal(vm->m_heap, s, e - s), 
+                                              make_string_literal(vm->m_heap, e + 1)),
+                                    obj);
+                }
+                s = s + strlen(s) + 1;
+            }
+            delete [] s;
+            FreeEnvironmentStrings(ucs2_environ);
+            return obj;
+        }
+        delete [] s;
+        FreeEnvironmentStrings(ucs2_environ);
+        return scm_nil;
+#else
+        extern char **environ;
+        char** p = environ;
+        scm_obj_t obj = scm_nil;
+        while (*p) {
+            const char* s = *p;
+            const char* e = strchr(s, '=');
+            if (e) {
+                obj = make_pair(vm->m_heap, 
+                                make_pair(vm->m_heap, 
+                                          make_string_literal(vm->m_heap, s, e - s), 
+                                          make_string_literal(vm->m_heap, e + 1)),
+                                obj);
+            }
+            p++;
+        }
+        return obj;
+#endif
+    }
+    wrong_number_of_arguments_violation(vm, "process-environment->alist", 0, 0, argc, argv);
+    return scm_undef;
+}
+
 // getenv
 scm_obj_t
 subr_getenv(VM* vm, int argc, scm_obj_t argv[])
@@ -2735,6 +2790,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("make-environment", subr_make_environment);
     DEFSUBR("architecture-feature", subr_architecture_feature);
     DEFSUBR("lookup-process-environment", subr_lookup_process_environment);
+    DEFSUBR("process-environment->alist", subr_process_environment_alist);
     DEFSUBR("command-line", subr_command_line);
     DEFSUBR("command-line-shift", subr_command_line_shift);
     DEFSUBR("system-share-path", subr_system_share_path);

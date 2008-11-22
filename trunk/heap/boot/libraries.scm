@@ -479,6 +479,7 @@
                         load
                         system-share-path
                         lookup-process-environment
+                        process-environment->alist
                         set-current-input-port! set-current-output-port! set-current-error-port!
                         open-builtin-data-input-port
                         current-library-infix

@@ -2,15 +2,14 @@
 
 (library (srfi srfi-8)
 
-  (export receive)  
-  
+  (export receive)
+
   (import (core primitives))
-  
+
   (define-syntax receive
     (syntax-rules ()
       ((_ formals expr body ...)
        (let-values ((formals expr)) body ...))))
-  
+
   ) ;[end]
-  
-  
+
