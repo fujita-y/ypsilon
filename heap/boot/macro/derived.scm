@@ -65,7 +65,10 @@
                      ((check-rec*-contract-violation renames inits)
                       => (lambda (lst)
                            (and (warning-level) (warning-contract-violation form inits lst))
-                           (annotate `(letrec* ,(map list renames inits) ,@body) form)))
+                           (annotate `(let ,(map (lambda (e) (list e '.&UNDEF)) renames)
+                                        ,@(map (lambda (lhs rhs) `(set! ,lhs ,rhs)) renames inits)
+                                        (let () ,@body))
+                                     form)))
                      (else
                       (annotate `(letrec* ,(rewrite-letrec*-bindings (map list renames inits) env) ,@body) form)))))))))))
 
@@ -141,7 +144,7 @@
                                  (renames (map cons
                                                vars
                                                (map (lambda (id) (rename-variable-id id suffix))
-                                                    vars))))    
+                                                    vars))))
                             `(.call-with-values
                               (lambda () ,(expand-form init init-env))
                               (lambda ,(rename-lambda-formals formals renames)
@@ -344,10 +347,10 @@
     (destructuring-match (desugar-define-macro form)
       ((_ name body)
        (let ((x (generate-temporary-symbol)))
-         (annotate `(.DEFINE-SYNTAX ,name 
-                      (.LAMBDA (,x)
-                        (.AND (.SYMBOL? ,x) (.SYNTAX-VIOLATION ',name "misplaced syntactic keyword" #f #f))
-                        (.APPLY ,body (.CDR ,x))))
+         (annotate `(.DEFINE-SYNTAX ,name
+                                    (.LAMBDA (,x)
+                                      (.AND (.SYMBOL? ,x) (.SYNTAX-VIOLATION ',name "misplaced syntactic keyword" #f #f))
+                                      (.APPLY ,body (.CDR ,x))))
                    form))))))
 
 (define expand-define-macro

@@ -1046,4 +1046,5 @@
 
       ((every?-ec qualifier expression)
        (first-ec #t qualifier (if (not expression)) #f) )))
+
   ) ;[end]
