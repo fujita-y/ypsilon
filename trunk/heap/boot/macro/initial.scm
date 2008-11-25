@@ -34,8 +34,8 @@
                                   (else
                                    (scheme-error "internal error in .set-top-level-macro!: bad transformer type:~s keyword:~s datum:~s" type keyword datum))))))))
 
-(define core-primitive-name 
-  (lambda (e) 
+(define core-primitive-name
+  (lambda (e)
     (string->symbol (format "~a~a" (current-primitive-prefix) e))))
 
 (define generate-global-id
@@ -49,7 +49,7 @@
           (let ((new (string->uninterned-symbol name prefix)))
             (core-hashtable-set! temps name new)
             new)))))
-    
+
 (define generate-temporary-symbol
   (lambda ()
     (let ((count (current-temporary-count)))
@@ -83,7 +83,7 @@
     (if (uninterned-symbol? id)
         (make-temporary-symbol (format "~a~a~a*" id (current-rename-delimiter) count) (string-length (uninterned-symbol-prefix id)))
         (make-temporary-symbol (format "~a~a~a*" id (current-rename-delimiter) count) (string-length (symbol->string id))))))
-  
+
 (define renamed-variable-id?
   (lambda (id)
     (and (uninterned-symbol? id)
@@ -102,13 +102,19 @@
 
 (define strip-rename-suffix
   (lambda (lst)
-    (cond ((pair? lst)
-           (let ((a (strip-rename-suffix (car lst)))
-                 (d (strip-rename-suffix (cdr lst))))
-             (if (and (eq? a (car lst)) (eq? d (cdr lst))) lst (cons a d))))
-          ((symbol? lst) (original-id lst))
-          ((vector? lst) (list->vector (map strip-rename-suffix (vector->list lst))))
-          (else lst))))
+    (define ht-visited (make-core-hashtable))
+    (let loop ((lst lst))
+      (cond ((pair? lst)
+             (cond ((core-hashtable-contains? ht-visited lst) lst)
+                   (else
+                    (core-hashtable-set! ht-visited lst #t)
+                    (let ((a (loop (car lst))) (d (loop (cdr lst))))
+                      (if (and (eq? a (car lst)) (eq? d (cdr lst))) lst (cons a d))))))
+            ((symbol? lst)
+             (original-id lst))
+            ((vector? lst) 
+             (list->vector (map loop (vector->list lst))))
+            (else lst)))))
 
 (define retrieve-rename-suffix
   (lambda (id)

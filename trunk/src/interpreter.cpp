@@ -85,6 +85,9 @@ Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
             vm->m_current_exception_handler = scm_false;
             vm->m_current_dynamic_environment = clone_weakhashtable(vm->m_heap, parent->m_current_dynamic_environment, false);
             vm->m_current_dynamic_wind_record = scm_nil;
+            vm->m_recursion_level = 0;
+            vm->m_shared_object_errno = 0;
+            vm->m_shared_object_last_error = 0;
             memcpy(&vm->flags, &parent->flags, sizeof(parent->flags));
             vm->run(true);
             vm->reset();

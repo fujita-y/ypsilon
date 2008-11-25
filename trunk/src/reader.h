@@ -13,7 +13,8 @@
 class reader_t {
 public:
     reader_t(VM* vm, scm_port_t input);
-    scm_obj_t       read(scm_hashtable_t note);
+    scm_obj_t read(scm_hashtable_t note);
+    scm_obj_t read_graph(scm_hashtable_t note);
 private:
     void            lexical_error(const char* fmt, ...) ATTRIBUTE(noreturn);
     void            unget_ucs4();
@@ -45,7 +46,10 @@ private:
     void            put_note(const char* symbol_name, scm_obj_t value);
     void            parsing_range(int from, int to);
     void            parsing_line(int line);
-
+    scm_obj_t       lookup_graph(scm_tuple_t tuple);
+    void            link_graph(scm_obj_t obj);
+    
+    scm_hashtable_t m_graph;
     scm_hashtable_t m_note;
     int             m_first_line;
     int             m_parsing_line_from;

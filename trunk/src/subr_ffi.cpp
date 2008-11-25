@@ -91,6 +91,10 @@ subr_call_shared_object_void(VM* vm, int argc, scm_obj_t argv[])
 #else
             fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
 #endif
+            vm->m_shared_object_errno = errno;
+#if _MSC_VER
+            vm->m_shared_object_last_error = GetLastError();
+#endif
             return scm_unspecified;
         }
         invalid_argument_violation(vm, "call-shared-object->void", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
@@ -125,13 +129,19 @@ subr_call_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
             }
+            intptr_t retval;
 #if ARCH_IA32
-            return int_to_integer(vm->m_heap, c_func_stub_intptr(func, stack.count(), stack.frame()));
+            retval = c_func_stub_intptr(func, stack.count(), stack.frame());
 #elif ARCH_X64
-            return int_to_integer(vm->m_heap, c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame()));
+            retval = c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
 #else
             fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
 #endif
+            vm->m_shared_object_errno = errno;
+#if _MSC_VER
+            vm->m_shared_object_last_error = GetLastError();
+#endif            
+            return int_to_integer(vm->m_heap, retval);
         }
         invalid_argument_violation(vm, "call-shared-object->int", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
@@ -165,13 +175,19 @@ subr_call_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
             }
+            double retval;
 #if ARCH_IA32
-            return make_flonum(vm->m_heap, c_func_stub_double(func, stack.count(), stack.frame()));
+            retval = c_func_stub_double(func, stack.count(), stack.frame());
 #elif ARCH_X64
-            return make_flonum(vm->m_heap, c_func_stub_double_x64(func, stack.count(), stack.sse_use(), stack.frame()));
+            retval = c_func_stub_double_x64(func, stack.count(), stack.sse_use(), stack.frame());
 #else
             fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
 #endif
+            vm->m_shared_object_errno = errno;
+#if _MSC_VER
+            vm->m_shared_object_last_error = GetLastError();
+#endif
+            return make_flonum(vm->m_heap, retval);
         }
         invalid_argument_violation(vm, "call-shared-object->double", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
@@ -205,14 +221,19 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
             }
+            intptr_t retval;
 #if ARCH_IA32
-            intptr_t value = c_func_stub_intptr(func, stack.count(), stack.frame());
+            retval = c_func_stub_intptr(func, stack.count(), stack.frame());
 #elif ARCH_X64
-            intptr_t value = c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
+            retval = c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
 #else
             fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
 #endif
-            return intptr_to_integer(vm->m_heap, value);
+            vm->m_shared_object_errno = errno;
+#if _MSC_VER
+            vm->m_shared_object_last_error = GetLastError();
+#endif
+            return intptr_to_integer(vm->m_heap, retval);
         }
         invalid_argument_violation(vm, "call-shared-object->void*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
@@ -246,12 +267,17 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
             }
+            uint8_t* p;
 #if ARCH_IA32
-            uint8_t* p = (uint8_t*)c_func_stub_intptr(func, stack.count(), stack.frame());
+            p = (uint8_t*)c_func_stub_intptr(func, stack.count(), stack.frame());
 #elif ARCH_X64
-            uint8_t* p = (uint8_t*)c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
+            p = (uint8_t*)c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
 #else
             fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+#endif
+            vm->m_shared_object_errno = errno;
+#if _MSC_VER
+            vm->m_shared_object_last_error = GetLastError();
 #endif
             if (p == NULL) return scm_false;
             int n = 0;
@@ -292,6 +318,8 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                     }
                 }
                 stdcall_func_stub_intptr(func, stack.count(), stack.frame());
+                vm->m_shared_object_errno = errno;
+                vm->m_shared_object_last_error = GetLastError();
                 return scm_unspecified;
             }
             invalid_argument_violation(vm, "stdcall-shared-object->void", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
@@ -326,7 +354,10 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
-                return int_to_integer(vm->m_heap, stdcall_func_stub_intptr(func, stack.count(), stack.frame()));
+                intptr_t retval = stdcall_func_stub_intptr(func, stack.count(), stack.frame());
+                vm->m_shared_object_errno = errno;
+                vm->m_shared_object_last_error = GetLastError();
+                return int_to_integer(vm->m_heap, retval);
             }
             invalid_argument_violation(vm, "stdcall-shared-object->int", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
             return scm_undef;
@@ -360,7 +391,10 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
-                return make_flonum(vm->m_heap, stdcall_func_stub_double(func, stack.count(), stack.frame()));
+                double retval = stdcall_func_stub_double(func, stack.count(), stack.frame());
+                vm->m_shared_object_errno = errno;
+                vm->m_shared_object_last_error = GetLastError();
+                return make_flonum(vm->m_heap, retval);
             }
             invalid_argument_violation(vm, "stdcall-shared-object->double", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
             return scm_undef;
@@ -394,8 +428,10 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
-                intptr_t value = stdcall_func_stub_intptr(func, stack.count(), stack.frame());
-                return intptr_to_integer(vm->m_heap, value);
+                intptr_t retval = stdcall_func_stub_intptr(func, stack.count(), stack.frame());
+                vm->m_shared_object_errno = errno;
+                vm->m_shared_object_last_error = GetLastError();
+                return intptr_to_integer(vm->m_heap, retval);
             }
             invalid_argument_violation(vm, "stdcall-shared-object->void*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
             return scm_undef;
@@ -430,6 +466,8 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                     }
                 }
                 uint8_t* p = (uint8_t*)stdcall_func_stub_intptr(func, stack.count(), stack.frame());
+                vm->m_shared_object_errno = errno;
+                vm->m_shared_object_last_error = GetLastError();
                 if (p == NULL) return scm_false;
                 int n = 0;
                 while (p[n]) n++;
@@ -504,6 +542,52 @@ subr_flonum_to_float(VM* vm, int argc, scm_obj_t argv[])
 #endif
 }
 
+// shared-object-c-errno
+scm_obj_t
+subr_shared_object_c_errno(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return int_to_integer(vm->m_heap, vm->m_shared_object_errno);
+    if (argc == 1) {
+        if (exact_integer_pred(argv[0])) {
+            int val;
+            if (exact_integer_to_int(argv[0], &val)) {
+                errno = val;
+                vm->m_shared_object_errno = val;
+                return scm_unspecified;
+            }
+            invalid_argument_violation(vm, "shared-object-c-errno", "value out of range,", argv[0], 0, argc, argv);
+        }
+        wrong_type_argument_violation(vm, "shared-object-c-errno", 0, "exact integer", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "shared-object-c-errno", 0, 1, argc, argv);
+    return scm_undef;
+}
+
+// shared-object-win32-last-error
+scm_obj_t
+subr_shared_object_win32_last_error(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return int_to_integer(vm->m_heap, vm->m_shared_object_last_error);
+    if (argc == 1) {
+        if (exact_integer_pred(argv[0])) {
+            uint32_t val;
+            if (exact_integer_to_uint32(argv[0], &val)) {
+#if _MSC_VER
+                SetLastError(val);
+#endif
+                vm->m_shared_object_last_error = val;
+                return scm_unspecified;
+            }
+            invalid_argument_violation(vm, "shared-object-win32-last-error", "value out of range,", argv[0], 0, argc, argv);
+        }
+        wrong_type_argument_violation(vm, "shared-object-win32-last-error", 0, "exact integer", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "shared-object-win32-last-error", 0, 1, argc, argv);
+    return scm_undef;
+}
+
 void init_subr_ffi(object_heap_t* heap)
 {
     #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
@@ -533,4 +617,6 @@ void init_subr_ffi(object_heap_t* heap)
 #endif
     DEFSUBR("make-callback", subr_make_callback);
     DEFSUBR("flonum->float", subr_flonum_to_float);
+    DEFSUBR("shared-object-c-errno", subr_shared_object_c_errno);
+    DEFSUBR("shared-object-win32-last-error", subr_shared_object_win32_last_error);
 }

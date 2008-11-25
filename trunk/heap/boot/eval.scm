@@ -330,43 +330,48 @@
 
       (define make-cache
         (lambda (src dst source-ref source-time)
-          (call-with-port
-            (make-file-output-port dst)
-            (lambda (output)
-              (call-with-port
-                (open-script-input-port src)
-                (lambda (input)
-                  (with-exception-handler
-                   (lambda (c)
-                     (close-port input)
-                     (close-port output)
-                     (and dst (file-exists? dst) (delete-file dst))
-                     (raise c))
-                   (lambda ()
-                     (parameterize
-                         ((current-source-comments (current-source-comments))
-                          (current-temporaries (current-temporaries))
-                          (current-environment (current-environment))
-                          (extend-lexical-syntax (extend-lexical-syntax))
-                          (backtrace (backtrace)))
-                       (let loop ()
-                         (current-source-comments (and (backtrace) (make-core-hashtable)))
-                         (current-temporaries (make-core-hashtable 'string=?))
-                         (current-rename-count 0)
-                         (let ((obj (core-read input (current-source-comments) 'load)))
-                           (cond ((eof-object? obj)
-                                  (format output "~%")
-                                  (close-port input)
-                                  (close-port output))
-                                 (else
-                                  (let ((code
-                                         (parameterize
-                                             ((current-closure-comments (make-core-hashtable)))
-                                           (compile-coreform (macro-expand obj)))))
-                                    (put-fasl output code)
-                                    (format output "~%")
-                                    (run-vmi (cons '(1 . 0) code))
-                                    (loop)))))))))))))))
+          (let ((cyclic-code #f))
+            (call-with-port
+              (make-file-output-port dst)
+              (lambda (output)
+                (call-with-port
+                  (open-script-input-port src)
+                  (lambda (input)
+                    (with-exception-handler
+                     (lambda (c)
+                       (close-port input)
+                       (close-port output)
+                       (and (file-exists? dst) (delete-file dst))
+                       (raise c))
+                     (lambda ()
+                       (parameterize
+                           ((current-source-comments (current-source-comments))
+                            (current-temporaries (current-temporaries))
+                            (current-environment (current-environment))
+                            (extend-lexical-syntax (extend-lexical-syntax))
+                            (backtrace (backtrace)))
+                         (let loop ()
+                           (current-source-comments (and (backtrace) (make-core-hashtable)))
+                           (current-temporaries (make-core-hashtable 'string=?))
+                           (current-rename-count 0)
+                           (let ((obj (core-read input (current-source-comments) 'load)))
+                             (cond ((eof-object? obj)
+                                    (or cyclic-code (format output "~%")))
+                                   (else
+                                    (let ((code
+                                           (parameterize ((current-closure-comments (make-core-hashtable)))
+                                             (compile-coreform (macro-expand obj)))))
+                                      (or cyclic-code
+                                          (cond ((circular-tree? code)
+                                                 (close-port output)
+                                                 (and (file-exists? dst) (delete-file dst))
+                                                 (set! cyclic-code #t))
+                                                (else
+                                                 (put-fasl output code)
+                                                 (format output "~%"))))
+                                      (run-vmi (cons '(1 . 0) code))
+                                      (loop)))))))))))))
+            cyclic-code)))
 
       (define locate-source
         (lambda (ref)
@@ -430,9 +435,15 @@
                                 (let ((ref (encode-library-ref ref)))
                                   (let ((cache-path (format "~a/~a.cache" (auto-compile-cache) (symbol-list->string ref "."))))
                                     (and (auto-compile-verbose) (format #t "~&;; compile ~s~%~!" source-path))
-                                    (make-cache source-path cache-path ref (stat-mtime source-path))
-                                    (let ((timestamp-path (string-append cache-path ".time")))
-                                      (call-with-port
-                                        (make-file-output-port timestamp-path)
-                                        (lambda (output) (format output "~s ~s ~s ~s" (microsecond) (stat-mtime source-path) source-path auto-compile-cache-validation-signature))))))))
+                                    (if (make-cache source-path cache-path ref (stat-mtime source-path))
+                                        (and (auto-compile-verbose) (format #t "~&;; delete ~s~%~!" cache-path))
+                                        (let ((timestamp-path (string-append cache-path ".time")))
+                                          (call-with-port
+                                            (make-file-output-port timestamp-path)
+                                            (lambda (output) (format output
+                                                                     "~s ~s ~s ~s"
+                                                                     (microsecond)
+                                                                     (stat-mtime source-path)
+                                                                     source-path
+                                                                     auto-compile-cache-validation-signature)))))))))
                           (load source-path))))))))))

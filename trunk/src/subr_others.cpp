@@ -666,7 +666,6 @@ subr_microsecond_utc(VM* vm, int argc, scm_obj_t argv[])
             time_t sec = usec / 1000000;
             struct tm* m = gmtime(&sec);
             int64_t utc = usec + (int64_t)(mktime(m) - sec) * 1000000;
-            if (utc <= 0) return MAKEFIXNUM(0);
             return int64_to_integer(vm->m_heap, utc);
         }
         wrong_type_argument_violation(vm, "microsecond->utc", 0, "exact non-negative integer", argv[0], argc, argv);
@@ -1369,6 +1368,39 @@ subr_write_with_shared_structure(VM* vm, int argc, scm_obj_t argv[])
     else invalid_object_violation(vm, "write-with-shared-structure", "output port", port, argc, argv);
     return scm_undef;
 }
+
+// read-with-shared-structure (srfi-38)
+scm_obj_t
+subr_read_with_shared_structure(VM* vm, int argc, scm_obj_t argv[])
+{
+    scm_port_t port;
+    if (argc == 0) {
+        port = vm->m_current_input;
+    } else if (argc == 1) {
+        if (PORTP(argv[0])) {
+            port = (scm_port_t)argv[0];
+        } else {
+            wrong_type_argument_violation(vm, "read-with-shared-structure", 0, "port", argv[0], argc, argv);
+            return scm_undef;
+        }
+    } else {
+        wrong_number_of_arguments_violation(vm, "read-with-shared-structure", 0, 1, argc, argv);
+        return scm_undef;
+    }
+    scoped_lock lock(port->lock);
+    if (port_input_pred(port)) {
+        if (port_open_pred(port)) {
+            return reader_t(vm, port).read_graph(NULL);
+        }
+        if (argc > 0) wrong_type_argument_violation(vm, "read-with-shared-structure", 0, "opened port", argv[0], argc, argv);
+        else invalid_object_violation(vm, "read-with-shared-structure", "opened port", port, argc, argv);
+        return scm_undef;
+    }
+    if (argc > 0) wrong_type_argument_violation(vm, "read-with-shared-structure", 0, "input port", argv[0], argc, argv);
+    else invalid_object_violation(vm, "read-with-shared-structure", "input port", port, argc, argv);
+    return scm_undef;
+}
+
 
 // gensym
 scm_obj_t
@@ -2729,6 +2761,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("interaction-environment", subr_interaction_environment);
     DEFSUBR("format", subr_format);
     DEFSUBR("write-with-shared-structure", subr_write_with_shared_structure);
+    DEFSUBR("read-with-shared-structure", subr_read_with_shared_structure);
     DEFSUBR("top-level-bound?", subr_top_level_bound_pred);
     DEFSUBR("set-top-level-value!", subr_set_top_level_value);
     DEFSUBR("top-level-value", subr_top_level_value);

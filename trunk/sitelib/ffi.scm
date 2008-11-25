@@ -5,7 +5,11 @@
 
 (library (ffi)
 
-  (export c-function c-argument load-shared-object
+  (export load-shared-object
+          c-function
+          c-function/errno
+          c-function/win32-last-error
+          c-argument
           on-windows on-darwin on-linux on-freebsd on-posix on-ia32 on-x64)
 
   (import (core))
@@ -15,7 +19,6 @@
   (define on-linux   (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
   (define on-freebsd (and (string-contains (architecture-feature 'operating-system) "freebsd") #t))
   (define on-posix   (not on-windows))
-
   (define on-x64     (and (string-contains (architecture-feature 'machine-hardware) "x86_64")  #t))
   (define on-ia32    (not on-x64))
 
@@ -204,5 +207,21 @@
        (c-function-stub lib-handle lib-name (int->bool call-shared-object->int) func-name types ...))
       ((_ lib-handle lib-name char* func-name (types ...))
        (c-function-stub lib-handle lib-name (char*->string call-shared-object->char*) func-name types ...))))
+
+  (define-syntax c-function/errno
+    (syntax-rules ()
+      ((_ . x)
+       (let ((proc (c-function . x)))
+         (lambda args
+           (let* ((ret (apply proc args)) (err (shared-object-c-errno)))
+             (values ret err)))))))
+
+  (define-syntax c-function/win32-last-error
+    (syntax-rules ()
+      ((_ . x)
+       (let ((proc (c-function . x)))
+         (lambda args
+           (let* ((ret (apply proc args)) (err (shared-object-win32-last-error)))
+             (values ret err)))))))
 
   ) ;[end]
