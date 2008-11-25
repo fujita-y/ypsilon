@@ -414,6 +414,7 @@
                         pretty-print-unwrap-syntax
                         peek-char
                         read
+                        read-with-shared-structure
                         write-with-shared-structure
                         tuple tuple? make-tuple tuple-ref tuple-set! tuple-length tuple-index tuple->list
                         make-weak-mapping weak-mapping? weak-mapping-key weak-mapping-value
@@ -431,7 +432,8 @@
                         microsecond->utc
                         scheme-error
                         architecture-feature
-                        load-shared-object lookup-shared-object
+                        load-shared-object 
+                        lookup-shared-object
                         call-shared-object->void 
                         call-shared-object->int 
                         call-shared-object->intptr 
@@ -444,6 +446,8 @@
                         stdcall-shared-object->char*
                         make-callback
                         flonum->float
+                        shared-object-c-errno
+                        shared-object-win32-last-error
                         collect collect-notify collect-stack-notify collect-trip-bytes display-heap-statistics display-object-statistics
                         backtrace expansion-backtrace backtrace-line-length display-backtrace
                         warning-level

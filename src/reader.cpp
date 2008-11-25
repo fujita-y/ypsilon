@@ -77,6 +77,7 @@ reader_t::delimited(int c)
 reader_t::reader_t(VM* vm, scm_port_t input)
 {
     m_file = port_regular_file_pred(input);
+    m_graph = NULL;
     m_note = NULL;
     m_in = input;
     m_vm = vm;
@@ -496,7 +497,6 @@ reader_t::read_string()
         }
         if (c == '\\') {
             c = get_ucs4();
-
             if (ucs4_intraline_whitespace(c)) {
                 do {
                     c = get_ucs4();
@@ -775,6 +775,9 @@ top:
 #if ENABLE_COMPATIBLE_COMMENT
                         if (strcmp(tag, "compatible") == 0) {
                             m_vm->flags.m_extend_lexical_syntax = scm_true;
+                            if (m_graph == NULL) {
+                                m_graph = make_hashtable(m_vm->m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
+                            }
                         }
 #endif
 #if ENABLE_R6RS_COMMENT
@@ -823,6 +826,37 @@ top:
                     if (c == '@') return list2(S_UNSYNTAX_SPLICING, read_expr());
                     unget_ucs4();
                     return list2(S_UNSYNTAX, read_expr());
+                default:
+                    if (m_graph == NULL) break;
+                    if (c >= '0' && c <= '9') {
+                        int mark = c - '0';
+                        while (true) {
+                            int c2 = get_ucs4();
+                            if (c2 >= '0' && c2 <= '9') {
+                                mark = mark * 10 + c2;
+                                if (mark < 0 || mark > FIXNUM_MAX) lexical_error("invalid object tag, value out of range");
+                                continue;
+                            }
+                            if (c2 == EOF) lexical_error("unexpected end-of-file while reading tag #%d", mark);
+                            if (c2 == '=') {
+                                scm_obj_t obj = read_expr();
+                                if (obj == scm_eof) lexical_error("unexpected end-of-file while reading tag #%d=", mark);
+                                if (get_hashtable(m_graph, MAKEFIXNUM(mark)) == scm_undef) {
+                                    int nsize = put_hashtable(m_graph, MAKEFIXNUM(mark), obj);
+                                    if (nsize) rehash_hashtable(m_vm->m_heap, m_graph, nsize);
+                                    return obj;
+                                }
+                                lexical_error("duplicate tag #%d=", mark);
+                            }
+                            if (c2 == '#') {
+                                scm_tuple_t tuple = make_tuple(m_vm->m_heap, 1);
+                                tuple->elts[0] = MAKEFIXNUM(mark);
+                                return tuple;
+                            }
+                            break;
+                        }
+                    }
+                    break;
             }
             lexical_error("invalid lexical syntax #~a", MAKECHAR(c));
         case ',':
@@ -881,18 +915,69 @@ reader_t::parsing_line(int line)
 }
 
 scm_obj_t
+reader_t::lookup_graph(scm_tuple_t tuple)
+{
+    scm_obj_t obj;
+    obj = get_hashtable(m_graph, tuple->elts[0]);
+    if (TUPLEP(obj)) return lookup_graph((scm_tuple_t)obj);
+    if (obj != scm_undef) return obj;
+    lexical_error("attempt to reference undefined tag #%d#", FIXNUM(tuple->elts[0]));
+}
+
+void
+reader_t::link_graph(scm_obj_t obj)
+{
+    if (PAIRP(obj)) {
+        if (TUPLEP(CAR(obj))) {
+            CAR(obj) = lookup_graph((scm_tuple_t)CAR(obj));
+        } else {
+            link_graph(CAR(obj));
+        }
+        if (TUPLEP(CDR(obj))) {
+            CDR(obj) = lookup_graph((scm_tuple_t)CDR(obj));
+        } else {
+            link_graph(CDR(obj));
+        }
+        return;
+    }
+    if (VECTORP(obj)) {
+        scm_vector_t vect = (scm_vector_t)obj;
+        int n = vect->count;
+        for (int i = 0; i < n; i++) {
+            if (TUPLEP(vect->elts[i])) {
+                vect->elts[i] = lookup_graph((scm_tuple_t)vect->elts[i]);
+            } else {
+                link_graph(vect->elts[i]);
+            }
+        }
+        return;
+    }
+}
+
+scm_obj_t
+reader_t::read_graph(scm_hashtable_t note)
+{
+    m_graph = make_hashtable(m_vm->m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
+    return read(note);
+}
+
+scm_obj_t
 reader_t::read(scm_hashtable_t note)
 {
     make_char_map();
     m_note = note;
     if (m_note) put_note(".&SOURCE-PATH", m_in->name);
     m_first_line = m_in->line;
-    scm_obj_t obj = read_expr();
-    if (m_vm->flags.m_extend_lexical_syntax != scm_true) {
-        if (obj == S_DOT) {
-            lexical_error("misplaced dot('.')");
+    if (m_vm->flags.m_extend_lexical_syntax == scm_true) {
+        if (m_graph == NULL) {
+            m_graph = make_hashtable(m_vm->m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
         }
     }
+    scm_obj_t obj = read_expr();
+    if (m_vm->flags.m_extend_lexical_syntax != scm_true) {
+        if (obj == S_DOT) lexical_error("misplaced dot('.')");
+    }
+    if (m_graph && m_graph->datum->live) link_graph(obj);
     parsing_range(m_first_line, m_in->line);
     return obj;
 }

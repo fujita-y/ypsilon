@@ -261,7 +261,8 @@ printer_t::format_va_list(const char* fmt, va_list ap)
                         m_unwrap = true;
                         m_radix = 10;
                         scm_obj_t expr = va_arg(ap, scm_obj_t);
-                        write(expr);
+                        if (infinite_listp(m_vm->m_heap, expr)) write_shared(expr);
+                        else write(expr);
                         if (PAIRP(expr) && m_vm->m_current_source_comments != scm_false) {
                             assert(HASHTABLEP(m_vm->m_current_source_comments));
                             scm_hashtable_t ht = (scm_hashtable_t)m_vm->m_current_source_comments;
@@ -299,16 +300,13 @@ printer_t::format_va_list(const char* fmt, va_list ap)
                             assert(HASHTABLEP(m_vm->m_current_source_comments));
                             scm_hashtable_t ht = (scm_hashtable_t)m_vm->m_current_source_comments;
                             scoped_lock lock(ht->lock);
-
                             scm_obj_t obj = get_hashtable(ht, expr);
                             if (PAIRP(obj)) {
                                 port_puts(m_port, "...");
                                 write(CAR(obj));
                                 snprintf(buf, sizeof(buf), " line %d", abs(FIXNUM(CDR(obj))) / MAX_SOURCE_COLUMN);
                                 port_puts(m_port, buf);
-
                             } else {
-
                                 scm_obj_t path = get_hashtable(ht, make_symbol(m_vm->m_heap, ".&SOURCE-PATH"));
                                 if (path != scm_undef) {
                                     port_puts(m_port, "...");
@@ -319,7 +317,6 @@ printer_t::format_va_list(const char* fmt, va_list ap)
                                         port_puts(m_port, buf);
                                     }
                                 }
-
                             }
                         }
                     } break;
@@ -343,7 +340,7 @@ printer_t::format_va_list(const char* fmt, va_list ap)
                             write(obj);
                         }
                     } break;
-
+                    
                     case '\\': {
                         scm_obj_t obj = va_arg(ap, scm_obj_t);
                         if (STRINGP(obj)) {
@@ -363,62 +360,76 @@ printer_t::format_va_list(const char* fmt, va_list ap)
                             write(obj);
                         }
                     } break;
-
-                    case 'a':
+                    
+                    case 'a': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 10;
-                        write(va_arg(ap, scm_obj_t));
-                        break;
-                    case 's':
+                        scm_obj_t expr = va_arg(ap, scm_obj_t);
+                        if (infinite_listp(m_vm->m_heap, expr)) write_shared(expr);
+                        else write(expr);
+                    } break;
+                    
+                    case 's': {
                         m_escape = true;
                         m_unwrap = false;
                         m_radix = 10;
-                        write(va_arg(ap, scm_obj_t));
-                        break;
-
-                    case 'w':
+                        scm_obj_t expr = va_arg(ap, scm_obj_t);
+                        if (infinite_listp(m_vm->m_heap, expr)) write_shared(expr);
+                        else write(expr);
+                    } break;
+                    
+                    case 'w': {
                         m_escape = true;
                         m_unwrap = false;
                         m_radix = 10;
                         write_shared(va_arg(ap, scm_obj_t));
-                        break;
-                    case 'u':
+                    } break;
+                        
+                    case 'u': {
                         m_escape = true;
                         m_unwrap = true;
                         m_radix = 10;
-                        write(va_arg(ap, scm_obj_t));
-                        break;
-                    case 'c':
+                        scm_obj_t expr = va_arg(ap, scm_obj_t);
+                        if (infinite_listp(m_vm->m_heap, expr)) write_shared(expr);
+                        else write(expr);
+                    } break;
+                    
+                    case 'c': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 10;
                         write(va_arg(ap, scm_obj_t));
-                        break;
-                    case 'd':
+                    } break;
+                    
+                    case 'd': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 10;
                         write(va_arg(ap, scm_obj_t));
-                        break;
-                    case 'x':
+                    } break;
+                    
+                    case 'x': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 16;
                         write(va_arg(ap, scm_obj_t));
-                        break;
-                    case 'o':
+                    } break;
+                    
+                    case 'o': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 8;
                         write(va_arg(ap, scm_obj_t));
-                        break;
-                    case 'b':
+                    } break;
+                    
+                    case 'b': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 2;
                         write(va_arg(ap, scm_obj_t));
-                        break;
+                    } break;
+                    
                     case '%':
                         port_put_byte(m_port, '\n');
                         break;

@@ -139,7 +139,7 @@
                           (format "mismatch between version reference ~a and current version ~a" reference current)
                           (abbreviated-take-form form 4 8) spec))))
 
-(define make-shield-id-table
+#;(define make-shield-id-table
   (lambda (lst)
     (let ((ht (make-core-hashtable)) (deno (make-unbound)))
       (for-each (lambda (id) (core-hashtable-set! ht id deno)) coreform-primitives)
@@ -152,6 +152,23 @@
               ((vector? lst)
                (loop (vector->list lst)))))
       ht)))
+
+(define make-shield-id-table
+  (lambda (lst)
+    (let ((visited (make-core-hashtable)) (ids (make-core-hashtable)) (deno (make-unbound)))
+      (for-each (lambda (id) (core-hashtable-set! ids id deno)) coreform-primitives)
+      (let loop ((lst lst))
+        (cond ((core-hashtable-contains? visited lst))
+              (else
+               (core-hashtable-set! visited lst #t)
+               (cond ((pair? lst)
+                      (loop (car lst))
+                      (loop (cdr lst)))
+                     ((symbol? lst)
+                      (core-hashtable-set! ids lst deno))
+                     ((vector? lst)
+                      (loop (vector->list lst)))))))
+      ids)))
 
 (define parse-exports
   (lambda (form specs)

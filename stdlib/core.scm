@@ -700,6 +700,7 @@
     rationalize
     read
     read-char
+    read-with-shared-structure
     real->flonum
     real-part
     real-valued?
@@ -751,6 +752,8 @@
     shared-bag-get!
     shared-bag-put!
     shared-bag?
+    shared-object-c-errno
+    shared-object-win32-last-error
     shared-queue-pop!
     shared-queue-push!
     shared-queue-shutdown

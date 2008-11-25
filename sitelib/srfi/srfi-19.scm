@@ -113,9 +113,7 @@
 
   (define tm:local-tz-offset
     (lambda ()
-      (let* ((usec (microsecond))
-             (diff (- usec (microsecond->utc usec))))
-        (div diff 1000000))))
+      (div (- (microsecond->utc 0)) 1000000)))
 
   (define (tm:time-error caller type value)
     (if (member type tm:time-error-types)
@@ -359,7 +357,6 @@
     (set! tm:leap-second-table (tm:read-tai-utc-data filename))
     (values))
 
-
   (define (tm:leap-second-delta utc-seconds)
     (letrec ( (lsd (lambda (table)
                      (cond
@@ -379,7 +376,6 @@
       (if (< tai-seconds  (* (- 1972 1970) 365 tm:sid)) 0
           (lsd  tm:leap-second-table))))
 
-
 ;;; the time structure; creates the accessors, too.
 ;;; wf: changed to match srfi documentation. uses mzscheme structures & inspectors
 
@@ -394,7 +390,6 @@
     (make-time (time-type time)
                (time-second time)
                (time-nanosecond time)))
-
 
 ;;; current-time
 
@@ -422,8 +417,6 @@
                  (+ seconds (tm:leap-second-delta seconds))
                  )))
 
-
-
   (define (tm:current-time-ms-time time-type proc)
     (let ((current-ms (proc)))
       (make-time time-type
@@ -442,7 +435,6 @@
                  (* ms 10000)
                  (+ seconds (tm:leap-second-delta seconds))
                  )))
-
 
 #;(define (tm:current-time-thread)
     (tm:current-time-ms-time time-process current-process-milliseconds))
@@ -463,8 +455,6 @@
      #;((eq? clock-type time-process) (tm:current-time-process))
      #;((eq? clock-type time-gc) (tm:current-time-gc))
        (else (tm:time-error 'current-time 'invalid-clock-type clock-type)))))
-
-
 
 ;; -- time resolution
 ;; this is the resolution of the clock in nanoseconds.
@@ -607,7 +597,6 @@
   (define (subtract-duration! time1 duration)
     (tm:subtract-duration time1 duration time1))
 
-
 ;; -- converters between types.
 
   (define (tm:time-tai->time-utc! time-in time-out caller)
@@ -623,10 +612,8 @@
   (define (time-tai->time-utc time-in)
     (tm:time-tai->time-utc! time-in (make-time #f #f #f) 'time-tai->time-utc))
 
-
   (define (time-tai->time-utc! time-in)
     (tm:time-tai->time-utc! time-in time-in 'time-tai->time-utc!))
-
 
   (define (tm:time-utc->time-tai! time-in time-out caller)
     (if (not (eq? (time-type time-in) time-utc))
@@ -637,7 +624,6 @@
                                       (tm:leap-second-delta
                                        (time-second time-in))))
     time-out)
-
 
   (define (time-utc->time-tai time-in)
     (tm:time-utc->time-tai! time-in (make-time #f #f #f) 'time-utc->time-tai))
@@ -680,7 +666,6 @@
       (set-time-type! ntime time-monotonic)
       ntime))
 
-
   (define (time-utc->time-monotonic! time-in)
     (if (not (eq? (time-type time-in) time-utc))
         (tm:time-error 'time-utc->time-montonic! 'incompatible-time-types time-in))
@@ -688,7 +673,6 @@
                                          'time-utc->time-monotonic!)))
       (set-time-type! ntime time-monotonic)
       ntime))
-
 
   (define (time-tai->time-monotonic time-in)
     (if (not (eq? (time-type time-in) time-tai))
@@ -723,7 +707,6 @@
 
   (define (set-date-second! date val)
     (tm:time-error 'set-date-second! 'dates-are-immutable date))
-
 
   (define (set-date-minute! date val)
     (tm:time-error 'set-date-minute! 'dates-are-immutable date))
@@ -761,13 +744,11 @@
      (else
       (tm:char-pos char str (+ index 1) len))))
 
-
   (define (tm:fractional-part r)
     (if (integer? r) "0"
         (let ((str (number->string (exact->inexact r))))
           (let ((ppos (tm:char-pos #\. str 0 (string-length str))))
             (substring str  (+ ppos 1) (string-length str))))))
-
 
 ;; gives the seconds/date/month/year 
   (define (tm:decode-julian-day-number jdn)
@@ -785,7 +766,6 @@
        (+ m 3 (* -12 (quotient m 10)))
        (if (>= 0 y) (- y 1) y))
       ))
-
 
 ;; relies on the fact that we named our time zone accessor
 ;; differently from MzScheme's....
@@ -880,7 +860,6 @@
 
   (define (date->time-monotonic date)
     (time-utc->time-monotonic! (date->time-utc date)))
-
 
   (define (tm:leap-year? year)
     (or (= (modulo year 400) 0)
@@ -990,7 +969,6 @@
     (- (date->julian-day date)
        4800001/2))
 
-
   (define (time-utc->julian-day time)
     (if (not (eq? (time-type time) time-utc))
         (tm:time-error 'time-utc->julian-day 'incompatible-time-types  time))
@@ -1025,11 +1003,9 @@
           tm:sid)
        tm:tai-epoch-in-jd))
 
-
   (define (time-monotonic->modified-julian-day time)
     (- (time-monotonic->julian-day time)
        4800001/2))
-
 
   (define (julian-day->time-utc jdn)
     (let ( (nanosecs (* tm:nano tm:sid (- jdn tm:tai-epoch-in-jd))) )
@@ -1121,8 +1097,6 @@
 
   (define (tm:locale-long-month->index string)
     (tm:vector-find string tm:locale-long-month-vector string=?))
-
-
 
 ;; do nothing. 
 ;; Your implementation might want to do something...
@@ -1301,7 +1275,6 @@
                  (display (date->string date "~Y-~m-~dT~k:~M:~S") port)))
      ))
 
-
   (define (tm:get-formatter char)
     (let ( (associated (assoc char tm:directives)) )
       (if associated (cdr associated) #f)))
@@ -1361,7 +1334,6 @@
                               (tm:date-printer date (+ index 2)
                                                format-string str-len port))))))))))))
 
-
   (define (date->string date .  format-string)
     (let ( (str-port (open-output-string))
            (fmt-str (:optional format-string "~c")) )
@@ -1418,7 +1390,6 @@
     (lambda (port)
       (tm:fractional-integer-reader upto port)))
 
-
 ;; read *exactly* n characters and convert to integer; could be padded
   (define (tm:integer-reader-exact n port)
     (let ( (padding-ok #t) )
@@ -1441,7 +1412,6 @@
             (tm:time-error 'string->date 'bad-date-template-string
                            "Non-numeric characters in integer read.")))))
       (accum-int port 0 0)))
-
 
   (define (tm:make-integer-exact-reader n)
     (lambda (port)

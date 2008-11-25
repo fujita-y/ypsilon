@@ -75,7 +75,15 @@ public:
     scm_obj_t           m_current_exception_handler;
     scm_obj_t           m_current_source_comments;
     int                 m_recursion_level;
-
+    int                 m_shared_object_errno;
+    uint32_t            m_shared_object_last_error;
+#if USE_PARALLEL_VM
+    Interpreter*        m_interp;
+    VM*                 m_parent;
+    int                 m_id;
+    int                 m_child;
+#endif
+    
     scm_closure_t       lookup_system_closure(const char* name);
     scm_obj_t           lookup_current_environment(scm_symbol_t symbol);
     void                intern_current_environment(scm_symbol_t symbol, scm_obj_t value);
@@ -205,14 +213,6 @@ public:
         return m_heap->inherent_symbol(opcode);
     }
 #endif
-
-#if USE_PARALLEL_VM
-    Interpreter*    m_interp;
-    VM*             m_parent;
-    int             m_id;
-    int             m_child;
-#endif
-
 } ATTRIBUTE(aligned(16));
 
 #endif
