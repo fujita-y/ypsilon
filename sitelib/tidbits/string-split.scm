@@ -4,9 +4,9 @@
 ;;; See license.txt for terms and conditions of use.
 
 (library (tidbits string-split)
-  
+
   (export string-split)
-  
+
   (import (core))
 
   (define split->list

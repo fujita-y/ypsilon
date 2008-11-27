@@ -259,12 +259,12 @@
   ;; Layers for use.
   (define GLUT_NORMAL             0)
   (define GLUT_OVERLAY            1)
-  
+
   (define-syntax define-function
     (syntax-rules ()
       ((_ ret name args)
        (define name (c-function libGLUT "GLUT library" ret __stdcall name args)))))
-  
+
   ;; void glutInit(int *argcp, char **argv)
   ;; (define-function void glutInit ([int] [char*]))
   (define glutInit

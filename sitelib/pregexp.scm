@@ -1,15 +1,12 @@
 #!nobacktrace
-#|
+;;; porting Portable regular expressions for Scheme to ypsilon
+;;; -- y.fujita.lwp
 
-    2008-11-20
-    (define *pregexp-space-sensitive?* #t) =>
-    (define-thread-variable *pregexp-space-sensitive?* #t)
-    for multi-thread support. 
-    -- fujita
+;;  (define *pregexp-space-sensitive?* #t) => (define-thread-variable *pregexp-space-sensitive?* #t)
+;;  for multi-thread support.
 
-|#
 (library (pregexp)
-  
+
   (export pregexp
           pregexp-match-positions
           pregexp-match
@@ -17,7 +14,7 @@
           pregexp-replace
           pregexp-replace*
           pregexp-quote)
-  
+
   (import (rnrs) (rnrs mutable-pairs) (concurrent))
 
 ;pregexp.scm
@@ -47,7 +44,7 @@
 
   ;(define *pregexp-space-sensitive?* #t)
   (define-thread-variable *pregexp-space-sensitive?* #t)
-  
+
   (define pregexp-reverse!
     ;the useful reverse! isn't R5RS
     (lambda (s)
@@ -685,7 +682,7 @@
                           (set! opt-args (cdr opt-args))
                           start)))
              (end (if (null? opt-args) str-len
-                      (car opt-args))))        
+                      (car opt-args))))
         (let loop ((i start))
           (and (<= i end)
                (or (pregexp-match-positions-aux
@@ -740,14 +737,14 @@
 
   (define pregexp-replace*
     (lambda (pat str ins)
-      ;return str with every occurrence of pat 
+      ;return str with every occurrence of pat
       ;replaced by ins
       (let ((pat (if (string? pat) (pregexp pat) pat))
             (n (string-length str))
             (ins-len (string-length ins)))
         (let loop ((i 0) (r ""))
           ;i = index in str to start replacing from
-          ;r = already calculated prefix of answer 
+          ;r = already calculated prefix of answer
           (if (>= i n) r
               (let ((pp (pregexp-match-positions pat str i n)))
                 (if (not pp)

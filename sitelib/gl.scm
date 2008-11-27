@@ -1244,7 +1244,7 @@
                       (on-linux   (load-shared-object "libGL.so.1"))
                       (on-freebsd (load-shared-object "libGL.so.1"))
                       (else       (assertion-violation #f "can not locate OpenGL library, unknown operating system"))))
-  
+
   ;;;; Boolean values
   (define GL_FALSE #x0)
   (define GL_TRUE #x1)
@@ -1520,9 +1520,9 @@
   (define GL_NONE #x0)
   (define GL_LEFT #x0406)
   (define GL_RIGHT #x0407)
-  ;;;;GL_FRONT					0x0404
-  ;;;;GL_BACK					0x0405
-  ;;;;GL_FRONT_AND_BACK			0x0408
+  ;;;;GL_FRONT                  0x0404
+  ;;;;GL_BACK                   0x0405
+  ;;;;GL_FRONT_AND_BACK         0x0408
   (define GL_FRONT_LEFT #x0400)
   (define GL_FRONT_RIGHT #x0401)
   (define GL_BACK_LEFT #x0402)
@@ -2215,7 +2215,7 @@
   ;; void glDepthMask( GLboolean flag )
   (define-function void glDepthMask (int))
 
-  ;; void glDepthRange( GLclampd near_val, GLclampd far_val )  
+  ;; void glDepthRange( GLclampd near_val, GLclampd far_val )
   (define-function void glDepthRange (double double))
 
   ;;;; Accumulation Buffer

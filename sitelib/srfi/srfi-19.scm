@@ -1,5 +1,6 @@
 #!nobacktrace
-;;; porting srfi-19 reference implementation to ypsilon -- y.fujita.lwp 2008-11-27  
+;;; porting srfi-19 reference implementation to ypsilon
+;;; -- y.fujita.lwp
 
 (library (srfi srfi-19)
 
@@ -128,31 +129,31 @@
   (define current-gc-milliseconds (lambda () 0))
   (define read-line get-line)
   (define eof (eof-object))
-  
+
 ;; SRFI-19: Time Data Types and Procedures.
-;; 
-;; Copyright (C) I/NET, Inc. (2000, 2002, 2003). All Rights Reserved. 
-;; 
-;; This document and translations of it may be copied and furnished to others, 
-;; and derivative works that comment on or otherwise explain it or assist in its 
-;; implementation may be prepared, copied, published and distributed, in whole or 
-;; in part, without restriction of any kind, provided that the above copyright 
-;; notice and this paragraph are included on all such copies and derivative works. 
-;; However, this document itself may not be modified in any way, such as by 
-;; removing the copyright notice or references to the Scheme Request For 
-;; Implementation process or editors, except as needed for the purpose of 
-;; developing SRFIs in which case the procedures for copyrights defined in the SRFI 
-;; process must be followed, or as required to translate it into languages other 
-;; than English. 
-;; 
-;; The limited permissions granted above are perpetual and will not be revoked 
-;; by the authors or their successors or assigns. 
-;; 
-;; This document and the information contained herein is provided on an "AS IS" 
-;; basis and THE AUTHOR AND THE SRFI EDITORS DISCLAIM ALL WARRANTIES, EXPRESS OR 
-;; IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE 
-;; INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF 
-;; MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. 
+;;
+;; Copyright (C) I/NET, Inc. (2000, 2002, 2003). All Rights Reserved.
+;;
+;; This document and translations of it may be copied and furnished to others,
+;; and derivative works that comment on or otherwise explain it or assist in its
+;; implementation may be prepared, copied, published and distributed, in whole or
+;; in part, without restriction of any kind, provided that the above copyright
+;; notice and this paragraph are included on all such copies and derivative works.
+;; However, this document itself may not be modified in any way, such as by
+;; removing the copyright notice or references to the Scheme Request For
+;; Implementation process or editors, except as needed for the purpose of
+;; developing SRFIs in which case the procedures for copyrights defined in the SRFI
+;; process must be followed, or as required to translate it into languages other
+;; than English.
+;;
+;; The limited permissions granted above are perpetual and will not be revoked
+;; by the authors or their successors or assigns.
+;;
+;; This document and the information contained herein is provided on an "AS IS"
+;; basis and THE AUTHOR AND THE SRFI EDITORS DISCLAIM ALL WARRANTIES, EXPRESS OR
+;; IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE
+;; INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+;; MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
 
 
 ;; -- Bug fixes.
@@ -173,9 +174,9 @@
 ;;
 ;; (CURRENT-TIME 'TIME-THREAD) added.
 ;;
-;; TIME-RESOLUTION for TIME-PROCESS added. 
+;; TIME-RESOLUTION for TIME-PROCESS added.
 ;;
-;; TIME comparison procedures (time=?, etc. fixed. 
+;; TIME comparison procedures (time=?, etc. fixed.
 ;;
 ;; Corrected errors in converting between TAI and UTC time.
 ;;
@@ -197,7 +198,7 @@
 ;; fixed julian-day->time-utc and variants.
 ;;
 ;; changes 2003-02-26, based on comments by Martin Gasbichler.
-;; 
+;;
 ;; moronic, overly complicated COPY-TIME procedure changed
 ;; to simple version suggested by Martin Gasbichler.
 ;;
@@ -205,14 +206,14 @@
 ;; and #\tab to #\Tab to (integer->char 9)
 ;;
 ;; changed arity-3 calls to / and - to arity 2 calls (again,
-;; for more general portability). 
+;; for more general portability).
 ;;
 ;; split-real fixed again -- by removing it, and using
 ;; 'fractional part'. Will Fitzgerald 5/16/2003.
 ;; --------------------------------------------------------------
 
 ;; ypsilon -- y.fujita.lwp
-  
+
   (define-syntax receive
     (syntax-rules ()
       ((receive formals expression body ...)
@@ -220,7 +221,7 @@
          (lambda formals body ...)))))
 
 ;;; -- we want receive later on for a couple of small things
-;; 
+;;
 
 ;; :OPTIONAL is nice, too
 
@@ -249,7 +250,7 @@
                                                 "Tuesday" "Wednesday"
                                                 "Thursday" "Friday"
                                                 "Saturday"))
-;; note empty string in 0th place. 
+;; note empty string in 0th place.
   (define tm:locale-abbr-month-vector   (vector "" "Jan" "Feb" "Mar"
                                                 "Apr" "May" "Jun" "Jul"
                                                 "Aug" "Sep" "Oct" "Nov"
@@ -279,7 +280,7 @@
 
 
 ;;; A Very simple Error system for the time procedures
-;;; 
+;;;
   (define tm:time-error-types
     '(invalid-clock-type
       unsupported-clock-type
@@ -291,7 +292,7 @@
       invalid-month-specification
       ))
 
-;; ypsilon -- y.fujita.lwp  
+;; ypsilon -- y.fujita.lwp
 #|
   (define (tm:time-error caller type value)
     (if (member type tm:time-error-types)
@@ -306,7 +307,7 @@
 ;; and update as necessary.
 ;; this procedures reads the file in the abover
 ;; format and creates the leap second table
-;; it also calls the almost standard, but not R5 procedures read-line 
+;; it also calls the almost standard, but not R5 procedures read-line
 ;; & open-input-string
 ;; ie (set! tm:leap-second-table (tm:read-tai-utc-date "tai-utc.dat"))
 
@@ -370,7 +371,7 @@
       (if (< utc-seconds  (* (- 1972 1970) 365 tm:sid)) 0
           (lsd  tm:leap-second-table))))
 
-;; going from tai seconds to utc seconds ... 
+;; going from tai seconds to utc seconds ...
   (define (tm:leap-second-neg-delta tai-seconds)
     (letrec ( (lsd (lambda (table)
                      (cond ((null? table) 0)
@@ -383,7 +384,7 @@
 ;;; the time structure; creates the accessors, too.
 ;;; wf: changed to match srfi documentation. uses mzscheme structures & inspectors
 
-;; ypsilon -- y.fujita.lwp  
+;; ypsilon -- y.fujita.lwp
 #|
   (define-struct time (type nanosecond second) (make-inspector))
 |#
@@ -401,10 +402,10 @@
 ;;; these should be rewritten to be os specific.
 ;;
 ;; -- using gnu gettimeofday() would be useful here -- gets
-;;    second + millisecond 
+;;    second + millisecond
 ;;    let's pretend we do, using mzscheme's current-seconds & current-milliseconds
 ;;    this is supposed to return utc.
-;; 
+;;
 
   (define (tm:get-time-of-day)
     (values (current-seconds)
@@ -692,7 +693,7 @@
     time-in)
 
 ;; ypsilon -- y.fujita.lwp
-#| 
+#|
 ;; -- date structures
 
   (define-struct date (nanosecond second minute hour day month year zone-offset) (make-inspector))
@@ -754,7 +755,7 @@
           (let ((ppos (tm:char-pos #\. str 0 (string-length str))))
             (substring str  (+ ppos 1) (string-length str))))))
 
-;; gives the seconds/date/month/year 
+;; gives the seconds/date/month/year
   (define (tm:decode-julian-day-number jdn)
     (let* ((days (truncate jdn))
            (a (+ days 32044))
@@ -888,7 +889,7 @@
   (define (date-year-day date)
     (tm:year-day (date-day date) (date-month date) (date-year date)))
 
-;; from calendar faq 
+;; from calendar faq
   (define (tm:week-day day month year)
     (let* ((a (quotient (- 14 month) 12))
            (y (- year a))
@@ -1047,7 +1048,7 @@
     (time-utc->modified-julian-day (current-time time-utc)))
 
 ;; returns a string rep. of number N, of minimum LENGTH,
-;; padded with character PAD-WITH. If PAD-WITH if #f, 
+;; padded with character PAD-WITH. If PAD-WITH if #f,
 ;; no padding is done, and it's as if number->string was used.
 ;; if string is longer than LENGTH, it's as if number->string was used.
 
@@ -1102,9 +1103,9 @@
   (define (tm:locale-long-month->index string)
     (tm:vector-find string tm:locale-long-month-vector string=?))
 
-;; do nothing. 
+;; do nothing.
 ;; Your implementation might want to do something...
-;; 
+;;
   (define (tm:locale-print-time-zone date port)
     (values))
 
@@ -1378,7 +1379,7 @@
 
 ;; read an fractional integer upto n characters long on port; upto -> #f if any length
 ;;
-;; The return value is normalized to upto decimal places. For example, if upto is 9 and 
+;; The return value is normalized to upto decimal places. For example, if upto is 9 and
 ;; the string read is "123", the return value is 123000000.
   (define (tm:fractional-integer-reader upto port)
     (define (accum-int port accum nchars)
@@ -1492,7 +1493,7 @@
 
 ;; A List of formatted read directives.
 ;; Each entry is a list.
-;; 1. the character directive; 
+;; 1. the character directive;
 ;; a procedure, which takes a character as input & returns
 ;; 2. #t as soon as a character on the input port is acceptable
 ;; for input,

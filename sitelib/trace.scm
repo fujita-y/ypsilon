@@ -4,7 +4,7 @@
 ;;; See license.txt for terms and conditions of use.
 
 (library (trace)
-  
+
   (export trace untrace with-trace trace-output-port trace-line-length trace-global-indent-mode trace-global-count-mode)
   (import (core) (rnrs))
 
@@ -13,9 +13,9 @@
   (define trace-global-indent-mode (make-parameter #t))
   (define trace-global-count-mode (make-parameter #f))
   (define ht-target-procs (make-core-hashtable))
-  
+
   (define glob-level 0)
-  
+
   (define make-trace-rec
     (lambda (proc count depth)
       (vector proc count depth)))

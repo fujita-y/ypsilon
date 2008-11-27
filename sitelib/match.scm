@@ -1,4 +1,6 @@
 #!nobacktrace
+;;; proting Pattern Matching Syntactic Extensiond for Scheme to ypsilon
+;;; -- y.fujita.lwp
 
 (library (match)
   (export match match-lambda match-lambda* match-let match-let* match-letrec match-define)
@@ -1577,7 +1579,7 @@
           (g209))))
 
   (define match:runtime-structures #f)
-  
+
   #|
   (define match:set-runtime-structures
     (lambda (v) (set! match:runtime-structures v)))
@@ -1922,7 +1924,7 @@
                               (g266))))
                     (g266)))
             (g266)))))
-  |#  
-  
-  
+  |#
+
+
   ) ; [end]

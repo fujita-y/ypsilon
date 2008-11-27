@@ -1,5 +1,4 @@
 #!nobacktrace
-
 (library (srfi srfi-1)
 
   (export
@@ -7,7 +6,7 @@
    ;; constructors
    xcons
    list                                          ; -> (core intrinsics)
-   cons*                                         ; -> (core intrinsics) 
+   cons*                                         ; -> (core intrinsics)
    make-list                                     ; -> (core lists)
    list-tabulate
    list-copy
@@ -150,7 +149,7 @@
    (rename (lset-xor lset-xor!))
    lset-diff+intersection
    (rename (lset-diff+intersection lset-diff+intersection!)))
-   
+
    ;; procedures conflict with r6rs
    #;(rename (map/srfi-1 map)
              (map!/srfi-1 map!)

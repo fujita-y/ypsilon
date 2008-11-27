@@ -190,13 +190,13 @@
 ;=> ("reverse" 3 2 1)
 (send request '(set "REVERSE"))
 (send request '(reverse (a b c)))
-(recv answer) 
+(recv answer)
 ;=> ("REVERSE" c b a)
 (recv answer 1000)
 ; error in recv: operation timed out
 (send request '(reverse 1))
 ;=> print backtrace and "## thread terminated"
-(send request '(reverse (a b c))) 
+(send request '(reverse (a b c)))
 ; error in send: mailbox is shutdowned
 (recv answer)
 ; error in recv: mailbox is shutdowned
@@ -205,5 +205,3 @@
 ; error in recv: mailbox is shutdowned
 (display-thread-status)
 |#
-
-

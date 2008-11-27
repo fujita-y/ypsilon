@@ -1,5 +1,6 @@
 #!nobacktrace
-;;; porting srfi-42 reference implementation to ypsilon -- y.fujita.lwp 2008-11-27  
+;;; porting srfi-42 reference implementation to ypsilon
+;;; -- y.fujita.lwp
 
 (library (srfi srfi-42)
 
