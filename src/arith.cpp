@@ -5367,10 +5367,9 @@ decode_flonum(object_heap_t* heap, scm_flonum_t n)
     int exp;
     int sign;
     double value = n->value;
-    scm_vector_t ans = make_vector(heap, 3, scm_unspecified);
     int64_t mant = decode_double(value, &exp, &sign);
-    ans->elts[0] = int64_to_integer(heap, mant);
-    ans->elts[1] = int32_to_integer(heap, exp);
-    ans->elts[2] = int32_to_integer(heap, sign);
-    return ans;
+    return make_list(heap, 3,
+                     int64_to_integer(heap, mant),
+                     int32_to_integer(heap, exp),
+                     int32_to_integer(heap, sign));
 }

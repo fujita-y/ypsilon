@@ -1,4 +1,6 @@
 #!nobacktrace
+;;; porting srfi-19 reference implementation to ypsilon -- y.fujita.lwp 2008-11-27  
+
 (library (srfi srfi-19)
 
   (export time-duration
@@ -209,6 +211,8 @@
 ;; 'fractional part'. Will Fitzgerald 5/16/2003.
 ;; --------------------------------------------------------------
 
+;; ypsilon -- y.fujita.lwp
+  
   (define-syntax receive
     (syntax-rules ()
       ((receive formals expression body ...)
@@ -287,7 +291,7 @@
       invalid-month-specification
       ))
 
-;; y.fujita.lwp  
+;; ypsilon -- y.fujita.lwp  
 #|
   (define (tm:time-error caller type value)
     (if (member type tm:time-error-types)
@@ -379,7 +383,7 @@
 ;;; the time structure; creates the accessors, too.
 ;;; wf: changed to match srfi documentation. uses mzscheme structures & inspectors
 
-;; y.fujita.lwp  
+;; ypsilon -- y.fujita.lwp  
 #|
   (define-struct time (type nanosecond second) (make-inspector))
 |#
@@ -687,7 +691,7 @@
     (set-time-type! time-in time-monotonic)
     time-in)
 
-;; y.fujita.lwp
+;; ypsilon -- y.fujita.lwp
 #| 
 ;; -- date structures
 
@@ -771,7 +775,7 @@
 ;; differently from MzScheme's....
 ;; This should be written to be OS specific.
 
-;; y.fujita.lwp
+;; ypsilon -- y.fujita.lwp
 #|
   (define (tm:local-tz-offset)
     (date-time-zone-offset (seconds->date (current-seconds))))
@@ -927,7 +931,7 @@
        (else
         (+ (- current-century 100) n)))))
 
-;; y.fujita.lwp
+;; ypsilon -- y.fujita.lwp
 #|
   (define (date->julian-day date)
     (let ( (nanosecond (date-nanosecond date))
@@ -945,7 +949,7 @@
                (- offset))))))
 |#
 
-;; y.fujita.lwp
+;; ypsilon -- y.fujita.lwp
   (define (date->julian-day date)
     (let ( (nanosecond (date-nanosecond date))
            (second (date-second date))
@@ -963,7 +967,7 @@
                   (/ nanosecond tm:nano)
                   (- offset))
                tm:sid)))))
-;; y.fujita.lwp
+;; ypsilon -- y.fujita.lwp
 
   (define (date->modified-julian-day date)
     (- (date->julian-day date)

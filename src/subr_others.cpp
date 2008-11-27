@@ -642,84 +642,6 @@ subr_collect_trip_bytes(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// microsecond
-scm_obj_t
-subr_microsecond(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 0) {
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-        return int64_to_integer(vm->m_heap, (int64_t)tv.tv_sec * 1000000 + tv.tv_usec);
-    }
-    wrong_number_of_arguments_violation(vm, "microsecond", 0, 0, argc, argv);
-    return scm_undef;
-}
-
-// microsecond->utc
-scm_obj_t
-subr_microsecond_utc(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 1) {
-        if (exact_non_negative_integer_pred(argv[0])) {
-            int64_t usec;
-            exact_integer_to_int64(argv[0], &usec);
-            time_t sec = usec / 1000000;
-            struct tm* m = gmtime(&sec);
-            int64_t utc = usec + (int64_t)(mktime(m) - sec) * 1000000;
-            return int64_to_integer(vm->m_heap, utc);
-        }
-        wrong_type_argument_violation(vm, "microsecond->utc", 0, "exact non-negative integer", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "microsecond->utc", 1, 1, argc, argv);
-    return scm_undef;
-}
-
-// time-usage
-scm_obj_t
-subr_time_usage(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 0) {
-#if _MSC_VER
-        FILETIME real_time;
-        FILETIME creation_time;
-        FILETIME exit_time;
-        FILETIME kernel_time;
-        FILETIME user_time;
-        GetSystemTimeAsFileTime(&real_time);
-        if (GetProcessTimes(GetCurrentProcess(), &creation_time, &exit_time, &kernel_time, &user_time)) {
-            scm_values_t values = make_values(vm->m_heap, 3);
-            values->elts[0] = make_flonum(vm->m_heap,
-                                          ((double)real_time.dwLowDateTime
-                                           + (double)real_time.dwHighDateTime
-                                           * (double)UINT32_MAX) / 10000000.0);
-            values->elts[1] = make_flonum(vm->m_heap,
-                                          ((double)user_time.dwLowDateTime
-                                           + (double)user_time.dwHighDateTime
-                                           * (double)UINT32_MAX) / 10000000.0);
-            values->elts[2] = make_flonum(vm->m_heap,
-                                          ((double)kernel_time.dwLowDateTime
-                                           + (double)kernel_time.dwHighDateTime
-                                           * (double)UINT32_MAX) / 10000000.0);
-            return values;
-        }
-        return scm_false;
-#else
-        struct timeval tv;
-        struct rusage ru;
-        gettimeofday(&tv, NULL);
-        getrusage(RUSAGE_SELF, &ru);
-        scm_values_t values = make_values(vm->m_heap, 3);
-        values->elts[0] = make_flonum(vm->m_heap, (double)tv.tv_sec + tv.tv_usec / 1000000.0);
-        values->elts[1] = make_flonum(vm->m_heap, (double)ru.ru_utime.tv_sec + ru.ru_utime.tv_usec / 1000000.0);
-        values->elts[2] = make_flonum(vm->m_heap, (double)ru.ru_stime.tv_sec + ru.ru_stime.tv_usec / 1000000.0);
-        return values;
-#endif
-    }
-    wrong_number_of_arguments_violation(vm, "times", 0, 0, argc, argv);
-    return scm_undef;
-}
-
 // display-heap-statistic
 scm_obj_t
 subr_display_heap_statistics(VM* vm, int argc, scm_obj_t argv[])
@@ -2493,7 +2415,7 @@ scm_obj_t subr_shared_queue_shutdown(VM* vm, int argc, scm_obj_t argv[]) {
     fatal("%s:%u shared-queue-shutdown not supported on this build",__FILE__ , __LINE__);
 #endif
 }
-
+/*
 // object->bytevetor
 scm_obj_t
 subr_object_bytevector(VM* vm, int argc, scm_obj_t argv[])
@@ -2525,7 +2447,7 @@ subr_bytevector_object(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "bytevector->object", 1, 1, argc, argv);
     return scm_undef;
 }
-
+*/
 // timeout-object?
 scm_obj_t
 subr_timeout_object_pred(VM* vm, int argc, scm_obj_t argv[])
@@ -2751,6 +2673,223 @@ subr_thread_id(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// microsecond
+scm_obj_t
+subr_microsecond(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        return int64_to_integer(vm->m_heap, (int64_t)tv.tv_sec * 1000000 + tv.tv_usec);
+    }
+    wrong_number_of_arguments_violation(vm, "microsecond", 0, 0, argc, argv);
+    return scm_undef;
+}
+
+// microsecond->utc
+scm_obj_t
+subr_microsecond_utc(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1 || argc == 2) {
+        if (exact_non_negative_integer_pred(argv[0])) {
+            int64_t usec;
+            int64_t offset = 0;
+            if (argc == 2) {
+                if (exact_integer_pred(argv[1])) {
+                    exact_integer_to_int64(argv[1], &offset);
+                } else {
+                    wrong_type_argument_violation(vm, "microsecond->utc", 1, "exact integer", argv[1], argc, argv);
+                    return scm_undef;
+                }
+            }
+            exact_integer_to_int64(argv[0], &usec);
+            time_t sec = usec / 1000000;
+            struct tm date;
+            gmtime_r(&sec, &date);
+            int64_t utc = usec + offset + (int64_t)(mktime(&date) - sec) * 1000000;
+            return int64_to_integer(vm->m_heap, utc);
+        }
+        wrong_type_argument_violation(vm, "microsecond->utc", 0, "exact non-negative integer", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "microsecond->utc", 1, 2, argc, argv);
+    return scm_undef;
+}
+
+// microsecond->string
+scm_obj_t
+subr_microsecond_string(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1 || argc == 2) {
+        if (exact_non_negative_integer_pred(argv[0])) {
+            int64_t usec;
+            exact_integer_to_int64(argv[0], &usec);
+            const char* fmt = "%c";
+            if (argc == 2) {
+                if (STRINGP(argv[1])) {
+                    fmt = ((scm_string_t)argv[1])->name;
+                } else {
+                    wrong_type_argument_violation(vm, "microsecond->string", 1, "string", argv[1], argc, argv);
+                    return scm_undef;
+                }
+            }
+            time_t sec = usec / 1000000;
+            struct tm date;
+            localtime_r(&sec, &date);
+            char* buf = NULL;
+            int buflen = 0;
+            int n;
+            do {
+                buflen += 64;
+                buf = (char*)realloc(buf, buflen);
+                buf[0] = '*';
+                buf[1] = 0;
+                n = strftime(buf, buflen, fmt, &date);
+            } while (strlen(buf) != n);
+            scm_obj_t obj = make_string(vm->m_heap, buf);
+            free(buf);
+            return obj;
+        }
+        wrong_type_argument_violation(vm, "microsecond->string", 0, "exact non-negative integer", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "microsecond->string", 1, 2, argc, argv);
+    return scm_undef;
+}
+
+// string->microsecond
+scm_obj_t
+subr_string_microsecond(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1 || argc == 2) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            const char* fmt = "%c";
+            if (argc == 2) {
+                if (STRINGP(argv[1])) {
+                    fmt = ((scm_string_t)argv[1])->name;
+                } else {
+                    wrong_type_argument_violation(vm, "string->microsecond", 1, "string", argv[1], argc, argv);
+                    return scm_undef;
+                }
+            }
+            struct tm date;
+            time_t sec = time(NULL);
+            localtime_r(&sec, &date);
+            if (strptime(string->name, fmt, &date)) {
+                int64_t usec = (int64_t)mktime(&date) * 1000000;
+                if (usec < 0) return scm_false;
+                return int64_to_integer(vm->m_heap, usec);
+            }
+            return scm_false;
+        }
+        wrong_type_argument_violation(vm, "string->microsecond", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "string->microsecond", 1, 2, argc, argv);
+    return scm_undef;
+}
+
+// decode-microsecond
+scm_obj_t
+subr_decode_microsecond(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (exact_non_negative_integer_pred(argv[0])) {
+            int64_t usec;
+            exact_integer_to_int64(argv[0], &usec);
+            time_t sec = usec / 1000000;
+            struct tm date;
+            localtime_r(&sec, &date);
+            return make_list(vm->m_heap, 9, 
+                             MAKEFIXNUM(date.tm_sec), MAKEFIXNUM(date.tm_min), MAKEFIXNUM(date.tm_hour),
+                             MAKEFIXNUM(date.tm_mday), MAKEFIXNUM(date.tm_mon), MAKEFIXNUM(date.tm_year),
+                             MAKEFIXNUM(date.tm_wday), MAKEFIXNUM(date.tm_yday), MAKEFIXNUM(date.tm_isdst));
+        }
+        wrong_type_argument_violation(vm, "decode-microsecond", 0, "exact non-negative integer", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "decode-microsecond", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// encode-microsecond
+scm_obj_t
+subr_encode_microsecond(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 9) {
+        for (int i = 0; i < 8; i++) {
+            if (exact_non_negative_integer_pred(argv[i])) continue;
+            wrong_type_argument_violation(vm, "encode-microsecond", i, "exact non-negative integer", argv[i], argc, argv);
+            return scm_undef;
+        }
+        if (!exact_integer_pred(argv[8])) {
+            wrong_type_argument_violation(vm, "encode-microsecond", 8, "exact integer", argv[8], argc, argv);
+            return scm_undef;
+        }
+        struct tm date;
+        date.tm_sec = FIXNUM(argv[0]);
+        date.tm_min = FIXNUM(argv[1]);
+        date.tm_hour = FIXNUM(argv[2]);
+        date.tm_mday = FIXNUM(argv[3]);
+        date.tm_mon = FIXNUM(argv[4]);
+        date.tm_year = FIXNUM(argv[5]);
+        date.tm_wday = FIXNUM(argv[6]);
+        date.tm_yday = FIXNUM(argv[7]);
+        date.tm_isdst = FIXNUM(argv[8]);
+        int64_t sec = mktime(&date);
+        if (sec < 0) return scm_false;
+        return int64_to_integer(vm->m_heap, sec * 1000000);
+    }
+    wrong_number_of_arguments_violation(vm, "encode-microsecond", 9, 9, argc, argv);
+    return scm_undef;
+}
+
+// time-usage
+scm_obj_t
+subr_time_usage(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) {
+#if _MSC_VER
+        FILETIME real_time;
+        FILETIME creation_time;
+        FILETIME exit_time;
+        FILETIME kernel_time;
+        FILETIME user_time;
+        GetSystemTimeAsFileTime(&real_time);
+        if (GetProcessTimes(GetCurrentProcess(), &creation_time, &exit_time, &kernel_time, &user_time)) {
+            scm_values_t values = make_values(vm->m_heap, 3);
+            values->elts[0] = make_flonum(vm->m_heap,
+                                          ((double)real_time.dwLowDateTime
+                                           + (double)real_time.dwHighDateTime
+                                           * (double)UINT32_MAX) / 10000000.0);
+            values->elts[1] = make_flonum(vm->m_heap,
+                                          ((double)user_time.dwLowDateTime
+                                           + (double)user_time.dwHighDateTime
+                                           * (double)UINT32_MAX) / 10000000.0);
+            values->elts[2] = make_flonum(vm->m_heap,
+                                          ((double)kernel_time.dwLowDateTime
+                                           + (double)kernel_time.dwHighDateTime
+                                           * (double)UINT32_MAX) / 10000000.0);
+            return values;
+        }
+        return scm_false;
+#else
+        struct timeval tv;
+        struct rusage ru;
+        gettimeofday(&tv, NULL);
+        getrusage(RUSAGE_SELF, &ru);
+        scm_values_t values = make_values(vm->m_heap, 3);
+        values->elts[0] = make_flonum(vm->m_heap, (double)tv.tv_sec + tv.tv_usec / 1000000.0);
+        values->elts[1] = make_flonum(vm->m_heap, (double)ru.ru_utime.tv_sec + ru.ru_utime.tv_usec / 1000000.0);
+        values->elts[2] = make_flonum(vm->m_heap, (double)ru.ru_stime.tv_sec + ru.ru_stime.tv_usec / 1000000.0);
+        return values;
+#endif
+    }
+    wrong_number_of_arguments_violation(vm, "times", 0, 0, argc, argv);
+    return scm_undef;
+}
+
 void
 init_subr_others(object_heap_t* heap)
 {
@@ -2799,8 +2938,6 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("collect-notify", subr_collect_notify);
     DEFSUBR("collect-trip-bytes", subr_collect_trip_bytes);
     DEFSUBR("collect-stack-notify", subr_collect_stack_notify);
-    DEFSUBR("microsecond", subr_microsecond);
-    DEFSUBR("microsecond->utc", subr_microsecond_utc);
     DEFSUBR("time-usage", subr_time_usage);
     DEFSUBR("backtrace", subr_backtrace);
     DEFSUBR("warning-level", subr_warning_level);
@@ -2850,8 +2987,6 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("shared-queue-pop!", subr_shared_queue_pop);
     DEFSUBR("shared-queue?", subr_shared_queue_pred);
     DEFSUBR("on-primordial-thread?", subr_on_primordial_thread_pred);
-    DEFSUBR("object->bytevector", subr_object_bytevector);
-    DEFSUBR("bytevector->object", subr_bytevector_object);
     DEFSUBR("timeout-object?", subr_timeout_object_pred);
     DEFSUBR("shutdown-object?", subr_shutdown_object_pred);
     DEFSUBR("make-uuid", subr_make_uuid);
@@ -2860,4 +2995,10 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("shared-bag-put!", subr_shared_bag_put);
     DEFSUBR("shared-bag-get!", subr_shared_bag_get);
     DEFSUBR("thread-id", subr_thread_id);
+    DEFSUBR("microsecond", subr_microsecond);
+    DEFSUBR("microsecond->utc", subr_microsecond_utc);
+    DEFSUBR("microsecond->string", subr_microsecond_string);    
+    DEFSUBR("string->microsecond", subr_string_microsecond);    
+    DEFSUBR("decode-microsecond", subr_decode_microsecond);    
+    DEFSUBR("encode-microsecond", subr_encode_microsecond);    
 }

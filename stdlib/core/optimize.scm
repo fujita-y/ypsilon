@@ -303,6 +303,7 @@
                  (and (symbol? form)
                       (or (primitive-function? form)
                           (and (core-hashtable-contains? ht-variable-binding form)
+                               (not (core-hashtable-contains? ht-variable-assigned form)) ;; 081127
                                (or (core-hashtable-contains? ht-variable-privates form)
                                    (not (core-hashtable-contains? ht-variable-defined form)))))
                       (= (core-hashtable-ref ht-variable-operands-refc form 0) 1)))))))

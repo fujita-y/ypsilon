@@ -3,6 +3,7 @@
 (library (srfi srfi-1)
 
   (export
+
    ;; constructors
    xcons
    list                                          ; -> (core intrinsics)
@@ -149,6 +150,16 @@
    (rename (lset-xor lset-xor!))
    lset-diff+intersection
    (rename (lset-diff+intersection lset-diff+intersection!)))
+   
+   ;; procedures conflict with r6rs
+   #;(rename (map/srfi-1 map)
+             (map!/srfi-1 map!)
+             (for-each/srfi-1 for-each)
+             (fold-right/srfi-1 fold-right)
+             (member/srfi-1 member)
+             (assoc/srfi-1 assoc)
+             (remove/srfi-1 remove)
+             (remove!/srfi-1 remove!))
 
   (import (core primitives) (except (core lists) remp) (core optargs))
 
@@ -685,14 +696,3 @@
               (apply lset-intersection proc lst))))
 
   ) ;[end]
-
-#|
-   (define map        map/srfi-1)
-   (define map!       map!/srfi-1)
-   (define for-each   for-each/srfi-1)
-   (define fold-right fold-right/srfi-1)
-   (define member     member/srfi-1)
-   (define assoc      assoc/srfi-1)
-   (define remove     remove/srfi-1)
-   (define remove!    remove!/srfi-1)   
-|#

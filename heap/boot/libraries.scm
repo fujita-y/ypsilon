@@ -428,8 +428,6 @@
                         core-hashtable-equivalence-function
                         core-hashtable-hash-function
                         usleep
-                        microsecond
-                        microsecond->utc
                         scheme-error
                         architecture-feature
                         load-shared-object 
@@ -478,7 +476,6 @@
                         current-directory
                         create-directory
                         home-directory
-                        time-usage
                         decode-flonum
                         load
                         system-share-path
@@ -528,11 +525,15 @@
                         thread-id
                         on-primordial-thread?
                         display-thread-status
-                        
-                        object->bytevector
-                        bytevector->object
-                        
+                                                
                         make-uuid
+                        time-usage
+                        microsecond
+                        microsecond->utc
+                        microsecond->string
+                        string->microsecond
+                        decode-microsecond
+                        encode-microsecond
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))

@@ -1,4 +1,5 @@
 #!nobacktrace
+;;; porting srfi-26 reference implementation to ypsilon -- y.fujita.lwp 2008-11-27  
 
 (library (srfi srfi-26)
   
