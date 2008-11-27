@@ -1,12 +1,13 @@
 #!nobacktrace
-;;; porting srfi-26 reference implementation to ypsilon -- y.fujita.lwp 2008-11-27  
+;;; porting srfi-26 reference implementation to ypsilon
+;;; -- y.fujita.lwp
 
 (library (srfi srfi-26)
-  
+
   (export cut cute)
-  
+
   (import (core primitives))
-  
+
 ; REFERENCE IMPLEMENTATION FOR SRFI-26 "CUT"
 ; ==========================================
 ;
@@ -19,7 +20,7 @@
 ; syntax of the macro using an explicit rest-slot symbol. The
 ; code to evaluate the non-slots for cute has been proposed by
 ; Dale Jordan. The code to allow a slot for the procedure position
-; and to process the macro using an internal macro is based on 
+; and to process the macro using an internal macro is based on
 ; a suggestion by Al Petrofsky. The code found below is, with
 ; exception of this header and some changes in variable names,
 ; entirely written by Al Petrofsky.
@@ -103,5 +104,5 @@
   (syntax-rules ()
     ((cute . slots-or-exprs)
      (srfi-26-internal-cute () () () . slots-or-exprs))))
-  
+
   ) ;[end]

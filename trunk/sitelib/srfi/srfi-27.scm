@@ -1,14 +1,15 @@
 #!nobacktrace
-;;; porting srfi-27 reference implementation to ypsilon -- y.fujita.lwp 2008-11-27  
+;;; porting srfi-27 reference implementation to ypsilon
+;;; -- y.fujita.lwp
 
 (library (srfi-27 mrg32k3a-a)
-  
+
   (export mrg32k3a-pack-state
           mrg32k3a-unpack-state
           mrg32k3a-random-range
           mrg32k3a-random-integer
           mrg32k3a-random-real)
-  
+
   (import (rnrs) (rnrs r5rs))
 
 ; 54-BIT INTEGER IMPLEMENTATION OF THE "MRG32K3A"-GENERATOR
@@ -70,7 +71,7 @@
   ) ;[end]
 
 (library (srfi-27 mrg32k3a)
-  
+
   (export random-integer
           random-real
           default-random-source
@@ -82,7 +83,7 @@
           random-source-pseudo-randomize!
           random-source-make-integers
           random-source-make-reals)
-  
+
   (import (rnrs) (rnrs r5rs)
           (only (time) microsecond)
           (srfi-27 mrg32k3a-a))
@@ -111,8 +112,8 @@
 ; Generator
 ; =========
 ;
-; Pierre L'Ecuyer's MRG32k3a generator is a Combined Multiple Recursive 
-; Generator. It produces the sequence {(x[1,n] - x[2,n]) mod m1 : n} 
+; Pierre L'Ecuyer's MRG32k3a generator is a Combined Multiple Recursive
+; Generator. It produces the sequence {(x[1,n] - x[2,n]) mod m1 : n}
 ; defined by the two recursive generators
 ;
 ;   x[1,n] = (               a12 x[1,n-2] + a13 x[1,n-3]) mod m1,
@@ -140,15 +141,15 @@
 ; publication provides detailed information on how to do that:
 ;
 ;    [1] P. L'Ecuyer, R. Simard, E. J. Chen, W. D. Kelton:
-;        An Object-Oriented Random-Number Package With Many Long 
+;        An Object-Oriented Random-Number Package With Many Long
 ;        Streams and Substreams. 2001.
 ;        To appear in Operations Research.
 ;
 ; Arithmetics
 ; ===========
 ;
-; The MRG32k3a generator produces values in {0..2^32-209-1}. All 
-; subexpressions of the actual generator fit into {-2^53..2^53-1}. 
+; The MRG32k3a generator produces values in {0..2^32-209-1}. All
+; subexpressions of the actual generator fit into {-2^53..2^53-1}.
 ; The code below assumes that Scheme's "integer" covers this range.
 ; In addition, it is assumed that floating point literals can be
 ; read and there is some arithmetics with inexact numbers.
@@ -168,16 +169,16 @@
 ;      pack/unpack a state of the generator. The core generator works
 ;      on packed states, passed as an explicit argument, only. This
 ;      allows native code implementations to store their state in a
-;      suitable form. Unpacked states are #(x10 x11 x12 x20 x21 x22) 
+;      suitable form. Unpacked states are #(x10 x11 x12 x20 x21 x22)
 ;      with integer x_ij. Pack/unpack need not allocate new objects
 ;      in case packed and unpacked states are identical.
 ;
 ;   (mrg32k3a-random-range) -> m-max
 ;   (mrg32k3a-random-integer packed-state range) -> x in {0..range-1}
 ;      advance the state of the generator and return the next random
-;      range-limited integer. 
-;        Note that the state is not necessarily advanced by just one 
-;      step because we use the rejection method to avoid any problems 
+;      range-limited integer.
+;        Note that the state is not necessarily advanced by just one
+;      step because we use the rejection method to avoid any problems
 ;      with distribution anomalies.
 ;        The range argument must be an exact integer in {1..m-max}.
 ;      It can be assumed that range is a fixnum if the Scheme system
@@ -195,7 +196,7 @@
 ; to be defined to create and access a new record data type:
 ;
 ;   (:random-source-make a0 a1 a2 a3 a4 a5) -> s
-;     constructs a new random source object s consisting of the 
+;     constructs a new random source object s consisting of the
 ;     objects a0 .. a5 in this order.
 ;
 ;   (:random-source? obj) -> bool
@@ -269,7 +270,7 @@
 ; Pseudo-Randomization
 ; ====================
 ;
-; Reference [1] above shows how to obtain many long streams and 
+; Reference [1] above shows how to obtain many long streams and
 ; substream from the backbone generator.
 ;
 ; The idea is that the generator is a linear operation on the state.
@@ -282,7 +283,7 @@
 ; For the implementation it is necessary to compute with matrices in
 ; the ring (Z/(m1*m1)*Z)^(3x3). By the Chinese-Remainder Theorem, this
 ; is isomorphic to ((Z/m1*Z) x (Z/m2*Z))^(3x3). We represent such a pair
-; of matrices 
+; of matrices
 ;   [ [[x00 x01 x02],
 ;      [x10 x11 x12],
 ;      [x20 x21 x22]], mod m1
@@ -294,9 +295,9 @@
 ;     y00 y01 y02 y10 y11 y12 y20 y21 y22)
 ;
 ; As the implementation should only use the range {-2^53..2^53-1}, the
-; fundamental operation (x*y) mod m, where x, y, m are nearly 2^32, 
-; is computed by breaking up x and y as x = x1*w + x0 and y = y1*w + y0 
-; where w = 2^16. In this case, all operations fit the range because 
+; fundamental operation (x*y) mod m, where x, y, m are nearly 2^32,
+; is computed by breaking up x and y as x = x1*w + x0 and y = y1*w + y0
+; where w = 2^16. In this case, all operations fit the range because
 ; w^2 mod m is a small number. If proper multiprecision integers are
 ; available this is not necessary, but pseudo-randomize! is an expected
 ; to be called only occasionally so we do not provide this implementation.
@@ -464,8 +465,8 @@
 ; Large Integers
 ; ==============
 ;
-; To produce large integer random deviates, for n > m-max, we first 
-; construct large random numbers in the range {0..m-max^k-1} for some 
+; To produce large integer random deviates, for n > m-max, we first
+; construct large random numbers in the range {0..m-max^k-1} for some
 ; k such that m-max^k >= n and then use the rejection method to choose
 ; uniformly from the range {0..n-1}.
 

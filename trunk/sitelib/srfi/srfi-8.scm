@@ -1,5 +1,6 @@
 #!nobacktrace
-;;; porting srfi-8 reference implementation to ypsilon -- y.fujita.lwp 2008-11-27
+;;; porting srfi-8 reference implementation to ypsilon
+;;; -- y.fujita.lwp
 
 (library (srfi srfi-8)
 
@@ -13,4 +14,3 @@
        (let-values ((formals expr)) body ...))))
 
   ) ;[end]
-
