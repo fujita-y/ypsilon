@@ -1,7 +1,7 @@
 #!nobacktrace
 
 (library (srfi :1)
-  
+
   (export
    ;; constructors
    xcons
@@ -149,5 +149,15 @@
    lset-xor!
    lset-diff+intersection
    lset-diff+intersection!)
+
+   ;; procedures conflict with r6rs
+   #;(rename (map/srfi-1 map)
+             (map!/srfi-1 map!)
+             (for-each/srfi-1 for-each)
+             (fold-right/srfi-1 fold-right)
+             (member/srfi-1 member)
+             (assoc/srfi-1 assoc)
+             (remove/srfi-1 remove)
+             (remove!/srfi-1 remove!))
 
   (import (srfi srfi-1)))

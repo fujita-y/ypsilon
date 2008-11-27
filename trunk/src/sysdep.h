@@ -91,7 +91,9 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #define snprintf            _snprintf
     #define srandom             srand
     #define random              rand
-
+    #define gmtime_r(A1, A2)    gmtime_s(A2, A1)
+    #define localtime_r(A1, A2) localtime_s(A2, A1)
+    
     #define VALUE_NAN           std::numeric_limits<double>::quiet_NaN()
     #define VALUE_INF           std::numeric_limits<double>::infinity()
 

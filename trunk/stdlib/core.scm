@@ -88,7 +88,6 @@
     break
     buffer-mode
     buffer-mode?
-    bytevector->object
     bytevector->sint-list
     bytevector->string
     bytevector->u8-list
@@ -271,6 +270,7 @@
     datum
     datum->syntax
     decode-flonum
+    decode-microsecond
     define
     define-condition-type
     define-enumeration
@@ -297,6 +297,7 @@
     drop
     dynamic-wind
     else
+    encode-microsecond
     endianness
     enum-set->list
     enum-set-complement
@@ -620,6 +621,7 @@
     memv
     message-condition?
     microsecond
+    microsecond->string
     microsecond->utc
     min
     mod
@@ -641,7 +643,6 @@
     number->string
     number?
     numerator
-    object->bytevector
     odd?
     on-primordial-thread?
     open-builtin-data-input-port
@@ -784,6 +785,7 @@
     string
     string->bytevector
     string->list
+    string->microsecond
     string->number
     string->symbol
     string->uninterned-symbol
