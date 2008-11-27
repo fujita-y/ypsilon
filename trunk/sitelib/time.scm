@@ -10,7 +10,6 @@
           microsecond
           microsecond->utc
           microsecond->string
-          string->microsecond
           decode-microsecond
           encode-microsecond)
 
