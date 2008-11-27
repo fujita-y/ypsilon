@@ -785,7 +785,6 @@
     string
     string->bytevector
     string->list
-    string->microsecond
     string->number
     string->symbol
     string->uninterned-symbol

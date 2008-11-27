@@ -2757,6 +2757,7 @@ subr_microsecond_string(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+/*
 // string->microsecond
 scm_obj_t
 subr_string_microsecond(VM* vm, int argc, scm_obj_t argv[])
@@ -2789,6 +2790,7 @@ subr_string_microsecond(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "string->microsecond", 1, 2, argc, argv);
     return scm_undef;
 }
+*/
 
 // decode-microsecond
 scm_obj_t
@@ -2998,7 +3000,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("microsecond", subr_microsecond);
     DEFSUBR("microsecond->utc", subr_microsecond_utc);
     DEFSUBR("microsecond->string", subr_microsecond_string);    
-    DEFSUBR("string->microsecond", subr_string_microsecond);    
+  //DEFSUBR("string->microsecond", subr_string_microsecond);    
     DEFSUBR("decode-microsecond", subr_decode_microsecond);    
     DEFSUBR("encode-microsecond", subr_encode_microsecond);    
 }
