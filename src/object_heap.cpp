@@ -26,9 +26,6 @@
   #define   GC_TRACE(fmt)   ((void)0)
 #endif
 
-#define NEW_WRITE_BARRIER           1
-#define NEW_ENQUEUE_ROOT            1
-
 #define DEBUG_CONCURRENT_COLLECT    0
 
 #define SYNCHRONIZE_THRESHOLD(x)    ((x) - (x) / 4)
@@ -39,43 +36,33 @@
 
 #if ARCH_LP64
     inline int
-    bytes_to_bucket(int x) // see clp2() in bit.cpp
+    bytes_to_bucket(uint32_t x) // see bit.cpp
     {
-        int bucket = 0;
-        if (x > 16) {
-            x = x - 1;  
-            x = x | (x >>  1);
-            x = x | (x >>  2);
-            x = x | (x >>  4);
-            x = x | (x >>  8);
-            x = x | (x >> 16);
-            x = (x + 1) >> 5;
-            while (x) {
-                bucket = bucket + 1;
-                x = x >> 1;
-            }
-        }
-        return bucket;
+        assert(x >= 16); // (1 << 4)
+        uint32_t n = 0;  
+        uint32_t c = 16;
+        x = x - 1;
+        do {
+            uint32_t y = x >> c;
+            if (y != 0) { n = n + c; x = y; }
+            c = c >> 1;
+        } while (c != 0);
+        return n + x - 4;
     }
 #else
     inline int
-    bytes_to_bucket(int x) // see clp2() in bit.cpp
+    bytes_to_bucket(uint32_t x) // see bit.cpp
     {
-        int bucket = 0;
-        if (x > 8) {
-            x = x - 1;
-            x = x | (x >>  1);
-            x = x | (x >>  2);
-            x = x | (x >>  4);
-            x = x | (x >>  8);
-            x = x | (x >> 16);
-            x = (x + 1) >> 4;
-            while (x) {
-                bucket = bucket + 1;
-                x = x >> 1;
-            }
-        }
-        return bucket;
+        assert(x >= 8); // (1 << 3)
+        uint32_t n = 0;  
+        uint32_t c = 16;
+        x = x - 1;
+        do {
+            uint32_t y = x >> c;
+            if (y != 0) { n = n + c; x = y; }
+            c = c >> 1;
+        } while (c != 0);
+        return n + x - 3;
     }
 #endif
 
@@ -149,7 +136,12 @@ object_heap_t::allocate_private(size_t size)
 {
     m_trip_bytes += size;
     if (m_trip_bytes >= m_collect_trip_bytes) collect();
-    int bucket = bytes_to_bucket(size);
+    int bucket = 0;
+#if ARCH_LP64
+    if (size > 16) bucket = bytes_to_bucket(size);
+#else
+    if (size > 8) bucket = bytes_to_bucket(size);
+#endif
     if (bucket < array_sizeof(m_privates)) {
         do {
             void* obj = m_privates[bucket].new_object();
@@ -592,9 +584,7 @@ object_heap_t::write_barrier(scm_obj_t rhs)
                     if (m_stop_the_world) {
                         m_collector_lock.lock();
                         m_collector_wake.signal();
-#if NEW_WRITE_BARRIER
                         m_mutator_wake.wait(m_collector_lock);
-#endif
                         m_collector_lock.unlock();
                     } else {
                         thread_yield();
@@ -669,9 +659,7 @@ object_heap_t::enqueue_root(scm_obj_t obj)
             if (m_shade_queue.wait_lock_try_put(obj) == false) {
                 m_collector_lock.lock();
                 m_collector_wake.signal(); // kick now
-    #if NEW_ENQUEUE_ROOT
                 m_mutator_wake.wait(m_collector_lock);
-    #endif
                 m_collector_lock.unlock();
                 GC_TRACE(";; [shade queue overflow while queueing root set]\n");
                 m_shade_queue.put(obj);
