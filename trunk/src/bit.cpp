@@ -44,7 +44,7 @@ nbits(uint32_t x)
     x = (x + (x >> 4)) & 0x0F0F0F0F;
     x = x + (x << 8);
     x = x + (x << 16);
-    return(x >> 24);
+    return x >> 24;
 }
 
 uint32_t
