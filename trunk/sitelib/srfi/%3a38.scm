@@ -1,8 +1,4 @@
 #!nobacktrace
-
 (library (srfi :38)
-  (export write-with-shared-structure
-          read-with-shared-structure
-          write/ss
-          read/ss)
+  (export read-with-shared-structure read/ss write-with-shared-structure write/ss)
   (import (srfi srfi-38)))

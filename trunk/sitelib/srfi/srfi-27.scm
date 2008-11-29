@@ -3,14 +3,12 @@
 ;;; -- y.fujita.lwp
 
 (library (srfi-27 mrg32k3a-a)
-
   (export mrg32k3a-pack-state
           mrg32k3a-unpack-state
           mrg32k3a-random-range
           mrg32k3a-random-integer
           mrg32k3a-random-real)
-
-  (import (rnrs) (rnrs r5rs))
+  (import (core))
 
 ; 54-BIT INTEGER IMPLEMENTATION OF THE "MRG32K3A"-GENERATOR
 ; =========================================================
@@ -71,7 +69,6 @@
   ) ;[end]
 
 (library (srfi-27 mrg32k3a)
-
   (export random-integer
           random-real
           default-random-source
@@ -83,10 +80,9 @@
           random-source-pseudo-randomize!
           random-source-make-integers
           random-source-make-reals)
-
-  (import (rnrs) (rnrs r5rs)
-          (only (time) microsecond)
-          (srfi-27 mrg32k3a-a))
+  (import (core)
+          (srfi-27 mrg32k3a-a)
+          (only (ypsilon time) microsecond))
 
 ; GENERIC PART OF MRG32k3a-GENERATOR FOR SRFI-27
 ; ==============================================

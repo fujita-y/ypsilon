@@ -4,9 +4,7 @@
 ;;; See license.txt for terms and conditions of use.
 
 (library (tidbits define-inline)
-
   (export define-inline)
-
   (import (rnrs))
 
   (define-syntax define-inline-assistant

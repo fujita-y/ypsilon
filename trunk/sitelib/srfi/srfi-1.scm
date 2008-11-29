@@ -1,30 +1,26 @@
 #!nobacktrace
 (library (srfi srfi-1)
-
   (export
-
    ;; constructors
    xcons
-   list                                          ; -> (core intrinsics)
-   cons*                                         ; -> (core intrinsics)
-   make-list                                     ; -> (core lists)
+   list
+   cons*
+   make-list
    list-tabulate
    list-copy
    circular-list
-   iota                                          ; -> (core lists)
-
+   iota
    ;; predicates
-   pair?                                         ; -> (core intrinsics)
-   null?                                         ; -> (core intrinsics)
-   (rename (list? proper-list?))                 ; -> (core intrinsics)
+   pair?
+   null?
+   (rename (list? proper-list?))
    circular-list?
    dotted-list?
    not-pair?
-   (rename (null? null-list?))                   ; -> (core intrinsics)
+   (rename (null? null-list?))
    list=
-
    ;; selectors
-   car cdr                                       ; -> (core intrinsics)
+   car cdr
    caar cadr cdar cddr
    caaar caadr cadar caddr
    cdaar cdadr cddar cdddr
@@ -32,7 +28,7 @@
    cadaar cadadr caddar cadddr
    cdaaar cdaadr cdadar cdaddr
    cddaar cddadr cdddar cddddr
-   list-ref                                      ; -> (core intrinsics)
+   list-ref
    first
    second
    third
@@ -44,9 +40,9 @@
    ninth
    tenth
    car+cdr
-   take                                          ; -> (core lists)
+   take
    (rename (take take!))
-   drop                                          ; -> (core lists)
+   drop
    take-right
    drop-right
    (rename (drop-right drop-right!))
@@ -54,31 +50,29 @@
    (rename (split-at split-at!))
    last
    last-pair
-
    ;; miscellaneous: length, append, concatenate, reverse, zip & count
-   length                                        ; -> (core intrinsics)
+   length
    length+
-   append                                        ; -> (core intrinsics)
+   append
    (rename (append append!))
    concatenate
    (rename (concatenate concatenate!))
-   reverse                                       ; -> (core intrinsics)
+   reverse
    (rename (reverse reverse!))
    append-reverse
    (rename (append-reverse append-reverse!))
    zip
    unzip1 unzip2 unzip3 unzip4 unzip5
    count
-
    ;; fold, unfold & map
-   map                                           ; -> (core intrinsics) *r6rs
+   map
    (rename (map map!))
    map/srfi-1
    (rename (map/srfi-1 map!/srfi-1))
-   for-each                                      ; -> (core intrinsics) *r6rs
+   for-each
    for-each/srfi-1
    fold
-   fold-right                                    ; -> (core lists) *r6rs
+   fold-right
    fold-right/srfi-1
    unfold
    pair-fold
@@ -91,21 +85,19 @@
    pair-for-each
    filter-map
    map-in-order
-
    ;; filtering & partitioning
-   filter                                        ; -> (core lists)
+   filter
    (rename (filter filter!))
-   partition                                     ; -> (core lists)
+   partition
    (rename (partition partition!))
-   (rename (remp remove/srfi-1))                 ; -> (core lists)
-   (rename (remp remove!/srfi-1))                ; -> (core lists)
-
+   (rename (remp remove/srfi-1))
+   (rename (remp remove!/srfi-1))
    ;; seaching
-   member                                        ; -> (core intrinsics) *r6rs
+   member
    member/srfi-1
-   memq                                          ; -> (core intrinsics)
-   memv                                          ; -> (core intrinsics)
-   find                                          ; -> (core lists)
+   memq
+   memv
+   find
    find-tail
    any
    every
@@ -115,17 +107,15 @@
    drop-while
    span
    (rename (span span!))
-   break                                         ; -> (core lists)
+   break
    (rename (break break!))
-
    ;; deleting
    delete
    (rename (delete delete!))
    delete-duplicates
    (rename (delete-duplicates delete-duplicates!))
-
    ;; association lists
-   assoc                                         ; -> (core intrinsics) *r6rs
+   assoc
    assoc/srfi-1
    assq
    assv
@@ -133,7 +123,6 @@
    alist-copy
    alist-delete
    (rename (alist-delete alist-delete!))
-
    ;; set operations on lists
    lset<=
    lset=
@@ -149,7 +138,6 @@
    (rename (lset-xor lset-xor!))
    lset-diff+intersection
    (rename (lset-diff+intersection lset-diff+intersection!)))
-
    ;; procedures conflict with r6rs
    #;(rename (map/srfi-1 map)
              (map!/srfi-1 map!)
@@ -159,8 +147,7 @@
              (assoc/srfi-1 assoc)
              (remove/srfi-1 remove)
              (remove!/srfi-1 remove!))
-
-  (import (core primitives) (except (core lists) remp) (core optargs))
+  (import (except (core) remp))
 
   (define xcons (lambda (d a) (cons a d)))
 

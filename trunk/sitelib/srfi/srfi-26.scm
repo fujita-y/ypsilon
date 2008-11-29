@@ -3,10 +3,8 @@
 ;;; -- y.fujita.lwp
 
 (library (srfi srfi-26)
-
   (export cut cute)
-
-  (import (core primitives))
+  (import (core))
 
 ; REFERENCE IMPLEMENTATION FOR SRFI-26 "CUT"
 ; ==========================================

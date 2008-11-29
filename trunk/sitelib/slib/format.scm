@@ -3,14 +3,8 @@
 ;;; -- y.fujita.lwp
 
 (library (slib format)
-
   (export format)
-
-  (import (rnrs)
-          (rnrs r5rs)
-          (rnrs mutable-strings)
-          (rnrs mutable-pairs)
-          (only (core) pretty-print))
+  (import (except (core) format))
 
   (define string-capitalize string-titlecase)
   (define force-output flush-output-port)
@@ -19,7 +13,7 @@
   (define slib:tab #\tab)
   (define slib:form-feed #\page)
   (define provided? (lambda (x) #t))
-  ;; comment out all (require ...)
+  ;; comment out (require ...)
   ;; use alternative format:out-substr
   ;; use alternative format:out-fill
   ;; return <#unspecified> on port output
@@ -344,7 +338,7 @@
       (lambda (n)
         (cond ((not (integer? n))
                (slib:error 'format
-                                    "only integers can be converted to English cardinals"))
+                           "only integers can be converted to English cardinals"))
               ((= n 0) "zero")
               ((< n 0) (string-append "minus " (format:num->cardinal (- n))))
               (else
@@ -382,7 +376,7 @@
       (lambda (n)
         (cond ((not (integer? n))
                (slib:error 'format
-                                    "only integers can be converted to English ordinals"))
+                           "only integers can be converted to English ordinals"))
               ((= n 0) "zeroth")
               ((< n 0) (string-append "minus " (format:num->ordinal (- n))))
               (else
@@ -412,7 +406,7 @@
     (define (format:out-fixed modifier number pars)
       (if (not (or (number? number) (string? number)))
           (slib:error 'format "argument is not a number or a number string"
-                               number))
+                      number))
 
       (let ((l (length pars)))
         (let ((width (format:par pars l 0 #f "width"))
@@ -564,7 +558,7 @@
     (define (format:out-general modifier number pars)
       (if (not (or (number? number) (string? number)))
           (slib:error 'format "argument is not a number or a number string"
-                               number))
+                      number))
 
       (let ((l (length pars)))
         (let ((width (if (> l 0) (list-ref pars 0) #f))
@@ -595,7 +589,7 @@
     (define (format:out-dollar modifier number pars)
       (if (not (or (number? number) (string? number)))
           (slib:error 'format "argument is not a number or a number string"
-                               number))
+                      number))
 
       (let ((l (length pars)))
         (let ((digits (format:par pars l 0 2 "digits"))
@@ -811,7 +805,7 @@
     (define (format:fn-shiftleft n) ; shift left current number n positions
       (if (> n format:fn-len)
           (slib:error 'format "internal error in format:fn-shiftleft"
-                               (list n format:fn-len)))
+                      (list n format:fn-len)))
       (do ((i n (+ i 1)))
         ((= i format:fn-len)
          (set! format:fn-len (- format:fn-len n)))
@@ -1031,7 +1025,7 @@
                   ((#\I)          ; Complex numbers
                    (if (not format:complex-numbers)
                        (slib:error 'format
-                                            "complex numbers not supported by this scheme system"))
+                                   "complex numbers not supported by this scheme system"))
                    (let ((z (next-arg)))
                      (if (not (complex? z))
                          (slib:error 'format "argument not a complex number"))
@@ -1321,7 +1315,7 @@
                                 (let ((sublist (list-ref args arg-pos)))
                                   (if (not (list? sublist))
                                       (slib:error 'format
-                                                           "expected a list of lists argument" args))
+                                                  "expected a list of lists argument" args))
                                   (format:format-work iteration-str sublist)))))
                            ((rest-args)
                             (let* ((args (rest-args))
@@ -1438,7 +1432,7 @@
                    (anychar-dispatch))
                   (else           ; Unknown tilde directive
                    (slib:error 'format "unknown control character"
-                                        (string-ref format-string (- format:pos 1))))))
+                               (string-ref format-string (- format:pos 1))))))
                (else (anychar-dispatch)))))) ; in case of conditional
 
         (set! format:pos 0)
@@ -1657,5 +1651,3 @@
                     (string-set! cap-str i (char-upcase c)))))))))
 
   ) ;[end]
-
-;(format "ABC~,,3A123~,,3@A" "pqr" "xyz")
