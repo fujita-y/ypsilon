@@ -4,4 +4,4 @@
           read-with-shared-structure
           (rename (write-with-shared-structure write/ss)
                   (read-with-shared-structure read/ss)))
-  (import (core primitives)))
+  (import (core)))

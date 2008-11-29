@@ -4,12 +4,10 @@
 ;;; See license.txt for terms and conditions of use.
 
 (library (tidbits remote-repl)
-
   (export connect-remote-repl
           make-remote-repl
           blocking-remote-repl)
-
-  (import (core) (socket))
+  (import (core) (ypsilon socket))
 
   (define connect-remote-repl
     (lambda (node service)

@@ -5,7 +5,7 @@
 
 (library (tidbits generator)
   (export define-generator)
-  (import (rnrs) (only (core) format))
+  (import (rnrs) (srfi :28))
 
   (define unexpected-return
     (lambda (name)

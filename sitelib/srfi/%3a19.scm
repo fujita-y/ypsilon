@@ -1,61 +1,50 @@
 #!nobacktrace
 (library (srfi :19)
-
-  (export time-duration
-          time-monotonic
-          time-tai
-          time-utc
+  (export add-duration
+          add-duration!
+          copy-time
           current-date
           current-julian-day
           current-modified-julian-day
           current-time
-          time-resolution
-          make-time
-          time?
-          time-type
-          time-nanosecond
-          time-second
-          set-time-type!
-          set-time-nanosecond!
-          set-time-second!
-          copy-time
-          time<=?
-          time<?
-          time=?
-          time>=?
-          time>?
-          time-difference
-          time-difference!
-          add-duration
-          add-duration!
-          subtract-duration
-          subtract-duration!
-          make-date
-          date?
-          date-nanosecond
-          date-second
-          date-minute
-          date-hour
-          date-day
-          date-month
-          date-year
-          date-zone-offset
-          date-year-day
-          date-week-day
-          date-week-number
           date->julian-day
           date->modified-julian-day
+          date->string
           date->time-monotonic
           date->time-tai
           date->time-utc
+          date-day
+          date-hour
+          date-minute
+          date-month
+          date-nanosecond
+          date-second
+          date-week-day
+          date-week-number
+          date-year
+          date-year-day
+          date-zone-offset
+          date?
           julian-day->date
           julian-day->time-monotonic
           julian-day->time-tai
           julian-day->time-utc
+          make-date
+          make-time
           modified-julian-day->date
           modified-julian-day->time-monotonic
           modified-julian-day->time-tai
           modified-julian-day->time-utc
+          set-time-nanosecond!
+          set-time-second!
+          set-time-type!
+          string->date
+          subtract-duration
+          subtract-duration!
+          time-difference
+          time-difference!
+          time-duration
+          time-monotonic
           time-monotonic->date
           time-monotonic->julian-day
           time-monotonic->modified-julian-day
@@ -63,6 +52,10 @@
           time-monotonic->time-tai!
           time-monotonic->time-utc
           time-monotonic->time-utc!
+          time-nanosecond
+          time-resolution
+          time-second
+          time-tai
           time-tai->date
           time-tai->julian-day
           time-tai->modified-julian-day
@@ -70,6 +63,8 @@
           time-tai->time-monotonic!
           time-tai->time-utc
           time-tai->time-utc!
+          time-type
+          time-utc
           time-utc->date
           time-utc->julian-day
           time-utc->modified-julian-day
@@ -77,9 +72,10 @@
           time-utc->time-monotonic!
           time-utc->time-tai
           time-utc->time-tai!
-          date->string
-          string->date)
-
-  (import (srfi srfi-19))
-
-  ) ;[end]
+          time<=?
+          time<?
+          time=?
+          time>=?
+          time>?
+          time?)
+  (import (srfi srfi-19)))

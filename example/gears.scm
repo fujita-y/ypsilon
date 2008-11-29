@@ -1,4 +1,5 @@
 #!/usr/bin/env ypsilon
+#!r6rs
 ;;
 ;; 3-D gear wheels.  This program is in the public domain.
 ;;
@@ -10,7 +11,13 @@
 ;; Port to Scheme/Gauche(GLUT) by YOKOTA Hiroshi
 ;; Port to Ypsilon by YOKOTA Hiroshi
 
-(import (core) (rnrs) (rnrs programs) (gl) (glut))
+(import (rnrs)
+        (rnrs r5rs)
+        (rnrs programs)
+        (srfi :28)
+        (ypsilon gl)
+        (ypsilon glut)
+        (ypsilon time))
 
 ;; These constant values are not defined in Ypsilon yet
 (define pi 3.14159265358979323846)
@@ -270,7 +277,7 @@
   (glMaterialfv GL_FRONT GL_AMBIENT_AND_DIFFUSE (f32vector 0.2 0.2 1.0 1.0))
   (gear 1.3 2.0 0.5 10 0.7)
   (glEndList)
-  
+
   (glEnable GL_NORMALIZE)
 
   ;; glGetString dose not works correctly.
@@ -298,7 +305,7 @@
     (set! *angle* (mod *angle* 360.0)) ; prevents eventual overflow
     (glutPostRedisplay)))))
 
-;; change view angle, exit upon ESC 
+;; change view angle, exit upon ESC
 (define (key rk x y)
   (let ((q (lambda () (glutPostRedisplay)))
     (k (c-int->c-uchar rk)))

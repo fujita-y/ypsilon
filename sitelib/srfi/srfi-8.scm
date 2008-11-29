@@ -3,10 +3,8 @@
 ;;; -- y.fujita.lwp
 
 (library (srfi srfi-8)
-
   (export receive)
-
-  (import (core primitives))
+  (import (core))
 
   (define-syntax receive
     (syntax-rules ()

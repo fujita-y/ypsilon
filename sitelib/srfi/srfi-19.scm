@@ -3,7 +3,6 @@
 ;;; -- y.fujita.lwp
 
 (library (srfi srfi-19)
-
   (export time-duration
           time-monotonic
           time-tai
@@ -82,12 +81,7 @@
           time-utc->time-tai!
           date->string
           string->date)
-
-  (import (rnrs)
-          (rnrs r5rs)
-          (rnrs mutable-strings)
-          (srfi :6)
-          (only (core) microsecond microsecond->utc format))
+  (import (core) (srfi srfi-6))
 
   (define-record-type time
     (fields

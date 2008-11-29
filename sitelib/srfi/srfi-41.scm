@@ -7,4 +7,4 @@
           stream-iterate stream-length stream-let stream-map stream-match _
           stream-of stream-range stream-ref stream-reverse stream-scan stream-take
           stream-take-while stream-unfold stream-unfolds stream-zip)
-  (import (streams)))
+  (import (ypsilon streams)))

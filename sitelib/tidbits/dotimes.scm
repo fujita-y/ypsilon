@@ -4,9 +4,7 @@
 ;;; See license.txt for terms and conditions of use.
 
 (library (tidbits dotimes)
-
   (export dotimes)
-
   (import (rnrs))
 
   (define-syntax dotimes

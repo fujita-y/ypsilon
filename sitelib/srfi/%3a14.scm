@@ -1,45 +1,67 @@
 #!nobacktrace
 (library (srfi :14)
-
-  (export
-
-   ;; predicates & comparison
-   char-set? char-set= char-set<= char-set-hash
-
-   ;; iterating over character sets
-   char-set-cursor char-set-ref char-set-cursor-next end-of-char-set?
-   char-set-fold char-set-unfold char-set-unfold!
-   char-set-for-each char-set-map
-
-   ;; creating character sets
-   char-set-copy char-set
-   list->char-set string->char-set
-   list->char-set! string->char-set!
-   char-set-filter ucs-range->char-set
-   char-set-filter! ucs-range->char-set!
-   ->char-set
-
-   ;; querying character sets
-   char-set->list char-set->string
-   char-set-size char-set-count char-set-contains?
-   char-set-every char-set-any
-
-   ;; character-set algebra
-   char-set-adjoin char-set-delete
-   char-set-adjoin! char-set-delete!
-   char-set-complement char-set-union char-set-intersection
-   char-set-complement! char-set-union! char-set-intersection!
-   char-set-difference char-set-xor char-set-diff+intersection
-   char-set-difference! char-set-xor! char-set-diff+intersection!
-
-   ;; standard character sets
-   char-set:lower-case char-set:upper-case char-set:title-case
-   char-set:letter char-set:digit char-set:letter+digit
-   char-set:graphic char-set:printing char-set:whitespace
-   char-set:iso-control char-set:punctuation char-set:symbol
-   char-set:hex-digit char-set:blank char-set:ascii
-   char-set:empty char-set:full)
-
-  (import (srfi srfi-14))
-
-  ) ;[end]
+  (export ->char-set
+          char-set
+          char-set->list
+          char-set->string
+          char-set-adjoin
+          char-set-adjoin!
+          char-set-any
+          char-set-complement
+          char-set-complement!
+          char-set-contains?
+          char-set-copy
+          char-set-count
+          char-set-cursor
+          char-set-cursor-next
+          char-set-delete
+          char-set-delete!
+          char-set-diff+intersection
+          char-set-diff+intersection!
+          char-set-difference
+          char-set-difference!
+          char-set-every
+          char-set-filter
+          char-set-filter!
+          char-set-fold
+          char-set-for-each
+          char-set-hash
+          char-set-intersection
+          char-set-intersection!
+          char-set-map
+          char-set-ref
+          char-set-size
+          char-set-unfold
+          char-set-unfold!
+          char-set-union
+          char-set-union!
+          char-set-xor
+          char-set-xor!
+          char-set:ascii
+          char-set:blank
+          char-set:digit
+          char-set:empty
+          char-set:full
+          char-set:graphic
+          char-set:hex-digit
+          char-set:iso-control
+          char-set:letter
+          char-set:letter+digit
+          char-set:lower-case
+          char-set:printing
+          char-set:punctuation
+          char-set:symbol
+          char-set:title-case
+          char-set:upper-case
+          char-set:whitespace
+          char-set<=
+          char-set=
+          char-set?
+          end-of-char-set?
+          list->char-set
+          list->char-set!
+          string->char-set
+          string->char-set!
+          ucs-range->char-set
+          ucs-range->char-set!)
+  (import (srfi srfi-14)))

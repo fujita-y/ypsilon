@@ -1,163 +1,156 @@
 #!nobacktrace
-
 (library (srfi :1)
-
-  (export
-   ;; constructors
-   xcons
-   list
-   cons*
-   make-list
-   list-tabulate
-   list-copy
-   circular-list
-   iota
-
-   ;; predicates
-   pair?
-   null?
-   proper-list?
-   circular-list?
-   dotted-list?
-   not-pair?
-   null-list?
-   list=
-
-   ;; selectors
-   car cdr
-   caar cadr cdar cddr
-   caaar caadr cadar caddr
-   cdaar cdadr cddar cdddr
-   caaaar caaadr caadar caaddr
-   cadaar cadadr caddar cadddr
-   cdaaar cdaadr cdadar cdaddr
-   cddaar cddadr cdddar cddddr
-   list-ref
-   first
-   second
-   third
-   fourth
-   fifth
-   sixth
-   seventh
-   eighth
-   ninth
-   tenth
-   car+cdr
-   take
-   take!
-   drop
-   take-right
-   drop-right
-   drop-right!
-   split-at
-   split-at!
-   last
-   last-pair
-
-   ;; miscellaneous: length, append, concatenate, reverse, zip & count
-   length
-   length+
-   append
-   append!
-   concatenate
-   concatenate!
-   reverse
-   reverse!
-   append-reverse
-   append-reverse!
-   zip
-   unzip1 unzip2 unzip3 unzip4 unzip5
-   count
-
-   ;; fold, unfold & map
-   map
-   map!
-   map/srfi-1
-   map!/srfi-1
-   for-each
-   for-each/srfi-1
-   fold
-   fold-right
-   fold-right/srfi-1
-   unfold
-   pair-fold
-   reduce
-   unfold-right
-   pair-fold-right
-   reduce-right
-   append-map
-   append-map!
-   pair-for-each
-   filter-map
-   map-in-order
-
-   ;; filtering & partitioning
-   filter                                        ; -> (core lists)
-   filter!
-   partition                                     ; -> (core lists)
-   partition!
-   remove/srfi-1
-   remove!/srfi-1
-
-   ;; seaching
-   member
-   member/srfi-1
-   memq
-   memv
-   find
-   find-tail
-   any
-   every
-   list-index
-   take-while
-   take-while!
-   drop-while
-   span
-   span!
-   break
-   break!
-
-   ;; deleting
-   delete
-   delete!
-   delete-duplicates
-   delete-duplicates!
-
-   ;; association lists
-   assoc
-   assoc/srfi-1
-   assq
-   assv
-   alist-cons
-   alist-copy
-   alist-delete
-   alist-delete!
-
-   ;; set operations on lists
-   lset<=
-   lset=
-   lset-adjoin
-   lset-adjoin!
-   lset-union
-   lset-union!
-   lset-intersection
-   lset-intersection!
-   lset-difference
-   lset-difference!
-   lset-xor
-   lset-xor!
-   lset-diff+intersection
-   lset-diff+intersection!)
-
-   ;; procedures conflict with r6rs
-   #;(rename (map/srfi-1 map)
-             (map!/srfi-1 map!)
-             (for-each/srfi-1 for-each)
-             (fold-right/srfi-1 fold-right)
-             (member/srfi-1 member)
-             (assoc/srfi-1 assoc)
-             (remove/srfi-1 remove)
-             (remove!/srfi-1 remove!))
-
+  (export alist-cons
+          alist-copy
+          alist-delete
+          alist-delete!
+          any
+          append
+          append!
+          append-map
+          append-map!
+          append-reverse
+          append-reverse!
+          assoc
+          assoc/srfi-1
+          assq
+          assv
+          break
+          break!
+          caaaar
+          caaadr
+          caaar
+          caadar
+          caaddr
+          caadr
+          caar
+          cadaar
+          cadadr
+          cadar
+          caddar
+          cadddr
+          caddr
+          cadr
+          car
+          car+cdr
+          cdaaar
+          cdaadr
+          cdaar
+          cdadar
+          cdaddr
+          cdadr
+          cdar
+          cddaar
+          cddadr
+          cddar
+          cdddar
+          cddddr
+          cdddr
+          cddr
+          cdr
+          circular-list
+          circular-list?
+          concatenate
+          concatenate!
+          cons*
+          count
+          delete
+          delete!
+          delete-duplicates
+          delete-duplicates!
+          dotted-list?
+          drop
+          drop-right
+          drop-right!
+          drop-while
+          eighth
+          every
+          fifth
+          filter
+          filter!
+          filter-map
+          find
+          find-tail
+          first
+          fold
+          fold-right
+          fold-right/srfi-1
+          for-each
+          for-each/srfi-1
+          fourth
+          iota
+          last
+          last-pair
+          length
+          length+
+          list
+          list-copy
+          list-index
+          list-ref
+          list-tabulate
+          list=
+          lset-adjoin
+          lset-adjoin!
+          lset-diff+intersection
+          lset-diff+intersection!
+          lset-difference
+          lset-difference!
+          lset-intersection
+          lset-intersection!
+          lset-union
+          lset-union!
+          lset-xor
+          lset-xor!
+          lset<=
+          lset=
+          make-list
+          map
+          map!
+          map!/srfi-1
+          map-in-order
+          map/srfi-1
+          member
+          member/srfi-1
+          memq
+          memv
+          ninth
+          not-pair?
+          null-list?
+          null?
+          pair-fold
+          pair-fold-right
+          pair-for-each
+          pair?
+          partition
+          partition!
+          proper-list?
+          reduce
+          reduce-right
+          remove!/srfi-1
+          remove/srfi-1
+          reverse
+          reverse!
+          second
+          seventh
+          sixth
+          span
+          span!
+          split-at
+          split-at!
+          take
+          take!
+          take-right
+          take-while
+          take-while!
+          tenth
+          third
+          unfold
+          unfold-right
+          unzip1
+          unzip2
+          unzip3
+          unzip4
+          unzip5
+          xcons
+          zip)
   (import (srfi srfi-1)))
