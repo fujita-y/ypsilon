@@ -48,8 +48,7 @@ private:
     void            parsing_line(int line);
     scm_obj_t       lookup_graph(scm_tuple_t tuple);
     void            link_graph(scm_obj_t obj);
-    
-    scm_hashtable_t m_graph;
+
     scm_hashtable_t m_note;
     int             m_first_line;
     int             m_parsing_line_from;
@@ -57,8 +56,10 @@ private:
     VM*             m_vm;
     scm_port_t      m_in;
     scm_obj_t       m_ungetbuf;
-    bool            m_ungetbuf_valid;
-    bool            m_file;
+    int             m_ungetbuf_valid;
+    int             m_file;
+    scm_hashtable_t m_graph;
+    int             m_graph_ref;
     static bool     s_char_map_ready;
     static uint8_t  s_char_map[128];
     static void     make_char_map();

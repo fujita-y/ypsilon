@@ -39,7 +39,7 @@
     bytes_to_bucket(uint32_t x) // see bit.cpp
     {
         assert(x >= 16); // (1 << 4)
-        uint32_t n = 0;  
+        uint32_t n = 0;
         uint32_t c = 16;
         x = x - 1;
         do {
@@ -54,7 +54,7 @@
     bytes_to_bucket(uint32_t x) // see bit.cpp
     {
         assert(x >= 8); // (1 << 3)
-        uint32_t n = 0;  
+        uint32_t n = 0;
         uint32_t c = 16;
         x = x - 1;
         do {

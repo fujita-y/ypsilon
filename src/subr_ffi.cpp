@@ -140,7 +140,7 @@ subr_call_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
             vm->m_shared_object_errno = errno;
 #if _MSC_VER
             vm->m_shared_object_last_error = GetLastError();
-#endif            
+#endif
             return int_to_integer(vm->m_heap, retval);
         }
         invalid_argument_violation(vm, "call-shared-object->int", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);

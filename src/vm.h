@@ -83,7 +83,7 @@ public:
     int                 m_id;
     int                 m_child;
 #endif
-    
+
     scm_closure_t       lookup_system_closure(const char* name);
     scm_obj_t           lookup_current_environment(scm_symbol_t symbol);
     void                intern_current_environment(scm_symbol_t symbol, scm_obj_t value);

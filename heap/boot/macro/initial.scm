@@ -102,19 +102,17 @@
 
 (define strip-rename-suffix
   (lambda (lst)
-    (define ht-visited (make-core-hashtable))
-    (let loop ((lst lst))
-      (cond ((pair? lst)
-             (cond ((core-hashtable-contains? ht-visited lst) lst)
-                   (else
-                    (core-hashtable-set! ht-visited lst #t)
-                    (let ((a (loop (car lst))) (d (loop (cdr lst))))
-                      (if (and (eq? a (car lst)) (eq? d (cdr lst))) lst (cons a d))))))
-            ((symbol? lst)
-             (original-id lst))
-            ((vector? lst) 
-             (list->vector (map loop (vector->list lst))))
-            (else lst)))))
+    (if (cyclic-object? lst)
+        lst
+        (let loop ((lst lst))
+          (cond ((pair? lst)
+                 (let ((a (loop (car lst))) (d (loop (cdr lst))))
+                   (if (and (eq? a (car lst)) (eq? d (cdr lst))) lst (cons a d))))
+                ((symbol? lst)
+                 (original-id lst))
+                ((vector? lst)
+                 (list->vector (map loop (vector->list lst))))
+                (else lst))))))
 
 (define retrieve-rename-suffix
   (lambda (id)
