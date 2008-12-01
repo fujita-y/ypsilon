@@ -362,7 +362,7 @@
                                            (parameterize ((current-closure-comments (make-core-hashtable)))
                                              (compile-coreform (macro-expand obj)))))
                                       (or cyclic-code
-                                          (cond ((circular-tree? code)
+                                          (cond ((cyclic-object? code)
                                                  (close-port output)
                                                  (and (file-exists? dst) (delete-file dst))
                                                  (set! cyclic-code #t))

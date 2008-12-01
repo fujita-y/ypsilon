@@ -70,7 +70,7 @@
 
       (define indent-type1?
         (lambda (id)
-          (memq id '(library define define-syntax define-macro define-inline define-constant 
+          (memq id '(library define define-syntax define-macro define-inline define-constant
                       syntax-rules syntax-case
                       with-syntax lambda let-syntax letrec-syntax
                       let letrec let* letrec letrec* let-values let*-values
@@ -150,28 +150,28 @@
                    (('unquote-splicing e) `(",@" (.&NEST 2 ,(parse e))))
                    (('let (? symbol? e1) e2 . (? pair? e3))
                     `(.&GROUP ,(format "(let ~a " e1)
-                              (.&NEST 2 
-                                      (.&NEST ,(+ (symbol->length e1) 4) 
-                                              ,(parse e2)) 
+                              (.&NEST 2
+                                      (.&NEST ,(+ (symbol->length e1) 4)
+                                              ,(parse e2))
                                       #\;
                                       ,@(parse-list e3) ")")))
                    (((? indent-type1? e1) e2 . (? pair? e3))
-                    `(.&GROUP ,(format "(~a " e1) 
+                    `(.&GROUP ,(format "(~a " e1)
                               (.&NEST 2
                                       (.&NEST ,(symbol->length e1)
                                               ,(parse e2))
                                       #\;
                                       ,@(parse-list e3) ")")))
                    (((? indent-type2? e1) e2 . (? pair? e3))
-                    `(.&GROUP ,(format "(~a " e1) 
-                              (.&NEST ,(+ (symbol->length e1) 2) 
+                    `(.&GROUP ,(format "(~a " e1)
+                              (.&NEST ,(+ (symbol->length e1) 2)
                                       ,(parse e2) #\; ,@(parse-list e3)) ")"))
                    (((? indent-type3? e1) e2 e3 . (? pair? e4))
-                    `(.&GROUP ,(format "(~a " e1) 
-                              (.&NEST 2 
-                                      (.&NEST 2 
-                                              ,(parse e2) #\; ,(parse e3)) 
-                                      #\; 
+                    `(.&GROUP ,(format "(~a " e1)
+                              (.&NEST 2
+                                      (.&NEST 2
+                                              ,(parse e2) #\; ,(parse e3))
+                                      #\;
                                       ,@(parse-list e4) ")")))
                    (((? symbol? _) . _)
                     `(.&GROUP "(" (.&NEST 2 ,@(parse-list obj)) ")"))
@@ -181,35 +181,14 @@
                  (if (= (vector-length obj) 0)
                      "#()"
                      `(.&GROUP "#(" (.&NEST 2 ,@(parse-list (vector->list obj))) ")")))
+                ((tuple? obj)
+                 (format "~w" obj))
                 ((pretty-print-unwrap-syntax)
                  (format "~u" obj))
                 (else
                  (format "~s" obj)))))
-      
-      (define infinite-print?
-        (lambda (lst)
-          (let ((ht (make-core-hashtable)))
-            (and (let loop ((lst lst) (ancestor '()) (limit (record-print-nesting-limit)))
-                   (if (core-hashtable-ref ht lst #f)
-                       (memq lst ancestor)
-                       (cond ((pair? lst)
-                              (core-hashtable-set! ht lst #t)
-                              (let ((ancestor (cons lst ancestor)))
-                                (or (loop (car lst) ancestor limit)
-                                    (loop (cdr lst) ancestor limit))))
-                             ((vector? lst)
-                              (core-hashtable-set! ht lst #t)
-                              (let ((ancestor (cons lst ancestor)))
-                                (any1 (lambda (e) (loop e ancestor limit)) (vector->list lst))))
-                             ((tuple? lst)
-                              (core-hashtable-set! ht lst #t)
-                              (and (> limit 0)
-                                   (let ((ancestor (cons lst ancestor)) (limit (- limit 1)))
-                                     (any1 (lambda (e) (loop e ancestor limit)) (tuple->list lst)))))
-                             (else #f))))
-                 #t))))
 
-      (if (infinite-print? expr)
+      (if (cyclic-object? expr)
           (format port "~w" expr)
           (let ((width (pretty-print-line-length)))
             (parameterize ((collect-notify #f))
@@ -220,4 +199,3 @@
              (put-string port "  ..."))
             (else
              (unspecified))))))
-

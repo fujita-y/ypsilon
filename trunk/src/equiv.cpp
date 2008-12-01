@@ -148,6 +148,7 @@ equal_pred(object_heap_t* heap, scm_hashtable_t visited, scm_obj_t lst1, scm_obj
 #if USE_R5RS_EQUAL
     return r5rs_equal_pred(lst1, lst2);
 #endif
+    // todo: optimize
     int c1 = terminal_listp(lst1);
     if (c1) {
         if (c1 == terminal_listp(lst2)) return r5rs_equal_pred(lst1, lst2);

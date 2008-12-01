@@ -158,16 +158,19 @@
     (let ((visited (make-core-hashtable)) (ids (make-core-hashtable)) (deno (make-unbound)))
       (for-each (lambda (id) (core-hashtable-set! ids id deno)) coreform-primitives)
       (let loop ((lst lst))
-        (cond ((core-hashtable-contains? visited lst))
-              (else
-               (core-hashtable-set! visited lst #t)
-               (cond ((pair? lst)
-                      (loop (car lst))
-                      (loop (cdr lst)))
-                     ((symbol? lst)
-                      (core-hashtable-set! ids lst deno))
-                     ((vector? lst)
-                      (loop (vector->list lst)))))))
+        (cond ((symbol? lst)
+               (core-hashtable-set! ids lst deno))
+              ((pair? lst)
+               (or (core-hashtable-contains? visited lst)
+                   (begin
+                     (core-hashtable-set! visited lst #t)
+                     (loop (car lst))
+                     (loop (cdr lst)))))
+              ((vector? lst)
+               (or (core-hashtable-contains? visited lst)
+                   (begin
+                     (core-hashtable-set! visited lst #t)
+                     (loop (vector->list lst)))))))
       ids)))
 
 (define parse-exports

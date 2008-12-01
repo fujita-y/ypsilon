@@ -15,56 +15,6 @@
     (let loop ((lst lst) (n 0))
       (if (pair? lst) (loop (cdr lst) (+ n 1)) n))))
 
-(define circular-tree?
-  (lambda (lst)
-    (let ((ht (make-core-hashtable)))
-      (and (let loop ((lst lst) (ancestor '()))
-             (if (core-hashtable-ref ht lst #f)
-                 (memq lst ancestor)
-                 (cond ((pair? lst)
-                        (core-hashtable-set! ht lst #t)
-                        (let ((ancestor (cons lst ancestor)))
-                          (or (loop (car lst) ancestor)
-                              (loop (cdr lst) ancestor))))
-                       ((vector? lst)
-                        (core-hashtable-set! ht lst #t)
-                        (let ((ancestor (cons lst ancestor)))
-                          (any1 (lambda (e) (loop e ancestor)) (vector->list lst))))
-                       ((tuple? lst)
-                        (core-hashtable-set! ht lst #t)
-                        (let ((ancestor (cons lst ancestor)))
-                          (any1 (lambda (e) (loop e ancestor)) (tuple->list lst))))
-                       (else #f))))
-           #t))))
-
-(define safe-length
-  (lambda (lst)
-    (let loop ((lst lst) (n 0))
-      (if (pair? lst)
-          (loop (cdr lst) (+ n 1))
-          (or (and (null? lst) n) -1)))))
-  
-(define split-at
-    (lambda (lst n)
-      (values (list-head lst n) (list-tail lst n))))
-
-(define unique-id-list?
-  (lambda (lst)
-    (and (list? lst)
-         (not (let loop ((lst lst))
-                (and (pair? lst)
-                     (or (not (symbol? (car lst)))
-                         (memq (car lst) (cdr lst))
-                         (loop (cdr lst)))))))))
-
-(define find-duplicates
-  (lambda (lst)
-    (and (list? lst)
-         (let loop ((lst lst))
-           (and (pair? lst)
-                (if (memq (car lst) (cdr lst))
-                    (car lst)
-                    (loop (cdr lst))))))))
 
 (define every1
   (lambda (pred lst)
@@ -91,7 +41,7 @@
 
 (define any2
   (lambda (pred lst1 lst2)
-    (and (not (null? lst1)) 
+    (and (not (null? lst1))
          (not (null? lst2))
          (or (pred (car lst1) (car lst2))
              (any2 pred (cdr lst1) (cdr lst2))))))
@@ -110,9 +60,38 @@
             ((pred (car lst)) (loop (cdr lst) (cons (car lst) acc1) acc2))
             (else (loop (cdr lst) acc1 (cons (car lst) acc2)))))))
 
+(define safe-length
+  (lambda (lst)
+    (let loop ((lst lst) (n 0))
+      (if (pair? lst)
+          (loop (cdr lst) (+ n 1))
+          (or (and (null? lst) n) -1)))))
+
+(define split-at
+  (lambda (lst n)
+    (values (list-head lst n) (list-tail lst n))))
+
+(define unique-id-list?
+  (lambda (lst)
+    (and (list? lst)
+         (not (let loop ((lst lst))
+                (and (pair? lst)
+                     (or (not (symbol? (car lst)))
+                         (memq (car lst) (cdr lst))
+                         (loop (cdr lst)))))))))
+
+(define find-duplicates
+  (lambda (lst)
+    (and (list? lst)
+         (let loop ((lst lst))
+           (and (pair? lst)
+                (if (memq (car lst) (cdr lst))
+                    (car lst)
+                    (loop (cdr lst))))))))
+
 (define string-split
   (lambda (str delim)
-    
+
     (define split->list
       (lambda (str proc)
         (let ((in (make-string-input-port str))
@@ -124,12 +103,12 @@
                        (if (string=? s "")
                            (reverse lst)
                            (reverse (cons s lst)))))
-                    ((proc c) 
+                    ((proc c)
                      (loop1 (cons (extract-accumulated-string out) lst)))
                     (else
                      (put-char out c)
                      (loop2 (get-char in)))))))))
-    
+
     (cond ((char? delim)
            (split->list str (lambda (c) (char=? c delim))))
           ((string? delim)

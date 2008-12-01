@@ -1728,9 +1728,9 @@ subr_process_environment_alist(VM* vm, int argc, scm_obj_t argv[])
             while (*s) {
                 const char* e = strchr(s, '=');
                 if (e && s != e) {
-                    obj = make_pair(vm->m_heap, 
-                                    make_pair(vm->m_heap, 
-                                              make_string_literal(vm->m_heap, s, e - s), 
+                    obj = make_pair(vm->m_heap,
+                                    make_pair(vm->m_heap,
+                                              make_string_literal(vm->m_heap, s, e - s),
                                               make_string_literal(vm->m_heap, e + 1)),
                                     obj);
                 }
@@ -1751,9 +1751,9 @@ subr_process_environment_alist(VM* vm, int argc, scm_obj_t argv[])
             const char* s = *p;
             const char* e = strchr(s, '=');
             if (e) {
-                obj = make_pair(vm->m_heap, 
-                                make_pair(vm->m_heap, 
-                                          make_string_literal(vm->m_heap, s, e - s), 
+                obj = make_pair(vm->m_heap,
+                                make_pair(vm->m_heap,
+                                          make_string_literal(vm->m_heap, s, e - s),
                                           make_string_literal(vm->m_heap, e + 1)),
                                 obj);
             }
@@ -2286,12 +2286,12 @@ subr_shared_queue_push(VM* vm, int argc, scm_obj_t argv[])
                     wrong_type_argument_violation(vm, "shared-queue-push!", 2, "non-negative fixnum", argv[2], argc, argv);
                     return scm_undef;
                 }
-            }            
+            }
             scm_sharedqueue_t queue = (scm_sharedqueue_t)argv[0];
             intptr_t id;
 #if USE_SHARED_QUEUE_QUICK_ENCODE
             if (FIXNUMP(argv[1])) {
-                id = FIXNUM(argv[1]) | INTPTR_MIN;                
+                id = FIXNUM(argv[1]) | INTPTR_MIN;
             }
             else if (argv[1] == scm_true) {
                 id = INTPTR_MAX;
@@ -2337,7 +2337,7 @@ subr_shared_queue_push(VM* vm, int argc, scm_obj_t argv[])
 }
 
 // shared-queue-pop!
-scm_obj_t subr_shared_queue_pop(VM* vm, int argc, scm_obj_t argv[]) 
+scm_obj_t subr_shared_queue_pop(VM* vm, int argc, scm_obj_t argv[])
 {
 #if USE_PARALLEL_VM
     if (argc == 1 || argc == 2) {
@@ -2367,7 +2367,7 @@ scm_obj_t subr_shared_queue_pop(VM* vm, int argc, scm_obj_t argv[])
                 vm->m_interp->update(vm, VM_STATE_ACTIVE);
                 if (!succ) return scm_shutdown;
             }
-            
+
         receive:
             {
 #if USE_SHARED_QUEUE_QUICK_ENCODE
@@ -2382,7 +2382,7 @@ scm_obj_t subr_shared_queue_pop(VM* vm, int argc, scm_obj_t argv[])
                 invalid_serialized_object_violation(vm, "shared-queue-pop!", bvector, argc, argv);
                 return scm_undef;
             }
-            
+
         timeout:
             if (queue->queue.no_more_get()) return scm_shutdown;
             return scm_timeout;
@@ -2552,10 +2552,10 @@ subr_shared_bag_put(VM* vm, int argc, scm_obj_t argv[])
                         wrong_type_argument_violation(vm, "shared-bag-put!", 3, "non-negative fixnum", argv[3], argc, argv);
                         return scm_undef;
                     }
-                } 
+                }
                 scm_string_t string = (scm_string_t)argv[1];
                 sharedbag_slot_t* slot = lookup_sharedbag((scm_sharedbag_t)argv[0], string->name, string->size);
-                assert(slot);                
+                assert(slot);
                 scm_obj_t obj = serializer_t(vm->m_heap).translate(argv[2]);
                 if (BVECTORP(obj)) {
                     scm_bvector_t bvector = (scm_bvector_t)obj;
@@ -2594,7 +2594,7 @@ subr_shared_bag_put(VM* vm, int argc, scm_obj_t argv[])
 // (shared-bag-get! <bag:shared-bag> <tag:string> . <timeout:fixnum>)
 // shared-bag-get!
 scm_obj_t
-subr_shared_bag_get(VM* vm, int argc, scm_obj_t argv[]) 
+subr_shared_bag_get(VM* vm, int argc, scm_obj_t argv[])
 {
 #if USE_PARALLEL_VM
     if (argc == 2 || argc == 3) {
@@ -2610,7 +2610,7 @@ subr_shared_bag_get(VM* vm, int argc, scm_obj_t argv[])
             }
             scm_string_t string = (scm_string_t)argv[1];
             sharedbag_slot_t* slot = lookup_sharedbag((scm_sharedbag_t)argv[0], string->name, string->size);
-            assert(slot);                
+            assert(slot);
             intptr_t id;
             bool succ;
             if (slot->queue.wait_lock_try_get(&id)) goto receive;
@@ -2626,7 +2626,7 @@ subr_shared_bag_get(VM* vm, int argc, scm_obj_t argv[])
                 vm->m_interp->update(vm, VM_STATE_ACTIVE);
                 if (!succ) return scm_shutdown;
             }
-            
+
         receive:
             {
                 scm_bvector_t bvector = make_bvector(vm->m_heap, slot->buf.size(id));
@@ -2636,7 +2636,7 @@ subr_shared_bag_get(VM* vm, int argc, scm_obj_t argv[])
                 invalid_serialized_object_violation(vm, "shared-bag-get!", bvector, argc, argv);
                 return scm_undef;
             }
-            
+
         timeout:
             if (slot->queue.no_more_get()) return scm_shutdown;
             return scm_timeout;
@@ -2803,7 +2803,7 @@ subr_decode_microsecond(VM* vm, int argc, scm_obj_t argv[])
             time_t sec = usec / 1000000;
             struct tm date;
             localtime_r(&sec, &date);
-            return make_list(vm->m_heap, 9, 
+            return make_list(vm->m_heap, 9,
                              MAKEFIXNUM(date.tm_sec), MAKEFIXNUM(date.tm_min), MAKEFIXNUM(date.tm_hour),
                              MAKEFIXNUM(date.tm_mday), MAKEFIXNUM(date.tm_mon), MAKEFIXNUM(date.tm_year),
                              MAKEFIXNUM(date.tm_wday), MAKEFIXNUM(date.tm_yday), MAKEFIXNUM(date.tm_isdst));
@@ -2892,6 +2892,14 @@ subr_time_usage(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// cyclic-object?
+scm_obj_t
+subr_cyclic_object_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) return cyclic_objectp(vm->m_heap, argv[0]) ? scm_true : scm_false;
+    wrong_number_of_arguments_violation(vm, "cyclic-object?", 1, 1, argc, argv);
+    return scm_undef;
+}
 void
 init_subr_others(object_heap_t* heap)
 {
@@ -2999,8 +3007,9 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("thread-id", subr_thread_id);
     DEFSUBR("microsecond", subr_microsecond);
     DEFSUBR("microsecond->utc", subr_microsecond_utc);
-    DEFSUBR("microsecond->string", subr_microsecond_string);    
-  //DEFSUBR("string->microsecond", subr_string_microsecond);    
-    DEFSUBR("decode-microsecond", subr_decode_microsecond);    
-    DEFSUBR("encode-microsecond", subr_encode_microsecond);    
+    DEFSUBR("microsecond->string", subr_microsecond_string);
+  //DEFSUBR("string->microsecond", subr_string_microsecond);
+    DEFSUBR("decode-microsecond", subr_decode_microsecond);
+    DEFSUBR("encode-microsecond", subr_encode_microsecond);
+    DEFSUBR("cyclic-object?", subr_cyclic_object_pred);
 }

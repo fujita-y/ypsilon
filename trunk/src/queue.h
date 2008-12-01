@@ -1073,7 +1073,7 @@ public:
     {
         return tail == head;
     }
-    
+
     void destroy()
     {
         free(tags);

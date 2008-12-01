@@ -13,4 +13,3 @@
 sharedbag_slot_t* lookup_sharedbag(scm_sharedbag_t bag, const char* key, int len);
 
 #endif
-

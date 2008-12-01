@@ -209,7 +209,6 @@
     char?
     check-argument
     circular-list?
-    circular-tree?
     close-input-port
     close-output-port
     close-port
@@ -267,6 +266,7 @@
     current-rename-delimiter
     current-source-comments
     current-variable-environment
+    cyclic-object?
     datum
     datum->syntax
     decode-flonum

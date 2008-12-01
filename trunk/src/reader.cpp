@@ -83,6 +83,7 @@ reader_t::reader_t(VM* vm, scm_port_t input)
     m_vm = vm;
     m_ungetbuf = scm_eof;
     m_ungetbuf_valid = false;
+    m_graph_ref = false;
 }
 
 void
@@ -806,7 +807,11 @@ top:
                     }
                     lexical_error("invalid lexical syntax #~a~a", MAKECHAR(c), MAKECHAR(c2));
                 }
-                case '(': return make_vector(m_vm->m_heap, read_list(false));
+                case '(': {
+                    scm_obj_t lst = read_list(false);
+                    if (listp(lst)) return make_vector(m_vm->m_heap, lst);
+                    lexical_error("misplaced dot('.') while reading vector");
+                }
                 case '|': return skip_srfi30();
                 case '\\': return read_char();
                 case ';': read_expr(); goto top;
@@ -851,6 +856,7 @@ top:
                             if (c2 == '#') {
                                 scm_tuple_t tuple = make_tuple(m_vm->m_heap, 1);
                                 tuple->elts[0] = MAKEFIXNUM(mark);
+                                m_graph_ref = true;
                                 return tuple;
                             }
                             break;
@@ -977,7 +983,7 @@ reader_t::read(scm_hashtable_t note)
     if (m_vm->flags.m_extend_lexical_syntax != scm_true) {
         if (obj == S_DOT) lexical_error("misplaced dot('.')");
     }
-    if (m_graph && m_graph->datum->live) link_graph(obj);
+    if (m_graph && m_graph_ref) link_graph(obj);
     parsing_range(m_first_line, m_in->line);
     return obj;
 }

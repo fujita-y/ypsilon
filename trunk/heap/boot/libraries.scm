@@ -400,7 +400,7 @@
                         unspecified?
                         generate-temporary-symbol
                         circular-list?
-                        circular-tree?
+                        cyclic-object?
                         list-transpose
                         list-transpose+
                         list-transpose*

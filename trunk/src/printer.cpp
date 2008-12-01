@@ -261,7 +261,7 @@ printer_t::format_va_list(const char* fmt, va_list ap)
                         m_unwrap = true;
                         m_radix = 10;
                         scm_obj_t expr = va_arg(ap, scm_obj_t);
-                        if (infinite_listp(m_vm->m_heap, expr)) write_shared(expr);
+                        if (cyclic_objectp(m_vm->m_heap, expr)) write_shared(expr);
                         else write(expr);
                         if (PAIRP(expr) && m_vm->m_current_source_comments != scm_false) {
                             assert(HASHTABLEP(m_vm->m_current_source_comments));
@@ -340,7 +340,7 @@ printer_t::format_va_list(const char* fmt, va_list ap)
                             write(obj);
                         }
                     } break;
-                    
+
                     case '\\': {
                         scm_obj_t obj = va_arg(ap, scm_obj_t);
                         if (STRINGP(obj)) {
@@ -360,76 +360,76 @@ printer_t::format_va_list(const char* fmt, va_list ap)
                             write(obj);
                         }
                     } break;
-                    
+
                     case 'a': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 10;
                         scm_obj_t expr = va_arg(ap, scm_obj_t);
-                        if (infinite_listp(m_vm->m_heap, expr)) write_shared(expr);
+                        if (cyclic_objectp(m_vm->m_heap, expr)) write_shared(expr);
                         else write(expr);
                     } break;
-                    
+
                     case 's': {
                         m_escape = true;
                         m_unwrap = false;
                         m_radix = 10;
                         scm_obj_t expr = va_arg(ap, scm_obj_t);
-                        if (infinite_listp(m_vm->m_heap, expr)) write_shared(expr);
+                        if (cyclic_objectp(m_vm->m_heap, expr)) write_shared(expr);
                         else write(expr);
                     } break;
-                    
+
                     case 'w': {
                         m_escape = true;
                         m_unwrap = false;
                         m_radix = 10;
                         write_shared(va_arg(ap, scm_obj_t));
                     } break;
-                        
+
                     case 'u': {
                         m_escape = true;
                         m_unwrap = true;
                         m_radix = 10;
                         scm_obj_t expr = va_arg(ap, scm_obj_t);
-                        if (infinite_listp(m_vm->m_heap, expr)) write_shared(expr);
+                        if (cyclic_objectp(m_vm->m_heap, expr)) write_shared(expr);
                         else write(expr);
                     } break;
-                    
+
                     case 'c': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 10;
                         write(va_arg(ap, scm_obj_t));
                     } break;
-                    
+
                     case 'd': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 10;
                         write(va_arg(ap, scm_obj_t));
                     } break;
-                    
+
                     case 'x': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 16;
                         write(va_arg(ap, scm_obj_t));
                     } break;
-                    
+
                     case 'o': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 8;
                         write(va_arg(ap, scm_obj_t));
                     } break;
-                    
+
                     case 'b': {
                         m_escape = false;
                         m_unwrap = false;
                         m_radix = 2;
                         write(va_arg(ap, scm_obj_t));
                     } break;
-                    
+
                     case '%':
                         port_put_byte(m_port, '\n');
                         break;
