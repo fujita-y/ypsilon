@@ -117,6 +117,10 @@ top:
             scm_obj_t type = classify_list(CAR(lst));
             if (type == scm_true) return true;
             if (type == scm_nil) {
+                if (CDR(lst) == scm_nil) {
+                    lst = CAR(lst);
+                    goto top;
+                }
                 ancestor = make_pair(heap, lst, ancestor);
                 if (cyclic_object_test(CAR(lst), ancestor, heap)) return true;
             }

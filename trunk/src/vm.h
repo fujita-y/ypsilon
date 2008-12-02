@@ -76,7 +76,7 @@ public:
     scm_obj_t           m_current_source_comments;
     int                 m_recursion_level;
     int                 m_shared_object_errno;
-    uint32_t            m_shared_object_last_error;
+    uint32_t            m_shared_object_win32_lasterror;
 #if USE_PARALLEL_VM
     Interpreter*        m_interp;
     VM*                 m_parent;

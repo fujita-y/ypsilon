@@ -212,8 +212,7 @@ lookup_immutable_hashtable_size(int n)
             442665511, 531198691, 637438433, 764926171, 917911471, 1101493807, 1321792573, 1586151131,
             1903381357, 2147483647 };
     for (int i = 0; i < array_sizeof(primes); i++) {
-        if (primes[i] > n)
-            return primes[i];
+        if (primes[i] > n) return primes[i];
     }
     fatal("%s:%u internal error: hashtable too big",__FILE__ , __LINE__);
 }

@@ -444,8 +444,8 @@
                         stdcall-shared-object->char*
                         make-callback
                         flonum->float
-                        shared-object-c-errno
-                        shared-object-win32-last-error
+                        shared-object-errno
+                        shared-object-win32-lasterror
                         collect collect-notify collect-stack-notify collect-trip-bytes display-heap-statistics display-object-statistics
                         backtrace expansion-backtrace backtrace-line-length display-backtrace
                         warning-level

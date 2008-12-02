@@ -7,7 +7,7 @@
   (export load-shared-object
           c-function
           c-function/errno
-          c-function/win32-last-error
+          c-function/win32-lasterror
           c-argument
           on-windows on-darwin on-linux on-freebsd on-posix on-ia32 on-x64)
   (import (core))
@@ -211,10 +211,10 @@
       ((_ . x)
        (let ((proc (c-function . x)))
          (lambda args
-           (let* ((ret (apply proc args)) (err (shared-object-c-errno)))
+           (let* ((ret (apply proc args)) (err (shared-object-errno)))
              (values ret err)))))))
 
-  (define-syntax c-function/win32-last-error
+  (define-syntax c-function/win32-lasterror
     (syntax-rules ()
       ((_ . x)
        (let ((proc (c-function . x)))

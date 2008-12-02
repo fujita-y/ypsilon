@@ -2,12 +2,14 @@
 #   Makefile for Linux, FreeBSD, and Darwin
 #   (Use Win32 native build for Cygwin)
 #
+#  DATAMODEL : [ILP32 | LP64]
+#
 
 PROG 	 = ypsilon
 
 PREFIX 	 = /usr/local
 
-CPPFLAGS = -DNDEBUG -DDEFAULT_HEAP_LIMIT=32 -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
+CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
 
 CXXFLAGS = -pipe -x c++ -pthread -msse -mfpmath=sse -O3 -fstrict-aliasing \
 	   -fomit-frame-pointer -momit-leaf-frame-pointer \
@@ -23,31 +25,67 @@ SRCS 	 = file.cpp main.cpp vm0.cpp object_heap_compact.cpp subr_flonum.cpp vm1.c
 
 VPATH 	 = src
 
-UNAME 	 = $(shell uname)
+UNAME 	 = $(shell uname -a)
+
+ifndef DATAMODEL
+  ifeq (, $(findstring X86_64, $(UNAME)))
+    ifeq (, $(findstring amd64, $(UNAME)))
+      DATAMODEL = ILP32
+    else
+      DATAMODEL = LP64
+    endif
+  else
+    DATAMODEL = LP64
+  endif
+endif
 
 ifneq (, $(findstring Linux, $(UNAME)))
   ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
-    CXXFLAGS += -m32 -march=i686
+    ifeq ($(DATAMODEL), ILP32)  
+      CXXFLAGS += -march=i686
+    endif
   else
-    CXXFLAGS += -m32 -march=native
+    CXXFLAGS += -march=native
   endif
-  ASFLAGS = --32
-  LDFLAGS = -m32
+  ifeq ($(DATAMODEL), ILP32)  
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
+    CXXFLAGS += -m32
+    LDFLAGS = -m32
+    ASFLAGS = --32
+    SRCS += ffi_stub_linux.s
+  else
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
+    CXXFLAGS += -m64
+    LDFLAGS = -m64
+    ASFLAGS = --64
+    SRCS += ffi_stub_linux64.s
+  endif
   LDLIBS = -lpthread -ldl
-  SRCS += ffi_stub_linux.s
 endif
 
 ifneq (, $(findstring FreeBSD, $(UNAME)))
   ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
-    CXXFLAGS += -m32 -march=i686
+    ifeq ($(DATAMODEL), ILP32)  
+      CXXFLAGS += -march=i686
+    endif
   else
-    CXXFLAGS += -m32 -march=native
+    CXXFLAGS += -march=native
   endif
   CPPFLAGS += -D__LITTLE_ENDIAN__
-  ASFLAGS = --32
-  LDFLAGS = -m32
+  ifeq ($(DATAMODEL), ILP32)  
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
+    CXXFLAGS += -m32
+    LDFLAGS = -m32
+    ASFLAGS = --32
+    SRCS += ffi_stub_freebsd.s
+  else
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
+    CXXFLAGS += -m64
+    LDFLAGS = -m64
+    ASFLAGS = --64
+    SRCS += ffi_stub_freebsd64.s
+  endif
   LDLIBS = -pthread
-  SRCS += ffi_stub_freebsd.s
 endif
 
 ifneq (, $(findstring Darwin, $(UNAME)))

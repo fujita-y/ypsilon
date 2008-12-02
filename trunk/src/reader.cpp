@@ -834,7 +834,7 @@ top:
                 default:
                     if (m_graph == NULL) break;
                     if (c >= '0' && c <= '9') {
-                        int mark = c - '0';
+                        intptr_t mark = c - '0';
                         while (true) {
                             int c2 = get_ucs4();
                             if (c2 >= '0' && c2 <= '9') {
@@ -842,16 +842,16 @@ top:
                                 if (mark < 0 || mark > FIXNUM_MAX) lexical_error("invalid object tag, value out of range");
                                 continue;
                             }
-                            if (c2 == EOF) lexical_error("unexpected end-of-file while reading tag #%d", mark);
+                            if (c2 == EOF) lexical_error("unexpected end-of-file while reading tag #%ld", mark);
                             if (c2 == '=') {
                                 scm_obj_t obj = read_expr();
-                                if (obj == scm_eof) lexical_error("unexpected end-of-file while reading tag #%d=", mark);
+                                if (obj == scm_eof) lexical_error("unexpected end-of-file while reading tag #%ld=", mark);
                                 if (get_hashtable(m_graph, MAKEFIXNUM(mark)) == scm_undef) {
                                     int nsize = put_hashtable(m_graph, MAKEFIXNUM(mark), obj);
                                     if (nsize) rehash_hashtable(m_vm->m_heap, m_graph, nsize);
                                     return obj;
                                 }
-                                lexical_error("duplicate tag #%d=", mark);
+                                lexical_error("duplicate tag #%ld=", mark);
                             }
                             if (c2 == '#') {
                                 scm_tuple_t tuple = make_tuple(m_vm->m_heap, 1);
