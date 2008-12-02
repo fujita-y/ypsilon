@@ -753,8 +753,8 @@
     shared-bag-get!
     shared-bag-put!
     shared-bag?
-    shared-object-c-errno
-    shared-object-win32-last-error
+    shared-object-errno
+    shared-object-win32-lasterror
     shared-queue-pop!
     shared-queue-push!
     shared-queue-shutdown

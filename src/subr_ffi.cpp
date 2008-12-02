@@ -93,7 +93,7 @@ subr_call_shared_object_void(VM* vm, int argc, scm_obj_t argv[])
 #endif
             vm->m_shared_object_errno = errno;
 #if _MSC_VER
-            vm->m_shared_object_last_error = GetLastError();
+            vm->m_shared_object_win32_lasterror = GetLastError();
 #endif
             return scm_unspecified;
         }
@@ -139,7 +139,7 @@ subr_call_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
 #endif
             vm->m_shared_object_errno = errno;
 #if _MSC_VER
-            vm->m_shared_object_last_error = GetLastError();
+            vm->m_shared_object_win32_lasterror = GetLastError();
 #endif
             return int_to_integer(vm->m_heap, retval);
         }
@@ -185,7 +185,7 @@ subr_call_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
 #endif
             vm->m_shared_object_errno = errno;
 #if _MSC_VER
-            vm->m_shared_object_last_error = GetLastError();
+            vm->m_shared_object_win32_lasterror = GetLastError();
 #endif
             return make_flonum(vm->m_heap, retval);
         }
@@ -231,7 +231,7 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
 #endif
             vm->m_shared_object_errno = errno;
 #if _MSC_VER
-            vm->m_shared_object_last_error = GetLastError();
+            vm->m_shared_object_win32_lasterror = GetLastError();
 #endif
             return intptr_to_integer(vm->m_heap, retval);
         }
@@ -277,7 +277,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
 #endif
             vm->m_shared_object_errno = errno;
 #if _MSC_VER
-            vm->m_shared_object_last_error = GetLastError();
+            vm->m_shared_object_win32_lasterror = GetLastError();
 #endif
             if (p == NULL) return scm_false;
             int n = 0;
@@ -319,7 +319,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 }
                 stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 vm->m_shared_object_errno = errno;
-                vm->m_shared_object_last_error = GetLastError();
+                vm->m_shared_object_win32_lasterror = GetLastError();
                 return scm_unspecified;
             }
             invalid_argument_violation(vm, "stdcall-shared-object->void", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
@@ -356,7 +356,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 }
                 intptr_t retval = stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 vm->m_shared_object_errno = errno;
-                vm->m_shared_object_last_error = GetLastError();
+                vm->m_shared_object_win32_lasterror = GetLastError();
                 return int_to_integer(vm->m_heap, retval);
             }
             invalid_argument_violation(vm, "stdcall-shared-object->int", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
@@ -393,7 +393,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 }
                 double retval = stdcall_func_stub_double(func, stack.count(), stack.frame());
                 vm->m_shared_object_errno = errno;
-                vm->m_shared_object_last_error = GetLastError();
+                vm->m_shared_object_win32_lasterror = GetLastError();
                 return make_flonum(vm->m_heap, retval);
             }
             invalid_argument_violation(vm, "stdcall-shared-object->double", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
@@ -430,7 +430,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 }
                 intptr_t retval = stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 vm->m_shared_object_errno = errno;
-                vm->m_shared_object_last_error = GetLastError();
+                vm->m_shared_object_win32_lasterror = GetLastError();
                 return intptr_to_integer(vm->m_heap, retval);
             }
             invalid_argument_violation(vm, "stdcall-shared-object->void*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
@@ -467,7 +467,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 }
                 uint8_t* p = (uint8_t*)stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 vm->m_shared_object_errno = errno;
-                vm->m_shared_object_last_error = GetLastError();
+                vm->m_shared_object_win32_lasterror = GetLastError();
                 if (p == NULL) return scm_false;
                 int n = 0;
                 while (p[n]) n++;
@@ -542,9 +542,9 @@ subr_flonum_to_float(VM* vm, int argc, scm_obj_t argv[])
 #endif
 }
 
-// shared-object-c-errno
+// shared-object-errno
 scm_obj_t
-subr_shared_object_c_errno(VM* vm, int argc, scm_obj_t argv[])
+subr_shared_object_errno(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 0) return int_to_integer(vm->m_heap, vm->m_shared_object_errno);
     if (argc == 1) {
@@ -555,20 +555,20 @@ subr_shared_object_c_errno(VM* vm, int argc, scm_obj_t argv[])
                 vm->m_shared_object_errno = val;
                 return scm_unspecified;
             }
-            invalid_argument_violation(vm, "shared-object-c-errno", "value out of range,", argv[0], 0, argc, argv);
+            invalid_argument_violation(vm, "shared-object-errno", "value out of range,", argv[0], 0, argc, argv);
         }
-        wrong_type_argument_violation(vm, "shared-object-c-errno", 0, "exact integer", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "shared-object-errno", 0, "exact integer", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "shared-object-c-errno", 0, 1, argc, argv);
+    wrong_number_of_arguments_violation(vm, "shared-object-errno", 0, 1, argc, argv);
     return scm_undef;
 }
 
 // shared-object-win32-last-error
 scm_obj_t
-subr_shared_object_win32_last_error(VM* vm, int argc, scm_obj_t argv[])
+subr_shared_object_win32_lasterror(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 0) return int_to_integer(vm->m_heap, vm->m_shared_object_last_error);
+    if (argc == 0) return int_to_integer(vm->m_heap, vm->m_shared_object_win32_lasterror);
     if (argc == 1) {
         if (exact_integer_pred(argv[0])) {
             uint32_t val;
@@ -576,15 +576,15 @@ subr_shared_object_win32_last_error(VM* vm, int argc, scm_obj_t argv[])
 #if _MSC_VER
                 SetLastError(val);
 #endif
-                vm->m_shared_object_last_error = val;
+                vm->m_shared_object_win32_lasterror = val;
                 return scm_unspecified;
             }
-            invalid_argument_violation(vm, "shared-object-win32-last-error", "value out of range,", argv[0], 0, argc, argv);
+            invalid_argument_violation(vm, "shared-object-win32-lasterror", "value out of range,", argv[0], 0, argc, argv);
         }
-        wrong_type_argument_violation(vm, "shared-object-win32-last-error", 0, "exact integer", argv[0], argc, argv);
+        wrong_type_argument_violation(vm, "shared-object-win32-lasterror", 0, "exact integer", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "shared-object-win32-last-error", 0, 1, argc, argv);
+    wrong_number_of_arguments_violation(vm, "shared-object-win32-lasterror", 0, 1, argc, argv);
     return scm_undef;
 }
 
@@ -617,6 +617,6 @@ void init_subr_ffi(object_heap_t* heap)
 #endif
     DEFSUBR("make-callback", subr_make_callback);
     DEFSUBR("flonum->float", subr_flonum_to_float);
-    DEFSUBR("shared-object-c-errno", subr_shared_object_c_errno);
-    DEFSUBR("shared-object-win32-last-error", subr_shared_object_win32_last_error);
+    DEFSUBR("shared-object-errno", subr_shared_object_errno);
+    DEFSUBR("shared-object-win32-lasterror", subr_shared_object_win32_lasterror);
 }

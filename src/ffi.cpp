@@ -22,15 +22,14 @@
                         m_frame[m_count++] = value;
                         return NULL;
                     }
-                    return "exact integer between 0 and UINTPTR_MAX";
                 } else {
                     intptr_t value;
                     if (exact_integer_to_intptr(obj, &value)) {
                         m_frame[m_count++] = value;
                         return NULL;
                     }
-                    return "exact integer between INTPTR_MIN and INTPTR_MAX";
                 }
+                return "exact integer between INTPTR_MIN and UINTPTR_MAX";
             }
             if (BVECTORP(obj)) {
                 scm_bvector_t bvector = (scm_bvector_t)obj;
@@ -97,7 +96,6 @@
                         }
                         return NULL;
                     }
-                    return "exact integer between 0 and UINTPTR_MAX";
                 } else {
                     intptr_t value;
                     if (exact_integer_to_intptr(obj, &value)) {
@@ -108,8 +106,8 @@
                         }
                         return NULL;
                     }
-                    return "exact integer between INTPTR_MIN and INTPTR_MAX";
                 }
+                return "exact integer between INTPTR_MIN and UINTPTR_MAX";
             }
             if (BVECTORP(obj)) {
                 scm_bvector_t bvector = (scm_bvector_t)obj;

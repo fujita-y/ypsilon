@@ -549,7 +549,7 @@ struct vm_env_rec_t {           // record size is variable
 #define HASH_SPARSE_THRESHOLD(n)            ((n) >> 2)                      // 25%
 #define HASH_IMMUTABLE_SIZE(n)              ((n) + ((n) >> 3))              // 112.5%
 #define HASH_MUTABLE_SIZE(n)                ((n) + ((n) >> 1) + ((n) >> 2)) // 175%
-#define HASH_BOUND_MAX                      FIXNUM_MAX
+#define HASH_BOUND_MAX                      UINT32_MAX
 
 #define OBJECT_SLAB_SIZE                    4096
 #define OBJECT_SLAB_SIZE_SHIFT              12
