@@ -99,6 +99,8 @@ public:
     int                 m_write_barrier;
     int                 m_read_barrier;
     int                 m_alloc_barrier;
+    uint8_t*            m_map;
+    size_t              m_map_size;
     uint8_t*            m_pool;
     size_t              m_pool_size;
     int                 m_pool_watermark;

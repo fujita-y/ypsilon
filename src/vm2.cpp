@@ -16,7 +16,7 @@ VM::prebind_gloc(scm_obj_t variable)
 {
 #ifndef NDEBUG
     if (!SYMBOLP(variable)) {
-        printf("invalid gloc variable: %x\n", variable);
+        printf("invalid gloc variable: %p\n", variable);
     }
 #endif
     assert(SYMBOLP(variable));
@@ -134,8 +134,8 @@ VM::prebind_list(scm_obj_t code)
                 scm_gloc_t gloc = prebind_gloc(CAR(operands));
   #ifndef NDEBUG
                 if (!SUBRP(gloc->value)) {
-                    if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %x, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name, gloc->value);
-                    else printf("** warning: expect gloc %x contain SUBR but got %x, maybe forward reference\n", gloc, gloc->value);
+                    if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %p, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name, gloc->value);
+                    else printf("** warning: expect gloc %p contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
                 }
   #endif
                 if (SUBRP(gloc->value)) {
@@ -155,10 +155,10 @@ VM::prebind_list(scm_obj_t code)
                 scm_gloc_t gloc = prebind_gloc(CAR(operands));
 #ifndef NDEBUG
                 if (!SUBRP(gloc->value)) {
-                    if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %x, maybe forward reference\n",
+                    if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %p, maybe forward reference\n",
                                                         ((scm_symbol_t)gloc->variable)->name,
                                                         gloc->value);
-                    else printf("** warning: expect gloc %x contain SUBR but got %x, maybe forward reference\n", gloc, gloc->value);
+                    else printf("** warning: expect gloc %p contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
                 }
 #endif
                 if (SUBRP(gloc->value)) {
@@ -178,10 +178,10 @@ VM::prebind_list(scm_obj_t code)
                 scm_gloc_t gloc = prebind_gloc(CAR(operands));
 #ifndef NDEBUG
                 if (!SUBRP(gloc->value)) {
-                    if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %x, maybe forward reference\n",
+                    if (SYMBOLP(gloc->variable)) printf("** warning: expect gloc of %s contain SUBR but got %p, maybe forward reference\n",
                                                         ((scm_symbol_t)gloc->variable)->name,
                                                         gloc->value);
-                    else printf("** warning: expect gloc %x contain SUBR but got %x, maybe forward reference\n", gloc, gloc->value);
+                    else printf("** warning: expect gloc %p contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
                 }
 #endif
                 if (SUBRP(gloc->value)) {

@@ -12,8 +12,8 @@ PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
 
-CXXFLAGS = -pipe -x c++ -pthread -msse -mfpmath=sse -O3 -fstrict-aliasing \
-	   -fomit-frame-pointer -momit-leaf-frame-pointer \
+CXXFLAGS = -pipe -x c++ -pthread -msse -mfpmath=sse -O3 \
+	   -fstrict-aliasing -fomit-frame-pointer -momit-leaf-frame-pointer \
 	   -fno-align-labels -fno-align-loops -fno-align-jumps
 
 SRCS 	 = file.cpp main.cpp vm0.cpp object_heap_compact.cpp subr_flonum.cpp vm1.cpp object_set.cpp \
