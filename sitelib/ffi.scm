@@ -3,12 +3,13 @@
   (export c-argument
           c-function
           c-function/errno
-          c-function/win32-last-error
+          c-function/win32-lasterror
           load-shared-object
           on-darwin
           on-freebsd
           on-ia32
           on-linux
+          on-openbsd
           on-posix
           on-windows
           on-x64)
