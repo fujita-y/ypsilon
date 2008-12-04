@@ -35,7 +35,9 @@ ifndef DATAMODEL
     ifeq (, $(findstring amd64, $(UNAME)))
       DATAMODEL = ILP32
     else
-      DATAMODEL = LP64
+#     no 64bit mode supported on bsd yet
+#     DATAMODEL = LP64
+      DATAMODEL = ILP32
     endif
   else
     DATAMODEL = LP64
