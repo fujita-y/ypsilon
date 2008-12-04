@@ -179,7 +179,9 @@
                         (on-windows (load-shared-object "glut32.dll"))
                         (on-linux   (load-shared-object "libglut.so.3"))
                         (on-freebsd (load-shared-object "libglut.so.4"))
-                        (on-openbsd (load-shared-object "libglut.so.3.7"))
+                        (on-openbsd (begin (load-shared-object "libXmu.so.10.0")
+					   (load-shared-object "libGLU.so.7.0")
+					   (load-shared-object "libglut.so.3.7")))
                         (else       (assertion-violation #f "can not locate GLUT library, unknown operating system"))))
 
   ;; Display mode bit masks.
