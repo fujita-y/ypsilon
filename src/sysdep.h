@@ -7,6 +7,10 @@
 #ifndef SYSDEP_H_INCLUDED
 #define SYSDEP_H_INCLUDED
 
+#if __APPLE_C__ || defined(NO_TLS)
+  #undef NO_TLS
+  #define NO_TLS                    1                  
+#endif
 #if _MSC_VER
   #define DECLSPEC(x)               __declspec(x)
   #define ATTRIBUTE(x)
