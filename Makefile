@@ -3,7 +3,7 @@
 #   * Cygwin not supported, Use win32 native build
 #   * Use gmake on FreeBSD and OpenBSD
 #
-#   DATAMODEL = ILP32(default) | LP64
+#   DATAMODEL = ILP32 | LP64
 #
 
 PROG 	 = ypsilon
@@ -12,7 +12,7 @@ PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
 
-CXXFLAGS = -pipe -x c++ -pthread -msse -mfpmath=sse -O3 \
+CXXFLAGS = -pipe -x c++ -pthread -O3 \
 	   -fstrict-aliasing -fomit-frame-pointer -momit-leaf-frame-pointer \
 	   -fno-align-labels -fno-align-loops -fno-align-jumps
 
@@ -33,12 +33,10 @@ ifndef DATAMODEL
     ifeq (, $(findstring amd64, $(UNAME)))
       DATAMODEL = ILP32
     else
-#     DATAMODEL = LP64
-      DATAMODEL = ILP32
+      DATAMODEL = LP64
     endif
   else
-#   DATAMODEL = LP64
-    DATAMODEL = ILP32
+    DATAMODEL = LP64
   endif
 endif
 
@@ -50,6 +48,7 @@ ifneq (, $(findstring Linux, $(UNAME)))
   else
     CXXFLAGS += -march=native
   endif
+  CXXFLAGS += -msse -mfpmath=sse
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -75,6 +74,7 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
     CXXFLAGS += -march=native
   endif
   CPPFLAGS += -D__LITTLE_ENDIAN__
+  CXXFLAGS += -msse -mfpmath=sse  
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -99,8 +99,8 @@ ifneq (, $(findstring OpenBSD, $(UNAME)))
   else
     CXXFLAGS += -march=native
   endif
-  CPPFLAGS += -D__LITTLE_ENDIAN__
-  CPPFLAGS += -DNO_TLS
+  CPPFLAGS += -D__LITTLE_ENDIAN__ -DNO_TLS
+  CXXFLAGS += -msse -mfpmath=sse
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -118,7 +118,7 @@ ifneq (, $(findstring OpenBSD, $(UNAME)))
 endif
 
 ifneq (, $(findstring Darwin, $(UNAME)))
-  CXXFLAGS += -arch i386
+  CXXFLAGS += -arch i386 -msse -mfpmath=sse
   CPPFLAGS += -DNO_TLS
   SRCS += ffi_stub_darwin.s
 endif
