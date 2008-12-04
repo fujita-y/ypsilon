@@ -9,15 +9,18 @@
           c-function/errno
           c-function/win32-lasterror
           c-argument
-          on-windows on-darwin on-linux on-freebsd on-posix on-ia32 on-x64)
+          on-windows on-darwin on-linux on-freebsd on-openbsd on-posix on-ia32 on-x64)
   (import (core))
 
   (define on-windows (and (string-contains (architecture-feature 'operating-system) "windows") #t))
   (define on-darwin  (and (string-contains (architecture-feature 'operating-system) "darwin")  #t))
   (define on-linux   (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
   (define on-freebsd (and (string-contains (architecture-feature 'operating-system) "freebsd") #t))
+  (define on-openbsd (and (string-contains (architecture-feature 'operating-system) "openbsd") #t))
   (define on-posix   (not on-windows))
-  (define on-x64     (and (string-contains (architecture-feature 'machine-hardware) "x86_64")  #t))
+  (define on-x64     (and (or (string-contains (architecture-feature 'machine-hardware) "x86_64")
+                              (string-contains (architecture-feature 'machine-hardware) "amd64"))
+                          #t))
   (define on-ia32    (not on-x64))
 
   (define assert-bool

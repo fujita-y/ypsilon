@@ -1351,7 +1351,7 @@ subr_gensym(VM* vm, int argc, scm_obj_t argv[])
         char buf[MAX_READ_SYMBOL_LENGTH];
         struct timeval tv;
         gettimeofday(&tv, NULL);
-        snprintf(buf, sizeof(buf), "%s.%x.%x",head, tv.tv_sec, tv.tv_usec);
+        snprintf(buf, sizeof(buf), "%s.%x.%x",head, (unsigned int)tv.tv_sec, (unsigned int)tv.tv_usec);
         return make_symbol_uninterned(vm->m_heap, buf, strlen(buf), strlen(head));
     }
     wrong_number_of_arguments_violation(vm, "gensym", 0, 1, argc, argv);

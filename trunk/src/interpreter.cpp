@@ -118,7 +118,7 @@ Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
             m_table[i]->id = i;
             m_table[i]->state = VM_STATE_ACTIVE;
             if (func->doc == scm_nil) {
-                snprintf(m_table[i]->name, sizeof(m_table[i]->name), "[%X]", func);
+                snprintf(m_table[i]->name, sizeof(m_table[i]->name), "[%p]", func);
             } else {
                 const char* name = "";
                 if (SYMBOLP(func->doc)) name = ((scm_symbol_t)func->doc)->name;
@@ -248,7 +248,11 @@ Interpreter::display_status(VM* vm)
         int n = strlen(rec->name);
         if (n > name_pad) name_pad = n;
     }
+#if ARCH_LP64
+    port_puts(port, "\n  VM ADRS           STATUS CT ID");
+#else
     port_puts(port, "\n  VM ADRS       STATUS CT ID");
+#endif
     for (int c = 0; c < name_pad - 2; c++) port_puts(port, " ");
     port_puts(port, "  MEM\n");
     for (int i = 0; i < interp->m_capacity; i++) {

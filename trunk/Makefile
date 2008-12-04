@@ -1,8 +1,11 @@
 #
-#   Makefile for Linux, FreeBSD, and Darwin
-#   (Use Win32 native build for Cygwin)
+#   Makefile for Linux, FreeBSD, OpenBSD, and Darwin
+#   * Cygwin not supported, Use win32 native build
+#   * Use gmake on FreeBSD and OpenBSD
 #
-#  DATAMODEL : [ILP32 | LP64]
+#   PREFIX=[path]
+#   DESTDIR=[path]
+#   DATAMODEL=[ILP32 | DATAMODEL=LP64]
 #
 
 PROG 	 = ypsilon
@@ -88,8 +91,35 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
   LDLIBS = -pthread
 endif
 
+ifneq (, $(findstring OpenBSD, $(UNAME)))
+  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
+    ifeq ($(DATAMODEL), ILP32)  
+      CXXFLAGS += -march=i686
+    endif
+  else
+    CXXFLAGS += -march=native
+  endif
+  CPPFLAGS += -D__LITTLE_ENDIAN__
+  CPPFLAGS += -DNO_TLS
+  ifeq ($(DATAMODEL), ILP32)  
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
+    CXXFLAGS += -m32
+    LDFLAGS = -m32
+    ASFLAGS = --32
+    SRCS += ffi_stub_openbsd.s
+  else
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
+    CXXFLAGS += -m64
+    LDFLAGS = -m64
+    ASFLAGS = --64
+    SRCS += ffi_stub_openbsd64.s
+  endif
+  LDLIBS = -pthread
+endif
+
 ifneq (, $(findstring Darwin, $(UNAME)))
   CXXFLAGS += -arch i386
+  CPPFLAGS += -DNO_TLS
   SRCS += ffi_stub_darwin.s
 endif
 
@@ -111,8 +141,8 @@ vm1.o: vm1.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -c src/vm1.cpp
 
 install: all stdlib sitelib
-	mkdir -pv -m755 $(DESTDIR)$(PREFIX)/bin
-	mkdir -pv -m755 $(DESTDIR)$(PREFIX)/share/man/man1
+	mkdir -p -m755 $(DESTDIR)$(PREFIX)/bin
+	mkdir -p -m755 $(DESTDIR)$(PREFIX)/share/man/man1
 	cp $(PROG) $(DESTDIR)$(PREFIX)/bin/$(PROG)
 	cp $(PROG).1 $(DESTDIR)$(PREFIX)/share/man/man1/$(PROG).1
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROG)
@@ -126,13 +156,13 @@ uninstall:
 	-rmdir $(DESTDIR)$(PREFIX)/share/$(PROG)
 
 stdlib:
-	mkdir -pv -m755 $(DESTDIR)$(PREFIX)/share/$(PROG)/stdlib
+	mkdir -p -m755 $(DESTDIR)$(PREFIX)/share/$(PROG)/stdlib
 	find stdlib -type f -name '*.scm' | cpio -pdu $(DESTDIR)$(PREFIX)/share/$(PROG)
 	find $(DESTDIR)$(PREFIX)/share/$(PROG)/stdlib -type d -exec chmod 755 {} \;
 	find $(DESTDIR)$(PREFIX)/share/$(PROG)/stdlib -type f -exec chmod 644 {} \;
 
 sitelib:
-	mkdir -pv -m755 $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib
+	mkdir -p -m755 $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib
 	find sitelib -type f -name '*.scm' | cpio -pdu $(DESTDIR)$(PREFIX)/share/$(PROG)
 	find $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib -type d -exec chmod 755 {} \;
 	find $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib -type f -exec chmod 644 {} \;
