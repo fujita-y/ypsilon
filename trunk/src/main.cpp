@@ -150,21 +150,20 @@ static int opt_heap_limit(int argc, char* const argv[])
         struct foo { char i; };
         struct bar { int i; struct foo o; };
         struct hoge { struct bar m; char k; };
-        printf("sizeof(int) %d\n", sizeof(int));
-        printf("sizeof(long) %d\n", sizeof(long));
-        printf("sizeof(long long) %d\n", sizeof(long long));
-        printf("sizeof(void*) %d\n", sizeof(void*));
-
-        printf("sizeof(foo) %d\n", sizeof(foo)); // 1
-        printf("sizeof(bar) %d\n", sizeof(bar)); // 8
-        printf("sizeof(hoge) %d\n", sizeof(hoge));
-        printf("sizeof(bool) %d\n", sizeof(bool));
-        printf("sizeof(size_t) %d\n", sizeof(size_t));
-        printf("__alignof__(double) %d\n", __alignof__(double)); // 8
-        printf("FIXNUM_MAX %d %x\n", FIXNUM_MAX, FIXNUM_MAX);
-        printf("FIXNUM_MIN %d %x\n", FIXNUM_MIN, FIXNUM_MIN);
-        printf("sizeof(pthread_mutex_t) %d\n", sizeof(pthread_mutex_t));
-        printf("sizeof(pthread_cond_t) %d\n", sizeof(pthread_cond_t));
+        printf("sizeof(int) %d\n", (int)sizeof(int));
+        printf("sizeof(long) %d\n", (int)sizeof(long));
+        printf("sizeof(long long) %d\n", (int)sizeof(long long));
+        printf("sizeof(void*) %d\n", (int)sizeof(void*));
+        printf("sizeof(foo) %d\n", (int)sizeof(foo)); // 1
+        printf("sizeof(bar) %d\n", (int)sizeof(bar)); // 8
+        printf("sizeof(hoge) %d\n", (int)sizeof(hoge));
+        printf("sizeof(bool) %d\n", (int)sizeof(bool));
+        printf("sizeof(size_t) %d\n", (int)sizeof(size_t));
+        printf("__alignof__(double) %d\n", (int)__alignof__(double)); // 8
+        printf("FIXNUM_MAX %ld %lx\n", (long)FIXNUM_MAX, (long)FIXNUM_MAX);
+        printf("FIXNUM_MIN %ld %lx\n", (long)FIXNUM_MIN, (long)FIXNUM_MIN);
+        printf("sizeof(pthread_mutex_t) %d\n", (int)sizeof(pthread_mutex_t));
+        printf("sizeof(pthread_cond_t) %d\n", (int)sizeof(pthread_cond_t));
   #endif
   #if MTDEBUG
         puts(";; MTDEBUG ON");

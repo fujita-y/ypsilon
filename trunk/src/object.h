@@ -551,11 +551,17 @@ struct vm_env_rec_t {           // record size is variable
 #define HASH_MUTABLE_SIZE(n)                ((n) + ((n) >> 1) + ((n) >> 2)) // 175%
 #define HASH_BOUND_MAX                      UINT32_MAX
 
-#define OBJECT_SLAB_SIZE                    4096
-#define OBJECT_SLAB_SIZE_SHIFT              12
-#define OBJECT_SLAB_THRESHOLD               (OBJECT_SLAB_SIZE / 4)  // m_shared[] and m_atomic[] in ObjectFactory in effect this value
-
-#define VM_STACK_BYTESIZE                   4096
+#if ARCH_LP64
+#define OBJECT_SLAB_SIZE                    (8192L)
+  #define OBJECT_SLAB_SIZE_SHIFT            13
+  #define OBJECT_SLAB_THRESHOLD             (OBJECT_SLAB_SIZE / 8)  // m_shared[] and m_atomic[] in ObjectFactory in effect this value
+  #define VM_STACK_BYTESIZE                 (8192L)
+#else
+  #define OBJECT_SLAB_SIZE                  (4096L)
+  #define OBJECT_SLAB_SIZE_SHIFT            12
+  #define OBJECT_SLAB_THRESHOLD             (OBJECT_SLAB_SIZE / 4)  // m_shared[] and m_atomic[] in ObjectFactory in effect this value
+  #define VM_STACK_BYTESIZE                 (4096L)
+#endif
 #define VM_STACK_BUSY_THRESHOLD(n)          ((n) - ((n) >> 2))      // 75%
 
 #define IDENTIFIER_RENAME_DELIMITER         '`'

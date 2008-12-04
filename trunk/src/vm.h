@@ -158,7 +158,7 @@ public:
             if ((uintptr_t)m_dispatch_table[i] == adrs) return i;
         }
   #ifndef NDEBUG
-        printf("bad instruction 0x%x\n", obj);
+        printf("bad instruction 0x%p\n", obj);
   #endif
         assert(false);
         return 0;

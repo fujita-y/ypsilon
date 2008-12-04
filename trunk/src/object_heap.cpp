@@ -67,7 +67,7 @@
 #endif
 
 object_heap_t::object_heap_t()
-    : m_pool(NULL), m_pool_size(0), m_mark_stack(NULL), m_inherents(NULL)
+    : m_map(NULL), m_map_size(NULL), m_pool(NULL), m_pool_size(0), m_mark_stack(NULL), m_inherents(NULL)
 {
     m_lock.init();
     m_gensym_lock.init();
@@ -204,11 +204,14 @@ object_heap_t::init_common(size_t pool_size, size_t init_size)
     // pool
     assert(m_pool == NULL);
     m_pool_size = (pool_size + OBJECT_SLAB_SIZE - 1) & ~(OBJECT_SLAB_SIZE - 1);
-    m_pool = (uint8_t*)heap_map(NULL, m_pool_size);
-    if (m_pool == HEAP_MAP_FAILED) {
-        m_pool = NULL;
+    m_map_size = m_pool_size + OBJECT_SLAB_SIZE;
+    m_map = (uint8_t*)heap_map(NULL, m_map_size);
+    if (m_map == HEAP_MAP_FAILED) {
+        m_map = NULL;
         fatal("%s:%u mmap() failed: %s",__FILE__ , __LINE__, strerror(errno));
     }
+    m_pool = (uint8_t*)(((uintptr_t)m_map + OBJECT_SLAB_SIZE - 1) & ~(OBJECT_SLAB_SIZE - 1));
+    assert(((uintptr_t)m_pool & (OBJECT_SLAB_SIZE - 1)) == 0);
     // ptag
     int n_tag = m_pool_size / OBJECT_SLAB_SIZE;
     int n_slab = (n_tag + OBJECT_SLAB_SIZE - 1) / OBJECT_SLAB_SIZE;
@@ -376,10 +379,12 @@ object_heap_t::destroy()
     m_shade_queue.destroy();
     if (m_mark_stack) free(m_mark_stack);
     m_mark_stack = NULL;
-    if (m_pool) {
-        heap_unmap(m_pool, m_pool_size);
+    if (m_map) {
+        heap_unmap(m_map, m_map_size);
+        m_map = NULL;
         m_pool = NULL;
-        m_pool_size = 0;
+        m_map_size = 0;
+        m_pool_size  = 0;
     }
 #if USE_PARALLEL_VM
     if (this == m_primordial) {
