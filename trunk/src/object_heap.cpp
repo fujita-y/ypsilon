@@ -67,7 +67,7 @@
 #endif
 
 object_heap_t::object_heap_t()
-    : m_map(NULL), m_map_size(NULL), m_pool(NULL), m_pool_size(0), m_mark_stack(NULL), m_inherents(NULL)
+    : m_map(NULL), m_map_size(0), m_pool(NULL), m_pool_size(0), m_mark_stack(NULL), m_inherents(NULL)
 {
     m_lock.init();
     m_gensym_lock.init();
