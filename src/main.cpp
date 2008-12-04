@@ -59,7 +59,7 @@ static int opt_heap_limit(int argc, char* const argv[])
 #if _MSC_VER
     int main(int argc, char* argv[])
     {
-        srandom(msec());
+        srandom((int)msec());
         assert(isnan(VALUE_NAN));
         assert(isinf(VALUE_INF));
         {
@@ -143,7 +143,7 @@ static int opt_heap_limit(int argc, char* const argv[])
 
     int main(int argc, char* const argv[])
     {
-        srandom(msec());
+        srandom((int)msec());
         main_command_line_argc = argc;
         main_command_line_argv = argv;
   #ifndef NDEBUG
@@ -200,7 +200,7 @@ static int opt_heap_limit(int argc, char* const argv[])
         heap->init_primordial(heap_limit, heap_init);
         VM rootVM;
         rootVM.init(heap);
-  #if __APPLE_CC__
+  #if defined(NO_TLS)
         MTVERIFY(pthread_key_create(&s_current_vm, NULL));
         MTVERIFY(pthread_setspecific(s_current_vm, &rootVM));
   #else
