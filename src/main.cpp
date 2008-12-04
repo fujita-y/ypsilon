@@ -13,10 +13,12 @@ char* const* main_command_line_argv;
 
 #if _MSC_VER
   __declspec(thread) VM* s_current_vm;
-#elif __APPLE_CC__
-  pthread_key_t s_current_vm;
 #else
-  __thread VM* s_current_vm;
+  #if defined(NO_TLS)
+    pthread_key_t s_current_vm;
+  #else
+    __thread VM* s_current_vm;
+  #endif
 #endif
 
 // --heap-limit=32   -> 32MB (default)

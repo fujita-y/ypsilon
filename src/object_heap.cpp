@@ -1688,7 +1688,7 @@ object_heap_t::init_architecture_feature()
 
     #undef ARCH_FIXNUM
 
-    #define ARCH_STRING(name, value)  put_hashtable(m_architecture_feature, make_symbol(this, #name), make_string_literal(this, value))
+    #define ARCH_STRING(name, value) put_hashtable(m_architecture_feature, make_symbol(this, #name), make_string_literal(this, value))
 
     #if _MSC_VER
         ARCH_STRING(operating-system, "windows");
@@ -1713,8 +1713,8 @@ object_heap_t::init_architecture_feature()
 
     #undef ARCH_STRING
 
-    #define ARCH_CCONST(name)         put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(name))
-    #define ARCH_CFALSE(name)         put_hashtable(m_architecture_feature, make_symbol(this, #name), scm_false)
+    #define ARCH_CCONST(name) put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(name))
+    #define ARCH_CFALSE(name) put_hashtable(m_architecture_feature, make_symbol(this, #name), scm_false)
 
     ////
     #ifdef AF_UNSPEC

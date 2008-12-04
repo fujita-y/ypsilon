@@ -228,12 +228,10 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
 
 #else
 
-    #include <pthread.h>
     #include <sys/time.h>
     #include <sys/types.h>
     #include <sys/stat.h>
     #include <sys/mman.h>
-    #include <sys/errno.h>
     #include <sys/poll.h>
     #include <sys/socket.h>
     #include <sys/param.h>
@@ -241,12 +239,13 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #include <sys/resource.h>
     #include <sys/utsname.h>
     #include <sys/wait.h>
+    #include <pthread.h>
     #include <stdint.h>
     #include <unistd.h>
-    #include <regex.h>
     #include <dlfcn.h>
     #include <netdb.h>
     #include <dirent.h>
+    #include <errno.h>
 
     typedef int     fd_t;
 
@@ -306,7 +305,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         } while(0)
   #endif
 
-  #if __APPLE_CC__
+  #if defined(NO_TLS)
 
     inline VM* current_vm()
     {

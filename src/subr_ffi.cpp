@@ -63,7 +63,6 @@ subr_lookup_shared_object(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_call_shared_object_void(VM* vm, int argc, scm_obj_t argv[])
 {
-    assert(sizeof(intptr_t) == sizeof(int));
     if (argc >= 1) {
         void *func = NULL;
         if (exact_positive_integer_pred(argv[0])) {
@@ -108,7 +107,6 @@ subr_call_shared_object_void(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_call_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
 {
-    assert(sizeof(intptr_t) == sizeof(int));
     if (argc >= 1) {
         void *func = NULL;
         if (exact_positive_integer_pred(argv[0])) {
@@ -154,7 +152,6 @@ subr_call_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_call_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
 {
-    assert(sizeof(intptr_t) == sizeof(int));
     if (argc >= 1) {
         void *func = NULL;
         if (exact_positive_integer_pred(argv[0])) {
@@ -200,7 +197,6 @@ subr_call_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
 {
-    assert(sizeof(intptr_t) == sizeof(int));
     if (argc >= 1) {
         void *func = NULL;
         if (exact_positive_integer_pred(argv[0])) {
@@ -246,7 +242,6 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
 {
-    assert(sizeof(intptr_t) == sizeof(int));
     if (argc >= 1) {
         void *func = NULL;
         if (exact_positive_integer_pred(argv[0])) {
@@ -486,7 +481,6 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_make_callback(VM* vm, int argc, scm_obj_t argv[])
 {
-    assert(sizeof(intptr_t) == sizeof(int));
     if (argc == 3) {
         if (exact_non_negative_integer_pred(argv[0])) {
             if (exact_non_negative_integer_pred(argv[1])) {

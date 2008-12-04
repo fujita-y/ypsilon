@@ -457,7 +457,7 @@ make_environment(object_heap_t* heap, const char* name)
         obj->name = make_string_literal(heap, name);
     } else {
         char buf[32];
-        snprintf(buf, sizeof(buf), "0x%x", obj);
+        snprintf(buf, sizeof(buf), "0x%p", obj);
         obj->name = make_string_literal(heap, buf);
     }
     return obj;

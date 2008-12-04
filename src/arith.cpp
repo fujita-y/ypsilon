@@ -179,7 +179,7 @@ bn_lognot(scm_bignum_t ans, scm_bignum_t obj)
     assert(ans_count >= obj_count);
     for (int i = 0; i < ans_count; i++) {
         if (i < obj_count) ans->elts[i] = ~obj->elts[i];
-        else ans->elts[i] = -1;
+        else ans->elts[i] = (uint32_t)-1;
     }
     bn_norm(ans);
 }
