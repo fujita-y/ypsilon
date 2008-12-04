@@ -3,9 +3,7 @@
 #   * Cygwin not supported, Use win32 native build
 #   * Use gmake on FreeBSD and OpenBSD
 #
-#   PREFIX=[path]
-#   DESTDIR=[path]
-#   DATAMODEL=[ILP32 | DATAMODEL=LP64]
+#   DATAMODEL = ILP32(default) | LP64
 #
 
 PROG 	 = ypsilon
@@ -35,12 +33,12 @@ ifndef DATAMODEL
     ifeq (, $(findstring amd64, $(UNAME)))
       DATAMODEL = ILP32
     else
-#     no 64bit mode supported on bsd yet
 #     DATAMODEL = LP64
       DATAMODEL = ILP32
     endif
   else
-    DATAMODEL = LP64
+#   DATAMODEL = LP64
+    DATAMODEL = ILP32
   endif
 endif
 
