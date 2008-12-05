@@ -4179,7 +4179,7 @@ cnvt_to_exact(object_heap_t* heap, scm_obj_t obj)
             bn_shift_left(&bn, -exp);
             bn_set_sign(&bn, sign);
             bn_norm(&bn);
-            return oprtr_reduce(heap, int64_to_integer(heap, mant), bn_dup(heap, &bn));
+            return oprtr_reduce(heap, int64_to_integer(heap, mant), bn_to_integer(heap, &bn));
         }
         assert(false);
     }
