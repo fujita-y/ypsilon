@@ -1,10 +1,6 @@
-#
 #   Makefile for Linux, FreeBSD, OpenBSD, and Darwin
-#   * Cygwin not supported, Use win32 native build
-#   * Use gmake on FreeBSD and OpenBSD
-#
-#   DATAMODEL = ILP32 | LP64
-#
+#   Requirements: GNU Make, GCC 4.0 or later
+#   Options: DESTDIR, PREFIX, DATAMODEL(ILP32/LP64)
 
 PROG 	 = ypsilon
 
