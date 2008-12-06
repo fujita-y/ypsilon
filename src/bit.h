@@ -9,10 +9,29 @@
 
 #include "core.h"
 
-uint32_t clp2(uint32_t x);
-uint32_t flp2(uint32_t x);
-uint32_t nbits(uint32_t x);
-uint32_t nlz(uint32_t x);
-uint32_t ntz(uint32_t x);
+int clp2(uint32_t x);
+int flp2(uint32_t x);
+int nlz(uint32_t x);
+int nlz(uint64_t x);
+int ntz(uint32_t x);
+int ntz(uint64_t x);
+int nbits(uint32_t x);
+int nbits(uint64_t x);
+
+inline int nbits(intptr_t x) {
+    if (sizeof(intptr_t) == sizeof(uint32_t)) return nbits((uint32_t)x);
+    return nbits((uint64_t)x);
+}
+
+inline int ntz(intptr_t x) {
+    if (sizeof(intptr_t) == sizeof(uint32_t)) return ntz((uint32_t)x);
+    return ntz((uint64_t)x);
+}
+
+inline int nlz(intptr_t x) {
+    if (sizeof(intptr_t) == sizeof(uint32_t)) return nlz((uint32_t)x);
+    return nlz((uint64_t)x);
+}
+
 
 #endif

@@ -300,7 +300,11 @@ serializer_t::put_datum(scm_obj_t obj)
         emit_u8(BVO_TAG_BIGNUM);
         emit_u32(sign);
         emit_u32(count);
+#if USE_DIGIT32
         for (int i = 0; i < count; i++) emit_u32(bn->elts[i]);
+#else
+        for (int i = 0; i < count; i++) emit_u64(bn->elts[i]);
+#endif
         return;
     }
     if (RATIONALP(obj)) {
@@ -463,9 +467,12 @@ deserializer_t::get_datum()
             int sign = (int32_t)fetch_u32();
             int count = fetch_u32();
             scm_bignum_t bn = make_bignum(m_heap, count);
-            assert(sizeof(bn->elts[0]) == sizeof(uint32_t));
-            for (int i = 0; i < count; i++) bn->elts[i] = fetch_u32();
             bn_set_sign(bn, sign);
+#if USE_DIGIT32
+            for (int i = 0; i < count; i++) bn->elts[i] = fetch_u32();
+#else
+            for (int i = 0; i < count; i++) bn->elts[i] = fetch_u64();
+#endif
             return bn;
         }
         case BVO_TAG_BVECTOR: {

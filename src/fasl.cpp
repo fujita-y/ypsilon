@@ -151,13 +151,20 @@ fasl_printer_t::put_datum(scm_obj_t obj)
     }
     if (BIGNUMP(obj)) {
         scm_bignum_t bn = (scm_bignum_t)obj;
-        assert(sizeof(bn->elts[0]) == sizeof(uint32_t));
         int sign = bn_get_sign(bn); // 0 or 1 or -1
         int count = bn_get_count(bn);
         emit_u8(FASL_TAG_BIGNUM);
         emit_u32(sign);
         emit_u32(count);
+#if USE_DIGIT32
         for (int i = 0; i < count; i++) emit_u32(bn->elts[i]);
+#else
+        for (int i = 0; i < count; i++) {
+            uint64_t digit = bn->elts[i];
+            emit_u32(digit & 0xffffffff);
+            emit_u32(digit >> 32);
+        }
+#endif
         return;
     }
     if (RATIONALP(obj)) {
@@ -306,22 +313,21 @@ fasl_reader_t::get_datum()
         int sign = (int)fetch_u32();
         int count = (int)fetch_u32();
         scm_bignum_t bn = make_bignum(m_vm->m_heap, count);
-        assert(sizeof(bn->elts[0]) == sizeof(uint32_t));
-        for (int i = 0; i < count; i++) bn->elts[i] = fetch_u32();
         bn_set_sign(bn, sign);
-#if ARCH_LP64
-        if (count == 1) {
-            int64_t n = bn->elts[0];
-            if (sign < 0) n = -n;
-            return MAKEFIXNUM(n);
+#if USE_DIGIT32
+        for (int i = 0; i < count; i++) bn->elts[i] = fetch_u32();
+        return bn;
+#else
+        for (int i = 0; i < count; i++) {
+            uint32_t lo = fetch_u32();
+            uint32_t hi = fetch_u32();
+            bn->elts[i] = ((uint64_t)hi << 32) + lo;
         }
-        if (count == 2) {
-            int128_t n = ((uint128_t)bn->elts[1] << 32) + bn->elts[0];
+        if (count == 1) {
+            int128_t n = bn->elts[0];
             if (sign < 0) n = -n;
             if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
         }
-        return bn;
-#else
         return bn;
 #endif
     }

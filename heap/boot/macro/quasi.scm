@@ -77,7 +77,7 @@
                  `(.QUOTE #()))
                 ((constant? lst)
                  `(.QUOTE ,(list->vector (constant-value lst))))
-                ((eq? (car lst) '.LIST)
+                ((and (pair? lst) (eq? (car lst) '.LIST))
                  `(.VECTOR ,@(cdr lst)))
                 (else
                  `(.LIST->VECTOR ,lst))))))

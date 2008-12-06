@@ -56,7 +56,13 @@ eqv_hash1(scm_obj_t obj, uint32_t bound)
             scm_bignum_t bignum = (scm_bignum_t)obj;
             int count = bn_get_count(bignum);
             uint32_t hash = bn_get_sign(bignum) + count * 5;
-            for (int i = 0; i < count; i++) hash = hash * 5 + bignum->elts[i];
+            if (sizeof(digit_t) == sizeof(uint32_t)) {
+                for (int i = 0; i < count; i++) hash = hash * 5 + bignum->elts[i];
+            } else {
+                for (int i = 0; i < count; i++) {
+                    hash = hash * 5 + (bignum->elts[i] & 0xffffffff) + ((uint64_t)bignum->elts[i] >> 32);
+                }
+            }
             return hash % bound;
         }
         if (RATIONALP(obj)) {
@@ -90,7 +96,13 @@ eqv_hash2(scm_obj_t obj, uint32_t bound)
             scm_bignum_t bignum = (scm_bignum_t)obj;
             int count = bn_get_count(bignum);
             uint32_t hash = bn_get_sign(bignum) + count * 3;
-            for (int i = 0; i < count; i++) hash = hash * 3 + bignum->elts[i];
+            if (sizeof(digit_t) == sizeof(uint32_t)) {
+                for (int i = 0; i < count; i++) hash = hash * 3 + bignum->elts[i];
+            } else {
+                for (int i = 0; i < count; i++) {
+                    hash = hash * 3 + (bignum->elts[i] & 0xffffffff) + ((uint64_t)bignum->elts[i] >> 32);
+                }
+            }
             hash = hash % bound;
             return hash + (hash == 0);
         }

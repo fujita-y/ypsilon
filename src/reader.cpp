@@ -291,12 +291,12 @@ reader_t::read_bytevector()
     int c = get_ucs4();
     if (c == '(') {
         int line_begin = m_in->line;
-        scm_obj_t lst = read_list(false);
+        scm_obj_t lst = read_list(false, false);
         parsing_range(line_begin, m_in->line);
         int n = list_length(lst);
         READ_BVECTOR("u8",  uint8_t,  FIXNUMP,            CAST_FIXNUM_TO_U8);
 #if USE_EXTENDED_BVECTOR_SYNTAX
-        if (flags.m_extend_lexical_syntax == scm_true) {
+        if (m_vm->flags.m_extend_lexical_syntax == scm_true) {
             READ_BVECTOR("s8",  int8_t,   FIXNUMP,            CAST_FIXNUM_TO_S8);
             READ_BVECTOR("s16", int16_t,  FIXNUMP,            exact_integer_to_int16);
             READ_BVECTOR("s32", int32_t,  exact_integer_pred, exact_integer_to_int32);
@@ -324,11 +324,9 @@ reader_t::read_number()
     read_thing(buf, sizeof(buf));
     scm_obj_t obj = parse_number(m_vm->m_heap, buf, 0, 0);
     if (obj != scm_false) return obj;
+    if (buf[1] == 0 && buf[0] == '.') return S_DOT;
     if (m_vm->flags.m_extend_lexical_syntax != scm_true) {
-        if (buf[1] == 0) {
-            if (buf[0] == '+' || buf[0] == '-') return make_symbol(m_vm->m_heap, buf);
-            if (buf[0] == '.') return S_DOT;
-        }
+        if (buf[1] == 0 && (buf[0] == '+' || buf[0] == '-')) return make_symbol(m_vm->m_heap, buf);
         if (strcmp(buf, "...") == 0) return make_symbol(m_vm->m_heap, buf);
         if (buf[0] == '-' && buf[1] == '>') {
             // todo: need check /x??;
@@ -634,7 +632,7 @@ encode_source_comment(int line, int column, bool file)
 }
 
 scm_obj_t
-reader_t::read_list(bool bracketed)
+reader_t::read_list(bool bracketed, bool vector)
 {
     scm_obj_t lst = scm_nil;
     scm_obj_t token;
@@ -661,24 +659,25 @@ reader_t::read_list(bool bracketed)
             return lst;
         }
         if (token == S_LPAREN) {
-            lst = cons(read_list(false), lst);
+            lst = cons(read_list(false, false), lst);
             continue;
         }
         if (token == S_LBRACK) {
-            lst = cons(read_list(true), lst);
+            lst = cons(read_list(true, false), lst);
             continue;
         }
         if (token == S_DOT) {
+            if (vector) {
+                if (m_vm->flags.m_extend_lexical_syntax != scm_true) {
+                    lexical_error("misplaced dot('.') while reading vector");
+                }
+            }
             if (lst == scm_nil) {
                 parsing_range(line_begin, m_in->line);
                 lexical_error("misplaced dot('.') while reading list");
             }
             scm_obj_t rest = read_expr();
-            if (m_vm->flags.m_extend_lexical_syntax != scm_true) {
-                if (rest == S_DOT) {
-                    lexical_error("misplaced dot('.') while reading list");
-                }
-            }
+            if (rest == S_DOT) lexical_error("misplaced dot('.') while reading list");
             token = read_token();
             if (token == S_RPAREN) {
                 if (bracketed) {
@@ -807,11 +806,7 @@ top:
                     }
                     lexical_error("invalid lexical syntax #~a~a", MAKECHAR(c), MAKECHAR(c2));
                 }
-                case '(': {
-                    scm_obj_t lst = read_list(false);
-                    if (listp(lst)) return make_vector(m_vm->m_heap, lst);
-                    lexical_error("misplaced dot('.') while reading vector");
-                }
+                case '(': return make_vector(m_vm->m_heap, read_list(false, true));
                 case '|': return skip_srfi30();
                 case '\\': return read_char();
                 case ';': read_expr(); goto top;
@@ -883,8 +878,8 @@ reader_t::read_expr()
     scm_obj_t token = read_token();
     if (token == S_RPAREN) lexical_error("unexpected closing parenthesis");
     if (token == S_RBRACK) lexical_error("unexpected closing bracket");
-    if (token == S_LPAREN) return read_list(false);
-    if (token == S_LBRACK) return read_list(true);
+    if (token == S_LPAREN) return read_list(false, false);
+    if (token == S_LBRACK) return read_list(true, false);
     return token;
 }
 
@@ -980,9 +975,7 @@ reader_t::read(scm_hashtable_t note)
         }
     }
     scm_obj_t obj = read_expr();
-    if (m_vm->flags.m_extend_lexical_syntax != scm_true) {
-        if (obj == S_DOT) lexical_error("misplaced dot('.')");
-    }
+    if (obj == S_DOT) lexical_error("misplaced dot('.')");
     if (m_graph && m_graph_ref) link_graph(obj);
     parsing_range(m_first_line, m_in->line);
     return obj;

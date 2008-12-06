@@ -88,9 +88,9 @@ relocate_collectible(void* obj, int size, void* desc)
         switch (tc) {
             case TC_BIGNUM: {
                 scm_bignum_t bignum_from = (scm_bignum_t)from;
-                if (bignum_from->elts == (uint32_t*)((uintptr_t)bignum_from + sizeof(scm_bignum_rec_t))) {
+                if (bignum_from->elts == (digit_t*)((uintptr_t)bignum_from + sizeof(scm_bignum_rec_t))) {
                     scm_bignum_t bignum_to = (scm_bignum_t)to;
-                    bignum_to->elts = (uint32_t*)((uintptr_t)bignum_to + sizeof(scm_bignum_rec_t));
+                    bignum_to->elts = (digit_t*)((uintptr_t)bignum_to + sizeof(scm_bignum_rec_t));
                 }
             } break;
 
@@ -468,8 +468,8 @@ relocate_private(void* obj, int size, void* desc)
         switch (tc) {
             case TC_BIGNUM: {
                 scm_bignum_t bignum = (scm_bignum_t)obj;
-                if (bignum->elts != (uint32_t*)((uintptr_t)bignum + sizeof(scm_bignum_rec_t))) {
-                    bignum->elts = (uint32_t*)copy_proc(heap, bignum->elts);
+                if (bignum->elts != (digit_t*)((uintptr_t)bignum + sizeof(scm_bignum_rec_t))) {
+                    bignum->elts = (digit_t*)copy_proc(heap, bignum->elts);
                 }
             } break;
 
