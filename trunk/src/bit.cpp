@@ -11,7 +11,7 @@
 #include "core.h"
 #include "bit.h"
 
-uint32_t
+int
 clp2(uint32_t x)
 {
     x = x - 1;
@@ -23,7 +23,7 @@ clp2(uint32_t x)
     return x + 1;
 }
 
-uint32_t
+int
 flp2(uint32_t x)
 {
     x = x | (x >>  1);
@@ -34,7 +34,7 @@ flp2(uint32_t x)
     return x - (x >> 1);
 }
 
-uint32_t
+int
 nbits(uint32_t x)
 {
     uint32_t t;
@@ -47,7 +47,14 @@ nbits(uint32_t x)
     return x >> 24;
 }
 
-uint32_t
+int
+nbits(uint64_t x)
+{
+    // todo: optimize
+    return nbits((uint32_t)(x >> 32)) + nbits((uint32_t)(x & 0xffffffff));
+}
+
+int
 nlz(uint32_t x)
 {
     uint32_t t;
@@ -60,8 +67,28 @@ nlz(uint32_t x)
     return n - x;
 }
 
-uint32_t
+int
+nlz(uint64_t x)
+{
+    uint64_t t;
+    int n = 64;
+    t = x >> 32; if (t) { n -= 32 ; x = t; }
+    t = x >> 16; if (t) { n -= 16 ; x = t; }
+    t = x >>  8; if (t) { n -=  8 ; x = t; }
+    t = x >>  4; if (t) { n -=  4 ; x = t; }
+    t = x >>  2; if (t) { n -=  2 ; x = t; }
+    t = x >>  1; if (t) { return n - 2; }
+    return n - x;
+}
+
+int
 ntz(uint32_t x)
+{
+    return nbits(~x & (x - 1));
+}
+
+int
+ntz(uint64_t x)
 {
     return nbits(~x & (x - 1));
 }

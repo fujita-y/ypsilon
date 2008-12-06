@@ -31,7 +31,7 @@ private:
     scm_obj_t       read_number();
     scm_obj_t       read_token();
     scm_obj_t       read_string();
-    scm_obj_t       read_list(bool bracketed);
+    scm_obj_t       read_list(bool bracketed, bool vector);
     scm_obj_t       read_quoted_symbol();
     scm_obj_t       read_symbol();
     scm_obj_t       read_char();

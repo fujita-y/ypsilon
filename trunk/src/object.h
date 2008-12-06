@@ -73,6 +73,16 @@ typedef scm_obj_t   scm_char_t;
 typedef scm_obj_t   scm_fixnum_t;
 typedef scm_obj_t   scm_inst_t;
 
+#if ARCH_LP64
+  #define USE_DIGIT32   0
+  #define USE_DIGIT64   1
+  typedef uint64_t digit_t;
+#else
+  #define USE_DIGIT32   1
+  #define USE_DIGIT64   0
+  typedef uint32_t digit_t;
+#endif
+
 const scm_obj_t scm_true                = (scm_obj_t)0x12;
 const scm_obj_t scm_false               = (scm_obj_t)0x22;
 const scm_obj_t scm_nil                 = (scm_obj_t)0x32;
@@ -344,7 +354,7 @@ OBJECT_ALIGNED(scm_weakhashtable_rec_t) {
 
 OBJECT_ALIGNED(scm_bignum_rec_t) {
     scm_hdr_t   hdr;
-    uint32_t*   elts;
+    digit_t*    elts;
 } END;
 
 OBJECT_ALIGNED(scm_complex_rec_t) {

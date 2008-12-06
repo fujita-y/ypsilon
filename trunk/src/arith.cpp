@@ -10,21 +10,43 @@
 #include "port.h"
 #include "heap.h"
 
+#if USE_DIGIT32
+  #define DIGIT_BIT                  32
+  #define DIGIT_BIT_MASK             UINT32_MAX
+  #define DIGIT_BIT_SHIFT_COUNT      5
+  typedef uint64_t                  digit2x_t;
+  typedef int32_t                   signed_digit_t;
+  typedef int64_t                   signed_digit2x_t;
+#else
+  #define DIGIT_BIT                  64
+  #define DIGIT_BIT_MASK             UINT64_MAX
+  #define DIGIT_BIT_SHIFT_COUNT      6
+  typedef uint128_t                 digit2x_t;
+  typedef int64_t                   signed_digit_t;
+  typedef int128_t                  signed_digit2x_t;
+#endif
+
 #define BN_QUANTUM      32
 #define BN_STACK_LIMIT  1024
 
 #define P_DIGITS        22
 #define P_EXP10         22      // (floor (/ (* 53 (log 2)) (log 5)))
 
+#ifndef NDEBUG
+  #include "vm.h"
+  #include "printer.h"
+  #define DBGPRT printer_t(current_vm(), current_vm()->m_current_output).format
+#endif
+
 // note: BN_TEMPORARY may not aligned and BIGNUMP() can not use to it. do not pass it to the function which argument type is scm_obj_t
 
-#define BN_TEMPORARY(NAME)      scm_bignum_rec_t NAME
+#define BN_TEMPORARY(NAME) scm_bignum_rec_t NAME
 
 #define BN_ALLOC(VAR, COUNT)                                                        \
             do {                                                                    \
-                if (sizeof(uint32_t) * (COUNT) < BN_STACK_LIMIT) {                  \
+                if (sizeof(digit_t) * (COUNT) < BN_STACK_LIMIT) {                   \
                     (VAR).hdr = scm_hdr_bignum;                                     \
-                    (VAR).elts = (uint32_t *)alloca(sizeof(uint32_t) * (COUNT));    \
+                    (VAR).elts = (digit_t *)alloca(sizeof(digit_t) * (COUNT));     \
                     bn_set_count(&(VAR), (COUNT));                                  \
                 } else {                                                            \
                     (VAR) = *(make_bignum(heap, COUNT));                            \
@@ -34,16 +56,12 @@
 #define BN_ALLOC_2SC(NEW, ORG)                                                          \
             do {                                                                        \
                 BN_ALLOC((NEW), bn_get_count(ORG) + 1);                                 \
-                memcpy((NEW).elts, (ORG)->elts, sizeof(uint32_t) * bn_get_count(ORG));  \
+                memcpy((NEW).elts, (ORG)->elts, sizeof(digit_t) * bn_get_count(ORG));   \
                 (NEW).elts[bn_get_count(ORG)] = 0;                                      \
                 bn_flip2sc(&(NEW));                                                     \
             } while(0);
 
-#if ARCH_LP64
-  #define BN_ALLOC_FIXNUM(VAR)    BN_ALLOC(VAR, 2)
-#else
-  #define BN_ALLOC_FIXNUM(VAR)    BN_ALLOC(VAR, 1)
-#endif
+#define BN_ALLOC_FIXNUM(VAR)    BN_ALLOC(VAR, 1)
 
 static const int64_t iexpt_2n52 = 0x10000000000000LL; // 2^(53-1)
 static const int64_t iexpt_2n53 = 0x20000000000000LL; // 2^53
@@ -78,11 +96,11 @@ static void
 bn_flip2sc(scm_bignum_t bn) // set 2s complement in elts
 {
     int bn_count = bn_get_count(bn);
-    uint64_t acc = 1;
+    digit2x_t acc = 1;
     for (int i = 0; i < bn_count; i++) {
-        acc = (uint64_t)(~bn->elts[i]) + acc;
-        bn->elts[i] = (uint32_t)acc;
-        acc >>= 32;
+        acc = (digit2x_t)(~bn->elts[i]) + acc;
+        bn->elts[i] = (digit_t)acc;
+        acc >>= DIGIT_BIT;
     }
 }
 
@@ -105,71 +123,32 @@ bn_norm(scm_bignum_t bn)
     return 0;
 }
 
-#if ARCH_LP64
-    static scm_obj_t
-    bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
-    {
-        if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
-        assert(bn_norm_pred(bn));
-        assert(bn_get_sign(bn) != 0);
-        if (bn_get_count(bn) == 1) {
-            int64_t n = bn->elts[0];
-            if (bn_get_sign(bn) < 0) n = -n;
-            return MAKEFIXNUM(n);
-        }
-        if (bn_get_count(bn) == 2) {
-            int128_t n = ((uint128_t)bn->elts[1] << 32) + bn->elts[0];
-            if (bn_get_sign(bn) < 0) n = -n;
-            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-        }
-        return bn_dup(heap, bn);
+static scm_obj_t
+bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
+{
+    if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
+    assert(bn_norm_pred(bn));
+    assert(bn_get_sign(bn) != 0);
+    if (bn_get_count(bn) == 1) {
+        signed_digit2x_t n = bn->elts[0];
+        if (bn_get_sign(bn) < 0) n = -n;
+        if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
     }
+    return bn_dup(heap, bn);
+}
 
-    static scm_obj_t
-    bn_demote(scm_bignum_t bn)
-    {
-        if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
-        assert(bn_get_sign(bn) != 0);
-        if (bn_get_count(bn) == 1) {
-            int64_t n = bn->elts[0];
-            if (bn_get_sign(bn) < 0) n = -n;
-            return MAKEFIXNUM(n);
-        }
-        if (bn_get_count(bn) == 2) {
-            int128_t n = ((uint128_t)bn->elts[1] << 32) + bn->elts[0];
-            if (bn_get_sign(bn) < 0) n = -n;
-            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-        }
-        return bn;
+static scm_obj_t
+bn_demote(scm_bignum_t bn)
+{
+    if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
+    assert(bn_get_sign(bn) != 0);
+    if (bn_get_count(bn) == 1) {
+        signed_digit2x_t n = bn->elts[0];
+        if (bn_get_sign(bn) < 0) n = -n;
+        if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
     }
-#else
-    static scm_obj_t
-    bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
-    {
-        if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
-        assert(bn_norm_pred(bn));
-        assert(bn_get_sign(bn) != 0);
-        if (bn_get_count(bn) == 1) {
-            int64_t n = bn->elts[0];
-            if (bn_get_sign(bn) < 0) n = -n;
-            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-        }
-        return bn_dup(heap, bn);
-    }
-
-    static scm_obj_t
-    bn_demote(scm_bignum_t bn)
-    {
-        if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
-        assert(bn_get_sign(bn) != 0);
-        if (bn_get_count(bn) == 1) {
-            int64_t n = bn->elts[0];
-            if (bn_get_sign(bn) < 0) n = -n;
-            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-        }
-        return bn;
-    }
-#endif
+    return bn;
+}
 
 static void
 bn_lognot(scm_bignum_t ans, scm_bignum_t obj)
@@ -179,7 +158,7 @@ bn_lognot(scm_bignum_t ans, scm_bignum_t obj)
     assert(ans_count >= obj_count);
     for (int i = 0; i < ans_count; i++) {
         if (i < obj_count) ans->elts[i] = ~obj->elts[i];
-        else ans->elts[i] = (uint32_t)-1;
+        else ans->elts[i] = (digit_t)-1;
     }
     bn_norm(ans);
 }
@@ -192,8 +171,8 @@ bn_logand(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs, bool lhs2sc, boo
     int rhs_count = bn_get_count(rhs);
     assert(ans_count >= lhs_count);
     for (int i = 0; i < ans_count; i++) {
-        uint32_t bit1 = (i < lhs_count) ? lhs->elts[i] : (lhs2sc ? 0xFFFFFFFF : 0);
-        uint32_t bit2 = (i < rhs_count) ? rhs->elts[i] : (rhs2sc ? 0xFFFFFFFF : 0);
+        digit_t bit1 = (i < lhs_count) ? lhs->elts[i] : (lhs2sc ? DIGIT_BIT_MASK : 0);
+        digit_t bit2 = (i < rhs_count) ? rhs->elts[i] : (rhs2sc ? DIGIT_BIT_MASK : 0);
         ans->elts[i] = bit1 & bit2;
     }
     bn_norm(ans);
@@ -207,8 +186,8 @@ bn_logior(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs, bool lhs2sc, boo
     int rhs_count = bn_get_count(rhs);
     assert(ans_count >= lhs_count);
     for (int i = 0; i < ans_count; i++) {
-        uint32_t bit1 = (i < lhs_count) ? lhs->elts[i] : (lhs2sc ? 0xFFFFFFFF : 0);
-        uint32_t bit2 = (i < rhs_count) ? rhs->elts[i] : (rhs2sc ? 0xFFFFFFFF : 0);
+        digit_t bit1 = (i < lhs_count) ? lhs->elts[i] : (lhs2sc ? DIGIT_BIT_MASK : 0);
+        digit_t bit2 = (i < rhs_count) ? rhs->elts[i] : (rhs2sc ? DIGIT_BIT_MASK : 0);
         ans->elts[i] = bit1 | bit2;
     }
     bn_norm(ans);
@@ -222,8 +201,8 @@ bn_logxor(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs, bool lhs2sc, boo
     int rhs_count = bn_get_count(rhs);
     assert(ans_count >= lhs_count);
     for (int i = 0; i < ans_count; i++) {
-        uint32_t bit1 = (i < lhs_count) ? lhs->elts[i] : (lhs2sc ? 0xFFFFFFFF : 0);
-        uint32_t bit2 = (i < rhs_count) ? rhs->elts[i] : (rhs2sc ? 0xFFFFFFFF : 0);
+        digit_t bit1 = (i < lhs_count) ? lhs->elts[i] : (lhs2sc ? DIGIT_BIT_MASK : 0);
+        digit_t bit2 = (i < rhs_count) ? rhs->elts[i] : (rhs2sc ? DIGIT_BIT_MASK : 0);
         ans->elts[i] = bit1 ^ bit2;
     }
     bn_norm(ans);
@@ -236,12 +215,12 @@ bn_add(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs)
     int lhs_count = bn_get_count(lhs);
     int rhs_count = bn_get_count(rhs);
     assert(ans_count >= lhs_count);
-    uint64_t acc = 0;
+    digit2x_t acc = 0;
     for (int i = 0; i < ans_count; i++) {
-        if (i < lhs_count) acc = acc + (uint64_t)lhs->elts[i];
-        if (i < rhs_count) acc = acc + (uint64_t)rhs->elts[i];
-        ans->elts[i] = (uint32_t)acc;
-        acc >>= 32;
+        if (i < lhs_count) acc = acc + (digit2x_t)lhs->elts[i];
+        if (i < rhs_count) acc = acc + (digit2x_t)rhs->elts[i];
+        ans->elts[i] = (digit_t)acc;
+        acc >>= DIGIT_BIT;
     }
     bn_norm(ans);
     return acc != 0;
@@ -254,12 +233,12 @@ bn_sub(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs)
     int lhs_count = bn_get_count(lhs);
     int rhs_count = bn_get_count(rhs);
     assert(ans_count);
-    int64_t acc = 0;
+    signed_digit2x_t acc = 0;
     for (int i = 0; i < ans_count; i++) {
-        if (i < lhs_count) acc = acc + (uint64_t)lhs->elts[i];
-        if (i < rhs_count) acc = acc - (uint64_t)rhs->elts[i];
-        ans->elts[i] = (uint32_t)acc;
-        acc >>= 32;
+        if (i < lhs_count) acc = acc + (digit2x_t)lhs->elts[i];
+        if (i < rhs_count) acc = acc - (digit2x_t)rhs->elts[i];
+        ans->elts[i] = (digit_t)acc;
+        acc >>= DIGIT_BIT;
     }
     if (acc >= 0) {
         bn_norm(ans);
@@ -277,48 +256,48 @@ bn_mul(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs)
     int lhs_count = bn_get_count(lhs);
     int rhs_count = bn_get_count(rhs);
     assert(ans_count >= lhs_count + rhs_count);
-    memset(ans->elts, 0, sizeof(uint32_t) * ans_count);
+    memset(ans->elts, 0, sizeof(digit_t) * ans_count);
     for (int i = 0; i < lhs_count; i++) {
-        uint64_t acc = 0;
+        digit2x_t acc = 0;
         for (int j = 0 ; j < rhs_count; j++) {
-            acc = (uint64_t)lhs->elts[i] * (uint64_t)rhs->elts[j] + acc + (uint64_t)ans->elts[i + j];
-            ans->elts[i + j] = (uint32_t)acc;
-            acc >>= 32;
+            acc = (digit2x_t)lhs->elts[i] * (digit2x_t)rhs->elts[j] + acc + (digit2x_t)ans->elts[i + j];
+            ans->elts[i + j] = (digit_t)acc;
+            acc >>= DIGIT_BIT;
         }
-        ans->elts[i + rhs_count] = (uint32_t)acc;
+        ans->elts[i + rhs_count] = (digit_t)acc;
     }
     bn_set_count(ans, rhs_count + lhs_count);
     bn_norm(ans);
 }
 
 static void
-bn_mul_add_uint32(scm_bignum_t ans, scm_bignum_t lhs, uint32_t rhs, uint32_t addend)
+bn_mul_add_digit(scm_bignum_t ans, scm_bignum_t lhs, digit_t rhs, digit_t addend)
 {
     // note: this func do not clear ans->elts[] if (ans == lhs)
     int lhs_count = bn_get_count(lhs);
     assert(bn_get_count(ans) > lhs_count);
-    uint64_t acc = addend;
+    digit2x_t acc = addend;
     for (int i = 0; i < lhs_count; i++) {
-        acc = (uint64_t)lhs->elts[i] * (uint64_t)rhs + acc;
-        ans->elts[i] = (uint32_t)acc;
-        acc >>= 32;
+        acc = (digit2x_t)lhs->elts[i] * (digit2x_t)rhs + acc;
+        ans->elts[i] = (digit_t)acc;
+        acc >>= DIGIT_BIT;
     }
     ans->elts[lhs_count] = acc;
     bn_set_count(ans, lhs_count + 1);
     bn_norm(ans);
 }
 
-static uint32_t
-bn_div_uint32(scm_bignum_t quotient, scm_bignum_t numerator, uint32_t denominator)
+static digit_t
+bn_div_digit(scm_bignum_t quotient, scm_bignum_t numerator, digit_t denominator)
 {
     int numerator_count = bn_get_count(numerator);
 #ifndef NDEBUG
     int quotient_count = bn_get_count(quotient);
     assert(quotient_count >= numerator_count);
 #endif
-    uint64_t remainder = 0;
+    digit2x_t remainder = 0;
     for (int i = numerator_count - 1; i >= 0; i--) {
-        remainder = (remainder << 32) + numerator->elts[i];
+        remainder = (remainder << DIGIT_BIT) + numerator->elts[i];
         quotient->elts[i] = remainder / denominator;
         remainder = remainder % denominator;
     }
@@ -326,58 +305,16 @@ bn_div_uint32(scm_bignum_t quotient, scm_bignum_t numerator, uint32_t denominato
     return remainder;
 }
 
-static uint32_t
-bn_remainder_uint32(scm_bignum_t numerator, uint32_t denominator)
+static digit_t
+bn_remainder_digit(scm_bignum_t numerator, digit_t denominator)
 {
     int numerator_count = bn_get_count(numerator);
-    uint64_t remainder = 0;
+    digit2x_t remainder = 0;
     for (int i = numerator_count - 1; i >= 0; i--) {
-        remainder = ((remainder << 32) + numerator->elts[i]) % denominator;
+        remainder = ((remainder << DIGIT_BIT) + numerator->elts[i]) % denominator;
     }
     return remainder;
 }
-
-#if ARCH_LP64
-    static uint64_t
-    bn_div_uint64(scm_bignum_t quotient, scm_bignum_t numerator, uint64_t denominator)
-    {
-        int numerator_count = bn_get_count(numerator);
-  #ifndef NDEBUG
-        int quotient_count = bn_get_count(quotient);
-        assert(quotient_count >= numerator_count);
-  #endif
-        uint128_t remainder = 0;
-        if (numerator_count & 1) {
-            quotient->elts[numerator_count - 1] = numerator->elts[numerator_count - 1] / denominator;
-            remainder = numerator->elts[numerator_count - 1] % denominator;
-            numerator_count--;
-        }
-        for (int i = numerator_count - 1; i >= 1; i-= 2) {
-            remainder = (remainder << 64) + ((uint64_t)numerator->elts[i] << 32) + numerator->elts[i - 1];
-            uint64_t quo = remainder / denominator;
-            quotient->elts[i] = quo >> 32;
-            quotient->elts[i - 1] = quo & 0xffffffff;
-            remainder = remainder % denominator;
-        }
-        bn_norm(quotient);
-        return remainder;
-    }
-
-    static uint64_t
-    bn_remainder_uint64(scm_bignum_t numerator, uint64_t denominator)
-    {
-        int numerator_count = bn_get_count(numerator);
-        uint128_t remainder = 0;
-        if (numerator_count & 1) {
-            remainder = numerator->elts[numerator_count - 1] % denominator;
-            numerator_count--;
-        }
-        for (int i = numerator_count - 1; i >= 1; i-=2) {
-            remainder = ((remainder << 64) + ((uint64_t)numerator->elts[i] << 32) + numerator->elts[i - 1]) % denominator;
-        }
-        return remainder;
-    }
-#endif
 
 static int
 bn_cmp(scm_bignum_t lhs, scm_bignum_t rhs)
@@ -396,7 +333,7 @@ bn_cmp(scm_bignum_t lhs, scm_bignum_t rhs)
 }
 
 static void
-bn_shift_right_32bit(scm_bignum_t bn, int unit)
+bn_shift_right_digit(scm_bignum_t bn, int unit)
 {
     assert(unit >= 0);
     int bn_count = bn_get_count(bn);
@@ -411,14 +348,14 @@ bn_shift_right_32bit(scm_bignum_t bn, int unit)
 static void
 bn_shift_right(scm_bignum_t bn, unsigned int shift)
 {
-    int bit_shift = shift & 31;
-    shift >>= 5;
-    if (shift) bn_shift_right_32bit(bn, shift);
+    int bit_shift = shift & (DIGIT_BIT - 1);
+    shift >>= DIGIT_BIT_SHIFT_COUNT;
+    if (shift) bn_shift_right_digit(bn, shift);
     if (bit_shift) {
         int count = bn_get_count(bn) - shift;
-        uint32_t bits = 0;
+        digit_t bits = 0;
         for (int i = count - 1; i >= 0; i--) {
-            uint32_t bits2 = bn->elts[i] << (32 - bit_shift);
+            digit_t bits2 = bn->elts[i] << (DIGIT_BIT - bit_shift);
             bn->elts[i] = (bn->elts[i] >> bit_shift) | bits;
             bits = bits2;
         }
@@ -426,7 +363,7 @@ bn_shift_right(scm_bignum_t bn, unsigned int shift)
 }
 
 static void
-bn_shift_right_32bit_2sc(scm_bignum_t bn, int unit)
+bn_shift_right_digit_2sc(scm_bignum_t bn, int unit)
 {
     assert(unit >= 0);
     int bn_count = bn_get_count(bn);
@@ -435,20 +372,20 @@ bn_shift_right_32bit_2sc(scm_bignum_t bn, int unit)
     } else {
         unit = bn_count;
     }
-    for (int i = bn_count - unit; i < bn_count; i++) bn->elts[i] = 0xffffffff;
+    for (int i = bn_count - unit; i < bn_count; i++) bn->elts[i] = DIGIT_BIT_MASK;
 }
 
 static void
 bn_shift_right_2sc(scm_bignum_t bn, unsigned int shift)
 {
-    int bit_shift = shift & 31;
-    shift >>= 5;
-    if (shift) bn_shift_right_32bit_2sc(bn, shift);
+    int bit_shift = shift & (DIGIT_BIT - 1);
+    shift >>= DIGIT_BIT_SHIFT_COUNT;
+    if (shift) bn_shift_right_digit_2sc(bn, shift);
     if (bit_shift) {
         int count = bn_get_count(bn) - shift;
-        uint32_t bits = ~(0xffffffff >> bit_shift);
+        digit_t bits = ~(DIGIT_BIT_MASK >> bit_shift);
         for (int i = count - 1; i >= 0; i--) {
-            uint32_t bits2 = bn->elts[i] << (32 - bit_shift);
+            digit_t bits2 = bn->elts[i] << (DIGIT_BIT - bit_shift);
             bn->elts[i] = (bn->elts[i] >> bit_shift) | bits;
             bits = bits2;
         }
@@ -456,7 +393,7 @@ bn_shift_right_2sc(scm_bignum_t bn, unsigned int shift)
 }
 
 static void
-bn_shift_left_32bit(scm_bignum_t bn, int unit)
+bn_shift_left_digit(scm_bignum_t bn, int unit)
 {
     assert(unit >= 0);
     int bn_count = bn_get_count(bn);
@@ -473,17 +410,17 @@ bn_shift_left(scm_bignum_t bn, int shift)
 {
     assert(shift >= 0);
     int bn_count = bn_get_count(bn);
-    int bit_shift = shift & 31;
+    int bit_shift = shift & (DIGIT_BIT - 1);
     if (bit_shift) {
-        uint32_t bits = 0;
+        digit_t bits = 0;
         for (int i = 0; i < bn_count; i++) {
-            uint32_t bits2 = bn->elts[i] >> (32 - bit_shift);
+            digit_t bits2 = bn->elts[i] >> (DIGIT_BIT - bit_shift);
             bn->elts[i] = (bn->elts[i] << bit_shift) | bits;
             bits = bits2;
         }
     }
     if (shift == bit_shift) return;
-    bn_shift_left_32bit(bn, shift >> 5);
+    bn_shift_left_digit(bn, shift >> DIGIT_BIT_SHIFT_COUNT);
 }
 
 static void
@@ -493,57 +430,28 @@ bn_copy(scm_bignum_t dst, scm_bignum_t src)
     int count = bn_get_count(src);
     bn_set_count(dst, count);
     bn_set_sign(dst, bn_get_sign(src));
-    memcpy(dst->elts, src->elts, sizeof(uint32_t) * count);
+    memcpy(dst->elts, src->elts, sizeof(digit_t) * count);
 }
 
-#if ARCH_LP64
-    static void
-    bn_let(scm_bignum_t dst, scm_fixnum_t src)
-    {
-        assert(bn_get_count(dst) >= 1);
-        intptr_t value = FIXNUM(src);
-        if (value) {
-            int sign;
-            if (value > 0) {
-                bn_set_sign(dst, 1);
-            } else {
-                bn_set_sign(dst, -1);
-                value = -value;
-            }
-            if ((value >> 32) != 0) {
-                dst->elts[0] = value & 0xffffffff;
-                dst->elts[1] = value >> 32;
-                bn_set_count(dst, 2);
-            } else {
-                dst->elts[0] = (uint32_t)value;
-                bn_set_count(dst, 1);
-            }
+static void
+bn_let(scm_bignum_t dst, scm_fixnum_t src)
+{
+    assert(bn_get_count(dst) >= 1);
+    intptr_t value = FIXNUM(src);
+    if (value) {
+        bn_set_count(dst, 1);
+        if (value > 0) {
+            dst->elts[0] = value;
+            bn_set_sign(dst, 1);
         } else {
-            bn_set_count(dst, 0);
-            bn_set_sign(dst, 0);
+            dst->elts[0] = -value;
+            bn_set_sign(dst, -1);
         }
+    } else {
+        bn_set_count(dst, 0);
+        bn_set_sign(dst, 0);
     }
-#else
-    static void
-    bn_let(scm_bignum_t dst, scm_fixnum_t src)
-    {
-        assert(bn_get_count(dst) >= 1);
-        intptr_t value = FIXNUM(src);
-        if (value) {
-            bn_set_count(dst, 1);
-            if (value > 0) {
-                dst->elts[0] = value;
-                bn_set_sign(dst, 1);
-            } else {
-                dst->elts[0] = -value;
-                bn_set_sign(dst, -1);
-            }
-        } else {
-            bn_set_count(dst, 0);
-            bn_set_sign(dst, 0);
-        }
-    }
-#endif
+}
 
 static void
 bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bignum_t denominator)
@@ -554,21 +462,21 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
     assert(bn_get_count(denominator));
     int denominator_count = bn_get_count(denominator);
     int numerator_count = bn_get_count(numerator);
-    uint32_t bits = denominator->elts[denominator_count - 1];
+    digit_t bits = denominator->elts[denominator_count - 1];
     int shift = 0;
-    while ((int32_t)bits > 0) { bits <<= 1; shift++; }
+    while ((signed_digit_t)bits > 0) { bits <<= 1; shift++; }
     bn_shift_left(denominator, shift);
     int remainder_count = numerator_count + 1;
     BN_TEMPORARY(remainder);
     BN_ALLOC(remainder, remainder_count);
-    memcpy(remainder.elts, numerator->elts, sizeof(uint32_t) * numerator_count);
+    memcpy(remainder.elts, numerator->elts, sizeof(digit_t) * numerator_count);
     remainder.elts[remainder_count - 1] = 0;
     bn_shift_left(&remainder, shift);
     remainder_count = bn_norm(&remainder);
     int quotient_count = remainder_count - denominator_count + 1;
     BN_TEMPORARY(quotient);
     BN_ALLOC(quotient, quotient_count);
-    memset(quotient.elts, 0, sizeof(uint32_t) * quotient_count);
+    memset(quotient.elts, 0, sizeof(digit_t) * quotient_count);
     int workpad_count = denominator_count + 1;
     BN_TEMPORARY(workpad);
     BN_ALLOC(workpad, workpad_count);
@@ -588,18 +496,18 @@ bn_div(object_heap_t* heap, bn_div_ans_t* answer, scm_bignum_t numerator, scm_bi
         }
         if (qt_index > 0) {
             assert(rd_index > 0);
-            uint64_t n = ((uint64_t)remainder.elts[rd_index] << 32) + remainder.elts[rd_index - 1];
+            digit2x_t n = ((digit2x_t)remainder.elts[rd_index] << DIGIT_BIT) + remainder.elts[rd_index - 1];
             if (n > denominator->elts[de_index]) {
-                uint32_t qt = 0;
+                digit_t qt = 0;
                 if (remainder.elts[rd_index] < denominator->elts[de_index]) {
                     qt = n / denominator->elts[de_index];
                     bn_set_count(&workpad, workpad_count);
-                    bn_mul_add_uint32(&workpad, denominator, qt, 0);
+                    bn_mul_add_digit(&workpad, denominator, qt, 0);
                 } else {
                     assert(remainder.elts[rd_index] == denominator->elts[de_index]);
                     bn_set_count(&workpad, workpad_count);
-                    memcpy(workpad.elts, denominator->elts, sizeof(uint32_t) * denominator_count);
-                    bn_shift_left(&workpad, 32);
+                    memcpy(workpad.elts, denominator->elts, sizeof(digit_t) * denominator_count);
+                    bn_shift_left(&workpad, DIGIT_BIT);
                 }
                 BN_TEMPORARY(subsec);
                 bn_subsection(&subsec, &remainder, rd_index - (workpad_count - 1));
@@ -647,8 +555,8 @@ bn_bitsize(scm_bignum_t obj)
     int last = bn_get_count(obj) - 1;
     assert(last >= 0);
     assert(obj->elts[last]);
-    int bitsize = 32 * last;
-    return bitsize + 32 - nlz(obj->elts[last]);
+    int bitsize = DIGIT_BIT * last;
+    return bitsize + DIGIT_BIT - nlz(obj->elts[last]);
 }
 
 static void
@@ -659,7 +567,7 @@ bn_sqrt(object_heap_t* heap, scm_bignum_t obj)
     BN_TEMPORARY(s);
     BN_ALLOC(s, count);
     bn_set_sign(&s, 1);
-    memcpy(s.elts, obj->elts, sizeof(uint32_t) * count);
+    memcpy(s.elts, obj->elts, sizeof(digit_t) * count);
     int workpad_count = count + 1;
     BN_TEMPORARY(workpad);
     BN_ALLOC(workpad, workpad_count);
@@ -668,7 +576,7 @@ bn_sqrt(object_heap_t* heap, scm_bignum_t obj)
     bn_shift_right(&s, (bitsize - 1) / 2);
     bn_norm(&s);
     while (true) {
-        memset(workpad.elts, 0, sizeof(uint32_t) * workpad_count);
+        memset(workpad.elts, 0, sizeof(digit_t) * workpad_count);
         bn_set_count(&workpad, workpad_count);
         bn_quotient(heap, &workpad, obj, &s);
         bn_set_count(&workpad, bn_get_count(&workpad) + 1);
@@ -684,22 +592,30 @@ bn_sqrt(object_heap_t* heap, scm_bignum_t obj)
         }
         count = bn_get_count(&workpad);
         bn_set_count(&s, count);
-        memcpy(s.elts, workpad.elts, sizeof(uint32_t) * count);
+        memcpy(s.elts, workpad.elts, sizeof(digit_t) * count);
     }
 }
 
-// to double conversion use last 3 elts (96bits)
 
 static double
 bignum_to_double(scm_bignum_t obj)
 {
     int count = bn_get_count(obj);
     double ans = 0.0;
+#if USE_DIGIT32
+    // to double conversion use last 3 elts (96bits)
     if (count == 0) return 0.0;
     else if (count == 1) ans = obj->elts[0];
     else if (count == 2) ans = obj->elts[1] * (double)4294967296.0 + obj->elts[0];
-    else for (int i = count - 1; i >= count - 3; i--) ans += ldexp((double)obj->elts[i], 32 * i);
+    else for (int i = count - 1; i >= count - 3; i--) ans += ldexp((double)obj->elts[i], DIGIT_BIT * i);
     return bn_get_sign(obj) > 0 ? ans : -ans;
+#else
+    // to double conversion use last 2 elts (128bits)
+    if (count == 0) return 0.0;
+    else if (count == 1) ans = obj->elts[0];
+    else for (int i = count - 1; i >= count - 2; i--) ans += ldexp((double)obj->elts[i], DIGIT_BIT * i);
+    return bn_get_sign(obj) > 0 ? ans : -ans;
+#endif
 }
 
 static double
@@ -710,10 +626,19 @@ bignum_shift_right_to_double(scm_bignum_t obj, int shift)
     if (count == 1) return (double)(obj->elts[0] >> shift);
     if (bn_bitsize(obj) <= shift) return 0.0;
     double ans = 0.0;
+#if USE_DIGIT32
+    // to double conversion use last 3 elts (96bits)
     for (int i = count - 1; i >= 0 && i >= count - 3; i--) {
-        int n = 32 * i - shift;
+        int n = DIGIT_BIT * i - shift;
         ans = ans + ldexp((double)obj->elts[i], n);
     }
+#else
+    // to double conversion use last 2 elts (128bits)
+    for (int i = count - 1; i >= 0 && i >= count - 2; i--) {
+        int n = DIGIT_BIT * i - shift;
+        ans = ans + ldexp((double)obj->elts[i], n);
+    }
+#endif
     return bn_get_sign(obj) > 0 ? ans : -ans;
 }
 
@@ -751,6 +676,7 @@ rational_to_double(scm_rational_t obj)
 bool
 bignum_to_int32(scm_bignum_t bn, int32_t* ans)
 {
+    assert(bn_norm_pred(bn));
     if (bn_get_count(bn) == 1) {
         if (bn_get_sign(bn) > 0) {
             if (bn->elts[0] <= INT32_MAX) {
@@ -770,63 +696,110 @@ bignum_to_int32(scm_bignum_t bn, int32_t* ans)
 bool
 bignum_to_uint32(scm_bignum_t bn, uint32_t* ans)
 {
-    if ((bn_get_sign(bn) < 0) | (bn_get_count(bn) > 1)) return false;
+    assert(bn_norm_pred(bn));
+#if USE_DIGIT32
+    if ((bn_get_sign(bn) < 0) || (bn_get_count(bn) > 1)) return false;
     *ans = bn->elts[0];
     return true;
+#else
+    if ((bn_get_sign(bn) < 0) || (bn_get_count(bn) > 1)) return false;
+    if (bn->elts[0] <= UINT32_MAX) {
+        *ans = bn->elts[0];
+        return true;
+    }
+    return false;
+#endif
 }
 
 bool
 bignum_to_int64(scm_bignum_t bn, int64_t* ans)
 {
+    assert(bn_norm_pred(bn));
+#if USE_DIGIT32
     if (bn_get_count(bn) == 1) {
         if (bn_get_sign(bn) > 0) {
-            *ans = (int64_t)bn->elts[0];
+            *ans = (signed_digit2x_t)bn->elts[0];
             return true;
         } else {
-            *ans = -((int64_t)bn->elts[0]);
+            *ans = -((signed_digit2x_t)bn->elts[0]);
             return true;
         }
     }
     if (bn_get_count(bn) == 2) {
-        uint64_t value = ((uint64_t)bn->elts[1] << 32) + (uint64_t)bn->elts[0];
+        digit2x_t value = ((digit2x_t)bn->elts[1] << DIGIT_BIT) + (digit2x_t)bn->elts[0];
         if (bn_get_sign(bn) > 0) {
             if (value <= INT64_MAX) {
                 *ans = value;
                 return true;
             }
         } else {
-            if (value <= (uint64_t)INT64_MAX + 1) {
+            if (value <= (digit2x_t)INT64_MAX + 1) {
                 *ans = -value;
                 return true;
             }
         }
     }
     return false;
+#else
+    if (bn_get_count(bn) == 1) {
+        if (bn_get_sign(bn) > 0) {
+            if (bn->elts[0] <= INT64_MAX) {
+                *ans = bn->elts[0];
+                return true;
+            }
+        } else {
+            if (bn->elts[0] <= (digit_t)INT64_MAX + 1) {
+                *ans = -bn->elts[0];
+                return true;
+            }
+        }
+    }
+    return false;
+#endif
 }
 
 bool
 bignum_to_uint64(scm_bignum_t bn, uint64_t* ans)
 {
-    if ((bn_get_sign(bn) < 0) | (bn_get_count(bn) > 2)) return false;
-    if (bn_get_count(bn) == 2) {
-        *ans = ((uint64_t)bn->elts[1] << 32) + (uint64_t)bn->elts[0];
-    } else {
-        *ans = (uint64_t)bn->elts[0];
+    assert(bn_norm_pred(bn));
+#if USE_DIGIT32
+    if (bn_get_sign(bn) < 0) return false;
+    if (bn_get_count(bn) == 1) {
+        *ans = (digit2x_t)bn->elts[0];
+        return true;
     }
-    return true;
+    if (bn_get_count(bn) == 2) {
+        *ans = ((digit2x_t)bn->elts[1] << DIGIT_BIT) + (digit2x_t)bn->elts[0];
+        return true;
+    }
+    return false;
+#else
+    if (bn_get_sign(bn) < 0) return false;
+    if (bn_get_count(bn) == 1) {
+        *ans = bn->elts[0];
+        return true;
+    }
+    return false;
+#endif
 }
 
 bool
 exact_integer_to_int32(scm_obj_t obj, int32_t* ans)
 {
     if (FIXNUMP(obj)) {
+#if USE_DIGIT32
         *ans = FIXNUM(obj);
         return true;
+#else
+        intptr_t value = FIXNUM(obj);
+        if (value >= INT32_MIN && value <= INT32_MAX) {
+            *ans = value;
+            return true;
+        }
+        return false;
+#endif
     }
-    if (BIGNUMP(obj)) {
-        return bignum_to_int32((scm_bignum_t)obj, ans);
-    }
-    assert(false);
+    if (BIGNUMP(obj)) return bignum_to_int32((scm_bignum_t)obj, ans);
     return false;
 }
 
@@ -834,17 +807,23 @@ bool
 exact_integer_to_uint32(scm_obj_t obj, uint32_t* ans)
 {
     if (FIXNUMP(obj)) {
+#if USE_DIGIT32
         intptr_t value = FIXNUM(obj);
         if (value >= 0) {
-            *ans = FIXNUM(obj);
+            *ans = value;
             return true;
         }
         return false;
+#else
+        intptr_t value = FIXNUM(obj);
+        if (value >= 0 && value < UINT32_MAX) {
+            *ans = value;
+            return true;
+        }
+        return false;
+#endif
     }
-    if (BIGNUMP(obj)) {
-        return bignum_to_uint32((scm_bignum_t)obj, ans);
-    }
-    assert(false);
+    if (BIGNUMP(obj)) return bignum_to_uint32((scm_bignum_t)obj, ans);
     return false;
 }
 
@@ -858,7 +837,6 @@ exact_integer_to_int64(scm_obj_t obj, int64_t* ans)
     if (BIGNUMP(obj)) {
         return bignum_to_int64((scm_bignum_t)obj, ans);
     }
-    assert(false);
     return false;
 }
 
@@ -876,7 +854,6 @@ exact_integer_to_uint64(scm_obj_t obj, uint64_t* ans)
     if (BIGNUMP(obj)) {
         return bignum_to_uint64((scm_bignum_t)obj, ans);
     }
-    assert(false);
     return false;
 }
 
@@ -936,6 +913,7 @@ uint32_to_bignum(object_heap_t* heap, uint32_t value)
 scm_obj_t
 int64_to_bignum(object_heap_t* heap, int64_t value)
 {
+#if USE_DIGIT32
     if (value) {
         int sign;
         if (value > 0) {
@@ -945,10 +923,10 @@ int64_to_bignum(object_heap_t* heap, int64_t value)
             value = -value;
         }
         scm_bignum_t ans;
-        if ((value >> 32) != 0) {
+        if ((value >> DIGIT_BIT) != 0) {
             ans = make_bignum(heap, 2);
-            ans->elts[0] = value & 0xffffffff;
-            ans->elts[1] = value >> 32;
+            ans->elts[0] = value & DIGIT_BIT_MASK;
+            ans->elts[1] = value >> DIGIT_BIT;
         } else {
             ans = make_bignum(heap, 1);
             ans->elts[0] = value;
@@ -957,17 +935,32 @@ int64_to_bignum(object_heap_t* heap, int64_t value)
         return ans;
     }
     return make_bignum(heap, 0);
+#else
+    if (value) {
+        scm_bignum_t ans = make_bignum(heap, 1);
+        if (value > 0) {
+            bn_set_sign(ans, 1);
+            ans->elts[0] = value;
+        } else {
+            bn_set_sign(ans, -1);
+            ans->elts[0] = -value;
+        }
+        return ans;
+    }
+    return make_bignum(heap, 0);
+#endif
 }
 
 scm_obj_t
 uint64_to_bignum(object_heap_t* heap, uint64_t value)
 {
+#if USE_DIGIT32
     if (value) {
         scm_bignum_t ans;
-        if ((value >> 32) != 0) {
+        if ((value >> DIGIT_BIT) != 0) {
             ans = make_bignum(heap, 2);
-            ans->elts[0] = value & 0xffffffff;
-            ans->elts[1] = value >> 32;
+            ans->elts[0] = value & DIGIT_BIT_MASK;
+            ans->elts[1] = value >> DIGIT_BIT;
         } else {
             ans = make_bignum(heap, 1);
             ans->elts[0] = value;
@@ -976,53 +969,55 @@ uint64_to_bignum(object_heap_t* heap, uint64_t value)
         return ans;
     }
     return make_bignum(heap, 0);
+#else
+    if (value) {
+        scm_bignum_t ans = make_bignum(heap, 1);
+        bn_set_sign(ans, 1);
+        ans->elts[0] = value;
+        return ans;
+    }
+    return make_bignum(heap, 0);
+#endif
 }
 
-#if ARCH_LP64
-    scm_obj_t
-    int128_to_bignum(object_heap_t* heap, int128_t value)
-    {
-        if (value) {
-            int sign;
-            if (value > 0) {
-                sign = 1;
-            } else {
-                sign = -1;
-                value = -value;
-            }
-            scm_bignum_t ans;
-            if ((value >> 32) != 0) {
-                if ((value >> 64) != 0) {
-                    if ((value >> 96) != 0) {
-                        ans = make_bignum(heap, 4);
-                        ans->elts[0] = value & 0xffffffff;
-                        ans->elts[1] = (value >> 32) & 0xffffffff;
-                        ans->elts[2] = (value >> 64) & 0xffffffff;
-                        ans->elts[3] = (value >> 96);
-                        bn_set_sign(ans, sign);
-                        return ans;
-                    }
-                    ans = make_bignum(heap, 3);
-                    ans->elts[0] = value & 0xffffffff;
-                    ans->elts[1] = (value >> 32) & 0xffffffff;
-                    ans->elts[2] = (value >> 64);
-                    bn_set_sign(ans, sign);
-                    return ans;
-                }
-                ans = make_bignum(heap, 2);
-                ans->elts[0] = value & 0xffffffff;
-                ans->elts[1] = value >> 32;
-                bn_set_sign(ans, sign);
-                return ans;
-            }
-            ans = make_bignum(heap, 1);
-            ans->elts[0] = value;
+#if USE_DIGIT64
+scm_obj_t
+int128_to_bignum(object_heap_t* heap, int128_t value)
+{
+    if (value) {
+        int sign;
+        if (value > 0) {
+            sign = 1;
+        } else {
+            sign = -1;
+            value = -value;
+        }
+        scm_bignum_t ans;
+        if ((value >> DIGIT_BIT) != 0) {
+            ans = make_bignum(heap, 2);
+            ans->elts[0] = value & DIGIT_BIT_MASK;
+            ans->elts[1] = value >> DIGIT_BIT;
             bn_set_sign(ans, sign);
             return ans;
         }
-        return make_bignum(heap, 0);
+        ans = make_bignum(heap, 1);
+        ans->elts[0] = value;
+        bn_set_sign(ans, sign);
+        return ans;
     }
+    return make_bignum(heap, 0);
+}
 #endif
+
+static scm_obj_t
+signed_digit2x_to_bignum(object_heap_t* heap, signed_digit2x_t value)
+{
+#if USE_DIGIT32
+    return int64_to_bignum(heap, value);
+#else
+    return int128_to_bignum(heap, value);
+#endif
+}
 
 scm_obj_t
 intptr_to_bignum(object_heap_t* heap, intptr_t value)
@@ -1200,7 +1195,7 @@ oprtr_reduce_fixnum_bignum(object_heap_t* heap, scm_fixnum_t numerator, scm_bign
         return make_rational(heap, numerator, denominator);
     }
     int ans_sign = 1;
-    intptr_t nume = FIXNUM(numerator);
+    signed_digit_t nume = FIXNUM(numerator);
     if (nume < 0) {
         ans_sign = -ans_sign;
         nume = -nume;
@@ -1208,25 +1203,17 @@ oprtr_reduce_fixnum_bignum(object_heap_t* heap, scm_fixnum_t numerator, scm_bign
     if (bn_get_sign(denominator) < 0) {
         ans_sign = -ans_sign;
     }
-#if ARCH_LP64
-    intptr_t n1 = bn_remainder_uint64(denominator, nume);
-#else
-    intptr_t n1 = bn_remainder_uint32(denominator, nume);
-#endif
-    intptr_t n2 = nume;
-    while (n2) { intptr_t t = n2; n2 = n1 % n2; n1 = t; }
-    intptr_t gcd = n1;
+    signed_digit_t n1 = bn_remainder_digit(denominator, nume);
+    signed_digit_t n2 = nume;
+    while (n2) { signed_digit_t t = n2; n2 = n1 % n2; n1 = t; }
+    signed_digit_t gcd = n1;
     nume = nume / gcd;
     if (ans_sign < 0) nume = -nume;
     BN_TEMPORARY(quo);
     int count = bn_get_count(denominator);
     BN_ALLOC(quo, count);
-    memset(quo.elts, 0, sizeof(uint32_t) * count);
-#if ARCH_LP64
-    bn_div_uint64(&quo, denominator, gcd);
-#else
-    bn_div_uint32(&quo, denominator, gcd);
-#endif
+    memset(quo.elts, 0, sizeof(digit_t) * count);
+    bn_div_digit(&quo, denominator, gcd);
     bn_set_sign(&quo, 1);
     scm_obj_t ans_nume = intptr_to_integer(heap, nume);
     scm_obj_t ans_deno = bn_to_integer(heap, &quo);
@@ -1248,11 +1235,7 @@ oprtr_reduce_bignum_fixnum(object_heap_t* heap, scm_bignum_t numerator, scm_fixn
         ans_sign = -ans_sign;
         deno = - deno;
     }
-#if ARCH_LP64
-    intptr_t n1 = bn_remainder_uint64(numerator, deno);
-#else
-    intptr_t n1 = bn_remainder_uint32(numerator, deno);
-#endif
+    intptr_t n1 = bn_remainder_digit(numerator, deno);
     intptr_t n2 = deno;
     while (n2) { intptr_t t = n2; n2 = n1 % n2; n1 = t; }
     intptr_t gcd = n1;
@@ -1260,12 +1243,8 @@ oprtr_reduce_bignum_fixnum(object_heap_t* heap, scm_bignum_t numerator, scm_fixn
     BN_TEMPORARY(quo);
     int count = bn_get_count(numerator);
     BN_ALLOC(quo, count);
-    memset(quo.elts, 0, sizeof(uint32_t) * count);
-#if ARCH_LP64
-    bn_div_uint64(&quo, numerator, gcd);
-#else
-    bn_div_uint32(&quo, numerator, gcd);
-#endif
+    memset(quo.elts, 0, sizeof(digit_t) * count);
+    bn_div_digit(&quo, numerator, gcd);
     bn_set_sign(&quo, ans_sign);
     if (deno == 1) return bn_to_integer(heap, &quo);
     return make_rational(heap, bn_to_integer(heap, &quo), intptr_to_integer(heap, deno));
@@ -1306,15 +1285,11 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         n1_count = bn_get_count((scm_bignum_t)numerator);
         assert(n1_count);
         BN_ALLOC(n1, n1_count);
-        memcpy(n1.elts, ((scm_bignum_t)numerator)->elts, sizeof(uint32_t) * n1_count);
+        memcpy(n1.elts, ((scm_bignum_t)numerator)->elts, sizeof(digit_t) * n1_count);
         ans_sign = bn_get_sign((scm_bignum_t)numerator);
     } else {
         BN_ALLOC_FIXNUM(n1);
-#if ARCH_LP64
-        n1_count = 2;
-#else
         n1_count = 1;
-#endif
         bn_let(&n1, (scm_fixnum_t)numerator);
         ans_sign = bn_get_sign(&n1);
     }
@@ -1324,14 +1299,10 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
         n2_count = bn_get_count((scm_bignum_t)denominator);
         assert(n2_count);
         BN_ALLOC(n2, n2_count);
-        memcpy(n2.elts, ((scm_bignum_t)denominator)->elts, sizeof(uint32_t) * n2_count);
+        memcpy(n2.elts, ((scm_bignum_t)denominator)->elts, sizeof(digit_t) * n2_count);
     } else {
         BN_ALLOC_FIXNUM(n2);
-#if ARCH_LP64
-        n2_count = 2;
-#else
         n2_count = 1;
-#endif
         bn_let(&n2, (scm_fixnum_t)denominator);
         if (bn_get_sign(&n2) == -1) ans_sign = -ans_sign;
     }
@@ -1378,32 +1349,18 @@ oprtr_reduce(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
     // numerator -> n1
     bn_set_count(&n1, n1_count);
     if (BIGNUMP(numerator)) {
-        memcpy(n1.elts, ((scm_bignum_t)numerator)->elts, sizeof(uint32_t) * n1_count);
+        memcpy(n1.elts, ((scm_bignum_t)numerator)->elts, sizeof(digit_t) * n1_count);
     } else {
-#if ARCH_LP64
-        intptr_t value = FIXNUM(numerator);
-        if (value < 0) value = -value;
-        n1.elts[0] = value & 0xffffffff;
-        n1.elts[1] = value >> 32;
-#else
         intptr_t value = FIXNUM(numerator);
         n1.elts[0] = (value > 0) ? value : -value;
-#endif
     }
     // denominator-> n2
     bn_set_count(&n2, n2_count);
     if (BIGNUMP(denominator)) {
-        memcpy(n2.elts, ((scm_bignum_t)denominator)->elts, sizeof(uint32_t) * n2_count);
+        memcpy(n2.elts, ((scm_bignum_t)denominator)->elts, sizeof(digit_t) * n2_count);
     } else {
-#if ARCH_LP64
-        intptr_t value = FIXNUM(denominator);
-        if (value < 0) value = -value;
-        n2.elts[0] = value & 0xffffffff;
-        n2.elts[1] = value >> 32;
-#else
         intptr_t value = FIXNUM(denominator);
         n2.elts[0] = (value > 0) ? value : -value;
-#endif
     }
     bn_shift_right(&n1, shift);
     bn_norm(&n1);
@@ -1627,11 +1584,11 @@ oprtr_logash(object_heap_t* heap, scm_bignum_t lhs, int shift)
     if (shift == 0) return lhs;
     if (shift > 0) {
         int lhs_count = bn_get_count(lhs);
-        int ans_count = lhs_count + (shift + 31) / 32;
+        int ans_count = lhs_count + (shift + (DIGIT_BIT - 1)) / DIGIT_BIT;
         BN_TEMPORARY(ans);
         BN_ALLOC(ans, ans_count);
-        memset(ans.elts, 0, sizeof(uint32_t) * ans_count);
-        memcpy(ans.elts, lhs->elts, sizeof(uint32_t) * lhs_count);
+        memset(ans.elts, 0, sizeof(digit_t) * ans_count);
+        memcpy(ans.elts, lhs->elts, sizeof(digit_t) * lhs_count);
         bn_set_sign(&ans, bn_get_sign(lhs));
         bn_shift_left(&ans, shift);
         bn_norm(&ans);
@@ -1642,7 +1599,7 @@ oprtr_logash(object_heap_t* heap, scm_bignum_t lhs, int shift)
             int lhs_count = bn_get_count(lhs);
             BN_TEMPORARY(ans);
             BN_ALLOC(ans, lhs_count);
-            memcpy(ans.elts, lhs->elts, sizeof(uint32_t) * lhs_count);
+            memcpy(ans.elts, lhs->elts, sizeof(digit_t) * lhs_count);
             bn_set_sign(&ans, 1);
             bn_shift_right(&ans, -shift);
             bn_norm(&ans);
@@ -1729,7 +1686,7 @@ oprtr_sub(object_heap_t* heap, scm_bignum_t lhs, scm_bignum_t rhs)
             BN_TEMPORARY(ans);
             BN_ALLOC(ans, rhs_count);
             bn_set_sign(&ans, -rhs_sign);
-            memcpy(ans.elts, rhs->elts, sizeof(uint32_t) * rhs_count);
+            memcpy(ans.elts, rhs->elts, sizeof(digit_t) * rhs_count);
             return bn_to_integer(heap, &ans);
         }                                               // (-,0) or (+,0)
         return oprtr_norm_integer(heap, lhs);
@@ -1845,12 +1802,12 @@ oprtr_expt(object_heap_t* heap, scm_obj_t lhs, scm_fixnum_t rhs)
     if (lhs == MAKEFIXNUM(0)) return lhs; // new
     if (lhs == MAKEFIXNUM(1)) return lhs; // new
     if (lhs == MAKEFIXNUM(2)) {
-        if (n + 1 <= FIXNUM_BITS - 1) return MAKEFIXNUM((intptr_t)1 << n);
-        int count = ((n + 1) + 31) / 32;
+        if (n + 1 <= FIXNUM_BITS - 1) return MAKEFIXNUM((uintptr_t)1 << n);
+        int count = ((n + 1) + (DIGIT_BIT - 1)) / DIGIT_BIT;
         scm_bignum_t ans = make_bignum(heap, count);
-        memset(ans->elts, 0, sizeof(uint32_t) * count);
+        memset(ans->elts, 0, sizeof(digit_t) * count);
         bn_set_sign(ans, 1);
-        ans->elts[count - 1] = 1 << (n & 31);
+        ans->elts[count - 1] = (digit_t)1 << (n & (DIGIT_BIT - 1));
         return ans;
     }
     if (RATIONALP(lhs)) {
@@ -2543,13 +2500,12 @@ scm_obj_t
 arith_bit_count(object_heap_t* heap, scm_obj_t obj)
 {
     if (FIXNUMP(obj)) {
-        assert(sizeof(uint32_t) == sizeof(intptr_t));
         intptr_t n = FIXNUM(obj);
         if (n > 0) {
             return MAKEFIXNUM(nbits(n));
         } else {
             return MAKEFIXNUM(~nbits(~n));
-        }
+        }   
     }
     if (BIGNUMP(obj)) {
         scm_bignum_t bn = (scm_bignum_t)obj;
@@ -2569,11 +2525,10 @@ scm_obj_t
 arith_bit_length(object_heap_t* heap, scm_obj_t obj)
 {
     if (FIXNUMP(obj)) {
-        assert(sizeof(uint32_t) == sizeof(intptr_t));
         intptr_t n = FIXNUM(obj);
         if (n == 0) return MAKEFIXNUM(0);
         uintptr_t n2 = (n < 0) ? ~n : n;
-        return MAKEFIXNUM(32 - nlz(n2));
+        return MAKEFIXNUM(DIGIT_BIT - nlz(n2));
     }
     if (BIGNUMP(obj)) {
         scm_bignum_t bn = (scm_bignum_t)obj;
@@ -2598,8 +2553,8 @@ arith_first_bit_set(object_heap_t* heap, scm_obj_t obj)
         if (bn_get_sign(bn) > 0) {
             int bit = 0;
             for (int i = 0; i < bn_get_count(bn); i++) {
-                uint32_t n = bn->elts[i];
-                if (n == 0) { bit += 32; continue; }
+                digit_t n = bn->elts[i];
+                if (n == 0) { bit += DIGIT_BIT; continue; }
                 bit += ntz(n);
                 return MAKEFIXNUM(bit);
             }
@@ -2608,8 +2563,8 @@ arith_first_bit_set(object_heap_t* heap, scm_obj_t obj)
             BN_ALLOC_2SC(obj2sc, bn);
             int bit = 0;
             for (int i = 0; i < bn_get_count(&obj2sc); i++) {
-                uint32_t n = obj2sc.elts[i];
-                if (n == 0) { bit += 32; continue; }
+                digit_t n = obj2sc.elts[i];
+                if (n == 0) { bit += DIGIT_BIT; continue; }
                 bit += ntz(n);
                 return MAKEFIXNUM(bit);
             }
@@ -2722,21 +2677,12 @@ arith_logash(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     assert(FIXNUMP(rhs));
     intptr_t shift = FIXNUM(rhs);
     if (FIXNUMP(lhs)) {
-#if ARCH_LP64
-        if (shift <= 64) {
-            int128_t n = FIXNUM(lhs);
+        if (shift <= DIGIT_BIT) {
+            signed_digit2x_t n = FIXNUM(lhs);
             if (shift > 0) n = n << shift;
             else n = n >> (-shift);
             if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
         }
-#else
-        if (shift <= 32) {
-            int64_t n = FIXNUM(lhs);
-            if (shift > 0) n = n << shift;
-            else n = n >> (-shift);
-            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
-        }
-#endif
         return oprtr_logash(heap, (scm_bignum_t)intptr_to_bignum(heap, FIXNUM(lhs)), shift);
     }
     if (BIGNUMP(lhs)) {
@@ -2997,15 +2943,9 @@ arith_mul(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
     if (FIXNUMP(lhs)) {
         if (FIXNUM(lhs) == 0) return MAKEFIXNUM(0);
         if (FIXNUMP(rhs)) {     // fixnum * fixnum
-#if ARCH_LP64
-            int128_t n = (int128_t)FIXNUM(lhs) * FIXNUM(rhs);
-            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM((intptr_t)n);
-            return int128_to_bignum(heap, n);
-#else
-            int64_t n = (int64_t)FIXNUM(lhs) * FIXNUM(rhs);
-            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM((int32_t)n);
-            return int64_to_bignum(heap, n);
-#endif
+            signed_digit2x_t n = (signed_digit2x_t)FIXNUM(lhs) * FIXNUM(rhs);
+            if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM((signed_digit_t)n);
+            return signed_digit2x_to_bignum(heap, n);
         }
         if (FLONUMP(rhs)) {     // fixnum * flonum
             return make_flonum(heap, (double)FIXNUM(lhs) * ((scm_flonum_t)rhs)->value);
@@ -3824,7 +3764,7 @@ arith_sqrt(object_heap_t* heap, scm_obj_t obj)
         BN_TEMPORARY(workpad);
         BN_ALLOC(workpad, count);
         bn_set_sign(&workpad, 1);
-        memcpy(workpad.elts, bn->elts, sizeof(uint32_t) * count);
+        memcpy(workpad.elts, bn->elts, sizeof(digit_t) * count);
         bn_sqrt(heap, &workpad);
         if (bn->elts[0] == workpad.elts[0] * workpad.elts[0]) {
             BN_TEMPORARY(s2);
@@ -3935,7 +3875,7 @@ arith_exact_integer_sqrt(object_heap_t* heap, scm_obj_t obj)
         BN_TEMPORARY(workpad);
         BN_ALLOC(workpad, count);
         bn_set_sign(&workpad, 1);
-        memcpy(workpad.elts, bn->elts, sizeof(uint32_t) * count);
+        memcpy(workpad.elts, bn->elts, sizeof(digit_t) * count);
         bn_sqrt(heap, &workpad);
         ans.s = bn_to_integer(heap, &workpad);
         ans.r = arith_sub(heap, obj, arith_mul(heap, ans.s, ans.s));
@@ -4160,21 +4100,33 @@ cnvt_to_exact(object_heap_t* heap, scm_obj_t obj)
         if (mant > 0) {
             if (exp == 0) return int64_to_integer(heap, (sign > 0 ? mant : -mant));
             if (exp > 0) {
-                int count = 2 + (exp / 32) + 1;
+#if USE_DIGIT32
+                int count = 2 + (exp / DIGIT_BIT) + 1;
                 BN_TEMPORARY(bn);
                 BN_ALLOC(bn, count);
-                memset(bn.elts,0 ,sizeof(uint32_t) * count);
-                bn.elts[0] = (uint32_t)mant;
-                bn.elts[1] = (uint32_t)(mant >> 32);
+                memset(bn.elts, 0 ,sizeof(digit_t) * count);
+                bn.elts[0] = (digit_t)mant;
+                bn.elts[1] = (digit_t)(mant >> DIGIT_BIT);
                 bn_shift_left(&bn, exp);
                 bn_set_sign(&bn, sign);
                 bn_norm(&bn);
                 return bn_dup(heap, &bn);
+#else
+                int count = 1 + (exp / DIGIT_BIT) + 1;
+                BN_TEMPORARY(bn);
+                BN_ALLOC(bn, count);
+                memset(bn.elts, 0 ,sizeof(digit_t) * count);
+                bn.elts[0] = (digit_t)mant;
+                bn_shift_left(&bn, exp);
+                bn_set_sign(&bn, sign);
+                bn_norm(&bn);
+                return bn_dup(heap, &bn);
+#endif
             }
-            int count = (-exp / 32) + 1;
+            int count = (-exp / DIGIT_BIT) + 1;
             BN_TEMPORARY(bn);
             BN_ALLOC(bn, count);
-            memset(bn.elts, 0, sizeof(uint32_t) * count);
+            memset(bn.elts, 0, sizeof(digit_t) * count);
             bn.elts[0] = 1;
             bn_shift_left(&bn, -exp);
             bn_set_sign(&bn, sign);
@@ -4202,13 +4154,13 @@ small_bignum_to_string(object_heap_t* heap, scm_bignum_t bn, int radix, char* bu
     if (workpad_count) {
         BN_TEMPORARY(workpad);
         BN_ALLOC(workpad, workpad_count);
-        memcpy(workpad.elts, bn->elts, sizeof(uint32_t) * workpad_count);
+        memcpy(workpad.elts, bn->elts, sizeof(digit_t) * workpad_count);
         int i = buf_size - 1;
         buf[i--] = 0;
         if (radix == 10) {
             while (bn_get_count(&workpad)) {
                 if (i < 0) return false;
-                uint32_t value = bn_div_uint32(&workpad, &workpad, 1000000000U);
+                digit_t value = bn_div_digit(&workpad, &workpad, 1000000000U);
                 for (int chunk = 0; chunk < 9; chunk++) {
                     if (i < 0) return false;
                     if (value) {
@@ -4224,7 +4176,7 @@ small_bignum_to_string(object_heap_t* heap, scm_bignum_t bn, int radix, char* bu
         } else {
             while (bn_get_count(&workpad)) {
                 if (i < 0) return false;
-                uint32_t digit = bn_div_uint32(&workpad, &workpad, radix);
+                digit_t digit = bn_div_digit(&workpad, &workpad, radix);
                 if (digit < 10) buf[i--] = digit + '0';
                 else buf[i--] = digit + 'a' - 10;
             }
@@ -4252,10 +4204,10 @@ cnvt_bignum_to_string(object_heap_t* heap, scm_bignum_t bn, int radix)
         scoped_lock lock(port->lock);
         BN_TEMPORARY(workpad);
         BN_ALLOC(workpad, workpad_count);
-        memcpy(workpad.elts, bn->elts, sizeof(uint32_t) * workpad_count);
+        memcpy(workpad.elts, bn->elts, sizeof(digit_t) * workpad_count);
         if (radix == 10) {
             while (bn_get_count(&workpad)) {
-                uint32_t value = bn_div_uint32(&workpad, &workpad, 1000000000U);
+                digit_t value = bn_div_digit(&workpad, &workpad, 1000000000U);
                 for (int chunk = 0; chunk < 9; chunk++) {
                     if (value) {
                         int digit = value % 10;
@@ -4268,7 +4220,7 @@ cnvt_bignum_to_string(object_heap_t* heap, scm_bignum_t bn, int radix)
             }
         } else {
             while (bn_get_count(&workpad)) {
-                uint32_t digit = bn_div_uint32(&workpad, &workpad, radix);
+                digit_t digit = bn_div_digit(&workpad, &workpad, radix);
                 if (digit < 10) port_put_byte(port, digit + '0');
                 else port_put_byte(port, digit + 'a' - 10);
             }
@@ -4340,38 +4292,35 @@ cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
 static scm_obj_t
 integer_mul10_may_inplace(object_heap_t* heap, scm_obj_t n)
 {
-#if ARCH_LP64
-    if (FIXNUMP(n)) {
-        int128_t n10 = (int128_t)FIXNUM(n) * 10;
-        if ((n10 >= FIXNUM_MIN) & (n10 <= FIXNUM_MAX)) return MAKEFIXNUM((intptr_t)n10);
-        return int128_to_bignum(heap, n10);
-    }
+#if USE_DIGIT32
+  #define OVERFLOW_TEST_BITS  0xf0000000
 #else
-    if (FIXNUMP(n)) {
-        int64_t n10 = (int64_t)FIXNUM(n) * 10;
-        if ((n10 >= FIXNUM_MIN) & (n10 <= FIXNUM_MAX)) return MAKEFIXNUM((intptr_t)n10);
-        return int64_to_bignum(heap, n10);
-    }
+  #define OVERFLOW_TEST_BITS  0xf000000000000000
 #endif
+    if (FIXNUMP(n)) {
+        signed_digit2x_t n10 = (signed_digit2x_t)FIXNUM(n) * 10;
+        if ((n10 >= FIXNUM_MIN) & (n10 <= FIXNUM_MAX)) return MAKEFIXNUM((signed_digit_t)n10);
+        return signed_digit2x_to_bignum(heap, n10);
+    }
     if (BIGNUMP(n)) {
         scm_bignum_t bn = (scm_bignum_t)n;
         int count = bn_get_count(bn);
         if (count == 0) return MAKEFIXNUM(0);
-        if ((bn->elts[count - 1] & 0xf0000000) == 0) {
-            uint64_t acc = 0;
+        if ((bn->elts[count - 1] & OVERFLOW_TEST_BITS) == 0) {
+            digit2x_t acc = 0;
             for (int i = 0; i < count; i++) {
-                acc = (uint64_t)bn->elts[i] * 10 + acc;
-                bn->elts[i] = (uint32_t)acc;
-                acc >>= 32;
+                acc = (digit2x_t)bn->elts[i] * 10 + acc;
+                bn->elts[i] = (digit_t)acc;
+                acc >>= DIGIT_BIT;
             }
             return bn;
         }
         scm_bignum_t ans = make_bignum(heap, count + 1);
-        uint64_t acc = 0;
+        digit2x_t acc = 0;
         for (int i = 0; i < count; i++) {
-            acc = (uint64_t)bn->elts[i] * 10 + acc;
-            ans->elts[i] = (uint32_t)acc;
-            acc >>= 32;
+            acc = (digit2x_t)bn->elts[i] * 10 + acc;
+            ans->elts[i] = (digit_t)acc;
+            acc >>= DIGIT_BIT;
         }
         if (acc == 0) bn_set_count(ans, count);
         else ans->elts[count] = acc;
@@ -4379,42 +4328,23 @@ integer_mul10_may_inplace(object_heap_t* heap, scm_obj_t n)
         return ans;
     }
     fatal("%s:%u wrong datum type", __FILE__, __LINE__);
+#undef OVERFLOW_TEST_BITS
 }
 
-#if ARCH_LP64
-    static uint32_t
-    integer_nth_digit(int n, scm_obj_t obj)
-    {
-        assert(FIXNUMP(obj) || BIGNUMP(obj));
-        if (FIXNUMP(obj)) {
-            if (n == 0) return (uint64_t)FIXNUM(obj) & 0xffffffff;
-            if (n == 1) return (uint64_t)FIXNUM(obj) >> 32;
-            return 0;
-        }
-        scm_bignum_t bn = (scm_bignum_t)obj;
-        if (n >= bn_get_count(bn)) return 0;
-        return bn->elts[n];
-    }
-#else
-    static uint32_t
-    integer_nth_digit(int n, scm_obj_t obj)
-    {
-        assert(FIXNUMP(obj) || BIGNUMP(obj));
-        if (FIXNUMP(obj)) return n == 0 ? FIXNUM(obj) : 0;
-        scm_bignum_t bn = (scm_bignum_t)obj;
-        if (n >= bn_get_count(bn)) return 0;
-        return bn->elts[n];
-    }
-#endif
+static digit_t
+integer_nth_digit(int n, scm_obj_t obj)
+{
+    assert(FIXNUMP(obj) || BIGNUMP(obj));
+    if (FIXNUMP(obj)) return n == 0 ? FIXNUM(obj) : 0;
+    scm_bignum_t bn = (scm_bignum_t)obj;
+    if (n >= bn_get_count(bn)) return 0;
+    return bn->elts[n];
+}
 
 static int
 integer_ucmp3(scm_obj_t n1, scm_obj_t n2, scm_obj_t n3)
 {
-#if ARCH_LP64
-    int count = 2;
-#else
     int count = 1;
-#endif
     int n;
     if (BIGNUMP(n1)) {
         n = bn_get_count((scm_bignum_t)n1);
@@ -4428,15 +4358,15 @@ integer_ucmp3(scm_obj_t n1, scm_obj_t n2, scm_obj_t n3)
         n = bn_get_count((scm_bignum_t)n3);
         if (n > count) count = n;
     }
-    int64_t acc = 0;
+    signed_digit2x_t acc = 0;
     for (n = count - 1; n >= 0; n--) {
-        uint32_t a = integer_nth_digit(n, n1);
-        uint32_t b = integer_nth_digit(n, n2);
-        uint32_t c = integer_nth_digit(n, n3);
-        acc = acc + (int64_t)a + (int64_t)b - (int64_t)c;
+        digit_t a = integer_nth_digit(n, n1);
+        digit_t b = integer_nth_digit(n, n2);
+        digit_t c = integer_nth_digit(n, n3);
+        acc = acc + (signed_digit2x_t)a + (signed_digit2x_t)b - (signed_digit2x_t)c;
         if (acc > 0) return 1;
         if (acc < -1) return -1;
-        acc <<= 32;
+        acc <<= DIGIT_BIT;
     }
     return (int)acc;
 }
@@ -4446,15 +4376,26 @@ integer_init_n_alloc(object_heap_t* heap, int64_t m, int shift_left)
 {
     assert(m >= 0);
     if (m == 0) return MAKEFIXNUM(0);
-    int count = 2 + ((shift_left + 31) / 32);
+#if USE_DIGIT32
+    int count = 2 + ((shift_left + (DIGIT_BIT - 1)) / DIGIT_BIT);
     scm_bignum_t bn = make_bignum(heap, count);
-    bn->elts[0] = (uint32_t)(m & 0xffffffff);
-    bn->elts[1] = (uint32_t)((uint64_t)m >> 32);
-    memset(bn->elts + 2, 0, sizeof(uint32_t) * (count - 2));
+    bn->elts[0] = (digit_t)(m & 0xffffffff);
+    bn->elts[1] = (digit_t)((digit2x_t)m >> DIGIT_BIT);
+    memset(bn->elts + 2, 0, sizeof(digit_t) * (count - 2));
     bn_shift_left(bn, shift_left);
     bn_norm(bn);
     bn_set_sign(bn, 1);
     return bn_demote(bn);
+#else
+    int count = 1 + ((shift_left + (DIGIT_BIT - 1)) / DIGIT_BIT);
+    scm_bignum_t bn = make_bignum(heap, count);
+    bn->elts[0] = (digit_t)m;
+    memset(bn->elts + 1, 0, sizeof(digit_t) * (count - 1));
+    bn_shift_left(bn, shift_left);
+    bn_norm(bn);
+    bn_set_sign(bn, 1);
+    return bn_demote(bn);
+#endif
 }
 
 //  Reference:
@@ -4462,7 +4403,7 @@ integer_init_n_alloc(object_heap_t* heap, int64_t m, int shift_left)
 //  Printing floatingpoint numbers quickly and accurately.
 //  In Proceedings of the ACM SIGPLAN '96 Conference on Programming Language Design and Implementation, pages 108--116.
 
-// note: can optimize with (mp = mm * 2) rule, but its very rare
+// note: can optimize by using (mp = mm * 2) rule, but its very rare
 scm_string_t
 cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
 {
@@ -4784,7 +4725,7 @@ parse_ubignum(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
     BN_TEMPORARY(workpad);
     BN_ALLOC(workpad, workpad_count);
     bn_set_sign(&workpad, 0);
-    memset(workpad.elts, 0, sizeof(uint32_t) * workpad_count);
+    memset(workpad.elts, 0, sizeof(digit_t) * workpad_count);
     if (*p) {
         char c;
         while ((c = *p++) != 0) {
@@ -4800,14 +4741,14 @@ parse_ubignum(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans)
                 BN_TEMPORARY(bn2);
                 bn1 = bn2 = workpad;
                 bn_set_count(&bn1, workpad_count - 1);
-                bn_mul_add_uint32(&bn2, &bn1, radix, digit);
+                bn_mul_add_digit(&bn2, &bn1, radix, digit);
                 if (workpad.elts[workpad_count - 1] == 0) continue;
-                uint32_t *save_elts = workpad.elts;
+                digit_t *save_elts = workpad.elts;
                 int save_count = workpad_count;
                 workpad_count += BN_QUANTUM;
                 BN_ALLOC(workpad, workpad_count);
-                memcpy(workpad.elts, save_elts,sizeof(uint32_t) * save_count);
-                memset(&workpad.elts[save_count], 0, sizeof(uint32_t) * (workpad_count - save_count));
+                memcpy(workpad.elts, save_elts,sizeof(digit_t) * save_count);
+                memset(&workpad.elts[save_count], 0, sizeof(digit_t) * (workpad_count - save_count));
                 continue;
             }
             break;
@@ -4974,7 +4915,7 @@ parse_mantissa(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans, in
     BN_TEMPORARY(workpad);
     BN_ALLOC(workpad, workpad_count);
     bn_set_sign(&workpad, 0);
-    memset(workpad.elts, 0, sizeof(uint32_t) * workpad_count);
+    memset(workpad.elts, 0, sizeof(digit_t) * workpad_count);
     if (*p) {
         char c;
         while ((c = *p++) != 0) {
@@ -4997,14 +4938,14 @@ parse_mantissa(object_heap_t* heap, const char* s, int radix, scm_obj_t* ans, in
                 BN_TEMPORARY(bn2);
                 bn1 = bn2 = workpad;
                 bn_set_count(&bn1, workpad_count - 1);
-                bn_mul_add_uint32(&bn2, &bn1, radix, digit);
+                bn_mul_add_digit(&bn2, &bn1, radix, digit);
                 if (workpad.elts[workpad_count - 1] == 0) continue;
-                uint32_t *save_elts = workpad.elts;
+                digit_t *save_elts = workpad.elts;
                 int save_count = workpad_count;
                 workpad_count += BN_QUANTUM;
                 BN_ALLOC(workpad, workpad_count);
-                memcpy(workpad.elts, save_elts,sizeof(uint32_t) * save_count);
-                memset(&workpad.elts[save_count], 0, sizeof(uint32_t) * (workpad_count - save_count));
+                memcpy(workpad.elts, save_elts,sizeof(digit_t) * save_count);
+                memset(&workpad.elts[save_count], 0, sizeof(digit_t) * (workpad_count - save_count));
                 continue;
             }
             break;
@@ -5081,7 +5022,7 @@ parse_digits:
         }
         BN_TEMPORARY(bn);
         BN_ALLOC(bn, count);
-        memset(bn.elts,0 ,sizeof(uint32_t) * count);
+        memset(bn.elts,0 ,sizeof(digit_t) * count);
         bn_set_sign(&bn, 1);
         bn.elts[0] = 1;
         BN_TEMPORARY(workpad);
@@ -5089,7 +5030,7 @@ parse_digits:
             bn_set_count(&bn, count);
             workpad = bn;
             bn_norm(&workpad);
-            bn_mul_add_uint32(&bn, &workpad, 1000000000U, 0);
+            bn_mul_add_digit(&bn, &workpad, 1000000000U, 0);
             exp10 -= 9;
         }
         if (exp10) {
@@ -5098,7 +5039,7 @@ parse_digits:
             bn_set_count(&bn, count);
             workpad = bn;
             bn_norm(&workpad);
-            bn_mul_add_uint32(&bn, &workpad, n, 0);
+            bn_mul_add_digit(&bn, &workpad, n, 0);
         }
         *ans = oprtr_reduce(heap, oprtr_norm_integer(heap, mantissa), oprtr_norm_integer(heap, bn_dup(heap, &bn)));
     } else {
@@ -5114,16 +5055,16 @@ parse_digits:
         }
         BN_TEMPORARY(bn);
         BN_ALLOC(bn, count);
-        memset(bn.elts,0 ,sizeof(uint32_t) * count);
+        memset(bn.elts,0 ,sizeof(digit_t) * count);
         bn_set_sign(&bn, 1);
         assert(count > bn_get_count(mantissa));
-        memcpy(bn.elts, mantissa->elts, sizeof(uint32_t) * bn_get_count(mantissa));
+        memcpy(bn.elts, mantissa->elts, sizeof(digit_t) * bn_get_count(mantissa));
         BN_TEMPORARY(workpad);
         while (exp10 >= 9) {
             bn_set_count(&bn, count);
             workpad = bn;
             bn_norm(&workpad);
-            bn_mul_add_uint32(&bn, &workpad, 1000000000U, 0);
+            bn_mul_add_digit(&bn, &workpad, 1000000000U, 0);
             exp10 -= 9;
         }
         if (exp10) {
@@ -5132,7 +5073,7 @@ parse_digits:
             bn_set_count(&bn, count);
             workpad = bn;
             bn_norm(&workpad);
-            bn_mul_add_uint32(&bn, &workpad, n, 0);
+            bn_mul_add_digit(&bn, &workpad, n, 0);
         }
         *ans = bn_to_integer(heap, &bn);
     }

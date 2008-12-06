@@ -10,7 +10,7 @@ PROG 	 = ypsilon
 
 PREFIX 	 = /usr/local
 
-CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
+CPPFLAGS = -g -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
 
 CXXFLAGS = -pipe -x c++ -pthread -O3 \
 	   -fstrict-aliasing -fomit-frame-pointer -momit-leaf-frame-pointer \

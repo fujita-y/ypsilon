@@ -540,24 +540,24 @@ make_bignum(object_heap_t* heap, scm_bignum_t bn)
     int count = HDR_BIGNUM_COUNT(bn->hdr);
     scm_bignum_t obj = make_bignum(heap, count);
     obj->hdr = bn->hdr;
-    memcpy(obj->elts, bn->elts, sizeof(uint32_t) * count);
+    memcpy(obj->elts, bn->elts, sizeof(digit_t) * count);
     return obj;
 }
 
 scm_bignum_t
 make_bignum(object_heap_t* heap, int n)
 {
-    int bytes = sizeof(scm_bignum_rec_t) + sizeof(uint32_t) * n;
+    int bytes = sizeof(scm_bignum_rec_t) + sizeof(digit_t) * n;
     scm_bignum_t obj;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
         obj = (scm_bignum_t)heap->allocate_collectible(bytes);
         obj->hdr = scm_hdr_bignum | MAKEBITS(n, HDR_BIGNUM_COUNT_SHIFT);
-        if (n) obj->elts = (uint32_t*)((uintptr_t)obj + sizeof(scm_bignum_rec_t));
+        if (n) obj->elts = (digit_t*)((uintptr_t)obj + sizeof(scm_bignum_rec_t));
         else obj->elts = NULL;
     } else {
         obj = (scm_bignum_t)heap->allocate_collectible(sizeof(scm_bignum_rec_t));
         obj->hdr = scm_hdr_bignum | MAKEBITS(n, HDR_BIGNUM_COUNT_SHIFT);
-        if (n) obj->elts = (uint32_t*)heap->allocate_private(sizeof(uint32_t) * n);
+        if (n) obj->elts = (digit_t*)heap->allocate_private(sizeof(digit_t) * n);
         else obj->elts = NULL;
     }
     return obj;
@@ -951,7 +951,7 @@ finalize(object_heap_t* heap, void* obj)
     switch (tc) {
         case TC_BIGNUM: {
             scm_bignum_t bignum = (scm_bignum_t)obj;
-            if (bignum->elts != (uint32_t*)((uintptr_t)bignum + sizeof(scm_bignum_rec_t))) {
+            if (bignum->elts != (digit_t*)((uintptr_t)bignum + sizeof(scm_bignum_rec_t))) {
                 heap->deallocate_private(bignum->elts);
             }
             break;
