@@ -2527,7 +2527,7 @@ arith_bit_length(object_heap_t* heap, scm_obj_t obj)
     if (FIXNUMP(obj)) {
         intptr_t n = FIXNUM(obj);
         if (n == 0) return MAKEFIXNUM(0);
-        uintptr_t n2 = (n < 0) ? ~n : n;
+        intptr_t n2 = (n < 0) ? ~n : n;
         return MAKEFIXNUM(DIGIT_BIT - nlz(n2));
     }
     if (BIGNUMP(obj)) {
