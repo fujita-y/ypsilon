@@ -368,3 +368,19 @@ void invalid_serialized_object_violation(VM* vm, const char* who, scm_obj_t obj,
         raise_assertion_violation(vm, make_symbol(vm->m_heap, who), message, irritants);
     }
 }
+
+void literal_constant_access_violation(VM* vm, const char* who, scm_obj_t obj, int argc, scm_obj_t argv[])
+{
+    vm->backtrace_seek();
+    scm_port_t port = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
+    scoped_lock lock(port->lock);
+    printer_t(vm, port).format("attempt to modify literal constant ~r", obj);
+    scm_string_t message = port_extract_string(vm->m_heap, port);
+    scm_obj_t irritants = scm_nil;
+    int last = argc;
+    while (--last >= 0) irritants = make_pair(vm->m_heap, argv[last], irritants);
+    raise_assertion_violation(vm,
+                              make_symbol(vm->m_heap, who),
+                              message,
+                              irritants);
+}

@@ -59,7 +59,7 @@
 
 (define lookup-topmost-subst
   (lambda (id env)
-    
+
     (define unrename-primitive-id
       (lambda (id)
         (if (and (eq? (symbol-contains id (current-primitive-prefix)) 0)
@@ -73,13 +73,13 @@
           (cond ((uninterned-symbol? deno) ; deno)
                  (cond ((local-macro-symbol? deno) deno)
                        ((renamed-variable-id? deno) deno)
-                       ((eq? id deno) 
+                       ((eq? id deno)
                         (unrename-primitive-id (original-id id)))
                        (else
                         (lookup-topmost-subst deno env))))
-                ((symbol? deno) 
+                ((symbol? deno)
                  (unrename-primitive-id deno))
-                ((unbound? deno) 
+                ((unbound? deno)
                  (unrename-primitive-id (original-id id)))
                 ((and (macro? deno) (assq deno env)) => cdr)
                 (else deno)))
@@ -384,4 +384,3 @@
 
 
 (current-macro-environment core-env)
-

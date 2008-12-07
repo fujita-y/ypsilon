@@ -122,7 +122,7 @@
 
 (define load-file-has-r6rs-comment?
   (lambda (path)
-    (parameterize ((extend-lexical-syntax #t))
+    (parameterize ((extend-lexical-syntax #t) (mutable-literals #f))
       (let ((port (open-script-input-port (locate-load-file path))))
         (core-read port #f 'load)
         (close-port port)
@@ -151,6 +151,7 @@
                        (current-temporaries (current-temporaries))
                        (current-environment (current-environment))
                        (extend-lexical-syntax (extend-lexical-syntax))
+                       (mutable-literals (mutable-literals))
                        (backtrace (backtrace)))
                     (current-temporaries (make-core-hashtable 'string=?))
                     (current-rename-count 0)
@@ -181,6 +182,7 @@
                 (current-temporaries (current-temporaries))
                 (current-environment (current-environment))
                 (extend-lexical-syntax (extend-lexical-syntax))
+                (mutable-literals (mutable-literals))
                 (backtrace (backtrace)))
              (current-source-comments (and (backtrace) (make-core-hashtable)))
              (current-temporaries (make-core-hashtable 'string=?))
@@ -318,7 +320,7 @@
                            (string->symbol (extract-accumulated-string buf))
                            (let ((c (bytevector-u8-ref utf8 i)))
                              (cond ((or (and (> c #x60) (< c #x7b))       ; a-z
-                                        (and (> c #x2f) (< c #x3a))       ; 0-9 
+                                        (and (> c #x2f) (< c #x3a))       ; 0-9
                                         (and (> c #x40) (< c #x5b))       ; A-Z
                                         (= c #x2b) (= c #x2d) (= c #x5f)) ; + - _
                                     (put-byte buf c)
@@ -349,6 +351,7 @@
                             (current-temporaries (current-temporaries))
                             (current-environment (current-environment))
                             (extend-lexical-syntax (extend-lexical-syntax))
+                            (mutable-literals (mutable-literals))
                             (backtrace (backtrace)))
                          (let loop ()
                            (current-source-comments (and (backtrace) (make-core-hashtable)))

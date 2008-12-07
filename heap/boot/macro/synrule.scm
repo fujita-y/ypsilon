@@ -28,11 +28,11 @@
     (define compiled->source
       (lambda (lites lst)
         `(syntax-rules ,lites ,@(map (lambda (e) `(,(car e) ,(cadr e))) lst))))
-      
+
     (or (pair? form)
         (syntax-violation form "misplaced syntactic keyword" form))
-    
-    (let ((lites (car spec)) (remark (cadr spec)) (rules (cddr spec)))      
+
+    (let ((lites (car spec)) (remark (cadr spec)) (rules (cddr spec)))
       (let loop ((rules rules))
         (if (null? rules)
             (if remark

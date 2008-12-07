@@ -2,7 +2,7 @@
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
-;; 
+;;
 ;; if libraries have (define foo <subr-id>) form and foo is referenced within same library, prebind may screwed up
 ;; to avoid problem, erase contents of core.vmi, restart, then build new core.vmi
 ;; or replace foo with identifier <subr-id>
@@ -12,9 +12,9 @@
 ;; this should avoid problem
 
   #|
-  
+
     core library dependencies
-  
+
     exceptions    :
     parameters    :
     arithmetic    :
@@ -35,16 +35,16 @@
     unicode-assistants : io files lists bytevectors bytevector-transcoders
     unicode       : io files lists bytevectors bytevector-transcoders
     hashtables    : lists unicode optargs
-  
+
     coreform optimizer dependencies
-  
+
     utils            : (destructuring lists parameters)
-    let-transform    : utils 
-    set-transform    : utils 
-    lambda-transform : utils 
-    constant-folding : utils 
+    let-transform    : utils
+    set-transform    : utils
+    lambda-transform : utils
+    constant-folding : utils
     local-transform  : utils constant-folding
-  
+
   |#
 
 
@@ -81,12 +81,12 @@
           (rnrs))
 
   (define put-fasl (parameterize ((current-environment (system-environment))) (top-level-value 'put-fasl)))
-  
+
   (define source-directory (format "~a/../stdlib" (current-directory)))
   (add-library-path source-directory)
 
   (define target-file-name "coreimage.vmi")
-  
+
   (define files
     '("./core/exceptions.scm"
       "./core/parameters.scm"
@@ -138,7 +138,7 @@
       "./rnrs/mutable-strings.scm"
       "./rnrs/mutable-pairs.scm"
       "./rnrs/eval.scm"
-      
+
       "./rnrs.scm"
       "./core.scm"
       ))
@@ -180,4 +180,3 @@
     (call-with-port
      (open-file-output-port target-file-name (file-options no-fail) (buffer-mode block) (native-transcoder))
      (lambda (output) (compile-to temp-port output))))
-

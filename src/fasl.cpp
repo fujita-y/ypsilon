@@ -271,17 +271,13 @@ fasl_reader_t::get_datum()
     case FASL_TAG_PLIST: {
         int count = fetch_u32();
         scm_obj_t lst = scm_nil;
-        for (int i = 0; i < count; i++) {
-            lst = make_pair(m_vm->m_heap, get_datum(), lst);
-        }
+        for (int i = 0; i < count; i++) lst = make_pair(m_vm->m_heap, get_datum(), lst);
         return lst;
     }
     case FASL_TAG_DLIST: {
         int count = fetch_u32();
         scm_obj_t lst = get_datum();
-        for (int i = 0; i < count; i++) {
-            lst = make_pair(m_vm->m_heap, get_datum(), lst);
-        }
+        for (int i = 0; i < count; i++) lst = make_pair(m_vm->m_heap, get_datum(), lst);
         return lst;
     }
     case FASL_TAG_VECTOR: {

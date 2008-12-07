@@ -111,4 +111,17 @@ make_pair(object_heap_t* heap, scm_obj_t car, scm_obj_t cdr)
     return obj;
 }
 
+#if USE_CONST_LITERAL
+inline scm_pair_t
+make_immutable_pair(object_heap_t* heap, scm_obj_t car, scm_obj_t cdr)
+{
+    VERIFY_DATUM(car);
+    VERIFY_DATUM(cdr);
+    scm_pair_t obj = (scm_pair_t)heap->allocate_immutable_cons();
+    CAR(obj) = car;
+    CDR(obj) = cdr;
+    return obj;
+}
+#endif
+
 #endif

@@ -55,14 +55,16 @@ public:
     void            system_error(const char* fmt, ...) ATTRIBUTE(noreturn);
 
     struct {
-        scm_obj_t   m_extend_lexical_syntax;        // #t or #f, no gc protect
-        scm_obj_t   m_collect_notify;               // #t or #f, no gc protect
-        scm_obj_t   m_collect_stack_notify;         // #t or #f, no gc protect
-        scm_obj_t   m_backtrace;                    // #t or #f or fixnum, no gc protect
-        scm_obj_t   m_backtrace_line_length;        // fixnum, no gc protect
-        scm_obj_t   m_restricted_print_line_length; // fixnum, no gc protect
-        scm_obj_t   m_record_print_nesting_limit;   // fixnum, no gc protect
-        scm_obj_t   m_warning_level;                // #t or #f or fixnum, no gc protect
+        // note: no gc protect
+        scm_obj_t   m_extend_lexical_syntax;        // #t or #f
+        scm_obj_t   m_mutable_literals;             // #t ot #f
+        scm_obj_t   m_collect_notify;               // #t or #f
+        scm_obj_t   m_collect_stack_notify;         // #t or #f
+        scm_obj_t   m_backtrace;                    // #t or #f or fixnum
+        scm_obj_t   m_backtrace_line_length;        // fixnum
+        scm_obj_t   m_restricted_print_line_length; // fixnum
+        scm_obj_t   m_record_print_nesting_limit;   // fixnum
+        scm_obj_t   m_warning_level;                // #t or #f or fixnum
     } flags;
 
     scm_port_t          m_bootport;
@@ -94,6 +96,7 @@ public:
     void                resolve();
 
 private:
+    scm_obj_t           prebind_literal(scm_obj_t literal);
     scm_gloc_t          prebind_gloc(scm_obj_t variable);
     void                prebind_list(scm_obj_t code);
 

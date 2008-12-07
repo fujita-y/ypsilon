@@ -136,6 +136,12 @@ subr_bytevector_fill(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-fill!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int val = FIXNUM(argv[1]);
                 if (val >= INT8_MIN && val <= UINT8_MAX) {
                     memset(bvector->elts, val & 0xff, bvector->count);
@@ -171,6 +177,12 @@ subr_bytevector_destructive_copy(VM* vm, int argc, scm_obj_t argv[])
                 if (source >= 0 && source <= bvector1->count) {
                     if (BVECTORP(argv[2])) {
                         scm_bvector_t bvector2 = (scm_bvector_t)argv[2];
+#if USE_CONST_LITERAL
+                        if (HDR_BVECTOR_LITERAL(bvector2->hdr)) {
+                            literal_constant_access_violation(vm, "bytevector-copy!", bvector2, argc, argv);
+                            return scm_undef;
+                        }
+#endif
                         if (FIXNUMP(argv[3])) {
                             target = FIXNUM(argv[3]);
                             if (target >= 0 && target <= bvector2->count) {
@@ -294,6 +306,12 @@ subr_bytevector_u8_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-u8-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && index < bvector->count) {
                     if (FIXNUMP(argv[2])) {
@@ -333,6 +351,12 @@ subr_bytevector_s8_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-u8-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && index < bvector->count) {
                     if (FIXNUMP(argv[2])) {
@@ -583,6 +607,12 @@ subr_bytevector_u16_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-u16-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if (FIXNUMP(argv[2])) {
@@ -637,6 +667,12 @@ subr_bytevector_s16_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-s16-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if (FIXNUMP(argv[2])) {
@@ -691,6 +727,12 @@ subr_bytevector_u16_native_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-u16-native-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if ((index & (size - 1)) == 0) {
@@ -736,6 +778,12 @@ subr_bytevector_s16_native_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-s16-native-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if ((index & (size - 1)) == 0) {
@@ -941,6 +989,12 @@ subr_bytevector_u32_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-u32-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if (exact_integer_pred(argv[2])) {
@@ -998,6 +1052,12 @@ subr_bytevector_s32_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-s32-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if (exact_integer_pred(argv[2])) {
@@ -1055,6 +1115,12 @@ subr_bytevector_u32_native_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-u32-native-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if ((index & (size - 1)) == 0) {
@@ -1100,6 +1166,12 @@ subr_bytevector_s32_native_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-s32-native-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if ((index & (size - 1)) == 0) {
@@ -1321,6 +1393,12 @@ subr_bytevector_u64_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-u64-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if (exact_integer_pred(argv[2])) {
@@ -1375,6 +1453,12 @@ subr_bytevector_s64_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-s64-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if (exact_integer_pred(argv[2])) {
@@ -1429,6 +1513,12 @@ subr_bytevector_u64_native_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-u64-native-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if ((index & (size - 1)) == 0) {
@@ -1474,6 +1564,12 @@ subr_bytevector_s64_native_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-s64-native-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if ((index & (size - 1)) == 0) {
@@ -1596,6 +1692,12 @@ subr_bytevector_ieee_single_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-ieee-single-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if (real_pred(argv[2])) {
@@ -1644,6 +1746,12 @@ subr_bytevector_ieee_single_native_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-ieee-single-native-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if ((index & (size - 1)) == 0) {
@@ -1759,6 +1867,12 @@ subr_bytevector_ieee_double_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-ieee-double-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if (real_pred(argv[2])) {
@@ -1808,6 +1922,12 @@ subr_bytevector_ieee_double_native_set(VM* vm, int argc, scm_obj_t argv[])
         if (BVECTORP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                    literal_constant_access_violation(vm, "bytevector-ieee-double-native-set!", argv[0], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 int index = FIXNUM(argv[1]);
                 if (index >= 0 && (index + size) <= bvector->count) {
                     if ((index & (size - 1)) == 0) {

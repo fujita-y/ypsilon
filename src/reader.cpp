@@ -770,11 +770,13 @@ top:
 #if ENABLE_CORE_COMMENT
                         if (strcmp(tag, "core") == 0) {
                             m_vm->flags.m_extend_lexical_syntax = scm_true;
+                            m_vm->flags.m_mutable_literals = scm_false;
                         }
 #endif
 #if ENABLE_COMPATIBLE_COMMENT
                         if (strcmp(tag, "compatible") == 0) {
                             m_vm->flags.m_extend_lexical_syntax = scm_true;
+                            m_vm->flags.m_mutable_literals = scm_true;
                             if (m_graph == NULL) {
                                 m_graph = make_hashtable(m_vm->m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
                             }
@@ -783,6 +785,7 @@ top:
 #if ENABLE_R6RS_COMMENT
                         if (strcmp(tag, "r6rs") == 0) {
                             m_vm->flags.m_extend_lexical_syntax = scm_false;
+                            m_vm->flags.m_mutable_literals = scm_false;
                         }
 #endif
                     }

@@ -430,16 +430,16 @@
                         usleep
                         scheme-error
                         architecture-feature
-                        load-shared-object 
+                        load-shared-object
                         lookup-shared-object
-                        call-shared-object->void 
-                        call-shared-object->int 
-                        call-shared-object->intptr 
+                        call-shared-object->void
+                        call-shared-object->int
+                        call-shared-object->intptr
                         call-shared-object->double
                         call-shared-object->char*
-                        stdcall-shared-object->void 
-                        stdcall-shared-object->int 
-                        stdcall-shared-object->intptr 
+                        stdcall-shared-object->void
+                        stdcall-shared-object->int
+                        stdcall-shared-object->intptr
                         stdcall-shared-object->double
                         stdcall-shared-object->char*
                         make-callback
@@ -451,7 +451,6 @@
                         warning-level
                         restricted-print-line-length
                         record-print-nesting-limit
-                        extend-lexical-syntax
                         macro-expand compile compile-coreform closure-code
                         current-environment current-macro-environment current-variable-environment current-dynamic-environment
                         system-environment interaction-environment
@@ -491,23 +490,23 @@
                         uninterned-symbol?
                         uninterned-symbol-prefix
                         uninterned-symbol-suffix
-                        
+
                         socket?
                         make-socket socket-shutdown socket-close socket->port socket-port
                         socket-send socket-recv socket-accept
                         shutdown-output-port
                         port-closed?
-                        
+
                         getenv
                         gethostname
-                        system 
-                        process 
+                        system
+                        process
                         process-wait
                         process-shell-command
-                        
+
                         ;default-exception-handler
                         current-exception-printer
-                        
+
                         make-shared-queue
                         shared-queue?
                         shared-queue-shutdown
@@ -517,15 +516,15 @@
                         shared-bag?
                         shared-bag-put!
                         shared-bag-get!
-                        
+
                         timeout-object?
                         shutdown-object?
-                        
+
                         spawn
                         thread-id
                         on-primordial-thread?
                         display-thread-status
-                                                
+
                         make-uuid
                         time-usage
                         microsecond

@@ -8,14 +8,14 @@
     (define unquote? (lambda (tag) (denote-unquote? env tag)))
     (define quasiquote? (lambda (tag) (denote-quasiquote? env tag)))
     (define unquote-splicing? (lambda (tag) (denote-unquote-splicing? env tag)))
-            
+
     (define quoted?
       (lambda (e)
         (and (pair? e)
              (pair? (cdr e))
              (null? (cddr e))
              (denote-quote? env (car e)))))
-    
+
     (define constant?
       (lambda (e)
         (or (boolean? e)
@@ -42,7 +42,7 @@
                (if (= (length body) 1) (car body) `(.APPEND ,@body)))
               (else
                `(.APPEND ,@body ,tail)))))
-    
+
     (define emit-cons*
       (lambda (body tail)
         (if (= (length body) 1)
@@ -92,7 +92,7 @@
                      ((((? unquote-splicing? _) e1 ...) . e2)
                       (emit-append e1 (expand e2 0)))
                      (((? quasiquote? _) _ ...)
-                      (emit-cons (expand (car expr) 1) 
+                      (emit-cons (expand (car expr) 1)
                                  (expand (cdr expr) 1)))
                      (((? unquote? _) e1) e1)
                      (((? unquote? _) . _)
@@ -101,17 +101,17 @@
                       (syntax-violation 'quasiquote "nested quasiquote appear in bad context" form expr))
                      (((? unquote-splicing? _) . _)
                       (syntax-violation 'quasiquote "unquote-splicing appear in bad context" form expr))
-                     (_ (emit-cons (expand (car expr) 0) 
+                     (_ (emit-cons (expand (car expr) 0)
                                    (expand (cdr expr) 0))))
                    (let ((tag (car expr)))
                      (cond ((or (denote-unquote? env tag) (denote-unquote-splicing? env tag))
-                            (emit-cons `(.QUOTE ,tag) 
+                            (emit-cons `(.QUOTE ,tag)
                                        (expand (cdr expr) (- nest 1))))
                            ((denote-quasiquote? env tag)
-                            (emit-cons `(.QUOTE ,tag) 
+                            (emit-cons `(.QUOTE ,tag)
                                        (expand (cdr expr) (+ nest 1))))
                            (else
-                            (emit-cons (expand (car expr) nest) 
+                            (emit-cons (expand (car expr) nest)
                                        (expand (cdr expr) nest)))))))
               ((vector? expr)
                (expand-vector expr nest))

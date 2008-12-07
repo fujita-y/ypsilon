@@ -477,6 +477,24 @@ subr_extend_lexical_syntax(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// mutable-literals
+scm_obj_t
+subr_mutable_literals(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (argv[0] == scm_false || argv[0] == scm_true) {
+            vm->flags.m_mutable_literals = argv[0];
+            return scm_unspecified;
+        } else {
+            wrong_type_argument_violation(vm, "mutable-literals", 0, "#t or #f", argv[0], argc, argv);
+            return scm_undef;
+        }
+    }
+    if (argc == 0) return vm->flags.m_mutable_literals;
+    wrong_number_of_arguments_violation(vm, "mutable-literals", 0, 1, argc, argv);
+    return scm_undef;
+}
+
 // display-backtrace
 scm_obj_t
 subr_display_backtrace(VM* vm, int argc, scm_obj_t argv[])
@@ -2952,6 +2970,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("backtrace", subr_backtrace);
     DEFSUBR("warning-level", subr_warning_level);
     DEFSUBR("extend-lexical-syntax", subr_extend_lexical_syntax);
+    DEFSUBR("mutable-literals", subr_mutable_literals);
     DEFSUBR("display-backtrace", subr_display_backtrace);
     DEFSUBR("backtrace-line-length", subr_backtrace_line_length);
     DEFSUBR("restricted-print-line-length", subr_restricted_print_line_length);

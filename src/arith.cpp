@@ -2505,7 +2505,7 @@ arith_bit_count(object_heap_t* heap, scm_obj_t obj)
             return MAKEFIXNUM(nbits(n));
         } else {
             return MAKEFIXNUM(~nbits(~n));
-        }   
+        }
     }
     if (BIGNUMP(obj)) {
         scm_bignum_t bn = (scm_bignum_t)obj;

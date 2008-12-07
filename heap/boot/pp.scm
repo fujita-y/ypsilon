@@ -8,41 +8,41 @@
 
   * OCaml code from paper
 
-      let (^^) x y    = DocCons(x,y)     
-      let empty       = DocNil           
-      let text s      = DocText(s)      
-      let nest i x    = DocNest(i,x)      
-      let break       = DocBreak(" ")    
-      let breakWith s = DocBreak(s)      
-      let group d     = DocGroup(d)     
-                                       
-      let rec sdocToString = function                 
-          | SNil -> ""                                          
-          | SText(s,d) -> s ^ sdocToString d               
-          | SLine(i,d) -> let prefix = String.make i ’ ’   
+      let (^^) x y    = DocCons(x,y)
+      let empty       = DocNil
+      let text s      = DocText(s)
+      let nest i x    = DocNest(i,x)
+      let break       = DocBreak(" ")
+      let breakWith s = DocBreak(s)
+      let group d     = DocGroup(d)
+
+      let rec sdocToString = function
+          | SNil -> ""
+          | SText(s,d) -> s ^ sdocToString d
+          | SLine(i,d) -> let prefix = String.make i ’ ’
                           in nl ^ prefix ^ sdocToString d
 
-      let rec fits w = function 
-          | _ when w < 0               -> false 
-          | []                         -> true 
-          | (i,m,DocNil)          :: z -> fits w z 
-          | (i,m,DocCons(x,y))    :: z -> fits w ((i,m,x)::(i,m,y)::z) 
-          | (i,m,DocNest(j,x))    :: z -> fits w ((i+j,m,x)::z) 
-          | (i,m,DocText(s))      :: z -> fits (w - strlen s) z 
-          | (i,Flat, DocBreak(s)) :: z -> fits (w - strlen s) z 
-          | (i,Break,DocBreak(_)) :: z -> true (* impossible *) 
-          | (i,m,DocGroup(x))     :: z -> fits w ((i,Flat,x)::z) 
+      let rec fits w = function
+          | _ when w < 0               -> false
+          | []                         -> true
+          | (i,m,DocNil)          :: z -> fits w z
+          | (i,m,DocCons(x,y))    :: z -> fits w ((i,m,x)::(i,m,y)::z)
+          | (i,m,DocNest(j,x))    :: z -> fits w ((i+j,m,x)::z)
+          | (i,m,DocText(s))      :: z -> fits (w - strlen s) z
+          | (i,Flat, DocBreak(s)) :: z -> fits (w - strlen s) z
+          | (i,Break,DocBreak(_)) :: z -> true (* impossible *)
+          | (i,m,DocGroup(x))     :: z -> fits w ((i,Flat,x)::z)
 
-      let rec format w k = function 
-          | [] -> SNil 
-          | (i,m,DocNil)          :: z -> format w k z 
-          | (i,m,DocCons(x,y))    :: z -> format w k ((i,m,x)::(i,m,y)::z) 
-          | (i,m,DocNest(j,x))    :: z -> format w k ((i+j,m,x)::z) 
-          | (i,m,DocText(s))      :: z -> SText(s,format w (k + strlen s) z) 
-          | (i,Flat, DocBreak(s)) :: z -> SText(s,format w (k + strlen s) z) 
-          | (i,Break,DocBreak(s)) :: z -> SLine(i,format w i z) 
-          | (i,m,DocGroup(x))     :: z -> if fits (w-k) ((i,Flat,x)::z) 
-                                          then format w k ((i,Flat ,x)::z) 
+      let rec format w k = function
+          | [] -> SNil
+          | (i,m,DocNil)          :: z -> format w k z
+          | (i,m,DocCons(x,y))    :: z -> format w k ((i,m,x)::(i,m,y)::z)
+          | (i,m,DocNest(j,x))    :: z -> format w k ((i+j,m,x)::z)
+          | (i,m,DocText(s))      :: z -> SText(s,format w (k + strlen s) z)
+          | (i,Flat, DocBreak(s)) :: z -> SText(s,format w (k + strlen s) z)
+          | (i,Break,DocBreak(s)) :: z -> SLine(i,format w i z)
+          | (i,m,DocGroup(x))     :: z -> if fits (w-k) ((i,Flat,x)::z)
+                                          then format w k ((i,Flat ,x)::z)
                                           else format w k ((i,Break,x)::z)
   scheme implementation note:
 
