@@ -140,6 +140,7 @@ VM::init(object_heap_t* heap)
 #else
         flags.m_extend_lexical_syntax = scm_true;
 #endif
+        flags.m_mutable_literals = scm_false;
         flags.m_collect_notify = scm_false;
         flags.m_collect_stack_notify = scm_false;
         flags.m_backtrace = scm_true;

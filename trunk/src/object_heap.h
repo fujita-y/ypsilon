@@ -90,6 +90,9 @@ public:
     object_slab_cache_t m_weakmappings;
     object_slab_cache_t m_cons;
     object_slab_cache_t m_flonums;
+#if USE_CONST_LITERAL
+    object_slab_cache_t m_immutable_cons;
+#endif
 
 public:
     int                 m_trip_bytes;
@@ -148,6 +151,9 @@ public:
     void                deallocate(void* p);
     scm_obj_t           allocate_collectible(size_t size);
     scm_pair_t          allocate_cons();
+#if USE_CONST_LITERAL
+    scm_pair_t          allocate_immutable_cons();
+#endif
     scm_flonum_t        allocate_flonum();
     scm_weakmapping_t   allocate_weakmapping();
     void*               allocate_private(size_t size);
@@ -178,6 +184,11 @@ public:
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         assert(index >= 0 && index < m_pool_watermark);
         return (m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
+    }
+
+    bool is_immutable_pair(void* obj) {
+        assert(PAIRP(obj));
+        return (OBJECT_SLAB_TRAITS_OF(obj)->cache == &m_immutable_cons);
     }
 
     scm_obj_t           lookup_system_environment(scm_symbol_t symbol);

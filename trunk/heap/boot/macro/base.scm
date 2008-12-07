@@ -52,7 +52,7 @@
                   (expand-form expr (extend-env renames env))))
                ((or (special? deno) (macro? deno))
                 (syntax-violation 'set! "misplaced syntactic keyword as variable" form))
-               (else                     
+               (else
                 (let ((var (expand-form name env)))
                   (and (core-hashtable-contains? immutable-primitives var)
                        (syntax-violation 'set! "attempt to modify immutable variable" form))
@@ -122,7 +122,7 @@
                         begin quasiquote unquote unquote-splicing
                         let-syntax letrec-syntax syntax-rules identifier-syntax
                         assert else => ... _)))))
-        
+
     (define let?
       (lambda (id)
         (denote-let? env id)))

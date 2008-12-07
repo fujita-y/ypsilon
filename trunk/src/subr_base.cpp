@@ -336,9 +336,9 @@ subr_append(VM* vm, int argc, scm_obj_t argv[])
     }
     if (argc == 0) return scm_nil;
     if (argc == 1) return argv[0];
-    scm_obj_t obj = scm_nil;
+    scm_obj_t obj = scm_undef;
     for (int i = argc - 1; i >= 0; i--) {
-        if (obj == scm_nil) obj = argv[i];
+        if (obj == scm_undef) obj = argv[i];
         else obj = append2(vm->m_heap, argv[i], obj);
     }
     return obj;
@@ -1384,6 +1384,13 @@ subr_vector_set(VM* vm, int argc, scm_obj_t argv[])
                         if (vm->m_child > 0) vm->m_interp->remember(vector->elts[n], argv[2]);
                     }
 #endif
+#if USE_CONST_LITERAL
+                    if (HDR_VECTOR_LITERAL(vector->hdr)) {
+                        literal_constant_access_violation(vm, "vector-set!", argv[0], argc, argv);
+                        return scm_undef;
+                    }
+
+#endif
                     vm->m_heap->write_barrier(argv[2]);
                     vector->elts[n] = argv[2];
                     return scm_unspecified;
@@ -1465,6 +1472,12 @@ subr_vector_fill(VM* vm, int argc, scm_obj_t argv[])
                 if (vm->m_child > 0) {
                     for (int i = 0; i < n; i++) vm->m_interp->remember(vector->elts[i], argv[1]);
                 }
+            }
+#endif
+#if USE_CONST_LITERAL
+            if (HDR_VECTOR_LITERAL(vector->hdr)) {
+                literal_constant_access_violation(vm, "vector-fill!", argv[0], argc, argv);
+                return scm_undef;
             }
 #endif
             vm->m_heap->write_barrier(argv[1]);
@@ -1709,7 +1722,6 @@ void init_subr_base(object_heap_t* heap)
     DEFSUBR("reverse", subr_reverse);
     DEFSUBR("list-tail", subr_list_tail);
     DEFSUBR("list-ref", subr_list_ref);
-
     DEFSUBR("symbol?", subr_symbol_pred);
     DEFSUBR("symbol=?", subr_symbol_eq_pred);
     DEFSUBR("symbol->string", subr_symbol_string);

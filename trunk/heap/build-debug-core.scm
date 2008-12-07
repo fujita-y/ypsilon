@@ -12,9 +12,9 @@
 
 
   #|
-  
+
     core library dependencies
-  
+
     exceptions    :
     parameters    :
     arithmetic    :
@@ -35,16 +35,16 @@
     unicode-assistants : io files lists bytevectors bytevector-transcoders
     unicode       : io files lists bytevectors bytevector-transcoders
     hashtables    : lists unicode optargs
-  
+
     coreform optimizer dependencies
-  
+
     utils            : (destructuring lists parameters)
-    let-transform    : utils 
-    set-transform    : utils 
-    lambda-transform : utils 
-    constant-folding : utils 
+    let-transform    : utils
+    set-transform    : utils
+    lambda-transform : utils
+    constant-folding : utils
     local-transform  : utils constant-folding
-  
+
   |#
 
 
@@ -157,4 +157,3 @@
                      (compile-to (open-input-file path) out)))
                  core-files)
        (format #t "~%~!"))))
-

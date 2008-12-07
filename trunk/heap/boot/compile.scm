@@ -407,7 +407,7 @@
                            (let loop ((lst bindings) (front '()))
                              (if (null? lst)
                                  (values bindings '())
-                                 (let ((init (cadar lst)))    
+                                 (let ((init (cadar lst)))
                                    (if (if (pair? init) (memq (car init) '(quote lambda)) (not (symbol? init)))
                                        (loop (cdr lst) (cons (car lst) front))
                                        (values (reverse front) lst)))))))
@@ -718,7 +718,7 @@
                  (loop (cdr lst) (append (car lst) ans)))))))
 
     #;(and discard tail (assertion-violation 'compile-expression-seq "invalid flag combination" (list form cte discard tail)))
-    
+
     (let loop ((lst form) (acc '()))
       (cond ((null? lst) (reverse-append acc))
             (else

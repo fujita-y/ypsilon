@@ -843,10 +843,12 @@
 (test-equal (cdr (cons 3 4)) 4 )
 
 (SECTION 6 3 "set-car!")
-(test-equal (let ((x '(a b c))) (set-car! x 1) x) (1 b c))
+;;(test-equal (let ((x '(a b c))) (set-car! x 1) x) (1 b c))
+(test-equal (let ((x (append '(a b c) '()))) (set-car! x 1) x) (1 b c))
 
 (SECTION 6 3 "set-cdr!")
-(test-equal (let ((x '(a b c))) (set-cdr! x 1) x) (a . 1))
+;;(test-equal (let ((x '(a b c))) (set-cdr! x 1) x) (a . 1))
+(test-equal (let ((x (append '(a b c) '()))) (set-cdr! x 1) x) (a . 1))
 
 (SECTION 6 3 "cxr")
 (test-equal (caar '((a))) a)
@@ -920,7 +922,8 @@
 (test-equal (assoc '(a) '(((a) . a) (-1 . b))) ((a) . a))
 (test-equal (assoc '(a) '(((b) . b) (a . c)))  #f)
 
-(test-equal (let ((alist '((2 . a) (3 . b)))) (set-cdr! (assv 3 alist) 'c) alist) ((2 . a) (3 . c)))
+;;(test-equal (let ((alist '((2 . a) (3 . b)))) (set-cdr! (assv 3 alist) 'c) alist) ((2 . a) (3 . c)))
+(test-equal (let ((alist `(,(cons 2 'a) ,(cons 3 'b)))) (set-cdr! (assv 3 alist) 'c) alist) ((2 . a) (3 . c)))
 
 (SECTION 6 4 "exact?")
 (test-equal (exact? 1)  #t)

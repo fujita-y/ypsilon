@@ -2,7 +2,7 @@
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
-;; Reference: 
+;; Reference:
 ;;   R. Kent Dybvig / The Scheme Programming Language, Third Edition
 ;;   Chapter 5. Control Operations, Section 5.6. Continuations
 
@@ -39,5 +39,3 @@
                ((caar rec))
                (current-dynamic-wind-record rec)))))
     (apply cont args)))
-
-

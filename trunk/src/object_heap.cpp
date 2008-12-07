@@ -87,6 +87,22 @@ object_heap_t::allocate_cons()
     return NULL;
 }
 
+#if USE_CONST_LITERAL
+scm_pair_t
+object_heap_t::allocate_immutable_cons()
+{
+    assert(m_immutable_cons.m_object_size == sizeof(scm_pair_rec_t));
+    m_trip_bytes += sizeof(scm_pair_rec_t);
+    if (m_trip_bytes >= m_collect_trip_bytes) collect();
+    do {
+        scm_pair_t obj = (scm_pair_t)m_immutable_cons.new_collectible_object();
+        if (obj) return obj;
+    } while (extend_pool(OBJECT_SLAB_SIZE));
+    fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_pool_size / (1024 * 1024));
+    return NULL;
+}
+#endif
+
 scm_flonum_t
 object_heap_t::allocate_flonum()
 {
@@ -238,14 +254,20 @@ object_heap_t::init_common(size_t pool_size, size_t init_size)
     for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, 1 << (n + 3), true);
     for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, 1 << (n + 3), false);
 #endif
-    m_weakmappings.init(this, clp2(sizeof(scm_weakmapping_rec_t)), true);
     m_cons.init(this, clp2(sizeof(scm_pair_rec_t)), true);
     m_flonums.init(this, clp2(sizeof(scm_flonum_rec_t)), true);
+    m_weakmappings.init(this, clp2(sizeof(scm_weakmapping_rec_t)), true);
+#if USE_CONST_LITERAL
+    m_immutable_cons.init(this, clp2(sizeof(scm_pair_rec_t)), true);
+#endif
     // cache
     int base_cache_limit = m_collect_trip_bytes / OBJECT_SLAB_SIZE;
     m_cons.m_cache_limit = base_cache_limit;
     m_flonums.m_cache_limit = base_cache_limit >> 1;
     m_weakmappings.m_cache_limit = base_cache_limit >> 3;
+#if USE_CONST_LITERAL
+    m_immutable_cons.m_cache_limit = 0;
+#endif
     for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].m_cache_limit = base_cache_limit >> 3;
     // hash
     m_symbol.init(this);
@@ -899,6 +921,9 @@ fallback:
                 hit |= (&heap.m_weakmappings == ca);
                 hit |= (&heap.m_flonums == ca);
                 hit |= (&heap.m_cons == ca);
+  #if USE_CONST_LITERAL
+                hit |= (&heap.m_immutable_cons == ca);
+  #endif
                 if (! hit) fatal("%s:%u concurrent_collect(): bad cache reference 0x%x in slab 0x%x", __FILE__, __LINE__, ca, slab);
             }
 #endif
@@ -1262,8 +1287,18 @@ object_heap_t::display_heap_statistics(scm_port_t port)
             if (traits->refc == 0) {
                 port_put_byte(port, '.');
             } else {
+#if USE_CONST_LITERAL
+                if (traits->free) {
+                    if (traits->cache == &m_immutable_cons) port_put_byte(port, 'l');
+                    else port_put_byte(port, 'o');
+                } else {
+                    if (traits->cache == &m_immutable_cons) port_put_byte(port, 'L');
+                    else port_put_byte(port, 'O');
+                }
+#else
                 if (traits->free) port_put_byte(port, 'o');
                 else port_put_byte(port, 'O');
+#endif
             }
             n_gcslab++;
             break;

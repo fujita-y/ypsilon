@@ -44,14 +44,14 @@
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_cont
     nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_closure       if has rest arguments then n == (- 1 - <required argc>)
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_subr
-    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_vector
+    .... .... .... .... .... L.-- ---- 1010 : scm_hdr_vector        L: literal
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_port
     nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_values
     .... .... .... .... .... IU-- ---- 1010 : scm_hdr_hashtable     I: immutable U: unsafe
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_gloc
     nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_tuple
     .... .... .... .... .... IU-- ---- 1010 : scm_hdr_weakhashtable I: immutable U: unsafe
-    .... .... .... .... .... M.-- ---- 1010 : scm_hdr_bvector       M: mapped
+    .... .... .... .... .... LM-- ---- 1010 : scm_hdr_bvector       L: literal M: mapped
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_complex
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_rational
     nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_heapenv
@@ -500,16 +500,18 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_HASHTABLE_IMMUTABLE_SHIFT       11
 #define HDR_WEAKHASHTABLE_SHARED_SHIFT      10
 #define HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT   11
-#define HDR_BVECTOR_MAPPING_SHIFT           11
+#define HDR_BVECTOR_MAPPING_SHIFT           10
 #define HDR_BIGNUM_SIGN_SHIFT               10
 #define HDR_BIGNUM_COUNT_SHIFT              16
 #define HDR_CLOSURE_ARGS_SHIFT              16
 #define HDR_FLONUM_32BIT_SHIFT              11
+#define HDR_VECTOR_LITERAL_SHIFT            11
+#define HDR_BVECTOR_LITERAL_SHIFT           11
 
 #define HDR_TC(hdr)                         (((hdr) >> 4) & TC_MASKBITS)
 #define HDR_CLOSURE_ARGS(hdr)               (((intptr_t)(hdr)) >> HDR_CLOSURE_ARGS_SHIFT)
-#define HDR_STRING_LITERAL(hdr)             (((hdr) >> HDR_STRING_LITERAL_SHIFT) & 0x01)
-#define HDR_STRING_TYPE(hdr)                (((hdr) >> HDR_STRING_TYPE_SHIFT) & 0x0f)
+#define HDR_STRING_LITERAL(hdr)             (((hdr) >> HDR_STRING_LITERAL_SHIFT) & 1)
+#define HDR_STRING_TYPE(hdr)                (((hdr) >> HDR_STRING_TYPE_SHIFT) & 1)
 #define HDR_VALUES_COUNT(hdr)               (((uintptr_t)(hdr)) >> HDR_VALUES_COUNT_SHIFT)
 #define HDR_TUPLE_COUNT(hdr)                (((uintptr_t)(hdr)) >> HDR_TUPLE_COUNT_SHIFT)
 #define HDR_HEAPENV_SIZE(hdr)               (((uintptr_t)(hdr)) >> HDR_HEAPENV_SIZE_SHIFT)
@@ -517,13 +519,15 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_BIGNUM_COUNT(hdr)               (((uintptr_t)(hdr)) >> HDR_BIGNUM_COUNT_SHIFT)
 #define HDR_SYMBOL_SIZE(hdr)                (((uintptr_t)(hdr)) >> HDR_SYMBOL_SIZE_SHIFT)
 #define HDR_SYMBOL_CODE(hdr)                (((hdr) >> HDR_SYMBOL_CODE_SHIFT) & 0xff)
-#define HDR_BVECTOR_MAPPING(hdr)            (((hdr) >> HDR_BVECTOR_MAPPING_SHIFT) & 0x01)
-#define HDR_HASHTABLE_SHARED(hdr)           (((hdr) >> HDR_HASHTABLE_SHARED_SHIFT) & 0x01)
-#define HDR_HASHTABLE_IMMUTABLE(hdr)        (((hdr) >> HDR_HASHTABLE_IMMUTABLE_SHIFT) & 0x01)
-#define HDR_WEAKHASHTABLE_SHARED(hdr)       (((hdr) >> HDR_WEAKHASHTABLE_SHARED_SHIFT) & 0x01)
-#define HDR_WEAKHASHTABLE_IMMUTABLE(hdr)    (((hdr) >> HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT) & 0x01)
+#define HDR_BVECTOR_MAPPING(hdr)            (((hdr) >> HDR_BVECTOR_MAPPING_SHIFT) & 1)
+#define HDR_HASHTABLE_SHARED(hdr)           (((hdr) >> HDR_HASHTABLE_SHARED_SHIFT) & 1)
+#define HDR_HASHTABLE_IMMUTABLE(hdr)        (((hdr) >> HDR_HASHTABLE_IMMUTABLE_SHIFT) & 1)
+#define HDR_WEAKHASHTABLE_SHARED(hdr)       (((hdr) >> HDR_WEAKHASHTABLE_SHARED_SHIFT) & 1)
+#define HDR_WEAKHASHTABLE_IMMUTABLE(hdr)    (((hdr) >> HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT) & 1)
 #define HDR_BIGNUM_SIGN(hdr)                (((hdr) >> HDR_BIGNUM_SIGN_SHIFT) & 0x03)
-#define HDR_FLONUM_32BIT(hdr)               (((hdr) >> HDR_FLONUM_32BIT_SHIFT) & 0x01)
+#define HDR_FLONUM_32BIT(hdr)               (((hdr) >> HDR_FLONUM_32BIT_SHIFT) & 1)
+#define HDR_VECTOR_LITERAL(hdr)             (((hdr) >> HDR_VECTOR_LITERAL_SHIFT) & 1)
+#define HDR_BVECTOR_LITERAL(hdr)            (((hdr) >> HDR_BVECTOR_LITERAL_SHIFT) & 1)
 
 #define HDR_SYMBOL_INHERENT_BIT             ((uintptr_t)1 << HDR_SYMBOL_INHERENT_SHIFT)
 #define HDR_SYMBOL_UNINTERNED_BIT           ((uintptr_t)1 << HDR_SYMBOL_UNINTERNED_SHIFT)

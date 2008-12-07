@@ -7,9 +7,39 @@
 #include "core.h"
 #include "vm.h"
 #include "hash.h"
+#include "list.h"
 #include "violation.h"
 
 #define CONS(a, d)      make_pair(m_heap, (a), (d))
+
+scm_obj_t
+VM::prebind_literal(scm_obj_t datum)
+{
+    if (PAIRP(datum)) {
+        scm_obj_t car = prebind_literal(CAR(datum));
+        scm_obj_t cdr = prebind_literal(CDR(datum));
+        return make_immutable_pair(m_heap, car, cdr);
+    }
+    if (VECTORP(datum)) {
+        // set literal bit
+        scm_vector_t vector = (scm_vector_t)datum;
+        vector->hdr = vector->hdr | MAKEBITS(1, HDR_VECTOR_LITERAL_SHIFT);
+        for (int i = 0; i < vector->count; i++) {
+            scm_obj_t obj = prebind_literal(vector->elts[i]);
+            if (obj != vector->elts[i]) {
+                m_heap->write_barrier(obj);
+                vector->elts[i] = obj;
+            }
+        }
+        return datum;
+    }
+    if (BVECTORP(datum)) {
+        scm_bvector_t bv = (scm_bvector_t)datum;
+        bv->hdr = bv->hdr | MAKEBITS(1, HDR_BVECTOR_LITERAL_SHIFT);
+        return datum;
+    }
+    return datum;
+}
 
 scm_gloc_t
 VM::prebind_gloc(scm_obj_t variable)
@@ -80,6 +110,32 @@ VM::prebind_list(scm_obj_t code)
         int opcode = HDR_SYMBOL_CODE(symbol->hdr);
         scm_obj_t operands = (scm_obj_t)CDAR(code);
         switch (opcode) {
+
+#if USE_CONST_LITERAL
+            case VMOP_RET_CONST:
+            case VMOP_PUSH_CONST:
+            case VMOP_CONST:
+            case VMOP_IF_NULLP_RET_CONST:
+            case VMOP_IF_TRUE_RET_CONST:
+            case VMOP_IF_FALSE_RET_CONST:
+            case VMOP_IF_EQP_RET_CONST:
+            case VMOP_IF_PAIRP_RET_CONST:
+            case VMOP_IF_SYMBOLP_RET_CONST:
+            case VMOP_IF_NOT_EQP_RET_CONST:
+            case VMOP_IF_NOT_PAIRP_RET_CONST:
+            case VMOP_IF_NOT_NULLP_RET_CONST:
+            case VMOP_IF_NOT_SYMBOLP_RET_CONST: {
+                if (flags.m_mutable_literals == scm_false) {
+                    scm_obj_t datum = CDAR(code);
+                    if ((PAIRP(datum) || VECTORP(datum)) && cyclic_objectp(m_heap, datum)) break;
+                    scm_obj_t lite = prebind_literal(datum);
+                    if (lite != datum) {
+                        m_heap->write_barrier(lite);
+                        CDAR(code) = lite;
+                    }
+                }
+            } break;
+#endif
 
             case VMOP_GLOC_OF: {
                 scm_gloc_t gloc = prebind_gloc(CAR(operands));
@@ -265,7 +321,6 @@ VM::prebind_list(scm_obj_t code)
         code = CDR(code);
     }
 }
-
 
 void
 VM::prebind(scm_obj_t code)

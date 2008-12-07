@@ -333,7 +333,6 @@
     exp
     expansion-backtrace
     expt
-    extend-lexical-syntax
     extract-accumulated-bytevector
     extract-accumulated-string
     file-exists?

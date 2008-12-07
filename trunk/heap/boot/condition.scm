@@ -62,7 +62,7 @@
 
     (or (rtd-ancestor? (record-type-rtd &condition) rtd)
         (assertion-violation 'condition-accessor (format "expected record-type-descriptor of a subtype of &condition, but got ~r" rtd) rtd proc))
-    
+
     (lambda (obj)
       (cond ((simple-condition? obj)
              (or (rtd-ancestor? rtd (record-rtd obj)) (wrong-type rtd obj))
@@ -109,7 +109,7 @@
                          lst))
              (format buf "~%   >")
              (format port "~a~!" (extract-accumulated-string buf))))
-          (else 
+          (else
            (format port "~r~!" c)))))
 
 (define describe-condition
@@ -150,7 +150,7 @@
                          lst))
              (format buf "~%   >")
              (format port "~a~!" (extract-accumulated-string buf))))
-          (else 
+          (else
            (format port "~r~!" c)))))
 
 (define &message

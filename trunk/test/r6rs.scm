@@ -1046,7 +1046,7 @@ bc"
               (vector-set! vec 1 '("Sue" "Sue"))
               vec)
             => #(0 ("Sue" "Sue") "Anna"))
-(test-equal "vect 5" (unspecified? (vector-set! '#(0 1 2) 1 "doe"))  => #t)
+(test-assertion-violation "vect 5" (vector-set! '#(0 1 2) 1 "doe"))
 (test-equal "vect 6" (vector->list '#(dah dah didah)) => (dah dah didah))
 (test-equal "vect 7" (list->vector '(dididit dah)) => #(dididit dah))
 (test-end)

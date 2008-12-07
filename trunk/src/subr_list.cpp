@@ -211,6 +211,12 @@ subr_set_car(VM* vm, int argc, scm_obj_t argv[])
                 if (vm->m_child > 0) vm->m_interp->remember(CAR(argv[0]), argv[1]);
             }
 #endif
+#if USE_CONST_LITERAL
+            if (vm->m_heap->is_immutable_pair(argv[0])) {
+                literal_constant_access_violation(vm, "set-car!", argv[0], argc, argv);
+                return scm_undef;
+            }
+#endif
             vm->m_heap->write_barrier(argv[1]);
             CAR(argv[0]) = argv[1];
             return scm_unspecified;
@@ -235,6 +241,12 @@ subr_set_cdr(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
                 if (vm->m_child > 0) vm->m_interp->remember(CDR(argv[0]), argv[1]);
+            }
+#endif
+#if USE_CONST_LITERAL
+            if (vm->m_heap->is_immutable_pair(argv[0])) {
+                literal_constant_access_violation(vm, "set-cdr!", argv[0], argc, argv);
+                return scm_undef;
             }
 #endif
             vm->m_heap->write_barrier(argv[1]);

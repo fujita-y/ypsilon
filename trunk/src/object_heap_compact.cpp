@@ -70,7 +70,17 @@ relocate_collectible(void* obj, int size, void* desc)
     scm_obj_t to;
     if (PAIRP(obj)) {
         assert(size == sizeof(scm_pair_rec_t));
+
+#if USE_CONST_LITERAL
+        object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
+        if (traits->cache == &heap->m_immutable_cons) {
+            to = heap->allocate_immutable_cons();
+        } else {
+            to = heap->allocate_cons();
+        }
+#else
         to = heap->allocate_cons();
+#endif
     } else if (FLONUMP(obj)) {
         assert(size == sizeof(scm_flonum_rec_t));
         to = heap->allocate_flonum();

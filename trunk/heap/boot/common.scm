@@ -15,7 +15,6 @@
     (let loop ((lst lst) (n 0))
       (if (pair? lst) (loop (cdr lst) (+ n 1)) n))))
 
-
 (define every1
   (lambda (pred lst)
     (or (null? lst)
@@ -122,4 +121,3 @@
     (if (null? nth)
         (format "expected ~a, but got ~a" expect got)
         (format "expected ~a, but got ~a, as argument ~a" expect got (car nth)))))
-

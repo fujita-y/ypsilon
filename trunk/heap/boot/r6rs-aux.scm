@@ -41,7 +41,7 @@
     (if (= b 0)
         (abs (if (inexact? b) (inexact a) a))
         (gcd2 b (remainder a b)))))
-    
+
 (define gcd
   (lambda args
     (for-each (lambda (a)
@@ -57,13 +57,13 @@
 
 (define lcm
   (lambda args
-    
+
     (define lcm2
       (lambda (a b)
         (if (or (= a 0) (= b 0))
             (if (and (exact? a) (exact? b)) 0 0.0)
             (abs (* (quotient a (gcd2 a b)) b)))))
-    
+
     (for-each (lambda (a)
                 (or (integer-valued? a)
                     (assertion-violation 'lcm (format "expected integer, but got ~s" a) args)))
@@ -79,7 +79,7 @@
   (lambda (x e)
     (or (real? x) (assertion-violation 'rationalize (format "expected real, but got ~s as argument 1" x) (list x e)))
     (or (real? e) (assertion-violation 'rationalize (format "expected real, but got ~s as argument 2" e) (list x e)))
-    (cond ((infinite? e) 
+    (cond ((infinite? e)
            (if (infinite? x) +nan.0 0.0))
           ((= x 0) x)
           ((= x e) (- x e))
@@ -107,7 +107,7 @@
 
 (define map
   (lambda (proc lst1 . lst2)
-    
+
     (define map-1
       (lambda (proc lst)
         (cond ((null? lst) '())
@@ -121,7 +121,7 @@
               (else
                (cons (apply proc (car lst))
                      (map-n proc (cdr lst)))))))
-    
+
     (if (null? lst2)
         (if (list? lst1)
             (map-1 proc lst1)
