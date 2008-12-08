@@ -104,7 +104,6 @@ ifneq (, $(findstring OpenBSD, $(UNAME)))
     ASFLAGS = --32
     SRCS += ffi_stub_openbsd.s
   else
-    CPPFLAGS += -DNO_UDIV128
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
     CXXFLAGS += -m64
     LDFLAGS = -m64
