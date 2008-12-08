@@ -61,7 +61,39 @@
                 bn_flip2sc(&(NEW));                                                     \
             } while(0);
 
-#define BN_ALLOC_FIXNUM(VAR)    BN_ALLOC(VAR, 1)
+#define BN_ALLOC_FIXNUM(VAR) BN_ALLOC(VAR, 1)
+
+
+
+#if defined(NO_UDIV128)
+static int
+nlz128(uint128_t x)
+{
+    uint64_t hi = x >> 64;
+    if (hi) return nlz(hi);
+    return nlz(x & UINT64_MAX) + 64;
+}
+
+static uint128_t 
+udiv128(uint128_t m, uint128_t n)
+{
+    if (m < n) return 0;
+    int m0 = nlz128(m); m <<= m0;
+    int n0 = nlz128(n); n <<= n0;
+    int s = n0 - m0;
+    uint128_t q = 0;
+    uint128_t b = (uint128_t)1 << s;
+    while (b) {
+        if (m >= n) {
+            m -= n;
+            q += b;
+        } 
+        n >>= 1;
+        b >>= 1;
+    }
+    return q;
+}
+#endif
 
 static const int64_t iexpt_2n52 = 0x10000000000000LL; // 2^(53-1)
 static const int64_t iexpt_2n53 = 0x20000000000000LL; // 2^53
