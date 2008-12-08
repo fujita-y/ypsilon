@@ -42,16 +42,24 @@ nbits(uint32_t x)
     t = ((x >> 2) & 0x33333333);
     x = (x & 0x33333333) + t;
     x = (x + (x >> 4)) & 0x0F0F0F0F;
-    x = x + (x << 8);
-    x = x + (x << 16);
+    x = x * 0x01010101;
     return x >> 24;
 }
 
 int
 nbits(uint64_t x)
 {
-    // todo: optimize
-    return nbits((uint32_t)(x >> 32)) + nbits((uint32_t)(x & 0xffffffff));
+    const uint64_t c1 = 0x5555555555555555LL;
+    const uint64_t c2 = 0x3333333333333333LL;
+    const uint64_t c3 = 0x0F0F0F0F0F0F0F0FLL;
+    const uint64_t c4 = 0x0101010101010101LL;
+    uint64_t t;
+    x = x - ((x >> 1) & c1);
+    t = ((x >> 2) & c2);
+    x = (x & c2) + t;
+    x = (x + (x >> 4)) & c3;
+    x = x * c4;
+    return x >> 56;
 }
 
 int

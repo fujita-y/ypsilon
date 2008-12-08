@@ -11,6 +11,10 @@
   #undef NO_TLS
   #define NO_TLS                    1
 #endif
+#if defined(NO_UDIV128)
+  #undef NO_UDIV128
+  #define NO_UDIV128                1
+#endif
 #if _MSC_VER
   #define DECLSPEC(x)               __declspec(x)
   #define ATTRIBUTE(x)
