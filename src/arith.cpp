@@ -63,9 +63,7 @@
 
 #define BN_ALLOC_FIXNUM(VAR) BN_ALLOC(VAR, 1)
 
-
-
-#if defined(NO_UDIV128)
+/*
 static int
 nlz128(uint128_t x)
 {
@@ -93,7 +91,7 @@ udiv128(uint128_t m, uint128_t n)
     }
     return q;
 }
-#endif
+*/
 
 static const int64_t iexpt_2n52 = 0x10000000000000LL; // 2^(53-1)
 static const int64_t iexpt_2n53 = 0x20000000000000LL; // 2^53
