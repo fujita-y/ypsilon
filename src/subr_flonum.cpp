@@ -699,7 +699,14 @@ scm_obj_t
 subr_fl_log(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
-        if (FLONUMP(argv[0])) return make_flonum(vm->m_heap, log(FLONUM(argv[0])));
+        if (FLONUMP(argv[0])) {
+            double value = FLONUM(argv[0]);
+            if (isinf(value)) {
+                if (value > 0.0) return argv[0];
+                return make_flonum(vm->m_heap, VALUE_NAN);
+            }
+            return make_flonum(vm->m_heap, log(value));
+        }
         wrong_type_argument_violation(vm, "fllog", 0, "flonum", argv[0], argc, argv);
         return scm_undef;
     }
