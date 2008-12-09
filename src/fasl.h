@@ -32,6 +32,10 @@
 #define FASL_TAG_STRING             16
 #define FASL_TAG_UNINTERNED_SYMBOL  17
 #define FASL_TAG_FIXNUM64           18
+#define FASL_TAG_INT0               19
+#define FASL_TAG_INT1               20
+#define FASL_TAG_INT2               21
+#define FASL_TAG_INT3               22
 
 class fasl_printer_t {
     VM*             m_vm;
