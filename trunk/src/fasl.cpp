@@ -99,6 +99,10 @@ fasl_printer_t::put_datum(scm_obj_t obj)
         return;
     }
     if (FIXNUMP(obj)) {
+        if (obj == MAKEFIXNUM(0)) { emit_u8(FASL_TAG_INT0); return; }
+        if (obj == MAKEFIXNUM(1)) { emit_u8(FASL_TAG_INT1); return; }
+        if (obj == MAKEFIXNUM(2)) { emit_u8(FASL_TAG_INT2); return; }
+        if (obj == MAKEFIXNUM(3)) { emit_u8(FASL_TAG_INT3); return; }        
 #if ARCH_LP64
         assert(sizeof(intptr_t) == sizeof(uint64_t));
         emit_u8(FASL_TAG_FIXNUM64);
@@ -268,16 +272,28 @@ fasl_reader_t::get_datum()
         return int64_to_integer(m_vm->m_heap, value);
 #endif
     }
+    case FASL_TAG_INT0: return MAKEFIXNUM(0);
+    case FASL_TAG_INT1: return MAKEFIXNUM(1);
+    case FASL_TAG_INT2: return MAKEFIXNUM(2);
+    case FASL_TAG_INT3: return MAKEFIXNUM(3);
     case FASL_TAG_PLIST: {
         int count = fetch_u32();
         scm_obj_t lst = scm_nil;
+#if USE_CONST_LITERAL
+        for (int i = 0; i < count; i++) lst = make_immutable_pair(m_vm->m_heap, get_datum(), lst);
+#else
         for (int i = 0; i < count; i++) lst = make_pair(m_vm->m_heap, get_datum(), lst);
+#endif
         return lst;
     }
     case FASL_TAG_DLIST: {
         int count = fetch_u32();
         scm_obj_t lst = get_datum();
+#if USE_CONST_LITERAL
+        for (int i = 0; i < count; i++) lst = make_immutable_pair(m_vm->m_heap, get_datum(), lst);
+#else
         for (int i = 0; i < count; i++) lst = make_pair(m_vm->m_heap, get_datum(), lst);
+#endif
         return lst;
     }
     case FASL_TAG_VECTOR: {

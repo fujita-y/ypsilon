@@ -26,13 +26,15 @@
   #define   GC_TRACE(fmt)   ((void)0)
 #endif
 
-#define DEBUG_CONCURRENT_COLLECT    0
-
-#define SYNCHRONIZE_THRESHOLD(x)    ((x) - (x) / 4)
-#define DEFALUT_COLLECT_TRIP_BYTES  (2 * 1024 * 1024)
-
-#define ENSURE_REALTIME             (1.0)       // in msec (1.0 == 0.001sec)
-#define TIMEOUT_CHECK_EACH          (100)
+#define DEBUG_CONCURRENT_COLLECT        0
+#define SYNCHRONIZE_THRESHOLD(x)        ((x) - (x) / 4)
+#if ARCH_LP64
+  #define DEFALUT_COLLECT_TRIP_BYTES    (4 * 1024 * 1024)
+#else
+  #define DEFALUT_COLLECT_TRIP_BYTES    (2 * 1024 * 1024)
+#endif
+#define ENSURE_REALTIME                 (1.0)       // in msec (1.0 == 0.001sec)
+#define TIMEOUT_CHECK_EACH              (100)
 
 #if ARCH_LP64
     inline int
@@ -1287,7 +1289,7 @@ object_heap_t::display_heap_statistics(scm_port_t port)
             if (traits->refc == 0) {
                 port_put_byte(port, '.');
             } else {
-#if USE_CONST_LITERAL
+#if USE_CONST_LITERAL && !defined(NDEBUG)
                 if (traits->free) {
                     if (traits->cache == &m_immutable_cons) port_put_byte(port, 'l');
                     else port_put_byte(port, 'o');

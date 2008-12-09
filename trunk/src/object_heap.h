@@ -185,11 +185,12 @@ public:
         assert(index >= 0 && index < m_pool_watermark);
         return (m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
     }
-
+#if USE_CONST_LITERAL
     bool is_immutable_pair(void* obj) {
         assert(PAIRP(obj));
         return (OBJECT_SLAB_TRAITS_OF(obj)->cache == &m_immutable_cons);
     }
+#endif
 
     scm_obj_t           lookup_system_environment(scm_symbol_t symbol);
     void                intern_system_environment(scm_symbol_t symbol, scm_obj_t value);
