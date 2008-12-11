@@ -25,7 +25,7 @@ VM::prebind_literal(scm_obj_t datum)
     if (VECTORP(datum)) {
         scm_vector_t vector = (scm_vector_t)datum;
         if (HDR_VECTOR_LITERAL(vector->hdr)) return datum;
-        vector->hdr = vector->hdr | MAKEBITS(1, HDR_VECTOR_LITERAL_SHIFT);
+        if (vector->count) vector->hdr = vector->hdr | MAKEBITS(1, HDR_VECTOR_LITERAL_SHIFT);
         for (int i = 0; i < vector->count; i++) {
             scm_obj_t obj = prebind_literal(vector->elts[i]);
             if (obj != vector->elts[i]) {
@@ -37,7 +37,7 @@ VM::prebind_literal(scm_obj_t datum)
     }
     if (BVECTORP(datum)) {
         scm_bvector_t bv = (scm_bvector_t)datum;
-        bv->hdr = bv->hdr | MAKEBITS(1, HDR_BVECTOR_LITERAL_SHIFT);
+        if (bv->count) bv->hdr = bv->hdr | MAKEBITS(1, HDR_BVECTOR_LITERAL_SHIFT);
         return datum;
     }
     return datum;

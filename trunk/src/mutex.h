@@ -145,19 +145,23 @@
   #if MTDEBUG
             lock_count = 0;
   #endif
-            pthread_mutexattr_t attr;
-            MTVERIFY(pthread_mutexattr_init(&attr));
             if (recursive) {
+                pthread_mutexattr_t attr;
+                MTVERIFY(pthread_mutexattr_init(&attr));
                 MTVERIFY(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE));
+                MTVERIFY(pthread_mutex_init(&mutex, &attr));
+                MTVERIFY(pthread_mutexattr_destroy(&attr));
             } else {
   #if MTDEBUG
+                pthread_mutexattr_t attr;
+                MTVERIFY(pthread_mutexattr_init(&attr));
                 MTVERIFY(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK));
+                MTVERIFY(pthread_mutex_init(&mutex, &attr));
+                MTVERIFY(pthread_mutexattr_destroy(&attr));
   #else
-                MTVERIFY(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL));
+                MTVERIFY(pthread_mutex_init(&mutex, NULL));
   #endif
             }
-            MTVERIFY(pthread_mutex_init(&mutex, &attr));
-            MTVERIFY(pthread_mutexattr_destroy(&attr));
         }
 
         void destroy()

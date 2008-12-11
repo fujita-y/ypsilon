@@ -56,7 +56,6 @@ struct object_slab_cache_t {
     object_slab_traits_t*   m_vacant;
     object_slab_traits_t*   m_occupied;
     object_heap_t*          m_heap;
-
     object_slab_cache_t();
     ~object_slab_cache_t();
     bool    init(object_heap_t* object_heap, int object_size, bool gc);

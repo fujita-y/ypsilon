@@ -710,62 +710,9 @@ loop:
 void
 VM::stop()
 {
-
     #define ARGC_TH     8
-
-    char usage[128];
-    if (flags.m_collect_notify != scm_false) {
-        if (m_heap->m_usage.m_recorded) {
-            if (DETAILED_STATISTIC) {
-                snprintf(usage,
-                        sizeof(usage),
-                         ";; [collect overlapped: %.2fms sync: %.2fms/%.2fms pause: %.2fms/%.2fms/%.2fms barrier: %dR/%dW/%dA]",
-                         m_heap->m_usage.m_duration,
-                         m_heap->m_usage.m_sync1,
-                         m_heap->m_usage.m_sync2,
-                         m_heap->m_usage.m_pause1,
-                         m_heap->m_usage.m_pause2,
-                         m_heap->m_usage.m_pause3,
-                         m_heap->m_usage.m_barriered_read,
-                         m_heap->m_usage.m_barriered_write,
-                         m_heap->m_usage.m_barriered_alloc);
-            } else {
-                if (m_heap->m_usage.m_synchronized) {
-                    snprintf(usage,
-                             sizeof(usage),
-                             ";; [collect synchronized: %.2fms]",
-                             m_heap->m_usage.m_duration);
-                } else {
-                    snprintf(usage,
-                             sizeof(usage),
-                             ";; [collect overlapped: %.2fms pause: %.2fms/%.2fms/%.2fms]",
-                             m_heap->m_usage.m_duration,
-                             m_heap->m_usage.m_pause1,
-                             m_heap->m_usage.m_pause2,
-                             m_heap->m_usage.m_pause3);
-                }
-            }
-            scoped_lock lock(m_current_output->lock);
-            printer_t prt(this, m_current_output);
-            prt.format("~&%s", usage);
-            if (m_heap->m_usage.m_shade_queue_hazard) prt.format("[shade queue overflow: %d]", m_heap->m_usage.m_shade_queue_hazard);
-            if (m_heap->m_usage.m_expand_mark_stack) prt.format("[mark stack overflow: %d]", m_heap->m_usage.m_expand_mark_stack);
-            prt.format("~%~!");
-        }
-    } else {
-        if (CONCURRENT_COLLECT) {
-            if (m_heap->m_usage.m_synchronized) {
-                snprintf(usage,
-                         sizeof(usage),
-                         "warning: low heap memory (collect: %.2fms)",
-                         m_heap->m_usage.m_duration);
-                scoped_lock lock(m_current_error->lock);
-                printer_t prt(this, m_current_error);
-                prt.format("~&%s~%~!", usage);
-            }
-        }
-    }
-    if (m_heap->m_usage.m_recorded) m_heap->m_usage.clear();
+    collector_usage_t last_usage = m_heap->m_usage;
+    if (last_usage.m_recorded) m_heap->m_usage.clear();
     double t1 = msec();
 #if HPDEBUG
     if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_CONSISTENCY_CHECK) save_stack();
@@ -838,6 +785,68 @@ VM::stop()
             double d = t2 - t1;
             if (d > m_heap->m_usage.m_pause3) m_heap->m_usage.m_pause3 = d;
         } break;
+    }
+
+    char usage[128];
+    if (flags.m_collect_notify != scm_false) {
+        if (last_usage.m_recorded) {
+            if (DETAILED_STATISTIC) {
+                if (last_usage.m_synchronized) {
+                    snprintf(usage,
+                             sizeof(usage),
+                             ";; [collect synchronize: %.2fms]",
+                             last_usage.m_duration);
+                } else {
+                    snprintf(usage,
+                            sizeof(usage),
+                             ";; [collect concurrent: %.2fms sync: %.2fms/%.2fms pause: %.2fms/%.2fms/%.2fms barrier: %dR/%dW/%dA]",
+                             last_usage.m_duration,
+                             last_usage.m_sync1,
+                             last_usage.m_sync2,
+                             last_usage.m_pause1,
+                             last_usage.m_pause2,
+                             last_usage.m_pause3,
+                             last_usage.m_barriered_read,
+                             last_usage.m_barriered_write,
+                             last_usage.m_barriered_alloc);
+                }
+            } else {
+                if (last_usage.m_synchronized) {
+                    snprintf(usage,
+                             sizeof(usage),
+                             ";; [collect synchronize: %.2fms]",
+                             last_usage.m_duration);
+                } else {
+                    snprintf(usage,
+                             sizeof(usage),
+                             ";; [collect concurrent: %.2fms pause: %.2fms/%.2fms/%.2fms]",
+                             last_usage.m_duration,
+                             last_usage.m_pause1,
+                             last_usage.m_pause2,
+                             last_usage.m_pause3);
+                }
+            }
+            scoped_lock lock(m_current_output->lock);
+            printer_t prt(this, m_current_output);
+            prt.format("~&%s", usage);
+            if (last_usage.m_shade_queue_hazard) prt.format("[shade queue overflow: %d]", last_usage.m_shade_queue_hazard);
+            if (last_usage.m_expand_mark_stack) prt.format("[mark stack overflow: %d]", last_usage.m_expand_mark_stack);
+            prt.format("~%~!");
+        }
+    } else {
+        if (last_usage.m_recorded) {
+            if (CONCURRENT_COLLECT) {
+                if (last_usage.m_synchronized) {
+                    snprintf(usage,
+                             sizeof(usage),
+                             "warning: low heap memory (collect: %.2fms)",
+                             last_usage.m_duration);
+                    scoped_lock lock(m_current_error->lock);
+                    printer_t prt(this, m_current_error);
+                    prt.format("~&%s~%~!", usage);
+                }
+            }
+        }
     }
 }
 

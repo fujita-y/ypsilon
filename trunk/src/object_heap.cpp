@@ -242,10 +242,6 @@ object_heap_t::init_common(size_t pool_size, size_t init_size)
     m_pool_memo = 0;
     m_pool_usage = 0;
     m_pool_threshold = SYNCHRONIZE_THRESHOLD(n_tag);
-    // collector
-    m_trip_bytes = 0;
-    m_collect_trip_bytes = ((m_pool_size / 16) < DEFALUT_COLLECT_TRIP_BYTES) ? (m_pool_size / 16) : DEFALUT_COLLECT_TRIP_BYTES;
-    collector_init();
     // slab
 #if ARCH_LP64
     assert((1 << (array_sizeof(m_collectibles) + 3)) == OBJECT_SLAB_THRESHOLD);
@@ -265,15 +261,19 @@ object_heap_t::init_common(size_t pool_size, size_t init_size)
     // cache
     int base_cache_limit = m_collect_trip_bytes / OBJECT_SLAB_SIZE;
     m_cons.m_cache_limit = base_cache_limit;
-    m_flonums.m_cache_limit = base_cache_limit >> 1;
-    m_weakmappings.m_cache_limit = base_cache_limit >> 3;
+    m_flonums.m_cache_limit = base_cache_limit / 2;
+    m_weakmappings.m_cache_limit = base_cache_limit / 8;
 #if USE_CONST_LITERAL
-    m_immutable_cons.m_cache_limit = 0;
+    m_immutable_cons.m_cache_limit = base_cache_limit / 8;
 #endif
-    for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].m_cache_limit = base_cache_limit >> 3;
+    for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].m_cache_limit = base_cache_limit / 8;
     // hash
     m_symbol.init(this);
     m_string.init(this);
+    // collector
+    m_trip_bytes = 0;
+    m_collect_trip_bytes = ((m_pool_size / 16) < DEFALUT_COLLECT_TRIP_BYTES) ? (m_pool_size / 16) : DEFALUT_COLLECT_TRIP_BYTES;
+    collector_init();
 }
 
 void

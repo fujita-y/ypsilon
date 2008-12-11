@@ -331,10 +331,11 @@ object_slab_cache_t::sweep(void* slab)
     uint8_t* p = bitmap;
     int refc = traits->refc;
     object_freelist_t* freelist = traits->free;
+    object_slab_cache_t* cache = traits->cache;
 #if USE_CONST_LITERAL
-    if ((traits->cache == &m_heap->m_cons) | (traits->cache == &m_heap->m_immutable_cons) | (traits->cache == &m_heap->m_flonums)) {
+    if ((cache == &m_heap->m_cons) || (cache == &m_heap->m_flonums) || (cache == &m_heap->m_immutable_cons)) {
 #else
-    if ((traits->cache == &m_heap->m_cons) | (traits->cache == &m_heap->m_flonums)) {
+    if ((cache == &m_heap->m_cons) || (cache == &m_heap->m_flonums)) {
 #endif
         do {
             uint8_t bit = 1;
