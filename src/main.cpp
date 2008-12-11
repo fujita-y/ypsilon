@@ -164,6 +164,13 @@ static int opt_heap_limit(int argc, char* const argv[])
         printf("FIXNUM_MIN %ld %lx\n", (long)FIXNUM_MIN, (long)FIXNUM_MIN);
         printf("sizeof(pthread_mutex_t) %d\n", (int)sizeof(pthread_mutex_t));
         printf("sizeof(pthread_cond_t) %d\n", (int)sizeof(pthread_cond_t));
+        printf("sizeof(queue_t<scm_obj_t>) %d\n", (int)sizeof(queue_t<scm_obj_t>));
+        printf("sizeof(object_slab_cache_t) %d\n", (int)sizeof(object_slab_cache_t));
+  #if __linux__
+        if (sizeof(object_slab_cache_t) < 64) {
+            puts("##### NOTE check padding count in object_slab_t.cpp ####");
+        }
+  #endif
   #endif
   #if MTDEBUG
         puts(";; MTDEBUG ON");

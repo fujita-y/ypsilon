@@ -27,12 +27,12 @@
   #include "spinlock.h"
 #endif
 
-#define ROOT_SNAPSHOT_GLOBALS           0
-#define ROOT_SNAPSHOT_LOCALS            1
-#define ROOT_SNAPSHOT_EVERYTHING        2
-#define ROOT_SNAPSHOT_RETRY             3
+#define ROOT_SNAPSHOT_GLOBALS               0
+#define ROOT_SNAPSHOT_LOCALS                1
+#define ROOT_SNAPSHOT_EVERYTHING            2
+#define ROOT_SNAPSHOT_RETRY                 3
 #if HPDEBUG
-  #define ROOT_SNAPSHOT_CONSISTENCY_CHECK 4
+  #define ROOT_SNAPSHOT_CONSISTENCY_CHECK   4
 #endif
 
 #define PTAG_FREE       0x00
@@ -78,8 +78,8 @@ public:
 struct relocate_info_t;
 
 class object_heap_t {
+    mutex_t             m_lock;       // mutator collector
 public:
-    mutex_t             m_lock;
 #if ARCH_LP64
     object_slab_cache_t m_collectibles[7];  //   16-32-64-128-256-512-1024
     object_slab_cache_t m_privates[7];      //   16-32-64-128-256-512-1024
@@ -87,53 +87,50 @@ public:
     object_slab_cache_t m_collectibles[8];  // 8-16-32-64-128-256-512-1024
     object_slab_cache_t m_privates[8];      // 8-16-32-64-128-256-512-1024
 #endif
-    object_slab_cache_t m_weakmappings;
-    object_slab_cache_t m_cons;
-    object_slab_cache_t m_flonums;
 #if USE_CONST_LITERAL
     object_slab_cache_t m_immutable_cons;
 #endif
-
-public:
-    int                 m_trip_bytes;
-    int                 m_collect_trip_bytes;
-    int                 m_stop_the_world;
-    uint8_t*            m_sweep_wavefront;
-    int                 m_write_barrier;
-    int                 m_read_barrier;
-    int                 m_alloc_barrier;
-    uint8_t*            m_map;
-    size_t              m_map_size;
-    uint8_t*            m_pool;
-    size_t              m_pool_size;
-    int                 m_pool_watermark;
-    int                 m_pool_memo;
-    int                 m_pool_usage;
-    int                 m_pool_threshold;
-    scm_obj_t*          m_mark_stack;
-    scm_obj_t*          m_mark_sp;
-    int                 m_mark_stack_size;
-
-    mutex_t             m_collector_lock;
-    cond_t              m_collector_wake;
+    object_slab_cache_t m_cons;
+    object_slab_cache_t m_flonums;
+    object_slab_cache_t m_weakmappings;
+    queue_t<scm_obj_t>  m_shade_queue;          // mutator collector
+    uint8_t*            m_sweep_wavefront;      // collector write mutator read
+    scm_obj_t*          m_mark_sp;              // collector private
+    scm_obj_t*          m_mark_stack;           // collector private
+    int                 m_mark_stack_size;      // collector private
+    int                 m_root_snapshot;        // collector nearprivate
+    int                 m_collector_ready;      // collector nearprivate
+    int                 m_collector_kicked;     // collector nearprivate
+    int                 m_collector_terminating;// collector nearprivate
+    int                 m_mutator_stopped;      // mutator nearprivate
+    int                 m_stop_the_world;       // mutator nearprivate
+    int                 m_read_barrier;         // mutator nearprivate
+    int                 m_write_barrier;        // mutator nearprivate
+    int                 m_alloc_barrier;        // mutator nearprivate
+    int                 m_trip_bytes;           // mutator nearprivate
+    int                 m_collect_trip_bytes;   // mutator nearprivate
+    uint8_t*            m_map;                  // mutator private
+    size_t              m_map_size;             // mutator private
+    uint8_t*            m_pool;                 // mutator private
+    size_t              m_pool_size;            // mutator private
+    int                 m_pool_watermark;       // mutator private
+    int                 m_pool_memo;            // mutator private
+    int                 m_pool_usage;           // mutator private
+    int                 m_pool_threshold;       // mutator private
+    mutex_t             m_collector_lock;       // mutator collector
     cond_t              m_mutator_wake;
-    int                 m_mutator_stopped;
-    queue_t<scm_obj_t>  m_shade_queue;
-    int                 m_collector_ready;
-    int                 m_collector_terminating;
-    int                 m_collector_kicked;
-    int                 m_root_snapshot;
+    cond_t              m_collector_wake;
     object_set_t        m_symbol;
     object_set_t        m_string;
-    scm_environment_t   m_system_environment;
     scm_environment_t   m_interaction_environment;
+    scm_environment_t   m_system_environment;
     scm_weakhashtable_t m_hidden_variables;
-    int                 m_gensym_counter;
-    mutex_t             m_gensym_lock;
-    scm_bvector_t       m_native_transcoder;
+    scm_obj_t*          m_inherents;
     scm_hashtable_t     m_architecture_feature;
     scm_hashtable_t     m_trampolines;
-    scm_obj_t*          m_inherents;
+    scm_bvector_t       m_native_transcoder;
+    int                 m_gensym_counter;
+    mutex_t             m_gensym_lock;
     collector_usage_t   m_usage;
 #if USE_PARALLEL_VM
     object_heap_t*      m_primordial;

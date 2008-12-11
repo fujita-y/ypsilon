@@ -7,10 +7,9 @@ PROG 	 = ypsilon
 PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
+#CPPFLAGS = -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
 
-CXXFLAGS = -pipe -x c++ -pthread -O3 \
-	   -fstrict-aliasing -fomit-frame-pointer -momit-leaf-frame-pointer \
-	   -fno-align-labels -fno-align-loops -fno-align-jumps
+CXXFLAGS = -pipe -x c++ -pthread -O3 -fstrict-aliasing -fomit-frame-pointer -momit-leaf-frame-pointer
 
 SRCS 	 = file.cpp main.cpp vm0.cpp object_heap_compact.cpp subr_flonum.cpp vm1.cpp object_set.cpp \
 	   subr_hash.cpp vm2.cpp object_slab.cpp subr_list.cpp interpreter.cpp serialize.cpp \
@@ -44,7 +43,7 @@ ifneq (, $(findstring Linux, $(UNAME)))
   else
     CXXFLAGS += -march=native
   endif
-  CXXFLAGS += -msse -mfpmath=sse
+  CXXFLAGS += -msse2 -mfpmath=sse
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -70,7 +69,7 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
     CXXFLAGS += -march=native
   endif
   CPPFLAGS += -D__LITTLE_ENDIAN__
-  CXXFLAGS += -msse -mfpmath=sse  
+  CXXFLAGS += -msse2 -mfpmath=sse  
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -96,7 +95,7 @@ ifneq (, $(findstring OpenBSD, $(UNAME)))
     CXXFLAGS += -march=native
   endif
   CPPFLAGS += -D__LITTLE_ENDIAN__ -DNO_TLS
-  CXXFLAGS += -msse -mfpmath=sse
+  CXXFLAGS += -msse2 -mfpmath=sse
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -114,7 +113,7 @@ ifneq (, $(findstring OpenBSD, $(UNAME)))
 endif
 
 ifneq (, $(findstring Darwin, $(UNAME)))
-  CXXFLAGS += -arch i386 -msse -mfpmath=sse
+  CXXFLAGS += -arch i386 -msse2 -mfpmath=sse
   CPPFLAGS += -DNO_TLS
   SRCS += ffi_stub_darwin.s
 endif
@@ -131,10 +130,14 @@ $(PROG): $(OBJS)
 	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
 vm1.s: vm1.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -fverbose-asm -S src/vm1.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \
+	-fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps \
+	-fverbose-asm -S src/vm1.cpp
 
 vm1.o: vm1.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-reorder-blocks -fno-crossjumping -c src/vm1.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \
+	-fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps \
+	-c src/vm1.cpp
 
 install: all stdlib sitelib
 	mkdir -p -m755 $(DESTDIR)$(PREFIX)/bin
