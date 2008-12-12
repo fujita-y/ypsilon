@@ -313,6 +313,7 @@ VM::run(bool init_dispatch_table)
         PIN(ERROR_GLOC);
         PIN(ERROR_RET_ILOC);
         PIN(ERROR_APPLY_ILOC);
+        PIN(ERROR_VECTREF_ILOC);
         PIN(ERROR_LETREC_VIOLATION);
         PIN(ERROR_RET_GLOC);
         PIN(ERROR_TOUCH_GLOC);
@@ -411,6 +412,8 @@ VM::run(bool init_dispatch_table)
         LABEL(VMOP_LE_ILOC);
         LABEL(VMOP_GT_ILOC);
         LABEL(VMOP_GE_ILOC);
+        LABEL(VMOP_PUSH_VECTREF_ILOC);
+        LABEL(VMOP_VECTREF_ILOC);
         // workaround for GCC bug
         for (int i = 0; i < array_sizeof(m_dispatch_table); i++) s_volatile_stub = m_dispatch_table[i];
   #if USE_DIRECT_THREAD && !defined(NDEBUG)
@@ -1420,6 +1423,38 @@ loop:
                 goto FALLBACK_GE_ILOC;
             }
 
+            CASE(VMOP_PUSH_VECTREF_ILOC) {
+                obj = *lookup_iloc(CAR(OPERANDS));
+                if (VECTORP(obj)) {
+                    scm_vector_t vect = (scm_vector_t)obj;
+                    if (FIXNUMP(m_sp[-1])) {
+                        unsigned int n = FIXNUM(m_sp[-1]);
+                        if (n < (unsigned int)vect->count) {
+                            m_sp[-1] = vect->elts[n];
+                            m_pc = CDR(m_pc);
+                            goto loop;
+                        }
+                     }
+                }
+                goto ERROR_PUSH_VECTREF_ILOC;
+            }
+
+            CASE(VMOP_VECTREF_ILOC) {
+                obj = *lookup_iloc(CAR(OPERANDS));
+                if (VECTORP(obj)) {
+                    scm_vector_t vect = (scm_vector_t)obj;
+                    if (FIXNUMP(m_value)) {
+                        unsigned int n = FIXNUM(m_value);
+                        if (n < (unsigned int)vect->count) {
+                            m_value = vect->elts[n];
+                            m_pc = CDR(m_pc);
+                            goto loop;
+                        }
+                    }
+                }
+                goto ERROR_VECTREF_ILOC;
+            }
+
             CASE(VMOP_TOUCH_GLOC) {
                 goto THUNK_TOUCH_GLOC_OF;
             }
@@ -1868,6 +1903,35 @@ ERROR_RET_ILOC:
 ERROR_APPLY_ILOC:
         letrec_violation(this);
         goto BACK_TO_LOOP;
+
+ERROR_PUSH_VECTREF_ILOC:
+        {
+            scm_obj_t argv[2] = { obj, m_sp[-1] };
+            if (VECTORP(argv[0])) {
+                if (exact_non_negative_integer_pred(argv[1])) {
+                    invalid_argument_violation(this, "vector-ref", "index out of bounds,", argv[1], 1, 2, argv);
+                } else {
+                    wrong_type_argument_violation(this, "vector-ref", 1, "exact non-negative integer", argv[1], 2, argv);
+                }
+                goto BACK_TO_LOOP;
+            }
+            wrong_type_argument_violation(this, "vector-ref", 0, "vector", argv[0], 2, argv);
+            goto BACK_TO_LOOP;
+        }
+ERROR_VECTREF_ILOC:
+        {
+            scm_obj_t argv[2] = { obj, m_value };
+            if (VECTORP(argv[0])) {
+                if (exact_non_negative_integer_pred(argv[1])) {
+                    invalid_argument_violation(this, "vector-ref", "index out of bounds,", argv[1], 1, 2, argv);
+                } else {
+                    wrong_type_argument_violation(this, "vector-ref", 1, "exact non-negative integer", argv[1], 2, argv);
+                }
+                goto BACK_TO_LOOP;
+            }
+            wrong_type_argument_violation(this, "vector-ref", 0, "vector", argv[0], 2, argv);
+            goto BACK_TO_LOOP;
+        }
 
 ERROR_LETREC_VIOLATION:
         letrec_violation(this);

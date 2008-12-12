@@ -78,54 +78,54 @@ public:
 struct relocate_info_t;
 
 class object_heap_t {
-    mutex_t             m_lock;       // mutator collector
 public:
+    mutex_t             m_lock;      
 #if ARCH_LP64
-    object_slab_cache_t m_collectibles[7];  //   16-32-64-128-256-512-1024
-    object_slab_cache_t m_privates[7];      //   16-32-64-128-256-512-1024
+    object_slab_cache_t m_collectibles[8];  //   16-32-64-128-256-512-1024-2048
+    object_slab_cache_t m_privates[8];      //   16-32-64-128-256-512-1024-2048
 #else
     object_slab_cache_t m_collectibles[8];  // 8-16-32-64-128-256-512-1024
     object_slab_cache_t m_privates[8];      // 8-16-32-64-128-256-512-1024
 #endif
-#if USE_CONST_LITERAL
-    object_slab_cache_t m_immutable_cons;
-#endif
     object_slab_cache_t m_cons;
     object_slab_cache_t m_flonums;
     object_slab_cache_t m_weakmappings;
-    queue_t<scm_obj_t>  m_shade_queue;          // mutator collector
-    uint8_t*            m_sweep_wavefront;      // collector write mutator read
-    scm_obj_t*          m_mark_sp;              // collector private
-    scm_obj_t*          m_mark_stack;           // collector private
-    int                 m_mark_stack_size;      // collector private
-    int                 m_root_snapshot;        // collector nearprivate
-    int                 m_collector_ready;      // collector nearprivate
-    int                 m_collector_kicked;     // collector nearprivate
-    int                 m_collector_terminating;// collector nearprivate
-    int                 m_mutator_stopped;      // mutator nearprivate
-    int                 m_stop_the_world;       // mutator nearprivate
-    int                 m_read_barrier;         // mutator nearprivate
-    int                 m_write_barrier;        // mutator nearprivate
-    int                 m_alloc_barrier;        // mutator nearprivate
-    int                 m_trip_bytes;           // mutator nearprivate
-    int                 m_collect_trip_bytes;   // mutator nearprivate
-    uint8_t*            m_map;                  // mutator private
-    size_t              m_map_size;             // mutator private
-    uint8_t*            m_pool;                 // mutator private
-    size_t              m_pool_size;            // mutator private
-    int                 m_pool_watermark;       // mutator private
-    int                 m_pool_memo;            // mutator private
-    int                 m_pool_usage;           // mutator private
-    int                 m_pool_threshold;       // mutator private
-    mutex_t             m_collector_lock;       // mutator collector
+#if USE_CONST_LITERAL
+    object_slab_cache_t m_immutable_cons;
+#endif
+    queue_t<scm_obj_t>  m_shade_queue;        
+    uint8_t*            m_sweep_wavefront;     
+    scm_obj_t*          m_mark_sp;         
+    scm_obj_t*          m_mark_stack;          
+    int                 m_mark_stack_size;     
+    int                 m_root_snapshot;      
+    int                 m_collector_ready;     
+    int                 m_collector_kicked;    
+    int                 m_collector_terminating;
+    int                 m_mutator_stopped;   
+    int                 m_stop_the_world;       
+    int                 m_read_barrier;       
+    int                 m_write_barrier;       
+    int                 m_alloc_barrier;     
+    int                 m_trip_bytes;       
+    int                 m_collect_trip_bytes;  
+    uint8_t*            m_map;                 
+    size_t              m_map_size;            
+    uint8_t*            m_pool;               
+    size_t              m_pool_size;           
+    int                 m_pool_watermark;     
+    int                 m_pool_memo;       
+    int                 m_pool_usage;
+    int                 m_pool_threshold;
+    mutex_t             m_collector_lock;
     cond_t              m_mutator_wake;
     cond_t              m_collector_wake;
     object_set_t        m_symbol;
     object_set_t        m_string;
+    scm_obj_t*          m_inherents;
     scm_environment_t   m_interaction_environment;
     scm_environment_t   m_system_environment;
     scm_weakhashtable_t m_hidden_variables;
-    scm_obj_t*          m_inherents;
     scm_hashtable_t     m_architecture_feature;
     scm_hashtable_t     m_trampolines;
     scm_bvector_t       m_native_transcoder;
@@ -136,46 +136,46 @@ public:
     object_heap_t*      m_primordial;
     object_heap_t*      m_parent;
 #endif
-
-    void                init_common(size_t pool_size, size_t initial_datum_size);
-
-public:
                         object_heap_t();
+    void                init_common(size_t pool_size, size_t initial_datum_size);
     void                init_primordial(size_t pool_size, size_t initial_datum_size);
     void                init_child(size_t pool_size, size_t initial_datum_size, object_heap_t* parent);
+    void                init_inherents();
+    void                init_architecture_feature();
     void                destroy();
     void*               allocate(size_t size, bool slab, bool gc);
     void                deallocate(void* p);
+    bool                extend_pool(size_t extend_size);
     scm_obj_t           allocate_collectible(size_t size);
     scm_pair_t          allocate_cons();
+    scm_flonum_t        allocate_flonum();
+    scm_weakmapping_t   allocate_weakmapping();
 #if USE_CONST_LITERAL
     scm_pair_t          allocate_immutable_cons();
 #endif
-    scm_flonum_t        allocate_flonum();
-    scm_weakmapping_t   allocate_weakmapping();
     void*               allocate_private(size_t size);
-    void                deallocate_private(void* obj);
     int                 allocated_size(void* obj);
-
+    void                deallocate_private(void* obj);
+    scm_obj_t           lookup_system_environment(scm_symbol_t symbol);
+    void                intern_system_environment(scm_symbol_t symbol, scm_obj_t value);
+    void                intern_system_subr(const char *name, subr_proc_t proc);
+    
     bool in_slab(void* obj) {
         assert(obj);
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         assert(index >= 0 && index < m_pool_watermark);
         return (m_pool[index] & PTAG_SLAB) != 0;
     }
-
     bool in_non_full_slab(void* obj) {
         assert(obj);
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         assert(index >= 0 && index < m_pool_watermark);
         return (m_pool[index] & PTAG_SLAB) && OBJECT_SLAB_TRAITS_OF(obj)->free != NULL;
     }
-
-    bool in_heap(void* obj) { // note: include vm stack
+    bool in_heap(void* obj) {
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
         return (index >= 0 && index < m_pool_watermark);
     }
-
     bool is_collectible(void* obj) {
         assert(obj);
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
@@ -188,49 +188,38 @@ public:
         return (OBJECT_SLAB_TRAITS_OF(obj)->cache == &m_immutable_cons);
     }
 #endif
-
-    scm_obj_t           lookup_system_environment(scm_symbol_t symbol);
-    void                intern_system_environment(scm_symbol_t symbol, scm_obj_t value);
-    void                intern_system_subr(const char *name, subr_proc_t proc);
-    void                init_inherents();
-    void                init_architecture_feature();
-
     scm_symbol_t inherent_symbol(int code) const {
         assert(code < INHERENT_TOTAL_COUNT);
         assert(SYMBOLP(m_inherents[code]));
         return (scm_symbol_t)m_inherents[code];
     }
-
-public:
-    relocate_info_t*    relocate(bool pack);
-    void                relocate_privates(bool pack);
-    void                resolve(relocate_info_t* info);
-    scm_obj_t           forward(scm_obj_t obj);
-    void*               interior_forward(void* ref);
-    void                compact_pool();
-
-private:
-    bool                extend_pool(size_t extend_size);
-    void                shade(scm_obj_t obj);
-    void                interior_shade(void* obj);
-    void                break_weakmapping(object_slab_traits_t* traits);
-
-public:
-    void            collect();
-    void            collector_init();
-    static thread_main_t collector_thread(void* param);
-    static void     concurrent_collect(object_heap_t& heap);
-    static void     synchronized_collect(object_heap_t& heap);
-    void            concurrent_marking();
-    bool            serial_marking();
-    void            write_barrier(scm_obj_t rhs);
-    void            trace(scm_obj_t obj);
-    void            dequeue_root();
-    void            enqueue_root(scm_obj_t obj);
-    void            display_object_statistics(scm_port_t port);
-    void            display_heap_statistics(scm_port_t port);
+    // compactor
+    relocate_info_t*        relocate(bool pack);
+    void                    relocate_privates(bool pack);
+    void                    resolve(relocate_info_t* info);
+    scm_obj_t               forward(scm_obj_t obj);
+    void*                   interior_forward(void* ref);
+    void                    compact_pool();
+    // collector
+    void                    collect();
+    void                    collector_init();
+    void                    concurrent_marking();
+    bool                    serial_marking();
+    void                    write_barrier(scm_obj_t rhs);
+    void                    break_weakmapping(object_slab_traits_t* traits);
+    void                    interior_shade(void* obj);
+    void                    shade(scm_obj_t obj);
+    void                    trace(scm_obj_t obj);
+    void                    dequeue_root();
+    void                    enqueue_root(scm_obj_t obj);
+    static thread_main_t    collector_thread(void* param);
+    static void             concurrent_collect(object_heap_t& heap);
+    static void             synchronized_collect(object_heap_t& heap);
+    // debug
+    void                    display_object_statistics(scm_port_t port);
+    void                    display_heap_statistics(scm_port_t port);
 #if HPDEBUG
-    void            consistency_check();
+    void                    consistency_check();
 #endif
 };
 

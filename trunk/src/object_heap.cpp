@@ -244,7 +244,7 @@ object_heap_t::init_common(size_t pool_size, size_t init_size)
     m_pool_threshold = SYNCHRONIZE_THRESHOLD(n_tag);
     // slab
 #if ARCH_LP64
-    assert((1 << (array_sizeof(m_collectibles) + 3)) == OBJECT_SLAB_THRESHOLD);
+    assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
     for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, 1 << (n + 4), true);
     for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, 1 << (n + 4), false);
 #else
@@ -1415,6 +1415,8 @@ object_heap_t::init_inherents()
     make_symbol_inherent(this, "<=.iloc", VMOP_LE_ILOC);
     make_symbol_inherent(this, ">.iloc", VMOP_GT_ILOC);
     make_symbol_inherent(this, ">=.iloc", VMOP_GE_ILOC);
+    make_symbol_inherent(this, "push.vector-ref.iloc", VMOP_PUSH_VECTREF_ILOC);
+    make_symbol_inherent(this, "vector-ref.iloc", VMOP_VECTREF_ILOC);
     make_symbol_inherent(this, "little", S_CODE_LITTLE);
     make_symbol_inherent(this, "big", S_CODE_BIG);
     make_symbol_inherent(this, "quote", S_CODE_QUOTE);
