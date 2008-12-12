@@ -351,10 +351,12 @@ more_more_seek:
             return;
         case VMOP_CAR_ILOC:
         case VMOP_CDR_ILOC:
+        case VMOP_VECTREF_ILOC:
         case VMOP_PUSH_CAR_ILOC:
         case VMOP_PUSH_CDR_ILOC:
         case VMOP_PUSH_CADR_ILOC:
         case VMOP_PUSH_CDDR_ILOC:
+        case VMOP_PUSH_VECTREF_ILOC:
             if (PAIRP(CDR(operands))) backtrace_seek_make_cont(CDR(operands));
             return;
         case VMOP_CONST:

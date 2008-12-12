@@ -123,7 +123,7 @@
 (define ht-special-subr-expression
   (let ((ht (make-core-hashtable)))
     (for-each (lambda (x) (core-hashtable-set! ht x #t))
-              (list unspecified car cdr cadr cddr cons = < <= > >= eq? null? pair? + - eqv? equal?))
+              (list unspecified car cdr cadr cddr cons = < <= > >= eq? null? pair? + - eqv? equal? vector-ref))
     (core-hashtable-copy ht #t)))
 
 (define alist-special-binary-subr
@@ -203,7 +203,6 @@
                                         ((iloc? opd1 cte)
                                          `(,@(compile-expression opd2 cte #f #f) (,(cdr (assq subr alist-special-binary-subr-iloc-negate)) ,(make-iloc-operand opd1 cte) . ,comment)))
                                         (else (compile-anonymous form cte tail comment))))))
-;;;
                              ((eq? subr +)
                               (let ((opd1 (cadr form)) (opd2 (caddr form)))
                                 (let-values (((lhs rhs) (cond ((and (fixnum? opd1) (symbol? opd2) (iloc? opd2 cte)) (values opd2 opd1))
@@ -217,7 +216,11 @@
                                 (if (and (fixnum? opd2) (symbol? opd1) (iloc? opd1 cte))
                                     `((n+.iloc ,(make-iloc-operand opd1 cte) ,(- opd2) . ,comment))
                                     (compile-anonymous form cte tail comment))))
-
+                             ((eq? subr vector-ref)
+                              (let ((opd1 (cadr form)) (opd2 (caddr form)))
+                                (if (iloc? opd1 cte)
+                                    `(,@(compile-expression opd2 cte #f #f) (vector-ref.iloc ,(make-iloc-operand opd1 cte) . ,comment))
+                                    (compile-anonymous form cte tail comment))))
                              (else
                               (compile-anonymous form cte tail comment)))))
                   (else
@@ -227,7 +230,7 @@
 (define ht-special-subr-argument
   (let ((ht (make-core-hashtable)))
     (for-each (lambda (x) (core-hashtable-set! ht x #t))
-              (list unspecified car cdr cadr cddr + - cons))
+              (list unspecified car cdr cadr cddr + - cons vector-ref))
     (core-hashtable-copy ht #t)))
 
 (define compile-subr-argument
@@ -268,6 +271,13 @@
                             (if (and (iloc? opd1 cte) (fixnum? opd2))
                                 `((push.n+.iloc ,(make-iloc-operand opd1 cte) ,(- opd2) . ,comment))
                                 (compile-anonymous form cte comment))))
+
+                         ((eq? subr vector-ref)
+                          (let ((opd1 (cadr form)) (opd2 (caddr form)))
+                            (if (iloc? opd1 cte)
+                                `(,@(compile-argument opd2 cte) (push.vector-ref.iloc ,(make-iloc-operand opd1 cte) . ,comment))
+                                (compile-anonymous form cte comment))))
+                         
                          (else
                           (compile-anonymous form cte comment))))
                   (else
