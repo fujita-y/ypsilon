@@ -118,7 +118,7 @@ private:
     scm_obj_t           call_scheme_stub(scm_obj_t proc, int argc, scm_obj_t argv[]);
 
 public:
-    void                collect_stack(int acquire);
+    void                collect_stack(unsigned int acquire);
     void                apply_scheme(scm_obj_t proc, int argc, ...);
     void                apply_scheme_argv(scm_obj_t proc, int argc, scm_obj_t argv[]);
     scm_obj_t           call_scheme(scm_obj_t proc, int argc, ...);
