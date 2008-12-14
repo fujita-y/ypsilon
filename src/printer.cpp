@@ -664,8 +664,10 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
         bool abbreviated = PAIRP(CDR(obj)) && (CDDR(obj) == scm_nil) && write_abbreviated(CAR(obj));
         if (abbreviated) obj = CDR(obj);
         else port_put_byte(m_port, '(');
+        bool head = true;
         for (scm_obj_t e = obj; e != scm_nil; e = CDR(e)) {
-            if (e != obj) port_put_byte(m_port, ' ');
+            if (head) head = false;
+            else port_put_byte(m_port, ' ');
             if (PAIRP(e)) {
                 if (HASHTABLEP(ht)) {
                     scm_obj_t datum = get_hashtable((scm_hashtable_t)ht, CDR(e));

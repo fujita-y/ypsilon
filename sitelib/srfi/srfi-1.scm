@@ -157,14 +157,6 @@
         (cond ((< n 0) lst)
               (else (loop (cons (proc n) lst) (- n 1)))))))
 
-  (define list-copy
-    (lambda (lst)
-      (let loop ((lst lst))
-        (if (pair? lst)
-            (cons (car lst)
-                  (loop (cdr lst)))
-            lst))))
-
   (define circular-list
     (lambda lst
       (let ((lst (list-copy lst)))

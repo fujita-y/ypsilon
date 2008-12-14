@@ -7,7 +7,7 @@
   (export load-shared-object
           c-function
           c-function/errno
-          c-function/win32-lasterror
+          c-function/lasterror
           c-argument
           on-windows on-darwin on-linux on-freebsd on-openbsd on-posix on-ia32 on-x64)
   (import (core))
@@ -217,12 +217,17 @@
            (let* ((ret (apply proc args)) (err (shared-object-errno)))
              (values ret err)))))))
 
-  (define-syntax c-function/win32-lasterror
+  (define-syntax c-function/lasterror
     (syntax-rules ()
       ((_ . x)
-       (let ((proc (c-function . x)))
-         (lambda args
-           (let* ((ret (apply proc args)) (err (shared-object-win32-last-error)))
-             (values ret err)))))))
+       (if on-windows
+           (let ((proc (c-function . x)))
+             (lambda args
+               (let* ((ret (apply proc args)) (err (shared-object-win32-lasterror)))
+                 (values ret err))))
+           (lambda x
+             (error 'c-function/lasterror (format "only available with windows")))))))
+           
+           
 
   ) ;[end]

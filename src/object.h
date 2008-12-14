@@ -431,7 +431,7 @@ struct vm_cont_rec_t {          // record size is variable
 
 struct vm_env_rec_t {           // record size is variable
   //scm_obj_t   vars[count];
-    int         count;
+    intptr_t    count;
     void*       up;             // 'm_env' and 'up' point here
 };
 

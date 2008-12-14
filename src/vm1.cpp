@@ -15,16 +15,16 @@
 #define UNWRAP_BACKTRACE        1
 
 #define STACKP(p)           (((p) >= (void*)m_stack_top) & ((p) < (void*)m_stack_limit))
-#define FORWARDP(p)         ((*(intptr_t*)(p)) & 1)
-#define FORWARD(from,to)    ((*(intptr_t*)(from)) = ((intptr_t)(to) | 1))
-#define RESOLVE(p)          ((void*)((*(intptr_t*)(p)) & (~1)))
+#define FORWARDP(p)         ((*(uintptr_t*)(p)) & 1)
+#define FORWARD(from,to)    ((*(uintptr_t*)(from)) = ((uintptr_t)(to) | 1))
+#define RESOLVE(p)          ((void*)((*(uintptr_t*)(p)) & (~1)))
 
 static void
-object_copy(void* dst, const void* src, uintptr_t bsize)
+object_copy(void* dst, const void* src, intptr_t bsize)
 {
     assert(bsize % sizeof(scm_obj_t) == 0);
-    uintptr_t c = bsize / sizeof(scm_obj_t);
-    for (uintptr_t i = 0; i < c; i++) ((scm_obj_t*)dst)[i] = ((scm_obj_t*)src)[i];
+    intptr_t c = bsize / sizeof(scm_obj_t);
+    for (intptr_t i = 0; i < c; i++) ((scm_obj_t*)dst)[i] = ((scm_obj_t*)src)[i];
 }
 
 void*
@@ -32,13 +32,13 @@ VM::save_cont(void* lnk)
 {
     if (!STACKP(lnk)) return lnk;
     void* up = save_cont(*(void**)lnk);
-    vm_cont_t cont = (vm_cont_t)((uintptr_t)lnk - offsetof(vm_cont_rec_t, up));
+    vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
     cont->env = save_env(cont->env);
-    uintptr_t asize = (uintptr_t)cont - (uintptr_t)cont->fp;
-    uintptr_t fsize = asize + sizeof(vm_cont_rec_t);
+    intptr_t asize = (intptr_t)cont - (intptr_t)cont->fp;
+    intptr_t fsize = asize + sizeof(vm_cont_rec_t);
     void* heap_top = new_heapcont_rec(m_heap, fsize);
     object_copy(heap_top, cont->fp, fsize);
-    vm_cont_t heap_cont = (vm_cont_t)((uintptr_t)heap_top + asize);
+    vm_cont_t heap_cont = (vm_cont_t)((intptr_t)heap_top + asize);
     heap_cont->up = up;
     heap_cont->fp = (scm_obj_t*)heap_top;
     return &heap_cont->up;
@@ -47,7 +47,7 @@ VM::save_cont(void* lnk)
 void
 VM::save_stack()
 {
-    uintptr_t argc = m_sp - m_fp;
+    intptr_t argc = m_sp - m_fp;
     m_cont = save_cont(m_cont);
     m_env = save_env(m_env);
     update_cont(m_cont);
@@ -62,11 +62,11 @@ VM::gc_env(void* lnk)
     if (!STACKP(lnk)) return lnk;
     if (FORWARDP(lnk)) return RESOLVE(lnk);
     void* up = gc_env(*(void**)lnk);
-    vm_env_t env = (vm_env_t)((uintptr_t)lnk - offsetof(vm_env_rec_t, up));
-    uintptr_t bytes = (unsigned int)env->count * sizeof(scm_obj_t) + sizeof(vm_env_rec_t);
-    object_copy(m_fp, (scm_obj_t*)env - (unsigned int)env->count, bytes);
-    vm_env_t to_env = (vm_env_t)(m_fp + (unsigned int)env->count);
-    m_fp = (scm_obj_t*)((uintptr_t)m_fp + bytes);
+    vm_env_t env = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
+    intptr_t bytes = env->count * sizeof(scm_obj_t) + sizeof(vm_env_rec_t);
+    object_copy(m_fp, (scm_obj_t*)env - env->count, bytes);
+    vm_env_t to_env = (vm_env_t)(m_fp + env->count);
+    m_fp = (scm_obj_t*)((intptr_t)m_fp + bytes);
     to_env->up = up;
     FORWARD(&env->up, &to_env->up);
     return &to_env->up;
@@ -77,19 +77,19 @@ VM::gc_cont(void* lnk)
 {
     if (!STACKP(lnk)) return lnk;
     void* up = gc_cont(*(void**)lnk);
-    vm_cont_t cont = (vm_cont_t)((uintptr_t)lnk - offsetof(vm_cont_rec_t, up));
+    vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
     cont->env = gc_env(cont->env);
-    uintptr_t bytes = (uintptr_t)cont - (uintptr_t)cont->fp + sizeof(vm_cont_rec_t);
+    intptr_t bytes = (intptr_t)cont - (intptr_t)cont->fp + sizeof(vm_cont_rec_t);
     object_copy(m_fp, cont->fp, bytes);
-    m_fp = (scm_obj_t*)((uintptr_t)m_fp + bytes);
-    vm_cont_t to_cont = (vm_cont_t)((uintptr_t)m_fp - sizeof(vm_cont_rec_t));
+    m_fp = (scm_obj_t*)((intptr_t)m_fp + bytes);
+    vm_cont_t to_cont = (vm_cont_t)((intptr_t)m_fp - sizeof(vm_cont_rec_t));
     to_cont->up = up;
-    to_cont->fp = (scm_obj_t*)((uintptr_t)m_fp - bytes);
+    to_cont->fp = (scm_obj_t*)((intptr_t)m_fp - bytes);
     return &to_cont->up;
 }
 
 void
-VM::collect_stack(unsigned int acquire)
+VM::collect_stack(intptr_t acquire)
 {
     if (m_stack_busy) {
         save_stack();
@@ -109,7 +109,7 @@ VM::collect_stack(unsigned int acquire)
         if (m_heap->m_stop_the_world) stop();
         return;
     }
-    uintptr_t argc = m_sp - m_fp;
+    intptr_t argc = m_sp - m_fp;
     m_fp = m_to_stack_top;
     m_cont = gc_cont(m_cont);
     m_env = gc_env(m_env);
@@ -161,17 +161,17 @@ VM::save_env(void* root)
     vm_env_t env;
     if (STACKP(root)) {
         if (FORWARDP(root)) return RESOLVE(root);
-        current = (vm_env_t)((uintptr_t)root - offsetof(vm_env_rec_t, up));
+        current = (vm_env_t)((intptr_t)root - offsetof(vm_env_rec_t, up));
         env = current;
-        uintptr_t bytes = (unsigned int)env->count * sizeof(scm_obj_t) + sizeof(vm_env_rec_t);
-        scm_obj_t* stack = (scm_obj_t*)env - (unsigned int)env->count;
+        intptr_t bytes = env->count * sizeof(scm_obj_t) + sizeof(vm_env_rec_t);
+        scm_obj_t* stack = (scm_obj_t*)env - env->count;
         scm_obj_t* heap = (scm_obj_t*)new_heapenv_rec(m_heap, bytes);
         assert(bytes % sizeof(scm_obj_t) == 0);
-        uintptr_t c = bytes / sizeof(scm_obj_t);
-        for (uintptr_t i = 0; i < c; i++) heap[i] = stack[i];
+        intptr_t c = bytes / sizeof(scm_obj_t);
+        for (intptr_t i = 0; i < c; i++) heap[i] = stack[i];
         intptr_t offset = (intptr_t)heap - (intptr_t)stack;
-        root = (void*)((uintptr_t)root + offset);
-        env = (vm_env_t)((uintptr_t)env + offset);
+        root = (void*)((intptr_t)root + offset);
+        env = (vm_env_t)((intptr_t)env + offset);
     } else {
         return root;
     }
@@ -180,15 +180,15 @@ VM::save_env(void* root)
             env->up = RESOLVE(env->up);
             break;
         }
-        vm_env_t parent = (vm_env_t)((uintptr_t)env->up - offsetof(vm_env_rec_t, up));
-        uintptr_t bytes = (unsigned int)parent->count * sizeof(scm_obj_t) + sizeof(vm_env_rec_t);
-        scm_obj_t* stack = (scm_obj_t*)parent - (unsigned int)parent->count;
+        vm_env_t parent = (vm_env_t)((intptr_t)env->up - offsetof(vm_env_rec_t, up));
+        intptr_t bytes = parent->count * sizeof(scm_obj_t) + sizeof(vm_env_rec_t);
+        scm_obj_t* stack = (scm_obj_t*)parent - parent->count;
         scm_obj_t* heap = (scm_obj_t*)new_heapenv_rec(m_heap, bytes);
         assert(bytes % sizeof(scm_obj_t) == 0);
-        uintptr_t c = bytes / sizeof(scm_obj_t);
-        for (uintptr_t i = 0; i < c; i++) heap[i] = stack[i];
+        intptr_t c = bytes / sizeof(scm_obj_t);
+        for (intptr_t i = 0; i < c; i++) heap[i] = stack[i];
         intptr_t offset = (intptr_t)heap - (intptr_t)stack;
-        vm_env_t heap_env = (vm_env_t)((uintptr_t)parent + offset);
+        vm_env_t heap_env = (vm_env_t)((intptr_t)parent + offset);
         FORWARD(&parent->up, &heap_env->up);
         env->up = &heap_env->up;
         env = heap_env;
@@ -201,7 +201,7 @@ void
 VM::update_cont(void* lnk)
 {
     while (STACKP(lnk)) {
-        vm_cont_t cont = (vm_cont_t)((uintptr_t)lnk - offsetof(vm_cont_rec_t, up));
+        vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
         if (cont->env && FORWARDP(cont->env)) cont->env = RESOLVE(cont->env);
         lnk = (*(void**)lnk);
     }
@@ -211,10 +211,10 @@ scm_obj_t*
 VM::lookup_iloc(scm_obj_t operands)
 {
     void* lnk = m_env;
-    uintptr_t level = FIXNUM(CAR(operands));
+    intptr_t level = FIXNUM(CAR(operands));
     while (level) { lnk = *(void**)lnk; level = level - 1; }
     vm_env_t env = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
-    return (scm_obj_t*)env - (unsigned int)env->count + FIXNUM(CDR(operands));
+    return (scm_obj_t*)env - env->count + FIXNUM(CDR(operands));
 }
 
 #if USE_GCC_EXTENSION
@@ -328,7 +328,7 @@ VM::run(bool init_dispatch_table)
         PIN(ERROR_SET_ILOC_BAD_CONTEXT);
     #endif
   #endif
-        for (unsigned int i = 0; i < array_sizeof(m_dispatch_table); i++) m_dispatch_table[i] = &&ERROR_BAD_INSTRUCTION;
+        for (int i = 0; i < array_sizeof(m_dispatch_table); i++) m_dispatch_table[i] = &&ERROR_BAD_INSTRUCTION;
         LABEL(VMOP_EXTEND_ENCLOSE);
         LABEL(VMOP_EXTEND_ENCLOSE_LOCAL);
         LABEL(VMOP_EXTEND_UNBOUND);
@@ -413,9 +413,9 @@ VM::run(bool init_dispatch_table)
         LABEL(VMOP_PUSH_VECTREF_ILOC);
         LABEL(VMOP_VECTREF_ILOC);
         // workaround for GCC bug
-        for (unsigned int i = 0; i < array_sizeof(m_dispatch_table); i++) s_volatile_stub = m_dispatch_table[i];
+        for (int i = 0; i < array_sizeof(m_dispatch_table); i++) s_volatile_stub = m_dispatch_table[i];
   #if USE_DIRECT_THREAD && !defined(NDEBUG)
-        for (unsigned int i = 0; i < array_sizeof(m_dispatch_table); i++) {
+        for (int i = 0; i < array_sizeof(m_dispatch_table); i++) {
             if ((uintptr_t)m_dispatch_table[i] & 1) {
                 fatal("%s:%u failed to initialize virtual machine for USE_DIRECT_THREAD", __FILE__, __LINE__);
             }
@@ -468,7 +468,7 @@ apply:
         }
         if (SUBRP(m_value)) {
             scm_subr_t subr = (scm_subr_t)m_value;
-            uintptr_t argc = m_sp - m_fp;
+            intptr_t argc = m_sp - m_fp;
             m_value = (*subr->adrs)(this, argc, m_fp);
             if (m_value == scm_undef) goto BACK_TO_TRACE_N_LOOP;
             goto pop_cont;
@@ -489,18 +489,18 @@ trace_n_loop:
                     // (path . fixnum) : loaded form
                     assert(STRINGP(CAR(operand_trace)));
                     scm_string_t string = (scm_string_t)CAR(operand_trace);
-                    int comment = FIXNUM(CDR(operand_trace));
-                    int line = comment / MAX_SOURCE_COLUMN;
-                    int column = comment % MAX_SOURCE_COLUMN;
+                    intptr_t comment = FIXNUM(CDR(operand_trace));
+                    intptr_t line = comment / MAX_SOURCE_COLUMN;
+                    intptr_t column = comment % MAX_SOURCE_COLUMN;
                     scoped_lock lock(m_current_output->lock);
-                    printer_t(this, m_current_output).format("trace: %s line %d column %d~%~!", string->name, line, column);
+                    printer_t(this, m_current_output).format("trace: %s line %ld column %ld~%~!", string->name, line, column);
                 } else {
                     // (expr path . fixnum) : repl form
                     scm_string_t string = (scm_string_t)CADR(operand_trace);
-                    int comment = FIXNUM(CDDR(operand_trace));
-                    int line = comment / MAX_SOURCE_COLUMN;
+                    intptr_t comment = FIXNUM(CDDR(operand_trace));
+                    intptr_t line = comment / MAX_SOURCE_COLUMN;
                     scoped_lock lock(m_current_output->lock);
-                    printer_t(this, m_current_output).format("trace: ~s  ... %s line %d~%~!", CAR(operand_trace), string->name, line);
+                    printer_t(this, m_current_output).format("trace: ~s  ... %s line %ld~%~!", CAR(operand_trace), string->name, line);
                 }
             }
   #endif
@@ -520,11 +520,11 @@ pop_cont:
             if (STACKP(cont)) {
                 m_sp = (scm_obj_t*)cont;
             } else {
-                uintptr_t nargs = (scm_obj_t*)cont - (scm_obj_t*)cont->fp;
+                intptr_t nargs = (scm_obj_t*)cont - (scm_obj_t*)cont->fp;
                 {
                     const scm_obj_t* s = (scm_obj_t*)cont->fp;
                     scm_obj_t* d = (scm_obj_t*)m_stack_top;
-                    for (uintptr_t i = 0; i < nargs; i++) d[i] = s[i];
+                    for (intptr_t i = 0; i < nargs; i++) d[i] = s[i];
                 }
                 m_fp = m_stack_top;
                 m_sp = m_fp + nargs;
@@ -623,7 +623,7 @@ loop:
                 subr->c_push++;
 #endif
                 assert(SUBRP(subr));
-                uintptr_t argc = FIXNUM(CADR(OPERANDS));
+                intptr_t argc = FIXNUM(CADR(OPERANDS));
                 assert(argc > 0);
                 m_value = (*subr->adrs)(this, argc, m_sp - argc);
                 m_sp = m_sp - argc;
@@ -699,7 +699,7 @@ loop:
                 if (m_sp < m_stack_limit) {
                     void* lnk = *(void**)m_env;
                     vm_env_t env = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
-                    m_sp[0] = *((scm_obj_t*)env - (unsigned int)env->count + FIXNUM(OPERANDS));
+                    m_sp[0] = *((scm_obj_t*)env - env->count + FIXNUM(OPERANDS));
                     if (m_sp[0] == scm_undef) goto ERROR_LETREC_VIOLATION;
                     m_sp++;
                     m_pc = CDR(m_pc);
@@ -711,7 +711,7 @@ loop:
             CASE(VMOP_PUSH_ILOC0) {
                 if (m_sp < m_stack_limit) {
                     vm_env_t env = (vm_env_t)((intptr_t)m_env - offsetof(vm_env_rec_t, up));
-                    m_sp[0] = *((scm_obj_t*)env - (unsigned int)env->count + FIXNUM(OPERANDS));
+                    m_sp[0] = *((scm_obj_t*)env - env->count + FIXNUM(OPERANDS));
                     if (m_sp[0] == scm_undef) goto ERROR_LETREC_VIOLATION;
                     m_sp++;
                     m_pc = CDR(m_pc);
@@ -735,7 +735,7 @@ loop:
 #if PROFILE_SUBR
                 subr->c_apply++;
 #endif
-                uintptr_t argc = m_sp - m_fp;
+                intptr_t argc = m_sp - m_fp;
                 m_value = (*subr->adrs)(this, argc, m_fp);
                 assert(m_value != scm_undef || ((m_value == scm_undef) && (CAR(m_pc) == scm_unspecified)));
                 if (m_value == scm_undef) goto BACK_TO_TRACE_N_LOOP;
@@ -753,10 +753,10 @@ loop:
                 if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) < (uintptr_t)m_stack_limit) {
                     operand_trace = CDR(OPERANDS);
                     void* lnk = m_env;
-                    unsigned int level = FIXNUM(CAAR(OPERANDS));
+                    intptr_t level = FIXNUM(CAAR(OPERANDS));
                     while (level) { lnk = *(void**)lnk; level = level - 1; }
                     vm_env_t env2 = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
-                    scm_obj_t obj = *((scm_obj_t*)env2 - (unsigned int)env2->count + FIXNUM(CDAR(OPERANDS)));
+                    scm_obj_t obj = *((scm_obj_t*)env2 - env2->count + FIXNUM(CDAR(OPERANDS)));
                     vm_env_t env = (vm_env_t)m_sp;
                     env->count = m_sp - m_fp;
                     env->up = &env2->up;
@@ -776,7 +776,7 @@ loop:
             CASE(VMOP_EXTEND) {
                 if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) < (uintptr_t)m_stack_limit) {
                     assert(FIXNUMP(OPERANDS));
-                    uintptr_t argc = FIXNUM(OPERANDS);
+                    intptr_t argc = FIXNUM(OPERANDS);
                     assert(argc == m_sp - m_fp);
                     vm_env_t env = (vm_env_t)m_sp;
                     env->count = argc;
@@ -839,9 +839,9 @@ loop:
 
             CASE(VMOP_EXTEND_UNBOUND) {
                 assert(FIXNUMP(OPERANDS));
-                uintptr_t argc = FIXNUM(OPERANDS);
+                intptr_t argc = FIXNUM(OPERANDS);
                 if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) + sizeof(scm_obj_t*) * argc < (uintptr_t)m_stack_limit) {
-                    for (uintptr_t i = 0; i < argc; i++) {
+                    for (intptr_t i = 0; i < argc; i++) {
                         m_sp[0] = scm_undef;
                         m_sp++;
                     }
@@ -892,14 +892,14 @@ loop:
 
             CASE(VMOP_ENCLOSE) {
                 assert(FIXNUMP(OPERANDS));
-                uintptr_t argc = FIXNUM(OPERANDS);
+                intptr_t argc = FIXNUM(OPERANDS);
                 assert(m_env);
                 vm_env_t env = (vm_env_t)((intptr_t)m_env - offsetof(vm_env_rec_t, up));
-                scm_obj_t* dst = (scm_obj_t*)env - (unsigned int)env->count;
+                scm_obj_t* dst = (scm_obj_t*)env - env->count;
                 if (STACKP(env)) {
-                    for (uintptr_t i = 0; i < argc; i++) dst[i] = m_fp[i];
+                    for (intptr_t i = 0; i < argc; i++) dst[i] = m_fp[i];
                 } else {
-                    for (uintptr_t i = 0; i < argc; i++) {
+                    for (intptr_t i = 0; i < argc; i++) {
                         dst[i] = m_fp[i];
                         m_heap->write_barrier(m_fp[i]);
                     }
@@ -958,7 +958,7 @@ loop:
                 subr->c_load++;
 #endif
                 assert(SUBRP(subr));
-                uintptr_t argc = FIXNUM(CADR(OPERANDS));
+                intptr_t argc = FIXNUM(CADR(OPERANDS));
                 m_value = (*subr->adrs)(this, argc, m_sp - argc);
                 m_sp = m_sp - argc;
                 assert(m_sp >= m_fp);
@@ -969,7 +969,7 @@ loop:
             CASE(VMOP_ILOC1) {
                 void* lnk = *(void**)m_env;
                 vm_env_t env = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
-                m_value = *((scm_obj_t*)env - (unsigned int)env->count + FIXNUM(OPERANDS));
+                m_value = *((scm_obj_t*)env - env->count + FIXNUM(OPERANDS));
                 if (m_value == scm_undef) goto ERROR_LETREC_VIOLATION;
                 m_pc = CDR(m_pc);
                 goto loop;
@@ -977,7 +977,7 @@ loop:
 
             CASE(VMOP_ILOC0) {
                 vm_env_t env = (vm_env_t)((intptr_t)m_env - offsetof(vm_env_rec_t, up));
-                m_value = *((scm_obj_t*)env - (unsigned int)env->count + FIXNUM(OPERANDS));
+                m_value = *((scm_obj_t*)env - env->count + FIXNUM(OPERANDS));
                 if (m_value == scm_undef) goto ERROR_LETREC_VIOLATION;
                 m_pc = CDR(m_pc);
                 goto loop;
@@ -1426,8 +1426,8 @@ loop:
                 if (VECTORP(obj)) {
                     scm_vector_t vect = (scm_vector_t)obj;
                     if (FIXNUMP(m_sp[-1])) {
-                        unsigned int n = FIXNUM(m_sp[-1]);
-                        if (n < (unsigned int)vect->count) {
+                        uintptr_t n = FIXNUM(m_sp[-1]);
+                        if (n < (uintptr_t)vect->count) {
                             m_sp[-1] = vect->elts[n];
                             m_pc = CDR(m_pc);
                             goto loop;
@@ -1442,8 +1442,8 @@ loop:
                 if (VECTORP(obj)) {
                     scm_vector_t vect = (scm_vector_t)obj;
                     if (FIXNUMP(m_value)) {
-                        unsigned int n = FIXNUM(m_value);
-                        if (n < (unsigned int)vect->count) {
+                        uintptr_t n = FIXNUM(m_value);
+                        if (n < (uintptr_t)vect->count) {
                             m_value = vect->elts[n];
                             m_pc = CDR(m_pc);
                             goto loop;
@@ -1500,10 +1500,10 @@ APPLY_VALUES:
             scm_obj_t args = m_fp[1];
             if (VALUESP(args)) {
                 scm_values_t values = (scm_values_t)args;
-                uintptr_t argc = HDR_VALUES_COUNT(values->hdr);
+                intptr_t argc = HDR_VALUES_COUNT(values->hdr);
                 m_sp = m_fp;
                 if (m_sp + argc >= m_stack_limit) collect_stack(sizeof(scm_obj_t) * argc);
-                for (uintptr_t i = 0; i < argc; i++) m_sp[i] = values->elts[i];
+                for (intptr_t i = 0; i < argc; i++) m_sp[i] = values->elts[i];
                 m_sp += argc;
                 goto apply;
             } else {
@@ -1518,14 +1518,14 @@ APPLY_VALUES:
 APPLY_CONT: {
             scm_cont_t cont = (scm_cont_t)m_value;
             if (cont->wind_rec == scm_unspecified || cont->wind_rec == m_current_dynamic_wind_record) {
-                uintptr_t argc = m_sp - m_fp;
+                intptr_t argc = m_sp - m_fp;
                 m_cont = cont->cont;
                 if (argc == 1) {
                     m_value = *m_fp;
                     goto pop_cont;
                 }
                 scm_values_t values = make_values(m_heap, argc);
-                for (uintptr_t i = 0; i < argc; i++) values->elts[i] = m_fp[i];
+                for (intptr_t i = 0; i < argc; i++) values->elts[i] = m_fp[i];
                 m_value = values;
                 goto pop_cont;
             } else {
@@ -1541,7 +1541,7 @@ APPLY_CONT: {
         }
 #else
 APPLY_CONT: {
-            uintptr_t argc = m_sp - m_fp;
+            intptr_t argc = m_sp - m_fp;
             scm_cont_t cont = (scm_cont_t)m_value;
             m_cont = cont->cont;
             if (argc == 1) {
@@ -1549,7 +1549,7 @@ APPLY_CONT: {
                 goto pop_cont;
             }
             scm_values_t values = make_values(m_heap, argc);
-            for (uintptr_t i = 0; i < argc; i++) values->elts[i] = m_fp[i];
+            for (intptr_t i = 0; i < argc; i++) values->elts[i] = m_fp[i];
             m_value = values;
             goto pop_cont;
         }
@@ -1587,7 +1587,7 @@ APPLY_VARIADIC: {
                 args = - args - 1;
                 rest = 1;
             }
-            uintptr_t argc = m_sp - m_fp;
+            intptr_t argc = m_sp - m_fp;
             if (rest & (argc >= args)) {
                 scm_obj_t opt = scm_nil;
                 scm_obj_t* first = m_sp - argc + args;
@@ -1689,7 +1689,7 @@ FALLBACK_GE_N_ILOC:
         goto ERROR_GE_N_ILOC;
 
 FALLBACK_EQ_ILOC: {
-            unsigned int bad;
+            int bad;
             if (number_pred(m_value)) {
                 if (number_pred(obj)) {
                     m_value = n_equal_pred(m_heap, m_value, obj) ? scm_true : scm_false;
@@ -1707,7 +1707,7 @@ FALLBACK_EQ_ILOC: {
         }
 
 FALLBACK_LT_ILOC: {
-            unsigned int bad;
+            int bad;
             if (number_pred(m_value)) {
                 if (number_pred(obj)) {
                     m_value = (n_compare(m_heap, m_value, obj) < 0) ? scm_true : scm_false;
@@ -1725,7 +1725,7 @@ FALLBACK_LT_ILOC: {
         }
 
 FALLBACK_LE_ILOC: {
-            unsigned int bad;
+            int bad;
             if (number_pred(m_value)) {
                 if (number_pred(obj)) {
                     m_value = (n_compare(m_heap, m_value, obj) <= 0) ? scm_true : scm_false;
@@ -1743,7 +1743,7 @@ FALLBACK_LE_ILOC: {
         }
 
 FALLBACK_GT_ILOC: {
-            unsigned int bad;
+            int bad;
             if (number_pred(m_value)) {
                 if (number_pred(obj)) {
                     m_value = (n_compare(m_heap, m_value, obj) > 0) ? scm_true : scm_false;
@@ -1761,7 +1761,7 @@ FALLBACK_GT_ILOC: {
         }
 
 FALLBACK_GE_ILOC: {
-            unsigned int bad;
+            int bad;
             if (number_pred(m_value)) {
                 if (number_pred(obj)) {
                     m_value = (n_compare(m_heap, m_value, obj) >= 0) ? scm_true : scm_false;

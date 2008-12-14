@@ -3,7 +3,7 @@
   (export c-argument
           c-function
           c-function/errno
-          c-function/win32-lasterror
+          c-function/lasterror
           load-shared-object
           on-darwin
           on-freebsd
