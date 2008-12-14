@@ -425,6 +425,45 @@ subr_assoc(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// circular-list?
+scm_obj_t
+subr_circular_list_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) return circular_listp(argv[0]) ? scm_true : scm_false;
+    wrong_number_of_arguments_violation(vm, "circular-list?", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// list-copy
+scm_obj_t
+subr_list_copy(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        scm_obj_t lst = argv[0];
+        if (PAIRP(lst)) {
+            if (circular_listp(lst)) {
+                wrong_type_argument_violation(vm, "list-copy", 0, "finite chain of pairs", argv[0], argc, argv);
+                return scm_undef;
+            }
+            scm_obj_t obj = make_pair(vm->m_heap, CAR(lst), scm_nil);
+            scm_obj_t tail = obj;
+            lst = CDR(lst);
+            while (PAIRP(lst)) {
+                scm_obj_t e = make_pair(vm->m_heap, CAR(lst), scm_nil);
+                CDR(tail) = e;
+                tail = e;
+                lst = CDR(lst);            
+            }
+            CDR(tail) = lst;
+            return obj;
+        }
+        return lst;
+    }
+    wrong_number_of_arguments_violation(vm, "list-copy", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+
 void
 init_subr_list(object_heap_t* heap)
 {
@@ -443,4 +482,6 @@ init_subr_list(object_heap_t* heap)
     DEFSUBR("assq", subr_assq);
     DEFSUBR("assv", subr_assv);
     DEFSUBR("assoc", subr_assoc);
+    DEFSUBR("circular-list?", subr_circular_list_pred);
+    DEFSUBR("list-copy", subr_list_copy);
 }

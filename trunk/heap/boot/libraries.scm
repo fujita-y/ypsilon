@@ -404,6 +404,8 @@
                         list-transpose
                         list-transpose+
                         list-transpose*
+                        list-copy
+                        vector-copy
                         make-parameter
                         gensym
                         format

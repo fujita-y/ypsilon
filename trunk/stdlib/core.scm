@@ -526,6 +526,7 @@
     list
     list->string
     list->vector
+    list-copy
     list-head
     list-of-unique-symbols?
     list-ref
@@ -879,6 +880,7 @@
     values
     vector
     vector->list
+    vector-copy
     vector-fill!
     vector-for-each
     vector-length

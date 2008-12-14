@@ -26,15 +26,6 @@
 #define DEFAULT_GENSYM_PREFIX           ".G"
 #define USE_SHARED_QUEUE_QUICK_ENCODE   1
 
-// circular-list?
-scm_obj_t
-subr_circular_list_pred(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 1) return circular_listp(argv[0]) ? scm_true : scm_false;
-    wrong_number_of_arguments_violation(vm, "circular-list?", 1, 1, argc, argv);
-    return scm_undef;
-}
-
 // core-read
 scm_obj_t
 subr_core_read(VM* vm, int argc, scm_obj_t argv[])
@@ -2918,12 +2909,80 @@ subr_cyclic_object_pred(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "cyclic-object?", 1, 1, argc, argv);
     return scm_undef;
 }
+
+// vector-copy
+scm_obj_t
+subr_vector_copy(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc >= 1 && argc <= 3) {
+        if (VECTORP(argv[0])) {
+            scm_vector_t src = (scm_vector_t)argv[0];
+            int len = src->count;
+            int end = len;
+            int start = 0;
+            if (argc >= 2) {
+                if (FIXNUMP(argv[1])) {
+                    start = FIXNUM(argv[1]);
+                    if (start < 0) {
+                        wrong_type_argument_violation(vm, "vector-copy", 1, "exact non-negative integer", argv[1], argc, argv);
+                        return scm_undef;        
+                    }
+                } else {
+                    if (exact_non_negative_integer_pred(argv[1])) {
+                        invalid_argument_violation(vm, "vector-copy", "index out of bounds,", argv[1], 1, argc, argv);
+                        return scm_undef;        
+                    } else {
+                        wrong_type_argument_violation(vm, "vector-copy", 1, "exact non-negative integer", argv[1], argc, argv);
+                        return scm_undef;        
+                    }
+                }
+                if (argc == 3) {
+                    if (FIXNUMP(argv[2])) {
+                        end = FIXNUM(argv[2]);
+                        if (end < 0) {
+                            wrong_type_argument_violation(vm, "vector-copy", 2, "exact non-negative integer", argv[2], argc, argv);
+                            return scm_undef;        
+                        }
+                    } else {
+                        if (exact_non_negative_integer_pred(argv[2])) {
+                            invalid_argument_violation(vm, "vector-copy", "index out of bounds,", argv[2], 2, argc, argv);
+                            return scm_undef;        
+                        } else {
+                            wrong_type_argument_violation(vm, "vector-copy", 2, "exact non-negative integer", argv[2], argc, argv);
+                            return scm_undef;        
+                        }
+                    }
+                }
+            }
+            if (start <= len && end <= len && start <= end) {
+                scm_vector_t dst = make_vector(vm->m_heap, end - start, scm_unspecified);
+                for (int i = start; i < end; i++) {
+                    vm->m_heap->write_barrier(src->elts[i]);
+                    dst->elts[i - start] = src->elts[i];
+                }
+                return dst;
+            }
+            if (start > end) {
+                invalid_argument_violation(vm, "vector-copy", "indices must be start <= end", NULL, -1, argc, argv);
+            } else if (start > len) {
+                invalid_argument_violation(vm, "vector-copy", "index out of bounds,", argv[1], 1, argc, argv);
+            } else if (end > len) {
+                invalid_argument_violation(vm, "vector-copy", "index out of bounds,", argv[2], 2, argc, argv);
+            }
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "vector-copy", 0, "vector", argv[0], argc, argv);
+        return scm_undef;
+    }    
+    wrong_number_of_arguments_violation(vm, "vector-copy", 1, 3, argc, argv);
+    return scm_undef;
+}
+
 void
 init_subr_others(object_heap_t* heap)
 {
 #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
-    DEFSUBR("circular-list?", subr_circular_list_pred);
     DEFSUBR("core-read", subr_core_read);
     DEFSUBR("interaction-environment", subr_interaction_environment);
     DEFSUBR("format", subr_format);
@@ -3031,4 +3090,5 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("decode-microsecond", subr_decode_microsecond);
     DEFSUBR("encode-microsecond", subr_encode_microsecond);
     DEFSUBR("cyclic-object?", subr_cyclic_object_pred);
+    DEFSUBR("vector-copy", subr_vector_copy);
 }
