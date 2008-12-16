@@ -21,15 +21,911 @@
 #include "printer.h"
 #include "violation.h"
 
-#define S_LITTLE            (vm->m_heap->inherent_symbol(S_CODE_LITTLE))
-#define S_BIG               (vm->m_heap->inherent_symbol(S_CODE_BIG))
-#define NATIVE_ENDIANNESS   (vm->m_heap->inherent_symbol(ARCH_LITTLE_ENDIAN ? S_CODE_LITTLE : S_CODE_BIG))
+#define S_LITTLE    (vm->m_heap->inherent_symbol(S_CODE_LITTLE))
+#define S_BIG       (vm->m_heap->inherent_symbol(S_CODE_BIG))
+
+struct mutator_param_t {
+    uint8_t*    bytes;
+    int         little;
+    bool        violation;
+    
+    mutator_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+    {
+        violation = false;
+        little = 0;
+        if (argc == 4) {
+            if (BVECTORP(argv[0])) {
+                if (FIXNUMP(argv[1])) {
+                    scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                    if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                        literal_constant_access_violation(vm, subr, argv[0], argc, argv);
+                        violation = true;
+                        return;
+                    }
+#endif
+                    int offset = FIXNUM(argv[1]);
+                    if (offset >= 0 && (offset + octets) <= bvector->count) {
+                        bytes = bvector->elts + offset;
+                        if (SYMBOLP(argv[3])) {
+                            scm_symbol_t symbol = (scm_symbol_t)argv[3];
+                            if (symbol == S_LITTLE) {
+                                little = 1;
+                                return;
+                            }
+                            if (symbol == S_BIG) return;
+                        }
+                        wrong_type_argument_violation(vm, subr, 3, "endianness", argv[3], argc, argv);
+                        violation = true;
+                        return;
+                    }
+                }
+                if (exact_integer_pred(argv[1])) {
+                    invalid_argument_violation(vm, subr, "index out of bounds,", argv[1], 1, argc, argv);
+                    violation = true;
+                    return;
+                }
+                wrong_type_argument_violation(vm, subr, 1, "exact integer", argv[1], argc, argv);
+                violation = true;
+                return;
+            }
+            wrong_type_argument_violation(vm, subr, 0, "bytevector", argv[0], argc, argv);
+            violation = true;
+            return;
+        }
+        wrong_number_of_arguments_violation(vm, subr, 4, 4, argc, argv);
+        violation = true;
+        return;
+    }
+};
+
+struct native_mutator_param_t {
+    uint8_t*    bytes;
+    bool        violation;
+    
+    native_mutator_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+    {
+        violation = false;
+        if (argc == 3) {
+            if (BVECTORP(argv[0])) {
+                if (FIXNUMP(argv[1])) {
+                    scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                    if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                        literal_constant_access_violation(vm, subr, argv[0], argc, argv);
+                        violation = true;
+                        return;
+                    }
+#endif
+                    int offset = FIXNUM(argv[1]);
+                    if (offset >= 0 && (offset + octets) <= bvector->count) {
+                        if ((offset & (octets - 1)) == 0) {
+                            bytes = bvector->elts + offset;
+                            return;
+                        }
+                        invalid_argument_violation(vm, subr, "index not aligned on native boundary,", argv[1], 1, argc, argv);
+                        violation = true;
+                        return;
+                    }
+                }
+                if (exact_integer_pred(argv[1])) {
+                    invalid_argument_violation(vm, subr, "index out of bounds,", argv[1], 1, argc, argv);
+                    violation = true;
+                    return;
+                }
+                wrong_type_argument_violation(vm, subr, 1, "exact integer", argv[1], argc, argv);
+                violation = true;
+                return;
+            }
+            wrong_type_argument_violation(vm, subr, 0, "bytevector", argv[0], argc, argv);
+            violation = true;
+            return;
+        }
+        wrong_number_of_arguments_violation(vm, subr, 4, 4, argc, argv);
+        violation = true;
+        return;
+    }
+};
+
+struct c_mutator_param_t {
+    uint8_t*    bytes;
+    bool        violation;
+    
+    c_mutator_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+    {
+        violation = false;
+        if (argc == 3) {
+            if (BVECTORP(argv[0])) {
+                if (FIXNUMP(argv[1])) {
+                    scm_bvector_t bvector = (scm_bvector_t)argv[0];
+#if USE_CONST_LITERAL
+                    if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
+                        literal_constant_access_violation(vm, subr, argv[0], argc, argv);
+                        violation = true;
+                        return;
+                    }
+#endif
+                    int offset = FIXNUM(argv[1]);
+                    if (offset >= 0 && (offset + octets) <= bvector->count) {
+                        bytes = bvector->elts + offset;
+                        return;
+                    }
+                }
+                if (exact_integer_pred(argv[1])) {
+                    invalid_argument_violation(vm, subr, "index out of bounds,", argv[1], 1, argc, argv);
+                    violation = true;
+                    return;
+                }
+                wrong_type_argument_violation(vm, subr, 1, "exact integer", argv[1], argc, argv);
+                violation = true;
+                return;
+            }
+            wrong_type_argument_violation(vm, subr, 0, "bytevector", argv[0], argc, argv);
+            violation = true;
+            return;
+        }
+        wrong_number_of_arguments_violation(vm, subr, 4, 4, argc, argv);
+        violation = true;
+        return;
+    }
+};
+
+struct accessor_param_t {
+    uint8_t*    bytes;
+    int         little;
+    bool        violation;
+    
+    accessor_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+    {
+        violation = false;
+        little = 0;
+        if (argc == 3) {
+            if (BVECTORP(argv[0])) {
+                if (FIXNUMP(argv[1])) {
+                    scm_bvector_t bvector = (scm_bvector_t)argv[0];
+                    int offset = FIXNUM(argv[1]);
+                    if (offset >= 0 && (offset + octets) <= bvector->count) {
+                        bytes = bvector->elts + offset;
+                        if (SYMBOLP(argv[2])) {
+                            scm_symbol_t symbol = (scm_symbol_t)argv[2];
+                            if (symbol == S_LITTLE) {
+                                little = 1;
+                                return;
+                            }
+                            if (symbol == S_BIG) return;
+                        }
+                        wrong_type_argument_violation(vm, subr, 2, "endianness", argv[2], argc, argv);
+                        violation = true;
+                        return;
+                    }
+                }
+                if (exact_integer_pred(argv[1])) {
+                    invalid_argument_violation(vm, subr, "index out of bounds,", argv[1], 1, argc, argv);
+                    violation = true;
+                    return;
+                }
+                wrong_type_argument_violation(vm, subr, 1, "exact integer", argv[1], argc, argv);
+                violation = true;
+                return;
+            }
+            wrong_type_argument_violation(vm, subr, 0, "bytevector", argv[0], argc, argv);
+            violation = true;
+            return;
+        }
+        wrong_number_of_arguments_violation(vm, subr, 3, 3, argc, argv);
+        violation = true;
+        return;
+    }
+};
+
+struct native_accessor_param_t {
+    uint8_t*    bytes;
+    bool        violation;
+    
+    native_accessor_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+    {
+        violation = false;
+        if (argc == 2) {
+            if (BVECTORP(argv[0])) {
+                if (FIXNUMP(argv[1])) {
+                    scm_bvector_t bvector = (scm_bvector_t)argv[0];
+                    int offset = FIXNUM(argv[1]);
+                    if (offset >= 0 && (offset + octets) <= bvector->count) {
+                        if ((offset & (octets - 1)) == 0) {
+                            bytes = bvector->elts + offset;
+                            return;
+                        }
+                        invalid_argument_violation(vm, subr, "index not aligned on native boundary,", argv[1], 1, argc, argv);
+                        violation = true;
+                        return;
+                    }
+                }
+                if (exact_integer_pred(argv[1])) {
+                    invalid_argument_violation(vm, subr, "index out of bounds,", argv[1], 1, argc, argv);
+                    violation = true;
+                    return;
+                }
+                wrong_type_argument_violation(vm, subr, 1, "exact integer", argv[1], argc, argv);
+                violation = true;
+                return;
+            }
+            wrong_type_argument_violation(vm, subr, 0, "bytevector", argv[0], argc, argv);
+            violation = true;
+            return;
+        }
+        wrong_number_of_arguments_violation(vm, subr, 2, 2, argc, argv);
+        violation = true;
+        return;
+    }
+};
+
+struct c_accessor_param_t {
+    uint8_t*    bytes;
+    bool        violation;
+    
+    c_accessor_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+    {
+        violation = false;
+        if (argc == 2) {
+            if (BVECTORP(argv[0])) {
+                if (FIXNUMP(argv[1])) {
+                    scm_bvector_t bvector = (scm_bvector_t)argv[0];
+                    int offset = FIXNUM(argv[1]);
+                    if (offset >= 0 && (offset + octets) <= bvector->count) {
+                        bytes = bvector->elts + offset;
+                        return;
+                    }
+                }
+                if (exact_integer_pred(argv[1])) {
+                    invalid_argument_violation(vm, subr, "index out of bounds,", argv[1], 1, argc, argv);
+                    violation = true;
+                    return;
+                }
+                wrong_type_argument_violation(vm, subr, 1, "exact integer", argv[1], argc, argv);
+                violation = true;
+                return;
+            }
+            wrong_type_argument_violation(vm, subr, 0, "bytevector", argv[0], argc, argv);
+            violation = true;
+            return;
+        }
+        wrong_number_of_arguments_violation(vm, subr, 2, 2, argc, argv);
+        violation = true;
+        return;
+    }
+};
+
+static inline uint64_t LE64(uint8_t* bytes)
+{
+    return ((uint64_t)bytes[0])
+         + ((uint64_t)bytes[1] << 8)
+         + ((uint64_t)bytes[2] << 16)
+         + ((uint64_t)bytes[3] << 24)
+         + ((uint64_t)bytes[4] << 32)
+         + ((uint64_t)bytes[5] << 40)
+         + ((uint64_t)bytes[6] << 48)
+         + ((uint64_t)bytes[7] << 56);
+}
+
+static inline uint64_t BE64(uint8_t* bytes)
+{
+    return ((uint64_t)bytes[0] << 56)
+         + ((uint64_t)bytes[1] << 48)
+         + ((uint64_t)bytes[2] << 40)
+         + ((uint64_t)bytes[3] << 32)
+         + ((uint64_t)bytes[4] << 24)
+         + ((uint64_t)bytes[5] << 16)
+         + ((uint64_t)bytes[6] << 8)
+         + ((uint64_t)bytes[7]);
+}
+
+static inline uint32_t LE32(uint8_t* bytes)
+{
+    return ((uint32_t)bytes[0])
+         + ((uint32_t)bytes[1] << 8)
+         + ((uint32_t)bytes[2] << 16)
+         + ((uint32_t)bytes[3] << 24);
+}
+
+static inline uint32_t BE32(uint8_t* bytes)
+{
+    return ((uint32_t)bytes[0] << 24)
+         + ((uint32_t)bytes[1] << 16)
+         + ((uint32_t)bytes[2] << 8)
+         + ((uint32_t)bytes[3]);
+}
+
+static inline uint16_t LE16(uint8_t* bytes)
+{
+    return ((uint16_t)bytes[0])
+         + ((uint16_t)bytes[1] << 8);
+}
+
+static inline uint16_t BE16(uint8_t* bytes)
+{
+    return ((uint16_t)bytes[0] << 8)
+         + ((uint16_t)bytes[1]);
+}
+
+static inline void LE64(uint64_t u64, uint8_t* bytes)
+{
+    bytes[0] = u64;
+    bytes[1] = u64 >> 8;
+    bytes[2] = u64 >> 16;
+    bytes[3] = u64 >> 24;
+    bytes[4] = u64 >> 32;
+    bytes[5] = u64 >> 40;
+    bytes[6] = u64 >> 48;
+    bytes[7] = u64 >> 56;
+}
+
+static inline void BE64(uint64_t u64, uint8_t* bytes)
+{
+    bytes[7] = u64;
+    bytes[6] = u64 >> 8;
+    bytes[5] = u64 >> 16;
+    bytes[4] = u64 >> 24;
+    bytes[3] = u64 >> 32;
+    bytes[2] = u64 >> 40;
+    bytes[1] = u64 >> 48;
+    bytes[0] = u64 >> 56;
+}
+
+static inline void LE32(uint32_t u32, uint8_t* bytes)
+{
+    bytes[0] = u32;
+    bytes[1] = u32 >> 8;
+    bytes[2] = u32 >> 16;
+    bytes[3] = u32 >> 24;
+}
+
+static inline void BE32(uint32_t u32, uint8_t* bytes)
+{
+    bytes[3] = u32;
+    bytes[2] = u32 >> 8;
+    bytes[1] = u32 >> 16;
+    bytes[0] = u32 >> 24;
+}
+
+static inline void LE16(uint16_t u16, uint8_t* bytes)
+{
+    bytes[0] = u16;
+    bytes[1] = u16 >> 8;
+}
+
+static inline void BE16(uint16_t u16, uint8_t* bytes)
+{
+    bytes[1] = u16;
+    bytes[0] = u16 >> 8;
+}
+
+// bytevector-s8-ref
+scm_obj_t
+subr_bytevector_s8_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(1, "bytevector-s8-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return MAKEFIXNUM((int8_t)param.bytes[0]);
+}
+
+// bytevector-u8-set!
+scm_obj_t
+subr_bytevector_u8_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_mutator_param_t param(1, "bytevector-u8-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (FIXNUMP(argv[2])) {
+        intptr_t u8 = FIXNUM(argv[2]);
+        if (u8 >= 0 && u8 <= UINT8_MAX) {
+            param.bytes[0] = u8;
+            return scm_unspecified;
+        }
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-u8-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-u8-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-s8-set!
+scm_obj_t
+subr_bytevector_s8_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_mutator_param_t param(1, "bytevector-s8-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (FIXNUMP(argv[2])) {
+        intptr_t u8 = FIXNUM(argv[2]);
+        if (u8 >= INT8_MIN && u8 <= INT8_MAX) {
+            param.bytes[0] = u8;
+            return scm_unspecified;
+        }
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-s8-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-s8-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-u16-ref
+scm_obj_t
+subr_bytevector_u16_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    accessor_param_t param(2, "bytevector-u16-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (param.little) return MAKEFIXNUM(LE16(param.bytes));
+    return MAKEFIXNUM(BE16(param.bytes));
+}
+
+// bytevector-s16-ref
+scm_obj_t
+subr_bytevector_s16_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    accessor_param_t param(2, "bytevector-s16-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (param.little) return MAKEFIXNUM((int16_t)LE16(param.bytes));
+    return MAKEFIXNUM((int16_t)BE16(param.bytes));
+}
+
+// bytevector-u16-native-ref
+scm_obj_t
+subr_bytevector_u16_native_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(2, "bytevector-u16-native-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return MAKEFIXNUM(*(uint16_t*)param.bytes);
+}
+
+// bytevector-s16-native-ref
+scm_obj_t
+subr_bytevector_s16_native_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(2, "bytevector-s16-native-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return MAKEFIXNUM(*(int16_t*)param.bytes);
+}
+
+// bytevector-u16-set!
+scm_obj_t
+subr_bytevector_u16_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    mutator_param_t param(2, "bytevector-u16-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (FIXNUMP(argv[2])) {
+        intptr_t u16 = FIXNUM(argv[2]);
+        if (u16 >= 0 && u16 <= UINT16_MAX) {
+            if (param.little) LE16((uint16_t)u16, param.bytes);
+            else BE16((uint16_t)u16, param.bytes);
+            return scm_unspecified;
+        }
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-u16-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-u16-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-s16-set!
+scm_obj_t
+subr_bytevector_s16_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    mutator_param_t param(2, "bytevector-s16-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (FIXNUMP(argv[2])) {
+        intptr_t s16 = FIXNUM(argv[2]);
+        if (s16 >= INT16_MIN && s16 <= INT16_MAX) {
+            if (param.little) LE16((uint16_t)s16, param.bytes);
+            else BE16((uint16_t)s16, param.bytes);
+            return scm_unspecified;
+        }
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-s16-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-s16-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-u16-native-set!
+scm_obj_t
+subr_bytevector_u16_native_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_mutator_param_t param(2, "bytevector-u16-native-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (FIXNUMP(argv[2])) {
+        intptr_t u16 = FIXNUM(argv[2]);
+        if (u16 >= 0 && u16 <= UINT16_MAX) {
+            *(uint16_t*)param.bytes = u16;
+            return scm_unspecified;
+        }
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-u16-native-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-u16-native-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-s16-native-set!
+scm_obj_t
+subr_bytevector_s16_native_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_mutator_param_t param(2, "bytevector-s16-native-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (FIXNUMP(argv[2])) {
+        intptr_t s16 = FIXNUM(argv[2]);
+        if (s16 >= INT16_MIN && s16 <= INT16_MAX) {
+            *(int16_t*)param.bytes = s16;
+            return scm_unspecified;
+        }
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-s16-native-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-s16-native-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-u32-ref
+scm_obj_t
+subr_bytevector_u32_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    accessor_param_t param(4, "bytevector-u32-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return uint32_to_integer(vm->m_heap, (param.little ? LE32(param.bytes) : BE32(param.bytes)));
+}
+
+// bytevector-s32-ref
+scm_obj_t
+subr_bytevector_s32_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    accessor_param_t param(4, "bytevector-s32-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (param.little) return int32_to_integer(vm->m_heap, (int32_t)LE32(param.bytes));
+    return int32_to_integer(vm->m_heap, (int32_t)(param.little ? LE32(param.bytes) : BE32(param.bytes)));
+}
+
+// bytevector-u32-native-ref
+scm_obj_t
+subr_bytevector_u32_native_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(4, "bytevector-u32-native-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return uint32_to_integer(vm->m_heap, *(uint32_t*)param.bytes);
+}
+
+// bytevector-s32-native-ref
+scm_obj_t
+subr_bytevector_s32_native_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(4, "bytevector-s32-native-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return int32_to_integer(vm->m_heap, *(int32_t*)param.bytes);
+}
+
+// bytevector-u32-set!
+scm_obj_t
+subr_bytevector_u32_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    mutator_param_t param(4, "bytevector-u32-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    uint32_t u32;
+    if (exact_integer_to_uint32(argv[2], &u32)) {
+        if (param.little) LE32(u32, param.bytes);
+        else BE32(u32, param.bytes);
+        return scm_unspecified;
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-u32-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-u32-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-s32-set!
+scm_obj_t
+subr_bytevector_s32_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    mutator_param_t param(4, "bytevector-s32-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    int32_t s32;
+    if (exact_integer_to_int32(argv[2], &s32)) {
+        if (param.little) LE32((uint32_t)s32, param.bytes);
+        else BE32((uint32_t)s32, param.bytes);
+        return scm_unspecified;
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-s32-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-s32-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-u32-native-set!
+scm_obj_t
+subr_bytevector_u32_native_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_mutator_param_t param(4, "bytevector-u32-native-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    uint32_t u32;
+    if (exact_integer_to_uint32(argv[2], &u32)) {
+        *(uint32_t*)param.bytes = u32;
+        return scm_unspecified;
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-u32-native-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-u32-native-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-s32-native-set!
+scm_obj_t
+subr_bytevector_s32_native_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_mutator_param_t param(4, "bytevector-s32-native-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    int32_t s32;
+    if (exact_integer_to_int32(argv[2], &s32)) {
+        *(int32_t*)param.bytes = s32;
+        return scm_unspecified;
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-s32-native-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-s32-native-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-u64-ref
+scm_obj_t
+subr_bytevector_u64_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    accessor_param_t param(8, "bytevector-u64-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return uint64_to_integer(vm->m_heap, (param.little ? LE64(param.bytes) : BE64(param.bytes)));
+}
+
+// bytevector-s64-ref
+scm_obj_t
+subr_bytevector_s64_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    accessor_param_t param(8, "bytevector-s64-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return int64_to_integer(vm->m_heap, (int64_t)(param.little ? LE64(param.bytes) : BE64(param.bytes)));
+}
+
+// bytevector-u64-native-ref
+scm_obj_t
+subr_bytevector_u64_native_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(8, "bytevector-u64-native-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return uint64_to_integer(vm->m_heap, *(uint64_t*)param.bytes);
+}
+
+// bytevector-s64-native-ref
+scm_obj_t
+subr_bytevector_s64_native_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(8, "bytevector-s64-native-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return int64_to_integer(vm->m_heap, *(int64_t*)param.bytes);
+}
+
+// bytevector-u64-set!
+scm_obj_t
+subr_bytevector_u64_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    mutator_param_t param(8, "bytevector-u64-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    uint64_t u64;
+    if (exact_integer_to_uint64(argv[2], &u64)) {
+        if (param.little) LE64(u64, param.bytes);
+        else BE64(u64, param.bytes);
+        return scm_unspecified;
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-u64-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-u64-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-s64-set!
+scm_obj_t
+subr_bytevector_s64_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    mutator_param_t param(8, "bytevector-s64-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    int64_t s64;
+    if (exact_integer_to_int64(argv[2], &s64)) {
+        if (param.little) LE64((uint64_t)s64, param.bytes);
+        else BE32((uint64_t)s64, param.bytes);
+        return scm_unspecified;
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-s64-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-s64-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-u64-native-set!
+scm_obj_t
+subr_bytevector_u64_native_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_mutator_param_t param(8, "bytevector-u64-native-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    uint64_t u64;
+    if (exact_integer_to_uint64(argv[2], &u64)) {
+        *(uint64_t*)param.bytes = u64;
+        return scm_unspecified;
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-u64-native-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-u64-native-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-s64-native-set!
+scm_obj_t
+subr_bytevector_s64_native_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_mutator_param_t param(8, "bytevector-s64-native-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    int64_t s64;
+    if (exact_integer_to_int64(argv[2], &s64)) {
+        *(int64_t*)param.bytes = s64;
+        return scm_unspecified;
+    }
+    if (exact_integer_pred(argv[2])) {
+        invalid_argument_violation(vm, "bytevector-s64-native-set!", "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, "bytevector-s64-native-set!", 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-ieee-single-ref
+scm_obj_t
+subr_bytevector_ieee_single_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    union { float ieee_single; uint8_t bytes[4]; } datum;
+    accessor_param_t param(4, "bytevector-ieee-single-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (param.little == ARCH_LITTLE_ENDIAN) {
+        for (int i = 0; i < 4; i++) datum.bytes[i] = param.bytes[i];
+        return make_flonum(vm->m_heap, datum.ieee_single);        
+    } else {
+        for (int i = 0; i < 4; i++) datum.bytes[i] = param.bytes[4 - 1 - i];
+        return make_flonum(vm->m_heap, datum.ieee_single);        
+    }
+}
+
+// bytevector-ieee-single-native-ref
+scm_obj_t
+subr_bytevector_ieee_single_native_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(4, "bytevector-ieee-single-native-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return double_to_inexact(vm->m_heap, *(float*)param.bytes);
+}
+
+// bytevector-ieee-single-set!
+scm_obj_t
+subr_bytevector_ieee_single_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    union { float ieee_single; uint8_t bytes[4]; } datum;
+    mutator_param_t param(4, "bytevector-ieee-single-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (real_pred(argv[2])) {
+        datum.ieee_single = real_to_double(argv[2]);
+        if (param.little == ARCH_LITTLE_ENDIAN) {
+            for (int i = 0; i < 4; i++) param.bytes[i] = datum.bytes[i];
+            return scm_unspecified;
+        }
+        for (int i = 0; i < 4; i++) param.bytes[i] = datum.bytes[4 - 1 - i];
+        return scm_unspecified;
+    }
+    wrong_type_argument_violation(vm, "bytevector-ieee-single-set!", 2, "real", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-ieee-single-native-set!
+scm_obj_t
+subr_bytevector_ieee_single_native_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_mutator_param_t param(4, "bytevector-ieee-single-native-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (real_pred(argv[2])) {
+        *(float*)param.bytes = real_to_double(argv[2]);
+        return scm_unspecified;
+    }
+    wrong_type_argument_violation(vm, "bytevector-ieee-single-native-set!", 2, "real", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-ieee-double-ref
+scm_obj_t
+subr_bytevector_ieee_double_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    union { double ieee_double; uint8_t bytes[8]; } datum;
+    accessor_param_t param(8, "bytevector-ieee-double-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (param.little == ARCH_LITTLE_ENDIAN) {
+        for (int i = 0; i < 8; i++) datum.bytes[i] = param.bytes[i];
+        return make_flonum(vm->m_heap, datum.ieee_double);        
+    } else {
+        for (int i = 0; i < 8; i++) datum.bytes[i] = param.bytes[8 - 1 - i];
+        return make_flonum(vm->m_heap, datum.ieee_double);        
+    }
+}
+
+// bytevector-ieee-double-native-ref
+scm_obj_t
+subr_bytevector_ieee_double_native_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(8, "bytevector-ieee-double-native-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return double_to_inexact(vm->m_heap, *(double*)param.bytes);
+}
+
+// bytevector-ieee-double-set!
+scm_obj_t
+subr_bytevector_ieee_double_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    union { double ieee_double; uint8_t bytes[8]; } datum;
+    mutator_param_t param(8, "bytevector-ieee-double-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (real_pred(argv[2])) {
+        datum.ieee_double = real_to_double(argv[2]);
+        if (param.little == ARCH_LITTLE_ENDIAN) {
+            for (int i = 0; i < 8; i++) param.bytes[i] = datum.bytes[i];
+            return scm_unspecified;
+        }
+        for (int i = 0; i < 8; i++) param.bytes[i] = datum.bytes[8 - 1 - i];
+        return scm_unspecified;
+    }
+    wrong_type_argument_violation(vm, "bytevector-ieee-double-set!", 2, "real", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-ieee-double-native-set!
+scm_obj_t
+subr_bytevector_ieee_double_native_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_mutator_param_t param(8, "bytevector-ieee-double-native-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (real_pred(argv[2])) {
+        *(double*)param.bytes = real_to_double(argv[2]);
+        return scm_unspecified;
+    }
+    wrong_type_argument_violation(vm, "bytevector-ieee-double-native-set!", 2, "real", argv[2], argc, argv);
+    return scm_undef;
+}
 
 // native-endianness
 scm_obj_t
 subr_native_endianness(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 0) return NATIVE_ENDIANNESS;
+    if (argc == 0) return ARCH_LITTLE_ENDIAN ? S_LITTLE : S_BIG;
     wrong_number_of_arguments_violation(vm, "native-endianness", 0, 0, argc, argv);
     return scm_undef;
 }
@@ -244,150 +1140,6 @@ subr_bytevector_copy(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// bytevector-u8-ref
-scm_obj_t
-subr_bytevector_u8_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 2) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && index < bvector->count) {
-                    return MAKEFIXNUM(bvector->elts[index]);
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u8-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u8-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u8-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u8-ref", 2, 2, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s8-ref
-scm_obj_t
-subr_bytevector_s8_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 2) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && index < bvector->count) {
-                    return MAKEFIXNUM((int8_t)bvector->elts[index]);
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s8-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s8-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s8-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s8-ref", 2, 2, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u8-set!
-scm_obj_t
-subr_bytevector_u8_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-u8-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && index < bvector->count) {
-                    if (FIXNUMP(argv[2])) {
-                        int val = FIXNUM(argv[2]);
-                        if (val >= 0 && val <= UINT8_MAX) {
-                            bvector->elts[index] = val & 0xff;
-                            return scm_unspecified;
-                        }
-                    }
-                    if (exact_integer_pred(argv[2])) {
-                        invalid_argument_violation(vm, "bytevector-u8-set!", "value out of range,", argv[2], 2, argc, argv);
-                        return scm_undef;
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-u8-set!", 2, "exact integer", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u8-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u8-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u8-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u8-set!", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s8-set!
-scm_obj_t
-subr_bytevector_s8_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-u8-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && index < bvector->count) {
-                    if (FIXNUMP(argv[2])) {
-                        int val = FIXNUM(argv[2]);
-                        if (val >= INT8_MIN && val <= INT8_MAX) {
-                            bvector->elts[index] = val & 0xff;
-                            return scm_unspecified;
-                        }
-                    }
-                    if (exact_integer_pred(argv[2])) {
-                        invalid_argument_violation(vm, "bytevector-s8-set!", "value out of range,", argv[2], 2, argc, argv);
-                        return scm_undef;
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-s8-set!", 2, "exact integer", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s8-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s8-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s8-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s8-set!", 3, 3, argc, argv);
-    return scm_undef;
-}
-
 // bytevector->u8-list
 scm_obj_t
 subr_bytevector_u8_list(VM* vm, int argc, scm_obj_t argv[])
@@ -450,1511 +1202,13 @@ subr_u8_list_bytevector(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// bytevector-u16-ref
+// bytevector-u8-ref
 scm_obj_t
-subr_bytevector_u16_ref(VM* vm, int argc, scm_obj_t argv[])
+subr_bytevector_u8_ref(VM* vm, int argc, scm_obj_t argv[])
 {
-    const int size = 2;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (SYMBOLP(argv[2])) {
-                        scm_symbol_t symbol = (scm_symbol_t)argv[2];
-                        uint16_t u16;
-                        if (symbol == S_LITTLE) {
-                            u16 = bvector->elts[index] + bvector->elts[index + 1] * 256;
-                            return MAKEFIXNUM(u16);
-                        }
-                        if (symbol == S_BIG) {
-                            u16 = bvector->elts[index] * 256 + bvector->elts[index + 1];
-                            return MAKEFIXNUM(u16);
-                        }
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-u16-ref", 2, "endianness", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u16-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u16-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u16-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u16-ref", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s16-ref
-scm_obj_t
-subr_bytevector_s16_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 2;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (SYMBOLP(argv[2])) {
-                        scm_symbol_t symbol = (scm_symbol_t)argv[2];
-                        int16_t s16;
-                        if (symbol == S_LITTLE) {
-                            s16 = bvector->elts[index] + bvector->elts[index + 1] * 256;
-                            return MAKEFIXNUM(s16);
-                        }
-                        if (symbol == S_BIG) {
-                            s16 = bvector->elts[index] * 256 + bvector->elts[index + 1];
-                            return MAKEFIXNUM(s16);
-                        }
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-s16-ref", 2, "endianness", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s16-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s16-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s16-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s16-ref", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u16-native-ref
-scm_obj_t
-subr_bytevector_u16_native_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 2;
-    if (argc == 2) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        uint16_t* ref = (uint16_t*)&bvector->elts[index];
-                        return MAKEFIXNUM(*ref);
-                    }
-                    invalid_argument_violation(vm, "bytevector-u16-native-ref", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u16-native-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u16-native-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u16-native-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u16-native-ref", 2, 2, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s16-native-ref
-scm_obj_t
-subr_bytevector_s16_native_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 2;
-    if (argc == 2) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        int16_t* ref = (int16_t*)&bvector->elts[index];
-                        return MAKEFIXNUM(*ref);
-                    }
-                    invalid_argument_violation(vm, "bytevector-u16-native-ref", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u16-native-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u16-native-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u16-native-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u16-native-ref", 2, 2, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u16-set!
-scm_obj_t
-subr_bytevector_u16_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 2;
-    if (argc == 4) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-u16-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (FIXNUMP(argv[2])) {
-                        int val = FIXNUM(argv[2]);
-                        if (val >= 0 && val <= UINT16_MAX) {
-                            uint16_t u16 = val;
-                            if (SYMBOLP(argv[3])) {
-                                scm_symbol_t symbol = (scm_symbol_t)argv[3];
-                                if (symbol == S_LITTLE) {
-                                    bvector->elts[index + 0] = u16 & 0xff;
-                                    bvector->elts[index + 1] = u16 >> 8;
-                                    return scm_unspecified;
-                                }
-                                if (symbol == S_BIG) {
-                                    bvector->elts[index + 0] = u16 >> 8;
-                                    bvector->elts[index + 1] = u16 & 0xff;
-                                    return scm_unspecified;
-                                }
-                            }
-                            wrong_type_argument_violation(vm, "bytevector-u16-set!", 3, "endianness", argv[3], argc, argv);
-                            return scm_undef;
-                        }
-                    }
-                    if (exact_integer_pred(argv[2])) {
-                        invalid_argument_violation(vm, "bytevector-u16-set!", "value out of range,", argv[2], 2, argc, argv);
-                        return scm_undef;
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-u16-set!", 2, "exact integer", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u16-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u16-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u16-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u16-set!", 4, 4, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s16-set!
-scm_obj_t
-subr_bytevector_s16_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 2;
-    if (argc == 4) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-s16-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (FIXNUMP(argv[2])) {
-                        int val = FIXNUM(argv[2]);
-                        if (val >= INT16_MIN && val <= INT16_MAX) {
-                            int16_t s16 = val;
-                            if (SYMBOLP(argv[3])) {
-                                scm_symbol_t symbol = (scm_symbol_t)argv[3];
-                                if (symbol == S_LITTLE) {
-                                    bvector->elts[index + 0] = s16 & 0xff;
-                                    bvector->elts[index + 1] = (uint16_t)s16 >> 8;
-                                    return scm_unspecified;
-                                }
-                                if (symbol == S_BIG) {
-                                    bvector->elts[index + 0] = (uint16_t)s16 >> 8;
-                                    bvector->elts[index + 1] = s16 & 0xff;
-                                    return scm_unspecified;
-                                }
-                            }
-                            wrong_type_argument_violation(vm, "bytevector-s16-set!", 3, "endianness", argv[3], argc, argv);
-                            return scm_undef;
-                        }
-                    }
-                    if (exact_integer_pred(argv[2])) {
-                        invalid_argument_violation(vm, "bytevector-s16-set!", "value out of range,", argv[2], 2, argc, argv);
-                        return scm_undef;
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-s16-set!", 2, "exact integer", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s16-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s16-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s16-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s16-set!", 4, 4, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u16-native-set!
-scm_obj_t
-subr_bytevector_u16_native_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 2;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-u16-native-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        if (FIXNUMP(argv[2])) {
-                            int val = FIXNUM(argv[2]);
-                            if (val >= 0 && val <= UINT16_MAX) {
-                                uint16_t* ref = (uint16_t*)&bvector->elts[index];
-                                *ref = val;
-                                return scm_unspecified;
-                            }
-                        }
-                        if (exact_integer_pred(argv[2])) {
-                            invalid_argument_violation(vm, "bytevector-u16-native-set!", "value out of range,", argv[2], 2, argc, argv);
-                            return scm_undef;
-                        }
-                        wrong_type_argument_violation(vm, "bytevector-u16-native-set!", 2, "exact integer", argv[2], argc, argv);
-                        return scm_undef;
-                    }
-                    invalid_argument_violation(vm, "bytevector-u16-native-set!", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u16-native-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u16-native-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u16-native-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u16-native-set!", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s16-native-set!
-scm_obj_t
-subr_bytevector_s16_native_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 2;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-s16-native-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        if (FIXNUMP(argv[2])) {
-                            int val = FIXNUM(argv[2]);
-                            if (val >= INT16_MIN && val <= INT16_MAX) {
-                                int16_t* ref = (int16_t*)&bvector->elts[index];
-                                *ref = val;
-                                return scm_unspecified;
-                            }
-                        }
-                        if (exact_integer_pred(argv[2])) {
-                            invalid_argument_violation(vm, "bytevector-s16-native-set!", "value out of range,", argv[2], 2, argc, argv);
-                            return scm_undef;
-                        }
-                        wrong_type_argument_violation(vm, "bytevector-s16-native-set!", 2, "exact integer", argv[2], argc, argv);
-                        return scm_undef;
-                    }
-                    invalid_argument_violation(vm, "bytevector-s16-native-set!", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s16-native-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s16-native-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s16-native-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s16-native-set!", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u32-ref
-scm_obj_t
-subr_bytevector_u32_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (SYMBOLP(argv[2])) {
-                        scm_symbol_t symbol = (scm_symbol_t)argv[2];
-                        uint32_t u32;
-                        if (symbol == S_LITTLE) {
-                            u32 = (bvector->elts[index + 0])
-                                + (bvector->elts[index + 1] << 8)
-                                + (bvector->elts[index + 2] << 16)
-                                + (bvector->elts[index + 3] << 24);
-                            return uint32_to_integer(vm->m_heap, u32);
-                        }
-                        if (symbol == S_BIG) {
-                            u32 = (bvector->elts[index + 0] << 24)
-                                + (bvector->elts[index + 1] << 16)
-                                + (bvector->elts[index + 2] << 8)
-                                + (bvector->elts[index + 3]);
-                            return uint32_to_integer(vm->m_heap, u32);
-                        }
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-u32-ref", 2, "endianness", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u32-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u32-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u32-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u32-ref", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s32-ref
-scm_obj_t
-subr_bytevector_s32_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (SYMBOLP(argv[2])) {
-                        scm_symbol_t symbol = (scm_symbol_t)argv[2];
-                        int32_t s32;
-                        if (symbol == S_LITTLE) {
-                            s32 = (bvector->elts[index + 0])
-                                + (bvector->elts[index + 1] << 8)
-                                + (bvector->elts[index + 2] << 16)
-                                + (bvector->elts[index + 3] << 24);
-                            return int32_to_integer(vm->m_heap, s32);
-                        }
-                        if (symbol == S_BIG) {
-                            s32 = (bvector->elts[index + 0] << 24)
-                                + (bvector->elts[index + 1] << 16)
-                                + (bvector->elts[index + 2] << 8)
-                                + (bvector->elts[index + 3]);
-                            return int32_to_integer(vm->m_heap, s32);
-                        }
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-s32-ref", 2, "endianness", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s32-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s32-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s32-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s32-ref", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u32-native-ref
-scm_obj_t
-subr_bytevector_u32_native_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 2) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        uint32_t* ref = (uint32_t*)&bvector->elts[index];
-                        return uint32_to_integer(vm->m_heap, *ref);
-                    }
-                    invalid_argument_violation(vm, "bytevector-u32-native-ref", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u32-native-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u32-native-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u32-native-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u32-native-ref", 2, 2, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s32-native-ref
-scm_obj_t
-subr_bytevector_s32_native_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 2) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        int32_t* ref = (int32_t*)&bvector->elts[index];
-                        return int32_to_integer(vm->m_heap, *ref);
-                    }
-                    invalid_argument_violation(vm, "bytevector-u32-native-ref", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u32-native-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u32-native-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u32-native-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u32-native-ref", 2, 2, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u32-set!
-scm_obj_t
-subr_bytevector_u32_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 4) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-u32-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (exact_integer_pred(argv[2])) {
-                        uint32_t u32;
-                        if (exact_integer_to_uint32(argv[2], &u32)) {
-                            if (SYMBOLP(argv[3])) {
-                                scm_symbol_t symbol = (scm_symbol_t)argv[3];
-                                if (symbol == S_LITTLE) {
-                                    bvector->elts[index + 0] = u32 & 0xff;
-                                    bvector->elts[index + 1] = u32 >> 8;
-                                    bvector->elts[index + 2] = u32 >> 16;
-                                    bvector->elts[index + 3] = u32 >> 24;
-                                    return scm_unspecified;
-                                }
-                                if (symbol == S_BIG) {
-                                    bvector->elts[index + 0] = u32 >> 24;
-                                    bvector->elts[index + 1] = u32 >> 16;
-                                    bvector->elts[index + 2] = u32 >> 8;
-                                    bvector->elts[index + 3] = u32 & 0xff;
-                                    return scm_unspecified;
-                                }
-                            }
-                            wrong_type_argument_violation(vm, "bytevector-u32-set!", 3, "endianness", argv[3], argc, argv);
-                            return scm_undef;
-                        }
-                    }
-                    if (exact_integer_pred(argv[2])) {
-                        invalid_argument_violation(vm, "bytevector-u32-set!", "value out of range,", argv[2], 2, argc, argv);
-                        return scm_undef;
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-u32-set!", 2, "exact integer", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u32-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u32-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u32-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u32-set!", 4, 4, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s32-set!
-scm_obj_t
-subr_bytevector_s32_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 4) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-s32-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (exact_integer_pred(argv[2])) {
-                        int32_t s32;
-                        if (exact_integer_to_int32(argv[2], &s32)) {
-                            if (SYMBOLP(argv[3])) {
-                                scm_symbol_t symbol = (scm_symbol_t)argv[3];
-                                if (symbol == S_LITTLE) {
-                                    bvector->elts[index + 0] = s32 & 0xff;
-                                    bvector->elts[index + 1] = (uint32_t)s32 >> 8;
-                                    bvector->elts[index + 2] = (uint32_t)s32 >> 16;
-                                    bvector->elts[index + 3] = (uint32_t)s32 >> 24;
-                                    return scm_unspecified;
-                                }
-                                if (symbol == S_BIG) {
-                                    bvector->elts[index + 0] = (uint32_t)s32 >> 24;
-                                    bvector->elts[index + 1] = (uint32_t)s32 >> 16;
-                                    bvector->elts[index + 2] = (uint32_t)s32 >> 8;
-                                    bvector->elts[index + 3] = s32 & 0xff;
-                                    return scm_unspecified;
-                                }
-                            }
-                            wrong_type_argument_violation(vm, "bytevector-s32-set!", 3, "endianness", argv[3], argc, argv);
-                            return scm_undef;
-                        }
-                    }
-                    if (exact_integer_pred(argv[2])) {
-                        invalid_argument_violation(vm, "bytevector-s32-set!", "value out of range,", argv[2], 2, argc, argv);
-                        return scm_undef;
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-s32-set!", 2, "exact integer", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s32-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s32-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s32-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s32-set!", 4, 4, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u32-native-set!
-scm_obj_t
-subr_bytevector_u32_native_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-u32-native-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        if (exact_integer_pred(argv[2])) {
-                            uint32_t u32;
-                            if (exact_integer_to_uint32(argv[2], &u32)) {
-                                uint32_t* ref = (uint32_t*)&bvector->elts[index];
-                                *ref = u32;
-                                return scm_unspecified;
-                            }
-                        }
-                        if (exact_integer_pred(argv[2])) {
-                            invalid_argument_violation(vm, "bytevector-u32-native-set!", "value out of range,", argv[2], 2, argc, argv);
-                            return scm_undef;
-                        }
-                        wrong_type_argument_violation(vm, "bytevector-u32-native-set!", 2, "exact integer", argv[2], argc, argv);
-                        return scm_undef;
-                    }
-                    invalid_argument_violation(vm, "bytevector-u32-native-set!", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u32-native-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u32-native-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u32-native-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u32-native-set!", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s32-native-set!
-scm_obj_t
-subr_bytevector_s32_native_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-s32-native-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        if (exact_integer_pred(argv[2])) {
-                            int32_t s32;
-                            if (exact_integer_to_int32(argv[2], &s32)) {
-                                int32_t* ref = (int32_t*)&bvector->elts[index];
-                                *ref = s32;
-                                return scm_unspecified;
-                            }
-                        }
-                        if (exact_integer_pred(argv[2])) {
-                            invalid_argument_violation(vm, "bytevector-s32-native-set!", "value out of range,", argv[2], 2, argc, argv);
-                            return scm_undef;
-                        }
-                        wrong_type_argument_violation(vm, "bytevector-s32-native-set!", 2, "exact integer", argv[2], argc, argv);
-                        return scm_undef;
-                    }
-                    invalid_argument_violation(vm, "bytevector-s32-native-set!", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s32-native-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s32-native-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s32-native-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s32-native-set!", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u64-ref
-scm_obj_t
-subr_bytevector_u64_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (SYMBOLP(argv[2])) {
-                        scm_symbol_t symbol = (scm_symbol_t)argv[2];
-                        uint64_t u64;
-                        if (symbol == S_LITTLE) {
-                            u64 = ((uint64_t)bvector->elts[index + 0])
-                                + ((uint64_t)bvector->elts[index + 1] << 8)
-                                + ((uint64_t)bvector->elts[index + 2] << 16)
-                                + ((uint64_t)bvector->elts[index + 3] << 24)
-                                + ((uint64_t)bvector->elts[index + 4] << 32)
-                                + ((uint64_t)bvector->elts[index + 5] << 40)
-                                + ((uint64_t)bvector->elts[index + 6] << 48)
-                                + ((uint64_t)bvector->elts[index + 7] << 56);
-                            return uint64_to_integer(vm->m_heap, u64);
-                        }
-                        if (symbol == S_BIG) {
-                            u64 = ((uint64_t)bvector->elts[index + 0] << 56)
-                                + ((uint64_t)bvector->elts[index + 1] << 48)
-                                + ((uint64_t)bvector->elts[index + 2] << 40)
-                                + ((uint64_t)bvector->elts[index + 3] << 32)
-                                + ((uint64_t)bvector->elts[index + 4] << 24)
-                                + ((uint64_t)bvector->elts[index + 5] << 16)
-                                + ((uint64_t)bvector->elts[index + 6] << 8)
-                                + ((uint64_t)bvector->elts[index + 7]);
-                            return uint64_to_integer(vm->m_heap, u64);
-                        }
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-u64-ref", 2, "endianness", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u64-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u64-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u64-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u64-ref", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s64-ref
-scm_obj_t
-subr_bytevector_s64_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (SYMBOLP(argv[2])) {
-                        scm_symbol_t symbol = (scm_symbol_t)argv[2];
-                        int64_t s64;
-                        if (symbol == S_LITTLE) {
-                            s64 = ((uint64_t)bvector->elts[index + 0])
-                                + ((uint64_t)bvector->elts[index + 1] << 8)
-                                + ((uint64_t)bvector->elts[index + 2] << 16)
-                                + ((uint64_t)bvector->elts[index + 3] << 24)
-                                + ((uint64_t)bvector->elts[index + 4] << 32)
-                                + ((uint64_t)bvector->elts[index + 5] << 40)
-                                + ((uint64_t)bvector->elts[index + 6] << 48)
-                                + ((uint64_t)bvector->elts[index + 7] << 56);
-                            return int64_to_integer(vm->m_heap, s64);
-                        }
-                        if (symbol == S_BIG) {
-                            s64 = ((uint64_t)bvector->elts[index + 0] << 56)
-                                + ((uint64_t)bvector->elts[index + 1] << 48)
-                                + ((uint64_t)bvector->elts[index + 2] << 40)
-                                + ((uint64_t)bvector->elts[index + 3] << 32)
-                                + ((uint64_t)bvector->elts[index + 4] << 24)
-                                + ((uint64_t)bvector->elts[index + 5] << 16)
-                                + ((uint64_t)bvector->elts[index + 6] << 8)
-                                + ((uint64_t)bvector->elts[index + 7]);
-                            return int64_to_integer(vm->m_heap, s64);
-                        }
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-s64-ref", 2, "endianness", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s64-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s64-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s64-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s64-ref", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u64-native-ref
-scm_obj_t
-subr_bytevector_u64_native_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 2) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        uint64_t* ref = (uint64_t*)&bvector->elts[index];
-                        return uint64_to_integer(vm->m_heap, *ref);
-                    }
-                    invalid_argument_violation(vm, "bytevector-u64-native-ref", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u64-native-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u64-native-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u64-native-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u64-native-ref", 2, 2, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s64-native-ref
-scm_obj_t
-subr_bytevector_s64_native_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 2) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        int64_t* ref = (int64_t*)&bvector->elts[index];
-                        return int64_to_integer(vm->m_heap, *ref);
-                    }
-                    invalid_argument_violation(vm, "bytevector-u64-native-ref", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u64-native-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u64-native-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u64-native-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u64-native-ref", 2, 2, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u64-set!
-scm_obj_t
-subr_bytevector_u64_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 4) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-u64-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (exact_integer_pred(argv[2])) {
-                        union {
-                            uint64_t u64;
-                            uint8_t bytes[8];
-                        } datum;
-                        if (exact_integer_to_uint64(argv[2], &datum.u64)) {
-                            if (SYMBOLP(argv[3])) {
-                                scm_symbol_t symbol = (scm_symbol_t)argv[3];
-                                if (symbol == S_BIG || symbol == S_LITTLE) {
-                                    if (symbol == NATIVE_ENDIANNESS) {
-                                        for (int i = 0; i < size; i++) bvector->elts[index + i] = datum.bytes[i];
-                                    } else {
-                                        for (int i = 0; i < size; i++) bvector->elts[index + i] = datum.bytes[size - i - 1];
-                                    }
-                                    return scm_unspecified;
-                                }
-                            }
-                            wrong_type_argument_violation(vm, "bytevector-u64-set!", 3, "endianness", argv[3], argc, argv);
-                            return scm_undef;
-                        }
-                    }
-                    if (exact_integer_pred(argv[2])) {
-                        invalid_argument_violation(vm, "bytevector-u64-set!", "value out of range,", argv[2], 2, argc, argv);
-                        return scm_undef;
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-u64-set!", 2, "exact integer", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u64-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u64-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u64-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u64-set!", 4, 4, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s64-set!
-scm_obj_t
-subr_bytevector_s64_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 4) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-s64-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (exact_integer_pred(argv[2])) {
-                        union {
-                            int64_t s64;
-                            uint8_t bytes[8];
-                        } datum;
-                        if (exact_integer_to_int64(argv[2], &datum.s64)) {
-                            if (SYMBOLP(argv[3])) {
-                                scm_symbol_t symbol = (scm_symbol_t)argv[3];
-                                if (symbol == S_BIG || symbol == S_LITTLE) {
-                                    if (symbol == NATIVE_ENDIANNESS) {
-                                        for (int i = 0; i < size; i++) bvector->elts[index + i] = datum.bytes[i];
-                                    } else {
-                                        for (int i = 0; i < size; i++) bvector->elts[index + i] = datum.bytes[size - i - 1];
-                                    }
-                                    return scm_unspecified;
-                                }
-                            }
-                            wrong_type_argument_violation(vm, "bytevector-s64-set!", 3, "endianness", argv[3], argc, argv);
-                            return scm_undef;
-                        }
-                    }
-                    if (exact_integer_pred(argv[2])) {
-                        invalid_argument_violation(vm, "bytevector-s64-set!", "value out of range,", argv[2], 2, argc, argv);
-                        return scm_undef;
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-s64-set!", 2, "exact integer", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s64-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s64-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s64-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s64-set!", 4, 4, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-u64-native-set!
-scm_obj_t
-subr_bytevector_u64_native_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-u64-native-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        if (exact_integer_pred(argv[2])) {
-                            uint64_t u64;
-                            if (exact_integer_to_uint64(argv[2], &u64)) {
-                                uint64_t* ref = (uint64_t*)&bvector->elts[index];
-                                *ref = u64;
-                                return scm_unspecified;
-                            }
-                        }
-                        if (exact_integer_pred(argv[2])) {
-                            invalid_argument_violation(vm, "bytevector-u64-native-set!", "value out of range,", argv[2], 2, argc, argv);
-                            return scm_undef;
-                        }
-                        wrong_type_argument_violation(vm, "bytevector-u64-native-set!", 2, "exact integer", argv[2], argc, argv);
-                        return scm_undef;
-                    }
-                    invalid_argument_violation(vm, "bytevector-u64-native-set!", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-u64-native-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-u64-native-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-u64-native-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-u64-native-set!", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-s64-native-set!
-scm_obj_t
-subr_bytevector_s64_native_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-s64-native-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        if (exact_integer_pred(argv[2])) {
-                            int64_t s64;
-                            if (exact_integer_to_int64(argv[2], &s64)) {
-                                int64_t* ref = (int64_t*)&bvector->elts[index];
-                                *ref = s64;
-                                return scm_unspecified;
-                            }
-                        }
-                        if (exact_integer_pred(argv[2])) {
-                            invalid_argument_violation(vm, "bytevector-s64-native-set!", "value out of range,", argv[2], 2, argc, argv);
-                            return scm_undef;
-                        }
-                        wrong_type_argument_violation(vm, "bytevector-s64-native-set!", 2, "exact integer", argv[2], argc, argv);
-                        return scm_undef;
-                    }
-                    invalid_argument_violation(vm, "bytevector-s64-native-set!", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-s64-native-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-s64-native-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-s64-native-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-s64-native-set!", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-ieee-single-ref
-scm_obj_t
-subr_bytevector_ieee_single_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (SYMBOLP(argv[2])) {
-                        scm_symbol_t symbol = (scm_symbol_t)argv[2];
-                        union {
-                            float ieee_single;
-                            uint8_t bytes[4];
-                        } datum;
-                        if (symbol == S_BIG || symbol == S_LITTLE) {
-                            if (symbol == NATIVE_ENDIANNESS) {
-                                for (int i = 0; i < size; i++) datum.bytes[i] = bvector->elts[index + i];
-                            } else {
-                                for (int i = 0; i < size; i++) datum.bytes[i] = bvector->elts[index + size - 1 - i];
-                            }
-                            return make_flonum(vm->m_heap, datum.ieee_single);
-                        }
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-ieee_double-ref", 2, "endianness", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-ieee_double-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-ieee_double-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-ieee_double-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-ieee_double-ref", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-ieee-single-native-ref
-scm_obj_t
-subr_bytevector_ieee_single_native_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 2) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        float* ref = (float*)&bvector->elts[index];
-                        return double_to_inexact(vm->m_heap, *ref);
-                    }
-                    invalid_argument_violation(vm, "bytevector-ieee-single-native-ref", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-ieee-single-native-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-ieee-single-native-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-ieee-single-native-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-ieee-single-native-ref", 2, 2, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-ieee-single-set!
-scm_obj_t
-subr_bytevector_ieee_single_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 4) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-ieee-single-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (real_pred(argv[2])) {
-                        union {
-                            float ieee_single;
-                            uint8_t bytes[4];
-                        } datum;
-                        datum.ieee_single = real_to_double(argv[2]);
-                        if (SYMBOLP(argv[3])) {
-                            scm_symbol_t symbol = (scm_symbol_t)argv[3];
-                            if (symbol == S_BIG || symbol == S_LITTLE) {
-                                if (symbol == NATIVE_ENDIANNESS) {
-                                    for (int i = 0; i < size; i++) bvector->elts[index + i] = datum.bytes[i];
-                                } else {
-                                    for (int i = 0; i < size; i++) bvector->elts[index + i] = datum.bytes[size - 1 - i];
-                                }
-                                return scm_unspecified;
-                            }                       }
-                        wrong_type_argument_violation(vm, "bytevector-ieee-single-set!", 3, "endianness", argv[3], argc, argv);
-                        return scm_undef;
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-ieee-single-set!", 2, "real", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-ieee-single-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-ieee-single-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-ieee-single-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-ieee-single-set!", 4, 4, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-ieee-single-native-set!
-scm_obj_t
-subr_bytevector_ieee_single_native_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 4;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-ieee-single-native-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        if (real_pred(argv[2])) {
-                            float* ref = (float*)&bvector->elts[index];
-                            *ref = real_to_double(argv[2]);
-                            return scm_unspecified;
-                        }
-                        wrong_type_argument_violation(vm, "bytevector-ieee-single-native-set!", 2, "real", argv[2], argc, argv);
-                        return scm_undef;
-                    }
-                    invalid_argument_violation(vm, "bytevector-ieee-single-native-set!", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-ieee-single-native-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-ieee-single-native-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-ieee-single-native-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-ieee-single-native-set!", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-ieee-double-ref
-scm_obj_t
-subr_bytevector_ieee_double_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (SYMBOLP(argv[2])) {
-                        scm_symbol_t symbol = (scm_symbol_t)argv[2];
-                        union {
-                            double ieee_double;
-                            uint8_t bytes[8];
-                        } datum;
-                        if (symbol == S_BIG || symbol == S_LITTLE) {
-                            if (symbol == NATIVE_ENDIANNESS) {
-                                for (int i = 0; i < size; i++) datum.bytes[i] = bvector->elts[index + i];
-                            } else {
-                                for (int i = 0; i < size; i++) datum.bytes[i] = bvector->elts[index + size - 1 - i];
-                            }
-                            return make_flonum(vm->m_heap, datum.ieee_double);
-                        }
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-ieee_double-ref", 2, "endianness", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-ieee_double-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-ieee_double-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-ieee_double-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-ieee_double-ref", 3, 3, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-ieee-double-native-ref
-scm_obj_t
-subr_bytevector_ieee_double_native_ref(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 2) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        double* ref = (double*)&bvector->elts[index];
-                        return double_to_inexact(vm->m_heap, *ref);
-                    }
-                    invalid_argument_violation(vm, "bytevector-ieee-double-native-ref", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-ieee-double-native-ref", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-ieee-double-native-ref", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-ieee-double-native-ref", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-ieee-double-native-ref", 2, 2, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-ieee-double-set!
-scm_obj_t
-subr_bytevector_ieee_double_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 4) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-ieee-double-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if (real_pred(argv[2])) {
-                        union {
-                            double ieee_double;
-                            uint8_t bytes[8];
-                        } datum;
-                        datum.ieee_double = real_to_double(argv[2]);
-                        if (SYMBOLP(argv[3])) {
-                            scm_symbol_t symbol = (scm_symbol_t)argv[3];
-                            if (symbol == S_BIG || symbol == S_LITTLE) {
-                                if (symbol == NATIVE_ENDIANNESS) {
-                                    for (int i = 0; i < size; i++) bvector->elts[index + i] = datum.bytes[i];
-                                } else {
-                                    for (int i = 0; i < size; i++) bvector->elts[index + i] = datum.bytes[size - 1 - i];
-                                }
-                                return scm_unspecified;
-                            }
-                        }
-                        wrong_type_argument_violation(vm, "bytevector-ieee-double-set!", 3, "endianness", argv[3], argc, argv);
-                        return scm_undef;
-                    }
-                    wrong_type_argument_violation(vm, "bytevector-ieee-double-set!", 2, "real", argv[2], argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-ieee-double-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-ieee-double-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-ieee-double-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-ieee-double-set!", 4, 4, argc, argv);
-    return scm_undef;
-}
-
-// bytevector-ieee-double-native-set!
-scm_obj_t
-subr_bytevector_ieee_double_native_set(VM* vm, int argc, scm_obj_t argv[])
-{
-    const int size = 8;
-    if (argc == 3) {
-        if (BVECTORP(argv[0])) {
-            if (FIXNUMP(argv[1])) {
-                scm_bvector_t bvector = (scm_bvector_t)argv[0];
-#if USE_CONST_LITERAL
-                if (HDR_BVECTOR_LITERAL(bvector->hdr)) {
-                    literal_constant_access_violation(vm, "bytevector-ieee-double-native-set!", argv[0], argc, argv);
-                    return scm_undef;
-                }
-#endif
-                int index = FIXNUM(argv[1]);
-                if (index >= 0 && (index + size) <= bvector->count) {
-                    if ((index & (size - 1)) == 0) {
-                        if (real_pred(argv[2])) {
-                            double* ref = (double*)&bvector->elts[index];
-                            *ref = real_to_double(argv[2]);
-                            return scm_unspecified;
-                        }
-                        wrong_type_argument_violation(vm, "bytevector-ieee-double-native-set!", 2, "real", argv[2], argc, argv);
-                        return scm_undef;
-                    }
-                    invalid_argument_violation(vm, "bytevector-ieee-double-native-set!", "index not aligned,", argv[1], 1, argc, argv);
-                    return scm_undef;
-                }
-            }
-            if (exact_integer_pred(argv[1])) {
-                invalid_argument_violation(vm, "bytevector-ieee-double-native-set!", "index out of bounds,", argv[1], 1, argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "bytevector-ieee-double-native-set!", 1, "exact integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "bytevector-ieee-double-native-set!", 0, "bytevector", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "bytevector-ieee-double-native-set!", 3, 3, argc, argv);
-    return scm_undef;
+    native_accessor_param_t param(1, "bytevector-u8-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return MAKEFIXNUM(param.bytes[0]);
 }
 
 // string->utf8
@@ -2049,24 +1303,236 @@ subr_make_bytevector_mapping(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+static inline scm_obj_t
+c_u16_ref(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_accessor_param_t param(2, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return MAKEFIXNUM(*(uint16_t*)param.bytes);
+}
+
+static inline scm_obj_t
+c_u32_ref(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_accessor_param_t param(4, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return uint32_to_integer(vm->m_heap, *(uint32_t*)param.bytes);
+}
+
+static inline scm_obj_t
+c_u64_ref(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_accessor_param_t param(8, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return uint64_to_integer(vm->m_heap, *(uint64_t*)param.bytes);
+}
+
+static inline scm_obj_t
+c_s8_ref(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_accessor_param_t param(1, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return MAKEFIXNUM(*(int8_t*)param.bytes);
+}
+
+static inline scm_obj_t
+c_s16_ref(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_accessor_param_t param(2, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return MAKEFIXNUM(*(int16_t*)param.bytes);
+}
+
+static inline scm_obj_t
+c_s32_ref(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_accessor_param_t param(4, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return int32_to_integer(vm->m_heap, *(int32_t*)param.bytes);
+}
+
+static inline scm_obj_t
+c_s64_ref(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_accessor_param_t param(8, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return int64_to_integer(vm->m_heap, *(int64_t*)param.bytes);
+}
+
+static inline scm_obj_t
+c_n16_set(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_mutator_param_t param(2, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (FIXNUMP(argv[2])) {
+        intptr_t n16 = FIXNUM(argv[2]);
+        if (n16 >= INT16_MIN && n16 <= UINT16_MAX) {
+            *(uint16_t*)param.bytes = n16;
+            return scm_unspecified;
+        }
+        invalid_argument_violation(vm, subr, "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, subr, 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+static inline scm_obj_t
+c_n32_set(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_mutator_param_t param(4, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (exact_integer_pred(argv[2])) {
+        if (n_negative_pred(argv[2])) {
+            int32_t s32;
+            if (exact_integer_to_int32(argv[2], &s32)) {
+                *(uint32_t*)param.bytes = (uint32_t)s32;
+                return scm_unspecified;
+            }
+        } else {
+            uint32_t u32;
+            if (exact_integer_to_uint32(argv[2], &u32)) {
+                *(uint32_t*)param.bytes = u32;
+                return scm_unspecified;
+            }
+        }
+        invalid_argument_violation(vm, subr, "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, subr, 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+static inline scm_obj_t
+c_n64_set(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_mutator_param_t param(8, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (exact_integer_pred(argv[2])) {
+        if (n_negative_pred(argv[2])) {
+            int64_t s64;
+            if (exact_integer_to_int64(argv[2], &s64)) {
+                *(uint64_t*)param.bytes = (uint64_t)s64;
+                return scm_unspecified;
+            }                
+        } else {
+            uint64_t u64;
+            if (exact_integer_to_uint64(argv[2], &u64)) {
+                *(uint64_t*)param.bytes = u64;
+                return scm_unspecified;
+            }
+        }
+        invalid_argument_violation(vm, subr, "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, subr, 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-c-short-ref
+scm_obj_t
+subr_bytevector_c_short_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(short) == 2);
+    return c_s16_ref("bytevector-c-short-ref", vm, argc, argv);
+}
+
+// bytevector-c-unsigend-short-ref
+scm_obj_t
+subr_bytevector_c_unsigned_short_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(unsigned short) == 2);
+    return c_u16_ref("bytevector-c-unsigned-short-ref", vm, argc, argv);
+}
+
+// bytevector-c-int-ref
+scm_obj_t
+subr_bytevector_c_int_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(int) == 4 || sizeof(int) == 8);
+    if (sizeof(int) == 4) return c_s32_ref("bytevector-c-int-ref", vm, argc, argv);
+    return c_s64_ref("bytevector-c-int-ref", vm, argc, argv);
+}
+
+// bytevector-c-unsigend-int-ref
+scm_obj_t
+subr_bytevector_c_unsigned_int_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(unsigned int) == 4 || sizeof(unsigned int) == 8);
+    if (sizeof(int) == 4) return c_u32_ref("bytevector-c-unsigned-int-ref", vm, argc, argv);
+    return c_u64_ref("bytevector-c-unsigned-int-ref", vm, argc, argv);
+}
+
+// bytevector-c-long-ref
+scm_obj_t
+subr_bytevector_c_long_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(long) == 4 || sizeof(long) == 8);
+    if (sizeof(long) == 4) return c_s32_ref("bytevector-c-long-ref", vm, argc, argv);
+    return c_s64_ref("bytevector-c-long-ref", vm, argc, argv);
+}
+
+// bytevector-c-unsigend-long-ref
+scm_obj_t
+subr_bytevector_c_unsigned_long_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(unsigned long) == 4 || sizeof(unsigned long) == 8);
+    if (sizeof(unsigned long) == 4) return c_u32_ref("bytevector-c-unsigned-long-ref", vm, argc, argv);
+    return c_u64_ref("bytevector-c-unsigned-long-ref", vm, argc, argv);
+}
+
+// bytevector-c-void*-ref
+scm_obj_t
+subr_bytevector_c_intptr_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(void*) == 4 || sizeof(void*) == 8);
+    if (sizeof(void*) == 4) return c_u32_ref("bytevector-c-void*-ref", vm, argc, argv);
+    return c_u64_ref("bytevector-c-void*-ref", vm, argc, argv);
+}
+
+// bytevector-c-short-set!
+scm_obj_t
+subr_bytevector_c_short_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(short) == 2);
+    return c_n16_set("bytevector-c-short-set!", vm, argc, argv);
+}
+
+// bytevector-c-int-set!
+scm_obj_t
+subr_bytevector_c_int_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(int) == 4 || sizeof(int) == 8);
+    if (sizeof(int) == 4) return c_n32_set("bytevector-c-int-set!", vm, argc, argv);
+    return c_n64_set("bytevector-c-int-set!", vm, argc, argv);
+}
+
+// bytevector-c-long-set!
+scm_obj_t
+subr_bytevector_c_long_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(long) == 4 || sizeof(long) == 8);
+    if (sizeof(long) == 4) return c_n32_set("bytevector-c-long-set!", vm, argc, argv);
+    return c_n64_set("bytevector-c-long-set!", vm, argc, argv);
+}
+
+// bytevector-c-void*-set!
+scm_obj_t
+subr_bytevector_c_intptr_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(void*) == 4 || sizeof(void*) == 8);
+    if (sizeof(void*) == 4) return c_n32_set("bytevector-c-void*-set!", vm, argc, argv);
+    return c_n64_set("bytevector-c-void*-set!", vm, argc, argv);
+}
+
 void init_subr_bvector(object_heap_t* heap)
 {
 #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
-    DEFSUBR("native-endianness", subr_native_endianness);
-    DEFSUBR("bytevector?", subr_bytevector_pred);
-    DEFSUBR("make-bytevector", subr_make_bytevector);
-    DEFSUBR("bytevector-length", subr_bytevector_length);
-    DEFSUBR("bytevector=?", subr_bytevector_eq_pred);
-    DEFSUBR("bytevector-fill!", subr_bytevector_fill);
-    DEFSUBR("bytevector-copy!", subr_bytevector_destructive_copy);
-    DEFSUBR("bytevector-copy", subr_bytevector_copy);
     DEFSUBR("bytevector-u8-ref", subr_bytevector_u8_ref);
     DEFSUBR("bytevector-s8-ref", subr_bytevector_s8_ref);
     DEFSUBR("bytevector-u8-set!", subr_bytevector_u8_set);
     DEFSUBR("bytevector-s8-set!", subr_bytevector_s8_set);
-    DEFSUBR("bytevector->u8-list", subr_bytevector_u8_list);
-    DEFSUBR("u8-list->bytevector", subr_u8_list_bytevector);
     DEFSUBR("bytevector-u16-ref", subr_bytevector_u16_ref);
     DEFSUBR("bytevector-s16-ref", subr_bytevector_s16_ref);
     DEFSUBR("bytevector-u16-native-ref", subr_bytevector_u16_native_ref);
@@ -2099,7 +1565,28 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector-ieee-double-native-ref", subr_bytevector_ieee_double_native_ref);
     DEFSUBR("bytevector-ieee-double-set!", subr_bytevector_ieee_double_set);
     DEFSUBR("bytevector-ieee-double-native-set!", subr_bytevector_ieee_double_native_set);
+    DEFSUBR("native-endianness", subr_native_endianness);
+    DEFSUBR("bytevector?", subr_bytevector_pred);
+    DEFSUBR("make-bytevector", subr_make_bytevector);
+    DEFSUBR("bytevector-length", subr_bytevector_length);
+    DEFSUBR("bytevector=?", subr_bytevector_eq_pred);
+    DEFSUBR("bytevector-fill!", subr_bytevector_fill);
+    DEFSUBR("bytevector-copy!", subr_bytevector_destructive_copy);
+    DEFSUBR("bytevector-copy", subr_bytevector_copy);
+    DEFSUBR("bytevector->u8-list", subr_bytevector_u8_list);
+    DEFSUBR("u8-list->bytevector", subr_u8_list_bytevector);
     DEFSUBR("string->utf8", subr_string_utf8);
     DEFSUBR("utf8->string", subr_utf8_string);
     DEFSUBR("make-bytevector-mapping", subr_make_bytevector_mapping);
+    DEFSUBR("bytevector-c-short-ref", subr_bytevector_c_short_ref);
+    DEFSUBR("bytevector-c-int-ref", subr_bytevector_c_int_ref);
+    DEFSUBR("bytevector-c-long-ref", subr_bytevector_c_long_ref);
+    DEFSUBR("bytevector-c-unsigned-short-ref", subr_bytevector_c_unsigned_short_ref);
+    DEFSUBR("bytevector-c-unsigned-int-ref", subr_bytevector_c_unsigned_int_ref);
+    DEFSUBR("bytevector-c-unsigned-long-ref", subr_bytevector_c_unsigned_long_ref);
+    DEFSUBR("bytevector-c-short-set!", subr_bytevector_c_short_set);
+    DEFSUBR("bytevector-c-int-set!", subr_bytevector_c_int_set);
+    DEFSUBR("bytevector-c-long-set!", subr_bytevector_c_long_set);
+    DEFSUBR("bytevector-c-void*-ref", subr_bytevector_c_intptr_ref);
+    DEFSUBR("bytevector-c-void*-set!", subr_bytevector_c_intptr_set);
 }

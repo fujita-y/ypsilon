@@ -1,10 +1,32 @@
 #!nobacktrace
 (library (ffi)
-  (export c-argument
+  (export alignof:double
+          alignof:float
+          alignof:int
+          alignof:int16_t
+          alignof:int32_t
+          alignof:int64_t
+          alignof:int8_t
+          alignof:long
+          alignof:short
+          alignof:void*
+          bytevector-c-int-ref
+          bytevector-c-int-set!
+          bytevector-c-long-ref
+          bytevector-c-long-set!
+          bytevector-c-short-ref
+          bytevector-c-short-set!
+          bytevector-c-unsigned-int-ref
+          bytevector-c-unsigned-long-ref
+          bytevector-c-unsigned-short-ref
+          bytevector-c-void*-ref
+          bytevector-c-void*-set!
+          c-argument
           c-function
           c-function/errno
           c-function/lasterror
           load-shared-object
+          make-bytevector-mapping
           on-darwin
           on-freebsd
           on-ia32
@@ -12,5 +34,9 @@
           on-openbsd
           on-posix
           on-windows
-          on-x64)
+          on-x64
+          sizeof:int
+          sizeof:long
+          sizeof:short
+          sizeof:void*)
   (import (ypsilon ffi)))

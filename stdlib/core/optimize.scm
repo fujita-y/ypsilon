@@ -131,7 +131,9 @@
                   .cons*
                   .memq .memv .member
                   .assq .assv .assoc
-                  .list-head
+                  .list-head .list-copy 
+                  .circular-list? .cyclic-object?
+                  .vector-copy
                   .datum->syntax
                   .syntax->datum
                   .syntax/i0 .syntax/i1 .syntax/i2 .syntax/i3
@@ -151,7 +153,29 @@
                   .current-library-infix
                   .current-library-suffix
                   .current-primitive-prefix
-                  .current-rename-delimiter))
+                  .current-rename-delimiter
+                  
+                  .native-endianness
+                  .bytevector?
+                  .make-bytevector
+                  .bytevector-length
+                  .bytevector=?
+                  .bytevector-copy
+                  .bytevector->u8-list .u8-list->bytevector
+                  .bytevector-u8-ref .bytevector-s8-ref
+                  .bytevector-u16-ref .bytevector-s16-ref .bytevector-u16-native-ref .bytevector-s16-native-ref
+                  .bytevector-u32-ref .bytevector-s32-ref .bytevector-u32-native-ref .bytevector-s32-native-ref
+                  .bytevector-u64-ref .bytevector-s64-ref .bytevector-u64-native-ref .bytevector-s64-native-ref
+                  .bytevector-ieee-single-ref .bytevector-ieee-single-native-ref
+                  .bytevector-ieee-double-ref .bytevector-ieee-double-native-ref
+                  .bytevector-c-short-ref
+                  .bytevector-c-int-ref
+                  .bytevector-c-long-ref
+                  .bytevector-c-void*-ref
+                  .bytevector-c-unsigned-short-ref
+                  .bytevector-c-unsigned-int-ref
+                  .bytevector-c-unsigned-long-ref
+                  ))
       (core-hashtable-copy ht)))
 
   (define ht-inlinable-primitive-functions

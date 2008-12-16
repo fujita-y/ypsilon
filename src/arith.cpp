@@ -626,7 +626,6 @@ bn_sqrt(object_heap_t* heap, scm_bignum_t obj)
     }
 }
 
-
 static double
 bignum_to_double(scm_bignum_t obj)
 {

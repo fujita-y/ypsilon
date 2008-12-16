@@ -53,13 +53,13 @@ private:
     int             m_first_line;
     int             m_parsing_line_from;
     int             m_parsing_line_to;
-    VM*             m_vm;
-    scm_port_t      m_in;
     scm_obj_t       m_ungetbuf;
     int             m_ungetbuf_valid;
-    int             m_file;
     scm_hashtable_t m_graph;
     int             m_graph_ref;
+    VM*             m_vm;
+    scm_port_t      m_in;
+    bool            m_file;
     static bool     s_char_map_ready;
     static uint8_t  s_char_map[128];
     static void     make_char_map();

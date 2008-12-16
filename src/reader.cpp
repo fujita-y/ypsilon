@@ -308,7 +308,7 @@ reader_t::read_bytevector()
             READ_BVECTOR("f64", double,   real_pred,          CAST_REAL_TO_DOUBLE);
         }
 #endif
-        }
+    }
     lexical_error("invalid lexical syntax #v%s~a ...", buf, MAKECHAR(c));
 
     #undef CAST_REAL_TO_DOUBLE
