@@ -210,7 +210,6 @@ scm_obj_t arith_first_bit_set(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_bit_length(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t arith_bit_count(object_heap_t* heap, scm_obj_t obj);
 exact_integer_sqrt_ans_t arith_exact_integer_sqrt(object_heap_t* heap, scm_obj_t obj);
-
 scm_obj_t parse_number(object_heap_t* heap, const char* s, int prefix, int radix);
 scm_obj_t decode_flonum(object_heap_t* heap, scm_flonum_t n);
 

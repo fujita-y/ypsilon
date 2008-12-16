@@ -1708,22 +1708,16 @@ object_heap_t::init_architecture_feature()
 
     #define ARCH_FIXNUM(name, value)  put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(value))
 
-    ARCH_FIXNUM(sizeof:char,     sizeof(char));
     ARCH_FIXNUM(sizeof:short,    sizeof(short));
     ARCH_FIXNUM(sizeof:int,      sizeof(int));
     ARCH_FIXNUM(sizeof:long,     sizeof(long));
-    ARCH_FIXNUM(sizeof:float,    sizeof(float));
-    ARCH_FIXNUM(sizeof:double,   sizeof(double));
-    ARCH_FIXNUM(sizeof:size_t,   sizeof(size_t));
-    ARCH_FIXNUM(sizeof:intptr_t, sizeof(intptr_t));
-    ARCH_FIXNUM(alignof:char,     ALIGNOF(char));
+    ARCH_FIXNUM(sizeof:void*,    sizeof(void*));
     ARCH_FIXNUM(alignof:short,    ALIGNOF(short));
     ARCH_FIXNUM(alignof:int,      ALIGNOF(int));
     ARCH_FIXNUM(alignof:long,     ALIGNOF(long));
+    ARCH_FIXNUM(alignof:void*,    ALIGNOF(void*));
     ARCH_FIXNUM(alignof:float,    ALIGNOF(float));
     ARCH_FIXNUM(alignof:double,   ALIGNOF(double));
-    ARCH_FIXNUM(alignof:size_t,   ALIGNOF(size_t));
-    ARCH_FIXNUM(alignof:intptr_t, ALIGNOF(intptr_t));
     ARCH_FIXNUM(alignof:int8_t,   ALIGNOF(int8_t));
     ARCH_FIXNUM(alignof:int16_t,  ALIGNOF(int16_t));
     ARCH_FIXNUM(alignof:int32_t,  ALIGNOF(int32_t));

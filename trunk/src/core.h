@@ -71,7 +71,7 @@
 #define USE_INLINED_CXR             0
 #define USE_FLONUM_CONST            1
 #define USE_FAST_DYNAMIC_WIND       1
-#define USE_EXTENDED_BVECTOR_SYNTAX 0
+#define USE_EXTENDED_BVECTOR_SYNTAX 1
 #define USE_PARALLEL_VM             1
 #define USE_CONST_LITERAL           1
 

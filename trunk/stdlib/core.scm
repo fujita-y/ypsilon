@@ -92,6 +92,17 @@
     bytevector->string
     bytevector->u8-list
     bytevector->uint-list
+    bytevector-c-int-ref
+    bytevector-c-int-set!
+    bytevector-c-long-ref
+    bytevector-c-long-set!
+    bytevector-c-short-ref
+    bytevector-c-short-set!
+    bytevector-c-unsigned-int-ref
+    bytevector-c-unsigned-long-ref
+    bytevector-c-unsigned-short-ref
+    bytevector-c-void*-ref
+    bytevector-c-void*-set!
     bytevector-copy
     bytevector-copy!
     bytevector-fill!

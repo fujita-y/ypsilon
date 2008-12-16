@@ -127,7 +127,7 @@
 
   (setup-core-primitive-macros
    '(core primitives) '( do
-                         syntax-case
+                           syntax-case
                          syntax
                          define-macro))
 
@@ -448,6 +448,10 @@
                         flonum->float
                         shared-object-errno
                         shared-object-win32-lasterror
+                        bytevector-c-short-ref bytevector-c-unsigned-short-ref bytevector-c-short-set!
+                        bytevector-c-int-ref bytevector-c-unsigned-int-ref bytevector-c-int-set!
+                        bytevector-c-long-ref bytevector-c-unsigned-long-ref bytevector-c-long-set!
+                        bytevector-c-void*-ref bytevector-c-void*-set!
                         collect collect-notify collect-stack-notify collect-trip-bytes display-heap-statistics display-object-statistics
                         backtrace expansion-backtrace backtrace-line-length display-backtrace
                         warning-level

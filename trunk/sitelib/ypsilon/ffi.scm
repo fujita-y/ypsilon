@@ -4,24 +4,65 @@
 ;;; See license.txt for terms and conditions of use.
 
 (library (ypsilon ffi)
-  (export load-shared-object
+  (export on-darwin on-linux on-freebsd on-openbsd on-windows on-posix
+          on-ia32 on-x64
+          load-shared-object
           c-function
           c-function/errno
           c-function/lasterror
           c-argument
-          on-windows on-darwin on-linux on-freebsd on-openbsd on-posix on-ia32 on-x64)
+          sizeof:short
+          sizeof:int
+          sizeof:long
+          sizeof:void*
+          alignof:short
+          alignof:int
+          alignof:long
+          alignof:void*
+          alignof:float
+          alignof:double
+          alignof:int8_t
+          alignof:int16_t
+          alignof:int32_t
+          alignof:int64_t
+          make-bytevector-mapping
+          bytevector-c-short-ref
+          bytevector-c-int-ref
+          bytevector-c-long-ref
+          bytevector-c-void*-ref
+          bytevector-c-unsigned-short-ref
+          bytevector-c-unsigned-int-ref
+          bytevector-c-unsigned-long-ref
+          bytevector-c-short-set!
+          bytevector-c-int-set!
+          bytevector-c-long-set!
+          bytevector-c-void*-set!)
+
   (import (core))
 
-  (define on-windows (and (string-contains (architecture-feature 'operating-system) "windows") #t))
-  (define on-darwin  (and (string-contains (architecture-feature 'operating-system) "darwin")  #t))
-  (define on-linux   (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
-  (define on-freebsd (and (string-contains (architecture-feature 'operating-system) "freebsd") #t))
-  (define on-openbsd (and (string-contains (architecture-feature 'operating-system) "openbsd") #t))
-  (define on-posix   (not on-windows))
-  (define on-x64     (and (or (string-contains (architecture-feature 'machine-hardware) "x86_64")
-                              (string-contains (architecture-feature 'machine-hardware) "amd64"))
-                          #t))
-  (define on-ia32    (not on-x64))
+  (define on-darwin        (and (string-contains (architecture-feature 'operating-system) "darwin")  #t))
+  (define on-linux         (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
+  (define on-freebsd       (and (string-contains (architecture-feature 'operating-system) "freebsd") #t))
+  (define on-openbsd       (and (string-contains (architecture-feature 'operating-system) "openbsd") #t))
+  (define on-windows       (and (string-contains (architecture-feature 'operating-system) "windows") #t))
+  (define on-posix         (not on-windows))
+  (define on-x64           (and (or (string-contains (architecture-feature 'machine-hardware) "x86_64")
+                                    (string-contains (architecture-feature 'machine-hardware) "amd64")) #t))
+  (define on-ia32          (not on-x64))
+  (define sizeof:short     (architecture-feature 'sizeof:short))
+  (define sizeof:int       (architecture-feature 'sizeof:int))
+  (define sizeof:long      (architecture-feature 'sizeof:long))
+  (define sizeof:void*     (architecture-feature 'sizeof:void*))
+  (define alignof:short    (architecture-feature 'alignof:short))
+  (define alignof:int      (architecture-feature 'alignof:int))
+  (define alignof:long     (architecture-feature 'alignof:long))
+  (define alignof:void*    (architecture-feature 'alignof:void*))
+  (define alignof:float    (architecture-feature 'alignof:float))
+  (define alignof:double   (architecture-feature 'alignof:double))
+  (define alignof:int8_t   (architecture-feature 'alignof:int8_t))
+  (define alignof:int16_t  (architecture-feature 'alignof:int16_t))
+  (define alignof:int32_t  (architecture-feature 'alignof:int32_t))
+  (define alignof:int64_t  (architecture-feature 'alignof:int64_t))
 
   (define assert-bool
     (lambda (name n i)
@@ -95,31 +136,30 @@
     (lambda (val)
       (and val (bytevector->string val (make-transcoder (utf-8-codec))))))
 
-  (define string->utf8-n-nul
+  (define string->utf8+nul
     (lambda (s)
       (string->utf8 (string-append s "\x0;"))))
 
   (define make-binary-array-of-int
     (lambda argv
-      (let ((step (architecture-feature 'alignof:int))
-            (proc (case (architecture-feature 'sizeof:int)
+      (let ((bv (make-bytevector (* alignof:int (length argv))))
+            (proc (case sizeof:int
                     ((4) bytevector-s32-native-set!)
                     ((8) bytevector-s64-native-set!)
                     (else
                      (syntax-violation 'make-binary-array-of-int "byte size of int not defined")))))
-        (let ((bv (make-bytevector (* step (length argv)))))
-          (let loop ((offset 0) (arg argv))
-            (cond ((null? arg) bv)
-                  (else
-                   (let ((value (car arg)))
-                     (proc bv offset value)
-                     (loop (+ offset step) (cdr arg))))))))))
+        (let loop ((offset 0) (arg argv))
+          (cond ((null? arg) bv)
+                (else
+                 (let ((value (car arg)))
+                   (proc bv offset value)
+                   (loop (+ offset alignof:int) (cdr arg)))))))))
 
   (define make-binary-array-of-char*
     (lambda (ref . argv)
       (apply vector
              ref
-             (map (lambda (value) (string->utf8-n-nul value)) argv))))
+             (map (lambda (value) (string->utf8+nul value)) argv))))
 
   (define-syntax c-callback-arguments
     (lambda (x)
@@ -145,7 +185,7 @@
       ((_ name n byte* var)
        (assert-bytevector 'name n var))
       ((_ name n char* var)
-       (string->utf8-n-nul (assert-string 'name n var)))
+       (string->utf8+nul (assert-string 'name n var)))
       ((_ name n [int] var)
        (apply make-binary-array-of-int (assert-int-vector 'name n var)))
       ((_ name n [char*] var)
@@ -227,7 +267,5 @@
                  (values ret err))))
            (lambda x
              (error 'c-function/lasterror (format "only available with windows")))))))
-           
-           
 
   ) ;[end]
