@@ -452,6 +452,7 @@
                         bytevector-c-int-ref bytevector-c-unsigned-int-ref bytevector-c-int-set!
                         bytevector-c-long-ref bytevector-c-unsigned-long-ref bytevector-c-long-set!
                         bytevector-c-void*-ref bytevector-c-void*-set!
+                        bytevector-c-int8-set! bytevector-c-int16-set! bytevector-c-int32-set! bytevector-c-int64-set!
                         collect collect-notify collect-stack-notify collect-trip-bytes display-heap-statistics display-object-statistics
                         backtrace expansion-backtrace backtrace-line-length display-backtrace
                         warning-level

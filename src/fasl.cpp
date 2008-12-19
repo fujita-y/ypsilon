@@ -102,7 +102,7 @@ fasl_printer_t::put_datum(scm_obj_t obj)
         if (obj == MAKEFIXNUM(0)) { emit_u8(FASL_TAG_INT0); return; }
         if (obj == MAKEFIXNUM(1)) { emit_u8(FASL_TAG_INT1); return; }
         if (obj == MAKEFIXNUM(2)) { emit_u8(FASL_TAG_INT2); return; }
-        if (obj == MAKEFIXNUM(3)) { emit_u8(FASL_TAG_INT3); return; }        
+        if (obj == MAKEFIXNUM(3)) { emit_u8(FASL_TAG_INT3); return; }
 #if ARCH_LP64
         assert(sizeof(intptr_t) == sizeof(uint64_t));
         emit_u8(FASL_TAG_FIXNUM64);

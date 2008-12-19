@@ -72,7 +72,7 @@ nlz128(uint128_t x)
     return nlz(x & UINT64_MAX) + 64;
 }
 
-static uint128_t 
+static uint128_t
 udiv128(uint128_t m, uint128_t n)
 {
     if (m < n) return 0;
@@ -85,7 +85,7 @@ udiv128(uint128_t m, uint128_t n)
         if (m >= n) {
             m -= n;
             q += b;
-        } 
+        }
         n >>= 1;
         b >>= 1;
     }

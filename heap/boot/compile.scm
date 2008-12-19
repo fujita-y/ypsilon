@@ -277,7 +277,7 @@
                             (if (iloc? opd1 cte)
                                 `(,@(compile-argument opd2 cte) (push.vector-ref.iloc ,(make-iloc-operand opd1 cte) . ,comment))
                                 (compile-anonymous form cte comment))))
-                         
+
                          (else
                           (compile-anonymous form cte comment))))
                   (else

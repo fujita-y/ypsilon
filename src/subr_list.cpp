@@ -452,7 +452,7 @@ subr_list_copy(VM* vm, int argc, scm_obj_t argv[])
                 scm_obj_t e = make_pair(vm->m_heap, CAR(lst), scm_nil);
                 CDR(tail) = e;
                 tail = e;
-                lst = CDR(lst);            
+                lst = CDR(lst);
             }
             CDR(tail) = lst;
             return obj;

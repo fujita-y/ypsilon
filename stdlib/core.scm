@@ -94,6 +94,10 @@
     bytevector->uint-list
     bytevector-c-int-ref
     bytevector-c-int-set!
+    bytevector-c-int16-set!
+    bytevector-c-int32-set!
+    bytevector-c-int64-set!
+    bytevector-c-int8-set!
     bytevector-c-long-ref
     bytevector-c-long-set!
     bytevector-c-short-ref

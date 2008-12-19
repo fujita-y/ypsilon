@@ -337,8 +337,20 @@
                    ((eq? deno denote-letrec-syntax)
                     (rewrite-letrec-syntax form env))
                    ((macro? deno)
-                    (let-values (((expr renames) (expand-macro-use form env deno)))
+
+                    (let-values
+                        (((expr renames)
+                          (if (< (expansion-trace-level) (expansion-backtrace))
+                              (begin
+                                (expansion-trace-stack (cons form (expansion-trace-stack)))
+                                (expansion-trace-level (+ 1 (expansion-trace-level)))
+                                (expand-macro-use form env deno))
+                              (expand-macro-use form env deno))))
                       (values expr (extend-env renames env))))
+
+;                    (let-values (((expr renames) (expand-macro-use form env deno)))
+;                      (values expr (extend-env renames env))))
+
                    (else
                     (values form env)))))
           (else
@@ -475,12 +487,13 @@
            (let ((deno (env-lookup env form)))
              (cond ((symbol? deno) deno)
                    ((macro? deno)
-                    (let-values (((expr renames)
-                                  (if (< (expansion-trace-level) (expansion-backtrace))
-                                      (parameterize ((expansion-trace-stack (cons (current-macro-expression) (expansion-trace-stack)))
-                                                     (expansion-trace-level (+ 1 (expansion-trace-level))))
-                                        (expand-macro-use form env deno))
-                                      (expand-macro-use form env deno))))
+                    (let-values
+                        (((expr renames)
+                          (if (< (expansion-trace-level) (expansion-backtrace))
+                              (parameterize ((expansion-trace-stack (cons (current-macro-expression) (expansion-trace-stack)))
+                                             (expansion-trace-level (+ 1 (expansion-trace-level))))
+                                (expand-macro-use form env deno))
+                              (expand-macro-use form env deno))))
                       (expand-form expr (extend-env renames env))))
                    ((unbound? deno)
                     (undefined/syntax-violation #f
@@ -509,8 +522,9 @@
                     (cond ((macro? deno)
                            (let-values (((expr renames) (expand-macro-use form env deno)))
                              (if (< (expansion-trace-level) (expansion-backtrace))
-                                 (parameterize ((expansion-trace-stack (cons form (expansion-trace-stack)))
-                                                (expansion-trace-level (+ 1 (expansion-trace-level))))
+                                 (parameterize
+                                     ((expansion-trace-stack (cons form (expansion-trace-stack)))
+                                      (expansion-trace-level (+ 1 (expansion-trace-level))))
                                    (expand-form expr (extend-env renames env)))
                                  (expand-form expr (extend-env renames env)))))
                           ((special? deno)

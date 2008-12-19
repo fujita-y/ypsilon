@@ -150,6 +150,7 @@ static int opt_heap_limit(int argc, char* const argv[])
         struct foo { char i; };
         struct bar { int i; struct foo o; };
         struct hoge { struct bar m; char k; };
+        struct nudge { char c; double x; };
         printf("sizeof(int) %d\n", (int)sizeof(int));
         printf("sizeof(long) %d\n", (int)sizeof(long));
         printf("sizeof(long long) %d\n", (int)sizeof(long long));
@@ -166,6 +167,7 @@ static int opt_heap_limit(int argc, char* const argv[])
         printf("sizeof(pthread_cond_t) %d\n", (int)sizeof(pthread_cond_t));
         printf("sizeof(queue_t<scm_obj_t>) %d\n", (int)sizeof(queue_t<scm_obj_t>));
         printf("sizeof(object_slab_cache_t) %d\n", (int)sizeof(object_slab_cache_t));
+        printf("offsetof(nudge, x) %d\n", (int)offsetof(nudge, x));
   #endif
   #if MTDEBUG
         puts(";; MTDEBUG ON");

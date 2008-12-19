@@ -11,6 +11,39 @@
           c-function/errno
           c-function/lasterror
           c-argument
+          define-c-typedef
+          define-c-struct-type
+          define-c-struct-methods
+          make-bytevector-mapping
+          bytevector-c-char-ref
+          bytevector-c-short-ref
+          bytevector-c-int-ref
+          bytevector-c-long-ref
+          bytevector-c-void*-ref
+          bytevector-c-float-ref
+          bytevector-c-double-ref
+          bytevector-c-unsigned-short-ref
+          bytevector-c-unsigned-int-ref
+          bytevector-c-unsigned-long-ref
+          bytevector-c-char-set!
+          bytevector-c-short-set!
+          bytevector-c-int-set!
+          bytevector-c-long-set!
+          bytevector-c-void*-set!
+          bytevector-c-float-set!
+          bytevector-c-double-set!
+          bytevector-c-int8-ref
+          bytevector-c-int16-ref
+          bytevector-c-int32-ref
+          bytevector-c-int64-ref
+          bytevector-c-uint8-ref
+          bytevector-c-uint16-ref
+          bytevector-c-uint32-ref
+          bytevector-c-uint64-ref
+          bytevector-c-int8-set!
+          bytevector-c-int16-set!
+          bytevector-c-int32-set!
+          bytevector-c-int64-set!
           sizeof:short
           sizeof:int
           sizeof:long
@@ -24,21 +57,9 @@
           alignof:int8_t
           alignof:int16_t
           alignof:int32_t
-          alignof:int64_t
-          make-bytevector-mapping
-          bytevector-c-short-ref
-          bytevector-c-int-ref
-          bytevector-c-long-ref
-          bytevector-c-void*-ref
-          bytevector-c-unsigned-short-ref
-          bytevector-c-unsigned-int-ref
-          bytevector-c-unsigned-long-ref
-          bytevector-c-short-set!
-          bytevector-c-int-set!
-          bytevector-c-long-set!
-          bytevector-c-void*-set!)
+          alignof:int64_t)
 
-  (import (core))
+  (import (core) (ypsilon c-types))
 
   (define on-darwin        (and (string-contains (architecture-feature 'operating-system) "darwin")  #t))
   (define on-linux         (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
@@ -49,20 +70,6 @@
   (define on-x64           (and (or (string-contains (architecture-feature 'machine-hardware) "x86_64")
                                     (string-contains (architecture-feature 'machine-hardware) "amd64")) #t))
   (define on-ia32          (not on-x64))
-  (define sizeof:short     (architecture-feature 'sizeof:short))
-  (define sizeof:int       (architecture-feature 'sizeof:int))
-  (define sizeof:long      (architecture-feature 'sizeof:long))
-  (define sizeof:void*     (architecture-feature 'sizeof:void*))
-  (define alignof:short    (architecture-feature 'alignof:short))
-  (define alignof:int      (architecture-feature 'alignof:int))
-  (define alignof:long     (architecture-feature 'alignof:long))
-  (define alignof:void*    (architecture-feature 'alignof:void*))
-  (define alignof:float    (architecture-feature 'alignof:float))
-  (define alignof:double   (architecture-feature 'alignof:double))
-  (define alignof:int8_t   (architecture-feature 'alignof:int8_t))
-  (define alignof:int16_t  (architecture-feature 'alignof:int16_t))
-  (define alignof:int32_t  (architecture-feature 'alignof:int32_t))
-  (define alignof:int64_t  (architecture-feature 'alignof:int64_t))
 
   (define assert-bool
     (lambda (name n i)
