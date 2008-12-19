@@ -1635,7 +1635,6 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector-c-long-set!", subr_bytevector_c_long_set);
     DEFSUBR("bytevector-c-void*-ref", subr_bytevector_c_intptr_ref);
     DEFSUBR("bytevector-c-void*-set!", subr_bytevector_c_intptr_set);
-    DEFSUBR("bytevector-c-short-set!", subr_bytevector_c_short_set);
     DEFSUBR("bytevector-c-int8-set!", subr_bytevector_c_int8_set);
     DEFSUBR("bytevector-c-int16-set!", subr_bytevector_c_int16_set);
     DEFSUBR("bytevector-c-int32-set!", subr_bytevector_c_int32_set);

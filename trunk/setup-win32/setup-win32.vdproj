@@ -615,6 +615,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_ECC55978FB484B889CB43FDCE973BB93"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_ECFE8D00F6454154B3CA0F4014045142"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -2750,6 +2756,26 @@
             "TargetName" = "8:pregexp.scm"
             "Tag" = "8:"
             "Folder" = "8:_D08BED6DB01C4592A10D6EE72A4CD9F6"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_ECC55978FB484B889CB43FDCE973BB93"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\c-types.scm"
+            "TargetName" = "8:c-types.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
