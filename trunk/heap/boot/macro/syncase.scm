@@ -333,14 +333,6 @@
 (define expand-syntax
   (lambda (form env)
 
-    (define rewrite
-      (lambda (form aliases)
-        (let loop ((lst form))
-          (cond ((pair? lst) (cons (loop (car lst)) (loop (cdr lst))))
-                ((and (symbol? lst) (assq lst aliases)) => cdr)
-                ((vector? lst) (list->vector (map loop (vector->list lst))))
-                (else lst)))))
-
     (destructuring-match form
       ((_ tmpl)
        (let ((template (unrename-syntax tmpl env)))

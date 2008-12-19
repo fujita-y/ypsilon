@@ -28,8 +28,8 @@ struct mutator_param_t {
     uint8_t*    bytes;
     int         little;
     bool        violation;
-    
-    mutator_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+
+    mutator_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[])
     {
         violation = false;
         little = 0;
@@ -82,8 +82,8 @@ struct mutator_param_t {
 struct native_mutator_param_t {
     uint8_t*    bytes;
     bool        violation;
-    
-    native_mutator_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+
+    native_mutator_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[])
     {
         violation = false;
         if (argc == 3) {
@@ -130,8 +130,8 @@ struct native_mutator_param_t {
 struct c_mutator_param_t {
     uint8_t*    bytes;
     bool        violation;
-    
-    c_mutator_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+
+    c_mutator_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[])
     {
         violation = false;
         if (argc == 3) {
@@ -174,8 +174,8 @@ struct accessor_param_t {
     uint8_t*    bytes;
     int         little;
     bool        violation;
-    
-    accessor_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+
+    accessor_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[])
     {
         violation = false;
         little = 0;
@@ -221,8 +221,8 @@ struct accessor_param_t {
 struct native_accessor_param_t {
     uint8_t*    bytes;
     bool        violation;
-    
-    native_accessor_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+
+    native_accessor_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[])
     {
         violation = false;
         if (argc == 2) {
@@ -262,8 +262,8 @@ struct native_accessor_param_t {
 struct c_accessor_param_t {
     uint8_t*    bytes;
     bool        violation;
-    
-    c_accessor_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[]) 
+
+    c_accessor_param_t(const int octets, const char* subr, VM* vm, int argc, scm_obj_t argv[])
     {
         violation = false;
         if (argc == 2) {
@@ -812,10 +812,10 @@ subr_bytevector_ieee_single_ref(VM* vm, int argc, scm_obj_t argv[])
     if (param.violation) return scm_undef;
     if (param.little == ARCH_LITTLE_ENDIAN) {
         for (int i = 0; i < 4; i++) datum.bytes[i] = param.bytes[i];
-        return make_flonum(vm->m_heap, datum.ieee_single);        
+        return make_flonum(vm->m_heap, datum.ieee_single);
     } else {
         for (int i = 0; i < 4; i++) datum.bytes[i] = param.bytes[4 - 1 - i];
-        return make_flonum(vm->m_heap, datum.ieee_single);        
+        return make_flonum(vm->m_heap, datum.ieee_single);
     }
 }
 
@@ -871,10 +871,10 @@ subr_bytevector_ieee_double_ref(VM* vm, int argc, scm_obj_t argv[])
     if (param.violation) return scm_undef;
     if (param.little == ARCH_LITTLE_ENDIAN) {
         for (int i = 0; i < 8; i++) datum.bytes[i] = param.bytes[i];
-        return make_flonum(vm->m_heap, datum.ieee_double);        
+        return make_flonum(vm->m_heap, datum.ieee_double);
     } else {
         for (int i = 0; i < 8; i++) datum.bytes[i] = param.bytes[8 - 1 - i];
-        return make_flonum(vm->m_heap, datum.ieee_double);        
+        return make_flonum(vm->m_heap, datum.ieee_double);
     }
 }
 
@@ -1360,6 +1360,24 @@ c_s64_ref(const char* subr, VM* vm, int argc, scm_obj_t argv[])
 }
 
 static inline scm_obj_t
+c_n8_set(const char* subr, VM* vm, int argc, scm_obj_t argv[])
+{
+    c_mutator_param_t param(1, subr, vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (FIXNUMP(argv[2])) {
+        intptr_t n8 = FIXNUM(argv[2]);
+        if (n8 >= INT8_MIN && n8 <= UINT16_MAX) {
+            *(uint8_t*)param.bytes = n8;
+            return scm_unspecified;
+        }
+        invalid_argument_violation(vm, subr, "value out of range,", argv[2], 2, argc, argv);
+        return scm_undef;
+    }
+    wrong_type_argument_violation(vm, subr, 2, "exact integer", argv[2], argc, argv);
+    return scm_undef;
+}
+
+static inline scm_obj_t
 c_n16_set(const char* subr, VM* vm, int argc, scm_obj_t argv[])
 {
     c_mutator_param_t param(2, subr, vm, argc, argv);
@@ -1414,7 +1432,7 @@ c_n64_set(const char* subr, VM* vm, int argc, scm_obj_t argv[])
             if (exact_integer_to_int64(argv[2], &s64)) {
                 *(uint64_t*)param.bytes = (uint64_t)s64;
                 return scm_unspecified;
-            }                
+            }
         } else {
             uint64_t u64;
             if (exact_integer_to_uint64(argv[2], &u64)) {
@@ -1525,6 +1543,34 @@ subr_bytevector_c_intptr_set(VM* vm, int argc, scm_obj_t argv[])
     return c_n64_set("bytevector-c-void*-set!", vm, argc, argv);
 }
 
+// bytevector-c-int8-set!
+scm_obj_t
+subr_bytevector_c_int8_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    return c_n8_set("bytevector-c-int8-set!", vm, argc, argv);
+}
+
+// bytevector-c-int16-set!
+scm_obj_t
+subr_bytevector_c_int16_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    return c_n16_set("bytevector-c-int16-set!", vm, argc, argv);
+}
+
+// bytevector-c-int32-set!
+scm_obj_t
+subr_bytevector_c_int32_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    return c_n32_set("bytevector-c-int32-set!", vm, argc, argv);
+}
+
+// bytevector-c-int64-set!
+scm_obj_t
+subr_bytevector_c_int64_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    return c_n64_set("bytevector-c-int64-set!", vm, argc, argv);
+}
+
 void init_subr_bvector(object_heap_t* heap)
 {
 #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
@@ -1589,4 +1635,9 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector-c-long-set!", subr_bytevector_c_long_set);
     DEFSUBR("bytevector-c-void*-ref", subr_bytevector_c_intptr_ref);
     DEFSUBR("bytevector-c-void*-set!", subr_bytevector_c_intptr_set);
+    DEFSUBR("bytevector-c-short-set!", subr_bytevector_c_short_set);
+    DEFSUBR("bytevector-c-int8-set!", subr_bytevector_c_int8_set);
+    DEFSUBR("bytevector-c-int16-set!", subr_bytevector_c_int16_set);
+    DEFSUBR("bytevector-c-int32-set!", subr_bytevector_c_int32_set);
+    DEFSUBR("bytevector-c-int64-set!", subr_bytevector_c_int64_set);
 }

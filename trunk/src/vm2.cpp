@@ -17,7 +17,7 @@ scm_obj_t
 VM::prebind_literal(scm_obj_t datum)
 {
     if (PAIRP(datum)) {
-        if (m_heap->is_immutable_pair(datum)) return datum;        
+        if (m_heap->is_immutable_pair(datum)) return datum;
         scm_obj_t car = prebind_literal(CAR(datum));
         scm_obj_t cdr = prebind_literal(CDR(datum));
         return make_immutable_pair(m_heap, car, cdr);

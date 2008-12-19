@@ -10,12 +10,30 @@
           alignof:long
           alignof:short
           alignof:void*
+          bytevector-c-char-ref
+          bytevector-c-char-set!
+          bytevector-c-double-ref
+          bytevector-c-double-set!
+          bytevector-c-float-ref
+          bytevector-c-float-set!
           bytevector-c-int-ref
           bytevector-c-int-set!
+          bytevector-c-int16-ref
+          bytevector-c-int16-set!
+          bytevector-c-int32-ref
+          bytevector-c-int32-set!
+          bytevector-c-int64-ref
+          bytevector-c-int64-set!
+          bytevector-c-int8-ref
+          bytevector-c-int8-set!
           bytevector-c-long-ref
           bytevector-c-long-set!
           bytevector-c-short-ref
           bytevector-c-short-set!
+          bytevector-c-uint16-ref
+          bytevector-c-uint32-ref
+          bytevector-c-uint64-ref
+          bytevector-c-uint8-ref
           bytevector-c-unsigned-int-ref
           bytevector-c-unsigned-long-ref
           bytevector-c-unsigned-short-ref
@@ -25,6 +43,9 @@
           c-function
           c-function/errno
           c-function/lasterror
+          define-c-struct-methods
+          define-c-struct-type
+          define-c-typedef
           load-shared-object
           make-bytevector-mapping
           on-darwin

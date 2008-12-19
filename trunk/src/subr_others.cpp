@@ -2925,15 +2925,15 @@ subr_vector_copy(VM* vm, int argc, scm_obj_t argv[])
                     start = FIXNUM(argv[1]);
                     if (start < 0) {
                         wrong_type_argument_violation(vm, "vector-copy", 1, "exact non-negative integer", argv[1], argc, argv);
-                        return scm_undef;        
+                        return scm_undef;
                     }
                 } else {
                     if (exact_non_negative_integer_pred(argv[1])) {
                         invalid_argument_violation(vm, "vector-copy", "index out of bounds,", argv[1], 1, argc, argv);
-                        return scm_undef;        
+                        return scm_undef;
                     } else {
                         wrong_type_argument_violation(vm, "vector-copy", 1, "exact non-negative integer", argv[1], argc, argv);
-                        return scm_undef;        
+                        return scm_undef;
                     }
                 }
                 if (argc == 3) {
@@ -2941,15 +2941,15 @@ subr_vector_copy(VM* vm, int argc, scm_obj_t argv[])
                         end = FIXNUM(argv[2]);
                         if (end < 0) {
                             wrong_type_argument_violation(vm, "vector-copy", 2, "exact non-negative integer", argv[2], argc, argv);
-                            return scm_undef;        
+                            return scm_undef;
                         }
                     } else {
                         if (exact_non_negative_integer_pred(argv[2])) {
                             invalid_argument_violation(vm, "vector-copy", "index out of bounds,", argv[2], 2, argc, argv);
-                            return scm_undef;        
+                            return scm_undef;
                         } else {
                             wrong_type_argument_violation(vm, "vector-copy", 2, "exact non-negative integer", argv[2], argc, argv);
-                            return scm_undef;        
+                            return scm_undef;
                         }
                     }
                 }
@@ -2973,7 +2973,7 @@ subr_vector_copy(VM* vm, int argc, scm_obj_t argv[])
         }
         wrong_type_argument_violation(vm, "vector-copy", 0, "vector", argv[0], argc, argv);
         return scm_undef;
-    }    
+    }
     wrong_number_of_arguments_violation(vm, "vector-copy", 1, 3, argc, argv);
     return scm_undef;
 }

@@ -131,7 +131,7 @@
                   .cons*
                   .memq .memv .member
                   .assq .assv .assoc
-                  .list-head .list-copy 
+                  .list-head .list-copy
                   .circular-list? .cyclic-object?
                   .vector-copy
                   .datum->syntax
@@ -154,7 +154,7 @@
                   .current-library-suffix
                   .current-primitive-prefix
                   .current-rename-delimiter
-                  
+
                   .native-endianness
                   .bytevector?
                   .make-bytevector
@@ -277,7 +277,7 @@
     (lambda (x)
       (or (uninterned-symbol? x)
           (and (symbol-contains x (current-library-suffix)) #t))))
-  
+
   #;(define variable-private?
     (lambda (x)
       (and (or (symbol-contains x (current-rename-delimiter))
@@ -1158,12 +1158,19 @@
                                (exists (lambda (b) (not (core-hashtable-contains? ht-variable-refc (car b))))
                                        (core-hashtable->alist ht-variable-binding)))))
                  (let ((top-level-defs (cons 'begin
-                                             (map (lambda (e)
+                                             #;(map (lambda (e)
                                                     (let ((lhs (car e)) (rhs (cdr e)))
                                                       (if (symbol? lhs)
                                                           `(define ,lhs ,rhs)
                                                           `(define ,rhs ,lhs))))
-                                                  (core-hashtable->alist ht-lift-table)))))
+                                                  (core-hashtable->alist ht-lift-table))
+                                             (filter values (map (lambda (e)
+                                                                   (let ((lhs (car e)) (rhs (cdr e)))
+                                                                     (if (symbol? lhs)
+                                                                         (and (core-hashtable-contains? ht-variable-refc lhs)
+                                                                              `(define ,lhs ,rhs))
+                                                                         `(define ,rhs ,lhs))))
+                                                                 (core-hashtable->alist ht-lift-table))))))
                    (let ((form (cons 'begin
                                      (map (lambda (e)
                                             (let loop ((e e))

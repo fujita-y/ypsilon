@@ -14,7 +14,6 @@
 #if _MSC_VER
   #define DECLSPEC(x)               __declspec(x)
   #define ATTRIBUTE(x)
-  #define ALIGNOF(x)                (sizeof(x) > __alignof(x) ? __alignof(x) : sizeof(x))
   #define ARCH_BIG_ENDIAN           0
   #define ARCH_LITTLE_ENDIAN        1
   #define ARCH_IA32                 1
@@ -25,7 +24,6 @@
 #else
   #define DECLSPEC(x)
   #define ATTRIBUTE(x)              __attribute__ ((x))
-  #define ALIGNOF(x)                __alignof__(x)
   #if defined(__LITTLE_ENDIAN__)
     #define ARCH_LITTLE_ENDIAN      1
     #define ARCH_BIG_ENDIAN         0
