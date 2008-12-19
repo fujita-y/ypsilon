@@ -152,7 +152,8 @@
          (uint8_t  1 ,alignof:int8_t  bytevector-c-uint8-ref  bytevector-c-int8-set!)
          (uint16_t 2 ,alignof:int16_t bytevector-c-uint16-ref bytevector-c-int16-set!)
          (uint32_t 4 ,alignof:int32_t bytevector-c-uint32-ref bytevector-c-int32-set!)
-         (uint64_t 8 ,alignof:int64_t bytevector-c-uint64-ref bytevector-c-int64-set!)         (unsigned-short ,sizeof:short ,alignof:short bytevector-c-unsigned-short-ref bytevector-c-short-set!)
+         (uint64_t 8 ,alignof:int64_t bytevector-c-uint64-ref bytevector-c-int64-set!)
+         (unsigned-short ,sizeof:short ,alignof:short bytevector-c-unsigned-short-ref bytevector-c-short-set!)
          (unsigned-int   ,sizeof:int   ,alignof:int   bytevector-c-unsigned-int-ref   bytevector-c-int-set!)
          (unsigned-long  ,sizeof:long  ,alignof:long  bytevector-c-unsigned-long-ref  bytevector-c-long-set!)))
       (hashtable-copy ht)))
@@ -187,7 +188,8 @@
             (lambda (bv val)
               (#,(datum->syntax stx mutator) bv #,index val))))))
 
-  #;(define make-compound-accessor/mutator
+  #;
+  (define make-compound-accessor/mutator
     (lambda (stx struct-name field-name index size make copy!)
       (cond ((eq? field-name '_) #'(begin))
             (else
