@@ -152,7 +152,6 @@
 (define make-shield-id-table
   (lambda (lst)
     (let ((visited (make-core-hashtable)) (ids (make-core-hashtable)) (deno (make-unbound)))
-      (for-each (lambda (id) (core-hashtable-set! ids id deno)) coreform-primitives)
       (let loop ((lst lst))
         (cond ((symbol? lst)
                (core-hashtable-set! ids lst deno))
