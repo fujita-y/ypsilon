@@ -1212,7 +1212,11 @@
 
 (SECTION 6 4 "exp")
 (test-equal (exp 0.0)  1.0)
-(test-equal (exp 1.0)  2.718281828459045) ;(test-equal (exp 1.0)  2.7182818284590455)
+; exclude (exp 1.0) since it depend on gcc version
+;  (exp 1.0) => 2.718281828459045  on Ubuntu8 x86_64 default gcc
+;  (exp 1.0) => 2.7182818284590455 on FreeBSD7 x86_64 default gcc
+; (exp 2.0) added 081221
+(test-equal (exp 2.0) 7.38905609893065)
 (test-equal (exp -.5)  0.6065306597126334)
 
 (SECTION 6 4 "log")
