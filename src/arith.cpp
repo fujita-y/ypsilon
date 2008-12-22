@@ -4878,7 +4878,7 @@ parse_fraction:
     while ((c = *p++) != 0) {
         if (c == '#') return p - 1;
         if ((c >= '0') & (c <= '9')) {
-            if (digit_count + fraction_count < P_DIGITS) {
+            if (digit_count < P_DIGITS) {
                 digit_count++;
                 digit = c - '0';
                 value = arith_add(heap, arith_mul(heap, value, MAKEFIXNUM(10)), MAKEFIXNUM(digit));
