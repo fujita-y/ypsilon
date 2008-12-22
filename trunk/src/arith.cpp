@@ -29,8 +29,8 @@
 #define BN_QUANTUM      32
 #define BN_STACK_LIMIT  1024
 
-#define P_DIGITS        22
-#define P_EXP10         22      // (floor (/ (* 53 (log 2)) (log 5)))
+#define P_DIGITS        308     // (floor (log (* (- 2 (expt 2 -52)) (expt 2 1023)) 10))
+#define P_EXP10         22      // (floor (* 53 (log 2 5)))
 
 #ifndef NDEBUG
   #include "vm.h"
@@ -4878,10 +4878,12 @@ parse_fraction:
     while ((c = *p++) != 0) {
         if (c == '#') return p - 1;
         if ((c >= '0') & (c <= '9')) {
-            digit_count++;
-            digit = c - '0';
-            value = arith_add(heap, arith_mul(heap, value, MAKEFIXNUM(10)), MAKEFIXNUM(digit));
-            fraction_count++;
+            if (digit_count + fraction_count < P_DIGITS) {
+                digit_count++;
+                digit = c - '0';
+                value = arith_add(heap, arith_mul(heap, value, MAKEFIXNUM(10)), MAKEFIXNUM(digit));
+                fraction_count++;
+            }
             continue;
         }
         if (strchr("esfdlESFDL", c)) goto parse_exponent;
