@@ -1,5 +1,9 @@
 #summary changes in latest version
 
+version 0.9.6-update3:
+
+  * Added supports for Windows XP, Linux 64bit, FreeBSD 32bit/64bit.
+
 version 0.9.6-update2:
 
   * REPL improved its hygiene and exception handling.
