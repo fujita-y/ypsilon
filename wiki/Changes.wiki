@@ -3,6 +3,12 @@
 version 0.9.6-update3:
 
   * Added supports for Windows XP, Linux 64bit, FreeBSD 32bit/64bit.
+  * Added immutable literals
+  * Added (srfi :9) (srfi :13) (srfi :14) (srfi :19) (srfi :27) (srfi :38) (srfi :97) (srfi :98) (srfi :27) 
+  * Added (slib format)
+  * Added (ypsilon concurrent) (ypsilon socket) (ypsilon c-types)
+  * Added (tidbits generator) (tidbits remote-repl)
+  * Enhance ffi and others (Issue [http://code.google.com/p/ypsilon/issues/detail?id=57&can=1 57] [http://code.google.com/p/ypsilon/issues/detail?id=58&can=1 58] [http://code.google.com/p/ypsilon/issues/detail?id=59&can=1 59] [http://code.google.com/p/ypsilon/issues/detail?id=60&can=1 60])
 
 version 0.9.6-update2:
 
