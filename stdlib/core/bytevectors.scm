@@ -10,7 +10,7 @@
           bytevector-fill! bytevector-copy! bytevector-copy
           bytevector-u8-ref bytevector-s8-ref bytevector-u8-set! bytevector-s8-set!
           bytevector->u8-list u8-list->bytevector
-          bytevector-uint-ref bytevector-sint-ref bytevector-uint-set! bytevector-sint-set! 
+          bytevector-uint-ref bytevector-sint-ref bytevector-uint-set! bytevector-sint-set!
           bytevector->uint-list bytevector->sint-list
           uint-list->bytevector sint-list->bytevector
           bytevector-u16-ref bytevector-s16-ref bytevector-u16-native-ref bytevector-s16-native-ref
@@ -25,7 +25,7 @@
           bytevector-ieee-double-set! bytevector-ieee-double-native-set!)
 
   (import (core primitives) (core arithmetic))
-  
+
   (define-syntax div256
     (syntax-rules ()
       ((_ x) (bitwise-arithmetic-shift x -8))))
@@ -33,13 +33,13 @@
   (define-syntax mod256
     (syntax-rules ()
       ((_ x) (bitwise-and x 255))))
-  
+
   (define-syntax endianness
     (syntax-rules (big little native)
       ((_ big) 'big)
       ((_ little) 'little)
-      ((_ native) (native-endianness)))) 
-  
+      ((_ native) (native-endianness))))
+
   (define bytevector-uint-ref
     (lambda (bv index endien size)
       (cond ((eq? endien (endianness big))
@@ -57,7 +57,7 @@
              (assertion-violation 'bytevector-uint-ref
                                   (format "expected endianness, but got ~r, as argument 3" endien)
                                   (list bv index endien size))))))
-  
+
   (define bytevector-sint-ref
     (lambda (bv index endien size)
       (cond ((eq? endien (endianness big))
@@ -105,7 +105,7 @@
 
   (define bytevector-sint-set!
     (lambda (bv index val endien size)
-      (let* ((p-bound (expt 2 (- (* size 8) 1))) 
+      (let* ((p-bound (expt 2 (- (* size 8) 1)))
              (n-bound (- (+ p-bound 1))))
         (if (< n-bound val p-bound)
             (if (> val 0)
@@ -137,7 +137,7 @@
                 (assertion-violation 'bytevector->sint-list
                                      (format "expected appropriate element size as argument 3, but got ~r" size)
                                      (list bv endien size)))))))
-  
+
   (define uint-list->bytevector
     (lambda (lst endien size)
       (let ((bv (make-bytevector (* size (length lst)))))
@@ -155,9 +155,5 @@
                 (else
                  (bytevector-sint-set! bv i (car lst) endien size)
                  (loop (+ i size) (cdr lst))))))))
-  
+
   ) ;[end]
-
-
-
-

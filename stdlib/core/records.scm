@@ -30,7 +30,7 @@
           (core lists)
           (core syntax-case)
           (core destructuring))
-  
+
   (define-syntax define-record-type
     (lambda (x)
       (let ((stash (make-core-hashtable)))
@@ -165,6 +165,5 @@
     (lambda (x)
       (syntax-case x ()
         ((_ name) (identifier? #'name) (syntax (record-type-rcd name))))))
-  
-  ) ;[end]
 
+  ) ;[end]

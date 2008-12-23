@@ -318,7 +318,3 @@
   (define drop list-tail)
 
   ) ;[end]
-
-
-
-

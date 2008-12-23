@@ -1,6 +1,4 @@
-
 (library (rnrs base (6))
-
   (export define define-syntax
           quote lambda if set! cond case and or
           let let* letrec letrec* let-values let*-values
@@ -51,6 +49,4 @@
           error assertion-violation
           apply call-with-current-continuation call/cc
           values call-with-values dynamic-wind)
-
   (import (core intrinsics)))
-

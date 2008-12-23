@@ -1,6 +1,4 @@
-
 (library (rnrs arithmetic bitwise (6))
-  
   (export bitwise-not
           bitwise-and
           bitwise-ior
@@ -18,5 +16,4 @@
           bitwise-arithmetic-shift-right
           bitwise-rotate-bit-field
           bitwise-reverse-bit-field)
-  
   (import (core arithmetic)))

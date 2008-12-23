@@ -2,7 +2,7 @@
 ;;; Ypsilon Scheme System
 ;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
-  
+
 (library (core hashtables)
 
   (export make-eq-hashtable
@@ -29,11 +29,11 @@
           (rename (core-hashtable->alist hashtable->alist)))
 
   (import (core intrinsics)
-          (only (core primitives) 
-                make-core-hashtable 
-                make-shared-core-hashtable 
-                make-weak-core-hashtable 
-                make-weak-shared-core-hashtable 
+          (only (core primitives)
+                make-core-hashtable
+                make-shared-core-hashtable
+                make-weak-core-hashtable
+                make-weak-shared-core-hashtable
                 weak-core-hashtable?
                 core-hashtable?
                 core-hashtable-size
@@ -104,7 +104,7 @@
                    => (lambda (alist)
                         (and (assp equiv? alist) #t)))
                   (else #f)))))
-      
+
       (define generic-hashtable-copy
         (lambda (ht-custom . opt)
           (let-optionals opt ((new-mutable? #f))
@@ -139,7 +139,7 @@
       (define generic-hashtable-hash-function (lambda (ht-custom) hash-function))
 
       (define generic-hashtable-mutable? (lambda (ht-custom) mutable?))
-      
+
       (make-core-hashtable 'generic
                            (vector 'hashtable-handler
                                    hash-function
@@ -179,7 +179,7 @@
     (lambda opt
       (let-optionals opt ((k 0))
         (make-shared-core-hashtable 'string=? k))))
-  
+
   (define hashtable-update!
     (lambda (ht key proc default)
       (or (core-hashtable-mutable? ht)
@@ -189,15 +189,15 @@
   (define hashtable-keys
     (lambda (ht)
       (list->vector (map car (core-hashtable->alist ht)))))
-  
+
   (define hashtable-entries
     (lambda (ht)
       (let ((lst (core-hashtable->alist ht)))
         (values (list->vector (map car lst))
                 (list->vector (map cdr lst))))))
-  
+
   (define string-ci-hash
     (lambda (s)
       (string-hash (string-foldcase s))))
-  
+
  ) ;[end]

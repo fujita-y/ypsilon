@@ -11,16 +11,16 @@
 #include "heap.h"
 
 #if USE_DIGIT32
-  #define DIGIT_BIT                  32
-  #define DIGIT_BIT_MASK             UINT32_MAX
-  #define DIGIT_BIT_SHIFT_COUNT      5
+  #define DIGIT_BIT                 32
+  #define DIGIT_BIT_MASK            UINT32_MAX
+  #define DIGIT_BIT_SHIFT_COUNT     5
   typedef uint64_t                  digit2x_t;
   typedef int32_t                   signed_digit_t;
   typedef int64_t                   signed_digit2x_t;
 #else
-  #define DIGIT_BIT                  64
-  #define DIGIT_BIT_MASK             UINT64_MAX
-  #define DIGIT_BIT_SHIFT_COUNT      6
+  #define DIGIT_BIT                 64
+  #define DIGIT_BIT_MASK            UINT64_MAX
+  #define DIGIT_BIT_SHIFT_COUNT     6
   typedef uint128_t                 digit2x_t;
   typedef int64_t                   signed_digit_t;
   typedef int128_t                  signed_digit2x_t;
@@ -29,8 +29,8 @@
 #define BN_QUANTUM      32
 #define BN_STACK_LIMIT  1024
 
-#define P_DIGITS        308     // (floor (log (* (- 2 (expt 2 -52)) (expt 2 1023)) 10))
-#define P_EXP10         22      // (floor (* 53 (log 2 5)))
+#define P_DIGITS        308         // (floor (log (* (- 2 (expt 2 -52)) (expt 2 1023)) 10))
+#define P_EXP10         22          // (floor (* 53 (log 2 5)))
 
 #ifndef NDEBUG
   #include "vm.h"
@@ -42,15 +42,15 @@
 
 #define BN_TEMPORARY(NAME) scm_bignum_rec_t NAME
 
-#define BN_ALLOC(VAR, COUNT)                                                        \
-            do {                                                                    \
-                if (sizeof(digit_t) * (COUNT) < BN_STACK_LIMIT) {                   \
-                    (VAR).hdr = scm_hdr_bignum;                                     \
-                    (VAR).elts = (digit_t *)alloca(sizeof(digit_t) * (COUNT));     \
-                    bn_set_count(&(VAR), (COUNT));                                  \
-                } else {                                                            \
-                    (VAR) = *(make_bignum(heap, COUNT));                            \
-                }                                                                   \
+#define BN_ALLOC(VAR, COUNT)                                                    \
+            do {                                                                \
+                if (sizeof(digit_t) * (COUNT) < BN_STACK_LIMIT) {               \
+                    (VAR).hdr = scm_hdr_bignum;                                 \
+                    (VAR).elts = (digit_t *)alloca(sizeof(digit_t) * (COUNT));  \
+                    bn_set_count(&(VAR), (COUNT));                              \
+                } else {                                                        \
+                    (VAR) = *(make_bignum(heap, COUNT));                        \
+                }                                                               \
             } while(0);
 
 #define BN_ALLOC_2SC(NEW, ORG)                                                          \
@@ -97,8 +97,8 @@ static const int64_t iexpt_2n52 = 0x10000000000000LL; // 2^(53-1)
 static const int64_t iexpt_2n53 = 0x20000000000000LL; // 2^53
 
 struct bn_div_ans_t {
-    scm_obj_t   quotient;       // #t: alloc new and set, #f: no need, scm_bignum_t: overwrite
-    scm_obj_t   remainder;      // #t: alloc new and set, #f: no need, scm_bignum_t: overwrite
+    scm_obj_t   quotient;   // #t: alloc new and set, #f: no need, scm_bignum_t: overwrite
+    scm_obj_t   remainder;  // #t: alloc new and set, #f: no need, scm_bignum_t: overwrite
 };
 
 static bool
@@ -156,9 +156,9 @@ bn_norm(scm_bignum_t bn)
 static scm_obj_t
 bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
 {
-    if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
     assert(bn_norm_pred(bn));
     assert(bn_get_sign(bn) != 0);
+    if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
     if (bn_get_count(bn) == 1) {
         signed_digit2x_t n = bn->elts[0];
         if (bn_get_sign(bn) < 0) n = -n;
@@ -170,8 +170,8 @@ bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
 static scm_obj_t
 bn_demote(scm_bignum_t bn)
 {
-    if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
     assert(bn_get_sign(bn) != 0);
+    if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
     if (bn_get_count(bn) == 1) {
         signed_digit2x_t n = bn->elts[0];
         if (bn_get_sign(bn) < 0) n = -n;
@@ -303,7 +303,7 @@ bn_mul(scm_bignum_t ans, scm_bignum_t lhs, scm_bignum_t rhs)
 static void
 bn_mul_add_digit(scm_bignum_t ans, scm_bignum_t lhs, digit_t rhs, digit_t addend)
 {
-    // note: this func do not clear ans->elts[] if (ans == lhs)
+    // note: this func do not clear ans->elts[...] if (ans == lhs)
     int lhs_count = bn_get_count(lhs);
     assert(bn_get_count(ans) > lhs_count);
     digit2x_t acc = addend;
@@ -1823,13 +1823,13 @@ oprtr_expt(object_heap_t* heap, scm_obj_t lhs, scm_fixnum_t rhs)
     if (n == 0) return MAKEFIXNUM(1);
     if (n == 1) return lhs;
     if (n < 0) return arith_inverse(heap, oprtr_expt(heap, lhs, MAKEFIXNUM(-n)));
-    if (!COMPLEXP(lhs) && n_negative_pred(lhs)) { // new
+    if (!COMPLEXP(lhs) && n_negative_pred(lhs)) {
         scm_obj_t ans = oprtr_expt(heap, arith_negate(heap, lhs), rhs);
         if (n & 1) return arith_negate(heap, ans);
         return ans;
     }
-    if (lhs == MAKEFIXNUM(0)) return lhs; // new
-    if (lhs == MAKEFIXNUM(1)) return lhs; // new
+    if (lhs == MAKEFIXNUM(0)) return lhs;
+    if (lhs == MAKEFIXNUM(1)) return lhs;
     if (lhs == MAKEFIXNUM(2)) {
         if (n + 1 <= FIXNUM_BITS - 1) return MAKEFIXNUM((uintptr_t)1 << n);
         int count = ((n + 1) + (DIGIT_BIT - 1)) / DIGIT_BIT;
@@ -2719,7 +2719,6 @@ arith_logash(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs)
         return oprtr_logash(heap, bn, shift);
     }
     fatal("%s:%u wrong datum type", __FILE__, __LINE__);
-
 }
 
 scm_obj_t
@@ -4225,10 +4224,17 @@ cnvt_bignum_to_string(object_heap_t* heap, scm_bignum_t bn, int radix)
     int workpad_count = bn_get_count(bn);
     if (workpad_count) {
         // todo: improve estimation for small bignum
+#if USE_DIGIT32
         if (workpad_count < 4) {
             char buf[128];
             if (small_bignum_to_string(heap, bn, radix, buf, sizeof(buf))) return make_string(heap, buf);
         }
+#else
+        if (workpad_count < 2) {
+            char buf[128];
+            if (small_bignum_to_string(heap, bn, radix, buf, sizeof(buf))) return make_string(heap, buf);
+        }
+#endif
         scm_port_t port = make_bytevector_port(heap, make_symbol(heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
         scoped_lock lock(port->lock);
         BN_TEMPORARY(workpad);
@@ -5202,7 +5208,6 @@ parse_number(object_heap_t* heap, const char* s, int prefix, int radix)
                 else return make_complex(heap, MAKEFIXNUM(0), MAKEFIXNUM(-1));  // -i
             }
             // -inf.0 or error
-            // return scm_false;
         }
         negative = true;
         nosign = false;

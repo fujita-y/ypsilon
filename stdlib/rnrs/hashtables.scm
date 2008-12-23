@@ -1,6 +1,4 @@
-
 (library (rnrs hashtables (6))
-
   (export make-eq-hashtable
           make-eqv-hashtable
           make-hashtable
@@ -18,9 +16,8 @@
           hashtable-equivalence-function
           hashtable-hash-function
           hashtable-mutable?
-          equal-hash 
-          string-hash 
-          string-ci-hash 
+          equal-hash
+          string-hash
+          string-ci-hash
           symbol-hash)
-
   (import (core hashtables)))

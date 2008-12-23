@@ -66,5 +66,3 @@
                            (define-syntax ?setter-name ?setter-rules) ...))))))))))
 
   ) ;[end]
-
-

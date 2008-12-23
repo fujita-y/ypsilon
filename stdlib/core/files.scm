@@ -26,5 +26,3 @@
           (core optargs))
 
   ) ;[end]
-
-

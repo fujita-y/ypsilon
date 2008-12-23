@@ -1,10 +1,7 @@
-
 (library (rnrs r5rs (6))
-
   (export exact->inexact inexact->exact
           quotient remainder modulo force delay
           null-environment scheme-report-environment)
-
   (import (core primitives) (core r5rs))
 
   (define null-environment
@@ -36,7 +33,7 @@
                           abs gcd lcm numerator denominator
                           floor ceiling truncate round rationalize
                           exp log sin cos tan asin acos atan sqrt expt
-                          make-rectangular make-polar real-part imag-part magnitude angle 
+                          make-rectangular make-polar real-part imag-part magnitude angle
                           number->string string->number
                           not boolean?
                           pair? cons car cdr caar cadr cdar cddr

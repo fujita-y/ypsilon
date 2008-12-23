@@ -29,4 +29,3 @@
         (_ (syntax-violation 'check-argument "expected 4 or 5 clauses (<position> who arg expect test)" x)))))
 
   ) ;[end]
-
