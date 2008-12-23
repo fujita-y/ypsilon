@@ -1,6 +1,4 @@
-
 (library (rnrs records inspection (6))
-  
   (export record?
           record-rtd
           record-type-name
@@ -11,5 +9,4 @@
           record-type-opaque?
           record-type-field-names
           record-field-mutable?)
-  
   (import (core records)))

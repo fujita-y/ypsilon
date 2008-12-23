@@ -29,10 +29,10 @@
     (lambda (x)
       (syntax-violation (and (pair? x) (car x)) "misplaced auxiliary syntactic keyword" x)))
 
-  (define-syntax datum 
+  (define-syntax datum
     (syntax-rules ()
       ((_ x) (syntax->datum (syntax x)))))
-  
+
   (define-syntax with-syntax
     (lambda (x)
       (syntax-case x ()
@@ -46,9 +46,9 @@
                            '((p e0) ...)))))
              (syntax (syntax-case (list e0 ...) ()
                        ((p ...) (let () e1 e2 ...)))))))))
-  
+
   ;; quasisyntax from
-  
+
   ;;; Portable implementation of syntax-case
   ;;; Extracted from Chez Scheme Version 7.3 (Feb 26, 2007)
   ;;; Authors: R. Kent Dybvig, Oscar Waddell, Bob Hieb, Carl Bruggeman

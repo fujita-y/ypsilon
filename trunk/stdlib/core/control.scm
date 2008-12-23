@@ -12,24 +12,24 @@
           (only (core syntax-case)
                 syntax-case syntax
                 datum->syntax))
-  
+
   (define-syntax syntax-length
     (lambda (x)
       (syntax-case x ()
         ((_ (lst ...)) (datum->syntax #'k (length (syntax (lst ...))))))))
-    
+
   (define-syntax when
     (syntax-rules ()
       ((when test result1 result2 ...)
        (if test
            (begin result1 result2 ...)))))
-    
+
   (define-syntax unless
     (syntax-rules ()
       ((unless test result1 result2 ...)
        (if (not test)
            (begin result1 result2 ...)))))
-   
+
   (define-syntax case-lambda-help
     (syntax-rules ()
       ((_ args n)
@@ -53,6 +53,6 @@
        (lambda args
          (let ((n (length args)))
            (case-lambda-help args n
-                             (fmls b1 b2 ...) ...)))))) 
-  
+                             (fmls b1 b2 ...) ...))))))
+
   ) ;[end]

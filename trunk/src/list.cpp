@@ -105,16 +105,16 @@ struct ancestor_t {
     scm_obj_t*  stack;
     int         capacity;
     scm_obj_t   buf[1024];
-    
-    ancestor_t() : stack(NULL) { 
+
+    ancestor_t() : stack(NULL) {
         stack = buf;
         capacity = array_sizeof(buf);
     }
-    
+
     ~ancestor_t() {
         if (stack != buf) free(stack);
-    }    
-    
+    }
+
     scm_obj_t& operator[](int depth) {
         if (depth >= capacity) {
             capacity += capacity;
@@ -122,19 +122,19 @@ struct ancestor_t {
             if (stack == buf) {
                 stack = (scm_obj_t*)malloc(sizeof(scm_obj_t) * capacity);
                 memcpy(stack, buf, sizeof(buf));
-            } else {            
+            } else {
                 stack = (scm_obj_t*)realloc(stack, sizeof(scm_obj_t) * capacity);
                 if (stack == NULL) fatal("%s:%u memory overflow", __FILE__, __LINE__);
             }
         }
         return stack[depth];
     }
-    
+
     bool contains(scm_obj_t obj, int depth) {
         for (int i = 0; i < depth; i++) {
             if (stack[i] == obj) return true;
         }
-        return false;        
+        return false;
     }
 };
 
@@ -194,68 +194,3 @@ cyclic_objectp(object_heap_t* heap, scm_obj_t lst)
     ancestor_t ancestor;
     return cyclic_object_test(lst, ancestor, 0);
 }
-
-/* before optimize
-
-static bool
-cyclic_object_test(scm_obj_t lst, scm_obj_t ancestor, object_heap_t* heap)
-{
-
-top:
-    if (CELLP(lst)) {
-        scm_obj_t p = ancestor;
-        while (PAIRP(p)) {
-            if (CAR(p) == lst) return true;
-            p = CDR(p);
-            continue;
-        }
-        if (PAIRP(lst)) {
-            scm_obj_t type = classify_list(CAR(lst));
-            if (type == scm_true) return true;
-            if (type == scm_nil) {
-                ancestor = make_pair(heap, lst, ancestor);
-                if (CDR(lst) == scm_nil) {
-                    lst = CAR(lst);
-                    goto top;
-                }
-                if (cyclic_object_test(CAR(lst), ancestor, heap)) return true;
-            }
-            lst = CDR(lst);
-            goto top;
-        }
-        if (VECTORP(lst)) {
-            scm_vector_t vector = (scm_vector_t)lst;
-            int n = vector->count;
-            if (n == 0) return false;
-            ancestor = make_pair(heap, lst, ancestor);
-            for (int i = 0; i < n - 1; i++) {
-                if (cyclic_object_test(vector->elts[i], ancestor, heap)) return true;
-            }
-            lst = vector->elts[n - 1];
-            goto top;
-        }
-        if (TUPLEP(lst)) {
-            scm_tuple_t tuple = (scm_tuple_t)lst;
-            int n = HDR_TUPLE_COUNT(tuple->hdr);
-            if (n == 0) return false;
-            ancestor = make_pair(heap, lst, ancestor);
-            for (int i = 0; i < n - 1; i++) {
-                if (cyclic_object_test(tuple->elts[i], ancestor, heap)) return true;
-            }
-            lst = tuple->elts[n - 1];
-            goto top;
-        }
-    }
-    return false;
-}
-
-bool
-cyclic_objectp(object_heap_t* heap, scm_obj_t lst)
-{
-    scm_obj_t type = classify_list(lst);
-    if (type == scm_true) return true;
-    if (type == scm_false) return false;
-    return cyclic_object_test(lst, scm_nil, heap);
-}
-
-*/

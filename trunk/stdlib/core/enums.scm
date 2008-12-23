@@ -159,4 +159,3 @@
                 (syntax (constructor '(symbol3 (... ...))))))))))))
 
   ) ;[end]
-

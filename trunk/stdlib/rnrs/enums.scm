@@ -1,6 +1,4 @@
-
 (library (rnrs enums (6))
-
   (export make-enumeration
           enum-set-universe
           enum-set-indexer
@@ -15,6 +13,4 @@
           enum-set-complement
           enum-set-projection
           define-enumeration)
-
   (import (core enums)))
-

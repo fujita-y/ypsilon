@@ -43,10 +43,5 @@
        (apply (lambda (var ...) body1 body2 ...)
               (let ((argc (length args)))
                 (let-optionals-aux argc args () (var ...) (def ...)))))))
-  
-  ) ;[end]
-      
 
-                 
-        
-        
+  ) ;[end]

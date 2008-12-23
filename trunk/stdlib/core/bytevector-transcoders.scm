@@ -14,7 +14,7 @@
           (core io)
           (core primitives)
           (core bytevectors))
-  
+
   (define string->utf32
     (lambda (str . opt)
       (let-optionals opt ((endian (endianness big)))
@@ -151,6 +151,5 @@
                     (transcode-utf16->string 2 (- (bytevector-length bvect) 2) bvect bom)))
               (else
                (transcode-utf16->string 0 (bytevector-length bvect) bvect endian))))))
-  
-  ) ;[end]
 
+  ) ;[end]

@@ -1,6 +1,4 @@
-
 (library (rnrs bytevectors (6))
-
   (export endianness native-endianness
           bytevector? make-bytevector bytevector-length bytevector=?
           bytevector-fill! bytevector-copy! bytevector-copy
@@ -23,6 +21,5 @@
           string->utf8 utf8->string
           string->utf16 utf16->string
           string->utf32 utf32->string)
-
   (import (core bytevectors)
           (core bytevector-transcoders)))

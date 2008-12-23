@@ -1,6 +1,4 @@
-
 (library (rnrs conditions (6))
-  
   (export &condition
           condition simple-conditions condition?
           condition-predicate condition-accessor
@@ -18,5 +16,4 @@
           &lexical make-lexical-violation lexical-violation?
           &syntax make-syntax-violation syntax-violation? syntax-violation-form syntax-violation-subform
           &undefined make-undefined-violation undefined-violation?)
-  
   (import (core conditions)))

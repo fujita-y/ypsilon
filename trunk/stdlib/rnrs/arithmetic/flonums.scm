@@ -1,6 +1,4 @@
-
 (library (rnrs arithmetic flonums (6))
-
   (export flonum?
           real->flonum
           fl=?
@@ -47,10 +45,6 @@
           flabs
           flsqrt
           fixnum->flonum
-          
           &no-infinities make-no-infinities-violation no-infinities-violation?
           &no-nans make-no-nans-violation no-nans-violation?)
-
-  (import (core arithmetic))
-
-  ) ;[end]
+  (import (core arithmetic)))

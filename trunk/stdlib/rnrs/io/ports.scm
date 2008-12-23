@@ -1,6 +1,4 @@
-
 (library (rnrs io ports (6))
-
   (export &i/o make-i/o-error i/o-error?
           &i/o-read make-i/o-read-error i/o-read-error?
           &i/o-write make-i/o-write-error i/o-write-error?
@@ -13,7 +11,6 @@
           &i/o-port make-i/o-port-error i/o-port-error? i/o-error-port
           &i/o-decoding make-i/o-decoding-error i/o-decoding-error?
           &i/o-encoding make-i/o-encoding-error i/o-encoding-error? i/o-encoding-error-char
-
           file-options
           buffer-mode
           buffer-mode?
@@ -87,5 +84,4 @@
           make-custom-textual-output-port
           make-custom-binary-input/output-port
           make-custom-textual-input/output-port)
-
   (import (core io)))

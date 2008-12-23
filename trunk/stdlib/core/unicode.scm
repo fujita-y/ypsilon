@@ -297,5 +297,5 @@
       (compose
        (sort-combining-marks!
         (decompose (open-string-input-port s) #f)))))
-  
+
   ) ;[end]

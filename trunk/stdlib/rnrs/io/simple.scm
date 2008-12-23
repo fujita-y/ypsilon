@@ -1,6 +1,4 @@
-
 (library (rnrs io simple (6))
-
   (export &i/o make-i/o-error i/o-error?
           &i/o-read make-i/o-read-error i/o-read-error?
           &i/o-write make-i/o-write-error i/o-write-error?
@@ -35,5 +33,4 @@
           newline
           display
           write)
-
   (import (core io)))

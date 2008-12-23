@@ -13,7 +13,7 @@
           force)
 
   (import (core primitives))
-    
+
   (define force
     (lambda (object)
       (object)))

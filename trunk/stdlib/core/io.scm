@@ -27,7 +27,7 @@
 
   (define file-option-codes
     '((no-create . 1) (no-fail . 2) (no-truncate . 4)))
-  
+
   (define buffer-mode-codes
     '((none . 1) (line . 2) (block . 3)))
 
@@ -82,9 +82,9 @@
   (define port-reverse-lookup-codec-code (lambda (obj) (lookup obj flipped-codec-codes)))
   (define port-reverse-lookup-eol-style-code (lambda (obj) (lookup obj flipped-eol-style-codes)))
   (define port-reverse-lookup-error-handling-mode-code (lambda (obj) (lookup obj flipped-error-handling-mode-codes)))
-  
+
   (define make-file-options (enum-set-constructor (make-enumeration (map car file-option-codes))))
-  
+
   )
 
 (library (core io)
@@ -231,7 +231,7 @@
   (define file-options->bits
     (lambda (x)
       (apply + (map (lambda (e) (port-lookup-file-option-code e)) (enum-set->list x)))))
-  
+
   ;; 8.2.3  Buffer modes
 
   (define-syntax buffer-mode
@@ -320,10 +320,10 @@
            (lambda (in)
              (let loop ((c (get-char in)))
                (cond ((eof-object? c) (extract))
-                     (else 
+                     (else
                       (put-char out c)
                       (loop (get-char in))))))))))
-                  
+
  #; (define string->bytevector
     (lambda (string transcoder)
       (let-values (((out extract) (open-bytevector-output-port transcoder)))
@@ -332,10 +332,10 @@
          (lambda (in)
            (let loop ((c (get-char in)))
              (cond ((eof-object? c) (extract))
-                   (else 
+                   (else
                     (put-char out c)
                     (loop (get-char in))))))))))
-  
+
   (define string->bytevector
     (lambda (string transcoder)
       (let-values (((out extract) (open-bytevector-output-port transcoder)))
@@ -344,10 +344,10 @@
          (lambda (in)
            (let loop ((c (get-char in)))
              (cond ((eof-object? c) (extract))
-                   (else 
+                   (else
                     (put-char out c)
-                    (loop (get-char in))))))))))  
-  
+                    (loop (get-char in))))))))))
+
   ;; 8.2.6  Input and output ports
 
   (define port-transcoder
@@ -685,10 +685,3 @@
         (make-temporary-file-port name (and transcoder (transcoder-descriptor transcoder))))))
 
   ) ;[end]
-
-
-
-
-
-
-

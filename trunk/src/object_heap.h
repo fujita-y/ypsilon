@@ -79,7 +79,7 @@ struct relocate_info_t;
 
 class object_heap_t {
 public:
-    mutex_t             m_lock;      
+    mutex_t             m_lock;
 #if ARCH_LP64
     object_slab_cache_t m_collectibles[8];  //   16-32-64-128-256-512-1024-2048
     object_slab_cache_t m_privates[8];      //   16-32-64-128-256-512-1024-2048
@@ -93,28 +93,28 @@ public:
 #if USE_CONST_LITERAL
     object_slab_cache_t m_immutable_cons;
 #endif
-    queue_t<scm_obj_t>  m_shade_queue;        
-    uint8_t*            m_sweep_wavefront;     
-    scm_obj_t*          m_mark_sp;         
-    scm_obj_t*          m_mark_stack;          
-    int                 m_mark_stack_size;     
-    int                 m_root_snapshot;      
-    int                 m_collector_ready;     
-    int                 m_collector_kicked;    
+    queue_t<scm_obj_t>  m_shade_queue;
+    uint8_t*            m_sweep_wavefront;
+    scm_obj_t*          m_mark_sp;
+    scm_obj_t*          m_mark_stack;
+    int                 m_mark_stack_size;
+    int                 m_root_snapshot;
+    int                 m_collector_ready;
+    int                 m_collector_kicked;
     int                 m_collector_terminating;
-    int                 m_mutator_stopped;   
-    int                 m_stop_the_world;       
-    int                 m_read_barrier;       
-    int                 m_write_barrier;       
-    int                 m_alloc_barrier;     
-    int                 m_trip_bytes;       
-    int                 m_collect_trip_bytes;  
-    uint8_t*            m_map;                 
-    size_t              m_map_size;            
-    uint8_t*            m_pool;               
-    size_t              m_pool_size;           
-    int                 m_pool_watermark;     
-    int                 m_pool_memo;       
+    int                 m_mutator_stopped;
+    int                 m_stop_the_world;
+    int                 m_read_barrier;
+    int                 m_write_barrier;
+    int                 m_alloc_barrier;
+    int                 m_trip_bytes;
+    int                 m_collect_trip_bytes;
+    uint8_t*            m_map;
+    size_t              m_map_size;
+    uint8_t*            m_pool;
+    size_t              m_pool_size;
+    int                 m_pool_watermark;
+    int                 m_pool_memo;
     int                 m_pool_usage;
     int                 m_pool_threshold;
     mutex_t             m_collector_lock;
@@ -159,7 +159,7 @@ public:
     scm_obj_t           lookup_system_environment(scm_symbol_t symbol);
     void                intern_system_environment(scm_symbol_t symbol, scm_obj_t value);
     void                intern_system_subr(const char *name, subr_proc_t proc);
-    
+
     bool in_slab(void* obj) {
         assert(obj);
         int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;

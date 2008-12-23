@@ -22,6 +22,40 @@ struct div_and_mod_ans_t {
     scm_obj_t   mod;
 };
 
+inline void
+bn_set_zero(scm_bignum_t bn)
+{
+    bn->hdr = scm_hdr_bignum;
+}
+
+inline void
+bn_set_count(scm_bignum_t bn, int count)
+{
+    assert(count >= 0);
+    bn->hdr = scm_hdr_bignum | MAKEBITS(count, HDR_BIGNUM_COUNT_SHIFT) | (bn->hdr & MAKEBITS(3, HDR_BIGNUM_SIGN_SHIFT));
+}
+
+inline int
+bn_get_count(scm_bignum_t bn)
+{
+    return HDR_BIGNUM_COUNT(bn->hdr);
+}
+
+inline void
+bn_set_sign(scm_bignum_t bn, int sign)
+{
+    assert(sign == 0 || sign == -1 || sign == 1);
+    bn->hdr = scm_hdr_bignum | (bn->hdr & MAKEBITS(-1, HDR_BIGNUM_COUNT_SHIFT)) | MAKEBITS((sign & 0x3), HDR_BIGNUM_SIGN_SHIFT);
+}
+
+inline int
+bn_get_sign(scm_bignum_t bn)
+{
+    int bits = HDR_BIGNUM_SIGN(bn->hdr);
+    if (bits == 0) return 0;
+    return (1 - bits) | 1;
+}
+
 bool number_pred(scm_obj_t obj);
 bool integer_pred(scm_obj_t obj);
 bool rational_pred(scm_obj_t obj);
@@ -42,12 +76,11 @@ bool n_equal_pred(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 bool n_exact_equal_pred(scm_obj_t lhs, scm_obj_t rhs);
 bool n_inexact_equal_pred(scm_obj_t lhs, scm_obj_t rhs);
 int  n_compare(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
+
 scm_obj_t int32_to_bignum(object_heap_t* heap, int32_t value);
 scm_obj_t int64_to_bignum(object_heap_t* heap, int64_t value);
 scm_obj_t uint32_to_bignum(object_heap_t* heap, uint32_t value);
 scm_obj_t uint64_to_bignum(object_heap_t* heap, uint64_t value);
-scm_obj_t uint64_to_integer(object_heap_t* heap, uint64_t value);
-scm_obj_t uint32_to_integer(object_heap_t* heap, uint32_t value);
 #if ARCH_LP64
 scm_obj_t int128_to_bignum(object_heap_t* heap, int128_t value);
 #endif
@@ -212,39 +245,5 @@ scm_obj_t arith_bit_count(object_heap_t* heap, scm_obj_t obj);
 exact_integer_sqrt_ans_t arith_exact_integer_sqrt(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t parse_number(object_heap_t* heap, const char* s, int prefix, int radix);
 scm_obj_t decode_flonum(object_heap_t* heap, scm_flonum_t n);
-
-inline void
-bn_set_zero(scm_bignum_t bn)
-{
-    bn->hdr = scm_hdr_bignum;
-}
-
-inline void
-bn_set_count(scm_bignum_t bn, int count)
-{
-    assert(count >= 0);
-    bn->hdr = scm_hdr_bignum | MAKEBITS(count, HDR_BIGNUM_COUNT_SHIFT) | (bn->hdr & MAKEBITS(3, HDR_BIGNUM_SIGN_SHIFT));
-}
-
-inline int
-bn_get_count(scm_bignum_t bn)
-{
-    return HDR_BIGNUM_COUNT(bn->hdr);
-}
-
-inline void
-bn_set_sign(scm_bignum_t bn, int sign)
-{
-    assert(sign == 0 || sign == -1 || sign == 1);
-    bn->hdr = scm_hdr_bignum | (bn->hdr & MAKEBITS(-1, HDR_BIGNUM_COUNT_SHIFT)) | MAKEBITS((sign & 0x3), HDR_BIGNUM_SIGN_SHIFT);
-}
-
-inline int
-bn_get_sign(scm_bignum_t bn)
-{
-    int bits = HDR_BIGNUM_SIGN(bn->hdr);
-    if (bits == 0) return 0;
-    return (1 - bits) | 1;
-}
 
 #endif

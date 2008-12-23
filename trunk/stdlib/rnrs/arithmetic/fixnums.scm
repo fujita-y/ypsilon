@@ -1,6 +1,4 @@
-
 (library (rnrs arithmetic fixnums (6))
-
   (export fixnum?
           fixnum-width
           least-fixnum
@@ -46,5 +44,4 @@
           fxarithmetic-shift-right
           fxrotate-bit-field
           fxreverse-bit-field)
-
   (import (core arithmetic)))

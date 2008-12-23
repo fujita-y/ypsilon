@@ -42,5 +42,5 @@
                        (condition-predicate (record-type-descriptor condition-type)))
                      (define cond-accessors
                        (condition-accessor (record-type-descriptor condition-type) rec-accessors)) ...)))))))
-  
+
   ) ;[end]
