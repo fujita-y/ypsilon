@@ -1,10 +1,23 @@
 #summary Known bugs in current release
 
-version 0.9.6-update2 (based on revision 184):
+version 0.9.6-update3 (based on revision 332):
 
   * _<no item>_
 
   * See [http://code.google.com/p/ypsilon/issues/list Issues list] to check more.
+
+version 0.9.6-update2 (based on revision 184):
+
+  * [http://code.google.com/p/ypsilon/issues/detail?id=48&can=1 Issue 48]: char-ci=? takes only two parameters.
+  * [http://code.google.com/p/ypsilon/issues/detail?id=49&can=1 Issue 49]: thread-local storage error
+  * [http://code.google.com/p/ypsilon/issues/detail?id=50&can=1 Issue 50]: procedure read! in make-custom-binary-input-port cannot call continuations	 
+  * [http://code.google.com/p/ypsilon/issues/detail?id=52&can=1 Issue 52]: flush-output-port dies badly
+  * [http://code.google.com/p/ypsilon/issues/detail?id=53&can=1 Issue 53]: syntax-case has problems with (... x) expressions
+  * [http://code.google.com/p/ypsilon/issues/detail?id=54&can=1 Issue 54]: Another porting issue between Ypsilon and Ikarus (syntax-case)
+  * [http://code.google.com/p/ypsilon/issues/detail?id=55&can=1 Issue 55]: enum-set-union doesn't work ("expected same type enum-sets")
+  * [http://code.google.com/p/ypsilon/issues/detail?id=56&can=1 Issue 56]: makefile support for the DESTDIR variable is missing
+
+  * _All bugs in version 0.9.6-update2 are fixed in version 0.9.6-update3_
 
 version 0.9.6-update1 (based on revision 169):
 
