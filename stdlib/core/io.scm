@@ -85,7 +85,7 @@
 
   (define make-file-options (enum-set-constructor (make-enumeration (map car file-option-codes))))
 
-  )
+  ) ;[end]
 
 (library (core io)
 
@@ -212,7 +212,6 @@
           (core conditions)
           (core bytevectors)
           (core optargs)
-          (core chkarg)
           (core enums))
 
   ;; 8.2.2  File options
@@ -228,9 +227,13 @@
         (_
          (syntax-violation 'file-options "invalid syntax" x)))))
 
-  (define file-options->bits
-    (lambda (x)
-      (apply + (map (lambda (e) (port-lookup-file-option-code e)) (enum-set->list x)))))
+  (define-syntax file-options->bits
+    (syntax-rules ()
+      ((_ x who args)
+       (begin
+         (or (and (enum-set? x) (enum-set-subset? x (enum-set-universe (file-options))))
+             (assertion-violation 'who (format "expected file-options object, but got ~r, as argument 2" x) args))
+         (apply + (map (lambda (e) (port-lookup-file-option-code e)) (enum-set->list x)))))))
 
   ;; 8.2.3  Buffer modes
 
@@ -315,16 +318,16 @@
   (define bytevector->string
     (lambda (bytes transcoder)
       (let-values (((out extract) (open-string-output-port)))
-          (call-with-port
-           (open-bytevector-input-port bytes transcoder)
-           (lambda (in)
-             (let loop ((c (get-char in)))
-               (cond ((eof-object? c) (extract))
-                     (else
-                      (put-char out c)
-                      (loop (get-char in))))))))))
+        (call-with-port
+          (open-bytevector-input-port bytes transcoder)
+          (lambda (in)
+            (let loop ((c (get-char in)))
+              (cond ((eof-object? c) (extract))
+                    (else
+                     (put-char out c)
+                     (loop (get-char in))))))))))
 
- #; (define string->bytevector
+  #; (define string->bytevector
     (lambda (string transcoder)
       (let-values (((out extract) (open-bytevector-output-port transcoder)))
         (call-with-port
@@ -340,13 +343,13 @@
     (lambda (string transcoder)
       (let-values (((out extract) (open-bytevector-output-port transcoder)))
         (call-with-port
-         (make-string-input-port string)
-         (lambda (in)
-           (let loop ((c (get-char in)))
-             (cond ((eof-object? c) (extract))
-                   (else
-                    (put-char out c)
-                    (loop (get-char in))))))))))
+          (make-string-input-port string)
+          (lambda (in)
+            (let loop ((c (get-char in)))
+              (cond ((eof-object? c) (extract))
+                    (else
+                     (put-char out c)
+                     (loop (get-char in))))))))))
 
   ;; 8.2.6  Input and output ports
 
@@ -381,7 +384,7 @@
         (open-port (port-type file)
                    (port-direction input)
                    filename
-                   (file-options->bits file-options)
+                   (file-options->bits file-options open-file-input-port (cons* filename options))
                    (port-lookup-buffer-mode-code buffer-mode)
                    (and transcoder (transcoder-descriptor transcoder))))))
 
@@ -462,7 +465,7 @@
         (open-port (port-type file)
                    (port-direction output)
                    filename
-                   (file-options->bits file-options)
+                   (file-options->bits file-options open-file-output-port (cons* filename options))
                    (port-lookup-buffer-mode-code buffer-mode)
                    (and transcoder (transcoder-descriptor transcoder))))))
 
@@ -567,7 +570,7 @@
         (open-port (port-type file)
                    (port-direction input output)
                    filename
-                   (file-options->bits file-options)
+                   (file-options->bits file-options open-file-input/output-port (cons* filename options))
                    (port-lookup-buffer-mode-code buffer-mode)
                    (and transcoder (transcoder-descriptor transcoder))))))
 

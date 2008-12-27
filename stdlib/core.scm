@@ -326,6 +326,7 @@
     enum-set-union
     enum-set-universe
     enum-set=?
+    enum-set?
     environment
     eof-object
     eof-object?

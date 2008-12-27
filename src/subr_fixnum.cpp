@@ -418,7 +418,12 @@ subr_fx_div(VM* vm, int argc, scm_obj_t argv[])
             invalid_argument_violation(vm, "fxdiv", "undefined for 0", NULL, 0, argc, argv);
             return scm_undef;
         }
-        if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) return arith_integer_div(vm->m_heap, argv[0], argv[1]);
+        if (FIXNUMP(argv[0]) & FIXNUMP(argv[1])) {
+            scm_obj_t obj = arith_integer_div(vm->m_heap, argv[0], argv[1]);
+            if (FIXNUMP(obj)) return obj;
+            implementation_restriction_violation(vm, "fxdiv", "return value out of fixnum range", obj, argc, argv);
+            return scm_undef;
+        }
         bad = FIXNUMP(argv[0]) ? 1 : 0; goto raise_bad;
     }
     wrong_number_of_arguments_violation(vm, "fxdiv", 2, 2, argc, argv);

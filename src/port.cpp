@@ -5,21 +5,23 @@
 */
 /*
 
- * 'ungetc' implementation may return part of replacement character to subsequent get-u8 operation.
-   If buffer-mode is 'none, this implementation do that otherwise subsequent get-u8 operation provide
-   octet which triggered decode error.
+ * Typical implementation using 'ungetc' may return part of replacement character to subsequent get-u8 operation.
+   If buffer-mode is 'none, this implementation do the same otherwise subsequent get-u8 operation provide octet 
+   which triggered decode error.
+
+ * SCM_PORT_SUBTYPE_CHAR_SPECIAL for non-positionable named file.
 
  * lookahead[4] for exclusive use of non-bufferd named file
 
- * filr position after lookahead operation:
+ * file position after lookahead operation:
    non-buffered |__________________________________________|
-                    ^[filepos]
+                                    ^[filepos]
+                    ^[portmark]
                     ^[lookahead ...]
        buffered |__________________________________________|
                     ^[filepos]
+                    ^[portmark]
                     ^[buf_head]  ........... ^[buf_tail]
-
- * SCM_PORT_SUBTYPE_CHAR_SPECIAL for non-positionable named file.
 
  * Mark is absense if port is non-positionable, however each read/write operation update it.
 
@@ -1241,6 +1243,88 @@ port_get_byte(scm_port_t port)
     return EOF;
 }
 
+int
+port_get_bytes(scm_port_t port, uint8_t* p, int bsize)
+{
+    assert(PORTP(port));
+    assert(bsize);
+    port->lock.verify_locked();
+    assert(port->direction & SCM_PORT_DIRECTION_IN);
+    if (port->opened) {
+
+        switch (port->type) {
+            case SCM_PORT_TYPE_BYTEVECTOR: {
+                assert(BVECTORP(port->bytes));
+                assert(port->buf == NULL);
+                assert(port->lookahead_size == 0);
+                scm_bvector_t bvec = ((scm_bvector_t)port->bytes);
+                if (bvec->count <= port->mark) return 0;
+                int available = bvec->count - port->mark;
+                bsize = (available < bsize) ? available : bsize;
+                memcpy(p, bvec->elts + port->mark, bsize);
+                if (port->track_line_column) {
+                    for (int i = 0; i < bsize; i++) port_update_line_column(port, p[i]);
+                }
+                port->mark = port->mark + bsize;
+                return bsize;
+            } break;
+            
+            case SCM_PORT_TYPE_CUSTOM:
+            case SCM_PORT_TYPE_SOCKET:
+            case SCM_PORT_TYPE_NAMED_FILE: {
+                if (port->buf) {
+                    assert(port->lookahead_size == 0);
+                    if (port->buf_state != SCM_PORT_BUF_STATE_READ || port->buf_head == port->buf_tail) {
+                        port_flush_output(port);
+                        port->buf_state = SCM_PORT_BUF_STATE_READ;
+                        port->buf_head = port->buf_tail = port->buf;
+                        int n = device_read(port, port->buf, port->buf_size, port->mark);
+                        if (n == 0) return 0;
+                        port->buf_tail = port->buf + n;
+                    }
+                    int available = port->buf_tail - port->buf_head;
+                    int n = (available < bsize) ? available : bsize;
+                    memcpy(p, port->buf_head, n);
+                    if (port->track_line_column) {
+                        for (int i = 0; i < n; i++) port_update_line_column(port, p[i]);
+                    }
+                    port->buf_head += n;
+                    port->mark += n;
+                    if (n == bsize) return bsize;
+                    return n + port_get_bytes(port, p + n, bsize - n);
+                } else {
+                    assert(port->buf == NULL);                    
+                    if (port->lookahead_size) {
+                        assert(port->buf == NULL);
+                        uint8_t b = port->lookahead[0];
+                        port->lookahead[0] = port->lookahead[1];
+                        port->lookahead[1] = port->lookahead[2];
+                        port->lookahead[2] = port->lookahead[3];
+                        port->lookahead_size--;
+                        p[0] = b;
+                        if (port->track_line_column) port_update_line_column(port, b);
+                        port->mark++;
+                        if (bsize == 1) return 1;
+                        return 1 + port_get_bytes(port, p + 1, bsize - 1);                        
+                    } else {
+                        int n = device_read(port, p, bsize, port->mark);
+                        if (port->track_line_column) {
+                            for (int i = 0; i < n; i++) port_update_line_column(port, p[i]);
+                        }
+                        port->mark += n;
+                        return n;
+                    }
+                }
+            } break;
+
+            default:
+                fatal("%s:%u wrong port type", __FILE__, __LINE__);
+
+        }
+    }
+    return 0;
+}
+
 scm_obj_t
 port_lookahead_utf8(scm_port_t port)
 {
@@ -1934,6 +2018,93 @@ port_put_byte(scm_port_t port, int byte)
     }
 }
 
+void
+port_put_bytes(scm_port_t port, uint8_t* p, int bsize)
+{
+    assert(PORTP(port));
+    assert(bsize);
+    port->lock.verify_locked();
+    assert(port->direction & SCM_PORT_DIRECTION_OUT);
+    if (port->opened) {
+        port->lookahead_size = 0;
+        switch (port->type) {
+
+            case SCM_PORT_TYPE_BYTEVECTOR: {
+                assert(port->buf_state == SCM_PORT_BUF_STATE_ACCUMULATE);
+                if (port->mark >= port->buf_size) {
+                    size_t newsize = port->mark + SCM_PORT_BYTEVECTOR_OUTPUT_CHUNK;
+                    size_t cursize = port->buf_tail - port->buf_head;
+                    if (newsize < HUNDRED_TWENTY_FIVE_PERCENT_OF(cursize)) newsize = HUNDRED_TWENTY_FIVE_PERCENT_OF(cursize);
+                    if (newsize < port->mark + SCM_PORT_BYTEVECTOR_OUTPUT_CHUNK) {
+                        throw_io_error(SCM_PORT_OPERATION_WRITE, "port bytevector too large, memory allocation failed");
+                    }
+                    uint8_t* prev = port->buf;
+                    port->buf = (uint8_t*)realloc(port->buf, newsize);
+                    if (port->buf == NULL) {
+                        port->buf = prev;
+                        throw_io_error(SCM_PORT_OPERATION_WRITE, "port bytevector too large, memory allocation failed");
+                    }
+                    memset(port->buf + cursize, 0, newsize - cursize);
+                    port->buf_head = port->buf;
+                    port->buf_tail = port->buf_head + cursize;
+                    port->buf_size = newsize;
+                }
+                int space = port->buf_size - port->mark;
+                int n = (space < bsize) ? space : bsize;
+                memcpy(port->buf_head + port->mark, p, n);
+                port->mark += n;
+                if (port->buf_head + port->mark > port->buf_tail) port->buf_tail = port->buf_head + port->mark;
+                if (port->track_line_column) {
+                    for (int i = 0; i < n; i++) port_update_line_column(port, p[i]);
+                }
+                if (n != bsize) port_put_bytes(port, p + n, bsize - n);
+            } break;
+
+            case SCM_PORT_TYPE_CUSTOM:
+            case SCM_PORT_TYPE_SOCKET:
+            case SCM_PORT_TYPE_NAMED_FILE: {
+                if (port->buf) {
+                    assert(port->buf_state != SCM_PORT_BUF_STATE_ACCUMULATE);
+                    if (port->buf_state != SCM_PORT_BUF_STATE_WRITE) {
+                        port->buf_state = SCM_PORT_BUF_STATE_WRITE;
+                        port->buf_head = port->buf_tail = port->buf;
+                    } else {
+                        if (port->buf_tail == port->buf + port->buf_size) {
+                            port_flush_output(port);
+                            port->buf_state = SCM_PORT_BUF_STATE_WRITE;
+                        }
+                    }
+                    int space = port->buf_size - (port->buf_tail - port->buf);
+                    int n = (space < bsize) ? space : bsize;
+                    memcpy(port->buf_tail, p, n);
+                    port->buf_tail += n;
+                    port->mark += n;
+                    if (port->track_line_column) {
+                        for (int i = 0; i < n; i++) port_update_line_column(port, p[i]);
+                    }
+                    if (n == bsize && port->buffer_mode == SCM_PORT_BUFFER_MODE_LINE) {
+                        bool flush = false;
+                        for (int i = 0; i < n; i++) {
+                            if (p[i] == '\n') flush = true;
+                        }
+                        if (flush) port_flush_output(port);
+                    }
+                    if (n != bsize) port_put_bytes(port, p + n, bsize - n);
+                } else {
+                    device_write(port, p, bsize, port->mark);
+                    port->mark += bsize;
+                    if (port->track_line_column) {
+                        for (int i = 0; i < bsize; i++) port_update_line_column(port, p[i]);
+                    }
+                }
+            } break;
+
+            default: fatal("%s:%u wrong port type", __FILE__, __LINE__);
+
+        }
+    }
+}
+
 static void
 port_put_utf8(scm_port_t port, int32_t ucs4)
 {
@@ -2407,8 +2578,12 @@ port_puts(scm_port_t port, const char* s)
     assert(PORTP(port));
     port->lock.verify_locked();
     if (s) {
+#if USE_MULTIBYTE_WRITE
+        port_put_bytes(port, (uint8_t*)s, strlen(s));
+#else
         char c;
         while ((c = *s++) != 0) port_put_byte(port, c);
+#endif
         if (port->type == SCM_PORT_TYPE_CUSTOM) {
             assert(VECTORP(port->handlers));
             scm_vector_t vect = (scm_vector_t)port->handlers;

@@ -6,6 +6,7 @@
 (library (core enums)
 
   (export make-enumeration
+          enum-set?
           enum-set-universe
           enum-set-indexer
           enum-set-constructor
@@ -41,9 +42,9 @@
                                 (universe (enum-type-universe (enum-set-type set))))
                             (for-each (lambda (e)
                                         (or (symbol? e)
-                                            (assertion-violation "enum-set constructor" "expected list of symbols as argument 1" symbol-list))
+                                            (assertion-violation "enum-set constructor" (format "expected list of symbols, but got ~r as argument 1" symbol-list)))
                                         (or (core-hashtable-ref universe e #f)
-                                            (assertion-violation "enum-set constructor" "excpectd symbols which belong to the universe" symbol-list)))
+                                            (assertion-violation "enum-set constructor" (format "excpectd symbols which belong to the universe, but got ~r as argument 1" symbol-list))))
                                       lst)
                             (make-enum-set (enum-set-type set) lst)))))))
 
@@ -53,7 +54,7 @@
         (let ((ht (make-core-hashtable)) (index 0))
           (for-each (lambda (e)
                       (or (symbol? e)
-                          (assertion-violation 'make-enumeration "expected list of symbols" symbol-list))
+                          (assertion-violation 'make-enumeration (format "expected list of symbols, but got ~r as argument 1" symbol-list)))
                       (core-hashtable-set! ht e index)
                       (set! index (+ index 1)))
                     symbol-list)
@@ -62,19 +63,27 @@
 
   (define enum-set-universe
     (lambda (set)
+      (or (enum-set? set)
+          (assertion-violation 'enum-set-universe (format "expected enum-set, but got ~r as argument 1" set)))
       (make-enum-set (enum-set-type set)
                      (enum-type-members (enum-set-type set)))))
 
   (define enum-set-indexer
     (lambda (set)
+      (or (enum-set? set)
+          (assertion-violation 'enum-set-indexer (format "expected enum-set, but got ~r as argument 1" set)))
       ((enum-type-indexer (enum-set-type set)) set)))
 
   (define enum-set-constructor
     (lambda (set)
+      (or (enum-set? set)
+          (assertion-violation 'enum-set-constructor (format "expected enum-set, but got ~r as argument 1" set)))
       ((enum-type-constructor (enum-set-type set)) set)))
 
   (define enum-set->list
     (lambda (set)
+      (or (enum-set? set)
+          (assertion-violation 'enum-set->list (format "expected enum-set, but got ~r as argument 1" set)))
       (let ((universe (enum-type-universe (enum-set-type set))))
         (map car
              (list-sort (lambda (a b) (< (cdr a) (cdr b)))
@@ -83,10 +92,18 @@
 
   (define enum-set-member?
     (lambda (symbol set)
+      (or (symbol? symbol)
+          (assertion-violation 'enum-set-member? (format "expected enum-set, but got ~r as argument 1" symbol) (list symbol set)))
+      (or (enum-set? set)
+          (assertion-violation 'enum-set-member? (format "expected enum-set, but got ~r as argument 2" set) (list symbol set)))
       (and (memq symbol (enum-set-members set)) #t)))
 
   (define enum-set-subset?
     (lambda (set1 set2)
+      (or (enum-set? set1)
+          (assertion-violation 'enum-set-subset? (format "expected enum-set, but got ~r as argument 1" set1) (list set1 set2)))
+      (or (enum-set? set2)
+          (assertion-violation 'enum-set-subset? (format "expected enum-set, but got ~r as argument 2" set2) (list set1 set2)))
       (and (for-all (lambda (e) (enum-set-member? e set2)) (enum-set-members set1))
            (let ((m2 (enum-type-members (enum-set-type set2))))
              (for-all (lambda (e) (memq e m2)) (enum-type-members (enum-set-type set1))))
@@ -94,12 +111,20 @@
 
   (define enum-set=?
     (lambda (set1 set2)
+      (or (enum-set? set1)
+          (assertion-violation 'enum-set=? (format "expected enum-set, but got ~r as argument 1" set1) (list set1 set2)))
+      (or (enum-set? set2)
+          (assertion-violation 'enum-set=? (format "expected enum-set, but got ~r as argument 2" set2) (list set1 set2)))
       (and (enum-set-subset? set2 set1)
            (enum-set-subset? set1 set2)
            #t)))
 
   (define enum-set-union
     (lambda (set1 set2)
+      (or (enum-set? set1)
+          (assertion-violation 'enum-set-union (format "expected enum-set, but got ~r as argument 1" set1) (list set1 set2)))
+      (or (enum-set? set2)
+          (assertion-violation 'enum-set-union (format "expected enum-set, but got ~r as argument 2" set2) (list set1 set2)))
       (or (eq? (enum-set-type set1) (enum-set-type set2))
           (assertion-violation 'enum-set-union "expected same type enum-sets" set1 set2))
       (make-enum-set (enum-set-type set1)
@@ -107,6 +132,10 @@
 
   (define enum-set-intersection
     (lambda (set1 set2)
+      (or (enum-set? set1)
+          (assertion-violation 'enum-set-intersection (format "expected enum-set, but got ~r as argument 1" set1) (list set1 set2)))
+      (or (enum-set? set2)
+          (assertion-violation 'enum-set-intersection (format "expected enum-set, but got ~r as argument 2" set2) (list set1 set2)))
       (or (eq? (enum-set-type set1) (enum-set-type set2))
           (assertion-violation 'enum-set-intersection "expected same type enum-sets" set1 set2))
       (let ((set2-members (enum-set-members set2)))
@@ -116,6 +145,10 @@
 
   (define enum-set-difference
     (lambda (set1 set2)
+      (or (enum-set? set1)
+          (assertion-violation 'enum-set-difference (format "expected enum-set, but got ~r as argument 1" set1) (list set1 set2)))
+      (or (enum-set? set2)
+          (assertion-violation 'enum-set-difference (format "expected enum-set, but got ~r as argument 2" set2) (list set1 set2)))
       (or (eq? (enum-set-type set1) (enum-set-type set2))
           (assertion-violation 'enum-set-difference "expected same type enum-sets" set1 set2))
       (let ((set2-members (enum-set-members set2)))
@@ -125,6 +158,8 @@
 
   (define enum-set-complement
     (lambda (set)
+      (or (enum-set? set)
+          (assertion-violation 'enum-set-complement (format "expected enum-set, but got ~r as argument 1" set)))
       (let ((set-members (enum-set-members set)))
         (make-enum-set (enum-set-type set)
                        (filter values (map (lambda (e) (and (not (memq e set-members)) e))
@@ -132,6 +167,10 @@
 
   (define enum-set-projection
     (lambda (set1 set2)
+      (or (enum-set? set1)
+          (assertion-violation 'enum-set-projection (format "expected enum-set, but got ~r as argument 1" set1) (list set1 set2)))
+      (or (enum-set? set2)
+          (assertion-violation 'enum-set-projection (format "expected enum-set, but got ~r as argument 2" set2) (list set1 set2)))
       (let ((set2-universe-members (enum-type-members (enum-set-type set2))))
         (make-enum-set (enum-set-type set2)
                        (filter values (map (lambda (e) (and (memq e set2-universe-members) e))
