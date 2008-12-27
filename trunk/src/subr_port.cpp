@@ -1167,6 +1167,15 @@ subr_get_bytevector_n(VM* vm, int argc, scm_obj_t argv[])
             int count = FIXNUM(argv[1]);
             try {
                 scm_bvector_t bvector = make_bvector(vm->m_heap, count);
+#if USE_MULTIBYTE_READ
+                if (count == 0) return bvector;
+                int n = port_get_bytes(port, bvector->elts, count);
+                if (n == 0) return scm_eof;
+                if (n == count) return bvector;
+                scm_bvector_t bvector2 = make_bvector(vm->m_heap, n);
+                memcpy(bvector2->elts, bvector->elts, n);
+                return bvector2;                
+#else
                 for (int i = 0; i < count; i++) {
                     int c = port_get_byte(port);
                     if (c == EOF) {
@@ -1178,6 +1187,7 @@ subr_get_bytevector_n(VM* vm, int argc, scm_obj_t argv[])
                     bvector->elts[i] = c;
                 }
                 return bvector;
+#endif
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "get-bytevector-n", e.m_operation, e.m_message, e.m_err, port, scm_false);
                 return scm_undef;
@@ -1207,6 +1217,12 @@ subr_get_bytevector_n_ex(VM* vm, int argc, scm_obj_t argv[])
                 int count = FIXNUM(argv[3]);
                 if (start + count <= bvector->count) {
                     try {
+#if USE_MULTIBYTE_READ
+                        if (count == 0) return MAKEFIXNUM(0);
+                        int n = port_get_bytes(port, bvector->elts + start, count);
+                        if (n == 0) return scm_eof;
+                        return MAKEFIXNUM(n);
+#else
                         for (int i = 0; i < count; i++) {
                             int c = port_get_byte(port);
                             if (c == EOF) {
@@ -1216,6 +1232,7 @@ subr_get_bytevector_n_ex(VM* vm, int argc, scm_obj_t argv[])
                             bvector->elts[start + i] = c;
                         }
                         return MAKEFIXNUM(count);
+#endif
                     } catch (io_exception_t& e) {
                         raise_io_error(vm, "get-bytevector-n!", e.m_operation, e.m_message, e.m_err, port, scm_false);
                         return scm_undef;
@@ -1279,6 +1296,17 @@ subr_get_bytevector_all(VM* vm, int argc, scm_obj_t argv[])
             scm_port_t output = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "bytevector"), SCM_PORT_DIRECTION_OUT, scm_false, scm_false);
             scoped_lock lock2(output->lock);
             try {
+#if USE_MULTIBYTE_READ && USE_MULTIBYTE_WRITE
+                uint8_t buf[SCM_PORT_BLOCK_BUFFER_SIZE];
+                while (true) {
+                    int n = port_get_bytes(port, buf, sizeof(buf));
+                    if (n == 0) {
+                        if (port_position(output) == 0) return scm_eof;
+                        return port_extract_bytevector(vm->m_heap, output);
+                    }
+                    port_put_bytes(output, buf, n);
+                }
+#else
                 while (true) {
                     int b = port_get_byte(port);
                     if (b == EOF) {
@@ -1287,6 +1315,7 @@ subr_get_bytevector_all(VM* vm, int argc, scm_obj_t argv[])
                     }
                     port_put_byte(output, b);
                 }
+#endif
             } catch (io_exception_t& e) {
                 raise_io_error(vm, "get-bytevector-all", e.m_operation, e.m_message, e.m_err, port, scm_false);
                 return scm_undef;
@@ -1572,7 +1601,11 @@ subr_put_bytevector(VM* vm, int argc, scm_obj_t argv[])
                 }
                 if (start + count <= bvector->count) {
                     try {
+#if USE_MULTIBYTE_WRITE
+                        port_put_bytes(port, bvector->elts + start, count);
+#else
                         for (int i = 0; i < count; i++) port_put_byte(port, bvector->elts[start + i]);
+#endif
                         if (port->force_sync) port_flush_output(port);
                         return scm_unspecified;
                     } catch (io_exception_t& e) {

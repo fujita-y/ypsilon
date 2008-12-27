@@ -74,6 +74,8 @@
 #define USE_EXTENDED_BVECTOR_SYNTAX 1
 #define USE_PARALLEL_VM             1
 #define USE_CONST_LITERAL           1
+#define USE_MULTIBYTE_READ          1
+#define USE_MULTIBYTE_WRITE         1
 
 #if USE_GCC_EXTENSION
     #define USE_SYMBOL_THREAD       0

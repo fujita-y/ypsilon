@@ -42,7 +42,12 @@ ifneq (, $(findstring Linux, $(UNAME)))
   else
     CXXFLAGS += -march=native
   endif
-  CXXFLAGS += -msse2 -mfpmath=sse
+  ifeq ($(shell grep -i sse2 /proc/cpuinfo), )
+    CXXFLAGS += -msse
+  else
+    CXXFLAGS += -msse2
+  endif
+  CXXFLAGS += -mfpmath=sse
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -67,8 +72,13 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
   else
     CXXFLAGS += -march=native
   endif
+  ifeq ($(shell dmesg | grep -i sse2), )
+    CXXFLAGS += -msse
+  else
+    CXXFLAGS += -msse2
+  endif
+  CXXFLAGS += -mfpmath=sse
   CPPFLAGS += -D__LITTLE_ENDIAN__
-  CXXFLAGS += -msse2 -mfpmath=sse  
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -93,8 +103,13 @@ ifneq (, $(findstring OpenBSD, $(UNAME)))
   else
     CXXFLAGS += -march=native
   endif
+  ifeq ($(shell dmesg | grep -i sse2), )
+    CXXFLAGS += -msse
+  else
+    CXXFLAGS += -msse2
+  endif
+  CXXFLAGS += -mfpmath=sse
   CPPFLAGS += -D__LITTLE_ENDIAN__ -DNO_TLS
-  CXXFLAGS += -msse2 -mfpmath=sse
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32

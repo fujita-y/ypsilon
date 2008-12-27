@@ -42,7 +42,7 @@
                                            ((_) (tuple ',desc-name ,@(make-list field-count '(unspecified)))))))
                     (?pred-rules
                      (datum->syntax #'k `(syntax-rules ()
-                                           ((_ obj) (and (tuple? obj) (eq? (tuple-ref obj 0) ',desc-name))))))
+                                           ((_ obj) (eq? (tuple-ref obj 0) ',desc-name)))))
                     ((?getter-name ...)
                      (map (lambda (field-name)
                             (datum->syntax #'?_ (string->symbol (format "~a-~a" struct-name field-name))))
