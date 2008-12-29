@@ -16,6 +16,7 @@
 
 (define libgtk-name (cond (on-linux "libgtk-x11-2.0.so.0")
                           (on-darwin "Gtk.framework/Gtk")
+                          (on-freebsd "libgtk-x11-2.0")
                           (else
                            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
 
