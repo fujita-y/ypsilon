@@ -7,6 +7,7 @@
 ;; Requirements:
 ;;   Darwin:  Gtk.framework
 ;;   Linux:   libgtk-x11-2.0.so.0
+;;   FreeBSD: libgtk-x11-2.0.so
 
 (import (rnrs)
         (srfi :28)
@@ -14,9 +15,9 @@
 
 ; minimal bindings for GTK hello world
 
-(define libgtk-name (cond (on-linux "libgtk-x11-2.0.so.0")
-                          (on-darwin "Gtk.framework/Gtk")
+(define libgtk-name (cond (on-linux   "libgtk-x11-2.0.so.0")
                           (on-freebsd "libgtk-x11-2.0.so")
+                          (on-darwin  "Gtk.framework/Gtk")
                           (else
                            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
 
