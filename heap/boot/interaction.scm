@@ -171,7 +171,7 @@
                  (if (string-contains (architecture-feature 'operating-system) "windows")
                      (string-append (or (lookup-process-environment "HOMEDRIVE") "")
                                     (or (lookup-process-environment "HOMEPATH") ""))
-                     (lookup-process-environment "HOME")))))
+                     (or (lookup-process-environment "HOME") "")))))
       (and (file-exists? path) path))))
 
 (define process-shell-command
