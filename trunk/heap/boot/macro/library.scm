@@ -1,5 +1,5 @@
 ;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
+;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
 (define scheme-library-paths (make-parameter '()))
@@ -361,7 +361,8 @@
 
     (define extend-libenv!
       (lambda (datum1 datum2)
-        (set! libenv (extend-env (list (cons datum1 datum2)) libenv))))
+        (set! libenv (extend-env (list (cons datum1 datum2)) libenv))
+        (current-template-environment libenv)))
 
     (define check-duplicate-definition
       (lambda (defs macros renames)
@@ -412,7 +413,7 @@
                        defs))
                  (rewrited-macros
                   (cond ((null? macros) '())
-                        ((every1 (lambda (e) (not (assq (car e) exports))) macros) '()) ;; 081219 add
+                        ;((every1 (lambda (e) (not (assq (car e) exports))) macros) '()) ;; 081219 add
                         (else
                          (let ((ht-visibles (make-core-hashtable)))
                            (let loop ((lst (map caddr macros)))
@@ -482,6 +483,7 @@
 
     (define ht-imported-immutables (make-core-hashtable))
 
+    (current-template-environment libenv)
     (for-each (lambda (b) (core-hashtable-set! ht-imported-immutables (car b) #t)) imports)
     (let loop ((body (flatten-begin body env)) (defs '()) (macros '()) (renames '()))
       (cond ((and (pair? body) (pair? (car body)) (symbol? (caar body)))
@@ -494,7 +496,9 @@
                          (begin
                            (and (core-hashtable-contains? ht-imported-immutables org)
                                 (syntax-violation 'define-syntax "attempt to modify immutable binding" (car body)))
-                           (let-values (((code . expr) (compile-macro (car body) clause env)))
+                           (let-values (((code . expr)
+                                         (parameterize ((current-template-environment #f))
+                                           (compile-macro (car body) clause env))))
                              (let ((new (generate-global-id library-id org)))
                                (extend-libenv! org (make-import new))
                                (cond ((procedure? code)
@@ -692,7 +696,8 @@
 
     (define extend-libenv!
       (lambda (datum1 datum2)
-        (set! libenv (extend-env (list (cons datum1 datum2)) libenv))))
+        (set! libenv (extend-env (list (cons datum1 datum2)) libenv))
+        (current-template-environment libenv)))
 
     (define check-duplicate-definition
       (lambda (defs macros renames)
@@ -789,6 +794,7 @@
           (set! num (+ num 1))
           (string->symbol (format ".e~a" num)))))
 
+    (current-template-environment libenv)
     (for-each (lambda (b) (core-hashtable-set! ht-imported-immutables (car b) #t)) imports)
     (let loop ((body (flatten-begin body env)) (defs '()) (macros '()) (renames '()))
       (if (null? body)
@@ -803,7 +809,9 @@
                              (begin
                                (and (core-hashtable-contains? ht-imported-immutables org)
                                     (syntax-violation 'define-syntax "attempt to modify immutable binding" (car body)))
-                               (let-values (((code . expr) (compile-macro (car body) clause env)))
+                               (let-values (((code . expr)
+                                             (parameterize ((current-template-environment #f))
+                                               (compile-macro (car body) clause env))))
                                  (let ((new (generate-global-id library-id org)))
                                    (extend-libenv! org (make-import new))
                                    (cond ((procedure? code)

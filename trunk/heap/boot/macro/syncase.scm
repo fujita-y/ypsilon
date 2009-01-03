@@ -1,5 +1,5 @@
 ;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
+;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
 ;; memo:
@@ -21,59 +21,6 @@
 (define wrapped-syntax-object?
   (lambda (datum)
     (eq? (tuple-ref datum 0) 'type:syntax)))
-
-(define unwrap-syntax
-  (lambda (expr)
-
-    (define contain-non-id-wrapped-syntax-object?
-      (lambda (lst)
-        (let loop ((lst lst))
-          (cond ((pair? lst)
-                 (or (loop (car lst)) (loop (cdr lst))))
-                ((vector? lst)
-                 (let loop2 ((i (- (vector-length lst) 1)))
-                   (and (>= i 0)
-                        (or (loop (vector-ref lst i))
-                            (loop2 (- i 1))))))
-                ((identifier? lst) #f)
-                (else
-                 (wrapped-syntax-object? lst))))))
-
-    (cond ((contain-non-id-wrapped-syntax-object? expr)
-           (let ((renames
-                  (let ((ht (make-core-hashtable)))
-                    (let loop ((lst expr))
-                      (cond ((pair? lst)
-                             (loop (car lst))
-                             (loop (cdr lst)))
-                            ((vector? lst)
-                             (for-each loop (vector->list lst)))
-                            ((identifier? lst)
-                             (let ((rename (syntax-object-renames lst)))
-                               (or (null? rename)
-                                   (core-hashtable-contains? ht (car rename))
-                                   (core-hashtable-set! ht (car rename) (cdr rename)))))
-                            ((wrapped-syntax-object? lst)
-                             (for-each (lambda (a)
-                                         (or (core-hashtable-contains? ht (car a))
-                                             (core-hashtable-set! ht (car a) (cdr a))))
-                                       (syntax-object-renames lst))
-                             (loop (syntax-object-expr lst)))))
-                    (core-hashtable->alist ht))))
-             (let loop ((lst expr))
-               (cond ((pair? lst)
-                      (let ((a (loop (car lst))) (d (loop (cdr lst))))
-                        (cond ((and (eq? a (car lst)) (eq? d (cdr lst))) lst)
-                              (else (cons a d)))))
-                     ((symbol? lst)
-                      (make-syntax-object lst (or (assq lst renames) '()) #f))
-                     ((wrapped-syntax-object? lst)
-                      (cond ((identifier? lst) lst)
-                            (else (loop (syntax-object-expr lst)))))
-                     ((vector? lst)
-                      (list->vector (map loop (vector->list lst))))
-                     (else lst)))))
-          (else expr))))
 
 (set-top-level-value! '.flatten-syntax
   (lambda (expr)
@@ -124,151 +71,22 @@
                       (expr (append vars patvars))
                       (loop (cdr lst)))))))))))
 
-(define syntax-transcribe
-  (lambda (vars template ranks identifier-lexname lexname-check-list)
-
-    (define emit
-      (lambda (datum)
-        (cond ((wrapped-syntax-object? datum) datum)
-              (else (make-syntax-object datum '() #f)))))
-
-    (define contain-wrapped-syntax-object?
-      (lambda (lst)
-        (let loop ((lst lst))
-          (cond ((pair? lst)
-                 (or (null? (car lst)) (loop (car lst)) (loop (cdr lst))))
-                ((vector? lst)
-                 (let loop2 ((i (- (vector-length lst) 1)))
-                   (and (>= i 0)
-                        (or (loop (vector-ref lst i))
-                            (loop2 (- i 1))))))
-                (else
-                 (wrapped-syntax-object? lst))))))
-
-    (define rewrite-nil
-      (lambda (lst)
-        (let loop ((lst lst))
-          (cond ((pair? lst)
-                 (let ((a (loop (car lst))) (d (loop (cdr lst))))
-                   (cond ((and (eq? (car lst) a) (eq? (cdr lst) d)) lst)
-                         (else (cons a d)))))
-                ((vector? lst)
-                 (list->vector (loop (vector->list lst))))
-                ((eq? lst '.&NIL) '())
-                (else lst)))))
-
-    (define wrap-renamed-id
-      (lambda (lst renames)
-        (let loop ((lst lst))
-          (cond ((pair? lst)
-                 (let ((a (loop (car lst))) (d (loop (cdr lst))))
-                   (cond ((and (eq? (car lst) a) (eq? (cdr lst) d)) lst)
-                         (else (cons a d)))))
-                ((vector? lst)
-                 (list->vector (loop (vector->list lst))))
-                ((renamed-id? lst)
-                 (make-syntax-object lst (or (assq lst renames) '()) #f))
-                (else lst)))))
-
-    (define partial-wrap-syntax-object
-      (lambda (lst renames)
-        (let loop ((lst lst))
-          (cond ((contain-wrapped-syntax-object? lst)
-                 (cond ((pair? lst)
-                        (let ((a (loop (car lst))) (d (loop (cdr lst))))
-                          (cond ((and (eq? (car lst) a) (eq? (cdr lst) d)) lst)
-                                (else (cons a d)))))
-                       (else lst)))
-                ((eq? lst '.&NIL)
-                 (make-syntax-object '() '() #f))
-                ((symbol? lst)
-                 (make-syntax-object lst (or (assq lst renames) '()) #f))
-                ((vector? lst)
-                 (make-syntax-object (rewrite-nil lst) renames #f))
-                ((pair? lst)
-                 (make-syntax-object (rewrite-nil lst) renames #f))
-                ((null? lst) '())
-                (else
-                 (make-syntax-object lst '() #f))))))
-
-    (if (null? template)
-        (make-syntax-object '() '() #f)
-        (let* ((env-use
-                (current-expansion-environment))
-               (env-def
-                (current-transformer-environment))
-               (suffix
-                (current-rename-count))
-               (aliases
-                (map (lambda (id) (cons id (rename-id id suffix)))
-                     (collect-rename-ids template ranks)))
-               (renames
-                (map (lambda (lst) (cons (cdr lst) (env-lookup env-def (car lst))))
-                     aliases))
-               (out-of-context
-                (cond ((null? lexname-check-list) '())
-                      ((null? env-def) '())
-                      (else
-                       (filter values
-                               (map (lambda (a)
-                                      (let ((id (car a)))
-                                        (cond ((assq id lexname-check-list)
-                                               => (lambda (e)
-                                                    (if (or (eq? (lookup-lexical-name id env-def) (cdr e))
-                                                            (and (local-macro-symbol? (cdr e))
-                                                                 (let ((lexname-use (lookup-lexical-name (car e) env-use)))
-                                                                   (and (local-macro-symbol? lexname-use)
-                                                                        (eq? lexname-use (lookup-lexical-name (car e) env-def))))))
-                                                        #f
-                                                        (cons (cdr a) (make-out-of-context template)))))
-                                              (else #f))))
-                                    aliases))))))
-          (if (null? env-use)
-              (let ((form (transcribe-template template ranks vars aliases #f)))
-                (if (renamed-id? form)
-                    (make-syntax-object form (or (assq form renames) '()) identifier-lexname)
-                    (wrap-renamed-id form renames)))
-              (let ((form (transcribe-template template ranks vars aliases emit)))
-                (cond ((null? form) '())
-                      ((wrapped-syntax-object? form) form)
-                      ((eq? form '.&NIL)
-                       (make-syntax-object '() '() #f))
-                      ((symbol? form)
-                       (make-syntax-object form (or (assq form out-of-context) (assq form renames) '()) identifier-lexname))
-                      (else
-                       (partial-wrap-syntax-object form (extend-env out-of-context renames))))))))))
-
-(set-top-level-value! '.syntax/i0 ; identifier: no-rank no-lexname
-  (lambda (vars template)
-    (syntax-transcribe vars template '() template '())))
-
-(set-top-level-value! '.syntax/i1 ; identifier: rank-0 no-lexname
-  (lambda (vars template)
-    (syntax-transcribe vars template (list (cons template 0)) template '())))
-
-(set-top-level-value! '.syntax/i2 ; identifier: no-rank has-lexname
-  (lambda (vars template identifier-lexname)
-    (syntax-transcribe vars template '() identifier-lexname '())))
-
-(set-top-level-value! '.syntax/i3 ; identifier: rank-0 has-lexname
-  (lambda (vars template identifier-lexname)
-    (syntax-transcribe vars template (list (cons template 0)) identifier-lexname '())))
-
-(set-top-level-value! '.syntax/c0 ; subtemplate: no-ranks no-lexname-check-list
-  (lambda (vars template)
-    (syntax-transcribe vars template '() #f '())))
-
-(set-top-level-value! '.syntax/c1 ; subtemplate: has-ranks no-lexname-check-list
-  (lambda (vars template ranks)
-    (syntax-transcribe vars template ranks #f '())))
-
-(set-top-level-value! '.syntax/c2 ; subtemplate: no-ranks has-lexname-check-list
-  (lambda (vars template lexname-check-list)
-    (syntax-transcribe vars template '() #f lexname-check-list)))
-
-(set-top-level-value! '.syntax/c3 ; subtemplate: has-ranks has-lexname-check-list
-  (lambda (vars template ranks lexname-check-list)
-    (syntax-transcribe vars template ranks #f lexname-check-list)))
+(set-top-level-value! '.transformer-thunk
+  (lambda (code)
+    (let ((thunk (lambda (x)
+                   (call-with-values
+                     (lambda () (code x))
+                     (lambda (obj . env)
+                       (if (null? env)
+                           (.flatten-syntax obj)
+                           (values obj (car env))))))))
+      (cond ((procedure? code)
+             (let-values (((nargs opt) (closure-arity code)))
+               (and nargs opt (= nargs 1) (= opt 0) thunk)))
+            ((variable-transformer-token? code)
+             (set! code (tuple-ref code 1))
+             (make-variable-transformer-token thunk))
+            (else code)))))
 
 (define expand-syntax-case
   (lambda (form env)
@@ -335,7 +153,7 @@
 
     (destructuring-match form
       ((_ tmpl)
-       (let ((template (unrename-syntax tmpl env)))
+       (let ((template (unrename-syntax tmpl env)) (patvar (expand-form '.vars env)))
          (let ((ids (collect-unique-ids template)))
            (let ((ranks
                   (filter values
@@ -345,16 +163,33 @@
                                         (cons id (cdr deno)))))
                                ids))))
              (check-template template ranks)
-             (let ((patvar (expand-form '.vars env)))
+             (let ((template-env
+                    (cond ((current-template-environment)
+                           => (lambda (alist)
+                                (filter values
+                                        (map (lambda (id)
+                                               (cond ((assq id ranks) #f)
+                                                     ((assq id alist) => (lambda (b) (cons id (cdr b))))
+                                                     (else #f)))
+                                             ids))))
+                          (else '()))))
                (if (symbol? template)
                    (let ((identifier-lexname (lookup-lexical-name tmpl env)))
                      (if (eq? template identifier-lexname)
                          (if (null? ranks)
-                             (annotate `(.syntax/i0 ,patvar ',template) form)
-                             (annotate `(.syntax/i1 ,patvar ',template) form))
+                             (if (null? template-env)
+                                 (annotate `(.syntax/i0n ,patvar ',template) form)
+                                 (annotate `(.syntax/i0e ,patvar ',template ',template-env) form))
+                             (if (null? template-env)
+                                 (annotate `(.syntax/i1n ,patvar ',template) form)
+                                 (annotate `(.syntax/i1e ,patvar ',template ',template-env) form)))
                          (if (null? ranks)
-                             (annotate `(.syntax/i2 ,patvar ',template ',identifier-lexname) form)
-                             (annotate `(.syntax/i3 ,patvar ',template ',identifier-lexname) form))))
+                             (if (null? template-env)
+                                 (annotate `(.syntax/i2n ,patvar ',template ',identifier-lexname) form)
+                                 (annotate `(.syntax/i2e ,patvar ',template ',template-env ',identifier-lexname) form))
+                             (if (null? template-env)
+                                 (annotate `(.syntax/i3n ,patvar ',template ',identifier-lexname) form)
+                                 (annotate `(.syntax/i3e ,patvar ',template ',template-env ',identifier-lexname) form)))))
                    (let ((lexname-check-list
                           (filter values
                                   (map (lambda (id)
@@ -365,11 +200,19 @@
                                        (collect-rename-ids template ranks)))))
                      (if (null? lexname-check-list)
                          (if (null? ranks)
-                             (annotate `(.syntax/c0 ,patvar ',template) form)
-                             (annotate `(.syntax/c1 ,patvar ',template ',ranks) form))
+                             (if (null? template-env)
+                                 (annotate `(.syntax/c0n ,patvar ',template) form)
+                                 (annotate `(.syntax/c0e ,patvar ',template ',template-env) form))
+                             (if (null? template-env)
+                                 (annotate `(.syntax/c1n ,patvar ',template ',ranks) form)
+                                 (annotate `(.syntax/c1e ,patvar ',template ',template-env ',ranks) form)))
                          (if (null? ranks)
-                             (annotate `(.syntax/c2 ,patvar ',template ',lexname-check-list) form)
-                             (annotate `(.syntax/c3 ,patvar ',template ',ranks ',lexname-check-list) form))))))))))
+                             (if (null? template-env)
+                                 (annotate `(.syntax/c2n ,patvar ',template ',lexname-check-list) form)
+                                 (annotate `(.syntax/c2e ,patvar ',template ',template-env ',lexname-check-list) form))
+                             (if (null? template-env)
+                                 (annotate `(.syntax/c3n ,patvar ',template ',ranks ',lexname-check-list) form)
+                                 (annotate `(.syntax/c3e ,patvar ',template ',template-env ',ranks ',lexname-check-list) form)))))))))))
       ; generic
       ; (let ((identifier-lexname (and (symbol? tmpl) (lookup-lexical-name tmpl env))))
       ;   (annotate `(.syntax-transcribe ,(expand-form '.vars env) ',template ',ranks ',identifier-lexname ',lexname-check-list) form)))))))
@@ -480,19 +323,241 @@
   (lambda (obj)
     (eq? (tuple-ref obj 0) 'type:variable-transformer-token)))
 
-(set-top-level-value! '.transformer-thunk
-  (lambda (code)
-    (let ((thunk (lambda (x)
-                   (call-with-values
-                    (lambda () (code x))
-                    (lambda (obj . env)
-                      (if (null? env)
-                          (.flatten-syntax obj)
-                          (values obj (car env))))))))
-      (cond ((procedure? code)
-             (let-values (((nargs opt) (closure-arity code)))
-               (and nargs opt (= nargs 1) (= opt 0) thunk)))
-            ((variable-transformer-token? code)
-             (set! code (tuple-ref code 1))
-             (make-variable-transformer-token thunk))
-            (else code)))))
+(define unwrap-syntax
+  (lambda (expr)
+
+    (define contain-non-id-wrapped-syntax-object?
+      (lambda (lst)
+        (let loop ((lst lst))
+          (cond ((pair? lst)
+                 (or (loop (car lst)) (loop (cdr lst))))
+                ((vector? lst)
+                 (let loop2 ((i (- (vector-length lst) 1)))
+                   (and (>= i 0)
+                        (or (loop (vector-ref lst i))
+                            (loop2 (- i 1))))))
+                ((identifier? lst) #f)
+                (else
+                 (wrapped-syntax-object? lst))))))
+
+    (cond ((contain-non-id-wrapped-syntax-object? expr)
+           (let ((renames
+                  (let ((ht (make-core-hashtable)))
+                    (let loop ((lst expr))
+                      (cond ((pair? lst)
+                             (loop (car lst))
+                             (loop (cdr lst)))
+                            ((vector? lst)
+                             (for-each loop (vector->list lst)))
+                            ((identifier? lst)
+                             (let ((rename (syntax-object-renames lst)))
+                               (or (null? rename)
+                                   (core-hashtable-contains? ht (car rename))
+                                   (core-hashtable-set! ht (car rename) (cdr rename)))))
+                            ((wrapped-syntax-object? lst)
+                             (for-each (lambda (a)
+                                         (or (core-hashtable-contains? ht (car a))
+                                             (core-hashtable-set! ht (car a) (cdr a))))
+                                       (syntax-object-renames lst))
+                             (loop (syntax-object-expr lst)))))
+                    (core-hashtable->alist ht))))
+             (let loop ((lst expr))
+               (cond ((pair? lst)
+                      (let ((a (loop (car lst))) (d (loop (cdr lst))))
+                        (cond ((and (eq? a (car lst)) (eq? d (cdr lst))) lst)
+                              (else (cons a d)))))
+                     ((symbol? lst)
+                      (make-syntax-object lst (or (assq lst renames) '()) #f))
+                     ((wrapped-syntax-object? lst)
+                      (cond ((identifier? lst) lst)
+                            (else (loop (syntax-object-expr lst)))))
+                     ((vector? lst)
+                      (list->vector (map loop (vector->list lst))))
+                     (else lst)))))
+          (else expr))))
+
+(define syntax-transcribe
+  (lambda (vars template template-env ranks identifier-lexname lexname-check-list)
+
+    (define emit
+      (lambda (datum)
+        (cond ((wrapped-syntax-object? datum) datum)
+              (else (make-syntax-object datum '() #f)))))
+
+    (define contain-wrapped-syntax-object?
+      (lambda (lst)
+        (let loop ((lst lst))
+          (cond ((pair? lst)
+                 (or (null? (car lst)) (loop (car lst)) (loop (cdr lst))))
+                ((vector? lst)
+                 (let loop2 ((i (- (vector-length lst) 1)))
+                   (and (>= i 0)
+                        (or (loop (vector-ref lst i))
+                            (loop2 (- i 1))))))
+                (else
+                 (wrapped-syntax-object? lst))))))
+
+    (define rewrite-nil
+      (lambda (lst)
+        (let loop ((lst lst))
+          (cond ((pair? lst)
+                 (let ((a (loop (car lst))) (d (loop (cdr lst))))
+                   (cond ((and (eq? (car lst) a) (eq? (cdr lst) d)) lst)
+                         (else (cons a d)))))
+                ((vector? lst)
+                 (list->vector (loop (vector->list lst))))
+                ((eq? lst '.&NIL) '())
+                (else lst)))))
+
+    (define wrap-renamed-id
+      (lambda (lst renames)
+        (let loop ((lst lst))
+          (cond ((pair? lst)
+                 (let ((a (loop (car lst))) (d (loop (cdr lst))))
+                   (cond ((and (eq? (car lst) a) (eq? (cdr lst) d)) lst)
+                         (else (cons a d)))))
+                ((vector? lst)
+                 (list->vector (loop (vector->list lst))))
+                ((renamed-id? lst)
+                 (make-syntax-object lst (or (assq lst renames) '()) #f))
+                (else lst)))))
+
+    (define partial-wrap-syntax-object
+      (lambda (lst renames)
+        (let loop ((lst lst))
+          (cond ((contain-wrapped-syntax-object? lst)
+                 (cond ((pair? lst)
+                        (let ((a (loop (car lst))) (d (loop (cdr lst))))
+                          (cond ((and (eq? (car lst) a) (eq? (cdr lst) d)) lst)
+                                (else (cons a d)))))
+                       (else lst)))
+                ((eq? lst '.&NIL)
+                 (make-syntax-object '() '() #f))
+                ((symbol? lst)
+                 (make-syntax-object lst (or (assq lst renames) '()) #f))
+                ((vector? lst)
+                 (make-syntax-object (rewrite-nil lst) renames #f))
+                ((pair? lst)
+                 (make-syntax-object (rewrite-nil lst) renames #f))
+                ((null? lst) '())
+                (else
+                 (make-syntax-object lst '() #f))))))
+
+    (if (null? template)
+        (make-syntax-object '() '() #f)
+        (let* ((env-use
+                (current-expansion-environment))
+               (env-def
+                (current-transformer-environment))
+               (suffix
+                (current-rename-count))
+               (aliases
+                (map (lambda (id) (cons id (rename-id id suffix)))
+                     (collect-rename-ids template ranks)))
+               (renames
+                (if (null? template-env)
+                    (map (lambda (lst) (cons (cdr lst) (env-lookup env-def (car lst)))) aliases)
+                    (map (lambda (lst)
+                           (cond ((assq (car lst) template-env) => (lambda (e) (cons (cdr lst) (cdr e))))
+                                 (else (cons (cdr lst) (env-lookup env-def (car lst))))))
+                         aliases)))
+               (out-of-context
+                (cond ((null? lexname-check-list) '())
+                      ((null? env-def) '())
+                      (else
+                       (filter values
+                               (map (lambda (a)
+                                      (let ((id (car a)))
+                                        (cond ((assq id lexname-check-list)
+                                               => (lambda (e)
+                                                    (if (or (eq? (lookup-lexical-name id env-def) (cdr e))
+                                                            (and (local-macro-symbol? (cdr e))
+                                                                 (let ((lexname-use (lookup-lexical-name (car e) env-use)))
+                                                                   (and (local-macro-symbol? lexname-use)
+                                                                        (eq? lexname-use (lookup-lexical-name (car e) env-def))))))
+                                                        #f
+                                                        (cons (cdr a) (make-out-of-context template)))))
+                                              (else #f))))
+                                    aliases))))))
+          (if (null? env-use)
+              (let ((form (transcribe-template template ranks vars aliases #f)))
+                (if (renamed-id? form)
+                    (make-syntax-object form (or (assq form renames) '()) identifier-lexname)
+                    (wrap-renamed-id form renames)))
+              (let ((form (transcribe-template template ranks vars aliases emit)))
+                (cond ((null? form) '())
+                      ((wrapped-syntax-object? form) form)
+                      ((eq? form '.&NIL)
+                       (make-syntax-object '() '() #f))
+                      ((symbol? form)
+                       (make-syntax-object form (or (assq form out-of-context) (assq form renames) '()) identifier-lexname))
+                      (else
+                       (partial-wrap-syntax-object form (extend-env out-of-context renames))))))))))
+
+;; shorthands without template environment
+
+(set-top-level-value! '.syntax/i0n ; identifier: no-rank no-lexname
+  (lambda (vars template)
+    (syntax-transcribe vars template '() '() template '())))
+
+(set-top-level-value! '.syntax/i1n ; identifier: rank-0 no-lexname
+  (lambda (vars template)
+    (syntax-transcribe vars template '() (list (cons template 0)) template '())))
+
+(set-top-level-value! '.syntax/i2n ; identifier: no-rank has-lexname
+  (lambda (vars template identifier-lexname)
+    (syntax-transcribe vars template '() '() identifier-lexname '())))
+
+(set-top-level-value! '.syntax/i3n ; identifier: rank-0 has-lexname
+  (lambda (vars template identifier-lexname)
+    (syntax-transcribe vars template '() (list (cons template 0)) identifier-lexname '())))
+
+(set-top-level-value! '.syntax/c0n ; subtemplate: no-ranks no-lexname-check-list
+  (lambda (vars template)
+    (syntax-transcribe vars template '() '() #f '())))
+
+(set-top-level-value! '.syntax/c1n ; subtemplate: has-ranks no-lexname-check-list
+  (lambda (vars template ranks)
+    (syntax-transcribe vars template '() ranks #f '())))
+
+(set-top-level-value! '.syntax/c2n ; subtemplate: no-ranks has-lexname-check-list
+  (lambda (vars template lexname-check-list)
+    (syntax-transcribe vars template '() '() #f lexname-check-list)))
+
+(set-top-level-value! '.syntax/c3n ; subtemplate: has-ranks has-lexname-check-list
+  (lambda (vars template ranks lexname-check-list)
+    (syntax-transcribe vars template '() ranks #f lexname-check-list)))
+
+;; shorthands with template environment
+
+(set-top-level-value! '.syntax/i0e ; identifier: no-rank no-lexname
+  (lambda (vars template env)
+    (syntax-transcribe vars template env '() template '())))
+
+(set-top-level-value! '.syntax/i1e ; identifier: rank-0 no-lexname
+  (lambda (vars template env)
+    (syntax-transcribe vars template env (list (cons template 0)) template '())))
+
+(set-top-level-value! '.syntax/i2e ; identifier: no-rank has-lexname
+  (lambda (vars template env identifier-lexname)
+    (syntax-transcribe vars template env '() identifier-lexname '())))
+
+(set-top-level-value! '.syntax/i3e ; identifier: rank-0 has-lexname
+  (lambda (vars template env identifier-lexname)
+    (syntax-transcribe vars template env (list (cons template 0)) identifier-lexname '())))
+
+(set-top-level-value! '.syntax/c0e ; subtemplate: no-ranks no-lexname-check-list
+  (lambda (vars template env)
+    (syntax-transcribe vars template env '() #f '())))
+
+(set-top-level-value! '.syntax/c1e ; subtemplate: has-ranks no-lexname-check-list
+  (lambda (vars template env ranks)
+    (syntax-transcribe vars template env ranks #f '())))
+
+(set-top-level-value! '.syntax/c2e ; subtemplate: no-ranks has-lexname-check-list
+  (lambda (vars template env lexname-check-list)
+    (syntax-transcribe vars template env '() #f lexname-check-list)))
+
+(set-top-level-value! '.syntax/c3e ; subtemplate: has-ranks has-lexname-check-list
+  (lambda (vars template env ranks lexname-check-list)
+    (syntax-transcribe vars template env ranks #f lexname-check-list)))

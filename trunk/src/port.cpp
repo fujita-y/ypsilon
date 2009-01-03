@@ -1,12 +1,12 @@
 /*
     Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
 /*
 
  * Typical implementation using 'ungetc' may return part of replacement character to subsequent get-u8 operation.
-   If buffer-mode is 'none, this implementation do the same otherwise subsequent get-u8 operation provide octet 
+   If buffer-mode is 'none, this implementation do the same otherwise subsequent get-u8 operation provide octet
    which triggered decode error.
 
  * SCM_PORT_SUBTYPE_CHAR_SPECIAL for non-positionable named file.
@@ -1268,7 +1268,7 @@ port_get_bytes(scm_port_t port, uint8_t* p, int bsize)
                 port->mark = port->mark + bsize;
                 return bsize;
             } break;
-            
+
             case SCM_PORT_TYPE_CUSTOM:
             case SCM_PORT_TYPE_SOCKET:
             case SCM_PORT_TYPE_NAMED_FILE: {
@@ -1293,7 +1293,7 @@ port_get_bytes(scm_port_t port, uint8_t* p, int bsize)
                     if (n == bsize) return bsize;
                     return n + port_get_bytes(port, p + n, bsize - n);
                 } else {
-                    assert(port->buf == NULL);                    
+                    assert(port->buf == NULL);
                     if (port->lookahead_size) {
                         assert(port->buf == NULL);
                         uint8_t b = port->lookahead[0];
@@ -1305,7 +1305,7 @@ port_get_bytes(scm_port_t port, uint8_t* p, int bsize)
                         if (port->track_line_column) port_update_line_column(port, b);
                         port->mark++;
                         if (bsize == 1) return 1;
-                        return 1 + port_get_bytes(port, p + 1, bsize - 1);                        
+                        return 1 + port_get_bytes(port, p + 1, bsize - 1);
                     } else {
                         int n = device_read(port, p, bsize, port->mark);
                         if (port->track_line_column) {

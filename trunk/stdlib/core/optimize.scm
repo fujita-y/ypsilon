@@ -1,6 +1,6 @@
 #!core
 ;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
+;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
 (library (core optimize)
@@ -136,8 +136,10 @@
                   .vector-copy
                   .datum->syntax
                   .syntax->datum
-                  .syntax/i0 .syntax/i1 .syntax/i2 .syntax/i3
-                  .syntax/c0 .syntax/c1 .syntax/c2 .syntax/c3
+                  .syntax/i0n .syntax/i1n .syntax/i2n .syntax/i3n
+                  .syntax/c0n .syntax/c1n .syntax/c2n .syntax/c3n
+                  .syntax/i0e .syntax/i1e .syntax/i2e .syntax/i3e
+                  .syntax/c0e .syntax/c1e .syntax/c2e .syntax/c3e
                   .string-contains
                   .symbol-contains
                   .top-level-value

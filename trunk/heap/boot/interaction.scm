@@ -1,5 +1,5 @@
 ;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
+;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
 (define dump-condition (make-parameter #f))
@@ -461,7 +461,7 @@
 
     (define show-banner
       (lambda ()
-       (format #t "Ypsilon 0.9.6-trunk/r~a Copyright (c) 2008 Y.Fujita, LittleWing Company Limited.~%" (architecture-feature 'ypsilon-revision))))
+       (format #t "Ypsilon 0.9.6-trunk/r~a Copyright (c) 2009 Y.Fujita, LittleWing Company Limited.~%" (architecture-feature 'ypsilon-revision))))
 
     (define show-info
       (lambda ()

@@ -1,3 +1,9 @@
+/*
+  Ypsilon Scheme System
+  Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
+  See license.txt for terms and conditions of use
+*/
+
 #ifndef SERIALIZE_H_INCLUDED
 #define SERIALIZE_H_INCLUDED
 

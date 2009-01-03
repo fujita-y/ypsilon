@@ -1,15 +1,16 @@
 ;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
+;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
 (define expansion-backtrace (make-parameter 5)) ; #f or fixnum
 (define expansion-trace-stack (make-parameter '()))
 (define expansion-trace-level (make-parameter 0))
 (define current-immutable-identifiers (make-parameter #f))
-(define current-expansion-mode (make-parameter '()))
 (define current-expansion-environment (make-parameter '()))
-(define current-macro-expression (make-parameter #f))
 (define current-transformer-environment (make-parameter '()))
+(define current-template-environment (make-parameter #f))
+(define current-expansion-mode (make-parameter '()))
+(define current-macro-expression (make-parameter #f))
 (define unexpect-top-level-form (make-parameter #f))
 (define current-after-expansion-hook (make-parameter (lambda (form annotate annotate-closure) form)))
 (define current-temporary-count (make-parameter 0))

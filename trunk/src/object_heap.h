@@ -1,19 +1,17 @@
 /*
     Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
 
 #ifndef OBJECT_HEAP_H_INCLUDED
 #define OBJECT_HEAP_H_INCLUDED
 
-#define KEYWORD_TABLE_SIZE_INIT     127
 #define STRING_TABLE_SIZE_INIT      1021
 #define GLOC_TABLE_SIZE_INIT        8191
-
-#define MARK_STACK_SIZE_INIT        16384       // 16K object, 64K bytes
-#define MARK_STACK_SIZE_GROW        4096        //  4K object, 16K bytes
-#define SHADE_QUEUE_SIZE            4096        //  4K object, 16K bytes
+#define MARK_STACK_SIZE_INIT        16384       // 16K object, 64K/128K bytes
+#define MARK_STACK_SIZE_GROW        4096        //  4K object, 16K/32K bytes
+#define SHADE_QUEUE_SIZE            4096        //  4K object, 16K/32K bytes
 
 #include "core.h"
 #include "cond.h"

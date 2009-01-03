@@ -1,6 +1,6 @@
 /*
     Ypsilon Scheme System
-    Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
 
@@ -10,7 +10,8 @@
 #include "arith.h"
 #include "ucs4.h"
 
-fasl_printer_t::fasl_printer_t(VM* vm, scm_port_t port) {
+fasl_printer_t::fasl_printer_t(VM* vm, scm_port_t port)
+{
     m_vm = vm;
     m_port = port;
     m_lites = make_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
@@ -21,7 +22,8 @@ fasl_printer_t::fasl_printer_t(VM* vm, scm_port_t port) {
     m_bad = NULL;
 }
 
-fasl_printer_t::~fasl_printer_t() {
+fasl_printer_t::~fasl_printer_t()
+{
     free(m_stack);
 }
 
