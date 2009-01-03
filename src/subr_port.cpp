@@ -1,6 +1,6 @@
 /*
   Ypsilon Scheme System
-  Copyright (c) 2004-2008 Y.FUJITA / LittleWing Company Limited.
+  Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
   See license.txt for terms and conditions of use
 */
 
@@ -1174,7 +1174,7 @@ subr_get_bytevector_n(VM* vm, int argc, scm_obj_t argv[])
                 if (n == count) return bvector;
                 scm_bvector_t bvector2 = make_bvector(vm->m_heap, n);
                 memcpy(bvector2->elts, bvector->elts, n);
-                return bvector2;                
+                return bvector2;
 #else
                 for (int i = 0; i < count; i++) {
                     int c = port_get_byte(port);
