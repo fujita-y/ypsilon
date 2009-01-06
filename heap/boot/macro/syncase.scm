@@ -32,7 +32,7 @@
              (map loop (vector->list obj)))
             ((symbol? obj)
              (or (uninterned-symbol? obj)
-                 (assertion-violation "macro transformer" (format "output contains non-syntax object ~s" obj) form)))))))
+                 (assertion-violation "macro transformer" (format "output contains non-syntax object ~s, possibly missing datum->syntax" obj) form)))))))
 
 (define ensure-input-is-syntax-object
   (lambda (form)
@@ -44,7 +44,7 @@
              (map loop (vector->list obj)))
             ((symbol? obj)
              (or (uninterned-symbol? obj)
-                 (assertion-violation 'syntax-case (format "input contains non-syntax object ~s" obj) form)))))))
+                 (assertion-violation "macro transformer" (format "input contains non-syntax object ~s, possibly missing datum->syntax" obj) form)))))))
 
 (set-top-level-value! '.flatten-syntax
   (lambda (expr)
