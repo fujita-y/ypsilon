@@ -329,36 +329,6 @@
            ((1 2) (syntax-violation (car form) "expected symbol for first clause" form))
            (else (syntax-violation (car form) (format "expected 1 or 2, but ~a clauses given" len) form))))))))
 
-(define desugar-define-macro
-  (lambda (form)
-    (destructuring-match form
-      ((_ (? symbol? _) _) form)
-      ((_ ((? symbol? name) . formals) . (? pair? body))
-       (begin
-         (collect-lambda-formals (annotate formals form) form)
-         (annotate `(define-macro ,name (.LAMBDA ,formals ,@body)) form)))
-      ((_ (e1 . e2) . _)
-       (syntax-violation (car form) "invalid syntax" form e1))
-      (_
-       (syntax-violation (car form) "expected symbol and expression" form)))))
-
-(define rewrite-define-macro
-  (lambda (form)
-    (destructuring-match (desugar-define-macro form)
-      ((_ name body)
-       (let ((x (generate-temporary-symbol)))
-         (annotate `(.DEFINE-SYNTAX ,name
-                                    (.LAMBDA (,x)
-                                      (.AND (.SYMBOL? ,x) (.SYNTAX-VIOLATION ',name "misplaced syntactic keyword" #f #f))
-                                      (.APPLY ,body (.CDR ,x))))
-                   form))))))
-
-(define expand-define-macro
-  (lambda (form env)
-    (and (unexpect-top-level-form)
-         (syntax-violation (car form) "misplaced definition" form))
-    (expand-form (rewrite-define-macro form) env)))
-
 (define expand-identifier-syntax
   (lambda (form env)
 
@@ -370,8 +340,8 @@
         (annotate
          `(.LAMBDA (x)
             (.SYNTAX-CASE x ()
-                          (id (.IDENTIFIER? (.SYNTAX id)) (.SYNTAX ,e))
-                          ((_ x ...) (.SYNTAX (,e x ...)))))
+              (id (.IDENTIFIER? (.SYNTAX id)) (.SYNTAX ,e))
+              ((_ x ...) (.SYNTAX (,e x ...)))))
          form)
         env))
       ((_ (id exp1) (((? set!? _) var val) exp2))
@@ -380,9 +350,9 @@
          `(.MAKE-VARIABLE-TRANSFORMER
            (.LAMBDA (x)
              (.SYNTAX-CASE x (set!)
-                           ((set! ,var ,val) (.SYNTAX ,exp2))
-                           ((,id x ...) (.SYNTAX (,exp1 x ...)))
-                           (,id (.IDENTIFIER? (.SYNTAX id)) (.SYNTAX ,exp1)))))
+               ((set! ,var ,val) (.SYNTAX ,exp2))
+               ((,id x ...) (.SYNTAX (,exp1 x ...)))
+               (,id (.IDENTIFIER? (.SYNTAX id)) (.SYNTAX ,exp1)))))
          form)
         env)))))
 

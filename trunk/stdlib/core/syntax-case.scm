@@ -5,19 +5,24 @@
 
 (library (core syntax-case)
 
-  (export syntax-case syntax
+  (export syntax-case
+          syntax
           with-syntax
+          _
+          ...
           make-variable-transformer
-          identifier? bound-identifier=? free-identifier=?
-          datum->syntax syntax->datum
+          identifier?
+          bound-identifier=?
+          free-identifier=?
+          datum->syntax
+          syntax->datum
           generate-temporaries
           quasisyntax
           unsyntax
           unsyntax-splicing
           syntax-violation
-          _
-          ...
-          datum)
+          datum
+          define-macro)
 
   (import (core primitives))
 
@@ -31,21 +36,37 @@
 
   (define-syntax datum
     (syntax-rules ()
-      ((_ x) (syntax->datum (syntax x)))))
+      ((_ x) (syntax->datum #'x))))
 
   (define-syntax with-syntax
     (lambda (x)
       (syntax-case x ()
         ((_ ((p e0) ...) e1 e2 ...)
          (if (backtrace)
-             (syntax (syntax-case (list e0 ...) ()
-                       ((p ...) (let () e1 e2 ...))
-                       (_ (syntax-violation
-                           'with-syntax
-                           "value does not match to pattern"
-                           '((p e0) ...)))))
-             (syntax (syntax-case (list e0 ...) ()
-                       ((p ...) (let () e1 e2 ...)))))))))
+             #'(syntax-case (list e0 ...) ()
+                 ((p ...) (let () e1 e2 ...))
+                 (_ (syntax-violation
+                     'with-syntax
+                     "value does not match to pattern"
+                     '((p e0) ...))))
+             #'(syntax-case (list e0 ...) ()
+                 ((p ...) (let () e1 e2 ...))))))))
+
+  (define-syntax define-macro
+    (lambda (x)
+      (syntax-case x ()
+        ((_ (name . args) . body)
+         #'(define-macro name (lambda args . body)))
+        ((_ name body)
+         #'(define-syntax name
+             (let ((define-macro-transformer body))
+               (lambda (x)
+                 (syntax-case x ()
+                   ((e0 . e1)
+                    (datum->syntax
+                     #'e0
+                     (apply define-macro-transformer
+                            (syntax->datum #'e1))))))))))))
 
   ;; quasisyntax from
 

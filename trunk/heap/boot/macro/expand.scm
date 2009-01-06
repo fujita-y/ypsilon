@@ -533,7 +533,6 @@
                                    (eq? denote-begin deno)
                                    (eq? denote-define deno)
                                    (eq? denote-import deno)
-                                   (eq? denote-define-macro deno)
                                    (eq? denote-define-syntax deno)
                                    (eq? denote-let-syntax deno)
                                    (eq? denote-letrec-syntax deno))

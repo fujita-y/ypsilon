@@ -17,7 +17,9 @@
             (lambda ()
               (format port "error")
               (and (who-condition? c)
-                   (format port " in ~u" (condition-who c)))
+                   (if (string? (condition-who c))
+                       (format port " in ~a" (condition-who c))
+                       (format port " in ~u" (condition-who c))))
               (and (message-condition? c)
                    (format port ": ~a" (condition-message c)))))
 

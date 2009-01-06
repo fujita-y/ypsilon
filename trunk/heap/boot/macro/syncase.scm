@@ -22,8 +22,33 @@
   (lambda (datum)
     (eq? (tuple-ref datum 0) 'type:syntax)))
 
+(define ensure-output-is-syntax-object
+  (lambda (form)
+    (let loop ((obj form))
+      (cond ((pair? obj)
+             (loop (car obj))
+             (loop (cdr obj)))
+            ((vector? obj)
+             (map loop (vector->list obj)))
+            ((symbol? obj)
+             (or (uninterned-symbol? obj)
+                 (assertion-violation "macro transformer" (format "output contains non-syntax object ~s" obj) form)))))))
+
+(define ensure-input-is-syntax-object
+  (lambda (form)
+    (let loop ((obj form))
+      (cond ((pair? obj)
+             (loop (car obj))
+             (loop (cdr obj)))
+            ((vector? obj)
+             (map loop (vector->list obj)))
+            ((symbol? obj)
+             (or (uninterned-symbol? obj)
+                 (assertion-violation 'syntax-case (format "input contains non-syntax object ~s" obj) form)))))))
+
 (set-top-level-value! '.flatten-syntax
   (lambda (expr)
+    (ensure-output-is-syntax-object expr)
     (let ((ht (make-core-hashtable)))
       (let ((expr
              (let loop ((lst expr))
@@ -56,6 +81,7 @@
         (and (match-pattern? form pat lites)
              (bind-pattern form pat lites '()))))
 
+    (or (null? patvars) (ensure-input-is-syntax-object form))
     (let ((form (unwrap-syntax form)))
       (let loop ((lst lst))
         (if (null? lst)

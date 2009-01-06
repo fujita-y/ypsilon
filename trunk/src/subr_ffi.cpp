@@ -193,7 +193,7 @@ subr_call_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// call-shared-object->void*
+// call-shared-object->intptr
 scm_obj_t
 subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
 {
@@ -201,11 +201,11 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
         void *func = NULL;
         if (exact_positive_integer_pred(argv[0])) {
             if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                invalid_argument_violation(vm, "call-shared-object->void*", "value out of bound,", argv[0], 0, argc, argv);
+                invalid_argument_violation(vm, "call-shared-object->intptr", "value out of bound,", argv[0], 0, argc, argv);
                 return scm_undef;
             }
         } else {
-            wrong_type_argument_violation(vm, "call-shared-object->void*", 0, "c-function address", argv[0], argc, argv);
+            wrong_type_argument_violation(vm, "call-shared-object->intptr", 0, "c-function address", argv[0], argc, argv);
             return scm_undef;
         }
         if (argc - 1 <= FFI_MAX_ARGC) {
@@ -213,7 +213,7 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
             for (int i = 1; i < argc; i++) {
                 const char* err = stack.push(argv[i]);
                 if (err) {
-                    wrong_type_argument_violation(vm, "call-shared-object->void*", i, err, argv[i], argc, argv);
+                    wrong_type_argument_violation(vm, "call-shared-object->intptr", i, err, argv[i], argc, argv);
                     return scm_undef;
                 }
             }
@@ -231,7 +231,7 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
 #endif
             return intptr_to_integer(vm->m_heap, retval);
         }
-        invalid_argument_violation(vm, "call-shared-object->void*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
+        invalid_argument_violation(vm, "call-shared-object->intptr", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "call-shared-object->void*", 1, -1, argc, argv);
@@ -398,7 +398,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
         return scm_undef;
     }
 
-    // stdcall-shared-object->void*
+    // stdcall-shared-object->intptr
     scm_obj_t
     subr_stdcall_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
     {
@@ -407,11 +407,11 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
             void *func = NULL;
             if (exact_positive_integer_pred(argv[0])) {
                 if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                    invalid_argument_violation(vm, "stdcall-shared-object->void*", "value out of bound,", argv[0], 0, argc, argv);
+                    invalid_argument_violation(vm, "stdcall-shared-object->intptr", "value out of bound,", argv[0], 0, argc, argv);
                     return scm_undef;
                 }
             } else {
-                wrong_type_argument_violation(vm, "stdcall-shared-object->void*", 0, "c-function address", argv[0], argc, argv);
+                wrong_type_argument_violation(vm, "stdcall-shared-object->intptr", 0, "c-function address", argv[0], argc, argv);
                 return scm_undef;
             }
             if (argc - 1 <= FFI_MAX_ARGC) {
@@ -419,7 +419,7 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 for (int i = 1; i < argc; i++) {
                     const char* err = stack.push(argv[i]);
                     if (err) {
-                        wrong_type_argument_violation(vm, "stdcall-shared-object->void*", i, err, argv[i], argc, argv);
+                        wrong_type_argument_violation(vm, "stdcall-shared-object->intptr", i, err, argv[i], argc, argv);
                         return scm_undef;
                     }
                 }
@@ -428,13 +428,13 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                 vm->m_shared_object_win32_lasterror = GetLastError();
                 return intptr_to_integer(vm->m_heap, retval);
             }
-            invalid_argument_violation(vm, "stdcall-shared-object->void*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
+            invalid_argument_violation(vm, "stdcall-shared-object->intptr", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
             return scm_undef;
         }
         wrong_number_of_arguments_violation(vm, "stdcall-shared-object->void*", 1, -1, argc, argv);
         return scm_undef;
     }
-
+    
     // stdcall-shared-object->char*
     scm_obj_t
     subr_stdcall_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
@@ -591,21 +591,18 @@ void init_subr_ffi(object_heap_t* heap)
     DEFSUBR("call-shared-object->void", subr_call_shared_object_void);
     DEFSUBR("call-shared-object->int", subr_call_shared_object_int);
     DEFSUBR("call-shared-object->double", subr_call_shared_object_double);
-    DEFSUBR("call-shared-object->void*", subr_call_shared_object_intptr);
     DEFSUBR("call-shared-object->intptr", subr_call_shared_object_intptr);
     DEFSUBR("call-shared-object->char*", subr_call_shared_object_chars);
 #if _MSC_VER
     DEFSUBR("stdcall-shared-object->void", subr_stdcall_shared_object_void);
     DEFSUBR("stdcall-shared-object->int", subr_stdcall_shared_object_int);
     DEFSUBR("stdcall-shared-object->double", subr_stdcall_shared_object_double);
-    DEFSUBR("stdcall-shared-object->void*", subr_stdcall_shared_object_intptr);
     DEFSUBR("stdcall-shared-object->intptr", subr_stdcall_shared_object_intptr);
     DEFSUBR("stdcall-shared-object->char*", subr_stdcall_shared_object_chars);
 #else
     DEFSUBR("stdcall-shared-object->void", subr_call_shared_object_void);
     DEFSUBR("stdcall-shared-object->int", subr_call_shared_object_int);
     DEFSUBR("stdcall-shared-object->double", subr_call_shared_object_double);
-    DEFSUBR("stdcall-shared-object->void*", subr_call_shared_object_intptr);
     DEFSUBR("stdcall-shared-object->intptr", subr_call_shared_object_intptr);
     DEFSUBR("stdcall-shared-object->char*", subr_call_shared_object_chars);
 #endif

@@ -206,7 +206,6 @@
   (init-core-macro 'or                (make-special expand-or))
   (init-core-macro 'letrec*           (make-special expand-letrec*))
   (init-core-macro 'library           (make-special expand-library))
-  (init-core-macro 'define-macro      (make-special expand-define-macro))
   (init-core-macro 'let*-values       (make-special expand-let*-values))
   (init-core-macro 'let-values        (make-special expand-let-values))
   (init-core-macro 'syntax            (make-special expand-syntax))
@@ -228,7 +227,6 @@
 (define denote-define-syntax    (core-hashtable-ref core-env 'define-syntax #f))
 (define denote-let-syntax       (core-hashtable-ref core-env 'let-syntax #f))
 (define denote-letrec-syntax    (core-hashtable-ref core-env 'letrec-syntax #f))
-(define denote-define-macro     (core-hashtable-ref core-env 'define-macro #f))
 (define denote-library          (core-hashtable-ref core-env 'library #f))
 (define denote-quasiquote       (core-hashtable-ref core-env 'quasiquote #f))
 (define denote-quote            (core-hashtable-ref core-env 'quote #f))
@@ -320,11 +318,6 @@
     (and (symbol? obj)
          (eq? (env-lookup env obj) denote-unquote-splicing))))
 
-(define denote-define-macro?
-  (lambda (env obj)
-    (and (symbol? obj)
-         (eq? (env-lookup env obj) denote-define-macro))))
-
 (define denote-syntax-rules?
   (lambda (env obj)
     (and (symbol? obj)
@@ -355,16 +348,11 @@
    (cons '.LIST->VECTOR '.list->vector)
    (cons '.EQ? '.eq?)
    (cons '.EQV? '.eqv?)
-   (cons '.SYMBOL? '.symbol?)
    (cons '.MEMQ '.memq)
    (cons '.MEMV '.memv)
    (cons '.CALL-WITH-VALUES '.call-with-values)
-   (cons '.APPLY '.apply)
-   (cons '.CDR '.cdr)
    (cons '.IDENTIFIER? '.identifier?)
    (cons '.MAKE-VARIABLE-TRANSFORMER '.make-variable-transformer)
-   (cons '.ASSERTION-VIOLATION '.assertion-violation)
-   (cons '.SYNTAX-VIOLATION '.syntax-violation)
    (cons '.UNSPECIFIED '.unspecified)
    (cons '.QUOTE denote-quote)
    (cons '.LET denote-let)
@@ -372,15 +360,10 @@
    (cons '.BEGIN denote-begin)
    (cons '.LAMBDA denote-lambda)
    (cons '.IF denote-if)
-   (cons '.SET! denote-set!)
-   (cons '.AND denote-and)
    (cons '.OR denote-or)
    (cons '.COND denote-cond)
    (cons '.ELSE denote-else)
-   (cons '.DEFINE-SYNTAX denote-define-syntax)
    (cons '.SYNTAX denote-syntax)
    (cons '.SYNTAX-CASE denote-syntax-case)))
-
-
 
 (current-macro-environment core-env)
