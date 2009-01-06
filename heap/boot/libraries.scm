@@ -127,9 +127,8 @@
 
   (setup-core-primitive-macros
    '(core primitives) '( do
-                           syntax-case
-                         syntax
-                         define-macro))
+                         syntax-case
+                         syntax))
 
   (setup-core-primitive-procs
    '(core primitives) '(; eval

@@ -346,7 +346,6 @@
                (or (macro? deno)
                    (eq? denote-define deno)
                    (eq? denote-define-syntax deno)
-                   (eq? denote-define-macro deno)
                    (eq? denote-let-syntax deno)
                    (eq? denote-letrec-syntax deno))))))
 
@@ -413,7 +412,6 @@
                        defs))
                  (rewrited-macros
                   (cond ((null? macros) '())
-                        ;((every1 (lambda (e) (not (assq (car e) exports))) macros) '()) ;; 081219 add
                         (else
                          (let ((ht-visibles (make-core-hashtable)))
                            (let loop ((lst (map caddr macros)))
@@ -521,8 +519,6 @@
                           (extend-env! org new)
                           (extend-libenv! org (make-import new))
                           (loop (cdr body) (cons def defs) macros (acons org new renames)))))
-                     ((eq? denote-define-macro deno)
-                      (loop (cons (rewrite-define-macro (car body)) (cdr body)) defs macros renames))
                      ((or (macro? deno)
                           (eq? denote-let-syntax deno)
                           (eq? denote-letrec-syntax deno))
@@ -539,19 +535,6 @@
                       (rewrite-body body (reverse defs) (reverse macros) renames)))))
             (else
              (rewrite-body body (reverse defs) (reverse macros) renames))))))
-
-#;(define import-top-level-bindings
-  (lambda (bindings)
-    (for-each (lambda (binding)
-                (let ((intern (car binding)) (extern (cddr binding)))
-                  (or (eq? intern extern)
-                      (begin
-                        (core-hashtable-delete! (current-macro-environment) intern)
-                        (if (top-level-bound? intern) (set-top-level-value! intern .&UNDEF))
-                        (cond ((core-hashtable-ref (current-macro-environment) extern #f)
-                               => (lambda (deno) (core-hashtable-set! (current-macro-environment) intern deno)))
-                              (else (set-top-level-value! intern (top-level-value extern))))))))
-              bindings)))
 
 (define import-top-level-bindings
   (lambda (bindings)
@@ -681,7 +664,6 @@
                (or (macro? deno)
                    (eq? denote-define deno)
                    (eq? denote-define-syntax deno)
-                   (eq? denote-define-macro deno)
                    (eq? denote-let-syntax deno)
                    (eq? denote-letrec-syntax deno))))))
 
@@ -834,8 +816,6 @@
                               (extend-env! org new)
                               (extend-libenv! org (make-import new))
                               (loop (cdr body) (cons def defs) macros (acons org new renames)))))
-                         ((eq? denote-define-macro deno)
-                          (loop (cons (rewrite-define-macro (car body)) (cdr body)) defs macros renames))
                          ((or (macro? deno)
                               (eq? denote-let-syntax deno)
                               (eq? denote-letrec-syntax deno))

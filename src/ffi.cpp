@@ -405,7 +405,7 @@
         }
         uid++;
         assert(uid < FIXNUM_MAX);
-        return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
+        return uintptr_to_integer(vm->m_heap, (uintptr_t)thunk);
     }
 #elif ARCH_IA32
     struct trampoline_t {
@@ -499,7 +499,7 @@
         }
         uid++;
         assert(uid < FIXNUM_MAX);
-        return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
+        return uintptr_to_integer(vm->m_heap, (uintptr_t)thunk);
     }
 #elif ARCH_X64
     struct trampoline_t {
@@ -599,7 +599,7 @@
         }
         uid++;
         assert(uid < FIXNUM_MAX);
-        return intptr_to_integer(vm->m_heap, (intptr_t)thunk);
+        return uintptr_to_integer(vm->m_heap, (uintptr_t)thunk);
     }
 #else
     scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure)
