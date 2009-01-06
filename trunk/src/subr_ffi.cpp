@@ -83,6 +83,10 @@ subr_call_shared_object_void(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
             }
+            errno = vm->m_shared_object_errno;
+#if _MSC_VER
+            SetLastError(vm->m_shared_object_win32_lasterror);
+#endif
 #if ARCH_IA32
             c_func_stub_intptr(func, stack.count(), stack.frame());
 #elif ARCH_X64
@@ -127,6 +131,10 @@ subr_call_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
             }
+            errno = vm->m_shared_object_errno;
+#if _MSC_VER
+            SetLastError(vm->m_shared_object_win32_lasterror);
+#endif
             intptr_t retval;
 #if ARCH_IA32
             retval = c_func_stub_intptr(func, stack.count(), stack.frame());
@@ -172,6 +180,10 @@ subr_call_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
             }
+            errno = vm->m_shared_object_errno;
+#if _MSC_VER
+            SetLastError(vm->m_shared_object_win32_lasterror);
+#endif
             double retval;
 #if ARCH_IA32
             retval = c_func_stub_double(func, stack.count(), stack.frame());
@@ -217,6 +229,10 @@ subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
             }
+            errno = vm->m_shared_object_errno;
+#if _MSC_VER
+            SetLastError(vm->m_shared_object_win32_lasterror);
+#endif
             intptr_t retval;
 #if ARCH_IA32
             retval = c_func_stub_intptr(func, stack.count(), stack.frame());
@@ -262,6 +278,10 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
             }
+            errno = vm->m_shared_object_errno;
+#if _MSC_VER
+            SetLastError(vm->m_shared_object_win32_lasterror);
+#endif
             uint8_t* p;
 #if ARCH_IA32
             p = (uint8_t*)c_func_stub_intptr(func, stack.count(), stack.frame());
@@ -312,6 +332,8 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
+                errno = vm->m_shared_object_errno;
+                SetLastError(vm->m_shared_object_win32_lasterror);
                 stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 vm->m_shared_object_errno = errno;
                 vm->m_shared_object_win32_lasterror = GetLastError();
@@ -349,6 +371,8 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
+                errno = vm->m_shared_object_errno;
+                SetLastError(vm->m_shared_object_win32_lasterror);
                 intptr_t retval = stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 vm->m_shared_object_errno = errno;
                 vm->m_shared_object_win32_lasterror = GetLastError();
@@ -386,6 +410,8 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
+                errno = vm->m_shared_object_errno;
+                SetLastError(vm->m_shared_object_win32_lasterror);
                 double retval = stdcall_func_stub_double(func, stack.count(), stack.frame());
                 vm->m_shared_object_errno = errno;
                 vm->m_shared_object_win32_lasterror = GetLastError();
@@ -423,6 +449,8 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
+                errno = vm->m_shared_object_errno;
+                SetLastError(vm->m_shared_object_win32_lasterror);
                 intptr_t retval = stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 vm->m_shared_object_errno = errno;
                 vm->m_shared_object_win32_lasterror = GetLastError();
@@ -460,6 +488,8 @@ subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
                         return scm_undef;
                     }
                 }
+                errno = vm->m_shared_object_errno;
+                SetLastError(vm->m_shared_object_win32_lasterror);
                 uint8_t* p = (uint8_t*)stdcall_func_stub_intptr(func, stack.count(), stack.frame());
                 vm->m_shared_object_errno = errno;
                 vm->m_shared_object_win32_lasterror = GetLastError();

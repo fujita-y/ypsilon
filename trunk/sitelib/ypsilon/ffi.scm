@@ -7,6 +7,9 @@
   (export on-darwin on-linux on-freebsd on-openbsd on-windows on-posix
           on-ia32 on-x64
           load-shared-object
+          lookup-shared-object
+          shared-object-errno
+          shared-object-win32-lasterror
           c-function
           c-function/errno
           c-function/lasterror
