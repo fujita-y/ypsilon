@@ -3279,13 +3279,10 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("microsecond", subr_microsecond);
     DEFSUBR("microsecond->utc", subr_microsecond_utc);
     DEFSUBR("microsecond->string", subr_microsecond_string);
-  //DEFSUBR("string->microsecond", subr_string_microsecond);
     DEFSUBR("decode-microsecond", subr_decode_microsecond);
     DEFSUBR("encode-microsecond", subr_encode_microsecond);
     DEFSUBR("cyclic-object?", subr_cyclic_object_pred);
     DEFSUBR("vector-copy", subr_vector_copy);
-  //DEFSUBR("stat-mtime", subr_file_stat_mtime);
-    
     DEFSUBR("file-size-in-bytes", subr_file_size_in_bytes);
     DEFSUBR("file-regular?", subr_file_regular_pred);
     DEFSUBR("file-directory?", subr_file_directory_pred);

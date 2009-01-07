@@ -124,16 +124,13 @@
             if (PathIsDirectoryW(ucs2)) return scm_false;
             HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (fd != INVALID_HANDLE_VALUE) {
-                DWORD type = GetFileType(fd);
+                DWORD type = GetFileType(fd) & ~FILE_TYPE_REMOTE;
                 CloseHandle(fd);
                 return (type == FILE_TYPE_DISK) ? scm_true : scm_false;
             }
-            _dosmaperr(GetLastError());
-            raise_io_error(vm, "file-regular?", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
-            return scm_undef;
+            return scm_false;
         }
-        raise_io_error(vm, "file-regular?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
-        return scm_undef;
+        return scm_false;
     }
 
     scm_obj_t file_directory(VM* vm, scm_string_t path)
@@ -143,8 +140,7 @@
             if (PathIsDirectoryW(ucs2)) return scm_true;
             return scm_false;
         }
-        raise_io_error(vm, "file-directory?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
-        return scm_undef;
+        return scm_false;
     }
 
     scm_obj_t file_symbolic_link(VM* vm, scm_string_t path)
@@ -153,68 +149,79 @@
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
             return scm_false;
         }
-        raise_io_error(vm, "file-symbolic-link?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
-        return scm_undef;
+        return scm_false;
     }
-
+    
     scm_obj_t file_exists(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            return (_waccess(ucs2, 0) == 0) ? scm_true : scm_false;
+            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (fd == INVALID_HANDLE_VALUE) return scm_false;
+            CloseHandle(fd);
+            return scm_true;            
         }
-        raise_io_error(vm, "file-exists?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
-        return scm_undef;
+        return scm_false;
     }
 
+    static bool get_file_attributes(wchar_t* ucs2, DWORD* dwFileAttributes)
+    {
+        HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (fd != INVALID_HANDLE_VALUE) {
+            BY_HANDLE_FILE_INFORMATION fileInfo;
+            if (GetFileInformationByHandle(fd, &fileInfo)) {
+                *dwFileAttributes = fileInfo.dwFileAttributes;
+                CloseHandle(fd);
+                return false;
+            }
+        }
+        CloseHandle(fd);
+        return true;
+    }
+        
     scm_obj_t file_readable(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            return (_waccess(ucs2, 4) == 0) ? scm_true : scm_false;
+            DWORD dwFileAttributes;
+            if (get_file_attributes(ucs2, &dwFileAttributes)) return scm_false;
+            return scm_true;
         }
-        raise_io_error(vm, "file-readable?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
-        return scm_undef;
+        return scm_false;
     }
 
     scm_obj_t file_writable(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            return (_waccess(ucs2, 2) == 0) ? scm_true : scm_false;
+            DWORD dwFileAttributes;
+            if (get_file_attributes(ucs2, &dwFileAttributes)) return scm_false;
+            return (dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? scm_false : scm_true;
         }
-        raise_io_error(vm, "file-writable?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
-        return scm_undef;
+        return scm_false;
     }
 
     scm_obj_t file_executable(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            DWORD dwFileAttributes;
             if (PathIsDirectoryW(ucs2)) return scm_false;
-            if (_waccess(ucs2, 4) == 0) {
-                if (!PathMatchSpecExW(ucs2, 
-                                      TEXT("*.com;*.exe;*.bat;*.cmd;*.vbs;*.vbe;*.js;*.jse;*.wsf;*.wsh;*.msc"),
-                                      PMSF_MULTIPLE)) return scm_true;
-            }
+            if (get_file_attributes(ucs2, &dwFileAttributes)) return scm_false;
+            if (!PathMatchSpecExW(ucs2, TEXT("*.com;*.exe;*.bat;*.cmd;*.vbs;*.vbe;*.js;*.jse;*.wsf;*.wsh;*.msc"), PMSF_MULTIPLE)) return scm_true;
             return scm_false;
         }
-        raise_io_error(vm, "file-executable?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
-        return scm_undef;
+        return scm_false;
     }
-
-
 
     scm_obj_t delete_file(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            if (_wremove(ucs2) < 0) {
-                _dosmaperr(GetLastError());
-                raise_io_error(vm, "delete-file", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
-                return scm_undef;
-            }
-            return scm_unspecified;
+            if (DeleteFile(ucs2)) return scm_unspecified;
+            _dosmaperr(GetLastError());
+            raise_io_error(vm, "delete-file", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            return scm_undef;
         }
         raise_io_error(vm, "delete-file", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
         return scm_undef;
@@ -307,9 +314,7 @@
     load_shared_object(scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
-        if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            return LoadLibraryW(ucs2);
-        }
+        if (win32path(path, ucs2, array_sizeof(ucs2))) return LoadLibraryW(ucs2);
         return NULL;
     }
 
@@ -410,24 +415,21 @@
     {
         struct stat st;
         if (lstat(path->name, &st) == 0) return S_ISREG(st.st_mode) ? scm_true : scm_false;
-        raise_io_error (vm, "file-regular?", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
-        return scm_undef;
+        return scm_false;
     }
 
     scm_obj_t file_directory(VM* vm, scm_string_t path)
     {
         struct stat st;
         if (lstat(path->name, &st) == 0) return S_ISDIR(st.st_mode) ? scm_true : scm_false;
-        raise_io_error (vm, "file-directory?", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
-        return scm_undef;
+        return scm_false;
     }
 
     scm_obj_t file_symbolic_link(VM* vm, scm_string_t path)
     {
         struct stat st;
         if (lstat(path->name, &st) == 0) return S_ISLNK(st.st_mode) ? scm_true : scm_false;
-        raise_io_error (vm, "file-symbolic-link?", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
-        return scm_undef;
+        return scm_false;
     }
 
     scm_obj_t file_exists(VM* vm, scm_string_t path)
