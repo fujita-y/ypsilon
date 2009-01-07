@@ -3188,21 +3188,6 @@ subr_rename_file(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 #endif
 }
-/*
-//
-scm_obj_t file_size_in_bytes(VM *vm, scm_string_t path);
-scm_obj_t file_regular(VM* vm, scm_string_t path);
-scm_obj_t file_directory(VM* vm, scm_string_t path);
-scm_obj_t file_symbolic_link(VM* vm, scm_string_t path);
-scm_obj_t file_readable(VM* vm, scm_string_t path);
-scm_obj_t file_writable(VM* vm, scm_string_t path);
-scm_obj_t file_executable(VM* vm, scm_string_t path);
-scm_obj_t file_stat_ctime(VM* vm, scm_string_t path);
-scm_obj_t file_stat_mtime(VM* vm, scm_string_t path);
-scm_obj_t create_symbolic_link(VM* vm, scm_string_t old_path, scm_string_t new_path);
-scm_obj_t create_hard_link(VM* vm, scm_string_t old_path, scm_string_t new_path);
-scm_obj_t rename_file(VM* vm, scm_string_t old_path, scm_string_t new_path);
-*/
 
 void
 init_subr_others(object_heap_t* heap)
@@ -3318,6 +3303,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("cyclic-object?", subr_cyclic_object_pred);
     DEFSUBR("vector-copy", subr_vector_copy);
   //DEFSUBR("stat-mtime", subr_file_stat_mtime);
+    
     DEFSUBR("file-size-in-bytes", subr_file_size_in_bytes);
     DEFSUBR("file-regular?", subr_file_regular_pred);
     DEFSUBR("file-directory?", subr_file_directory_pred);
