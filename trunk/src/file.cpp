@@ -121,7 +121,6 @@
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            if (PathIsDirectoryW(ucs2)) return scm_false;
             HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (fd != INVALID_HANDLE_VALUE) {
                 DWORD type = GetFileType(fd) & ~FILE_TYPE_REMOTE;
@@ -151,65 +150,55 @@
         }
         return scm_false;
     }
-    
+
+    static bool ucs2_file_exists(wchar_t* ucs2)
+    {
+        HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, NULL);
+        if (fd == INVALID_HANDLE_VALUE) return false;
+        CloseHandle(fd);
+        return true;
+    }
+
     scm_obj_t file_exists(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (fd == INVALID_HANDLE_VALUE) return scm_false;
-            CloseHandle(fd);
-            return scm_true;            
+            return ucs2_file_exists(ucs2) ? scm_true : scm_false;
         }
         return scm_false;
-    }
-
-    static bool get_file_attributes(wchar_t* ucs2, DWORD* dwFileAttributes)
-    {
-        HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (fd != INVALID_HANDLE_VALUE) {
-            BY_HANDLE_FILE_INFORMATION fileInfo;
-            if (GetFileInformationByHandle(fd, &fileInfo)) {
-                *dwFileAttributes = fileInfo.dwFileAttributes;
-                CloseHandle(fd);
-                return false;
-            }
-        }
-        CloseHandle(fd);
-        return true;
     }
         
     scm_obj_t file_readable(VM* vm, scm_string_t path)
     {
-        wchar_t ucs2[MAX_PATH];
-        if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            DWORD dwFileAttributes;
-            if (get_file_attributes(ucs2, &dwFileAttributes)) return scm_false;
-            return scm_true;
-        }
-        return scm_false;
+        return file_exists(vm, path);
     }
 
     scm_obj_t file_writable(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            DWORD dwFileAttributes;
-            if (get_file_attributes(ucs2, &dwFileAttributes)) return scm_false;
-            return (dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? scm_false : scm_true;
+            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, NULL);
+            if (fd != INVALID_HANDLE_VALUE) {
+                BY_HANDLE_FILE_INFORMATION fileInfo;
+                if (GetFileInformationByHandle(fd, &fileInfo)) {
+                    CloseHandle(fd);
+                    return (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? scm_false : scm_true;
+                }
+            }
+            CloseHandle(fd);
         }
         return scm_false;
     }
 
     scm_obj_t file_executable(VM* vm, scm_string_t path)
     {
+        wchar_t* pathext = TEXT("*.com;*.exe;*.bat;*.cmd;*.vbs;*.vbe;*.js;*.jse;*.wsf;*.wsh;*.msc");
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            DWORD dwFileAttributes;
-            if (PathIsDirectoryW(ucs2)) return scm_false;
-            if (get_file_attributes(ucs2, &dwFileAttributes)) return scm_false;
-            if (!PathMatchSpecExW(ucs2, TEXT("*.com;*.exe;*.bat;*.cmd;*.vbs;*.vbe;*.js;*.jse;*.wsf;*.wsh;*.msc"), PMSF_MULTIPLE)) return scm_true;
-            return scm_false;
+            if (ucs2_file_exists(ucs2)) {
+                if (PathIsDirectoryW(ucs2)) return scm_true;
+                if (PathMatchSpecExW(ucs2, pathext, PMSF_MULTIPLE) == 0) return scm_true;
+            }
         }
         return scm_false;
     }
