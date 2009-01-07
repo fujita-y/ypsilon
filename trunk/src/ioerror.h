@@ -27,5 +27,6 @@
 
 void raise_io_error(VM* vm, const char* who, int operation, const char* message, int err, scm_obj_t port, scm_obj_t filename);
 void raise_io_codec_error(VM* vm, const char* who, int operation, const char* message, scm_obj_t port, scm_obj_t ch);
+void raise_io_filesystem_error(VM* vm, const char* who, const char* message, int err, scm_obj_t old_filename, scm_obj_t new_filename);
 
 #endif
