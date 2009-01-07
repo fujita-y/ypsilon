@@ -52,16 +52,6 @@
         return false;
     }
 
-    scm_obj_t file_exists(VM* vm, scm_string_t path)
-    {
-        wchar_t ucs2[MAX_PATH];
-        if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            return (_waccess(ucs2, 0) == 0) ? scm_true : scm_false;
-        }
-        raise_io_error(vm, "file-exists?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
-        return scm_undef;
-    }
-
     scm_obj_t file_stat_mtime(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
@@ -70,9 +60,11 @@
             if (fd != INVALID_HANDLE_VALUE) {
                 BY_HANDLE_FILE_INFORMATION fileInfo;
                 if (GetFileInformationByHandle(fd, &fileInfo)) {
+                    CloseHandle(fd);
                     int64_t tm = ((int64_t)fileInfo.ftLastWriteTime.dwHighDateTime << 32) + fileInfo.ftLastWriteTime.dwLowDateTime;
                     return int64_to_integer(vm->m_heap, tm);
                 }
+                CloseHandle(fd);
             }
             _dosmaperr(GetLastError());
             raise_io_error(vm, "file-stat-mtime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
@@ -90,9 +82,11 @@
             if (fd != INVALID_HANDLE_VALUE) {
                 BY_HANDLE_FILE_INFORMATION fileInfo;
                 if (GetFileInformationByHandle(fd, &fileInfo)) {
+                    CloseHandle(fd);
                     int64_t tm = ((int64_t)fileInfo.ftCreationTime.dwHighDateTime << 32) + fileInfo.ftCreationTime.dwLowDateTime;
                     return int64_to_integer(vm->m_heap, tm);
                 }
+                CloseHandle(fd);
             }
             _dosmaperr(GetLastError());
             raise_io_error(vm, "file-stat-ctime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
@@ -102,28 +96,114 @@
         return scm_undef;
     }
 
-    scm_obj_t directory_list(VM* vm, scm_string_t path)
+    scm_obj_t file_size_in_bytes(VM *vm, scm_string_t path)
     {
-        char utf8[MAX_PATH];
-        snprintf(utf8, sizeof(utf8), "%s\\*", path->name);
         wchar_t ucs2[MAX_PATH];
-        if (MultiByteToWideChar(CP_UTF8, 0, utf8, -1, ucs2, array_sizeof(ucs2))) {
-            WIN32_FIND_DATAW data;
-            HANDLE hdl = FindFirstFileW(ucs2, &data);
-            if (hdl != INVALID_HANDLE_VALUE) {
-                scm_obj_t lst = scm_nil;
-                while (WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1, utf8, sizeof(utf8), NULL, NULL)) {
-                    lst = make_pair(vm->m_heap, make_string_literal(vm->m_heap, utf8), lst);
-                    if (FindNextFileW(hdl, &data)) continue;
-                    FindClose(hdl);
-                    return lst;
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+           HANDLE fd = CreateFileW(ucs2, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (fd != INVALID_HANDLE_VALUE) {
+                LARGE_INTEGER bsize;
+                if (GetFileSizeEx(fd, &bsize)) {
+                    CloseHandle(fd);
+                    return int64_to_integer(vm->m_heap, bsize.QuadPart);
                 }
+                CloseHandle(fd);
             }
+            _dosmaperr(GetLastError());
+            raise_io_error(vm, "file-size-in-bytes", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            return scm_undef;
         }
-        _dosmaperr(GetLastError());
-        raise_io_error(vm, "directory-list", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+        raise_io_error(vm, "file-size-in-bytes", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
         return scm_undef;
     }
+
+    scm_obj_t file_regular(VM* vm, scm_string_t path)
+    {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            if (PathIsDirectoryW(ucs2)) return scm_false;
+            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (fd != INVALID_HANDLE_VALUE) {
+                DWORD type = GetFileType(fd);
+                CloseHandle(fd);
+                return (type == FILE_TYPE_DISK) ? scm_true : scm_false;
+            }
+            _dosmaperr(GetLastError());
+            raise_io_error(vm, "file-regular?", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            return scm_undef;
+        }
+        raise_io_error(vm, "file-regular?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_directory(VM* vm, scm_string_t path)
+    {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            if (PathIsDirectoryW(ucs2)) return scm_true;
+            return scm_false;
+        }
+        raise_io_error(vm, "file-directory?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_symbolic_link(VM* vm, scm_string_t path)
+    {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            return scm_false;
+        }
+        raise_io_error(vm, "file-symbolic-link?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_exists(VM* vm, scm_string_t path)
+    {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            return (_waccess(ucs2, 0) == 0) ? scm_true : scm_false;
+        }
+        raise_io_error(vm, "file-exists?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_readable(VM* vm, scm_string_t path)
+    {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            return (_waccess(ucs2, 4) == 0) ? scm_true : scm_false;
+        }
+        raise_io_error(vm, "file-readable?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_writable(VM* vm, scm_string_t path)
+    {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            return (_waccess(ucs2, 2) == 0) ? scm_true : scm_false;
+        }
+        raise_io_error(vm, "file-writable?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_executable(VM* vm, scm_string_t path)
+    {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            if (PathIsDirectoryW(ucs2)) return scm_false;
+            if (_waccess(ucs2, 4) == 0) {
+                if (!PathMatchSpecExW(ucs2, 
+                                      TEXT("*.com;*.exe;*.bat;*.cmd;*.vbs;*.vbe;*.js;*.jse;*.wsf;*.wsh;*.msc"),
+                                      PMSF_MULTIPLE)) return scm_true;
+            }
+            return scm_false;
+        }
+        raise_io_error(vm, "file-executable?", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
+
 
     scm_obj_t delete_file(VM* vm, scm_string_t path)
     {
@@ -137,6 +217,24 @@
             return scm_unspecified;
         }
         raise_io_error(vm, "delete-file", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t rename_file(VM* vm, scm_string_t old_path, scm_string_t new_path)
+    {
+        wchar_t old_ucs2[MAX_PATH];
+        if (win32path(old_path, old_ucs2, array_sizeof(old_ucs2))) {
+            wchar_t new_ucs2[MAX_PATH];
+            if (win32path(new_path, new_ucs2, array_sizeof(new_ucs2))) {
+                if (MoveFileEx(old_ucs2, new_ucs2, MOVEFILE_REPLACE_EXISTING)) return scm_unspecified;
+                _dosmaperr(GetLastError());
+                raise_io_filesystem_error(vm, "rename-file", strerror(errno), errno, old_path, new_path);
+                return scm_undef;
+            }
+            raise_io_error(vm, "rename-file", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, new_path);
+            return scm_undef;
+        }
+        raise_io_error(vm, "rename-file", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, old_path);
         return scm_undef;
     }
 
@@ -179,6 +277,29 @@
             return scm_unspecified;
         }
         raise_io_error(vm, "current-directory", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t directory_list(VM* vm, scm_string_t path)
+    {
+        char utf8[MAX_PATH];
+        snprintf(utf8, sizeof(utf8), "%s\\*", path->name);
+        wchar_t ucs2[MAX_PATH];
+        if (MultiByteToWideChar(CP_UTF8, 0, utf8, -1, ucs2, array_sizeof(ucs2))) {
+            WIN32_FIND_DATAW data;
+            HANDLE hdl = FindFirstFileW(ucs2, &data);
+            if (hdl != INVALID_HANDLE_VALUE) {
+                scm_obj_t lst = scm_nil;
+                while (WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1, utf8, sizeof(utf8), NULL, NULL)) {
+                    lst = make_pair(vm->m_heap, make_string_literal(vm->m_heap, utf8), lst);
+                    if (FindNextFileW(hdl, &data)) continue;
+                    FindClose(hdl);
+                    return lst;
+                }
+            }
+        }
+        _dosmaperr(GetLastError());
+        raise_io_error(vm, "directory-list", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
         return scm_undef;
     }
 
@@ -342,7 +463,6 @@
     {
         if (rename(old_path->name, new_path->name) < 0) {
             raise_io_filesystem_error(vm, "rename-file", strerror(errno), errno, old_path, new_path);
-//            raise_io_error(vm, "rename-file", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, new_path);
             return scm_undef;
         }
         return scm_unspecified;

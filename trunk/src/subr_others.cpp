@@ -2966,7 +2966,6 @@ subr_vector_copy(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_file_size_in_bytes(VM* vm, int argc, scm_obj_t argv[])
 {
-#if !_MSC_VER
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
@@ -2977,14 +2976,12 @@ subr_file_size_in_bytes(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "file-size-in-bytes", 1, 1, argc, argv);
     return scm_undef;
-#endif
 }
 
 // file-regular?
 scm_obj_t
 subr_file_regular_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-#if !_MSC_VER
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
@@ -2995,14 +2992,12 @@ subr_file_regular_pred(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "file-regular?", 1, 1, argc, argv);
     return scm_undef;
-#endif
 }
 
 // file-directory?
 scm_obj_t
 subr_file_directory_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-#if !_MSC_VER
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
@@ -3013,7 +3008,6 @@ subr_file_directory_pred(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "file-directory?", 1, 1, argc, argv);
     return scm_undef;
-#endif
 }
 
 // file-symbolic-link?
@@ -3022,12 +3016,8 @@ subr_file_symbolic_link_pred(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 1) {
         if (STRINGP(argv[0])) {
-#if _MSC_VER
-            return scm_false;
-#else
             scm_string_t string = (scm_string_t)argv[0];
             return file_symbolic_link(vm, string);
-#endif
         }
         wrong_type_argument_violation(vm, "file-symbolic-link?", 0, "string", argv[0], argc, argv);
         return scm_undef;
@@ -3040,7 +3030,6 @@ subr_file_symbolic_link_pred(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_file_readable_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-#if !_MSC_VER
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
@@ -3051,14 +3040,12 @@ subr_file_readable_pred(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "file-readable?", 1, 1, argc, argv);
     return scm_undef;
-#endif
 }
 
 // file-writable?
 scm_obj_t
 subr_file_writable_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-#if !_MSC_VER
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
@@ -3069,14 +3056,12 @@ subr_file_writable_pred(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "file-rwritable?", 1, 1, argc, argv);
     return scm_undef;
-#endif
 }
 
 // file-executable?
 scm_obj_t
 subr_file_executable_pred(VM* vm, int argc, scm_obj_t argv[])
 {
-#if !_MSC_VER
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
@@ -3087,14 +3072,12 @@ subr_file_executable_pred(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "file-executable?", 1, 1, argc, argv);
     return scm_undef;
-#endif
 }
 
 // file-stat-ctime
 scm_obj_t
 subr_file_stat_ctime(VM* vm, int argc, scm_obj_t argv[])
 {
-#if !_MSC_VER
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
@@ -3105,7 +3088,6 @@ subr_file_stat_ctime(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "file-stat-ctime", 1, 1, argc, argv);
     return scm_undef;
-#endif
 }
 
 // file-stat-mtime
@@ -3144,6 +3126,7 @@ subr_create_symbolic_link(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "create-symbolic-link", 2, 2, argc, argv);
     return scm_undef;
 #endif
+return 0;
 }
 
 // create-hard-link
@@ -3166,13 +3149,13 @@ subr_create_hard_link(VM* vm, int argc, scm_obj_t argv[])
     wrong_number_of_arguments_violation(vm, "create-hard-link", 2, 2, argc, argv);
     return scm_undef;
 #endif
+return 0;
 }
 
 // rename-file
 scm_obj_t
 subr_rename_file(VM* vm, int argc, scm_obj_t argv[])
 {
-#if !_MSC_VER
     if (argc == 2) {
         if (STRINGP(argv[0])) {
             if (STRINGP(argv[1])) {
@@ -3186,7 +3169,6 @@ subr_rename_file(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "rename-file", 2, 2, argc, argv);
     return scm_undef;
-#endif
 }
 
 void
