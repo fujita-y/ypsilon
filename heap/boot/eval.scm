@@ -291,7 +291,7 @@
                                           (close-port timestamp-port)
                                           (cond ((not (and (number? cache-timestamp) (number? source-timestamp) (string? source-path) (eq? cache-signature auto-compile-cache-validation-signature) (file-exists? source-path)))
                                                  (inconsistent-cache-state cache-lst))
-                                                ((= (stat-mtime source-path) source-timestamp)
+                                                ((= (file-stat-mtime source-path) source-timestamp)
                                                  (loop (cdr lst) expiration))
                                                 (else
                                                  (loop (cdr lst)
@@ -438,7 +438,7 @@
                                 (let ((ref (encode-library-ref ref)))
                                   (let ((cache-path (format "~a/~a.cache" (auto-compile-cache) (symbol-list->string ref "."))))
                                     (and (auto-compile-verbose) (format #t "~&;; compile ~s~%~!" source-path))
-                                    (if (make-cache source-path cache-path ref (stat-mtime source-path))
+                                    (if (make-cache source-path cache-path ref (file-stat-mtime source-path))
                                         (and (auto-compile-verbose) (format #t "~&;; delete ~s~%~!" cache-path))
                                         (let ((timestamp-path (string-append cache-path ".time")))
                                           (call-with-port
@@ -446,7 +446,7 @@
                                             (lambda (output) (format output
                                                                      "~s ~s ~s ~s"
                                                                      (microsecond)
-                                                                     (stat-mtime source-path)
+                                                                     (file-stat-mtime source-path)
                                                                      source-path
                                                                      auto-compile-cache-validation-signature)))))))))
                           (load source-path))))))))))

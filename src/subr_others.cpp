@@ -1408,22 +1408,6 @@ subr_delete_file(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// stat-mtime
-scm_obj_t
-subr_stat_mtime(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 1) {
-        if (STRINGP(argv[0])) {
-            scm_string_t string = (scm_string_t)argv[0];
-            return stat_mtime(vm, string);
-        }
-        wrong_type_argument_violation(vm, "stat-mtime", 0, "string", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "stat-mtime", 1, 1, argc, argv);
-    return scm_undef;
-}
-
 // directory-list
 scm_obj_t
 subr_directory_list(VM* vm, int argc, scm_obj_t argv[])
@@ -2978,6 +2962,248 @@ subr_vector_copy(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// file-size-in-bytes
+scm_obj_t
+subr_file_size_in_bytes(VM* vm, int argc, scm_obj_t argv[])
+{
+#if !_MSC_VER
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            return file_size_in_bytes(vm, string);
+        }
+        wrong_type_argument_violation(vm, "file-size-in-bytes", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "file-size-in-bytes", 1, 1, argc, argv);
+    return scm_undef;
+#endif
+}
+
+// file-regular?
+scm_obj_t
+subr_file_regular_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+#if !_MSC_VER
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            return file_regular(vm, string);
+        }
+        wrong_type_argument_violation(vm, "file-regular?", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "file-regular?", 1, 1, argc, argv);
+    return scm_undef;
+#endif
+}
+
+// file-directory?
+scm_obj_t
+subr_file_directory_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+#if !_MSC_VER
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            return file_directory(vm, string);
+        }
+        wrong_type_argument_violation(vm, "file-directory?", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "file-directory?", 1, 1, argc, argv);
+    return scm_undef;
+#endif
+}
+
+// file-symbolic-link?
+scm_obj_t
+subr_file_symbolic_link_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+#if _MSC_VER
+            return scm_false;
+#else
+            scm_string_t string = (scm_string_t)argv[0];
+            return file_symbolic_link(vm, string);
+#endif
+        }
+        wrong_type_argument_violation(vm, "file-symbolic-link?", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "file-symbolic-link?", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// file-readable?
+scm_obj_t
+subr_file_readable_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+#if !_MSC_VER
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            return file_readable(vm, string);
+        }
+        wrong_type_argument_violation(vm, "file-readable?", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "file-readable?", 1, 1, argc, argv);
+    return scm_undef;
+#endif
+}
+
+// file-writable?
+scm_obj_t
+subr_file_writable_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+#if !_MSC_VER
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            return file_writable(vm, string);
+        }
+        wrong_type_argument_violation(vm, "file-writable?", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "file-rwritable?", 1, 1, argc, argv);
+    return scm_undef;
+#endif
+}
+
+// file-executable?
+scm_obj_t
+subr_file_executable_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+#if !_MSC_VER
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            return file_executable(vm, string);
+        }
+        wrong_type_argument_violation(vm, "file-executable?", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "file-executable?", 1, 1, argc, argv);
+    return scm_undef;
+#endif
+}
+
+// file-stat-ctime
+scm_obj_t
+subr_file_stat_ctime(VM* vm, int argc, scm_obj_t argv[])
+{
+#if !_MSC_VER
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            return file_stat_ctime(vm, string);
+        }
+        wrong_type_argument_violation(vm, "file-stat-ctime", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "file-stat-ctime", 1, 1, argc, argv);
+    return scm_undef;
+#endif
+}
+
+// file-stat-mtime
+scm_obj_t
+subr_file_stat_mtime(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            return file_stat_mtime(vm, string);
+        }
+        wrong_type_argument_violation(vm, "file-stat-mtime", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "file-stat-mtime", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// create-symbolic-link
+scm_obj_t
+subr_create_symbolic_link(VM* vm, int argc, scm_obj_t argv[])
+{
+#if _MSC_VER
+#else
+    if (argc == 2) {
+        if (STRINGP(argv[0])) {
+            if (STRINGP(argv[1])) {
+                return create_symbolic_link(vm, (scm_string_t)argv[0], (scm_string_t)argv[1]);
+            }
+            wrong_type_argument_violation(vm, "create-symbolic-link", 1, "string", argv[1], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "create-symbolic-link", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "create-symbolic-link", 2, 2, argc, argv);
+    return scm_undef;
+#endif
+}
+
+// create-hard-link
+scm_obj_t
+subr_create_hard_link(VM* vm, int argc, scm_obj_t argv[])
+{
+#if _MSC_VER
+#else
+    if (argc == 2) {
+        if (STRINGP(argv[0])) {
+            if (STRINGP(argv[1])) {
+                return create_hard_link(vm, (scm_string_t)argv[0], (scm_string_t)argv[1]);
+            }
+            wrong_type_argument_violation(vm, "create-hard-link", 1, "string", argv[1], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "create-hard-link", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "create-hard-link", 2, 2, argc, argv);
+    return scm_undef;
+#endif
+}
+
+// rename-file
+scm_obj_t
+subr_rename_file(VM* vm, int argc, scm_obj_t argv[])
+{
+#if !_MSC_VER
+    if (argc == 2) {
+        if (STRINGP(argv[0])) {
+            if (STRINGP(argv[1])) {
+                return rename_file(vm, (scm_string_t)argv[0], (scm_string_t)argv[1]);
+            }
+            wrong_type_argument_violation(vm, "rename-file", 1, "string", argv[1], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "rename-file", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "rename-file", 2, 2, argc, argv);
+    return scm_undef;
+#endif
+}
+/*
+//
+scm_obj_t file_size_in_bytes(VM *vm, scm_string_t path);
+scm_obj_t file_regular(VM* vm, scm_string_t path);
+scm_obj_t file_directory(VM* vm, scm_string_t path);
+scm_obj_t file_symbolic_link(VM* vm, scm_string_t path);
+scm_obj_t file_readable(VM* vm, scm_string_t path);
+scm_obj_t file_writable(VM* vm, scm_string_t path);
+scm_obj_t file_executable(VM* vm, scm_string_t path);
+scm_obj_t file_stat_ctime(VM* vm, scm_string_t path);
+scm_obj_t file_stat_mtime(VM* vm, scm_string_t path);
+scm_obj_t create_symbolic_link(VM* vm, scm_string_t old_path, scm_string_t new_path);
+scm_obj_t create_hard_link(VM* vm, scm_string_t old_path, scm_string_t new_path);
+scm_obj_t rename_file(VM* vm, scm_string_t old_path, scm_string_t new_path);
+*/
+
 void
 init_subr_others(object_heap_t* heap)
 {
@@ -3017,7 +3243,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("file-exists?", subr_file_exists_pred);
     DEFSUBR("delete-file", subr_delete_file);
     DEFSUBR("directory-list", subr_directory_list);
-    DEFSUBR("stat-mtime", subr_stat_mtime);
+    DEFSUBR("file-stat-mtime", subr_file_stat_mtime);
     DEFSUBR("usleep", subr_usleep);
     DEFSUBR("exit", subr_exit);
     DEFSUBR("gensym", subr_gensym);
@@ -3091,4 +3317,17 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("encode-microsecond", subr_encode_microsecond);
     DEFSUBR("cyclic-object?", subr_cyclic_object_pred);
     DEFSUBR("vector-copy", subr_vector_copy);
+  //DEFSUBR("stat-mtime", subr_file_stat_mtime);
+    DEFSUBR("file-size-in-bytes", subr_file_size_in_bytes);
+    DEFSUBR("file-regular?", subr_file_regular_pred);
+    DEFSUBR("file-directory?", subr_file_directory_pred);
+    DEFSUBR("file-symbolic-link?", subr_file_symbolic_link_pred);
+    DEFSUBR("file-readable?", subr_file_readable_pred);
+    DEFSUBR("file-writable?", subr_file_writable_pred);
+    DEFSUBR("file-executable?", subr_file_executable_pred);
+    DEFSUBR("file-stat-ctime", subr_file_stat_ctime);
+    DEFSUBR("file-stat-mtime", subr_file_stat_mtime);
+    DEFSUBR("create-symbolic-link", subr_create_symbolic_link);
+    DEFSUBR("create-hard-link", subr_create_hard_link);
+    DEFSUBR("rename-file", subr_rename_file);
 }

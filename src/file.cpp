@@ -62,7 +62,7 @@
         return scm_undef;
     }
 
-    scm_obj_t stat_mtime(VM* vm, scm_string_t path)
+    scm_obj_t file_stat_mtime(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
@@ -74,9 +74,31 @@
                     return int64_to_integer(vm->m_heap, tm);
                 }
             }
-            return scm_false;
+            _dosmaperr(GetLastError());
+            raise_io_error(vm, "file-stat-mtime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            return scm_undef;
         }
-        raise_io_error(vm, "stat-mtime", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        raise_io_error(vm, "file-stat-mtime", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_stat_ctime(VM* vm, scm_string_t path)
+    {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (fd != INVALID_HANDLE_VALUE) {
+                BY_HANDLE_FILE_INFORMATION fileInfo;
+                if (GetFileInformationByHandle(fd, &fileInfo)) {
+                    int64_t tm = ((int64_t)fileInfo.ftCreationTime.dwHighDateTime << 32) + fileInfo.ftCreationTime.dwLowDateTime;
+                    return int64_to_integer(vm->m_heap, tm);
+                }
+            }
+            _dosmaperr(GetLastError());
+            raise_io_error(vm, "file-stat-ctime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            return scm_undef;
+        }
+        raise_io_error(vm, "file-stat-ctime", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
         return scm_undef;
     }
 
@@ -203,12 +225,7 @@
         return s_last_message;
     }
 #else
-    scm_obj_t file_exists(VM* vm, scm_string_t path)
-    {
-        return (access(path->name, F_OK) == 0) ? scm_true : scm_false;
-    }
-
-    scm_obj_t stat_mtime(VM* vm, scm_string_t path)
+    scm_obj_t file_stat_mtime(VM* vm, scm_string_t path)
     {
         struct stat st;
         if (stat(path->name, &st) == 0) {
@@ -218,13 +235,163 @@
                         arith_mul(vm->m_heap,
                             MAKEFIXNUM(1000000000),
                             int32_to_integer(vm->m_heap, st.st_mtimespec.tv_sec)));
+#elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+            return arith_add(vm->m_heap,
+                        int32_to_integer(vm->m_heap, st.st_atim.tv_nsec),
+                        arith_mul(vm->m_heap,
+                            MAKEFIXNUM(1000000000),
+                            int32_to_integer(vm->m_heap, st.st_atim.tv_sec)));
 #else
             return arith_mul(vm->m_heap,
                             MAKEFIXNUM(1000000000),
                             int32_to_integer(vm->m_heap, st.st_mtime));
 #endif
         }
-        return scm_false;
+        raise_io_error(vm, "file-stat-mtime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_stat_ctime(VM* vm, scm_string_t path)
+    {
+        struct stat st;
+        if (stat(path->name, &st) == 0) {
+#if __DARWIN_64_BIT_INO_T
+            return arith_add(vm->m_heap,
+                        int32_to_integer(vm->m_heap, st.st_ctimespec.tv_nsec),
+                        arith_mul(vm->m_heap,
+                            MAKEFIXNUM(1000000000),
+                            int32_to_integer(vm->m_heap, st.st_ctimespec.tv_sec)));
+#elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+            return arith_add(vm->m_heap,
+                        int32_to_integer(vm->m_heap, st.st_ctim.tv_nsec),
+                        arith_mul(vm->m_heap,
+                            MAKEFIXNUM(1000000000),
+                            int32_to_integer(vm->m_heap, st.st_ctim.tv_sec)));
+#else
+            return arith_mul(vm->m_heap,
+                            MAKEFIXNUM(1000000000),
+                            int32_to_integer(vm->m_heap, st.st_ctime));
+#endif
+        }
+        raise_io_error(vm, "file-stat-ctime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_size_in_bytes(VM *vm, scm_string_t path)
+    {
+        struct stat st;
+        if (stat(path->name, &st) == 0) return int64_to_integer(vm->m_heap, st.st_size);
+        raise_io_error (vm, "file-size-in-bytes", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_regular(VM* vm, scm_string_t path)
+    {
+        struct stat st;
+        if (lstat(path->name, &st) == 0) return S_ISREG(st.st_mode) ? scm_true : scm_false;
+        raise_io_error (vm, "file-regular?", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_directory(VM* vm, scm_string_t path)
+    {
+        struct stat st;
+        if (lstat(path->name, &st) == 0) return S_ISDIR(st.st_mode) ? scm_true : scm_false;
+        raise_io_error (vm, "file-directory?", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_symbolic_link(VM* vm, scm_string_t path)
+    {
+        struct stat st;
+        if (lstat(path->name, &st) == 0) return S_ISLNK(st.st_mode) ? scm_true : scm_false;
+        raise_io_error (vm, "file-symbolic-link?", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+        return scm_undef;
+    }
+
+    scm_obj_t file_exists(VM* vm, scm_string_t path)
+    {
+        return (access(path->name, F_OK) == 0) ? scm_true : scm_false;
+    }
+
+    scm_obj_t file_readable(VM* vm, scm_string_t path)
+    {
+        return (access(path->name, R_OK) == 0) ? scm_true : scm_false;
+    }
+
+    scm_obj_t file_writable(VM* vm, scm_string_t path)
+    {
+        return (access(path->name, W_OK) == 0) ? scm_true : scm_false;
+    }
+
+    scm_obj_t file_executable(VM* vm, scm_string_t path)
+    {
+        return (access(path->name, X_OK) == 0) ? scm_true : scm_false;
+    }
+
+    scm_obj_t delete_file(VM* vm, scm_string_t path)
+    {
+        if (remove(path->name) < 0) {
+            raise_io_error(vm, "delete-file", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            return scm_undef;
+        }
+        return scm_unspecified;
+    }
+
+    scm_obj_t rename_file(VM* vm, scm_string_t old_path, scm_string_t new_path)
+    {
+        if (rename(old_path->name, new_path->name) < 0) {
+            raise_io_filesystem_error(vm, "rename-file", strerror(errno), errno, old_path, new_path);
+//            raise_io_error(vm, "rename-file", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, new_path);
+            return scm_undef;
+        }
+        return scm_unspecified;
+    }
+
+    scm_obj_t create_symbolic_link(VM* vm, scm_string_t old_path, scm_string_t new_path)
+    {
+        if (symlink(old_path->name, new_path->name) < 0) {
+            raise_io_error(vm, "create-symbolic-link", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, new_path);
+            return scm_undef;
+        }
+        return scm_unspecified;
+    }
+
+    scm_obj_t create_hard_link(VM* vm, scm_string_t old_path, scm_string_t new_path)
+    {
+        if (link(old_path->name, new_path->name) < 0) {
+            raise_io_error(vm, "create-hard-link", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, new_path);
+            return scm_undef;
+        }
+        return scm_unspecified;
+    }
+
+    scm_obj_t create_directory(VM* vm, scm_string_t path)
+    {
+        if (mkdir(path->name, S_IRWXU | S_IRWXG | S_IRWXO) < 0) {
+            raise_io_error(vm, "create-directory", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            return scm_undef;
+        }
+        return scm_unspecified;
+    }
+
+    scm_obj_t current_directory(VM* vm)
+    {
+        char buf[MAXPATHLEN];
+        if (getcwd(buf, MAXPATHLEN) == NULL) {
+            raise_io_error(vm, "current-directory", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, scm_false);
+            return scm_undef;
+        }
+        return make_string_literal(vm->m_heap, buf);
+    }
+
+    scm_obj_t set_current_directory(VM* vm, scm_string_t path)
+    {
+        if (chdir(path->name) < 0) {
+            raise_io_error(vm, "current-directory", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            return scm_undef;
+        }
+        return scm_unspecified;
     }
 
     scm_obj_t directory_list(VM* vm, scm_string_t path)
@@ -244,43 +411,6 @@
         }
         raise_io_error(vm, "directory-list", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
         return scm_undef;
-    }
-
-    scm_obj_t delete_file(VM* vm, scm_string_t path)
-    {
-        if (remove(path->name) < 0) {
-            raise_io_error(vm, "delete-file", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
-            return scm_undef;
-        }
-        return scm_unspecified;
-    }
-
-    scm_obj_t current_directory(VM* vm)
-    {
-        char buf[MAXPATHLEN];
-        if (getcwd(buf, MAXPATHLEN) == NULL) {
-            raise_io_error(vm, "current-directory", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, scm_false);
-            return scm_undef;
-        }
-        return make_string_literal(vm->m_heap, buf);
-    }
-
-    scm_obj_t create_directory(VM* vm, scm_string_t path)
-    {
-        if (mkdir(path->name, S_IRWXU | S_IRWXG | S_IRWXO) < 0) {
-            raise_io_error(vm, "create-directory", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
-            return scm_undef;
-        }
-        return scm_unspecified;
-    }
-
-    scm_obj_t set_current_directory(VM* vm, scm_string_t path)
-    {
-        if (chdir(path->name) < 0) {
-            raise_io_error(vm, "current-directory", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
-            return scm_undef;
-        }
-        return scm_unspecified;
     }
 
     void*
