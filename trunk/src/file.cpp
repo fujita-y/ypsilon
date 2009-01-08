@@ -267,7 +267,7 @@
                     DWORD flag = PathIsDirectoryW(new_ucs2) ? 1 : 0; // SYMBOLIC_LINK_FLAG_DIRECTORY == 1
                     if (win32CreateSymbolicLink(new_ucs2, old_ucs2, flag)) return scm_unspecified;
                     _dosmaperr(GetLastError());
-                    raise_io_filesystem_error(vm, "create-symbolic-link", strerror(errno), errno, old_path, new_path);
+                    raise_io_filesystem_error(vm, "create-symbolic-link", last_shared_object_error() /*strerror(errno)*/, errno, old_path, new_path);
                     return scm_undef;
                 }
                 raise_io_error(vm, "create-symbolic-link", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, new_path);
@@ -394,7 +394,7 @@
     const char*
     last_shared_object_error()
     {
-        static char* s_last_message;
+        __declspec(thread) static char* s_last_message;
         if (s_last_message) {
             LocalFree(s_last_message);
             s_last_message = NULL;
@@ -406,6 +406,14 @@
                         (LPSTR)&s_last_message,
                         0,
                         NULL);
+        int tail = strlen(s_last_message);
+        while (--tail >= 0) {
+            if (s_last_message[tail] == '\r' || s_last_message[tail] == '\n') {
+                s_last_message[tail] = 0;
+                continue;
+            }
+            break;
+        }
         return s_last_message;
     }
 #else
