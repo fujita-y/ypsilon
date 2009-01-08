@@ -266,6 +266,8 @@
     coreform-optimize
     cos
     create-directory
+    create-hard-link
+    create-symbolic-link
     current-after-expansion-hook
     current-directory
     current-dynamic-environment
@@ -351,8 +353,17 @@
     expt
     extract-accumulated-bytevector
     extract-accumulated-string
+    file-directory?
+    file-executable?
     file-exists?
     file-options
+    file-readable?
+    file-regular?
+    file-size-in-bytes
+    file-stat-ctime
+    file-stat-mtime
+    file-symbolic-link?
+    file-writable?
     filter
     find
     finite?
@@ -749,6 +760,7 @@
     remp
     remq
     remv
+    rename-file
     restricted-print-line-length
     reverse
     round
