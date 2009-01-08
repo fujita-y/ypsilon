@@ -538,6 +538,19 @@
                         microsecond->string
                         decode-microsecond
                         encode-microsecond
+
+                        file-size-in-bytes
+                        file-regular?
+                        file-directory?
+                        file-symbolic-link?
+                        file-readable?
+                        file-writable?
+                        file-executable?
+                        file-stat-ctime
+                        file-stat-mtime
+                        create-symbolic-link
+                        create-hard-link
+                        rename-file
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))

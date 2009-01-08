@@ -13,6 +13,33 @@
 #include "violation.h"
 
 #if _MSC_VER
+
+    const char*
+    win32_lasterror_message()
+    {
+        __declspec(thread) static char* s_last_message;
+        if (s_last_message) {
+            LocalFree(s_last_message);
+            s_last_message = NULL;
+        }
+        FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       NULL,
+                       GetLastError(),
+                       MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+                       (LPSTR)&s_last_message,
+                       0,
+                       NULL);
+        int tail = strlen(s_last_message);
+        while (--tail >= 0) {
+            if (s_last_message[tail] == '\r' || s_last_message[tail] == '\n') {
+                s_last_message[tail] = 0;
+                continue;
+            }
+            break;
+        }
+        return s_last_message;
+    }
+
     bool win32path(scm_string_t path, wchar_t* ucs2, int count)
     {
         if (MultiByteToWideChar(CP_UTF8, 0, path->name, -1, ucs2, count)) {
@@ -67,7 +94,7 @@
                 CloseHandle(fd);
             }
             _dosmaperr(GetLastError());
-            raise_io_error(vm, "file-stat-mtime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            raise_io_error(vm, "file-stat-mtime", SCM_PORT_OPERATION_OPEN, win32_lasterror_message(), errno, scm_false, path);
             return scm_undef;
         }
         raise_io_error(vm, "file-stat-mtime", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
@@ -89,7 +116,7 @@
                 CloseHandle(fd);
             }
             _dosmaperr(GetLastError());
-            raise_io_error(vm, "file-stat-ctime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            raise_io_error(vm, "file-stat-ctime", SCM_PORT_OPERATION_OPEN, win32_lasterror_message(), errno, scm_false, path);
             return scm_undef;
         }
         raise_io_error(vm, "file-stat-ctime", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
@@ -110,7 +137,7 @@
                 CloseHandle(fd);
             }
             _dosmaperr(GetLastError());
-            raise_io_error(vm, "file-size-in-bytes", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            raise_io_error(vm, "file-size-in-bytes", SCM_PORT_OPERATION_OPEN, win32_lasterror_message(), errno, scm_false, path);
             return scm_undef;
         }
         raise_io_error(vm, "file-size-in-bytes", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
@@ -146,17 +173,28 @@
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            return scm_false;
+            DWORD attr = GetFileAttributesW(ucs2);
+            if (attr == INVALID_FILE_ATTRIBUTES) return scm_false;
+            return (attr & FILE_ATTRIBUTE_REPARSE_POINT) ? scm_true : scm_false;
         }
         return scm_false;
     }
 
     static bool ucs2_file_exists(wchar_t* ucs2)
     {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            DWORD attr = GetFileAttributesW(ucs2);
+            if (attr == INVALID_FILE_ATTRIBUTES) return scm_false;
+            return scm_true;
+        }
+        return scm_false;
+/*
         HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, NULL);
         if (fd == INVALID_HANDLE_VALUE) return false;
         CloseHandle(fd);
         return true;
+*/
     }
 
     scm_obj_t file_exists(VM* vm, scm_string_t path)
@@ -167,7 +205,7 @@
         }
         return scm_false;
     }
-        
+
     scm_obj_t file_readable(VM* vm, scm_string_t path)
     {
         return file_exists(vm, path);
@@ -175,6 +213,14 @@
 
     scm_obj_t file_writable(VM* vm, scm_string_t path)
     {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            DWORD attr = GetFileAttributesW(ucs2);
+            if (attr == INVALID_FILE_ATTRIBUTES) return scm_false;
+            return (attr & FILE_ATTRIBUTE_READONLY) ? scm_false : scm_true;
+        }
+        return scm_false;
+/*
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
             HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, NULL);
@@ -188,6 +234,7 @@
             CloseHandle(fd);
         }
         return scm_false;
+*/
     }
 
     scm_obj_t file_executable(VM* vm, scm_string_t path)
@@ -205,22 +252,6 @@
         }
         return scm_false;
     }
-    /*
-
-    scm_obj_t file_executable(VM* vm, scm_string_t path)
-    {
-        const wchar_t* pathext = TEXT("*.com;*.exe;*.bat;*.cmd;*.vbs;*.vbe;*.js;*.jse;*.wsf;*.wsh;*.msc");
-        wchar_t ucs2[MAX_PATH];
-        if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            if (ucs2_file_exists(ucs2)) {
-                if (PathIsDirectoryW(ucs2)) return scm_true;
-                if (PathMatchSpecExW(ucs2, pathext, PMSF_MULTIPLE) == 0) return scm_true;
-            }
-        }
-        return scm_false;
-    }
-    
-    */
 
     scm_obj_t delete_file(VM* vm, scm_string_t path)
     {
@@ -228,7 +259,7 @@
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
             if (DeleteFile(ucs2)) return scm_unspecified;
             _dosmaperr(GetLastError());
-            raise_io_error(vm, "delete-file", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            raise_io_error(vm, "delete-file", SCM_PORT_OPERATION_OPEN, win32_lasterror_message(), errno, scm_false, path);
             return scm_undef;
         }
         raise_io_error(vm, "delete-file", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
@@ -243,7 +274,7 @@
             if (win32path(new_path, new_ucs2, array_sizeof(new_ucs2))) {
                 if (MoveFileEx(old_ucs2, new_ucs2, MOVEFILE_REPLACE_EXISTING)) return scm_unspecified;
                 _dosmaperr(GetLastError());
-                raise_io_filesystem_error(vm, "rename-file", strerror(errno), errno, old_path, new_path);
+                raise_io_filesystem_error(vm, "rename-file", win32_lasterror_message(), errno, old_path, new_path);
                 return scm_undef;
             }
             raise_io_error(vm, "rename-file", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, new_path);
@@ -253,8 +284,7 @@
         return scm_undef;
     }
 
-    typedef BOOL (WINAPI* ProcCreateSymbolicLink) (LPCTSTR, LPCTSTR, DWORD); 
-    typedef BOOL (WINAPI* ProcCreateHardLink) (LPCTSTR, LPCTSTR, LPSECURITY_ATTRIBUTES); 
+    typedef BOOL (WINAPI* ProcCreateSymbolicLink) (LPCTSTR, LPCTSTR, DWORD);
 
     scm_obj_t create_symbolic_link(VM* vm, scm_string_t old_path, scm_string_t new_path)
     {
@@ -267,7 +297,7 @@
                     DWORD flag = PathIsDirectoryW(new_ucs2) ? 1 : 0; // SYMBOLIC_LINK_FLAG_DIRECTORY == 1
                     if (win32CreateSymbolicLink(new_ucs2, old_ucs2, flag)) return scm_unspecified;
                     _dosmaperr(GetLastError());
-                    raise_io_filesystem_error(vm, "create-symbolic-link", last_shared_object_error() /*strerror(errno)*/, errno, old_path, new_path);
+                    raise_io_filesystem_error(vm, "create-symbolic-link", last_shared_object_error(), errno, old_path, new_path);
                     return scm_undef;
                 }
                 raise_io_error(vm, "create-symbolic-link", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, new_path);
@@ -277,8 +307,10 @@
             return scm_undef;
         }
         raise_io_filesystem_error(vm, "create-symbolic-link", "operating system does not support symblic link", 0, old_path, new_path);
-        return scm_undef;        
+        return scm_undef;
     }
+
+    typedef BOOL (WINAPI* ProcCreateHardLink) (LPCTSTR, LPCTSTR, LPSECURITY_ATTRIBUTES);
 
     scm_obj_t create_hard_link(VM* vm, scm_string_t old_path, scm_string_t new_path)
     {
@@ -290,7 +322,7 @@
                 if (win32path(new_path, new_ucs2, array_sizeof(new_ucs2))) {
                     if (win32CreateHardLink(new_ucs2, old_ucs2, NULL)) return scm_unspecified;
                     _dosmaperr(GetLastError());
-                    raise_io_filesystem_error(vm, "create-hard-link", strerror(errno), errno, old_path, new_path);
+                    raise_io_filesystem_error(vm, "create-hard-link", win32_lasterror_message(), errno, old_path, new_path);
                     return scm_undef;
                 }
                 raise_io_error(vm, "create-hard-link", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, new_path);
@@ -300,16 +332,16 @@
             return scm_undef;
         }
         raise_io_filesystem_error(vm, "create-hard-link", "operating system does not support hard link", 0, old_path, new_path);
-        return scm_undef;        
+        return scm_undef;
     }
-    
+
     scm_obj_t current_directory(VM* vm)
     {
         wchar_t ucs2[MAX_PATH];
         char utf8[MAX_PATH];
         if (!GetCurrentDirectoryW(MAX_PATH, ucs2) || !posixpath(ucs2, utf8, sizeof(utf8))) {
             _dosmaperr(GetLastError());
-            raise_io_error(vm, "current-directory", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, scm_false);
+            raise_io_error(vm, "current-directory", SCM_PORT_OPERATION_OPEN, win32_lasterror_message(), errno, scm_false, scm_false);
             return scm_undef;
         }
         return make_string_literal(vm->m_heap, utf8);
@@ -321,7 +353,7 @@
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
             if (!CreateDirectoryW(ucs2, NULL)) {
                 _dosmaperr(GetLastError());
-                raise_io_error(vm, "create-directory", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+                raise_io_error(vm, "create-directory", SCM_PORT_OPERATION_OPEN, win32_lasterror_message(), errno, scm_false, path);
                 return scm_undef;
             }
             return scm_unspecified;
@@ -336,7 +368,7 @@
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
             if (!SetCurrentDirectoryW(ucs2)) {
                 _dosmaperr(GetLastError());
-                raise_io_error(vm, "current-directory", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+                raise_io_error(vm, "current-directory", SCM_PORT_OPERATION_OPEN, win32_lasterror_message(), errno, scm_false, path);
                 return scm_undef;
             }
             return scm_unspecified;
@@ -364,7 +396,7 @@
             }
         }
         _dosmaperr(GetLastError());
-        raise_io_error(vm, "directory-list", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+        raise_io_error(vm, "directory-list", SCM_PORT_OPERATION_OPEN, win32_lasterror_message(), errno, scm_false, path);
         return scm_undef;
     }
 
@@ -394,50 +426,30 @@
     const char*
     last_shared_object_error()
     {
-        __declspec(thread) static char* s_last_message;
-        if (s_last_message) {
-            LocalFree(s_last_message);
-            s_last_message = NULL;
-        }
-        FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                        NULL,
-                        GetLastError(),
-                        MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
-                        (LPSTR)&s_last_message,
-                        0,
-                        NULL);
-        int tail = strlen(s_last_message);
-        while (--tail >= 0) {
-            if (s_last_message[tail] == '\r' || s_last_message[tail] == '\n') {
-                s_last_message[tail] = 0;
-                continue;
-            }
-            break;
-        }
-        return s_last_message;
+        return win32_lasterror_message();
     }
 #else
     scm_obj_t file_stat_mtime(VM* vm, scm_string_t path)
     {
         struct stat st;
         if (stat(path->name, &st) == 0) {
-#if __DARWIN_64_BIT_INO_T
+  #if __DARWIN_64_BIT_INO_T
             return arith_add(vm->m_heap,
                         int32_to_integer(vm->m_heap, st.st_mtimespec.tv_nsec),
                         arith_mul(vm->m_heap,
                             MAKEFIXNUM(1000000000),
                             int32_to_integer(vm->m_heap, st.st_mtimespec.tv_sec)));
-#elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+  #elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
             return arith_add(vm->m_heap,
                         int32_to_integer(vm->m_heap, st.st_atim.tv_nsec),
                         arith_mul(vm->m_heap,
                             MAKEFIXNUM(1000000000),
                             int32_to_integer(vm->m_heap, st.st_atim.tv_sec)));
-#else
+  #else
             return arith_mul(vm->m_heap,
                             MAKEFIXNUM(1000000000),
                             int32_to_integer(vm->m_heap, st.st_mtime));
-#endif
+  #endif
         }
         raise_io_error(vm, "file-stat-mtime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
         return scm_undef;
@@ -447,23 +459,23 @@
     {
         struct stat st;
         if (stat(path->name, &st) == 0) {
-#if __DARWIN_64_BIT_INO_T
+  #if __DARWIN_64_BIT_INO_T
             return arith_add(vm->m_heap,
                         int32_to_integer(vm->m_heap, st.st_ctimespec.tv_nsec),
                         arith_mul(vm->m_heap,
                             MAKEFIXNUM(1000000000),
                             int32_to_integer(vm->m_heap, st.st_ctimespec.tv_sec)));
-#elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+  #elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
             return arith_add(vm->m_heap,
                         int32_to_integer(vm->m_heap, st.st_ctim.tv_nsec),
                         arith_mul(vm->m_heap,
                             MAKEFIXNUM(1000000000),
                             int32_to_integer(vm->m_heap, st.st_ctim.tv_sec)));
-#else
+  #else
             return arith_mul(vm->m_heap,
                             MAKEFIXNUM(1000000000),
                             int32_to_integer(vm->m_heap, st.st_ctime));
-#endif
+  #endif
         }
         raise_io_error(vm, "file-stat-ctime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
         return scm_undef;
