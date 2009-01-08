@@ -3110,8 +3110,6 @@ subr_file_stat_mtime(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_create_symbolic_link(VM* vm, int argc, scm_obj_t argv[])
 {
-#if _MSC_VER
-#else
     if (argc == 2) {
         if (STRINGP(argv[0])) {
             if (STRINGP(argv[1])) {
@@ -3125,16 +3123,12 @@ subr_create_symbolic_link(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "create-symbolic-link", 2, 2, argc, argv);
     return scm_undef;
-#endif
-return 0;
 }
 
 // create-hard-link
 scm_obj_t
 subr_create_hard_link(VM* vm, int argc, scm_obj_t argv[])
 {
-#if _MSC_VER
-#else
     if (argc == 2) {
         if (STRINGP(argv[0])) {
             if (STRINGP(argv[1])) {
@@ -3148,8 +3142,6 @@ subr_create_hard_link(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "create-hard-link", 2, 2, argc, argv);
     return scm_undef;
-#endif
-return 0;
 }
 
 // rename-file
