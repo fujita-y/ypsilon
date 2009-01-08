@@ -56,7 +56,7 @@
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, NULL);
             if (fd != INVALID_HANDLE_VALUE) {
                 BY_HANDLE_FILE_INFORMATION fileInfo;
                 if (GetFileInformationByHandle(fd, &fileInfo)) {
@@ -78,7 +78,7 @@
     {
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, NULL);
             if (fd != INVALID_HANDLE_VALUE) {
                 BY_HANDLE_FILE_INFORMATION fileInfo;
                 if (GetFileInformationByHandle(fd, &fileInfo)) {
@@ -192,7 +192,7 @@
 
     scm_obj_t file_executable(VM* vm, scm_string_t path)
     {
-        wchar_t* pathext = TEXT("*.com;*.exe;*.bat;*.cmd;*.vbs;*.vbe;*.js;*.jse;*.wsf;*.wsh;*.msc");
+        const wchar_t* pathext = TEXT("*.com;*.exe;*.bat;*.cmd;*.vbs;*.vbe;*.js;*.jse;*.wsf;*.wsh;*.msc");
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
             if (ucs2_file_exists(ucs2)) {
@@ -234,6 +234,57 @@
         return scm_undef;
     }
 
+    typedef BOOL (WINAPI* ProcCreateSymbolicLink) (LPCSTR, LPCSTR, DWORD); 
+    typedef BOOL (WINAPI* ProcCreateHardLink) (LPCSTR, LPCSTR, LPSECURITY_ATTRIBUTES); 
+
+    scm_obj_t create_symbolic_link(VM* vm, scm_string_t old_path, scm_string_t new_path)
+    {
+        ProcCreateSymbolicLink win32CreateSymbolicLink = (ProcCreateSymbolicLink)GetProcAddress(LoadLibrary("kernel32"), "CreateSymbolicLinkW");
+        if (win32CreateSymbolicLink) {
+            wchar_t old_ucs2[MAX_PATH];
+            if (win32path(old_path, old_ucs2, array_sizeof(old_ucs2))) {
+                wchar_t new_ucs2[MAX_PATH];
+                if (win32path(new_path, new_ucs2, array_sizeof(new_ucs2))) {
+                    DWORD flag = PathIsDirectoryW(ucs2) ? 1 : 0; // SYMBOLIC_LINK_FLAG_DIRECTORY == 1
+                    if (win32CreateSymbolicLinkW(new_ucs2, old_ucs2, flag)) return scm_unspecified;
+                    _dosmaperr(GetLastError());
+                    raise_io_filesystem_error(vm, "create-symbolic-link", strerror(errno), errno, old_path, new_path);
+                    return scm_undef;
+                }
+                raise_io_error(vm, "create-symbolic-link", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, new_path);
+                return scm_undef;
+            }
+            raise_io_error(vm, "create-symbolic-link", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, old_path);
+            return scm_undef;
+        }
+        raise_io_filesystem_error(vm, "create-symbolic-link", "operating system does not support symblic link", 0, old_path, new_path);
+        return scm_undef;        
+    }
+
+    scm_obj_t create_hard_link(VM* vm, scm_string_t old_path, scm_string_t new_path)
+    {
+        ProcCreateHardLink win32CreateHardLink = (ProcCreateHardLink)GetProcAddress(LoadLibrary("kernel32"), "CreateHardLinkW");
+        if (win32CreateHardLink) {
+            wchar_t old_ucs2[MAX_PATH];
+            if (win32path(old_path, old_ucs2, array_sizeof(old_ucs2))) {
+                wchar_t new_ucs2[MAX_PATH];
+                if (win32path(new_path, new_ucs2, array_sizeof(new_ucs2))) {
+                    DWORD flag = PathIsDirectoryW(ucs2) ? 1 : 0; // SYMBOLIC_LINK_FLAG_DIRECTORY == 1
+                    if (win32CreateHardLink(new_ucs2, old_ucs2, NULL)) return scm_unspecified;
+                    _dosmaperr(GetLastError());
+                    raise_io_filesystem_error(vm, "create-hard-link", strerror(errno), errno, old_path, new_path);
+                    return scm_undef;
+                }
+                raise_io_error(vm, "create-hard-link", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, new_path);
+                return scm_undef;
+            }
+            raise_io_error(vm, "create-hard-link", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, old_path);
+            return scm_undef;
+        }
+        raise_io_filesystem_error(vm, "create-hard-link", "operating system does not support hard link", 0, old_path, new_path);
+        return scm_undef;        
+    }
+    
     scm_obj_t current_directory(VM* vm)
     {
         wchar_t ucs2[MAX_PATH];
