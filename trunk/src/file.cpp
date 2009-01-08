@@ -182,19 +182,9 @@
 
     static bool ucs2_file_exists(wchar_t* ucs2)
     {
-        wchar_t ucs2[MAX_PATH];
-        if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            DWORD attr = GetFileAttributesW(ucs2);
-            if (attr == INVALID_FILE_ATTRIBUTES) return scm_false;
-            return scm_true;
-        }
-        return scm_false;
-/*
-        HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, NULL);
-        if (fd == INVALID_HANDLE_VALUE) return false;
-        CloseHandle(fd);
+        DWORD attr = GetFileAttributesW(ucs2);
+        if (attr == INVALID_FILE_ATTRIBUTES) return false;
         return true;
-*/
     }
 
     scm_obj_t file_exists(VM* vm, scm_string_t path)
@@ -220,21 +210,6 @@
             return (attr & FILE_ATTRIBUTE_READONLY) ? scm_false : scm_true;
         }
         return scm_false;
-/*
-        wchar_t ucs2[MAX_PATH];
-        if (win32path(path, ucs2, array_sizeof(ucs2))) {
-            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, NULL);
-            if (fd != INVALID_HANDLE_VALUE) {
-                BY_HANDLE_FILE_INFORMATION fileInfo;
-                if (GetFileInformationByHandle(fd, &fileInfo)) {
-                    CloseHandle(fd);
-                    return (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? scm_false : scm_true;
-                }
-            }
-            CloseHandle(fd);
-        }
-        return scm_false;
-*/
     }
 
     scm_obj_t file_executable(VM* vm, scm_string_t path)
