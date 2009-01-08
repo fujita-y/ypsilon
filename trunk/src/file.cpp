@@ -192,6 +192,23 @@
 
     scm_obj_t file_executable(VM* vm, scm_string_t path)
     {
+        const wchar_t* pathext = TEXT(".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC");
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            if (ucs2_file_exists(ucs2)) {
+                if (PathIsDirectoryW(ucs2)) return scm_true;
+                wchar_t extension[MAX_PATH];
+                wcsncpy(extension, PathFindExtensionW(ucs2), MAX_PATH);
+                if (extension[0] == 0) return scm_false;
+                return (wstrstr(_wcsupr(extension), pathext)) ? scm_true : scm_false;
+            }
+        }
+        return scm_false;
+    }
+    /*
+
+    scm_obj_t file_executable(VM* vm, scm_string_t path)
+    {
         const wchar_t* pathext = TEXT("*.com;*.exe;*.bat;*.cmd;*.vbs;*.vbe;*.js;*.jse;*.wsf;*.wsh;*.msc");
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) {
@@ -202,6 +219,8 @@
         }
         return scm_false;
     }
+    
+    */
 
     scm_obj_t delete_file(VM* vm, scm_string_t path)
     {
@@ -234,19 +253,19 @@
         return scm_undef;
     }
 
-    typedef BOOL (WINAPI* ProcCreateSymbolicLink) (LPCSTR, LPCSTR, DWORD); 
-    typedef BOOL (WINAPI* ProcCreateHardLink) (LPCSTR, LPCSTR, LPSECURITY_ATTRIBUTES); 
+    typedef BOOL (WINAPI* ProcCreateSymbolicLink) (LPCTSTR, LPCTSTR, DWORD); 
+    typedef BOOL (WINAPI* ProcCreateHardLink) (LPCTSTR, LPCTSTR, LPSECURITY_ATTRIBUTES); 
 
     scm_obj_t create_symbolic_link(VM* vm, scm_string_t old_path, scm_string_t new_path)
     {
-        ProcCreateSymbolicLink win32CreateSymbolicLink = (ProcCreateSymbolicLink)GetProcAddress(LoadLibrary("kernel32"), "CreateSymbolicLinkW");
+        ProcCreateSymbolicLink win32CreateSymbolicLink = (ProcCreateSymbolicLink)GetProcAddress(LoadLibraryA("kernel32"), "CreateSymbolicLinkW");
         if (win32CreateSymbolicLink) {
             wchar_t old_ucs2[MAX_PATH];
             if (win32path(old_path, old_ucs2, array_sizeof(old_ucs2))) {
                 wchar_t new_ucs2[MAX_PATH];
                 if (win32path(new_path, new_ucs2, array_sizeof(new_ucs2))) {
-                    DWORD flag = PathIsDirectoryW(ucs2) ? 1 : 0; // SYMBOLIC_LINK_FLAG_DIRECTORY == 1
-                    if (win32CreateSymbolicLinkW(new_ucs2, old_ucs2, flag)) return scm_unspecified;
+                    DWORD flag = PathIsDirectoryW(new_ucs2) ? 1 : 0; // SYMBOLIC_LINK_FLAG_DIRECTORY == 1
+                    if (win32CreateSymbolicLink(new_ucs2, old_ucs2, flag)) return scm_unspecified;
                     _dosmaperr(GetLastError());
                     raise_io_filesystem_error(vm, "create-symbolic-link", strerror(errno), errno, old_path, new_path);
                     return scm_undef;
@@ -263,13 +282,12 @@
 
     scm_obj_t create_hard_link(VM* vm, scm_string_t old_path, scm_string_t new_path)
     {
-        ProcCreateHardLink win32CreateHardLink = (ProcCreateHardLink)GetProcAddress(LoadLibrary("kernel32"), "CreateHardLinkW");
+        ProcCreateHardLink win32CreateHardLink = (ProcCreateHardLink)GetProcAddress(LoadLibraryA("kernel32"), "CreateHardLinkW");
         if (win32CreateHardLink) {
             wchar_t old_ucs2[MAX_PATH];
             if (win32path(old_path, old_ucs2, array_sizeof(old_ucs2))) {
                 wchar_t new_ucs2[MAX_PATH];
                 if (win32path(new_path, new_ucs2, array_sizeof(new_ucs2))) {
-                    DWORD flag = PathIsDirectoryW(ucs2) ? 1 : 0; // SYMBOLIC_LINK_FLAG_DIRECTORY == 1
                     if (win32CreateHardLink(new_ucs2, old_ucs2, NULL)) return scm_unspecified;
                     _dosmaperr(GetLastError());
                     raise_io_filesystem_error(vm, "create-hard-link", strerror(errno), errno, old_path, new_path);
