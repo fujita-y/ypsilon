@@ -200,7 +200,7 @@
                 wchar_t extension[MAX_PATH];
                 wcsncpy(extension, PathFindExtensionW(ucs2), MAX_PATH);
                 if (extension[0] == 0) return scm_false;
-                return (wstrstr(_wcsupr(extension), pathext)) ? scm_true : scm_false;
+                return (wcsstr(pathext, _wcsupr(extension))) ? scm_true : scm_false;
             }
         }
         return scm_false;
