@@ -3202,7 +3202,6 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("file-exists?", subr_file_exists_pred);
     DEFSUBR("delete-file", subr_delete_file);
     DEFSUBR("directory-list", subr_directory_list);
-    DEFSUBR("file-stat-mtime", subr_file_stat_mtime);
     DEFSUBR("usleep", subr_usleep);
     DEFSUBR("exit", subr_exit);
     DEFSUBR("gensym", subr_gensym);
