@@ -12,7 +12,7 @@
           current-modified-julian-day
           current-time
           time-resolution
-          make-time
+          (rename (make-time/srfi-19 make-time))
           time?
           time-type
           time-nanosecond
@@ -32,7 +32,7 @@
           add-duration!
           subtract-duration
           subtract-duration!
-          make-date
+          (rename (make-date/srfi-19 make-date))
           date?
           date-nanosecond
           date-second
@@ -88,6 +88,13 @@
      (mutable type time-type set-time-type!)
      (mutable nanosecond time-nanosecond set-time-nanosecond!)
      (mutable second time-second set-time-second!)))
+  
+  (define make-time/srfi-19
+    (lambda (type nanosecond second)
+      (assert (integer? nanosecond))
+      (assert (integer? second))
+      (let ((nanoseconds (+ (* second tm:nano) nanosecond)))
+        (make-time type (remainder nanoseconds tm:nano) (quotient nanoseconds tm:nano)))))
 
   (define-record-type date
     (fields
@@ -100,6 +107,22 @@
      (mutable year date-year tm:set-date-year!)
      (mutable zone-offset date-zone-offset tm:set-date-zone-offset!)))
 
+  (define make-date/srfi-19
+    (lambda (nanosecond second minute hour day month year zone-offset)
+      (assert (integer? nanosecond))
+      (assert (<= 0 nanosecond 999999999))
+      (assert (integer? second))
+      (assert (<= 0 second 60))
+      (assert (integer? minute))
+      (assert (<= 0 minute 59))
+      (assert (integer? hour))
+      (assert (<= 0 hour 23))
+      (assert (integer? day))
+      (assert (<= 0 day 31))
+      (assert (integer? month))
+      (assert (<= 1 month 12))
+      (make-date nanosecond second minute hour day month year zone-offset)))
+      
   (define current-seconds
     (lambda ()
       (div (microsecond) 1000000)))
@@ -407,7 +430,7 @@
 
   (define (tm:current-time-utc)
     (receive (seconds ms) (tm:get-time-of-day)
-      (make-time  time-utc (* ms 10000) seconds )))
+      (make-time time-utc (* ms 10000) seconds )))
 
   (define (tm:current-time-tai)
     (receive (seconds ms) (tm:get-time-of-day)
@@ -747,7 +770,7 @@
     (if (integer? r) "0"
         (let ((str (number->string (exact->inexact r))))
           (let ((ppos (tm:char-pos #\. str 0 (string-length str))))
-            (substring str  (+ ppos 1) (string-length str))))))
+            (substring str (+ ppos 1) (string-length str))))))
 
 ;; gives the seconds/date/month/year
   (define (tm:decode-julian-day-number jdn)
@@ -1160,14 +1183,19 @@
                      (display (tm:padding (date-second date)
                                           pad-with 2)
                               port))
-                 (let* ((ns (tm:fractional-part (/
+                 
+               ;; ypsilon -- y.fujita.lwp
+               #;(let* ((ns (tm:fractional-part (/
                                                  (date-nanosecond date)
                                                  tm:nano 1.0)))
                         (le (string-length ns)))
                    (if (> le 2)
                        (begin
                          (display tm:locale-number-separator port)
-                         (display (substring ns 2 le) port))))))
+                         (display (substring ns 2 le) port))))
+                 (display tm:locale-number-separator port)
+                 (display (tm:fractional-part (/ (date-nanosecond date) tm:nano)) port)))
+     
      (cons #\h (lambda (date pad-with port)
                  (display (date->string date "~b") port)))
      (cons #\H (lambda (date pad-with port)
@@ -1189,12 +1217,12 @@
                           port)))
      (cons #\k (lambda (date pad-with port)
                  (display (tm:padding (date-hour date)
-                                      #\0 2)
+                                      #\space 2) ;; ypsilon -- y.fujita.lwp (#\0 -> #\space)
                           port)))
      (cons #\l (lambda (date pad-with port)
                  (let ((hr (if (> (date-hour date) 12)
                                (- (date-hour date) 12) (date-hour date))))
-                   (display (tm:padding hr  #\space 2)
+                   (display (tm:padding hr #\space 2)
                             port))))
      (cons #\m (lambda (date pad-with port)
                  (display (tm:padding (date-month date)
@@ -1265,13 +1293,13 @@
      (cons #\1 (lambda (date pad-with port)
                  (display (date->string date "~Y-~m-~d") port)))
      (cons #\2 (lambda (date pad-with port)
-                 (display (date->string date "~k:~M:~S~z") port)))
+                 (display (date->string date "~H:~M:~S~z") port)))
      (cons #\3 (lambda (date pad-with port)
-                 (display (date->string date "~k:~M:~S") port)))
+                 (display (date->string date "~H:~M:~S") port)))
      (cons #\4 (lambda (date pad-with port)
-                 (display (date->string date "~Y-~m-~dT~k:~M:~S~z") port)))
+                 (display (date->string date "~Y-~m-~dT~H:~M:~S~z") port)))
      (cons #\5 (lambda (date pad-with port)
-                 (display (date->string date "~Y-~m-~dT~k:~M:~S") port)))
+                 (display (date->string date "~Y-~m-~dT~H:~M:~S") port)))
      ))
 
   (define (tm:get-formatter char)

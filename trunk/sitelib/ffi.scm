@@ -47,6 +47,7 @@
           define-c-struct-type
           define-c-typedef
           load-shared-object
+          lookup-shared-object
           make-bytevector-mapping
           on-darwin
           on-freebsd
@@ -56,6 +57,8 @@
           on-posix
           on-windows
           on-x64
+          shared-object-errno
+          shared-object-win32-lasterror
           sizeof:int
           sizeof:long
           sizeof:short
