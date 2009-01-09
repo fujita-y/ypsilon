@@ -12,7 +12,6 @@
           append-reverse
           append-reverse!
           assoc
-          assoc/srfi-1
           assq
           assv
           break
@@ -74,9 +73,7 @@
           first
           fold
           fold-right
-          fold-right/srfi-1
           for-each
-          for-each/srfi-1
           fourth
           iota
           last
@@ -106,11 +103,8 @@
           make-list
           map
           map!
-          map!/srfi-1
           map-in-order
-          map/srfi-1
           member
-          member/srfi-1
           memq
           memv
           ninth
@@ -126,8 +120,8 @@
           proper-list?
           reduce
           reduce-right
-          remove!/srfi-1
-          remove/srfi-1
+          remove
+          remove!
           reverse
           reverse!
           second

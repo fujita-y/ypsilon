@@ -1,161 +1,162 @@
 #!nobacktrace
+;; A list of identifiers conflict with rnrs: (assoc fold-right for-each map member remove)
 (library (srfi srfi-1)
-  (export
-   ;; constructors
-   xcons
-   list
-   cons*
-   make-list
-   list-tabulate
-   list-copy
-   circular-list
-   iota
-   ;; predicates
-   pair?
-   null?
-   (rename (list? proper-list?))
-   circular-list?
-   dotted-list?
-   not-pair?
-   (rename (null? null-list?))
-   list=
-   ;; selectors
-   car cdr
-   caar cadr cdar cddr
-   caaar caadr cadar caddr
-   cdaar cdadr cddar cdddr
-   caaaar caaadr caadar caaddr
-   cadaar cadadr caddar cadddr
-   cdaaar cdaadr cdadar cdaddr
-   cddaar cddadr cdddar cddddr
-   list-ref
-   first
-   second
-   third
-   fourth
-   fifth
-   sixth
-   seventh
-   eighth
-   ninth
-   tenth
-   car+cdr
-   take
-   (rename (take take!))
-   drop
-   take-right
-   drop-right
-   (rename (drop-right drop-right!))
-   split-at
-   (rename (split-at split-at!))
-   last
-   last-pair
-   ;; miscellaneous: length, append, concatenate, reverse, zip & count
-   length
-   length+
-   append
-   (rename (append append!))
-   concatenate
-   (rename (concatenate concatenate!))
-   reverse
-   (rename (reverse reverse!))
-   append-reverse
-   (rename (append-reverse append-reverse!))
-   zip
-   unzip1 unzip2 unzip3 unzip4 unzip5
-   count
-   ;; fold, unfold & map
-   map
-   (rename (map map!))
-   map/srfi-1
-   (rename (map/srfi-1 map!/srfi-1))
-   for-each
-   for-each/srfi-1
-   fold
-   fold-right
-   fold-right/srfi-1
-   unfold
-   pair-fold
-   (rename (fold reduce))
-   unfold-right
-   pair-fold-right
-   (rename (fold-right/srfi-1 reduce-right))
-   append-map
-   (rename (append-map append-map!))
-   pair-for-each
-   filter-map
-   map-in-order
-   ;; filtering & partitioning
-   filter
-   (rename (filter filter!))
-   partition
-   (rename (partition partition!))
-   (rename (remp remove/srfi-1))
-   (rename (remp remove!/srfi-1))
-   ;; seaching
-   member
-   member/srfi-1
-   memq
-   memv
-   find
-   find-tail
-   any
-   every
-   list-index
-   take-while
-   (rename (take-while take-while!))
-   drop-while
-   span
-   (rename (span span!))
-   break
-   (rename (break break!))
-   ;; deleting
-   delete
-   (rename (delete delete!))
-   delete-duplicates
-   (rename (delete-duplicates delete-duplicates!))
-   ;; association lists
-   assoc
-   assoc/srfi-1
-   assq
-   assv
-   alist-cons
-   alist-copy
-   alist-delete
-   (rename (alist-delete alist-delete!))
-   ;; set operations on lists
-   lset<=
-   lset=
-   lset-adjoin
-   (rename (lset-adjoin lset-adjoin!))
-   lset-union
-   (rename (lset-union lset-union!))
-   lset-intersection
-   (rename (lset-intersection lset-intersection!))
-   lset-difference
-   (rename (lset-difference lset-difference!))
-   lset-xor
-   (rename (lset-xor lset-xor!))
-   lset-diff+intersection
-   (rename (lset-diff+intersection lset-diff+intersection!)))
-   ;; procedures conflict with r6rs
-   #;(rename (map/srfi-1 map)
-             (map!/srfi-1 map!)
-             (for-each/srfi-1 for-each)
-             (fold-right/srfi-1 fold-right)
-             (member/srfi-1 member)
-             (assoc/srfi-1 assoc)
-             (remove/srfi-1 remove)
-             (remove!/srfi-1 remove!))
-  (import (except (core) remp))
+  (export alist-cons
+          alist-copy
+          alist-delete
+          (rename (alist-delete alist-delete!))
+          any
+          append
+          (rename (append append!))
+          append-map
+          (rename (append-map append-map!))
+          append-reverse
+          (rename (append-reverse append-reverse!))
+          (rename (assoc/srfi-1 assoc))
+          assq
+          assv
+          break
+          (rename (break break!))
+          caaaar
+          caaadr
+          caaar
+          caadar
+          caaddr
+          caadr
+          caar
+          cadaar
+          cadadr
+          cadar
+          caddar
+          cadddr
+          caddr
+          cadr
+          car
+          car+cdr
+          cdaaar
+          cdaadr
+          cdaar
+          cdadar
+          cdaddr
+          cdadr
+          cdar
+          cddaar
+          cddadr
+          cddar
+          cdddar
+          cddddr
+          cdddr
+          cddr
+          cdr
+          circular-list
+          circular-list?
+          concatenate
+          (rename (concatenate concatenate!))
+          cons*
+          count
+          delete
+          (rename (delete delete!))
+          delete-duplicates
+          (rename (delete-duplicates delete-duplicates!))
+          dotted-list?
+          drop
+          drop-right
+          (rename (drop-right drop-right!))
+          drop-while
+          eighth
+          every
+          fifth
+          filter
+          (rename (filter filter!))
+          filter-map
+          find
+          find-tail
+          first
+          fold
+          (rename (fold-right/srfi-1 fold-right))
+          (rename (for-each/srfi-1 for-each))
+          fourth
+          iota
+          last
+          last-pair
+          length
+          length+
+          list
+          list-copy
+          list-index
+          list-ref
+          list-tabulate
+          list=
+          lset-adjoin
+          (rename (lset-adjoin lset-adjoin!))
+          lset-diff+intersection
+          (rename (lset-diff+intersection lset-diff+intersection!))
+          lset-difference
+          (rename (lset-difference lset-difference!))
+          lset-intersection
+          (rename (lset-intersection lset-intersection!))
+          lset-union
+          (rename (lset-union lset-union!))
+          lset-xor
+          (rename (lset-xor lset-xor!))
+          lset<=
+          lset=
+          make-list
+          (rename (map/srfi-1 map))
+          (rename (map/srfi-1 map!))
+          (rename (map/srfi-1 map-in-order))
+          (rename (member/srfi-1 member))
+          memq
+          memv
+          ninth
+          not-pair?
+          (rename (null? null-list?))
+          null?
+          pair-fold
+          pair-fold-right
+          pair-for-each
+          pair?
+          partition
+          (rename (partition partition!))
+          (rename (list? proper-list?))
+          (rename (fold reduce))
+          (rename (fold-right/srfi-1 reduce-right))
+          (rename (rnrs:remp remove))
+          (rename (rnrs:remp remove!))
+          reverse
+          (rename (reverse reverse!))
+          second
+          seventh
+          sixth
+          span
+          (rename (span span!))
+          split-at
+          (rename (split-at split-at!))
+          take
+          (rename (take take!))
+          take-right
+          take-while
+          (rename (take-while take-while!))
+          tenth
+          third
+          unfold
+          unfold-right
+          unzip1
+          unzip2
+          unzip3
+          unzip4
+          unzip5
+          xcons
+          zip)
+
+  (import (rename (core) (remp rnrs:remp)))
 
   (define xcons (lambda (d a) (cons a d)))
 
   (define list-tabulate
     (lambda (n proc)
       (let loop ((lst '()) (n (- n 1)))
-        (cond ((< n 0) lst)
-              (else (loop (cons (proc n) lst) (- n 1)))))))
+        (if (< n 0) lst (loop (cons (proc n) lst) (- n 1))))))
 
   (define circular-list
     (lambda lst
@@ -172,9 +173,7 @@
                           (null? (cdr head))))
                  (null? head))))))
 
-  (define not-pair?
-    (lambda (x)
-      (not (pair? x))))
+  (define not-pair? (lambda (x) (not (pair? x))))
 
   (define list=
     (lambda (proc . lists)
@@ -183,7 +182,9 @@
           (let loop ((lst1 (car lists)) (lst2 lst))
             (if (null? lst1)
                 (null? lst2)
-                (and (proc (car lst1) (car lst2))
+                (and (pair? lst1)
+                     (pair? lst2)
+                     (proc (car lst1) (car lst2))
                      (loop (cdr lst1) (cdr lst2)))))))
       (or (null? lists)
           (null? (cdr lists))
@@ -208,94 +209,73 @@
   (define count-pair
     (lambda (lst)
       (let loop ((lst lst) (n 0))
-        (cond ((pair? lst)
-               (loop (cdr lst) (+ n 1)))
-              (else n)))))
+        (if (pair? lst) (loop (cdr lst) (+ n 1)) n))))
 
   (define take-right
     (lambda (lst n)
       (let loop ((head (list-tail lst n)) (tail lst))
-        (cond ((pair? head)
-               (loop (cdr head) (cdr tail)))
-              (else tail)))))
+        (if (pair? head) (loop (cdr head) (cdr tail)) tail))))
 
-  (define drop-right
-    (lambda (lst n)
-      (list-head lst (- (count-pair lst) n))))
-
-  (define split-at
-    (lambda (lst n)
-      (values (take lst n) (drop lst n))))
-
+  (define drop-right (lambda (lst n) (list-head lst (- (count-pair lst) n))))
+  (define split-at (lambda (lst n) (values (take lst n) (drop lst n))))
   (define last (lambda (lst) (car (last-pair lst))))
 
   (define last-pair
     (lambda (lst)
       (let loop ((lst lst))
-        (cond ((pair? (cdr lst)) (loop (cdr lst)))
-              (else lst)))))
+        (if (pair? (cdr lst)) (loop (cdr lst)) lst))))
 
-  (define length+
-    (lambda (lst)
-      (and (list? lst) (length lst))))
-
-  (define concatenate
-    (lambda (lst)
-      (apply append lst)))
+  (define length+ (lambda (lst) (and (list? lst) (length lst))))
+  (define concatenate (lambda (lst) (apply append lst)))
 
   (define append-reverse
     (lambda (head tail)
-      (cond ((pair? head)
-             (append-reverse (cdr head)
-                             (cons (car head) tail)))
-            (else tail))))
+      (if (pair? head) (append-reverse (cdr head) (cons (car head) tail)) tail)))
 
-  (define zip
-    (lambda lists
-      (apply list-transpose* lists)))
-
-  (define unzip1
-    (lambda (lst)
-      (map-1/srfi-1 first lst)))
+  (define zip (lambda lists (apply list-transpose* lists)))
+  (define unzip1 (lambda (lst) (map-1/srfi-1 first lst)))
 
   (define unzip2
     (lambda (lst)
-      (values (map-1/srfi-1 first lst) (map-1/srfi-1 second lst))))
+      (values (map-1/srfi-1 first lst)
+              (map-1/srfi-1 second lst))))
 
   (define unzip3
     (lambda (lst)
-      (values (map-1/srfi-1 first lst) (map-1/srfi-1 second lst) (map-1/srfi-1 third lst))))
+      (values (map-1/srfi-1 first lst)
+              (map-1/srfi-1 second lst)
+              (map-1/srfi-1 third lst))))
 
   (define unzip4
     (lambda (lst)
-      (values (map-1/srfi-1 first lst) (map-1/srfi-1 second lst) (map-1/srfi-1 third lst) (map-1/srfi-1 fourth lst))))
+      (values (map-1/srfi-1 first lst)
+              (map-1/srfi-1 second lst)
+              (map-1/srfi-1 third lst)
+              (map-1/srfi-1 fourth lst))))
 
   (define unzip5
     (lambda (lst)
-      (values (map-1/srfi-1 first lst) (map-1/srfi-1 second lst) (map-1/srfi-1 third lst) (map-1/srfi-1 fourth lst) (map-1/srfi-1 fifth lst))))
+      (values (map-1/srfi-1 first lst)
+              (map-1/srfi-1 second lst)
+              (map-1/srfi-1 third lst)
+              (map-1/srfi-1 fourth lst)
+              (map-1/srfi-1 fifth lst))))
 
   (define count
     (lambda (proc lst1 . lst2)
-      (cond ((null? lst2)
-             (fold-1 (lambda (args acc)
-                       (if (apply proc args) (+ acc 1) acc))
-                     0
-                     lst1))
-            (else
-             (fold-n (lambda (arg acc)
-                       (if (proc arg) (+ acc 1) acc))
-                     0
-                     (apply list-transpose* lst1 lst2))))))
+      (if (null? lst2)
+          (fold-1 (lambda (arg acc) (if (proc arg) (+ acc 1) acc))
+                  0 lst1)
+          (fold-n (lambda (args acc) (if (apply proc args) (+ acc 1) acc))
+                  0 (apply list-transpose* lst1 lst2)))))
 
   (define fold-1
     (lambda (proc seed lst)
-      (cond ((null? lst) seed)
-            (else (fold-1 proc (proc (car lst) seed) (cdr lst))))))
+      (if (null? lst) seed (fold-1 proc (proc (car lst) seed) (cdr lst)))))
 
   (define fold-n
     (lambda (proc seed lst)
-      (cond ((null? lst) seed)
-            (else (fold-n proc (apply proc (append (car lst) (list seed))) (cdr lst))))))
+      (if (null? lst) seed (fold-n proc (apply proc (append (car lst) (list seed))) (cdr lst)))))
 
   (define fold
     (lambda (proc seed lst1 . lst2)
@@ -305,12 +285,12 @@
 
   (define fold-right/srfi-1
     (lambda (proc seed lst1 . lst2)
-      (define fold-right-1 (lambda (proc seed lst)
-                             (cond ((null? lst) seed)
-                                   (else (proc (car lst) (fold-right-1 proc seed (cdr lst)))))))
-      (define fold-right-n (lambda (proc seed lst)
-                             (cond ((null? lst) seed)
-                                   (else (apply proc (append (car lst) (list (fold-right-n proc seed (cdr lst)))))))))
+      (define fold-right-1
+        (lambda (proc seed lst)
+          (if (null? lst) seed (proc (car lst) (fold-right-1 proc seed (cdr lst))))))
+      (define fold-right-n
+        (lambda (proc seed lst)
+          (if (null? lst) seed (apply proc (append (car lst) (list (fold-right-n proc seed (cdr lst))))))))
       (if (null? lst2)
           (fold-right-1 proc seed lst1)
           (fold-right-n proc seed (apply list-transpose* lst1 lst2)))))
@@ -335,40 +315,44 @@
 
   (define every
     (lambda (proc lst1 . lst2)
-      (define every-1 (lambda (proc lst)
-                        (or (null? lst)
-                            (let loop ((head (car lst)) (rest (cdr lst)))
-                              (if (null? rest)
-                                  (proc head)
-                                  (and (proc head)
-                                       (loop (car rest) (cdr rest))))))))
-      (define every-n (lambda (proc lst)
-                        (or (null? lst)
-                            (let loop ((head (car lst)) (rest (cdr lst)))
-                              (if (null? rest)
-                                  (apply proc head)
-                                  (and (apply proc head)
-                                       (loop (car rest) (cdr rest))))))))
+      (define every-1
+        (lambda (proc lst)
+          (or (null? lst)
+              (let loop ((head (car lst)) (rest (cdr lst)))
+                (if (null? rest)
+                    (proc head)
+                    (and (proc head)
+                         (loop (car rest) (cdr rest))))))))
+      (define every-n
+        (lambda (proc lst)
+          (or (null? lst)
+              (let loop ((head (car lst)) (rest (cdr lst)))
+                (if (null? rest)
+                    (apply proc head)
+                    (and (apply proc head)
+                         (loop (car rest) (cdr rest))))))))
       (if (null? lst2)
           (every-1 proc lst1)
           (every-n proc (apply list-transpose* lst1 lst2)))))
 
   (define any
     (lambda (proc lst1 . lst2)
-      (define any-1 (lambda (proc lst)
-                      (cond ((null? lst) #f)
-                            (else (let loop ((head (car lst)) (rest (cdr lst)))
-                                    (if (null? rest)
-                                        (proc head)
-                                        (or (proc head)
-                                            (loop (car rest) (cdr rest)))))))))
-      (define any-n (lambda (proc lst)
-                      (cond ((null? lst) #f)
-                            (else (let loop ((head (car lst)) (rest (cdr lst)))
-                                    (if (null? rest)
-                                        (apply proc head)
-                                        (or (apply proc head)
-                                            (loop (car rest) (cdr rest)))))))))
+      (define any-1
+        (lambda (proc lst)
+          (cond ((null? lst) #f)
+                (else (let loop ((head (car lst)) (rest (cdr lst)))
+                        (if (null? rest)
+                            (proc head)
+                            (or (proc head)
+                                (loop (car rest) (cdr rest)))))))))
+      (define any-n
+        (lambda (proc lst)
+          (cond ((null? lst) #f)
+                (else (let loop ((head (car lst)) (rest (cdr lst)))
+                        (if (null? rest)
+                            (apply proc head)
+                            (or (apply proc head)
+                                (loop (car rest) (cdr rest)))))))))
       (if (null? lst2)
           (any-1 proc lst1)
           (any-n proc (apply list-transpose* lst1 lst2)))))
@@ -376,16 +360,14 @@
   (define map-1/srfi-1
     (lambda (proc lst)
       (cond ((null? lst) '())
-            (else
-             (cons (proc (car lst))
-                   (map-1/srfi-1 proc (cdr lst)))))))
+            (else (cons (proc (car lst))
+                        (map-1/srfi-1 proc (cdr lst)))))))
 
   (define map-n/srfi-1
     (lambda (proc lst)
       (cond ((null? lst) '())
-            (else
-             (cons (apply proc (car lst))
-                   (map-n/srfi-1 proc (cdr lst)))))))
+            (else (cons (apply proc (car lst))
+                        (map-n/srfi-1 proc (cdr lst)))))))
 
   (define map/srfi-1
     (lambda (proc lst1 . lst2)
@@ -395,11 +377,10 @@
 
   (define for-each-1/srfi-1
     (lambda (proc lst)
-      (if (null? lst)
-          (unspecified)
-          (begin
-            (proc (car lst))
-            (for-each-1/srfi-1 proc (cdr lst))))))
+      (cond ((null? lst) (unspecified))
+            (else
+             (proc (car lst))
+             (for-each-1/srfi-1 proc (cdr lst))))))
 
   (define for-each-n/srfi-1
     (lambda (proc lst)
@@ -418,29 +399,33 @@
     (lambda (lst)
       (let loop ((lst lst) (acc '()))
         (cond ((null? lst) acc)
-              (else
-               (cons lst (loop (cdr lst) acc)))))))
+              (else (cons lst (loop (cdr lst) acc)))))))
 
   (define pair-fold
     (lambda (proc seed lst1 . lst2)
-      (define pair-fold-1 (lambda (proc seed lst)
-                            (cond ((null? lst) seed)
-                                  (else (pair-fold-1 proc (proc lst seed) (cdr lst))))))
-      (define pair-fold-n (lambda (proc seed lst)
-                            (cond ((null? lst) seed)
-                                  (else (pair-fold-n proc (apply proc (append (car lst) (list seed))) (cdr lst))))))
+      (define pair-fold-1
+        (lambda (proc seed lst)
+          (cond ((null? lst) seed)
+                (else (let ((lst2 (cdr lst)))
+                        (pair-fold-1 proc (proc lst seed) lst2))))))
+      (define pair-fold-n
+        (lambda (proc seed lst)
+          (cond ((null? lst) seed)
+                (else (pair-fold-n proc (apply proc (append (car lst) (list seed))) (cdr lst))))))
       (if (null? lst2)
           (pair-fold-1 proc seed lst1)
           (pair-fold-n proc seed (apply list-transpose* (list-of-subset lst1) (map-1/srfi-1 list-of-subset lst2))))))
 
   (define pair-fold-right
     (lambda (proc seed lst1 . lst2)
-      (define pair-fold-right-1 (lambda (proc seed lst)
-                                  (cond ((null? lst) seed)
-                                        (else (proc lst (pair-fold-right-1 proc seed (cdr lst)))))))
-      (define pair-fold-right-n (lambda (proc seed lst)
-                                  (cond ((null? lst) seed)
-                                        (else (apply proc (append (car lst) (list (pair-fold-right-n proc seed (cdr lst)))))))))
+      (define pair-fold-right-1
+        (lambda (proc seed lst)
+          (cond ((null? lst) seed)
+                (else (proc lst (pair-fold-right-1 proc seed (cdr lst)))))))
+      (define pair-fold-right-n
+        (lambda (proc seed lst)
+          (cond ((null? lst) seed)
+                (else (apply proc (append (car lst) (list (pair-fold-right-n proc seed (cdr lst)))))))))
       (if (null? lst2)
           (pair-fold-right-1 proc seed lst1)
           (pair-fold-right-n proc seed (apply list-transpose* (list-of-subset lst1) (map-1/srfi-1 list-of-subset lst2))))))
@@ -463,8 +448,6 @@
           (filter values (map-1/srfi-1 proc lst1))
           (filter values (map-n/srfi-1 proc (apply list-transpose* lst1 lst2))))))
 
-  (define map-in-order map/srfi-1)
-
   (define find-tail
     (lambda (proc lst)
       (let loop ((lst lst))
@@ -480,19 +463,17 @@
                (let loop ((head (car lst)) (rest (cdr lst)) (n 0))
                  (cond ((proc head) n)
                        ((null? rest) #f)
-                       (else
-                        (loop (car rest) (cdr rest) (+ n 1))))))))
+                       (else (loop (car rest) (cdr rest) (+ n 1))))))))
       (define list-index-n
         (lambda (proc lst)
           (and (not (null? lst))
                (let loop ((head (car lst)) (rest (cdr lst)) (n 0))
                  (cond ((apply proc head) n)
                        ((null? rest) #f)
-                       (else
-                        (loop (car rest) (cdr rest) (+ n 1))))))))
+                       (else (loop (car rest) (cdr rest) (+ n 1))))))))
       (if (null? lst2)
           (list-index-1 proc lst1)
-          (list-index-n proc (apply map/srfi-1 list lst1 lst2)))))
+          (list-index-n proc (apply list-transpose* lst1 lst2)))))
 
   (define take-while
     (lambda (proc lst)
@@ -537,10 +518,8 @@
                             ((memp (lambda (e) (proc head e)) rest)
                              (let ((rest (delete head rest proc)))
                                (cond ((null? rest) (list head))
-                                     (else
-                                      (cons head (loop (car rest) (cdr rest)))))))
-                            (else
-                             (cons head (loop (car rest) (cdr rest)))))))))))
+                                     (else (cons head (loop (car rest) (cdr rest)))))))
+                            (else (cons head (loop (car rest) (cdr rest)))))))))))
 
   (define alist-cons
     (lambda (key val lst)
@@ -655,9 +634,8 @@
     (lambda (proc lst1 lst2)
       (cond ((null? lst2) lst1)
             ((null? lst1) lst2)
-            (else
-             (append (lset-difference-1 proc lst1 lst2)
-                     (lset-difference-1 proc lst2 lst1))))))
+            (else (append (lset-difference-1 proc lst1 lst2)
+                          (lset-difference-1 proc lst2 lst1))))))
 
   (define lset-xor
     (lambda (proc . lst)
