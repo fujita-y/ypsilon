@@ -551,6 +551,7 @@
                         create-symbolic-link
                         create-hard-link
                         rename-file
+                        win32-error->string
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))

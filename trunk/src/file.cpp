@@ -14,7 +14,31 @@
 
 #if _MSC_VER
 
-    const char*
+    scm_string_t
+    win32_error_message(VM* vm, uint32_t code)
+    {
+        char* message;
+        FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL,
+                code,
+                MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+                (LPSTR)&message,
+                0,
+                NULL);
+        int tail = strlen(message);
+        while (--tail >= 0) {
+            if (message[tail] == '\r' || message[tail] == '\n') {
+                message[tail] = 0;
+                continue;
+            }
+            break;
+        }
+        scm_string_t obj = make_string(vm, message);
+        LocalFree(message);
+        return obj;
+    }
+    
+    static const char*
     win32_lasterror_message()
     {
         __declspec(thread) static char* s_last_message;
@@ -281,7 +305,7 @@
             raise_io_error(vm, "create-symbolic-link", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, old_path);
             return scm_undef;
         }
-        raise_io_filesystem_error(vm, "create-symbolic-link", "operating system does not support symblic link", 0, old_path, new_path);
+        raise_io_filesystem_error(vm, "create-symbolic-link", "operating system does not support symbolic link", 0, old_path, new_path);
         return scm_undef;
     }
 

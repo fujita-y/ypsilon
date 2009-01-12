@@ -928,6 +928,7 @@
     weak-mapping?
     when
     who-condition?
+    win32-error->string
     with-exception-handler
     with-input-from-file
     with-output-to-file

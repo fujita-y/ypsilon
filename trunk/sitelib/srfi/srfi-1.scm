@@ -217,7 +217,9 @@
         (if (pair? head) (loop (cdr head) (cdr tail)) tail))))
 
   (define drop-right (lambda (lst n) (list-head lst (- (count-pair lst) n))))
+
   (define split-at (lambda (lst n) (values (take lst n) (drop lst n))))
+
   (define last (lambda (lst) (car (last-pair lst))))
 
   (define last-pair
@@ -226,6 +228,7 @@
         (if (pair? (cdr lst)) (loop (cdr lst)) lst))))
 
   (define length+ (lambda (lst) (and (list? lst) (length lst))))
+
   (define concatenate (lambda (lst) (apply append lst)))
 
   (define append-reverse
@@ -233,6 +236,7 @@
       (if (pair? head) (append-reverse (cdr head) (cons (car head) tail)) tail)))
 
   (define zip (lambda lists (apply list-transpose* lists)))
+
   (define unzip1 (lambda (lst) (map-1/srfi-1 first lst)))
 
   (define unzip2
