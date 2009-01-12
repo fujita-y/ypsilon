@@ -368,7 +368,8 @@
                                (syntax-case x ()
                                  ((_ temp . _)
                                   (with-syntax
-                                      (((compound-types (... ...)) (list (#,#'ensure-c-typedef compounds 'compounds) ...)))
+                                      (((compound-types (... ...)) 
+                                        (datum->syntax #'k (list (#,#'ensure-c-typedef compounds 'compounds) ...))))
                                     (c-typedef-struct-expand #'temp (datum (compound-types (... ...))) '(field-specs ...))))))))
                            (check-c-struct-fields lhs field-specs ...)))))
                (else
@@ -387,7 +388,9 @@
                              (lambda (x)
                                (syntax-case x ()
                                  ((_ temp . _)
-                                  (with-syntax (((compound-types (... ...)) (list (#,#'ensure-c-struct compounds 'compounds) ...)))
+                                  (with-syntax
+                                      (((compound-types (... ...))
+                                        (datum->syntax #'k (list (#,#'ensure-c-struct compounds 'compounds) ...))))
                                     (c-struct-expand #'temp (datum (compound-types (... ...))) '(field-specs ...))))))))
                            (check-c-struct-fields lhs field-specs ...)))))
                (else

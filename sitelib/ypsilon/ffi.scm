@@ -4,20 +4,17 @@
 ;;; See license.txt for terms and conditions of use.
 
 (library (ypsilon ffi)
-  (export on-darwin on-linux on-freebsd on-openbsd on-windows on-posix
-          on-ia32 on-x64
-          load-shared-object
-          lookup-shared-object
-          shared-object-errno
-          shared-object-win32-lasterror
+  (export load-shared-object
           c-function
           c-function/errno
-          c-function/lasterror
-          c-argument
+          c-function/win32-lasterror
+          shared-object-errno
+          shared-object-win32-lasterror
+          win32-error->string
+          make-bytevector-mapping
           define-c-typedef
           define-c-struct-type
           define-c-struct-methods
-          make-bytevector-mapping
           bytevector-c-char-ref
           bytevector-c-short-ref
           bytevector-c-int-ref
@@ -60,7 +57,15 @@
           alignof:int8_t
           alignof:int16_t
           alignof:int32_t
-          alignof:int64_t)
+          alignof:int64_t
+          on-darwin
+          on-linux
+          on-freebsd
+          on-openbsd
+          on-windows
+          on-posix
+          on-ia32
+          on-x64)
 
   (import (core) (ypsilon c-types))
 
@@ -145,7 +150,7 @@
   (define int->unsigned-int
     (let ((unsigned-int-mask (- (bitwise-arithmetic-shift 1 (* sizeof:int 8)) 1)))
       (lambda (val) (if (< val 0) (bitwise-and val unsigned-int-mask) val))))
-  
+
   (define intptr->uintptr
     (let ((uintptr-mask (- (bitwise-arithmetic-shift 1 (* sizeof:void* 8)) 1)))
       (lambda (val) (if (< val 0) (bitwise-and val uintptr-mask) val))))
@@ -289,7 +294,7 @@
            (let* ((ret (apply proc args)) (err (shared-object-errno)))
              (values ret err)))))))
 
-  (define-syntax c-function/lasterror
+  (define-syntax c-function/win32-lasterror
     (syntax-rules ()
       ((_ . x)
        (if on-windows
@@ -298,6 +303,6 @@
                (let* ((ret (apply proc args)) (err (shared-object-win32-lasterror)))
                  (values ret err))))
            (lambda x
-             (error 'c-function/lasterror (format "only available with windows")))))))
+             (error 'c-function/win32-lasterror (format "only available with windows")))))))
 
   ) ;[end]

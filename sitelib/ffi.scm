@@ -39,15 +39,13 @@
           bytevector-c-unsigned-short-ref
           bytevector-c-void*-ref
           bytevector-c-void*-set!
-          c-argument
           c-function
           c-function/errno
-          c-function/lasterror
+          c-function/win32-lasterror
           define-c-struct-methods
           define-c-struct-type
           define-c-typedef
           load-shared-object
-          lookup-shared-object
           make-bytevector-mapping
           on-darwin
           on-freebsd
@@ -62,5 +60,6 @@
           sizeof:int
           sizeof:long
           sizeof:short
-          sizeof:void*)
+          sizeof:void*
+          win32-error->string)
   (import (ypsilon ffi)))

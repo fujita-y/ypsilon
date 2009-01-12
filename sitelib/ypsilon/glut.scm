@@ -271,8 +271,8 @@
   (define glutInit
     (if on-windows
         (lambda (a1 a2)
-          (c-argument 'glutInit 1 [int] a1)
-          (c-argument 'glutInit 2 [char*] a2)
+          #;(c-argument 'glutInit 1 [int] a1)
+          #;(c-argument 'glutInit 2 [char*] a2)
           ((c-function libGLUT "GLUT library" void __stdcall __glutInitWithExit ([int] [char*] [c-callback void (int)]))
            a1 a2 (lambda (n) (exit n))))
         (c-function libGLUT "GLUT library" void __stdcall glutInit ([int] [char*]))))

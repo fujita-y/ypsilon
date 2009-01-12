@@ -580,6 +580,7 @@ subr_shared_object_errno(VM* vm, int argc, scm_obj_t argv[])
                 return scm_unspecified;
             }
             invalid_argument_violation(vm, "shared-object-errno", "value out of range,", argv[0], 0, argc, argv);
+            return scm_undef;
         }
         wrong_type_argument_violation(vm, "shared-object-errno", 0, "exact integer", argv[0], argc, argv);
         return scm_undef;
@@ -592,24 +593,71 @@ subr_shared_object_errno(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_shared_object_win32_lasterror(VM* vm, int argc, scm_obj_t argv[])
 {
+#if _MSC_VER
     if (argc == 0) return int_to_integer(vm->m_heap, vm->m_shared_object_win32_lasterror);
     if (argc == 1) {
         if (exact_integer_pred(argv[0])) {
             uint32_t val;
             if (exact_integer_to_uint32(argv[0], &val)) {
-#if _MSC_VER
                 SetLastError(val);
-#endif
                 vm->m_shared_object_win32_lasterror = val;
                 return scm_unspecified;
             }
             invalid_argument_violation(vm, "shared-object-win32-lasterror", "value out of range,", argv[0], 0, argc, argv);
+            return scm_undef;
         }
         wrong_type_argument_violation(vm, "shared-object-win32-lasterror", 0, "exact integer", argv[0], argc, argv);
         return scm_undef;
     }
     wrong_number_of_arguments_violation(vm, "shared-object-win32-lasterror", 0, 1, argc, argv);
     return scm_undef;
+#else
+    raise_error(vm, "shared-object-win32-last-error", "operating system does not support this feature", 0, argc, argv);
+    return scm_undef;
+#endif    
+}
+
+// win32-error->string
+scm_obj_t
+subr_win32_error_string(VM* vm, int argc, scm_obj_t argv[])
+{
+#if _MSC_VER
+    if (argc == 1) {
+        if (exact_integer_pred(argv[0])) {
+            uint32_t val;
+            if (exact_integer_to_uint32(argv[0], &val)) {
+                char* message;
+                FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                        NULL,
+                        val,
+                        MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+                        (LPSTR)&message,
+                        0,
+                        NULL);
+                int tail = strlen(message);
+                while (--tail >= 0) {
+                    if (message[tail] == '\r' || message[tail] == '\n') {
+                        message[tail] = 0;
+                        continue;
+                    }
+                    break;
+                }
+                scm_string_t obj = make_string(vm->m_heap, message);
+                LocalFree(message);
+                return obj;
+            }
+            invalid_argument_violation(vm, "win32-error->string", "value out of range,", argv[0], 0, argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "win32-error->string", 0, "exact integer", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "win32-error->string", 1, 1, argc, argv);
+    return scm_undef;
+#else
+    raise_error(vm, "win32-error->string", "operating system does not support this feature", 0, argc, argv);
+    return scm_undef;
+#endif
 }
 
 void init_subr_ffi(object_heap_t* heap)
@@ -640,4 +688,6 @@ void init_subr_ffi(object_heap_t* heap)
     DEFSUBR("flonum->float", subr_flonum_to_float);
     DEFSUBR("shared-object-errno", subr_shared_object_errno);
     DEFSUBR("shared-object-win32-lasterror", subr_shared_object_win32_lasterror);
+    DEFSUBR("win32-error->string", subr_win32_error_string);
+
 }
