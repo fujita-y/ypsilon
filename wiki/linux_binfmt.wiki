@@ -1,20 +1,20 @@
 #summary Using binfmt_misc linux kernel module
 
-Following information is provided by Marco Maggi who is the author of Nausicaa project[[1]].
+Following information is provided by Marco Maggi who is the author of Nausicaa project`[1]`.
 
-[[1]] http://github.com/marcomaggi/nausicaa/
+`[1]` http://github.com/marcomaggi/nausicaa/
 
 Special thanks to Marco :)
 
 ----
 
 It is possible to activate automatic execution
-of R6RS Scheme programs with Ypsilon through the
+of R^6^RS Scheme programs with Ypsilon through the
 mechanism of the "binfmt_misc" Linux kernel module.
 It is available only on Unix--like platforms running
 the Linux kernel.
 
-The "binfmt_mic" module allows us to run R6RS
+The "binfmt_mic" module allows us to run R^6^RS
 programs without explicitly invoking the Ypsilon
 runtime executable.  It is a generalisation of
 the mechanism that allows us to run shell scripts
