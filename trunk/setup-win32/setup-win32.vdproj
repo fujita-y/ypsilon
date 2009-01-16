@@ -27,6 +27,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_085569146A524853A3821D909CEE506E"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_0A1223B80F2F4BB7B8449ED884F79EDD"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -69,6 +75,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_132C016891804964951F95CFEE228A5C"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_18F51E07EB834B45836E9797F7EB72B5"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -76,6 +88,12 @@
         "Entry"
         {
         "MsmKey" = "8:_1ADA98A2BBF543BB892498EF81F30E5F"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_1D4EF5C468204C40A394F1EC2C856906"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -273,7 +291,19 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_6411AE1DC2C744779952D6BFE927E273"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_6462A8B03FE14EAF8A02851726290B2A"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_64EF6B077BEB46BCA87E832D2BA7BE16"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -298,6 +328,12 @@
         "Entry"
         {
         "MsmKey" = "8:_6D6BBE3C87F846B5B3BE6E050B6D2F87"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_7243AE08D6F34EB1950AFF262238C47E"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -334,6 +370,18 @@
         "Entry"
         {
         "MsmKey" = "8:_7B00EA9A11754F73B509C102CDC28E0C"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_7F23DD4346F6482681B6EFC7CE5B96B5"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_843E72B4314142178AF05EA4F326FBA8"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -388,6 +436,18 @@
         "Entry"
         {
         "MsmKey" = "8:_959234418C2640F4B713CC8636CD6676"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_99DFB3989BB84E7E96ACFE2AFB8F6965"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_9E920EB1065343D687BD58454E67392A"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -555,6 +615,18 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_D2AD90C6189B4165B54001FE4ED28D61"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D2C05EF9D6FF4331A958EEFC3105C5FE"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_D2EBE201C27942C7A1B03C2B9B9734ED"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -675,6 +747,18 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_F41F4FFCC8334A61A732243F0591DD37"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_F54246CDCD9D47588529D9A07AA4215B"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_F6F0D59C3FC24A94847DDA16CBEA78D1"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -700,6 +784,12 @@
         "Entry"
         {
         "MsmKey" = "8:_FEF004FF12E84629A220D87F3A41B12F"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_FF8C42B7A9F14B0C9B94381DDAE27059"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -816,6 +906,26 @@
             "TargetName" = "8:%3a9.scm"
             "Tag" = "8:"
             "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_085569146A524853A3821D909CEE506E"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a41\\streams\\primitive.scm"
+            "TargetName" = "8:primitive.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_4416A26D93A9440C971761712C4785AC"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -950,6 +1060,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_132C016891804964951F95CFEE228A5C"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a41\\streams.scm"
+            "TargetName" = "8:streams.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_E62CEC4FB5DA4D66B328CD3B87B2D558"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_18F51E07EB834B45836E9797F7EB72B5"
             {
             "SourcePath" = "8:..\\stdlib\\rnrs.scm"
@@ -976,6 +1106,26 @@
             "TargetName" = "8:core.scm"
             "Tag" = "8:"
             "Folder" = "8:_DBA8A88409A145E9BAA28DFEC1B17D64"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_1D4EF5C468204C40A394F1EC2C856906"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a28\\basic-format-strings.scm"
+            "TargetName" = "8:basic-format-strings.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_08820F0DFB964E8FBF0124142BCFE236"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1630,12 +1780,52 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6411AE1DC2C744779952D6BFE927E273"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a41\\streams\\derived.scm"
+            "TargetName" = "8:derived.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_4416A26D93A9440C971761712C4785AC"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6462A8B03FE14EAF8A02851726290B2A"
             {
             "SourcePath" = "8:..\\stdlib\\rnrs\\r5rs.scm"
             "TargetName" = "8:r5rs.scm"
             "Tag" = "8:"
             "Folder" = "8:_E37BC4BED2AE4DA0943DAA4E1309D4A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_64EF6B077BEB46BCA87E832D2BA7BE16"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a9\\records.scm"
+            "TargetName" = "8:records.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_566C8783D88944389C28C3992D4A95C0"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1716,6 +1906,26 @@
             "TargetName" = "8:unicode-assistants.scm"
             "Tag" = "8:"
             "Folder" = "8:_09FE17C038694EABA8944CAB7A607A78"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7243AE08D6F34EB1950AFF262238C47E"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a1\\lists.scm"
+            "TargetName" = "8:lists.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_EE1D7509B4E74123B293D535E08E1781"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1836,6 +2046,46 @@
             "TargetName" = "8:%3a1.scm"
             "Tag" = "8:"
             "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7F23DD4346F6482681B6EFC7CE5B96B5"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a6\\basic-string-ports.scm"
+            "TargetName" = "8:basic-string-ports.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_AA887364A92D45109BDF006ED9807773"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_843E72B4314142178AF05EA4F326FBA8"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a27\\random-bits.scm"
+            "TargetName" = "8:random-bits.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_EB8948F0D2EE42E083FD4972C7ED17BA"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -2016,6 +2266,46 @@
             "TargetName" = "8:trace.scm"
             "Tag" = "8:"
             "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_99DFB3989BB84E7E96ACFE2AFB8F6965"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a19\\time.scm"
+            "TargetName" = "8:time.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_D2E892C911FF4053903C373864B0C4D5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9E920EB1065343D687BD58454E67392A"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a14\\char-sets.scm"
+            "TargetName" = "8:char-sets.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_38AEFB44AB624D4EB2FE8E2F299C04FE"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -2570,6 +2860,46 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D2AD90C6189B4165B54001FE4ED28D61"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a13\\strings.scm"
+            "TargetName" = "8:strings.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_9B254748DDEC454982925F073B0E6131"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D2C05EF9D6FF4331A958EEFC3105C5FE"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a39\\parameters.scm"
+            "TargetName" = "8:parameters.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_6B1BF4E310C542C581C5B5661F1C5256"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D2EBE201C27942C7A1B03C2B9B9734ED"
             {
             "SourcePath" = "8:..\\stdlib\\rnrs\\mutable-pairs.scm"
@@ -2970,6 +3300,46 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F41F4FFCC8334A61A732243F0591DD37"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a42\\eager-comprehensions.scm"
+            "TargetName" = "8:eager-comprehensions.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_6D5BC7FCAACB48DFB61816BCA79BF408"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F54246CDCD9D47588529D9A07AA4215B"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a38\\with-shared-structure.scm"
+            "TargetName" = "8:with-shared-structure.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_B11F4326451D4A7E8944842CBB16D11B"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F6F0D59C3FC24A94847DDA16CBEA78D1"
             {
             "SourcePath" = "8:..\\sitelib\\tidbits\\string-split.scm"
@@ -3070,6 +3440,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_FF8C42B7A9F14B0C9B94381DDAE27059"
+            {
+            "SourcePath" = "8:..\\sitelib\\srfi\\%3a26\\cut.scm"
+            "TargetName" = "8:cut.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_D51A2D06F4B74DD2A7098BE8679E9B49"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
         }
         "FileType"
         {
@@ -3148,6 +3538,171 @@
                             "Property" = "8:_0DAA3929F5DB4D18B48FEEEAFB86B69D"
                                 "Folders"
                                 {
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_08820F0DFB964E8FBF0124142BCFE236"
+                                    {
+                                    "Name" = "8:%3a28"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_F875A274C0454E38B2BB9934B8D5BBC1"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_38AEFB44AB624D4EB2FE8E2F299C04FE"
+                                    {
+                                    "Name" = "8:%3a14"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_24C783931C3B47338262713D513D97B7"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_4A355065FC9F42A393568E1D6FB441A4"
+                                    {
+                                    "Name" = "8:%3a98"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_9CC200C788C447E2B0AD4C4291B0F8C7"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_566C8783D88944389C28C3992D4A95C0"
+                                    {
+                                    "Name" = "8:%3a9"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_8B7820626382471A87BB7771C361B9E9"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_6B1BF4E310C542C581C5B5661F1C5256"
+                                    {
+                                    "Name" = "8:%3a39"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_68B75C7BF5554978807A0012FB1CDF21"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_6D5BC7FCAACB48DFB61816BCA79BF408"
+                                    {
+                                    "Name" = "8:%3a42"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_798036E11A494275909358C48718CB87"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_9B254748DDEC454982925F073B0E6131"
+                                    {
+                                    "Name" = "8:%3a13"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_99CD2B3E8E054A3881EC10A25129EB5A"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_AA887364A92D45109BDF006ED9807773"
+                                    {
+                                    "Name" = "8:%3a6"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_2EB509B3D21044B8ACC0001E969514E7"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_B11F4326451D4A7E8944842CBB16D11B"
+                                    {
+                                    "Name" = "8:%3a38"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_07867DE8D32148228A8B1BE8D38FAD26"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_D2E892C911FF4053903C373864B0C4D5"
+                                    {
+                                    "Name" = "8:%3a19"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_D3FC6EBF017E4573A3DA268D5590856D"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_D51A2D06F4B74DD2A7098BE8679E9B49"
+                                    {
+                                    "Name" = "8:%3a26"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_840DF5F9F10F48E7B5D469FA3AB24413"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_E62CEC4FB5DA4D66B328CD3B87B2D558"
+                                    {
+                                    "Name" = "8:%3a41"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_A828DB5AC6514E019094BFA5A032F5BF"
+                                        "Folders"
+                                        {
+                                            "{9EF0B969-E518-4E46-987F-47570745A589}:_4416A26D93A9440C971761712C4785AC"
+                                            {
+                                            "Name" = "8:streams"
+                                            "AlwaysCreate" = "11:FALSE"
+                                            "Condition" = "8:"
+                                            "Transitive" = "11:FALSE"
+                                            "Property" = "8:_49B95A3C708641DDA04420140A06FAFB"
+                                                "Folders"
+                                                {
+                                                }
+                                            }
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_EB8948F0D2EE42E083FD4972C7ED17BA"
+                                    {
+                                    "Name" = "8:%3a27"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_A9144C3AB1494F9582CA6EBD961882CD"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_EE1D7509B4E74123B293D535E08E1781"
+                                    {
+                                    "Name" = "8:%3a1"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_0DA4BD007DFD47409662F59FCAA8893E"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
                                 }
                             }
                             "{9EF0B969-E518-4E46-987F-47570745A589}:_C6205E1AFA9948F6AAC514D8551BA58F"
