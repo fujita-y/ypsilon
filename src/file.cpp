@@ -33,7 +33,7 @@
             }
             break;
         }
-        scm_string_t obj = make_string(vm, message);
+        scm_string_t obj = make_string(vm->m_heap, message);
         LocalFree(message);
         return obj;
     }
