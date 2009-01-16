@@ -3706,6 +3706,10 @@ arith_log(object_heap_t* heap, scm_obj_t obj)
     }
     if (real_valued_pred(obj)) {
         double real = real_to_double(obj);
+        if (isinf(real) && exact_positive_integer_pred(obj)) {
+            exact_integer_sqrt_ans_t ans = arith_exact_integer_sqrt(heap, obj);
+            return arith_add(heap, arith_log(heap, ans.s), arith_log(heap, ans.s));
+        }
         if (real > 0) return make_flonum(heap, log(real));
         double imag = atan2(0.0, real);
         if (imag == 0.0) return make_flonum(heap, 0.5 * log(real * real));
