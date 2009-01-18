@@ -115,6 +115,9 @@ private:
     void                record_trace(scm_obj_t comment);
     scm_obj_t*          lookup_iloc(scm_obj_t operands);
 
+    int                 apply_apply_closure(scm_obj_t lastarg);
+    int                 apply_apply_subr(scm_obj_t lastarg);
+    
     scm_obj_t           call_scheme_stub(scm_obj_t proc, int argc, scm_obj_t argv[]);
 
 public:

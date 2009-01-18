@@ -11,8 +11,8 @@
 #include "violation.h"
 #include "interpreter.h"
 
-#define FOLD_TAIL_CALL_TRACE    1
-#define UNWRAP_BACKTRACE        1
+#define FOLD_TAIL_CALL_TRACE            1
+#define UNWRAP_BACKTRACE                1
 
 #define STACKP(p)           (((p) >= (void*)m_stack_top) & ((p) < (void*)m_stack_limit))
 #define FORWARDP(p)         ((*(uintptr_t*)(p)) & 1)
@@ -100,7 +100,8 @@ VM::collect_stack(intptr_t acquire)
         }
         if ((uintptr_t)m_sp + acquire > (uintptr_t)m_stack_limit) {
             backtrace(m_current_error);
-            fatal("fatal: vm stack overflow: can not handle more than %ld arguments under current configuration", m_stack_limit - m_stack_top);
+            fatal("fatal: vm stack overflow: can not handle more than %ld arguments under current configuration",
+                  (m_stack_limit - m_stack_top) - sizeof(vm_env_rec_t) / sizeof(scm_obj_t));
         }
         m_stack_busy = false;
 #if STDEBUG
@@ -131,7 +132,6 @@ VM::collect_stack(intptr_t acquire)
         }
         m_stack_busy = true;
     } else {
-
         if (flags.m_collect_stack_notify != scm_false) {
             char buf[16];
             double rate = 1.0 - ((double)(m_sp - m_stack_top) / (double)(m_stack_limit - m_stack_top));
@@ -262,6 +262,141 @@ scm_undef  scm_unspecified   call-scheme-proc
 ...        scm_false         call-scheme-modal-proc
            [*1 debug info]
 */
+
+enum {
+    apply_apply_trace_n_loop = 0,   // goto trace_n_loop;
+    apply_apply_pop_cont,           // goto pop_cont;
+    apply_apply_wrong_number_args,  // goto ERROR_APPLY_WRONG_NUMBER_ARGS
+    apply_apply_bad_last_args       // goto ERROR_PROC_APPLY_BAD_LAST_ARGS
+};
+
+int
+VM::apply_apply_closure(scm_obj_t lastarg)
+{
+    scm_closure_t closure = (scm_closure_t)m_value;
+    if (HDR_CLOSURE_ARGS(closure->hdr) < 0) {
+        int last_argc = 0;
+        scm_obj_t lst = lastarg;
+        while (PAIRP(lst)) {
+            last_argc++;
+            lst = CDR(lst);
+        }
+        if (lst == scm_nil) {
+            intptr_t argc = m_sp - m_fp;
+            intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
+            args = -args - 1;
+            if (argc == args) {
+                if (m_sp >= m_stack_limit) collect_stack(sizeof(scm_obj_t));
+                m_sp[0] = lastarg;
+                m_sp++;
+            } else if (argc > args) {
+                scm_obj_t lst = lastarg;
+                do {
+                    lst = make_pair(m_heap, m_sp[-1], lst);
+                    m_sp--;
+                } while (--argc > args);
+                m_sp[0] = lst;
+                m_sp++;
+            } else if (argc + last_argc >= args) {
+                scm_obj_t lst = lastarg;
+                do {
+                    if (m_sp >= m_stack_limit) collect_stack(sizeof(scm_obj_t));
+                    m_sp[0] = CAR(lst);
+                    m_sp++;
+                    lst = CDR(lst);
+                } while (++argc < args);
+                m_sp[0] = lst;
+                m_sp++;
+            } else {
+                return apply_apply_wrong_number_args;
+            }
+            if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) >= (uintptr_t)m_stack_limit) collect_stack(sizeof(vm_env_rec_t));
+            vm_env_t env = (vm_env_t)m_sp;
+            env->count = args + 1;
+            env->up = closure->env;
+            m_sp = m_fp = (scm_obj_t*)(env + 1);
+            m_pc = closure->code;
+            m_env = &env->up;
+            return apply_apply_trace_n_loop;
+        }
+        return apply_apply_bad_last_args;
+    }
+    scm_obj_t lst = lastarg;
+    while (PAIRP(lst)) {
+        if (m_sp >= m_stack_limit)
+            collect_stack(sizeof(scm_obj_t));
+        m_sp[0] = CAR(lst);
+        m_sp++;
+        lst = CDR(lst);
+    }
+    if (lst == scm_nil) {
+        const int req = sizeof(vm_env_rec_t) + sizeof(scm_obj_t);
+        if ((uintptr_t)m_sp + req >= (uintptr_t)m_stack_limit)
+            collect_stack(req);
+        intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
+        vm_env_t env = (vm_env_t)m_sp;
+        env->count = args;
+        env->up = closure->env;
+        m_sp = m_fp = (scm_obj_t*)(env + 1);
+        m_pc = closure->code;
+        m_env = &env->up;
+        return apply_apply_trace_n_loop;
+    }
+    return apply_apply_bad_last_args;
+}
+
+int 
+VM::apply_apply_subr(scm_obj_t lastarg) 
+{
+    scm_obj_t lst = lastarg;
+    while (PAIRP(lst)) {
+        if (m_sp >= m_stack_limit) {
+            if (m_fp == m_stack_top) {
+                int argc = VM_STACK_BYTESIZE / sizeof(scm_obj_t);
+                scm_obj_t tmp = lst;
+                while (PAIRP(tmp)) {
+                    argc++;
+                    tmp = CDR(tmp);
+                }
+                if (tmp == scm_nil) {
+                    scm_subr_t subr = (scm_subr_t)m_value;
+                    scm_vector_t argv = make_vector(m_heap, argc, scm_unspecified);
+                    memcpy(argv->elts, m_stack_top, VM_STACK_BYTESIZE);
+                    for (int i = VM_STACK_BYTESIZE / sizeof(scm_obj_t); i < argc; i++) {
+                        argv->elts[i] = CAR(lst);
+                        lst = CDR(lst);
+                    }
+                    m_value = argv;
+                    m_fp = m_sp = m_stack_top;
+                    m_value = (*subr->adrs)(this, argc, argv->elts);
+                    if (m_value == scm_undef) {
+                        m_sp = m_fp;
+                        m_pc = CDR(m_pc);
+                        return apply_apply_trace_n_loop;
+                    }
+                    return apply_apply_pop_cont;
+                }
+                return apply_apply_bad_last_args;
+            }
+            collect_stack(sizeof(scm_obj_t));
+        }
+        m_sp[0] = CAR(lst);
+        m_sp++;
+        lst = CDR(lst);
+    }
+    if (lst == scm_nil) {
+        scm_subr_t subr = (scm_subr_t)m_value;
+        intptr_t argc = m_sp - m_fp;
+        m_value = (*subr->adrs)(this, argc, m_fp);
+        if (m_value == scm_undef) {
+            m_sp = m_fp;
+            m_pc = CDR(m_pc);
+            return apply_apply_trace_n_loop;
+        }
+        return apply_apply_pop_cont;
+    }
+    return apply_apply_bad_last_args;
+}
 
 void
 VM::run(bool init_dispatch_table)
@@ -1480,8 +1615,22 @@ APPLY_APPLY:
         if (m_sp - m_fp >= 2) {
             m_value = m_fp[0];
             m_fp++;
-            obj = m_sp[-1]; // for error message
+            obj = m_sp[-1];
             m_sp--;
+            if (CLOSUREP(m_value)) {
+                int x = apply_apply_closure(obj);
+                if (x == apply_apply_trace_n_loop) goto trace_n_loop;
+                if (x == apply_apply_wrong_number_args) goto ERROR_APPLY_WRONG_NUMBER_ARGS;
+                assert(x != apply_apply_pop_cont);
+                goto ERROR_PROC_APPLY_BAD_LAST_ARGS;
+            }
+            if (SUBRP(m_value)) {
+                int x = apply_apply_subr(obj);
+                if (x == apply_apply_pop_cont) goto pop_cont;
+                if (x == apply_apply_trace_n_loop) goto trace_n_loop;
+                if (x == apply_apply_wrong_number_args) goto ERROR_APPLY_WRONG_NUMBER_ARGS;
+                goto ERROR_PROC_APPLY_BAD_LAST_ARGS;
+            }
             scm_obj_t lst = obj;
             while (PAIRP(lst)) {
                 if (m_sp >= m_stack_limit) collect_stack(sizeof(scm_obj_t));
@@ -1489,7 +1638,7 @@ APPLY_APPLY:
                 m_sp++;
                 lst = CDR(lst);
             }
-            if (lst == scm_nil) goto apply;
+            if (lst == scm_nil) goto APPLY_SPECIAL;
             goto ERROR_PROC_APPLY_BAD_LAST_ARGS;
         }
         goto ERROR_PROC_APPLY_WRONG_NUMBER_ARGS;

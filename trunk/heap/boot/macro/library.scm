@@ -394,90 +394,134 @@
                     (else
                      (syntax-violation 'library "duplicate definitions" id)))))))
 
+    ;; update script too
+    #;(define rewrite-env
+      (lambda (env libenv defs)
+        (map (lambda (b)
+               (cond ((and (uninterned-symbol? (car b)) (assq (cdr b) defs))
+                      (let ((new (cons (car b) (cddr (assq (cdr b) libenv)))))
+                        (format #t "rewrite-binding ~s (~a)~%" new (length env))
+                        new))
+                     (else b)))
+             env)))
+
+    #;(define rewrite-env
+      (lambda (env defs)
+
+        (define compact
+          (lambda (env)
+            (let loop ((lst (reverse env)) (acc '()))
+              (cond ((null? lst) acc)
+                    ((uninterned-symbol? (caar lst))
+                     (loop (cdr lst) (cons (car lst) acc)))
+                    ((assq (caar lst) (cdr lst))
+                     (loop (cdr lst) acc))
+                    (else
+                     (loop (cdr lst) (cons (car lst) acc)))))))
+
+        (map (lambda (b)
+               (if (and (uninterned-symbol? (car b)) (assq (cdr b) defs))
+                   (cons (car b) (cddr (assq (cdr b) libenv)))
+                   b))
+             (compact env))))
+
     (define rewrite-body
       (lambda (body defs macros renames)
+
+        (define rewrite-env
+          (lambda (env)
+            (let loop ((lst (reverse env)) (acc '()))
+              (cond ((null? lst) acc)
+                    ((uninterned-symbol? (caar lst))
+                     (if (assq (cdar lst) defs)
+                         (loop (cdr lst) (cons (cons (caar lst) (cddr (assq (cdar lst) libenv))) acc))
+                         (loop (cdr lst) (cons (car lst) acc))))
+                    ((assq (caar lst) (cdr lst))
+                     (loop (cdr lst) acc))
+                    (else
+                     (loop (cdr lst) (cons (car lst) acc)))))))
+
         (check-duplicate-definition defs macros renames)
-        (let ((rewrited-body (expand-each body env)))
-          (let* ((rewrited-depends
-                  (map (lambda (dep)
-                         `(.require-scheme-library ',dep))
-                       depends))
-                 (rewrited-defs
-                  (map (lambda (def)
-                         (parameterize ((current-top-level-exterior (car def)))
-                           (let ((lhs (cdr (assq (car def) renames)))
-                                 (rhs (expand-form (cadr def) env)))
-                             (set-closure-comment! rhs lhs)
-                             `(define ,lhs ,rhs))))
-                       defs))
-                 (rewrited-macros
-                  (cond ((null? macros) '())
-                        (else
-                         (let ((ht-visibles (make-core-hashtable)))
-                           (let loop ((lst (map caddr macros)))
-                             (cond ((pair? lst) (loop (car lst)) (loop (cdr lst)))
-                                   ((symbol? lst) (core-hashtable-set! ht-visibles lst #t))
-                                   ((vector? lst) (loop (vector->list lst)))))
-                           (for-each (lambda (b)
-                                       (or (assq (car b) libenv)
-                                           (let ((deno (env-lookup env (car b))))
-                                             (if (and (symbol? deno) (not (eq? deno (car b))))
-                                                 (extend-libenv! (car b) (make-import deno))
-                                                 (or (uninterned-symbol? (car b))
-                                                     (extend-libenv! (car b) (make-unbound)))))))
-                                     (core-hashtable->alist ht-visibles))
-                           (let ((shared-env (generate-temporary-symbol)))
-                             `((let ((,shared-env
-                                       ',(let ((ht (make-core-hashtable)))
-                                           (for-each (lambda (a)
-                                                       (and (core-hashtable-contains? ht-visibles (car a))
-                                                            (core-hashtable-set! ht (car a) (cdr a))))
-                                                     (reverse libenv))
-                                           (core-hashtable->alist ht))))
-                                 ,@(map (lambda (e)
-                                          (let ((id (cdr (assq (car e) renames)))
-                                                (type (cadr e))
-                                                (spec (caddr e)))
-                                            (case type
-                                              ((template) `(.set-top-level-macro! 'syntax ',id ',spec ,shared-env))
-                                              ((procedure) `(.set-top-level-macro! 'syntax ',id ,spec ,shared-env))
-                                              ((variable) `(.set-top-level-macro! 'variable ',id ,spec ,shared-env))
-                                              (else (scheme-error "internal error in rewrite body: bad macro spec ~s" e)))))
-                                        macros))))))))
-                 (rewrited-exports
-                  `(.intern-scheme-library
-                    ',library-id
-                    ',library-version
-                    ',(begin
-                        (map (lambda (e)
-                               (cons (cdr e)
-                                     (cond ((assq (car e) renames) => (lambda (a) (make-import (cdr a))))
-                                           ((assq (car e) imports) => cdr)
-                                           (else
-                                            (current-macro-expression #f)
-                                            (syntax-violation 'library
-                                                              (format "attempt to export unbound identifier ~u" (car e))
-                                                              (caddr form))))))
-                             exports)))))
-            (let ((vars (map cadr rewrited-defs))
-                  (assignments (map caddr rewrited-defs)))
-              (cond ((check-rec*-contract-violation vars assignments)
-                     => (lambda (var)
-                          (let ((id (any1 (lambda (a) (and (eq? (cdr a) (car var)) (car a))) renames)))
-                            (current-macro-expression #f)
-                            (syntax-violation #f
-                                              (format "attempt to reference uninitialized variable ~u" id)
-                                              (any1 (lambda (e)
-                                                      (and (check-rec-contract-violation (list id) e)
-                                                           (annotate `(define ,@e) e)))
-                                                    defs)))))))
-            (annotate `(begin
-                         ,@rewrited-depends
-                         ,@rewrited-defs
-                         ,@rewrited-body
-                         ,@rewrited-macros
-                         ,rewrited-exports)
-                      form)))))
+        (let ((env (rewrite-env env)))
+          (let ((rewrited-body (expand-each body env)))
+            (let* ((rewrited-depends
+                    (map (lambda (dep) `(.require-scheme-library ',dep)) depends))
+                   (rewrited-defs
+                    (map (lambda (def)
+                           (parameterize ((current-top-level-exterior (car def)))
+                             (let ((lhs (cdr (assq (car def) renames)))
+                                   (rhs (expand-form (cadr def) env)))
+                               (set-closure-comment! rhs lhs)
+                               `(define ,lhs ,rhs))))
+                         defs))
+                   (rewrited-macros
+                    (cond ((null? macros) '())
+                          (else
+                           (let ((ht-visibles (make-core-hashtable)))
+                             (let loop ((lst (map caddr macros)))
+                               (cond ((pair? lst) (loop (car lst)) (loop (cdr lst)))
+                                     ((symbol? lst) (core-hashtable-set! ht-visibles lst #t))
+                                     ((vector? lst) (loop (vector->list lst)))))
+                             (for-each (lambda (b)
+                                         (or (assq (car b) libenv)
+                                             (let ((deno (env-lookup env (car b))))
+                                               (if (and (symbol? deno) (not (eq? deno (car b))))
+                                                   (extend-libenv! (car b) (make-import deno))
+                                                   (or (uninterned-symbol? (car b))
+                                                       (extend-libenv! (car b) (make-unbound)))))))
+                                       (core-hashtable->alist ht-visibles))
+                             (let ((shared-env (generate-temporary-symbol)))
+                               `((let ((,shared-env
+                                         ',(let ((ht (make-core-hashtable)))
+                                             (for-each (lambda (a)
+                                                         (and (core-hashtable-contains? ht-visibles (car a))
+                                                              (core-hashtable-set! ht (car a) (cdr a))))
+                                                       (reverse libenv))
+                                             (core-hashtable->alist ht))))
+                                   ,@(map (lambda (e)
+                                            (let ((id (cdr (assq (car e) renames)))
+                                                  (type (cadr e))
+                                                  (spec (caddr e)))
+                                              (case type
+                                                ((template) `(.set-top-level-macro! 'syntax ',id ',spec ,shared-env))
+                                                ((procedure) `(.set-top-level-macro! 'syntax ',id ,spec ,shared-env))
+                                                ((variable) `(.set-top-level-macro! 'variable ',id ,spec ,shared-env))
+                                                (else (scheme-error "internal error in rewrite body: bad macro spec ~s" e)))))
+                                          macros))))))))
+                   (rewrited-exports
+                    `(.intern-scheme-library
+                      ',library-id
+                      ',library-version
+                      ',(begin
+                          (map (lambda (e)
+                                 (cons (cdr e)
+                                       (cond ((assq (car e) renames) => (lambda (a) (make-import (cdr a))))
+                                             ((assq (car e) imports) => cdr)
+                                             (else
+                                              (current-macro-expression #f)
+                                              (syntax-violation 'library
+                                                                (format "attempt to export unbound identifier ~u" (car e))
+                                                                (caddr form))))))
+                               exports)))))
+              (let ((vars (map cadr rewrited-defs))
+                    (assignments (map caddr rewrited-defs)))
+                (cond ((check-rec*-contract-violation vars assignments)
+                       => (lambda (var)
+                            (let ((id (any1 (lambda (a) (and (eq? (cdr a) (car var)) (car a))) renames)))
+                              (current-macro-expression #f)
+                              (syntax-violation #f
+                                                (format "attempt to reference uninitialized variable ~u" id)
+                                                (any1 (lambda (e)
+                                                        (and (check-rec-contract-violation (list id) e)
+                                                             (annotate `(define ,@e) e)))
+                                                      defs)))))))
+              (annotate `(begin
+                           ,@rewrited-depends
+                           ,@rewrited-defs
+                           ,@rewrited-body
+                           ,@rewrited-macros
+                           ,rewrited-exports)
+                        form))))))
 
     (define ht-imported-immutables (make-core-hashtable))
 
@@ -714,59 +758,74 @@
 
     (define rewrite-body
       (lambda (body defs macros renames)
+
+        (define rewrite-env
+          (lambda (env)
+            (let loop ((lst (reverse env)) (acc '()))
+              (cond ((null? lst) acc)
+                    ((uninterned-symbol? (caar lst))
+                     (if (assq (cdar lst) defs)
+                         (loop (cdr lst) (cons (cons (caar lst) (cddr (assq (cdar lst) libenv))) acc))
+                         (loop (cdr lst) (cons (car lst) acc))))
+                    ((assq (caar lst) (cdr lst))
+                     (loop (cdr lst) acc))
+                    (else
+                     (loop (cdr lst) (cons (car lst) acc)))))))
+
         (check-duplicate-definition defs macros renames)
-        (let ((rewrited-body (expand-each body env)))
-          (let ((rewrited-depends
-                 (map (lambda (dep)
-                        `(.require-scheme-library ',dep))
-                      depends))
-                (rewrited-defs
-                 (map (lambda (def)
-                        (parameterize ((current-top-level-exterior (car def)))
-                          (let ((lhs (cdr (assq (car def) renames)))
-                                (rhs (expand-form (cadr def) env)))
-                            (set-closure-comment! rhs lhs)
-                            `(define ,lhs ,rhs))))
-                      defs))
-                (rewrited-macros
-                 (if (null? macros)
-                     '()
-                     (let ((shared-env (generate-temporary-symbol)))
-                       `((let ((,shared-env
-                                 ',(let ((ht (make-core-hashtable)))
-                                     (for-each (lambda (a)
-                                                 (if (not (unbound? (cdr a)))
-                                                     (core-hashtable-set! ht (car a) (cdr a))))
-                                               (reverse libenv))
-                                     (core-hashtable->alist ht))))
-                           ,@(map (lambda (e)
-                                    (let ((id (cdr (assq (car e) renames)))
-                                          (type (cadr e))
-                                          (spec (caddr e)))
-                                      (case type
-                                        ((template) `(.set-top-level-macro! 'syntax ',id ',spec ,shared-env))
-                                        ((procedure) `(.set-top-level-macro! 'syntax ',id ,spec ,shared-env))
-                                        ((variable) `(.set-top-level-macro! 'variable ',id ,spec ,shared-env))
-                                        (else (scheme-error "internal error in rewrite body: bad macro spec ~s" e)))))
-                                  macros)))))))
-            (let ((vars (map cadr rewrited-defs))
-                  (assignments (map caddr rewrited-defs)))
-              (cond ((check-rec*-contract-violation vars assignments)
-                     => (lambda (var)
-                          (let ((id (any1 (lambda (a) (and (eq? (cdr a) (car var)) (car a))) renames)))
-                            (current-macro-expression #f)
-                            (syntax-violation #f
-                                              (format "attempt to reference uninitialized variable ~u" id)
-                                              (any1 (lambda (e)
-                                                      (and (check-rec-contract-violation (list id) e)
-                                                           (annotate `(define ,@e) e)))
-                                                    defs)))))))
-            (annotate `(begin
-                         ,@rewrited-depends
-                         ,@rewrited-defs
-                         ,@rewrited-body
-                         ,@rewrited-macros)
-                      form)))))
+        (let ((env (rewrite-env env)))
+          (let ((rewrited-body (expand-each body env)))
+            (let ((rewrited-depends
+                   (map (lambda (dep)
+                          `(.require-scheme-library ',dep))
+                        depends))
+                  (rewrited-defs
+                   (map (lambda (def)
+                          (parameterize ((current-top-level-exterior (car def)))
+                            (let ((lhs (cdr (assq (car def) renames)))
+                                  (rhs (expand-form (cadr def) env)))
+                              (set-closure-comment! rhs lhs)
+                              `(define ,lhs ,rhs))))
+                        defs))
+                  (rewrited-macros
+                   (if (null? macros)
+                       '()
+                       (let ((shared-env (generate-temporary-symbol)))
+                         `((let ((,shared-env
+                                   ',(let ((ht (make-core-hashtable)))
+                                       (for-each (lambda (a)
+                                                   (if (not (unbound? (cdr a)))
+                                                       (core-hashtable-set! ht (car a) (cdr a))))
+                                                 (reverse libenv))
+                                       (core-hashtable->alist ht))))
+                             ,@(map (lambda (e)
+                                      (let ((id (cdr (assq (car e) renames)))
+                                            (type (cadr e))
+                                            (spec (caddr e)))
+                                        (case type
+                                          ((template) `(.set-top-level-macro! 'syntax ',id ',spec ,shared-env))
+                                          ((procedure) `(.set-top-level-macro! 'syntax ',id ,spec ,shared-env))
+                                          ((variable) `(.set-top-level-macro! 'variable ',id ,spec ,shared-env))
+                                          (else (scheme-error "internal error in rewrite body: bad macro spec ~s" e)))))
+                                    macros)))))))
+              (let ((vars (map cadr rewrited-defs))
+                    (assignments (map caddr rewrited-defs)))
+                (cond ((check-rec*-contract-violation vars assignments)
+                       => (lambda (var)
+                            (let ((id (any1 (lambda (a) (and (eq? (cdr a) (car var)) (car a))) renames)))
+                              (current-macro-expression #f)
+                              (syntax-violation #f
+                                                (format "attempt to reference uninitialized variable ~u" id)
+                                                (any1 (lambda (e)
+                                                        (and (check-rec-contract-violation (list id) e)
+                                                             (annotate `(define ,@e) e)))
+                                                      defs)))))))
+              (annotate `(begin
+                           ,@rewrited-depends
+                           ,@rewrited-defs
+                           ,@rewrited-body
+                           ,@rewrited-macros)
+                        form))))))
 
     (define ht-imported-immutables (make-core-hashtable))
 
