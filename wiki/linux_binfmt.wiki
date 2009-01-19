@@ -1,13 +1,5 @@
 #summary Using binfmt_misc linux kernel module
 
-Following information is provided by Marco Maggi who is the author of Nausicaa project`[1]`.
-
-`[1]` http://github.com/marcomaggi/nausicaa/
-
-Special thanks to Marco :)
-
-----
-
 It is possible to activate automatic execution
 of R^6^RS Scheme programs with Ypsilon through the
 mechanism of the "binfmt_misc" Linux kernel module.
