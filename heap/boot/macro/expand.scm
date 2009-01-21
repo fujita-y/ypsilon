@@ -270,7 +270,7 @@
     (current-macro-expression form)
     (parameterize ((current-expansion-environment env) (current-transformer-environment (cddr deno)))
       (if (procedure? (cadr deno))
-          ((cadr deno) form)
+          ((cadr deno) (wrap-transformer-input form))
           (transcribe-syntax-rules form (cadr deno))))))
 
 (define expand-initial-forms

@@ -3,13 +3,21 @@
 ;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
+(library (ypsilon socket assistant)
+  (export unsupported-option)
+  (import (rnrs))
+  (define unsupported-option
+    (lambda (x)
+      (syntax-case x ()
+        (name (error (syntax->datum #'name) "option not supported on this operating system")))))
+  ) ;[end]
+  
 (library (ypsilon socket)
   (export make-client-socket
           make-server-socket
           call-with-socket
           shutdown-output-port
           socket?
-          make-socket
           socket-port
           socket-accept
           socket-send
@@ -22,14 +30,16 @@
           SOCK_STREAM
           SOCK_DGRAM
           SOCK_RAW
-          SOCK_RDM
-          SOCK_SEQPACKET
           AI_PASSIVE
           AI_CANONNAME
           AI_NUMERICHOST
+          AI_NUMERICSERV
           AI_V4MAPPED
           AI_ALL
           AI_ADDRCONFIG
+          IPPROTO_TCP
+          IPPROTO_UDP
+          IPPROTO_RAW
           SHUT_RD
           SHUT_WR
           SHUT_RDWR
@@ -50,27 +60,32 @@
           MSG_NOSIGNAL
           MSG_MORE
           MSG_EOF)
-  (import (core))
+  (import (core) (ypsilon socket assistant))
 
   (define-syntax define-const
-    (syntax-rules ()
-      ((_ name)
-       (define name (architecture-feature 'name)))))
-
+    (lambda (x)
+      (syntax-case x ()
+        ((_ name)
+         (cond ((architecture-feature (syntax->datum #'name))
+                => (lambda (value) #`(define name #,value)))
+               (else #'(define-syntax name unsupported-option)))))))
+  
   (define-const AF_UNSPEC)
   (define-const AF_INET)
   (define-const AF_INET6)
   (define-const SOCK_STREAM)
   (define-const SOCK_DGRAM)
   (define-const SOCK_RAW)
-  (define-const SOCK_RDM)
-  (define-const SOCK_SEQPACKET)
   (define-const AI_PASSIVE)
   (define-const AI_CANONNAME)
   (define-const AI_NUMERICHOST)
+  (define-const AI_NUMERICSERV)
   (define-const AI_V4MAPPED)
   (define-const AI_ALL)
   (define-const AI_ADDRCONFIG)
+  (define-const IPPROTO_TCP)
+  (define-const IPPROTO_UDP)
+  (define-const IPPROTO_RAW)
   (define-const SHUT_RD)
   (define-const SHUT_WR)
   (define-const SHUT_RDWR)

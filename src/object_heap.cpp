@@ -1781,16 +1781,6 @@ object_heap_t::init_architecture_feature()
   #else
     ARCH_CFALSE(SOCK_RAW);
   #endif
-  #ifdef SOCK_RDM
-    ARCH_CCONST(SOCK_RDM);
-  #else
-    ARCH_CFALSE(SOCK_RDM);
-  #endif
-  #ifdef SOCK_SEQPACKET
-    ARCH_CCONST(SOCK_SEQPACKET);
-  #else
-    ARCH_CFALSE(SOCK_SEQPACKET);
-  #endif
   #ifdef AI_PASSIVE
     ARCH_CCONST(AI_PASSIVE);
   #else
@@ -1806,6 +1796,11 @@ object_heap_t::init_architecture_feature()
   #else
     ARCH_CFALSE(AI_NUMERICHOST);
   #endif
+  #ifdef AI_NUMERICSERV
+    ARCH_CCONST(AI_NUMERICSERV);
+  #else
+    ARCH_CFALSE(AI_NUMERICSERV);
+  #endif
   #ifdef AI_V4MAPPED
     ARCH_CCONST(AI_V4MAPPED);
   #else
@@ -1820,6 +1815,21 @@ object_heap_t::init_architecture_feature()
     ARCH_CCONST(AI_ADDRCONFIG);
   #else
     ARCH_CFALSE(AI_ADDRCONFIG);
+  #endif
+  #ifdef IPPROTO_TCP
+    ARCH_CCONST(IPPROTO_TCP);
+  #else
+    ARCH_CFALSE(IPPROTO_TCP);
+  #endif
+  #ifdef IPPROTO_UDP
+    ARCH_CCONST(IPPROTO_UDP);
+  #else
+    ARCH_CFALSE(IPPROTO_UDP);
+  #endif
+  #ifdef IPPROTO_RAW
+    ARCH_CCONST(IPPROTO_RAW);
+  #else
+    ARCH_CFALSE(IPPROTO_RAW);
   #endif
   #ifdef SHUT_RD
     ARCH_CCONST(SHUT_RD);

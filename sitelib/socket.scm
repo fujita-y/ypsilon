@@ -7,8 +7,12 @@
           AI_ALL
           AI_CANONNAME
           AI_NUMERICHOST
+          AI_NUMERICSERV
           AI_PASSIVE
           AI_V4MAPPED
+          IPPROTO_RAW
+          IPPROTO_TCP
+          IPPROTO_UDP
           MSG_CONFIRM
           MSG_CTRUNC
           MSG_DONTROUTE
@@ -31,13 +35,10 @@
           SHUT_WR
           SOCK_DGRAM
           SOCK_RAW
-          SOCK_RDM
-          SOCK_SEQPACKET
           SOCK_STREAM
           call-with-socket
           make-client-socket
           make-server-socket
-          make-socket
           shutdown-output-port
           socket-accept
           socket-close
