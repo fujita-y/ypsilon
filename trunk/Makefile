@@ -183,34 +183,34 @@ sitelib:
 check: all
 	@echo '----------------------------------------'
 	@echo 'r4rstest.scm:'
-	@./$(PROG) --heap-limit=128 --acc=/tmp --sitelib=./test:./sitelib:./stdlib ./test/r4rstest.scm
+	@./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib:./stdlib ./test/r4rstest.scm
 	@echo '----------------------------------------'
 	@echo 'tspl.scm:'
-	@./$(PROG) --heap-limit=128 --acc=/tmp --sitelib=./test:./sitelib:./stdlib ./test/tspl.scm
+	@./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib:./stdlib ./test/tspl.scm
 	@echo '----------------------------------------'
 	@echo 'arith.scm:'
-	@./$(PROG) --heap-limit=128 --acc=/tmp --sitelib=./test:./sitelib:./stdlib ./test/arith.scm
+	@./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib:./stdlib ./test/arith.scm
 	@echo '----------------------------------------'
 	@echo 'r5rs_pitfall.scm:'
-	@./$(PROG) --heap-limit=128 --acc=/tmp --sitelib=./test:./sitelib:./stdlib ./test/r5rs_pitfall.scm
+	@./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib:./stdlib ./test/r5rs_pitfall.scm
 	@echo '----------------------------------------'
 	@echo 'syntax-rule-stress-test.scm:'
-	@./$(PROG) --heap-limit=128 --acc=/tmp --sitelib=./test:./sitelib:./stdlib ./test/syntax-rule-stress-test.scm
+	@./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib:./stdlib ./test/syntax-rule-stress-test.scm
 	@echo '----------------------------------------'
 	@echo 'r6rs.scm:'
-	@./$(PROG) --heap-limit=128 --acc=/tmp --sitelib=./test:./sitelib:./stdlib ./test/r6rs.scm
+	@./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib:./stdlib ./test/r6rs.scm
 	@echo '----------------------------------------'
 	@echo 'r6rs-lib.scm:'
-	@./$(PROG) --heap-limit=128 --acc=/tmp --sitelib=./test:./sitelib:./stdlib ./test/r6rs-lib.scm
+	@./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib:./stdlib ./test/r6rs-lib.scm
 	@echo '----------------------------------------'
 	@echo 'Passed all tests'
 	@rm -f ./test/tmp* 
 
 eval: all
-	./$(PROG) --heap-limit=128 --acc=/tmp --sitelib=./sitelib:./stdlib
+	./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./sitelib:./stdlib
 
 bench: all
-	./$(PROG) --heap-limit=128 --acc=/tmp --sitelib=./test:./sitelib:./stdlib -- bench/run-ypsilon.scm
+	./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib:./stdlib -- bench/run-ypsilon.scm
 
 clean:
 	rm -f *.o *.d

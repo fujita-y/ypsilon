@@ -11,7 +11,7 @@
 ;;   if call (datum->syntax ...) on macro expansion, (syntax-object-renames template-id) should be nil.
 ;;   if call (datum->syntax ...) on transformer evaluation, (syntax-object-renames template-id) should be alist.
 
-(set-top-level-value! '.vars '())
+(set-top-level-value! '.vars #f)
 
 (define make-syntax-object    (lambda (form renames lexname) (tuple 'type:syntax form renames lexname)))
 (define syntax-object-expr    (lambda (obj) (tuple-ref obj 1)))
@@ -81,8 +81,8 @@
         (and (match-pattern? form pat lites)
              (bind-pattern form pat lites '()))))
 
-    (or (null? patvars) (ensure-input-is-syntax-object form))
-    (let ((form (unwrap-syntax form)))
+    (and patvars (ensure-input-is-syntax-object form))
+    (let ((form (unwrap-syntax form)) (patvars (or patvars '())))
       (let loop ((lst lst))
         (if (null? lst)
             (syntax-violation (and (pair? form) (car form)) "invalid syntax" form)
@@ -263,6 +263,9 @@
   (lambda (template-id datum)
     (or (identifier? template-id)
         (assertion-violation 'datum->syntax (format "expected identifier, but got ~r" template-id)))
+    (and (pair? (syntax-object-renames template-id))
+         (import? (cdr (syntax-object-renames template-id)))
+         (assertion-violation 'datum->syntax (format "identifer ~u out of context" (syntax-object-expr template-id))))
     (let ((suffix (retrieve-rename-suffix (syntax-object-expr template-id)))
           (env (if (null? (syntax-object-renames template-id))
                    (current-expansion-environment)
@@ -349,6 +352,12 @@
   (lambda (obj)
     (eq? (tuple-ref obj 0) 'type:variable-transformer-token)))
 
+(define wrap-transformer-input
+  (lambda (form)
+    (cond ((wrapped-syntax-object? form) form)
+          ((symbol? form) (make-syntax-object form form #f))
+          (else (make-syntax-object form '() #f)))))
+  
 (define unwrap-syntax
   (lambda (expr)
 
@@ -505,20 +514,21 @@
                                                         (cons (cdr a) (make-out-of-context template)))))
                                               (else #f))))
                                     aliases))))))
-          (if (null? env-use)
-              (let ((form (transcribe-template template ranks vars aliases #f)))
-                (if (renamed-id? form)
-                    (make-syntax-object form (or (assq form renames) '()) identifier-lexname)
-                    (wrap-renamed-id form renames)))
-              (let ((form (transcribe-template template ranks vars aliases emit)))
-                (cond ((null? form) '())
-                      ((wrapped-syntax-object? form) form)
-                      ((eq? form '.&NIL)
-                       (make-syntax-object '() '() #f))
-                      ((symbol? form)
-                       (make-syntax-object form (or (assq form out-of-context) (assq form renames) '()) identifier-lexname))
-                      (else
-                       (partial-wrap-syntax-object form (extend-env out-of-context renames))))))))))
+          (let ((vars (or vars '())))
+            (if (null? env-use)
+                (let ((form (transcribe-template template ranks vars aliases #f)))
+                  (if (renamed-id? form)
+                      (make-syntax-object form (or (assq form renames) '()) identifier-lexname)
+                      (wrap-renamed-id form renames)))
+                (let ((form (transcribe-template template ranks vars aliases emit)))
+                  (cond ((null? form) '())
+                        ((wrapped-syntax-object? form) form)
+                        ((eq? form '.&NIL)
+                         (make-syntax-object '() '() #f))
+                        ((symbol? form)
+                         (make-syntax-object form (or (assq form out-of-context) (assq form renames) '()) identifier-lexname))
+                        (else
+                         (partial-wrap-syntax-object form (extend-env out-of-context renames)))))))))))
 
 ;; shorthands without template environment
 
