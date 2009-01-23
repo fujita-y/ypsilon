@@ -121,10 +121,10 @@
   (define make-server-socket
     (lambda (service . options)
       (assert (string? service))
-      (let-optionals options ((ai-family AF_INET) (ai-protocol 0))
+      (let-optionals options ((ai-family AF_INET) (ai-socktype SOCK_STREAM) (ai-protocol 0))
         (assert (integer? ai-family))
         (assert (integer? ai-protocol))
-        (make-socket #f service ai-family SOCK_STREAM AI_PASSIVE ai-protocol))))
+        (make-socket #f service ai-family ai-socktype AI_PASSIVE ai-protocol))))
 
   (define call-with-socket
     (lambda (socket proc)

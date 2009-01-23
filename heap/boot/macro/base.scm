@@ -49,6 +49,7 @@
        (let ((deno (env-lookup env name)))
          (cond ((macro-variable? deno)
                 (let-values (((expr renames) (expand-macro-use form env deno)))
+                  (annotate-macro! expr form)
                   (expand-form expr (extend-env renames env))))
                ((or (special? deno) (macro? deno))
                 (syntax-violation 'set! "misplaced syntactic keyword as variable" form))

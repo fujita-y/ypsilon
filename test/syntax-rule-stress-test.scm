@@ -1,3 +1,4 @@
+#!nobacktrace
 (import (core))
 
 (display "A stress test of the syntax-rule macro-expander (wait few sec)\n\n")
