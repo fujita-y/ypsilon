@@ -61,15 +61,17 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
             int one = 1;
             if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char *)&one, sizeof(one)) == 0) {
                 if (bind(fd, p->ai_addr, p->ai_addrlen) == 0) {
-                    if (listen(fd, 5) == 0) {
-                        s->mode = SCM_SOCKET_MODE_SERVER;
-                        s->fd = fd;
-                        s->family = p->ai_family;
-                        s->socktype = p->ai_socktype;
-                        s->protocol = p->ai_protocol;
-                        s->addrlen = p->ai_addrlen;
-                        memcpy(&s->addr, p->ai_addr, p->ai_addrlen);
-                        freeaddrinfo(list);
+                    s->mode = SCM_SOCKET_MODE_SERVER;
+                    s->fd = fd;
+                    s->family = p->ai_family;
+                    s->socktype = p->ai_socktype;
+                    s->protocol = p->ai_protocol;
+                    s->addrlen = p->ai_addrlen;
+                    memcpy(&s->addr, p->ai_addr, p->ai_addrlen);
+                    freeaddrinfo(list);
+                    if (p->ai_socktype == SOCK_STREAM) {
+                        if (listen(fd, 5) == 0) return;
+                    } else {
                         return;
                     }
                 }

@@ -160,34 +160,42 @@
 
 (define annotate
   (lambda (form source)
+    (let ((ht-comments (current-source-comments)))
 
-    (define put-note!
-      (lambda (form note)
-        (and note
-             (let loop ((lst form))
-               (and (list? lst)
-                    (or (core-hashtable-ref (current-source-comments) lst #f)
-                        (begin
-                          (core-hashtable-set! (current-source-comments) lst note)
-                          (for-each loop lst))))))))
+      (define put-note!
+        (lambda (form note)
+          (and note
+               (let loop ((lst form))
+                 (and (list? lst)
+                      (or (core-hashtable-ref ht-comments lst #f)
+                          (begin
+                            (core-hashtable-set! ht-comments lst note)
+                            (for-each loop lst))))))))
 
-    (define get-note
-      (lambda (source)
-        (let loop ((lst source))
-          (and (pair? lst)
-               (or (core-hashtable-ref (current-source-comments) lst #f)
-                   (loop (car lst))
-                   (loop (cdr lst)))))))
+      (define get-note
+        (lambda (source)
+          (let loop ((lst source))
+            (and (pair? lst)
+                 (or (core-hashtable-ref ht-comments lst #f)
+                     (loop (car lst))
+                     (loop (cdr lst)))))))
 
-    (and (pair? form)
-         (pair? source)
-         (not (eq? form source))
-         (begin
-           (cond ((and (current-source-comments) (get-note source))
-                  => (lambda (e) (put-note! form e))))
-           (cond ((and (current-closure-comments) (core-hashtable-ref (current-closure-comments) source #f))
-                  => (lambda (e) (core-hashtable-set! (current-closure-comments) form e))))))
+      (and ht-comments
+           (pair? form)
+           (pair? source)
+           (not (eq? form source))
+           (cond ((core-hashtable-ref ht-comments source #f)
+                  => (lambda (e) (core-hashtable-set! ht-comments form e)))
+                 ((get-note source)
+                  => (lambda (e) (put-note! form e))))))
     form))
+
+(define annotate-macro!
+  (lambda (form source)
+    (and (current-source-comments)
+         (annotate (if (wrapped-syntax-object? form) (syntax-object-expr form) form)
+                   (if (wrapped-syntax-object? source) (syntax-object-expr source) source)))
+    (unspecified)))
 
 (define abbreviated-take
   (lambda (form n)
