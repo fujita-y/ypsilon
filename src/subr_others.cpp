@@ -162,6 +162,10 @@ output:
             while ((c = *p++) != 0) {
                 if (c == '~') {
                     c = *p++;
+                    if (c == 0) {
+                        invalid_argument_violation(vm, "format", "wrong directive in control string", fmt, -1, argc, argv);
+                        return scm_undef;
+                    }                    
                     tilded[1] = c;
                     if (c == '!') {
                         flush_output = true;
@@ -1006,7 +1010,7 @@ subr_tuple_set(VM* vm, int argc, scm_obj_t argv[])
                 int n = FIXNUM(argv[1]);
                 if (n >= 0 && n < HDR_TUPLE_COUNT(tuple->hdr)) {
 #if USE_PARALLEL_VM
-                    if (vm->m_interp->concurrency() > 1) {
+                    if (vm->m_interp->live_thread_count() > 1) {
                         if (!vm->m_heap->in_heap(tuple)) {
                             thread_object_access_violation(vm, "tuple-set!",argc, argv);
                             return scm_undef;
@@ -1481,7 +1485,7 @@ subr_copy_environment_variables(VM* vm, int argc, scm_obj_t argv[])
                 scm_environment_t from = (scm_environment_t)argv[0];
                 scm_environment_t to = (scm_environment_t)argv[1];
 #if USE_PARALLEL_VM
-                if (vm->m_interp->concurrency() > 1) {
+                if (vm->m_interp->live_thread_count() > 1) {
                     if (!vm->m_heap->in_heap(to)) {
                         thread_object_access_violation(vm, "copy-environment-variables!" ,argc, argv);
                         return scm_undef;
@@ -1514,7 +1518,7 @@ subr_copy_environment_variables(VM* vm, int argc, scm_obj_t argv[])
                         scm_gloc_t to_gloc = make_gloc(vm->m_heap, to, to_symbol);
                         to_gloc->value = from_gloc->value;
 #if USE_PARALLEL_VM
-                        if (vm->m_interp->concurrency() > 1 && vm->m_child > 0) {
+                        if (vm->m_interp->live_thread_count() > 1 && vm->m_child > 0) {
                             vm->m_interp->remember(get_hashtable(to->variable, to_symbol), to_gloc);
                         }
 #endif
@@ -1552,7 +1556,7 @@ subr_copy_environment_macros(VM* vm, int argc, scm_obj_t argv[])
                 scm_environment_t from = (scm_environment_t)argv[0];
                 scm_environment_t to = (scm_environment_t)argv[1];
 #if USE_PARALLEL_VM
-                if (vm->m_interp->concurrency() > 1) {
+                if (vm->m_interp->live_thread_count() > 1) {
                     if (!vm->m_heap->in_heap(to)) {
                         thread_object_access_violation(vm, "copy-environment-macros!" ,argc, argv);
                         return scm_undef;
@@ -1582,7 +1586,7 @@ subr_copy_environment_macros(VM* vm, int argc, scm_obj_t argv[])
                     }
                     if (obj != scm_undef) {
 #if USE_PARALLEL_VM
-                        if (vm->m_interp->concurrency() > 1 && vm->m_child > 0) {
+                        if (vm->m_interp->live_thread_count() > 1 && vm->m_child > 0) {
                             vm->m_interp->remember(get_hashtable(to->macro, to_symbol), obj);
                         }
 #endif
@@ -2226,6 +2230,37 @@ subr_display_thread_status(VM* vm, int argc, scm_obj_t argv[])
     fatal("%s:%u display-thread-status not supported on this build", __FILE__, __LINE__);
 #endif
 }
+
+// live-thread-count
+scm_obj_t
+subr_live_thread_count(VM* vm, int argc, scm_obj_t argv[])
+{
+#if USE_PARALLEL_VM
+    if (argc == 0) {
+        return MAKEFIXNUM(vm->m_interp->live_thread_count());
+    }
+    wrong_number_of_arguments_violation(vm, "live-thread-count", 0, 0, argc, argv);
+    return scm_undef;
+#else
+    fatal("%s:%u live-thread-count not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
+// max-thread-count
+scm_obj_t
+subr_max_thread_count(VM* vm, int argc, scm_obj_t argv[])
+{
+#if USE_PARALLEL_VM
+    if (argc == 0) {
+        return MAKEFIXNUM(vm->m_interp->max_thread_count());
+    }
+    wrong_number_of_arguments_violation(vm, "max-thread-count", 0, 0, argc, argv);
+    return scm_undef;
+#else
+    fatal("%s:%u max-thread-count not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
 
 // make-shared-queue
 scm_obj_t
@@ -3252,6 +3287,8 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("escape", subr_escape);
     DEFSUBR("recursion-level", subr_recursion_level);
     DEFSUBR("spawn", subr_spawn);
+    DEFSUBR("live-thread-count", subr_live_thread_count);
+    DEFSUBR("max-thread-count", subr_max_thread_count);
     DEFSUBR("display-thread-status", subr_display_thread_status);
     DEFSUBR("make-shared-queue", subr_make_shared_queue);
     DEFSUBR("shared-queue-shutdown", subr_shared_queue_shutdown);

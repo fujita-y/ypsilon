@@ -48,16 +48,19 @@
 
 extern "C" {
 #if _MSC_VER
+    float       stdcall_func_stub_float(void* func, int argc, intptr_t argv[]);
     double      stdcall_func_stub_double(void* func, int argc, intptr_t argv[]);
     intptr_t    stdcall_func_stub_intptr(void* func, int argc, intptr_t argv[]);
 #endif
 #if ARCH_IA32
+    float       c_func_stub_float(void* func, int argc, intptr_t argv[]);
     double      c_func_stub_double(void* func, int argc, intptr_t argv[]);
     intptr_t    c_func_stub_intptr(void* func, int argc, intptr_t argv[]);
     intptr_t    c_callback_stub_intptr();
     intptr_t    c_callback_intptr(intptr_t uid, intptr_t argc, intptr_t* stack);
 #endif
 #if ARCH_X64
+    float       c_func_stub_float_x64(void* func, intptr_t nstack, intptr_t nsse, intptr_t argv[]);
     double      c_func_stub_double_x64(void* func, intptr_t nstack, intptr_t nsse, intptr_t argv[]);
     intptr_t    c_func_stub_intptr_x64(void* func, intptr_t nstack, intptr_t nsse, intptr_t argv[]);
     intptr_t    c_callback_stub_intptr_x64();

@@ -246,7 +246,7 @@ invalid_argument_violation(VM* vm, const char* who, const char* description, scm
     } else if (position < 0) {
         prt.format("%s ~r", description, value);
     } else {
-        prt.format("%s ~r as argument %d", description, value, position + 1);
+        prt.format("%s ~r, as argument %d", description, value, position + 1);
     }
     scm_string_t message = port_extract_string(vm->m_heap, port);
     if (position >= 0 && argc < 2) {

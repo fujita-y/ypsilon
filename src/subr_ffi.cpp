@@ -59,477 +59,6 @@ subr_lookup_shared_object(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// call-shared-object->void
-scm_obj_t
-subr_call_shared_object_void(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc >= 1) {
-        void *func = NULL;
-        if (exact_positive_integer_pred(argv[0])) {
-            if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                invalid_argument_violation(vm, "call-shared-object->void", "value out of bound,", argv[0], 0, argc, argv);
-                return scm_undef;
-            }
-        } else {
-            wrong_type_argument_violation(vm, "call-shared-object->void", 0, "c-function address", argv[0], argc, argv);
-            return scm_undef;
-        }
-        if (argc - 1 <= FFI_MAX_ARGC) {
-            c_stack_frame_t stack(vm);
-            for (int i = 1; i < argc; i++) {
-                const char* err = stack.push(argv[i]);
-                if (err) {
-                    wrong_type_argument_violation(vm, "call-shared-object->void", i, err, argv[i], argc, argv);
-                    return scm_undef;
-                }
-            }
-            errno = vm->m_shared_object_errno;
-#if _MSC_VER
-            SetLastError(vm->m_shared_object_win32_lasterror);
-#endif
-#if ARCH_IA32
-            c_func_stub_intptr(func, stack.count(), stack.frame());
-#elif ARCH_X64
-            c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
-#else
-            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-#endif
-            vm->m_shared_object_errno = errno;
-#if _MSC_VER
-            vm->m_shared_object_win32_lasterror = GetLastError();
-#endif
-            return scm_unspecified;
-        }
-        invalid_argument_violation(vm, "call-shared-object->void", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "call-shared-object->void", 1, -1, argc, argv);
-    return scm_undef;
-}
-
-// call-shared-object->int
-scm_obj_t
-subr_call_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc >= 1) {
-        void *func = NULL;
-        if (exact_positive_integer_pred(argv[0])) {
-            if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                invalid_argument_violation(vm, "call-shared-object->int", "value out of bound,", argv[0], 0, argc, argv);
-                return scm_undef;
-            }
-        } else {
-            wrong_type_argument_violation(vm, "call-shared-object->int", 0, "c-function address", argv[0], argc, argv);
-            return scm_undef;
-        }
-        if (argc - 1 <= FFI_MAX_ARGC) {
-            c_stack_frame_t stack(vm);
-            for (int i = 1; i < argc; i++) {
-                const char* err = stack.push(argv[i]);
-                if (err) {
-                    wrong_type_argument_violation(vm, "call-shared-object->int", i, err, argv[i], argc, argv);
-                    return scm_undef;
-                }
-            }
-            errno = vm->m_shared_object_errno;
-#if _MSC_VER
-            SetLastError(vm->m_shared_object_win32_lasterror);
-#endif
-            intptr_t retval;
-#if ARCH_IA32
-            retval = c_func_stub_intptr(func, stack.count(), stack.frame());
-#elif ARCH_X64
-            retval = c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
-#else
-            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-#endif
-            vm->m_shared_object_errno = errno;
-#if _MSC_VER
-            vm->m_shared_object_win32_lasterror = GetLastError();
-#endif
-            return int_to_integer(vm->m_heap, retval);
-        }
-        invalid_argument_violation(vm, "call-shared-object->int", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "call-shared-object->int", 1, -1, argc, argv);
-    return scm_undef;
-}
-
-// call-shared-object->double
-scm_obj_t
-subr_call_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc >= 1) {
-        void *func = NULL;
-        if (exact_positive_integer_pred(argv[0])) {
-            if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                invalid_argument_violation(vm, "call-shared-object->double", "value out of bound,", argv[0], 0, argc, argv);
-                return scm_undef;
-            }
-        } else {
-            wrong_type_argument_violation(vm, "call-shared-object->double", 0, "c-function address", argv[0], argc, argv);
-            return scm_undef;
-        }
-        if (argc - 1 <= FFI_MAX_ARGC) {
-            c_stack_frame_t stack(vm);
-            for (int i = 1; i < argc; i++) {
-                const char* err = stack.push(argv[i]);
-                if (err) {
-                    wrong_type_argument_violation(vm, "call-shared-object->double", i, err, argv[i], argc, argv);
-                    return scm_undef;
-                }
-            }
-            errno = vm->m_shared_object_errno;
-#if _MSC_VER
-            SetLastError(vm->m_shared_object_win32_lasterror);
-#endif
-            double retval;
-#if ARCH_IA32
-            retval = c_func_stub_double(func, stack.count(), stack.frame());
-#elif ARCH_X64
-            retval = c_func_stub_double_x64(func, stack.count(), stack.sse_use(), stack.frame());
-#else
-            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-#endif
-            vm->m_shared_object_errno = errno;
-#if _MSC_VER
-            vm->m_shared_object_win32_lasterror = GetLastError();
-#endif
-            return make_flonum(vm->m_heap, retval);
-        }
-        invalid_argument_violation(vm, "call-shared-object->double", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "call-shared-object->double", 1, -1, argc, argv);
-    return scm_undef;
-}
-
-// call-shared-object->intptr
-scm_obj_t
-subr_call_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc >= 1) {
-        void *func = NULL;
-        if (exact_positive_integer_pred(argv[0])) {
-            if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                invalid_argument_violation(vm, "call-shared-object->intptr", "value out of bound,", argv[0], 0, argc, argv);
-                return scm_undef;
-            }
-        } else {
-            wrong_type_argument_violation(vm, "call-shared-object->intptr", 0, "c-function address", argv[0], argc, argv);
-            return scm_undef;
-        }
-        if (argc - 1 <= FFI_MAX_ARGC) {
-            c_stack_frame_t stack(vm);
-            for (int i = 1; i < argc; i++) {
-                const char* err = stack.push(argv[i]);
-                if (err) {
-                    wrong_type_argument_violation(vm, "call-shared-object->intptr", i, err, argv[i], argc, argv);
-                    return scm_undef;
-                }
-            }
-            errno = vm->m_shared_object_errno;
-#if _MSC_VER
-            SetLastError(vm->m_shared_object_win32_lasterror);
-#endif
-            intptr_t retval;
-#if ARCH_IA32
-            retval = c_func_stub_intptr(func, stack.count(), stack.frame());
-#elif ARCH_X64
-            retval = c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
-#else
-            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-#endif
-            vm->m_shared_object_errno = errno;
-#if _MSC_VER
-            vm->m_shared_object_win32_lasterror = GetLastError();
-#endif
-            return intptr_to_integer(vm->m_heap, retval);
-        }
-        invalid_argument_violation(vm, "call-shared-object->intptr", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "call-shared-object->void*", 1, -1, argc, argv);
-    return scm_undef;
-}
-
-// call-shared-object->char*
-scm_obj_t
-subr_call_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc >= 1) {
-        void *func = NULL;
-        if (exact_positive_integer_pred(argv[0])) {
-            if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                invalid_argument_violation(vm, "call-shared-object->char*", "value out of bound,", argv[0], 0, argc, argv);
-                return scm_undef;
-            }
-        } else {
-            wrong_type_argument_violation(vm, "call-shared-object->char*", 0, "c-function address", argv[0], argc, argv);
-            return scm_undef;
-        }
-        if (argc - 1 <= FFI_MAX_ARGC) {
-            c_stack_frame_t stack(vm);
-            for (int i = 1; i < argc; i++) {
-                const char* err = stack.push(argv[i]);
-                if (err) {
-                    wrong_type_argument_violation(vm, "call-shared-object->char*", i, err, argv[i], argc, argv);
-                    return scm_undef;
-                }
-            }
-            errno = vm->m_shared_object_errno;
-#if _MSC_VER
-            SetLastError(vm->m_shared_object_win32_lasterror);
-#endif
-            uint8_t* p;
-#if ARCH_IA32
-            p = (uint8_t*)c_func_stub_intptr(func, stack.count(), stack.frame());
-#elif ARCH_X64
-            p = (uint8_t*)c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
-#else
-            fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
-#endif
-            vm->m_shared_object_errno = errno;
-#if _MSC_VER
-            vm->m_shared_object_win32_lasterror = GetLastError();
-#endif
-            if (p == NULL) return scm_false;
-            int n = 0;
-            while (p[n]) n++;
-            return make_bvector_mapping(vm->m_heap, p, n);
-        }
-        invalid_argument_violation(vm, "call-shared-object->char*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "call-shared-object->char*", 1, -1, argc, argv);
-    return scm_undef;
-}
-
-#if _MSC_VER
-    // stdcall-shared-object->void
-    scm_obj_t
-    subr_stdcall_shared_object_void(VM* vm, int argc, scm_obj_t argv[])
-    {
-        assert(sizeof(intptr_t) == sizeof(int));
-        if (argc >= 1) {
-            void *func = NULL;
-            if (exact_positive_integer_pred(argv[0])) {
-                if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                    invalid_argument_violation(vm, "stdcall-shared-object->void", "value out of bound,", argv[0], 0, argc, argv);
-                    return scm_undef;
-                }
-            } else {
-                wrong_type_argument_violation(vm, "stdcall-shared-object->void", 0, "c-function address", argv[0], argc, argv);
-                return scm_undef;
-            }
-            if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_t stack(vm);
-                for (int i = 1; i < argc; i++) {
-                    const char* err = stack.push(argv[i]);
-                    if (err) {
-                        wrong_type_argument_violation(vm, "stdcall-shared-object->void", i, err, argv[i], argc, argv);
-                        return scm_undef;
-                    }
-                }
-                errno = vm->m_shared_object_errno;
-                SetLastError(vm->m_shared_object_win32_lasterror);
-                stdcall_func_stub_intptr(func, stack.count(), stack.frame());
-                vm->m_shared_object_errno = errno;
-                vm->m_shared_object_win32_lasterror = GetLastError();
-                return scm_unspecified;
-            }
-            invalid_argument_violation(vm, "stdcall-shared-object->void", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
-            return scm_undef;
-        }
-        wrong_number_of_arguments_violation(vm, "stdcall-shared-object->void", 1, -1, argc, argv);
-        return scm_undef;
-    }
-
-    // stdcall-shared-object->int
-    scm_obj_t
-    subr_stdcall_shared_object_int(VM* vm, int argc, scm_obj_t argv[])
-    {
-        assert(sizeof(intptr_t) == sizeof(int));
-        if (argc >= 1) {
-            void *func = NULL;
-            if (exact_positive_integer_pred(argv[0])) {
-                if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                    invalid_argument_violation(vm, "stdcall-shared-object->int", "value out of bound,", argv[0], 0, argc, argv);
-                    return scm_undef;
-                }
-            } else {
-                wrong_type_argument_violation(vm, "stdcall-shared-object->int", 0, "c-function address", argv[0], argc, argv);
-                return scm_undef;
-            }
-            if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_t stack(vm);
-                for (int i = 1; i < argc; i++) {
-                    const char* err = stack.push(argv[i]);
-                    if (err) {
-                        wrong_type_argument_violation(vm, "stdcall-shared-object->int", i, err, argv[i], argc, argv);
-                        return scm_undef;
-                    }
-                }
-                errno = vm->m_shared_object_errno;
-                SetLastError(vm->m_shared_object_win32_lasterror);
-                intptr_t retval = stdcall_func_stub_intptr(func, stack.count(), stack.frame());
-                vm->m_shared_object_errno = errno;
-                vm->m_shared_object_win32_lasterror = GetLastError();
-                return int_to_integer(vm->m_heap, retval);
-            }
-            invalid_argument_violation(vm, "stdcall-shared-object->int", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
-            return scm_undef;
-        }
-        wrong_number_of_arguments_violation(vm, "stdcall-shared-object->int", 1, -1, argc, argv);
-        return scm_undef;
-    }
-
-    // stdcall-shared-object->double
-    scm_obj_t
-    subr_stdcall_shared_object_double(VM* vm, int argc, scm_obj_t argv[])
-    {
-        assert(sizeof(intptr_t) == sizeof(int));
-        if (argc >= 1) {
-            void *func = NULL;
-            if (exact_positive_integer_pred(argv[0])) {
-                if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                    invalid_argument_violation(vm, "stdcall-shared-object->double", "value out of bound,", argv[0], 0, argc, argv);
-                    return scm_undef;
-                }
-            } else {
-                wrong_type_argument_violation(vm, "stdcall-shared-object->double", 0, "c-function address", argv[0], argc, argv);
-                return scm_undef;
-            }
-            if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_t stack(vm);
-                for (int i = 1; i < argc; i++) {
-                    const char* err = stack.push(argv[i]);
-                    if (err) {
-                        wrong_type_argument_violation(vm, "stdcall-shared-object->double", i, err, argv[i], argc, argv);
-                        return scm_undef;
-                    }
-                }
-                errno = vm->m_shared_object_errno;
-                SetLastError(vm->m_shared_object_win32_lasterror);
-                double retval = stdcall_func_stub_double(func, stack.count(), stack.frame());
-                vm->m_shared_object_errno = errno;
-                vm->m_shared_object_win32_lasterror = GetLastError();
-                return make_flonum(vm->m_heap, retval);
-            }
-            invalid_argument_violation(vm, "stdcall-shared-object->double", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
-            return scm_undef;
-        }
-        wrong_number_of_arguments_violation(vm, "stdcall-shared-object->double", 1, -1, argc, argv);
-        return scm_undef;
-    }
-
-    // stdcall-shared-object->intptr
-    scm_obj_t
-    subr_stdcall_shared_object_intptr(VM* vm, int argc, scm_obj_t argv[])
-    {
-        assert(sizeof(intptr_t) == sizeof(int));
-        if (argc >= 1) {
-            void *func = NULL;
-            if (exact_positive_integer_pred(argv[0])) {
-                if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                    invalid_argument_violation(vm, "stdcall-shared-object->intptr", "value out of bound,", argv[0], 0, argc, argv);
-                    return scm_undef;
-                }
-            } else {
-                wrong_type_argument_violation(vm, "stdcall-shared-object->intptr", 0, "c-function address", argv[0], argc, argv);
-                return scm_undef;
-            }
-            if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_t stack(vm);
-                for (int i = 1; i < argc; i++) {
-                    const char* err = stack.push(argv[i]);
-                    if (err) {
-                        wrong_type_argument_violation(vm, "stdcall-shared-object->intptr", i, err, argv[i], argc, argv);
-                        return scm_undef;
-                    }
-                }
-                errno = vm->m_shared_object_errno;
-                SetLastError(vm->m_shared_object_win32_lasterror);
-                intptr_t retval = stdcall_func_stub_intptr(func, stack.count(), stack.frame());
-                vm->m_shared_object_errno = errno;
-                vm->m_shared_object_win32_lasterror = GetLastError();
-                return intptr_to_integer(vm->m_heap, retval);
-            }
-            invalid_argument_violation(vm, "stdcall-shared-object->intptr", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
-            return scm_undef;
-        }
-        wrong_number_of_arguments_violation(vm, "stdcall-shared-object->void*", 1, -1, argc, argv);
-        return scm_undef;
-    }
-    
-    // stdcall-shared-object->char*
-    scm_obj_t
-    subr_stdcall_shared_object_chars(VM* vm, int argc, scm_obj_t argv[])
-    {
-        assert(sizeof(intptr_t) == sizeof(int));
-        if (argc >= 1) {
-            void *func = NULL;
-            if (exact_positive_integer_pred(argv[0])) {
-                if (exact_integer_to_uintptr(argv[0], (uintptr_t*)&func) == false) {
-                    invalid_argument_violation(vm, "stdcall-shared-object->char*", "value out of bound,", argv[0], 0, argc, argv);
-                    return scm_undef;
-                }
-            } else {
-                wrong_type_argument_violation(vm, "stdcall-shared-object->char*", 0, "c-function address", argv[0], argc, argv);
-                return scm_undef;
-            }
-            if (argc - 1 <= FFI_MAX_ARGC) {
-                c_stack_frame_t stack(vm);
-                for (int i = 1; i < argc; i++) {
-                    const char* err = stack.push(argv[i]);
-                    if (err) {
-                        wrong_type_argument_violation(vm, "stdcall-shared-object->char*", i, err, argv[i], argc, argv);
-                        return scm_undef;
-                    }
-                }
-                errno = vm->m_shared_object_errno;
-                SetLastError(vm->m_shared_object_win32_lasterror);
-                uint8_t* p = (uint8_t*)stdcall_func_stub_intptr(func, stack.count(), stack.frame());
-                vm->m_shared_object_errno = errno;
-                vm->m_shared_object_win32_lasterror = GetLastError();
-                if (p == NULL) return scm_false;
-                int n = 0;
-                while (p[n]) n++;
-                return make_bvector_mapping(vm->m_heap, p, n);
-            }
-            invalid_argument_violation(vm, "stdcall-shared-object->char*", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
-            return scm_undef;
-        }
-        wrong_number_of_arguments_violation(vm, "stdcall-shared-object->char*", 1, -1, argc, argv);
-        return scm_undef;
-    }
-
-#endif
-
-// make-callback
-scm_obj_t
-subr_make_callback(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 3) {
-        if (exact_non_negative_integer_pred(argv[0])) {
-            if (exact_non_negative_integer_pred(argv[1])) {
-                if (CLOSUREP(argv[2])) {
-                    return make_callback(vm, FIXNUM(argv[0]), FIXNUM(argv[1]), (scm_closure_t)argv[2]);
-                }
-                wrong_type_argument_violation(vm, "make-callback", 2, "closure", argv[2], argc, argv);
-                return scm_undef;
-            }
-            wrong_type_argument_violation(vm, "make-callback", 1, "exact non-negative integer", argv[1], argc, argv);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "make-callback", 0, "exact non-negative integer", argv[0], argc, argv);
-        return scm_undef;
-    }
-    wrong_number_of_arguments_violation(vm, "make-callback", 3, 3, argc, argv);
-    return scm_undef;
-}
-
 // flonum->float
 scm_obj_t
 subr_flonum_to_float(VM* vm, int argc, scm_obj_t argv[])
@@ -660,34 +189,338 @@ subr_win32_error_string(VM* vm, int argc, scm_obj_t argv[])
 #endif
 }
 
+// make-callback
+scm_obj_t
+subr_make_callback(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 3) {
+        if (exact_non_negative_integer_pred(argv[0])) {
+            if (exact_non_negative_integer_pred(argv[1])) {
+                if (CLOSUREP(argv[2])) {
+                    return make_callback(vm, FIXNUM(argv[0]), FIXNUM(argv[1]), (scm_closure_t)argv[2]);
+                }
+                wrong_type_argument_violation(vm, "make-callback", 2, "closure", argv[2], argc, argv);
+                return scm_undef;
+            }
+            wrong_type_argument_violation(vm, "make-callback", 1, "exact non-negative integer", argv[1], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "make-callback", 0, "exact non-negative integer", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "make-callback", 3, 3, argc, argv);
+    return scm_undef;
+}
+
+#define FFI_RETURN_TYPE_VOID        0x00
+#define FFI_RETURN_TYPE_BOOL        0x01
+#define FFI_RETURN_TYPE_SHORT       0x02
+#define FFI_RETURN_TYPE_INT         0x03
+#define FFI_RETURN_TYPE_INTPTR      0x04
+#define FFI_RETURN_TYPE_USHORT      0x05
+#define FFI_RETURN_TYPE_UINT        0x06
+#define FFI_RETURN_TYPE_UINTPTR     0x07
+#define FFI_RETURN_TYPE_FLOAT       0x08
+#define FFI_RETURN_TYPE_DOUBLE      0x09
+#define FFI_RETURN_TYPE_STRING      0x0a
+#define FFI_RETURN_TYPE_SIZE_T      0x0b
+
+class synchronize_errno {
+    VM* m_vm;
+public:
+    synchronize_errno(VM* vm) {
+        m_vm = vm;
+        errno = m_vm->m_shared_object_errno;
+#if _MSC_VER
+        SetLastError(m_vm->m_shared_object_win32_lasterror);
+#endif
+    }
+    ~synchronize_errno() {
+        m_vm->m_shared_object_errno = errno;
+#if _MSC_VER
+        m_vm->m_shared_object_win32_lasterror = GetLastError();
+#endif
+    }
+};
+
+inline intptr_t 
+call_cdecl_intptr(VM* vm, void* func, c_stack_frame_t& stack)
+{
+    synchronize_errno sync(vm);
+#if ARCH_IA32
+    return c_func_stub_intptr(func, stack.count(), stack.frame());
+#elif ARCH_X64
+    return c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
+#else
+    fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
+inline float 
+call_cdecl_float(VM* vm, void* func, c_stack_frame_t& stack)
+{
+    synchronize_errno sync(vm);
+#if ARCH_IA32
+    return c_func_stub_float(func, stack.count(), stack.frame());
+#elif ARCH_X64
+    return c_func_stub_float_x64(func, stack.count(), stack.sse_use(), stack.frame());
+#else
+    fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
+inline double 
+call_cdecl_double(VM* vm, void* func, c_stack_frame_t& stack)
+{
+    synchronize_errno sync(vm);
+#if ARCH_IA32
+    return c_func_stub_double(func, stack.count(), stack.frame());
+#elif ARCH_X64
+    return c_func_stub_double_x64(func, stack.count(), stack.sse_use(), stack.frame());
+#else
+    fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
+// call-shared-object
+scm_obj_t
+subr_call_shared_object(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc >= 1) {
+        if (!FIXNUMP(argv[0])) {
+            wrong_type_argument_violation(vm, "call-shared-object", 0, "fixnum", argv[0], argc, argv);
+            return scm_undef;
+        }
+        int type = FIXNUM(argv[0]);
+        void *func = NULL;
+        if (exact_positive_integer_pred(argv[1])) {
+            if (exact_integer_to_uintptr(argv[1], (uintptr_t*)&func) == false) {
+                invalid_argument_violation(vm, "call-shared-object", "value out of bound,", argv[1], 1, argc, argv);
+                return scm_undef;
+            }
+        } else {
+            wrong_type_argument_violation(vm, "call-shared-object", 1, "c function address", argv[1], argc, argv);
+            return scm_undef;
+        }
+        if (argc - 1 <= FFI_MAX_ARGC) {
+            c_stack_frame_t stack(vm);
+            for (int i = 2; i < argc; i++) {
+                const char* err = stack.push(argv[i]);
+                if (err) {
+                    wrong_type_argument_violation(vm, "call-shared-object", i, err, argv[i], argc, argv);
+                    return scm_undef;
+                }
+            }
+            switch (type) {
+                case FFI_RETURN_TYPE_VOID: {
+                    call_cdecl_intptr(vm, func, stack);
+                    return scm_unspecified;
+                }
+                case FFI_RETURN_TYPE_BOOL: {
+                    intptr_t retval = call_cdecl_intptr(vm, func, stack);
+                    return retval ? scm_true : scm_false;
+                }
+                case FFI_RETURN_TYPE_SHORT: {
+                    short retval = (short)call_cdecl_intptr(vm, func, stack);
+                    return int_to_integer(vm->m_heap, retval);
+                }
+                case FFI_RETURN_TYPE_INT: {
+                    int retval = (int)call_cdecl_intptr(vm, func, stack);
+                    return int_to_integer(vm->m_heap, retval);
+                }
+                case FFI_RETURN_TYPE_INTPTR: {
+                    intptr_t retval = call_cdecl_intptr(vm, func, stack);
+                    return intptr_to_integer(vm->m_heap, retval);
+                }
+                case FFI_RETURN_TYPE_USHORT: {
+                    unsigned short retval = (unsigned short)call_cdecl_intptr(vm, func, stack);
+                    return uint_to_integer(vm->m_heap, retval);
+                }
+                case FFI_RETURN_TYPE_UINT: {
+                    unsigned int retval = (unsigned int)call_cdecl_intptr(vm, func, stack);
+                    return uint_to_integer(vm->m_heap, retval);
+                }
+                case FFI_RETURN_TYPE_UINTPTR: {
+                    uintptr_t retval = (uintptr_t)call_cdecl_intptr(vm, func, stack);
+                    return uintptr_to_integer(vm->m_heap, retval);
+                }
+                case FFI_RETURN_TYPE_FLOAT: {
+                    float retval = call_cdecl_float(vm, func, stack);
+                    return make_flonum(vm->m_heap, retval);
+                }
+                case FFI_RETURN_TYPE_DOUBLE: {
+                    double retval = call_cdecl_double(vm, func, stack);
+                    return make_flonum(vm->m_heap, retval);
+                }
+                case FFI_RETURN_TYPE_STRING: {
+                    char* p = (char*)call_cdecl_intptr(vm, func, stack);
+                    if (p == NULL) return scm_false;
+                    return make_string(vm->m_heap, p);
+                }
+                case FFI_RETURN_TYPE_SIZE_T: {
+                    if (sizeof(size_t) == sizeof(int)) {
+                        unsigned int retval = (unsigned int)call_cdecl_intptr(vm, func, stack);
+                        return uint_to_integer(vm->m_heap, retval);
+                    }
+                    uintptr_t retval = (uintptr_t)call_cdecl_intptr(vm, func, stack);
+                    return uintptr_to_integer(vm->m_heap, retval);
+                }
+            }
+            invalid_argument_violation(vm, "call-shared-object", "invalid c function return type", argv[0], 0, argc, argv);
+            return scm_undef;
+        }
+        invalid_argument_violation(vm, "call-shared-object", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "call-shared-object", 2, -1, argc, argv);
+    return scm_undef;
+}
+
+#if _MSC_VER
+    inline intptr_t 
+    call_stdcall_intptr(VM* vm, void* func, c_stack_frame_t& stack)
+    {
+        synchronize_errno sync(vm);
+    #if ARCH_IA32
+        return c_func_stub_intptr(func, stack.count(), stack.frame());
+    #elif ARCH_X64
+        return c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
+    #else
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    #endif
+    }
+    
+    inline float 
+    call_stdcall_float(VM* vm, void* func, c_stack_frame_t& stack)
+    {
+        synchronize_errno sync(vm);
+    #if ARCH_IA32
+        return c_func_stub_float(func, stack.count(), stack.frame());
+    #elif ARCH_X64
+        return c_func_stub_float_x64(func, stack.count(), stack.sse_use(), stack.frame());
+    #else
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    #endif
+    }
+    
+    inline double 
+    call_stdcall_double(VM* vm, void* func, c_stack_frame_t& stack)
+    {
+        synchronize_errno sync(vm);
+    #if ARCH_IA32
+        return c_func_stub_double(func, stack.count(), stack.frame());
+    #elif ARCH_X64
+        return c_func_stub_double_x64(func, stack.count(), stack.sse_use(), stack.frame());
+    #else
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    #endif
+    }
+
+    // stdcall-shared-object
+    scm_obj_t
+    subr_stdcall_shared_object(VM* vm, int argc, scm_obj_t argv[])
+    {
+        if (argc >= 1) {
+            if (!FIXNUMP(argv[0])) {
+                wrong_type_argument_violation(vm, "stdcall-shared-object", 0, "fixnum", argv[0], argc, argv);
+                return scm_undef;
+            }
+            int type = FIXNUM(argv[0]);
+            void *func = NULL;
+            if (exact_positive_integer_pred(argv[1])) {
+                if (exact_integer_to_uintptr(argv[1], (uintptr_t*)&func) == false) {
+                    invalid_argument_violation(vm, "stdcall-shared-object", "value out of bound,", argv[1], 1, argc, argv);
+                    return scm_undef;
+                }
+            } else {
+                wrong_type_argument_violation(vm, "stdcall-shared-object", 1, "c function address", argv[1], argc, argv);
+                return scm_undef;
+            }
+            if (argc - 1 <= FFI_MAX_ARGC) {
+                c_stack_frame_t stack(vm);
+                for (int i = 2; i < argc; i++) {
+                    const char* err = stack.push(argv[i]);
+                    if (err) {
+                        wrong_type_argument_violation(vm, "stdcall-shared-object", i, err, argv[i], argc, argv);
+                        return scm_undef;
+                    }
+                }
+                switch (type) {
+                    case FFI_RETURN_TYPE_VOID: {
+                        call_stdcall_intptr(vm, func, stack);
+                        return scm_unspecified;
+                    }
+                    case FFI_RETURN_TYPE_BOOL: {
+                        intptr_t retval = call_stdcall_intptr(vm, func, stack);
+                        return retval ? scm_true : scm_false;
+                    }
+                    case FFI_RETURN_TYPE_SHORT: {
+                        short retval = (short)call_stdcall_intptr(vm, func, stack);
+                        return int_to_integer(vm->m_heap, retval);
+                    }
+                    case FFI_RETURN_TYPE_INT: {
+                        int retval = (int)call_stdcall_intptr(vm, func, stack);
+                        return int_to_integer(vm->m_heap, retval);
+                    }
+                    case FFI_RETURN_TYPE_INTPTR: {
+                        intptr_t retval = call_stdcall_intptr(vm, func, stack);
+                        return intptr_to_integer(vm->m_heap, retval);
+                    }
+                    case FFI_RETURN_TYPE_USHORT: {
+                        unsigned short retval = (unsigned short)call_stdcall_intptr(vm, func, stack);
+                        return uint_to_integer(vm->m_heap, retval);
+                    }
+                    case FFI_RETURN_TYPE_UINT: {
+                        unsigned int retval = (unsigned int)call_stdcall_intptr(vm, func, stack);
+                        return uint_to_integer(vm->m_heap, retval);
+                    }
+                    case FFI_RETURN_TYPE_UINTPTR: {
+                        uintptr_t retval = (uintptr_t)call_stdcall_intptr(vm, func, stack);
+                        return uintptr_to_integer(vm->m_heap, retval);
+                    }
+                    case FFI_RETURN_TYPE_FLOAT: {
+                        float retval = call_stdcall_float(vm, func, stack);
+                        return make_flonum(vm->m_heap, retval);
+                    }
+                    case FFI_RETURN_TYPE_DOUBLE: {
+                        double retval = call_stdcall_double(vm, func, stack);
+                        return make_flonum(vm->m_heap, retval);
+                    }
+                    case FFI_RETURN_TYPE_SIZE_T: {
+                        if (sizeof(size_t) == sizeof(int)) {
+                            unsigned int retval = (unsigned int)call_stdcall_intptr(vm, func, stack);
+                            return uint_to_integer(vm->m_heap, retval);
+                        }
+                        uintptr_t retval = (uintptr_t)call_stdcall_intptr(vm, func, stack);
+                        return uintptr_to_integer(vm->m_heap, retval);
+                    }
+                }
+                invalid_argument_violation(vm, "stdcall-shared-object", "invalid c function return type", argv[0], 0, argc, argv);
+                return scm_undef;
+            }
+            invalid_argument_violation(vm, "stdcall-shared-object", "too many arguments,", MAKEFIXNUM(argc), -1, argc, argv);
+            return scm_undef;
+        }
+        wrong_number_of_arguments_violation(vm, "stdcall-shared-object", 2, -1, argc, argv);
+        return scm_undef;
+    }
+#endif    
+
 void init_subr_ffi(object_heap_t* heap)
 {
     #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
 
     DEFSUBR("load-shared-object", subr_load_shared_object);
     DEFSUBR("lookup-shared-object", subr_lookup_shared_object);
-    DEFSUBR("call-shared-object->void", subr_call_shared_object_void);
-    DEFSUBR("call-shared-object->int", subr_call_shared_object_int);
-    DEFSUBR("call-shared-object->double", subr_call_shared_object_double);
-    DEFSUBR("call-shared-object->intptr", subr_call_shared_object_intptr);
-    DEFSUBR("call-shared-object->char*", subr_call_shared_object_chars);
+    DEFSUBR("call-shared-object", subr_call_shared_object);
 #if _MSC_VER
-    DEFSUBR("stdcall-shared-object->void", subr_stdcall_shared_object_void);
-    DEFSUBR("stdcall-shared-object->int", subr_stdcall_shared_object_int);
-    DEFSUBR("stdcall-shared-object->double", subr_stdcall_shared_object_double);
-    DEFSUBR("stdcall-shared-object->intptr", subr_stdcall_shared_object_intptr);
-    DEFSUBR("stdcall-shared-object->char*", subr_stdcall_shared_object_chars);
+    DEFSUBR("stdcall-shared-object", subr_stdcall_shared_object);
 #else
-    DEFSUBR("stdcall-shared-object->void", subr_call_shared_object_void);
-    DEFSUBR("stdcall-shared-object->int", subr_call_shared_object_int);
-    DEFSUBR("stdcall-shared-object->double", subr_call_shared_object_double);
-    DEFSUBR("stdcall-shared-object->intptr", subr_call_shared_object_intptr);
-    DEFSUBR("stdcall-shared-object->char*", subr_call_shared_object_chars);
+    DEFSUBR("stdcall-shared-object", subr_call_shared_object);
 #endif
     DEFSUBR("make-callback", subr_make_callback);
     DEFSUBR("flonum->float", subr_flonum_to_float);
     DEFSUBR("shared-object-errno", subr_shared_object_errno);
     DEFSUBR("shared-object-win32-lasterror", subr_shared_object_win32_lasterror);
     DEFSUBR("win32-error->string", subr_win32_error_string);
-
 }

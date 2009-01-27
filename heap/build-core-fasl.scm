@@ -64,7 +64,7 @@
           (core r5rs)
           (core control)
           (core optargs)
-          (core chkarg)
+;         (core chkarg)
           (core lists)
           (core records)
           (core conditions)
@@ -98,7 +98,7 @@
       ;
       "./core/control.scm"
       "./core/optargs.scm"
-      "./core/chkarg.scm"
+;     "./core/chkarg.scm"
       "./core/lists.scm"
       "./core/destructuring.scm"
       "./core/records.scm"

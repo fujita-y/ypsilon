@@ -1713,10 +1713,12 @@ object_heap_t::init_architecture_feature()
     ARCH_FIXNUM(sizeof:int,      sizeof(int));
     ARCH_FIXNUM(sizeof:long,     sizeof(long));
     ARCH_FIXNUM(sizeof:void*,    sizeof(void*));
+    ARCH_FIXNUM(sizeof:size_t,   sizeof(size_t));
     ARCH_ALIGNOF(alignof:short,   short);
     ARCH_ALIGNOF(alignof:int,     int);
     ARCH_ALIGNOF(alignof:long,    long);
     ARCH_ALIGNOF(alignof:void*,   void*);
+    ARCH_ALIGNOF(alignof:size_t,  size_t);
     ARCH_ALIGNOF(alignof:float,   float);
     ARCH_ALIGNOF(alignof:double,  double);
     ARCH_ALIGNOF(alignof:int8_t,  int8_t);

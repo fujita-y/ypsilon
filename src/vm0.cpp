@@ -43,7 +43,7 @@ VM::intern_current_environment(scm_symbol_t symbol, scm_obj_t value)
     if (obj != scm_undef) {
         assert(GLOCP(obj));
 #if USE_PARALLEL_VM
-        if (m_interp->concurrency() > 1) {
+        if (m_interp->live_thread_count() > 1) {
             assert(m_heap->in_heap(obj));
             m_interp->remember(((scm_gloc_t)obj)->value, value);
         }
@@ -760,7 +760,7 @@ VM::stop()
         }
     }
 #if USE_PARALLEL_VM
-    if (m_interp->concurrency() > 1) {
+    if (m_interp->live_thread_count() > 1) {
         if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) m_interp->snapshot(this, false);
         if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_RETRY) m_interp->snapshot(this, true);
     }

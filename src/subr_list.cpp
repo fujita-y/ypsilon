@@ -203,7 +203,7 @@ subr_set_car(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 2) {
         if (PAIRP(argv[0])) {
 #if USE_PARALLEL_VM
-            if (vm->m_interp->concurrency() > 1) {
+            if (vm->m_interp->live_thread_count() > 1) {
                 if (!vm->m_heap->in_heap(argv[0])) {
                     thread_object_access_violation(vm, "set-car!" ,argc, argv);
                     return scm_undef;
@@ -235,7 +235,7 @@ subr_set_cdr(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 2) {
         if (PAIRP(argv[0])) {
 #if USE_PARALLEL_VM
-            if (vm->m_interp->concurrency() > 1) {
+            if (vm->m_interp->live_thread_count() > 1) {
                 if (!vm->m_heap->in_heap(argv[0])) {
                     thread_object_access_violation(vm, "set-cdr!" ,argc, argv);
                     return scm_undef;

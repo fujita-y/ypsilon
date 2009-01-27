@@ -217,10 +217,12 @@
 
 (define nonblock-input-wait
   (lambda ()
-    (cond ((nonblock-byte-ready? (current-input-port)))
-          (else
-           (usleep 10000)
-           (nonblock-input-wait)))))
+    (parameterize ((collect-stack-notify #f))
+      (let loop ()
+        (cond ((nonblock-byte-ready? (current-input-port)))
+              (else
+               (usleep 10000)
+               (loop)))))))
 
 (define read-eval-print-loop
   (lambda ()

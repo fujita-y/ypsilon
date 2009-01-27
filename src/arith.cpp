@@ -910,6 +910,36 @@ exact_integer_to_uint16(scm_obj_t obj, uint16_t* ans)
     return false;
 }
 
+intptr_t
+coerce_exact_integer_to_intptr(scm_obj_t obj)
+{
+    if (FIXNUMP(obj)) return FIXNUM(obj);
+    if (BIGNUMP(obj)) {
+        scm_bignum_t bn = (scm_bignum_t)obj;
+#if USE_DIGIT32
+        assert(sizeof(intptr_t) == 4);
+        if (bn_get_sign(bn) > 0) return bn->elts[0];
+        if (bn_get_count(bn) == 1) {
+            int64_t n = bn->elts[0];
+            return (intptr_t)(- n);
+        }
+        int64_t n = bn->elts[0] + ((int64_t)bn->elts[1] << 32);
+        return (intptr_t)(- n);
+#else
+        assert(sizeof(intptr_t) == 8);
+        if (bn_get_sign(bn) > 0) return bn->elts[0];
+        if (bn_get_count(bn) == 1) {
+            int128_t n = bn->elts[0];
+            return (intptr_t)(- n);
+        } else {
+            int128_t n = bn->elts[0] + ((int128_t)bn->elts[1] << 64);
+            return (intptr_t)(- n);
+        }
+#endif
+    }
+    fatal("%s:%u wrong datum type", __FILE__, __LINE__);
+}
+
 scm_obj_t
 int32_to_bignum(object_heap_t* heap, int32_t value)
 {

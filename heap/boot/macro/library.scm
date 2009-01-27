@@ -337,6 +337,8 @@
 (define expand-library-body
   (lambda (form library-id library-version body exports imports depends env libenv)
 
+    (define initial-libenv libenv)
+    
     (define internal-definition?
       (lambda (lst)
         (and (pair? lst)
@@ -393,37 +395,6 @@
                                                      (annotate `(define-syntax ,(car e2) ...) e2)))))))
                     (else
                      (syntax-violation 'library "duplicate definitions" id)))))))
-
-    ;; update script too
-    #;(define rewrite-env
-      (lambda (env libenv defs)
-        (map (lambda (b)
-               (cond ((and (uninterned-symbol? (car b)) (assq (cdr b) defs))
-                      (let ((new (cons (car b) (cddr (assq (cdr b) libenv)))))
-                        (format #t "rewrite-binding ~s (~a)~%" new (length env))
-                        new))
-                     (else b)))
-             env)))
-
-    #;(define rewrite-env
-      (lambda (env defs)
-
-        (define compact
-          (lambda (env)
-            (let loop ((lst (reverse env)) (acc '()))
-              (cond ((null? lst) acc)
-                    ((uninterned-symbol? (caar lst))
-                     (loop (cdr lst) (cons (car lst) acc)))
-                    ((assq (caar lst) (cdr lst))
-                     (loop (cdr lst) acc))
-                    (else
-                     (loop (cdr lst) (cons (car lst) acc)))))))
-
-        (map (lambda (b)
-               (if (and (uninterned-symbol? (car b)) (assq (cdr b) defs))
-                   (cons (car b) (cddr (assq (cdr b) libenv)))
-                   b))
-             (compact env))))
 
     (define rewrite-body
       (lambda (body defs macros renames)
@@ -539,7 +510,7 @@
                            (and (core-hashtable-contains? ht-imported-immutables org)
                                 (syntax-violation 'define-syntax "attempt to modify immutable binding" (car body)))
                            (let-values (((code . expr)
-                                         (parameterize ((current-template-environment #f))
+                                         (parameterize ((current-template-environment initial-libenv))
                                            (compile-macro (car body) clause env))))
                              (let ((new (generate-global-id library-id org)))
                                (extend-libenv! org (make-import new))
@@ -699,6 +670,8 @@
 (define expand-top-level-program-body
   (lambda (form library-id library-version body imports depends env libenv)
 
+    (define initial-libenv libenv)
+    
     (define internal-definition?
       (lambda (lst)
         (and (pair? lst)
@@ -851,7 +824,7 @@
                                (and (core-hashtable-contains? ht-imported-immutables org)
                                     (syntax-violation 'define-syntax "attempt to modify immutable binding" (car body)))
                                (let-values (((code . expr)
-                                             (parameterize ((current-template-environment #f))
+                                             (parameterize ((current-template-environment initial-libenv))
                                                (compile-macro (car body) clause env))))
                                  (let ((new (generate-global-id library-id org)))
                                    (extend-libenv! org (make-import new))
