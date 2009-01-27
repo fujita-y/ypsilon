@@ -280,6 +280,12 @@
         return stdcall_func_stub_double(adrs, argc, argv);
     }
 
+    float
+    c_func_stub_float(void* adrs, int argc, intptr_t argv[])
+    {
+        return stdcall_func_stub_float(adrs, argc, argv);
+    }
+
     #pragma pack(push, 1)
     struct trampoline_t {
         uint8_t     mov_ecx_imm32;  // B9           : mov ecx, imm16/32
