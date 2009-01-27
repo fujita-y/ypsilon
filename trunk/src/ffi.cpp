@@ -93,7 +93,7 @@
     {
         if (m_count < array_sizeof(m_frame) - array_sizeof(m_reg) - array_sizeof(m_sse)) {
             if (FIXNUMP(obj) || BIGNUMP(obj)) {
-#if C_STACK_COERCE_ARGUMENTS
+#if C_STACK_COERCE_ARGUMENTS && 0
                 m_frame[m_count++] = coerce_exact_integer_to_intptr(obj);
                 return NULL;
 #else
