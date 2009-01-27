@@ -392,9 +392,12 @@
         (lambda (code addrs thunks)
           (lambda x
             (let loop ((in x) (thunk thunks) (out '()))
-              (if (and (pair? in) (pair? thunk))
-                  (loop (cdr in) (cdr thunk) (cons ((car thunk) (car in)) out))
-                  (apply call-shared-object code addrs (reverse out)))))))
+              (cond ((and (pair? in) (pair? thunk))
+                     (loop (cdr in) (cdr thunk) (cons ((car thunk) (car in)) out)))
+                    ((or (pair? in) (pair? thunk))
+                     (assertion-violation #f (format "c function expected ~a, but ~a arguments given" (length thunks) (length x)) x))
+                    (else
+                     (apply call-shared-object code addrs (reverse out))))))))
 
       (assert-argument make-cdecl-callout 1 ret "symbol" symbol? (list ret args addrs))
       (assert-argument make-cdecl-callout 2 args "list" list? (list ret args addrs))
@@ -414,9 +417,12 @@
         (lambda (code addrs thunks)
           (lambda x
             (let loop ((in x) (thunk thunks) (out '()))
-              (if (and (pair? in) (pair? thunk))
-                  (loop (cdr in) (cdr thunk) (cons ((car thunk) (car in)) out))
-                  (apply stdcall-shared-object code addrs (reverse out)))))))
+              (cond ((and (pair? in) (pair? thunk))
+                     (loop (cdr in) (cdr thunk) (cons ((car thunk) (car in)) out)))
+                    ((or (pair? in) (pair? thunk))
+                     (assertion-violation #f (format "c function expected ~a, but ~a arguments given" (length thunks) (length x)) x))
+                    (else
+                     (apply stdcall-shared-object code addrs (reverse out))))))))
 
       (assert-argument make-cdecl-callout 1 ret "symbol" symbol? (list ret args addrs))
       (assert-argument make-cdecl-callout 2 args "list" list? (list ret args addrs))
