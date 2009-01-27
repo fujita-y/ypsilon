@@ -10,12 +10,18 @@
 #include "hash.h"
 #include "arith.h"
 
+#define C_STACK_COERCE_ARGUMENTS    1
+
 #if ARCH_IA32
     const char*
     c_stack_frame_t::push(scm_obj_t obj)
     {
         if (m_count < array_sizeof(m_frame)) {
             if (FIXNUMP(obj) || BIGNUMP(obj)) {
+#if C_STACK_COERCE_ARGUMENTS
+                m_frame[m_count++] = coerce_exact_integer_to_intptr(obj);
+                return NULL;
+#else
                 if (n_positive_pred(obj)) {
                     uintptr_t value;
                     if (exact_integer_to_uintptr(obj, &value)) {
@@ -30,6 +36,7 @@
                     }
                 }
                 return "exact integer between INTPTR_MIN and UINTPTR_MAX";
+#endif
             }
             if (BVECTORP(obj)) {
                 scm_bvector_t bvector = (scm_bvector_t)obj;
@@ -86,6 +93,10 @@
     {
         if (m_count < array_sizeof(m_frame) - array_sizeof(m_reg) - array_sizeof(m_sse)) {
             if (FIXNUMP(obj) || BIGNUMP(obj)) {
+#if C_STACK_COERCE_ARGUMENTS
+                m_frame[m_count++] = coerce_exact_integer_to_intptr(obj);
+                return NULL;
+#else
                 if (n_positive_pred(obj)) {
                     uintptr_t value;
                     if (exact_integer_to_uintptr(obj, &value)) {
@@ -108,6 +119,7 @@
                     }
                 }
                 return "exact integer between INTPTR_MIN and UINTPTR_MAX";
+#endif
             }
             if (BVECTORP(obj)) {
                 scm_bvector_t bvector = (scm_bvector_t)obj;
@@ -212,6 +224,28 @@
         return retval;
     }
 
+    float
+    stdcall_func_stub_float(void* adrs, int argc, intptr_t argv[])
+    {
+        int bytes = (argc * sizeof(intptr_t) + 15) & ~15;
+        float retval;
+
+        __asm {
+            mov     ecx, bytes
+            mov     edx, esp
+            sub     esp, ecx
+            mov     esi, argv
+            mov     edi, esp
+            rep     movsb
+            mov     edi, edx
+            call    adrs
+            mov     esp, edi
+            fstp    retval
+        }
+
+        return retval;
+    }
+    
     double
     stdcall_func_stub_double(void* adrs, int argc, intptr_t argv[])
     {
@@ -305,7 +339,7 @@
         MEM_STORE_FENCE;
     }
 
-    int callback_int(uint32_t uid, uint32_t argc, uint32_t* base)
+    intptr_t callback_intptr(uint32_t uid, uint32_t argc, uint32_t* base)
     {
         scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
         if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
@@ -321,15 +355,13 @@
             fatal("fatal: unhandled exception in callback\n[exit]\n");
         }
         if (exact_integer_pred(result)) {
-            intptr_t value;
-            if (exact_integer_to_intptr(result, &value) == false) return 0;
-            return value;
+            return coerce_exact_integer_to_intptr(result);
         } else {
             return 0;
         }
     }
 
-    int __declspec(naked) c_callback_stub_int()
+    int __declspec(naked) c_callback_stub_intptr()
     {
         // note: uid adrs in ecx
         uint32_t*   base;
@@ -347,7 +379,7 @@
             mov     eax, [ecx + 4]
             mov     argc, eax
         }
-        value = callback_int(uid, argc, base);
+        value = callback_intptr(uid, argc, base);
         __asm {
             mov     eax, value
             mov     esp, ebp
@@ -356,7 +388,7 @@
         }
     }
 
-    int __declspec(naked) stdcall_callback_stub_int()
+    int __declspec(naked) stdcall_callback_stub_intptr()
     {
         // note: uid adrs in ecx
         uint32_t*   base;
@@ -375,7 +407,7 @@
             mov     eax, [ecx + 4]
             mov     argc, eax
         }
-        value = callback_int(uid, argc, base);
+        value = callback_intptr(uid, argc, base);
         bytes = argc * 4;
         __asm {
             mov     edx, bytes
@@ -393,9 +425,9 @@
         static intptr_t uid;
         trampoline_t* thunk;
         if (type) {
-            thunk = new trampoline_t((intptr_t)stdcall_callback_stub_int, uid, argc);
+            thunk = new trampoline_t((intptr_t)stdcall_callback_stub_intptr, uid, argc);
         } else {
-            thunk = new trampoline_t((intptr_t)c_callback_stub_int, uid, argc);
+            thunk = new trampoline_t((intptr_t)c_callback_stub_intptr, uid, argc);
         }
         vm->m_heap->write_barrier(closure);
         {
@@ -479,9 +511,7 @@
             fatal("fatal: unhandled exception in callback\n[exit]\n");
         }
         if (exact_integer_pred(result)) {
-            intptr_t value;
-            if (exact_integer_to_intptr(result, &value) == false) return 0;
-            return value;
+            return coerce_exact_integer_to_intptr(result);
         } else {
             return 0;
         }
@@ -579,9 +609,7 @@
             fatal("fatal: unhandled exception in callback\n[exit]\n");
         }
         if (exact_integer_pred(result)) {
-            intptr_t value;
-            if (exact_integer_to_intptr(result, &value) == false) return 0;
-            return value;
+            return coerce_exact_integer_to_intptr(result);
         } else {
             return 0;
         }

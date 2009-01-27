@@ -22,10 +22,12 @@
     .align  4,0x90
 
     .globl  c_func_stub_intptr_x64
+    .globl  c_func_stub_float_x64
     .globl  c_func_stub_double_x64
     .globl  c_callback_stub_intptr_x64
 
 c_func_stub_intptr_x64:
+c_func_stub_float_x64:
 c_func_stub_double_x64:
 
     pushq       %rbp

@@ -72,7 +72,8 @@ public:
     void    remember(scm_obj_t lhs, scm_obj_t rhs);
     bool    primordial(int id);
     void    display_status(VM* vm);
-    int     concurrency() { return m_live; }
+    int     live_thread_count() { return m_live; }
+    int     max_thread_count() { return m_capacity; }
     void    set_thread_name(int id, const char* name);
     void    get_thread_name(int id, char* name, int len);
     void    generate_uuid(char* buf, int bufsize);

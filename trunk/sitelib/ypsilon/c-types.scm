@@ -41,10 +41,12 @@
           sizeof:long
           sizeof:short
           sizeof:void*
+          sizeof:size_t
           alignof:int
           alignof:long
           alignof:short
           alignof:void*
+          alignof:size_t
           alignof:float
           alignof:double
           alignof:int8_t
@@ -58,10 +60,12 @@
   (define sizeof:long      (architecture-feature 'sizeof:long))
   (define sizeof:short     (architecture-feature 'sizeof:short))
   (define sizeof:void*     (architecture-feature 'sizeof:void*))
+  (define sizeof:size_t    (architecture-feature 'sizeof:size_t))
   (define alignof:int      (architecture-feature 'alignof:int))
   (define alignof:long     (architecture-feature 'alignof:long))
   (define alignof:short    (architecture-feature 'alignof:short))
   (define alignof:void*    (architecture-feature 'alignof:void*))
+  (define alignof:size_t   (architecture-feature 'alignof:size_t))
   (define alignof:float    (architecture-feature 'alignof:float))
   (define alignof:double   (architecture-feature 'alignof:double))
   (define alignof:int8_t   (architecture-feature 'alignof:int8_t))
@@ -138,11 +142,11 @@
                                  (list 'primitive
                                        accessor
                                        mutator)))))
-       `((int    ,sizeof:int   ,alignof:int    bytevector-c-int-ref    bytevector-c-int-set!)
-         (char   1             1               bytevector-c-char-ref   bytevector-c-char-set!)
-         (long   ,sizeof:long  ,alignof:long   bytevector-c-long-ref   bytevector-c-long-set!)
-         (short  ,sizeof:short ,alignof:short  bytevector-c-short-ref  bytevector-c-short-set!)
-         (void*  ,sizeof:void* ,alignof:void*  bytevector-c-void*-ref  bytevector-c-void*-set!)
+       `((int    ,sizeof:int    ,alignof:int    bytevector-c-int-ref    bytevector-c-int-set!)
+         (char   1              1               bytevector-c-char-ref   bytevector-c-char-set!)
+         (long   ,sizeof:long   ,alignof:long   bytevector-c-long-ref   bytevector-c-long-set!)
+         (short  ,sizeof:short  ,alignof:short  bytevector-c-short-ref  bytevector-c-short-set!)
+         (void*  ,sizeof:void*  ,alignof:void*  bytevector-c-void*-ref  bytevector-c-void*-set!)
          (unsigned-int   ,sizeof:int   ,alignof:int   bytevector-c-unsigned-int-ref   bytevector-c-int-set!)
          (unsigned-long  ,sizeof:long  ,alignof:long  bytevector-c-unsigned-long-ref  bytevector-c-long-set!)
          (unsigned-short ,sizeof:short ,alignof:short bytevector-c-unsigned-short-ref bytevector-c-short-set!)
@@ -155,7 +159,10 @@
          (uint8_t  1 ,alignof:int8_t  bytevector-c-uint8-ref  bytevector-c-int8-set!)
          (uint16_t 2 ,alignof:int16_t bytevector-c-uint16-ref bytevector-c-int16-set!)
          (uint32_t 4 ,alignof:int32_t bytevector-c-uint32-ref bytevector-c-int32-set!)
-         (uint64_t 8 ,alignof:int64_t bytevector-c-uint64-ref bytevector-c-int64-set!)))
+         (uint64_t 8 ,alignof:int64_t bytevector-c-uint64-ref bytevector-c-int64-set!)
+         (size_t ,sizeof:size_t ,alignof:size_t ,@(if (= sizeof:size_t sizeof:int)
+                                                      '(bytevector-c-unsigned-int-ref  bytevector-c-int-set!)
+                                                      '(bytevector-c-unsigned-long-ref bytevector-c-long-set!)))))
       (hashtable-copy ht)))
 
   (define constructor-name

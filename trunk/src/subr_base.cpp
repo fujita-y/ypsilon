@@ -923,7 +923,7 @@ subr_string_set(VM* vm, int argc, scm_obj_t argv[])
                     if (type == STRING_TYPE_ASCII) {
                         if (index >= 0 && index < string->size) {
 #if USE_PARALLEL_VM
-                            if (vm->m_interp->concurrency() > 1) {
+                            if (vm->m_interp->live_thread_count() > 1) {
                                 if (!vm->m_heap->in_heap(string)) {
                                     thread_object_access_violation(vm, "string-set!" , argc, argv);
                                     return scm_undef;
@@ -937,7 +937,7 @@ subr_string_set(VM* vm, int argc, scm_obj_t argv[])
                         if (index >= 0 && index < string->size) {
                             if (HDR_STRING_LITERAL(string->hdr) == 0) {
 #if USE_PARALLEL_VM
-                                if (vm->m_interp->concurrency() > 1) {
+                                if (vm->m_interp->live_thread_count() > 1) {
                                     if (!vm->m_heap->in_heap(string)) {
                                         thread_object_access_violation(vm, "string-set!" , argc, argv);
                                         return scm_undef;
@@ -1220,7 +1220,7 @@ subr_string_fill(VM* vm, int argc, scm_obj_t argv[])
             if (CHARP(argv[1])) {
                 scm_string_t string = (scm_string_t)argv[0];
 #if USE_PARALLEL_VM
-                if (vm->m_interp->concurrency() > 1) {
+                if (vm->m_interp->live_thread_count() > 1) {
                     if (!vm->m_heap->in_heap(string)) {
                         thread_object_access_violation(vm, "string-fill!" ,argc, argv);
                         return scm_undef;
@@ -1376,7 +1376,7 @@ subr_vector_set(VM* vm, int argc, scm_obj_t argv[])
                 int n = FIXNUM(argv[1]);
                 if (n >= 0 && n < vector->count) {
 #if USE_PARALLEL_VM
-                    if (vm->m_interp->concurrency() > 1) {
+                    if (vm->m_interp->live_thread_count() > 1) {
                         if (!vm->m_heap->in_heap(vector)) {
                             thread_object_access_violation(vm, "vector-set!" ,argc, argv);
                             return scm_undef;
@@ -1464,7 +1464,7 @@ subr_vector_fill(VM* vm, int argc, scm_obj_t argv[])
             scm_vector_t vector = (scm_vector_t)argv[0];
             int n = vector->count;
 #if USE_PARALLEL_VM
-            if (vm->m_interp->concurrency() > 1) {
+            if (vm->m_interp->live_thread_count() > 1) {
                 if (!vm->m_heap->in_heap(vector)) {
                     thread_object_access_violation(vm, "vector-fill!" ,argc, argv);
                     return scm_undef;

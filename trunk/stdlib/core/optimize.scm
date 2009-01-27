@@ -599,8 +599,6 @@
             (for-each (lambda (b)
                         (core-hashtable-delete! ht (car b)))
                       (core-hashtable->alist ht-variable-defined))
-
-
             ht)))
 
       (let loop ()
@@ -1169,13 +1167,26 @@
                                                           `(define ,lhs ,rhs)
                                                           `(define ,rhs ,lhs))))
                                                   (core-hashtable->alist ht-lift-table))
-                                             (filter values (map (lambda (e)
-                                                                   (let ((lhs (car e)) (rhs (cdr e)))
-                                                                     (if (symbol? lhs)
-                                                                         (and (core-hashtable-contains? ht-variable-refc lhs)
-                                                                              `(define ,lhs ,rhs))
-                                                                         `(define ,rhs ,lhs))))
-                                                                 (core-hashtable->alist ht-lift-table))))))
+                                             (filter values
+                                                     (map (lambda (e)
+                                                            (let ((lhs (car e)) (rhs (cdr e)))
+
+                                                              ;; experimental
+                                                              #;(and (core-hashtable-contains? ht-variable-refc lhs)
+                                                                   (cond ((core-hashtable-ref ht-variable-callsites lhs #f)
+                                                                          => (lambda (lst)
+                                                                               (and (pair? rhs)
+                                                                                    (pair? (cdr rhs))
+                                                                                    (list? (cadr rhs))
+                                                                                    (let ((len (+ (length (cadr rhs)) 1)))
+                                                                                      (and (for-all (lambda (e) (= (length e) len)) lst)
+                                                                                           (closure-attribute-set! rhs 'fastcall))))))))
+
+                                                              (if (symbol? lhs)
+                                                                  (and (core-hashtable-contains? ht-variable-refc lhs)
+                                                                       `(define ,lhs ,rhs))
+                                                                  `(define ,rhs ,lhs))))
+                                                          (core-hashtable->alist ht-lift-table))))))
                    (let ((form (cons 'begin
                                      (map (lambda (e)
                                             (let loop ((e e))

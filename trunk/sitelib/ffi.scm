@@ -9,6 +9,7 @@
           alignof:int8_t
           alignof:long
           alignof:short
+          alignof:size_t
           alignof:void*
           bytevector-c-char-ref
           bytevector-c-char-set!
@@ -46,7 +47,12 @@
           define-c-struct-type
           define-c-typedef
           load-shared-object
+          lookup-shared-object
           make-bytevector-mapping
+          make-cdecl-callback
+          make-cdecl-callout
+          make-stdcall-callback
+          make-stdcall-callout
           on-darwin
           on-freebsd
           on-ia32
@@ -60,6 +66,7 @@
           sizeof:int
           sizeof:long
           sizeof:short
+          sizeof:size_t
           sizeof:void*
           win32-error->string)
   (import (ypsilon ffi)))

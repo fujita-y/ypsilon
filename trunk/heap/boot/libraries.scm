@@ -433,16 +433,23 @@
                         architecture-feature
                         load-shared-object
                         lookup-shared-object
+                        #|
                         call-shared-object->void
                         call-shared-object->int
                         call-shared-object->intptr
+                        call-shared-object->float
                         call-shared-object->double
                         call-shared-object->char*
                         stdcall-shared-object->void
                         stdcall-shared-object->int
                         stdcall-shared-object->intptr
+                        stdcall-shared-object->float
                         stdcall-shared-object->double
                         stdcall-shared-object->char*
+                        |#
+                        call-shared-object
+                        stdcall-shared-object
+                        
                         make-callback
                         flonum->float
                         shared-object-errno
@@ -530,6 +537,8 @@
                         thread-id
                         on-primordial-thread?
                         display-thread-status
+                        live-thread-count
+                        max-thread-count
 
                         make-uuid
                         time-usage

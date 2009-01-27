@@ -167,11 +167,7 @@
     cadddr
     caddr
     cadr
-    call-shared-object->char*
-    call-shared-object->double
-    call-shared-object->int
-    call-shared-object->intptr
-    call-shared-object->void
+    call-shared-object
     call-with-bytevector-output-port
     call-with-current-continuation
     call-with-input-file
@@ -222,7 +218,6 @@
     char>=?
     char>?
     char?
-    check-argument
     circular-list?
     close-input-port
     close-output-port
@@ -563,6 +558,7 @@
     list-transpose*
     list-transpose+
     list?
+    live-thread-count
     load
     load-shared-object
     log
@@ -642,6 +638,7 @@
     make-who-condition
     map
     max
+    max-thread-count
     member
     memp
     memq
@@ -805,11 +802,7 @@
     standard-error-port
     standard-input-port
     standard-output-port
-    stdcall-shared-object->char*
-    stdcall-shared-object->double
-    stdcall-shared-object->int
-    stdcall-shared-object->intptr
-    stdcall-shared-object->void
+    stdcall-shared-object
     string
     string->bytevector
     string->list
@@ -952,7 +945,6 @@
     (core r5rs)
     (core control)
     (core optargs)
-    (core chkarg)
     (core lists)
     (core destructuring)
     (core records)

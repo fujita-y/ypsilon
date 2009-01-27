@@ -416,7 +416,7 @@ VM::run(bool init_dispatch_table)
         PIN(COLLECT_STACK_CONT_REC);
         PIN(COLLECT_STACK_ENV_REC);
         PIN(COLLECT_STACK_ENV_REC_N_ONE);
-        PIN(COLLECT_STACK_ENV_REC_N_ONE_N_APPLY);
+        PIN(COLLECT_STACK_ENV_REC_N_APPLY);
         PIN(COLLECT_STACK_ENV_REC_N_OPERAND);
         PIN(FALLBACK_PUSH_NADD_ILOC);
         PIN(FALLBACK_EQ_N_ILOC);
@@ -587,7 +587,7 @@ apply:
         __asm__ ("/* VM APPLY */");
 #endif
         if (CLOSUREP(m_value)) {
-            if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) + sizeof(scm_obj_t) < (uintptr_t)m_stack_limit) {
+            if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) < (uintptr_t)m_stack_limit) {
                 scm_closure_t closure = (scm_closure_t)m_value;
                 intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
                 if (m_sp - m_fp != args) goto APPLY_VARIADIC;
@@ -599,7 +599,7 @@ apply:
                 m_env = &env->up;
                 goto trace_n_loop;
             }
-            goto COLLECT_STACK_ENV_REC_N_ONE_N_APPLY;
+            goto COLLECT_STACK_ENV_REC_N_APPLY;
         }
         if (SUBRP(m_value)) {
             scm_subr_t subr = (scm_subr_t)m_value;
@@ -1291,7 +1291,7 @@ loop:
                 scm_gloc_t gloc = (scm_gloc_t)CAR(OPERANDS);
                 assert(GLOCP(gloc));
 #if USE_PARALLEL_VM
-                if (m_interp->concurrency() > 1) {
+                if (m_interp->live_thread_count() > 1) {
                     if (!m_heap->in_heap(gloc)) goto ERROR_SET_GLOC_BAD_CONTEXT;
                     m_interp->remember(gloc->value, m_value);
                 }
@@ -1306,7 +1306,7 @@ loop:
                 scm_obj_t* slot = lookup_iloc(CAR(OPERANDS));
                 if (!STACKP(slot)) {
 #if USE_PARALLEL_VM
-                    if (m_interp->concurrency() > 1) {
+                    if (m_interp->live_thread_count() > 1) {
                         if (!m_heap->in_heap(slot)) goto ERROR_SET_ILOC_BAD_CONTEXT;
                         if (m_child > 0) m_interp->remember(*slot, m_value);
                     }
@@ -1772,8 +1772,8 @@ COLLECT_STACK_ENV_REC_N_ONE:
         collect_stack(sizeof(vm_env_rec_t) + sizeof(scm_obj_t));
         goto loop;
 
-COLLECT_STACK_ENV_REC_N_ONE_N_APPLY:
-        collect_stack(sizeof(vm_env_rec_t) + sizeof(scm_obj_t));
+COLLECT_STACK_ENV_REC_N_APPLY:
+        collect_stack(sizeof(vm_env_rec_t));
         goto apply;
 
 COLLECT_STACK_ENV_REC_N_OPERAND:

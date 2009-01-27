@@ -194,7 +194,7 @@ exact_integer_to_int(scm_obj_t obj, int* ans)
     assert(false);
     return false;
 }
-
+intptr_t coerce_exact_integer_to_intptr(scm_obj_t obj);
 scm_obj_t double_to_inexact(object_heap_t* heap, double value);
 double real_to_double(scm_obj_t obj);
 bool bignum_to_int32(scm_bignum_t bn, int32_t* ans);
