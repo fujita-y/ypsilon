@@ -93,8 +93,13 @@
     {
         if (m_count < array_sizeof(m_frame) - array_sizeof(m_reg) - array_sizeof(m_sse)) {
             if (FIXNUMP(obj) || BIGNUMP(obj)) {
-#if C_STACK_COERCE_ARGUMENTS && 0
-                m_frame[m_count++] = coerce_exact_integer_to_intptr(obj);
+#if C_STACK_COERCE_ARGUMENTS
+                intptr_t value = coerce_exact_integer_to_intptr(obj);
+                if (m_reg_count < array_sizeof(m_reg)) {
+                    m_reg[m_reg_count++] = value;
+                } else {
+                    m_frame[m_count++] = value;
+                }
                 return NULL;
 #else
                 if (n_positive_pred(obj)) {
