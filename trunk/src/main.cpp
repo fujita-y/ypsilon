@@ -59,7 +59,7 @@ static int opt_heap_limit(int argc, char* const argv[])
 #if _MSC_VER
     int main(int argc, char* argv[])
     {
-        srandom((int)msec());
+        srandom((unsigned int)fmod(msec() * 1000.0, INT_MAX));
         assert(isnan(VALUE_NAN));
         assert(isinf(VALUE_INF));
         {
@@ -143,7 +143,7 @@ static int opt_heap_limit(int argc, char* const argv[])
 
     int main(int argc, char* const argv[])
     {
-        srandom((int)msec());
+        srandom((unsigned int)fmod(msec() * 1000.0, INT_MAX));
         main_command_line_argc = argc;
         main_command_line_argv = argv;
   #ifndef NDEBUG
