@@ -2,15 +2,6 @@
 ;;; Ypsilon Scheme System
 ;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
-
-(library (ypsilon socket assistant)
-  (export unsupported-option)
-  (import (rnrs))
-  (define unsupported-option
-    (lambda (x)
-      (syntax-case x ()
-        (name (error (syntax->datum #'name) "option not supported on this operating system")))))
-  ) ;[end]
   
 (library (ypsilon socket)
   (export make-client-socket
@@ -60,7 +51,7 @@
           MSG_NOSIGNAL
           MSG_MORE
           MSG_EOF)
-  (import (core) (ypsilon socket assistant))
+  (import (core) (ypsilon assert))
 
   (define-syntax define-const
     (lambda (x)

@@ -107,6 +107,7 @@
    define-record-type
    record-type-descriptor
    record-constructor-descriptor
+   fields mutable immutable parent protocol sealed opaque nongenerative parent-rtd
 
    #;(rnrs records procedural (6))
    make-record-type-descriptor

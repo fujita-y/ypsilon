@@ -8,7 +8,9 @@
   (export with-exception-handler
           guard
           raise
-          raise-continuable)
+          raise-continuable
+          else
+          =>)
 
   (import (core primitives))
 

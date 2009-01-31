@@ -348,6 +348,7 @@
     expt
     extract-accumulated-bytevector
     extract-accumulated-string
+    fields
     file-directory?
     file-executable?
     file-exists?
@@ -516,6 +517,7 @@
     identifier?
     if
     imag-part
+    immutable
     implementation-restriction-violation?
     inexact
     inexact->exact
@@ -651,6 +653,7 @@
     mod
     mod0
     modulo
+    mutable
     nan?
     native-endianness
     native-eol-style
@@ -662,6 +665,7 @@
     no-nans-violation?
     non-continuable-violation?
     nonblock-byte-ready?
+    nongenerative
     not
     null?
     number->string
@@ -669,6 +673,7 @@
     numerator
     odd?
     on-primordial-thread?
+    opaque
     open-builtin-data-input-port
     open-bytevector-input-port
     open-bytevector-output-port
@@ -686,6 +691,8 @@
     output-port?
     pair?
     parameterize
+    parent
+    parent-rtd
     partition
     peek-char
     port-closed?
@@ -708,6 +715,7 @@
     process-environment->alist
     process-shell-command
     process-wait
+    protocol
     put-byte
     put-bytevector
     put-char
@@ -766,6 +774,7 @@
     scheme-library-paths
     scheme-load-paths
     scheme-load-verbose
+    sealed
     serious-condition?
     set!
     set-car!
