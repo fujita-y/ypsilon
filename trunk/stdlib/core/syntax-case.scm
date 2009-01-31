@@ -18,21 +18,13 @@
           syntax->datum
           generate-temporaries
           quasisyntax
-          unsyntax
-          unsyntax-splicing
           syntax-violation
           datum
-          define-macro)
+          define-macro
+          unsyntax
+          unsyntax-splicing)
 
   (import (core primitives))
-
-  (define-syntax unsyntax
-    (lambda (x)
-      (syntax-violation (and (pair? x) (car x)) "misplaced auxiliary syntactic keyword" x)))
-
-  (define-syntax unsyntax-splicing
-    (lambda (x)
-      (syntax-violation (and (pair? x) (car x)) "misplaced auxiliary syntactic keyword" x)))
 
   (define-syntax datum
     (syntax-rules ()
@@ -67,6 +59,14 @@
                      #'e0
                      (apply define-macro-transformer
                             (syntax->datum #'e1))))))))))))
+
+  (define-syntax unsyntax
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
+
+  (define-syntax unsyntax-splicing
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
 
   ;; quasisyntax from
 

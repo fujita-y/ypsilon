@@ -4,8 +4,14 @@
 ;;; See license.txt for terms and conditions of use.
 
 (library (ypsilon assert)
-  (export assert-argument)
+  (export unsupported-option
+          assert-argument)
   (import (core) (rnrs))
+
+  (define unsupported-option
+    (lambda (x)
+      (syntax-case x ()
+        (name (error (syntax->datum #'name) "option not supported on this operating system")))))
   
   (define-syntax assert-argument
     (lambda (x)
@@ -20,5 +26,5 @@
                  #'(or test (assertion-violation 'who (format msg variable) . irritants))))))
         (_
          (syntax-violation 'assert-arguemnt "expected 5 clauses (assert-arguemnt <position> <who> <variable> <expect> <test>)" x)))))
-  
+
   ) ;[end]

@@ -24,7 +24,16 @@
           record-field-mutable?
           record-type-descriptor
           record-constructor-descriptor
-          define-record-type)
+          define-record-type
+          fields
+          mutable
+          immutable
+          parent
+          protocol
+          sealed
+          opaque
+          nongenerative
+          parent-rtd)
 
   (import (core primitives)
           (core lists)
@@ -165,5 +174,41 @@
     (lambda (x)
       (syntax-case x ()
         ((_ name) (identifier? #'name) (syntax (record-type-rcd name))))))
+
+  (define-syntax fields
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
+
+  (define-syntax mutable
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
+
+  (define-syntax immutable
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
+
+  (define-syntax parent
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
+
+  (define-syntax protocol
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
+
+  (define-syntax sealed
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
+
+  (define-syntax opaque
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
+
+  (define-syntax nongenerative
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
+
+  (define-syntax parent-rtd
+    (lambda (x)
+      (syntax-violation #f "misplaced auxiliary syntactic keyword" x)))
 
   ) ;[end]

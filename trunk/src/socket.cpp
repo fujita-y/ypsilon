@@ -41,7 +41,10 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
     hints.ai_canonname = NULL;
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
-    int retval = getaddrinfo(node, service, &hints, &list);
+    int retval;
+    do {
+        retval = getaddrinfo(node, service, &hints, &list);
+    } while (retval == EAI_AGAIN);
 #if _MSC_VER
     if (retval) {
         char utf8[256];
@@ -51,13 +54,19 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
         throw_socket_error(SCM_SOCKET_OPERATION_OPEN, utf8);
     }
 #else
-    if (retval) throw_socket_error(SCM_SOCKET_OPERATION_OPEN, gai_strerror(retval));
+    if (retval) {
+        if (retval == EAI_SYSTEM) throw_socket_error(SCM_SOCKET_OPERATION_OPEN, errno);
+        throw_socket_error(SCM_SOCKET_OPERATION_OPEN, gai_strerror(retval));
+    }
 #endif
     int first_error = 0;
     if (flags & AI_PASSIVE) {
         for (struct addrinfo* p = list; p != NULL; p = p->ai_next) {
             int fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-            if (fd == INVALID_SOCKET) continue;
+            if (fd == INVALID_SOCKET) {
+                if (first_error == 0) first_error = errno;
+                continue;
+            }
             int one = 1;
             if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char *)&one, sizeof(one)) == 0) {
                 if (bind(fd, p->ai_addr, p->ai_addrlen) == 0) {
@@ -82,7 +91,10 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
     } else {
         for (struct addrinfo* p = list; p != NULL; p = p->ai_next) {
             int fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-            if (fd == INVALID_SOCKET) continue;
+            if (fd == INVALID_SOCKET) {
+                if (first_error == 0) first_error = errno;
+                continue;
+            }
             if (connect(fd, p->ai_addr, p->ai_addrlen) == 0) {
                 s->mode = SCM_SOCKET_MODE_CLIENT;
                 s->fd = fd;

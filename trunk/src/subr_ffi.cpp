@@ -126,11 +126,20 @@ subr_shared_object_win32_lasterror(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 0) return int_to_integer(vm->m_heap, vm->m_shared_object_win32_lasterror);
     if (argc == 1) {
         if (exact_integer_pred(argv[0])) {
-            uint32_t val;
-            if (exact_integer_to_uint32(argv[0], &val)) {
-                SetLastError(val);
-                vm->m_shared_object_win32_lasterror = val;
-                return scm_unspecified;
+            if (n_positive_pred(argv[0])) {
+                uint32_t val;
+                if (exact_integer_to_uint32(argv[0], &val)) {
+                    SetLastError(val);
+                    vm->m_shared_object_win32_lasterror = val;
+                    return scm_unspecified;
+                }
+            } else {
+                int32_t val;
+                if (exact_integer_to_int32(argv[0], &val)) {
+                    SetLastError(val);
+                    vm->m_shared_object_win32_lasterror = val;
+                    return scm_unspecified;
+                }
             }
             invalid_argument_violation(vm, "shared-object-win32-lasterror", "value out of range,", argv[0], 0, argc, argv);
             return scm_undef;
