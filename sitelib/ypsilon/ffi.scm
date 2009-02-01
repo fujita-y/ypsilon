@@ -193,7 +193,7 @@
   (define coerce-unsigned-long (coerce-unsigned-exact sizeof:long))
   (define coerce-void* (coerce-unsigned-exact sizeof:void*))
   (define coerce-bool (lambda (n) (= n 0)))
-
+  
   (define c-function-return-type-alist
     `((void           . #x00)    ; FFI_RETURN_TYPE_VOID
       (bool           . #x01)    ; FFI_RETURN_TYPE_BOOL
@@ -344,12 +344,9 @@
                (assertion-violation #f (format "c function expected flonum, but got ~r" x)))))
         (else
          (destructuring-match type
-           (['c-callback e1 (e2 ...)]
-            (cdecl-callback-thunk e1 e2))
-           (['c-callback e1 '__cdecl (e2 ...)]
-            (cdecl-callback-thunk e1 e2))
-           (['c-callback e1 '__stdcall (e2 ...)]
-            (stdcall-callback-thunk e1 e2))
+           #;(['c-callback e1 (e2 ...)] (cdecl-callback-thunk e1 e2))
+           #;(['c-callback e1 '__cdecl (e2 ...)] (cdecl-callback-thunk e1 e2))
+           #;(['c-callback e1 '__stdcall (e2 ...)] (stdcall-callback-thunk e1 e2))
            (['int]
             (lambda (x)
               (or (vector? x) (assertion-violation name (format "expected vector, but got ~r" x)))
