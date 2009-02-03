@@ -40,9 +40,11 @@
           bytevector-c-unsigned-short-ref
           bytevector-c-void*-ref
           bytevector-c-void*-set!
+          c-coerce-void*
           c-function
           c-function/errno
           c-function/win32-lasterror
+          c-sizeof
           define-c-struct-methods
           define-c-struct-type
           define-c-typedef

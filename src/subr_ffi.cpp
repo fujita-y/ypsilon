@@ -233,6 +233,8 @@ subr_make_callback(VM* vm, int argc, scm_obj_t argv[])
 #define FFI_RETURN_TYPE_DOUBLE      0x09
 #define FFI_RETURN_TYPE_STRING      0x0a
 #define FFI_RETURN_TYPE_SIZE_T      0x0b
+#define FFI_RETURN_TYPE_INT8_T      0x0c
+#define FFI_RETURN_TYPE_UINT8_T     0x0d
 
 class synchronize_errno {
     VM* m_vm;
@@ -374,6 +376,14 @@ subr_call_shared_object(VM* vm, int argc, scm_obj_t argv[])
                     uintptr_t retval = (uintptr_t)call_cdecl_intptr(vm, func, stack);
                     return uintptr_to_integer(vm->m_heap, retval);
                 }
+                case FFI_RETURN_TYPE_INT8_T: {
+                    int8_t retval = (int8_t)call_cdecl_intptr(vm, func, stack);
+                    return int_to_integer(vm->m_heap, retval);
+                }
+                case FFI_RETURN_TYPE_UINT8_T: {
+                    uint8_t retval = (uint8_t)call_cdecl_intptr(vm, func, stack);
+                    return uint_to_integer(vm->m_heap, retval);
+                }
             }
             invalid_argument_violation(vm, "call-shared-object", "invalid c function return type", argv[0], 0, argc, argv);
             return scm_undef;
@@ -503,6 +513,14 @@ subr_call_shared_object(VM* vm, int argc, scm_obj_t argv[])
                         uintptr_t retval = (uintptr_t)call_stdcall_intptr(vm, func, stack);
                         return uintptr_to_integer(vm->m_heap, retval);
                     }
+                    case FFI_RETURN_TYPE_INT8_T: {
+                        int8_t retval = (int8_t)call_stdcall_intptr(vm, func, stack);
+                        return int_to_integer(vm->m_heap, retval);
+                    }
+                    case FFI_RETURN_TYPE_UINT8_T: {
+                        uint8_t retval = (uint8_t)call_stdcall_intptr(vm, func, stack);
+                        return uint_to_integer(vm->m_heap, retval);
+                    }                
                 }
                 invalid_argument_violation(vm, "stdcall-shared-object", "invalid c function return type", argv[0], 0, argc, argv);
                 return scm_undef;
