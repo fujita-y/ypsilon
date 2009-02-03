@@ -20,6 +20,8 @@
           define-c-typedef
           define-c-struct-type
           define-c-struct-methods
+          c-sizeof
+          c-coerce-void*
           bytevector-c-char-ref
           bytevector-c-short-ref
           bytevector-c-int-ref
@@ -112,15 +114,17 @@
 
   (define expect-string
     (lambda (name n s)
-      (cond ((string? s) s)
+      (cond ((string? s) (string->utf8+nul s))
+            ((not s) 0)
             (else
-             (assertion-violation name (format "expected string, but got ~r, as argument ~s" s n))))))
+             (assertion-violation name (format "expected string or #f(NULL), but got ~r, as argument ~s" s n))))))
 
   (define expect-bytevector
     (lambda (name n b)
       (cond ((bytevector? b) b)
+            ((not b) 0)
             (else
-             (assertion-violation name (format "expected bytevector, but got ~r, as argument ~s" b n))))))
+             (assertion-violation name (format "expected bytevector or #f(NULL), but got ~r, as argument ~s" b n))))))
 
   (define expect-proc
     (lambda (name n p)
@@ -207,7 +211,9 @@
       (double         . #x09)    ; FFI_RETURN_TYPE_DOUBLE
       (void*          . #x07)    ; FFI_RETURN_TYPE_UINTPTR
       (char*          . #x0a)    ; FFI_RETURN_TYPE_STRING
-      (size_t         . #x0b)))  ; FFI_RETURN_TYPE_SIZE_T
+      (size_t         . #x0b)    ; FFI_RETURN_TYPE_SIZE_T
+      (int8_t         . #x0c)    ; FFI_RETURN_TYPE_INT8_T
+      (uint8_t        . #x0d)))  ; FFI_RETURN_TYPE_UINT8_T
   
   (define ht-cdecl-callback-trampolines (make-parameter (make-weak-hashtable)))
   (define ht-stdcall-callback-trampolines (make-parameter (make-weak-hashtable)))
@@ -324,14 +330,16 @@
                (assertion-violation #f (format "c function expected exact integer, but got ~r" x)))))
         ((byte*)
          (lambda (x)
-           (if (bytevector? x)
-               x
-               (assertion-violation #f (format "c function expected bytevector, but got ~r" x)))))
+           (cond ((bytevector? x) x)
+                 ((not x) 0)
+                 (else
+                  (assertion-violation #f (format "c function expected bytevector or #f(NULL), but got ~r" x))))))
         ((char*)
          (lambda (x)
-           (if (string? x)
-               (string->utf8+nul x)
-               (assertion-violation #f (format "c function expected string, but got ~r" x)))))
+           (cond ((string? x) (string->utf8+nul x))
+                 ((not x) 0)
+                 (else
+                  (assertion-violation #f (format "c function expected string or #f(NULL), but got ~r" x))))))
         ((float)
          (lambda (x)
            (if (flonum? x)
@@ -462,7 +470,7 @@
                           ((byte*)
                            #'(expect-bytevector 'func-name n var))
                           ((char*)
-                           #'(string->utf8+nul (expect-string 'func-name n var)))
+                           #'(expect-string 'func-name n var))
                           ((float)
                            #'(expect-float 'func-name n var))
                           ((double)

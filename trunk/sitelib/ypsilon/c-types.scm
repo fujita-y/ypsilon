@@ -7,6 +7,8 @@
   (export define-c-typedef
           define-c-struct-type
           define-c-struct-methods
+          c-sizeof
+          c-coerce-void*
           make-bytevector-mapping
           bytevector-c-int-ref
           bytevector-c-char-ref
@@ -281,7 +283,8 @@
                       (assertion-violation who "internal error"))))
               (_
                (assertion-violation who "internal error")))
-            (list (+ field-offset (mod field-offset struct-align)) struct-align field-defs)))))
+            
+            (list (* (div (+ field-offset (- struct-align 1)) struct-align) struct-align) struct-align field-defs)))))
 
   (define find-maybe-compound
     (lambda (form field-specs)
@@ -437,5 +440,23 @@
        (begin
          (define-c-typedef type (struct field-specs ...))
          (define-c-struct-methods type)))))
+  
+  (define-syntax c-sizeof
+    (lambda (x)
+      (syntax-case x ()
+        ((_ type)
+         #'(let-syntax
+             ((c-sizeof
+               (lambda (x)
+                 (cond ((hashtable-ref primitive-types 'type #f) => cadr)
+                       ((eq? (tuple-ref type 0) 'type:c-typedef) (tuple-ref type 2))                       
+                       (else
+                        (syntax-violation 'c-sizeof (format "expected primitive type or c-typedef object, but got ~s" type) x))))))
+             (c-sizeof type))))))
+  
+  (define-syntax c-coerce-void*
+    (syntax-rules ()
+      ((_ var type)
+       (make-bytevector-mapping var (c-sizeof type)))))
 
   ) ;[end]

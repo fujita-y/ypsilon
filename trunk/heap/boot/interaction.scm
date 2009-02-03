@@ -46,7 +46,7 @@
             (lambda ()
               (and (expansion-backtrace)
                    (current-macro-expression)
-                   (parameterize ((pretty-print-initial-indent 7)
+                   (parameterize ((pretty-print-initial-indent 5)
                                   (pretty-print-maximum-lines 10))
                      (format port "~%~%expanding:~%  >  ")
                      (pretty-print (unrename-private-primitives (current-macro-expression)) port)
