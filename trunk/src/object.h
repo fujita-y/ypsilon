@@ -539,6 +539,7 @@ struct vm_env_rec_t {           // record size is variable
                                                 && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_UNINTERNED_BIT)))
 #define BOTHFLONUMP(x, y)                   (CELLP((intptr_t)(x) | (intptr_t)(y)) \
                                                 && ((((scm_flonum_t)(x))->hdr == scm_hdr_flonum) & (((scm_flonum_t)(y))->hdr == scm_hdr_flonum)))
+#define BVECTORMAPPINGP(obj)                (BVECTORP(obj) && HDR_BVECTOR_MAPPING(HDR(obj)))
 
 #define STRING_TYPE_UNKNOWN                 0x0
 #define STRING_TYPE_ASCII                   0x1

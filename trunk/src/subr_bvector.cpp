@@ -939,6 +939,15 @@ subr_bytevector_pred(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// bytevector-mapping?
+scm_obj_t
+subr_bytevector_mapping_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) return BVECTORMAPPINGP(argv[0]) ? scm_true : scm_false;
+    wrong_number_of_arguments_violation(vm, "bytevector-mapping?", 1, 1, argc, argv);
+    return scm_undef;
+}
+
 // make-bytevector
 scm_obj_t
 subr_make_bytevector(VM* vm, int argc, scm_obj_t argv[])
@@ -1624,6 +1633,7 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("string->utf8", subr_string_utf8);
     DEFSUBR("utf8->string", subr_utf8_string);
     DEFSUBR("make-bytevector-mapping", subr_make_bytevector_mapping);
+    DEFSUBR("bytevector-mapping?", subr_bytevector_mapping_pred);
     DEFSUBR("bytevector-c-short-ref", subr_bytevector_c_short_ref);
     DEFSUBR("bytevector-c-int-ref", subr_bytevector_c_int_ref);
     DEFSUBR("bytevector-c-long-ref", subr_bytevector_c_long_ref);

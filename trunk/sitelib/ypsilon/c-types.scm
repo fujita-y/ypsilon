@@ -445,14 +445,15 @@
     (lambda (x)
       (syntax-case x ()
         ((_ type)
-         #'(let-syntax
-             ((c-sizeof
-               (lambda (x)
-                 (cond ((hashtable-ref primitive-types 'type #f) => cadr)
-                       ((eq? (tuple-ref type 0) 'type:c-typedef) (tuple-ref type 2))                       
-                       (else
-                        (syntax-violation 'c-sizeof (format "expected primitive type or c-typedef object, but got ~s" type) x))))))
-             (c-sizeof type))))))
+         (cond ((hashtable-ref primitive-types (datum type) #f) => cadr)
+               (else
+                #'(let-syntax
+                    ((c-sizeof
+                      (lambda (x)
+                        (if (eq? (tuple-ref type 0) 'type:c-typedef)
+                            (tuple-ref type 2)
+                            (syntax-violation 'c-sizeof (format "expected primitive type or c-typedef object, but got ~s" type) x)))))
+                    (c-sizeof type))))))))
   
   (define-syntax c-coerce-void*
     (syntax-rules ()

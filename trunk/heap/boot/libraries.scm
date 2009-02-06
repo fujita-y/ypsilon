@@ -474,7 +474,7 @@
                         current-source-comments
                         current-after-expansion-hook
                         string-contains symbol-contains subr?
-                        make-bytevector-mapping
+                        make-bytevector-mapping bytevector-mapping?
                         scheme-library-exports
                         scheme-library-paths
                         scheme-load-paths
