@@ -1,6 +1,6 @@
 #   Makefile for Linux, FreeBSD, OpenBSD, and Darwin
 #   Requirements: GNU Make, GCC 4.0 or later
-#   Options: DESTDIR, PREFIX, DATAMODEL(ILP32/LP64)
+#   Options: DESTDIR, PREFIX, DATAMODEL(ILP32/LP64), USE_SDL(ON)
 
 PROG 	 = ypsilon
 
@@ -8,7 +8,7 @@ PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
 
-CXXFLAGS = -pipe -x c++ -pthread -O3 -fstrict-aliasing -fomit-frame-pointer -momit-leaf-frame-pointer
+CXXFLAGS = -pipe -x c++ -O3 -fstrict-aliasing -fomit-frame-pointer -momit-leaf-frame-pointer
 
 SRCS 	 = file.cpp main.cpp vm0.cpp object_heap_compact.cpp subr_flonum.cpp vm1.cpp object_set.cpp \
 	   subr_hash.cpp vm2.cpp object_slab.cpp subr_list.cpp interpreter.cpp serialize.cpp \
@@ -47,7 +47,7 @@ ifneq (, $(findstring Linux, $(UNAME)))
   else
     CXXFLAGS += -msse2
   endif
-  CXXFLAGS += -mfpmath=sse
+  CXXFLAGS += -mfpmath=sse -pthread
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -77,7 +77,7 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
   else
     CXXFLAGS += -msse2
   endif
-  CXXFLAGS += -mfpmath=sse
+  CXXFLAGS += -mfpmath=sse -pthread
   CPPFLAGS += -D__LITTLE_ENDIAN__
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
@@ -108,7 +108,7 @@ ifneq (, $(findstring OpenBSD, $(UNAME)))
   else
     CXXFLAGS += -msse2
   endif
-  CXXFLAGS += -mfpmath=sse
+  CXXFLAGS += -mfpmath=sse -pthread
   CPPFLAGS += -D__LITTLE_ENDIAN__ -DNO_TLS
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
@@ -130,6 +130,10 @@ ifneq (, $(findstring Darwin, $(UNAME)))
   CXXFLAGS += -arch i386 -msse2 -mfpmath=sse
   CPPFLAGS += -DNO_TLS
   SRCS += ffi_stub_darwin.s
+  ifneq (, $(USE_SDL))
+    CPPFLAGS += -DUSE_SDL
+    LDFLAGS = extension/SDL/darwin/i386/SDLmain.o -framework SDL -framework Cocoa 
+  endif
 endif
 
 OBJS =	$(patsubst %.cpp, %.o, $(filter %.cpp, $(SRCS))) $(patsubst %.s, %.o, $(filter %.s, $(SRCS)))
