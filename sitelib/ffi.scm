@@ -40,6 +40,7 @@
           bytevector-c-unsigned-short-ref
           bytevector-c-void*-ref
           bytevector-c-void*-set!
+          bytevector-mapping?
           c-coerce-void*
           c-function
           c-function/errno

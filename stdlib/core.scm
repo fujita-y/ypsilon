@@ -119,6 +119,7 @@
     bytevector-ieee-single-ref
     bytevector-ieee-single-set!
     bytevector-length
+    bytevector-mapping?
     bytevector-s16-native-ref
     bytevector-s16-native-set!
     bytevector-s16-ref

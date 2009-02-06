@@ -16,6 +16,7 @@
           make-cdecl-callback
           make-stdcall-callout
           make-stdcall-callback
+          bytevector-mapping?
           make-bytevector-mapping
           define-c-typedef
           define-c-struct-type
@@ -100,6 +101,12 @@
             (else
              (assertion-violation name (format "expected exact integer, but got ~r, as argument ~s" i n))))))
 
+  (define expect-void*
+    (lambda (name n i)
+      (cond ((or (and (integer? i) (exact? i)) (bytevector-mapping? i)) i)
+            (else
+             (assertion-violation name (format "expected exact integer or bytevector-mapping object, but got ~r, as argument ~s" i n))))))
+  
   (define expect-float
     (lambda (name n f)
       (cond ((flonum? f) (flonum->float f))
@@ -119,7 +126,7 @@
             (else
              (assertion-violation name (format "expected string or #f(NULL), but got ~r, as argument ~s" s n))))))
 
-  (define expect-bytevector
+  (define expect-byte*
     (lambda (name n b)
       (cond ((bytevector? b) b)
             ((not b) 0)
@@ -323,11 +330,16 @@
            (if (boolean? x)
                (if x 1 0)
                (assertion-violation #f (format "c function expected #t or #f, but got ~r" x)))))
-        ((short int long unsigned-short unsigned-int unsigned-long size_t void*)
+        ((short int long unsigned-short unsigned-int unsigned-long size_t)
          (lambda (x)
            (if (and (integer? x) (exact? x))
                x
                (assertion-violation #f (format "c function expected exact integer, but got ~r" x)))))
+        ((void*)
+         (lambda (x)
+           (if (or (and (integer? x) (exact? x)) (bytevector-mapping? x))
+               x
+               (assertion-violation #f (format "c function expected exact integer or bytevector-mapping object, but got ~r" x)))))
         ((byte*)
          (lambda (x)
            (cond ((bytevector? x) x)
@@ -465,10 +477,12 @@
                         (case type
                           ((bool)
                            #'(expect-bool 'func-name n var))
-                          ((short int long unsigned-short unsigned-int unsigned-long size_t void*)
+                          ((short int long unsigned-short unsigned-int unsigned-long size_t)
                            #'(expect-exact-int 'func-name n var))
-                          ((byte*)
-                           #'(expect-bytevector 'func-name n var))
+                          ((void*)
+                           #'(expect-void* 'func-name n var))
+                           ((byte*)
+                           #'(expect-byte* 'func-name n var))
                           ((char*)
                            #'(expect-string 'func-name n var))
                           ((float)
