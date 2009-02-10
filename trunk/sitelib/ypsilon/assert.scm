@@ -12,7 +12,7 @@
     (lambda (x)
       (syntax-case x ()
         (name (error (syntax->datum #'name) "option not supported on this operating system")))))
-  
+
   (define-syntax assert-argument
     (lambda (x)
       (syntax-case x ()

@@ -6,22 +6,22 @@
 
 #include "core.h"
 
-#define FFI_MAX_ARGC    32
-
 #if ARCH_IA32
-    class c_stack_frame_t {
+     #define FFI_MAX_ARGC 64
+     class c_stack_frame_t {
         intptr_t m_frame[FFI_MAX_ARGC];
         int m_count;
         VM* m_vm;
     public:
         c_stack_frame_t(VM* vm) : m_vm(vm), m_count(0) {}
-        const char* push(scm_obj_t obj);
+        const char* push(scm_obj_t obj, int signature);
         intptr_t* frame() { return m_frame; }
         int count() { return m_count; }
     };
 #endif
 
 #if ARCH_X64
+    #define FFI_MAX_ARGC 32
     class c_stack_frame_t {
         intptr_t m_frame[FFI_MAX_ARGC + 8 + 8 + 6];
         int m_count;
@@ -39,7 +39,7 @@
             memset(m_pre, 0, sizeof(m_pre));
             memset(m_reg, 0, sizeof(m_reg));
         }
-        const char* push(scm_obj_t obj);
+        const char* push(scm_obj_t obj, int signature);
         intptr_t* frame() { compose(); return m_frame; }
         int count() { return m_count; }
         int sse_use() { return m_sse_count; }
@@ -47,14 +47,16 @@
 #endif
 
 extern "C" {
-#if _MSC_VER
+#if ARCH_IA32
+  #if _MSC_VER
     float       stdcall_func_stub_float(void* func, int argc, intptr_t argv[]);
     double      stdcall_func_stub_double(void* func, int argc, intptr_t argv[]);
+    int64_t     stdcall_func_stub_int64(void* func, int argc, intptr_t argv[]);
     intptr_t    stdcall_func_stub_intptr(void* func, int argc, intptr_t argv[]);
-#endif
-#if ARCH_IA32
+  #endif
     float       c_func_stub_float(void* func, int argc, intptr_t argv[]);
     double      c_func_stub_double(void* func, int argc, intptr_t argv[]);
+    int64_t     c_func_stub_int64(void* func, int argc, intptr_t argv[]);
     intptr_t    c_func_stub_intptr(void* func, int argc, intptr_t argv[]);
     intptr_t    c_callback_stub_intptr();
     intptr_t    c_callback_intptr(intptr_t uid, intptr_t argc, intptr_t* stack);

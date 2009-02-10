@@ -37,7 +37,7 @@
         LocalFree(message);
         return obj;
     }
-    
+
     static const char*
     win32_lasterror_message()
     {

@@ -165,7 +165,7 @@ output:
                     if (c == 0) {
                         invalid_argument_violation(vm, "format", "wrong directive in control string", fmt, -1, argc, argv);
                         return scm_undef;
-                    }                    
+                    }
                     tilded[1] = c;
                     if (c == '!') {
                         flush_output = true;

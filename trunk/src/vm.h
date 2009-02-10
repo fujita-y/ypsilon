@@ -117,7 +117,7 @@ private:
 
     int                 apply_apply_closure(scm_obj_t lastarg);
     int                 apply_apply_subr(scm_obj_t lastarg);
-    
+
     scm_obj_t           call_scheme_stub(scm_obj_t proc, int argc, scm_obj_t argv[]);
 
 public:

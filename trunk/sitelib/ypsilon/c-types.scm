@@ -238,6 +238,11 @@
 
   (define process-struct-fields
     (lambda (code? who stx struct-name compound-types field-specs)
+
+      (define align-field-offset
+        (lambda (offset align)
+          (bitwise-and (+ offset (- align 1)) (bitwise-not (- align 1)))))
+
       (let loop ((specs field-specs) (field-offset 0) (struct-align 0) (field-defs '()))
         (if (pair? specs)
             (destructuring-match (car specs)
@@ -245,7 +250,7 @@
                (let ((desc (or (hashtable-ref primitive-types field-type #f) (assq field-type compound-types))))
                  (destructuring-match desc
                    ((_ sizeof alignof ('primitive accessor mutator))
-                    (let ((index (+ field-offset (mod field-offset alignof))))
+                    (let ((index (align-field-offset field-offset alignof)))
                       (loop (cdr specs)
                             (+ index sizeof)
                             (max struct-align alignof)
@@ -255,7 +260,7 @@
                                      (cons (make-accessor/mutator stx struct-name field-name index accessor mutator)
                                            field-defs))))))
                    ((_ sizeof alignof ('struct . _))
-                    (let ((index (+ field-offset (mod field-offset alignof))))
+                    (let ((index (align-field-offset field-offset alignof)))
                       (loop (cdr specs)
                             (+ index sizeof)
                             (max struct-align alignof)
@@ -270,7 +275,7 @@
                (cond ((or (hashtable-ref primitive-types field-type #f) (assq field-type compound-types))
                       => (lambda (rec)
                            (destructuring-bind (_ sizeof alignof . _) rec
-                             (let ((index (+ field-offset (mod field-offset alignof))))
+                             (let ((index (align-field-offset field-offset alignof)))
                                (loop (cdr specs)
                                      (+ index (* sizeof count))
                                      (max struct-align alignof)
@@ -283,8 +288,8 @@
                       (assertion-violation who "internal error"))))
               (_
                (assertion-violation who "internal error")))
-            
-            (list (* (div (+ field-offset (- struct-align 1)) struct-align) struct-align) struct-align field-defs)))))
+
+            (list (align-field-offset field-offset struct-align) struct-align field-defs)))))
 
   (define find-maybe-compound
     (lambda (form field-specs)
@@ -378,7 +383,7 @@
                                (syntax-case x ()
                                  ((_ temp . _)
                                   (with-syntax
-                                      (((compound-types (... ...)) 
+                                      (((compound-types (... ...))
                                         (datum->syntax #'k (list (#,#'ensure-c-typedef compounds 'compounds) ...))))
                                     (c-typedef-struct-expand #'temp (datum (compound-types (... ...))) '(field-specs ...))))))))
                            (check-c-struct-fields lhs field-specs ...)))))
@@ -440,7 +445,7 @@
        (begin
          (define-c-typedef type (struct field-specs ...))
          (define-c-struct-methods type)))))
-  
+
   (define-syntax c-sizeof
     (lambda (x)
       (syntax-case x ()
@@ -454,7 +459,7 @@
                             (tuple-ref type 2)
                             (syntax-violation 'c-sizeof (format "expected primitive type or c-typedef object, but got ~s" type) x)))))
                     (c-sizeof type))))))))
-  
+
   (define-syntax c-coerce-void*
     (syntax-rules ()
       ((_ var type)

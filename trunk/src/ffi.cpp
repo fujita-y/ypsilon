@@ -14,36 +14,62 @@
 
 #if ARCH_IA32
     const char*
-    c_stack_frame_t::push(scm_obj_t obj)
+    c_stack_frame_t::push(scm_obj_t obj, int signature)
     {
         if (m_count < array_sizeof(m_frame)) {
             if (FIXNUMP(obj) || BIGNUMP(obj)) {
-#if C_STACK_COERCE_ARGUMENTS
-                m_frame[m_count++] = coerce_exact_integer_to_intptr(obj);
-                return NULL;
-#else
-                if (n_positive_pred(obj)) {
-                    uintptr_t value;
-                    if (exact_integer_to_uintptr(obj, &value)) {
-                        m_frame[m_count++] = value;
-                        return NULL;
-                    }
-                } else {
-                    intptr_t value;
-                    if (exact_integer_to_intptr(obj, &value)) {
-                        m_frame[m_count++] = value;
-                        return NULL;
-                    }
+                if (signature == 'x') {
+                    union { uint64_t u64; struct { uint32_t lo; uint32_t hi; } u32; } n;
+                    n.u64 = coerce_exact_integer_to_int64(obj);
+                    m_frame[m_count++] = n.u32.lo;
+                    m_frame[m_count++] = n.u32.hi;
+                    return NULL;
                 }
-                return "exact integer between INTPTR_MIN and UINTPTR_MAX";
-#endif
+                if (signature == 'i' || signature == 'p') {
+                    m_frame[m_count++] = coerce_exact_integer_to_intptr(obj);
+                    return NULL;
+                }
+                if (signature == 'f') {
+                    union { float f32; uintptr_t u32; } n;
+                    n.f32 = real_to_double(obj);
+                    m_frame[m_count++] = n.u32;
+                    return NULL;
+                }
+                if (signature == 'd') {
+                    union { double f64; struct { uint32_t lo; uint32_t hi; } u32; } n;
+                    n.f64 = real_to_double(obj);
+                    m_frame[m_count++] = n.u32.lo;
+                    m_frame[m_count++] = n.u32.hi;
+                    return NULL;
+                }
+                goto bad_signature;
+            }
+            if (FLONUMP(obj)) {
+                if (signature == 'f') {
+                    union { float f32; uintptr_t u32; } n;
+                    scm_flonum_t flonum = (scm_flonum_t)obj;
+                    n.f32 = flonum->value;
+                    m_frame[m_count++] = n.u32;
+                    return NULL;
+                }
+                if (signature == 'd') {
+                    union { double f64; struct { uint32_t lo; uint32_t hi; } u32; } n;
+                    scm_flonum_t flonum = (scm_flonum_t)obj;
+                    n.f64 = flonum->value;
+                    m_frame[m_count++] = n.u32.lo;
+                    m_frame[m_count++] = n.u32.hi;
+                    return NULL;
+                }
+                goto bad_signature;
             }
             if (BVECTORP(obj)) {
+                if (signature != 'p') goto bad_signature;
                 scm_bvector_t bvector = (scm_bvector_t)obj;
                 m_frame[m_count++] = (intptr_t)bvector->elts;
                 return NULL;
             }
             if (VECTORP(obj)) {
+                if (signature != 'c') goto bad_signature;
                 scm_vector_t vector = (scm_vector_t)obj;
                 int n = vector->count;
                 if (n == 0) return "nonempty vector";
@@ -67,101 +93,57 @@
                 m_frame[m_count++] = (intptr_t)bvector->elts;
                 return NULL;
             }
-            if (FLONUMP(obj)) {
-                union {
-                    double f64;
-                    struct {
-                        uint32_t lo;
-                        uint32_t hi;
-                    } u32;
-                } n;
-                scm_flonum_t flonum = (scm_flonum_t)obj;
-                n.f64 = flonum->value;
-                m_frame[m_count++] = n.u32.lo;
-                m_frame[m_count++] = n.u32.hi;
-                return NULL;
-            }
-            return "exact integer";
+            goto bad_signature;
         }
-        return "internal error: c function stack frame overflow";
+        fatal("fatal: c function stack frame overflow");
+
+    bad_signature:
+        switch (signature) {
+            case 'i':
+            case 'x':
+                return "exact integer";
+            case 'p':
+                return "exact integer or bytevector";
+            case 'c':
+                return "vector";
+            case 'f':
+            case 'd':
+                return "real";
+            default:
+                fatal("fatal: invalid c function argument type specifier");
+        }
     }
 #endif
 
 #if ARCH_X64
     const char*
-    c_stack_frame_t::push(scm_obj_t obj)
+    c_stack_frame_t::push(scm_obj_t obj, int signature)
     {
         if (m_count < array_sizeof(m_frame) - array_sizeof(m_reg) - array_sizeof(m_sse)) {
             if (FIXNUMP(obj) || BIGNUMP(obj)) {
-#if C_STACK_COERCE_ARGUMENTS
-                intptr_t value = coerce_exact_integer_to_intptr(obj);
-                if (m_reg_count < array_sizeof(m_reg)) {
-                    m_reg[m_reg_count++] = value;
-                } else {
-                    m_frame[m_count++] = value;
-                }
-                return NULL;
-#else
-                if (n_positive_pred(obj)) {
-                    uintptr_t value;
-                    if (exact_integer_to_uintptr(obj, &value)) {
-                        if (m_reg_count < array_sizeof(m_reg)) {
-                            m_reg[m_reg_count++] = value;
-                        } else {
-                            m_frame[m_count++] = value;
-                        }
-                        return NULL;
-                    }
-                } else {
-                    intptr_t value;
-                    if (exact_integer_to_intptr(obj, &value)) {
-                        if (m_reg_count < array_sizeof(m_reg)) {
-                            m_reg[m_reg_count++] = value;
-                        } else {
-                            m_frame[m_count++] = value;
-                        }
-                        return NULL;
-                    }
-                }
-                return "exact integer between INTPTR_MIN and UINTPTR_MAX";
-#endif
-            }
-            if (BVECTORP(obj)) {
-                scm_bvector_t bvector = (scm_bvector_t)obj;
-                if (m_reg_count < array_sizeof(m_reg)) {
-                    m_reg[m_reg_count++] = (intptr_t)bvector->elts;
-                } else {
-                    m_frame[m_count++] = (intptr_t)bvector->elts;
-                }
-                return NULL;
-            }
-            if (VECTORP(obj)) {
-                scm_vector_t vector = (scm_vector_t)obj;
-                int n = vector->count;
-                if (n == 0) return "nonempty vector";
-                assert(n);
-                if (!FIXNUMP(vector->elts[0])) return "vector contains fixnum in first element";
-                int ref = FIXNUM(vector->elts[0]);
-                scm_bvector_t bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t) * (n - 1));
-                for (int i = 0; i < n - 1; i++) {
-                    if (BVECTORP(vector->elts[i + 1])) {
-                        *(uint8_t**)(bvector->elts + sizeof(intptr_t) * i) = ((scm_bvector_t)vector->elts[i + 1])->elts;
+                if (signature == 'x' || signature == 'i' || signature == 'p') {
+                    intptr_t value = coerce_exact_integer_to_intptr(obj);
+                    if (m_reg_count < array_sizeof(m_reg)) {
+                        m_reg[m_reg_count++] = value;
                     } else {
-                        return "vector of bytevector";
+                        m_frame[m_count++] = value;
                     }
+                    return NULL;
                 }
-                while (ref) {
-                    intptr_t datum = (intptr_t)bvector->elts;
-                    bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t));
-                    *(intptr_t*)(bvector->elts) = datum;
-                    ref--;
+                if (signature == 'f') {
+                    union { float f32; uintptr_t u32; } n;
+                    n.f32 = real_to_double(obj);
+                    m_frame[m_count++] = n.u32;
+                    return NULL;
                 }
-                if (m_reg_count < array_sizeof(m_reg)) {
-                    m_reg[m_reg_count++] = (intptr_t)bvector->elts;
-                } else {
-                    m_frame[m_count++] = (intptr_t)bvector->elts;
+                if (signature == 'd') {
+                    union { double f64; struct { uint32_t lo; uint32_t hi; } u32; } n;
+                    n.f64 = real_to_double(obj);
+                    m_frame[m_count++] = n.u32.lo;
+                    m_frame[m_count++] = n.u32.hi;
+                    return NULL;
                 }
-                return NULL;
+                goto bad_signature;
             }
             if (FLONUMP(obj)) {
                 union {
@@ -170,7 +152,7 @@
                     uint64_t    u64;
                 } n;
                 scm_flonum_t flonum = (scm_flonum_t)obj;
-                if (HDR_FLONUM_32BIT(flonum->hdr)) {
+                if (signature == 'f') {
                     if (m_sse_count < array_sizeof(m_sse)) {
                         n.f64 = flonum->value;
                         m_pre[m_sse_count] = 1;
@@ -181,19 +163,77 @@
                         n.f32 = flonum->value;
                         m_frame[m_count++] = n.u64;
                     }
-                } else {
+                    return NULL;
+                }
+                if (signature == 'd') {
                     n.f64 = flonum->value;
                     if (m_sse_count < array_sizeof(m_sse)) {
                         m_sse[m_sse_count++] = n.u64;
                     } else {
                         m_frame[m_count++] = n.u64;
                     }
+                    return NULL;
+                }
+                goto bad_signature;
+            }
+            if (BVECTORP(obj)) {
+                if (signature != 'p') goto bad_signature;
+                scm_bvector_t bvector = (scm_bvector_t)obj;
+                if (m_reg_count < array_sizeof(m_reg)) {
+                    m_reg[m_reg_count++] = (intptr_t)bvector->elts;
+                } else {
+                    m_frame[m_count++] = (intptr_t)bvector->elts;
                 }
                 return NULL;
             }
-            return "exact integer";
+            if (VECTORP(obj)) {
+                if (signature != 'c') goto bad_signature;
+                scm_vector_t vector = (scm_vector_t)obj;
+                int n = vector->count;
+                if (n == 0) return "nonempty vector";
+                assert(n);
+                if (!FIXNUMP(vector->elts[0])) return "vector contains fixnum in first element";
+                int ref = FIXNUM(vector->elts[0]);
+                scm_bvector_t bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t) * (n - 1));
+                for (int i = 0; i < n - 1; i++) {
+                    if (BVECTORP(vector->elts[i + 1])) {
+                        *(uint8_t**)(bvector->elts + sizeof(intptr_t) * i) = ((scm_bvector_t)vector->elts[i + 1])->elts;
+                    } else {
+                        return "vector of bytevector";
+                    }
+                }
+                while (ref) {
+                    intptr_t datum = (intptr_t)bvector->elts;
+                    bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t));
+                    *(intptr_t*)(bvector->elts) = datum;
+                    ref--;
+                }
+                if (m_reg_count < array_sizeof(m_reg)) {
+                    m_reg[m_reg_count++] = (intptr_t)bvector->elts;
+                } else {
+                    m_frame[m_count++] = (intptr_t)bvector->elts;
+                }
+                return NULL;
+            }
+            goto bad_signature;
         }
-        return "internal error: c function stack frame overflow";
+        fatal("fatal: c function stack frame overflow");
+
+    bad_signature:
+        switch (signature) {
+            case 'i':
+            case 'x':
+                return "exact integer";
+            case 'p':
+                return "exact integer or bytevector";
+            case 'c':
+                return "vector";
+            case 'f':
+            case 'd':
+                return "real";
+            default:
+                fatal("fatal: invalid c function argument type specifier");
+        }
     }
 
     void
@@ -229,6 +269,35 @@
         return retval;
     }
 
+    int64_t
+    stdcall_func_stub_int64(void* adrs, int argc, intptr_t argv[])
+    {
+        int bytes = (argc * sizeof(intptr_t) + 15) & ~15;
+        union {
+            int64_t s64;
+            struct {
+                uint32_t lo;
+                uint32_t hi;
+            } s32;
+        } retval;
+
+        __asm {
+            mov     ecx, bytes
+            mov     edx, esp
+            sub     esp, ecx
+            mov     esi, argv
+            mov     edi, esp
+            rep     movsb
+            mov     edi, edx
+            call    adrs
+            mov     esp, edi
+            mov     retval.s32.lo, eax
+            mov     retval.s32.hi, edx
+        }
+
+        return retval.s64;
+    }
+
     float
     stdcall_func_stub_float(void* adrs, int argc, intptr_t argv[])
     {
@@ -250,7 +319,7 @@
 
         return retval;
     }
-    
+
     double
     stdcall_func_stub_double(void* adrs, int argc, intptr_t argv[])
     {
@@ -277,6 +346,12 @@
     c_func_stub_intptr(void* adrs, int argc, intptr_t argv[])
     {
         return stdcall_func_stub_intptr(adrs, argc, argv);
+    }
+
+    int64_t
+    c_func_stub_int64(void* adrs, int argc, intptr_t argv[])
+    {
+        return stdcall_func_stub_int64(adrs, argc, argv);
     }
 
     double

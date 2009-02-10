@@ -345,8 +345,8 @@ VM::apply_apply_closure(scm_obj_t lastarg)
     return apply_apply_bad_last_args;
 }
 
-int 
-VM::apply_apply_subr(scm_obj_t lastarg) 
+int
+VM::apply_apply_subr(scm_obj_t lastarg)
 {
     scm_obj_t lst = lastarg;
     while (PAIRP(lst)) {
