@@ -9,12 +9,18 @@
 
   (define-syntax dotimes
     (syntax-rules ()
-      ((_ n body1 body2 ...)
+      ((_ (i e1) e2 e3 ...)
+       (let ((n e1))
+         (let loop ((i 0))
+           (if (< i n)
+               (begin
+                 e2 e3 ...
+                 (loop (+ i 1)))))))
+      ((_ n e1 e2 ...)
        (let loop ((i n))
          (if (> i 0)
              (begin
-               body1 body2 ...
+               e1 e2 ...
                (loop (- i 1))))))))
-
 
   ) ;[end]

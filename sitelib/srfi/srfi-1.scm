@@ -1,5 +1,5 @@
 #!nobacktrace
-;; A list of identifiers conflict with rnrs: (assoc fold-right for-each map member remove)
+;; list of identifiers conflict with r6rs --- assoc fold-right for-each map member remove
 (library (srfi srfi-1)
   (export alist-cons
           alist-copy

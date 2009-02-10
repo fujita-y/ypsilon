@@ -403,7 +403,6 @@
     flnegative?
     flnumerator
     flodd?
-    flonum->float
     flonum?
     floor
     flpositive?
@@ -574,7 +573,7 @@
     make-assertion-violation
     make-bytevector
     make-bytevector-mapping
-    make-callback
+    make-callback-trampoline
     make-core-hashtable
     make-custom-binary-input-port
     make-custom-binary-input/output-port
@@ -812,7 +811,6 @@
     standard-error-port
     standard-input-port
     standard-output-port
-    stdcall-shared-object
     string
     string->bytevector
     string->list

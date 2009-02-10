@@ -1,5 +1,8 @@
 #!nobacktrace
 ;;; porting srfi-13 reference implementation to ypsilon
+;;; list of identifiers conflict with r6rs:
+;;;   string-copy string-for-each string-hash string-upcase string-downcase
+;;;   string-titlecase string-fill! string->list
 ;;; -- y.fujita.lwp
 
 (library (srfi srfi-13)
@@ -10,12 +13,13 @@
    ;; constructors
    make-string string string-tabulate
    ;; list & string conversion
-   string->list list->string
+   (rename (string->list/srfi-13 string->list))
+   list->string
    reverse-list->string string-join
    ;; selection
    string-length
    string-ref
-   string-copy
+   (rename (string-copy/srfi-13 string-copy))
    substring/shared
    string-copy!
    string-take string-take-right
@@ -23,12 +27,14 @@
    string-pad string-pad-right
    string-trim string-trim-right string-trim-both
    ;; modification
-   string-set! string-fill!
+   string-set!
+   (rename (string-fill!/srfi-13 string-fill!))
    ;; comparison
    string-compare string-compare-ci
    string<> string= string< string> string<= string>=
    string-ci<> string-ci= string-ci< string-ci> string-ci<= string-ci>=
-   string-hash string-hash-ci
+   (rename (string-hash/srfi-13 string-hash))
+   string-hash-ci
    ;; prefixes & suffixes
    string-prefix-length string-suffix-length
    string-prefix-length-ci string-suffix-length-ci
@@ -40,7 +46,9 @@
    string-count
    string-contains string-contains-ci
    ;; alphabetic case mapping
-   string-titlecase string-upcase string-downcase
+   (rename (string-titlecase/srfi-13 string-titlecase)
+           (string-upcase/srfi-13 string-upcase)
+           (string-downcase/srfi-13 string-downcase))
    string-titlecase! string-upcase! string-downcase!
    ;; reverse & append
    string-reverse string-reverse!
@@ -52,7 +60,8 @@
    string-map string-map!
    string-fold string-fold-right
    string-unfold string-unfold-right
-   string-for-each string-for-each-index
+   (rename (string-for-each/srfi-13 string-for-each))
+   string-for-each-index
    ;; replicate & rotate
    xsubstring string-xcopy!
    ;; miscellaneous: insertion, parsing
@@ -66,15 +75,6 @@
    check-substring-spec
    substring-spec-ok?
    make-kmp-restart-vector kmp-step string-kmp-partial-search)
-   ;; procedures conflict with r6rs
-   #;(rename (string-copy/srfi-13 string-copy)
-             (string-for-each/srfi-13 string-for-each)
-             (string-hash/srfi-13 string-hash)
-             (string-upcase/srfi-13 string-upcase)
-             (string-downcase/srfi-13 string-downcase)
-             (string-titlecase/srfi-13 string-titlecase)
-             (string-fill!/srfi-13 string-fill!)
-             (string->list/srfi-13 string->list))
   (import (core) (srfi srfi-8) (srfi srfi-14))
 
   (define-syntax check-arg

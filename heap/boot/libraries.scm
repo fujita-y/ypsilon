@@ -448,10 +448,11 @@
                         stdcall-shared-object->char*
                         |#
                         call-shared-object
-                        stdcall-shared-object
+                        ;stdcall-shared-object
                         
-                        make-callback
-                        flonum->float
+                        ;make-callback
+                        make-callback-trampoline
+                        ;flonum->float
                         shared-object-errno
                         shared-object-win32-lasterror
                         bytevector-c-short-ref bytevector-c-unsigned-short-ref bytevector-c-short-set!

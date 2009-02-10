@@ -88,7 +88,7 @@
      (mutable type time-type set-time-type!)
      (mutable nanosecond time-nanosecond set-time-nanosecond!)
      (mutable second time-second set-time-second!)))
-  
+
   (define make-time/srfi-19
     (lambda (type nanosecond second)
       (assert (integer? nanosecond))
@@ -122,7 +122,7 @@
       (assert (integer? month))
       (assert (<= 1 month 12))
       (make-date nanosecond second minute hour day month year zone-offset)))
-      
+
   (define current-seconds
     (lambda ()
       (div (microsecond) 1000000)))
@@ -1183,7 +1183,7 @@
                      (display (tm:padding (date-second date)
                                           pad-with 2)
                               port))
-                 
+
                ;; ypsilon -- y.fujita.lwp
                #;(let* ((ns (tm:fractional-part (/
                                                  (date-nanosecond date)
@@ -1195,7 +1195,7 @@
                          (display (substring ns 2 le) port))))
                  (display tm:locale-number-separator port)
                  (display (tm:fractional-part (/ (date-nanosecond date) tm:nano)) port)))
-     
+
      (cons #\h (lambda (date pad-with port)
                  (display (date->string date "~b") port)))
      (cons #\H (lambda (date pad-with port)

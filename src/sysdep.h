@@ -228,7 +228,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     {
         Sleep(0);
     }
-    
+
 #else
 
     #include <sys/time.h>

@@ -2,7 +2,7 @@
 ;;; Ypsilon Scheme System
 ;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
-  
+
 (library (ypsilon socket)
   (export make-client-socket
           make-server-socket
@@ -60,7 +60,7 @@
          (cond ((architecture-feature (syntax->datum #'name))
                 => (lambda (value) #`(define name #,value)))
                (else #'(define-syntax name unsupported-option)))))))
-  
+
   (define-const AF_UNSPEC)
   (define-const AF_INET)
   (define-const AF_INET6)

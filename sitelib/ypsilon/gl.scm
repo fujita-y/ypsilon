@@ -2120,25 +2120,25 @@
   (define-function void glPolygonOffset (float float))
 
   ;; void glPolygonStipple( const GLubyte *mask )
-  (define-function void glPolygonStipple (byte*))
+  (define-function void glPolygonStipple (void*))
 
   ;; void glGetPolygonStipple( GLubyte *mask )
-  (define-function void glGetPolygonStipple (byte*))
+  (define-function void glGetPolygonStipple (void*))
 
   ;; void glEdgeFlag( GLboolean flag )
   (define-function void glEdgeFlag (int))
 
   ;; void glEdgeFlagv( const GLboolean *flag )
-  (define-function void glEdgeFlagv (byte*))
+  (define-function void glEdgeFlagv (void*))
 
   ;; void glScissor( GLint x, GLint y, GLsizei width, GLsizei height)
   (define-function void glScissor (int int int int))
 
   ;; void glClipPlane( GLenum plane, const GLdouble *equation )
-  (define-function void glClipPlane (int byte*))
+  (define-function void glClipPlane (int void*))
 
   ;; void glGetClipPlane( GLenum plane, GLdouble *equation )
-  (define-function void glGetClipPlane (int byte*))
+  (define-function void glGetClipPlane (int void*))
 
   ;; void glDrawBuffer( GLenum mode )
   (define-function void glDrawBuffer (int))
@@ -2162,16 +2162,16 @@
   (define-function void glDisableClientState (int))
 
   ;; void glGetBooleanv( GLenum pname, GLboolean *params )
-  (define-function void glGetBooleanv (int byte*))
+  (define-function void glGetBooleanv (int void*))
 
   ;; void glGetDoublev( GLenum pname, GLdouble *params )
-  (define-function void glGetDoublev (int byte*))
+  (define-function void glGetDoublev (int void*))
 
   ;; void glGetFloatv( GLenum pname, GLfloat *params )
-  (define-function void glGetFloatv (int byte*))
+  (define-function void glGetFloatv (int void*))
 
   ;; void glGetIntegerv( GLenum pname, GLint *params )
-  (define-function void glGetIntegerv (int byte*))
+  (define-function void glGetIntegerv (int void*))
 
   ;; void glPushAttrib( GLbitfield mask )
   (define-function void glPushAttrib (int))
@@ -2249,16 +2249,16 @@
   (define-function void glLoadIdentity ())
 
   ;; void glLoadMatrixd( const GLdouble *m )
-  (define-function void glLoadMatrixd (byte*))
+  (define-function void glLoadMatrixd (void*))
 
   ;; void glLoadMatrixf( const GLfloat *m )
-  (define-function void glLoadMatrixf (byte*))
+  (define-function void glLoadMatrixf (void*))
 
   ;; void glMultMatrixd( const GLdouble *m )
-  (define-function void glMultMatrixd (byte*))
+  (define-function void glMultMatrixd (void*))
 
   ;; void glMultMatrixf( const GLfloat *m )
-  (define-function void glMultMatrixf (byte*))
+  (define-function void glMultMatrixf (void*))
 
   ;; void glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
   (define-function void glRotated (double double double double))
@@ -2299,7 +2299,7 @@
   (define-function void glCallList (int))
 
   ;; void glCallLists( GLsizei n, GLenum type, const GLvoid *lists )
-  (define-function void glCallLists (int int byte*))
+  (define-function void glCallLists (int int void*))
 
   ;; void glListBase( GLuint base )
   (define-function void glListBase (int))
@@ -2349,40 +2349,40 @@
   (define-function void glVertex4s (int int int int))
 
   ;; void glVertex2dv( const GLdouble *v )
-  (define-function void glVertex2dv (byte*))
+  (define-function void glVertex2dv (void*))
 
   ;; void glVertex2fv( const GLfloat *v )
-  (define-function void glVertex2fv (byte*))
+  (define-function void glVertex2fv (void*))
 
   ;; void glVertex2iv( const GLint *v )
-  (define-function void glVertex2iv (byte*))
+  (define-function void glVertex2iv (void*))
 
   ;; void glVertex2sv( const GLshort *v )
-  (define-function void glVertex2sv (byte*))
+  (define-function void glVertex2sv (void*))
 
   ;; void glVertex3dv( const GLdouble *v )
-  (define-function void glVertex3dv (byte*))
+  (define-function void glVertex3dv (void*))
 
   ;; void glVertex3fv( const GLfloat *v )
-  (define-function void glVertex3fv (byte*))
+  (define-function void glVertex3fv (void*))
 
   ;; void glVertex3iv( const GLint *v )
-  (define-function void glVertex3iv (byte*))
+  (define-function void glVertex3iv (void*))
 
   ;; void glVertex3sv( const GLshort *v )
-  (define-function void glVertex3sv (byte*))
+  (define-function void glVertex3sv (void*))
 
   ;; void glVertex4dv( const GLdouble *v )
-  (define-function void glVertex4dv (byte*))
+  (define-function void glVertex4dv (void*))
 
   ;; void glVertex4fv( const GLfloat *v )
-  (define-function void glVertex4fv (byte*))
+  (define-function void glVertex4fv (void*))
 
   ;; void glVertex4iv( const GLint *v )
-  (define-function void glVertex4iv (byte*))
+  (define-function void glVertex4iv (void*))
 
   ;; void glVertex4sv( const GLshort *v )
-  (define-function void glVertex4sv (byte*))
+  (define-function void glVertex4sv (void*))
 
   ;; void glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz )
   (define-function void glNormal3b (int int int))
@@ -2400,19 +2400,19 @@
   (define-function void glNormal3s (int int int))
 
   ;; void glNormal3bv( const GLbyte *v )
-  (define-function void glNormal3bv (byte*))
+  (define-function void glNormal3bv (void*))
 
   ;; void glNormal3dv( const GLdouble *v )
-  (define-function void glNormal3dv (byte*))
+  (define-function void glNormal3dv (void*))
 
   ;; void glNormal3fv( const GLfloat *v )
-  (define-function void glNormal3fv (byte*))
+  (define-function void glNormal3fv (void*))
 
   ;; void glNormal3iv( const GLint *v )
-  (define-function void glNormal3iv (byte*))
+  (define-function void glNormal3iv (void*))
 
   ;; void glNormal3sv( const GLshort *v )
-  (define-function void glNormal3sv (byte*))
+  (define-function void glNormal3sv (void*))
 
   ;; void glIndexd( GLdouble c )
   (define-function void glIndexd (double))
@@ -2430,19 +2430,19 @@
   (define-function void glIndexub (int))
 
   ;; void glIndexdv( const GLdouble *c )
-  (define-function void glIndexdv (byte*))
+  (define-function void glIndexdv (void*))
 
   ;; void glIndexfv( const GLfloat *c )
-  (define-function void glIndexfv (byte*))
+  (define-function void glIndexfv (void*))
 
   ;; void glIndexiv( const GLint *c )
-  (define-function void glIndexiv (byte*))
+  (define-function void glIndexiv (void*))
 
   ;; void glIndexsv( const GLshort *c )
-  (define-function void glIndexsv (byte*))
+  (define-function void glIndexsv (void*))
 
   ;; void glIndexubv( const GLubyte *c )  /* 1.1 */
-  (define-function void glIndexubv (byte*))
+  (define-function void glIndexubv (void*))
 
   ;; void glColor3b( GLbyte red, GLbyte green, GLbyte blue )
   (define-function void glColor3b (int int int))
@@ -2493,52 +2493,52 @@
   (define-function void glColor4us (int int int int))
 
   ;; void glColor3bv( const GLbyte *v )
-  (define-function void glColor3bv (byte*))
+  (define-function void glColor3bv (void*))
 
   ;; void glColor3dv( const GLdouble *v )
-  (define-function void glColor3dv (byte*))
+  (define-function void glColor3dv (void*))
 
   ;; void glColor3fv( const GLfloat *v )
-  (define-function void glColor3fv (byte*))
+  (define-function void glColor3fv (void*))
 
   ;; void glColor3iv( const GLint *v )
-  (define-function void glColor3iv (byte*))
+  (define-function void glColor3iv (void*))
 
   ;; void glColor3sv( const GLshort *v )
-  (define-function void glColor3sv (byte*))
+  (define-function void glColor3sv (void*))
 
   ;; void glColor3ubv( const GLubyte *v )
-  (define-function void glColor3ubv (byte*))
+  (define-function void glColor3ubv (void*))
 
   ;; void glColor3uiv( const GLuint *v )
-  (define-function void glColor3uiv (byte*))
+  (define-function void glColor3uiv (void*))
 
   ;; void glColor3usv( const GLushort *v )
-  (define-function void glColor3usv (byte*))
+  (define-function void glColor3usv (void*))
 
   ;; void glColor4bv( const GLbyte *v )
-  (define-function void glColor4bv (byte*))
+  (define-function void glColor4bv (void*))
 
   ;; void glColor4dv( const GLdouble *v )
-  (define-function void glColor4dv (byte*))
+  (define-function void glColor4dv (void*))
 
   ;; void glColor4fv( const GLfloat *v )
-  (define-function void glColor4fv (byte*))
+  (define-function void glColor4fv (void*))
 
   ;; void glColor4iv( const GLint *v )
-  (define-function void glColor4iv (byte*))
+  (define-function void glColor4iv (void*))
 
   ;; void glColor4sv( const GLshort *v )
-  (define-function void glColor4sv (byte*))
+  (define-function void glColor4sv (void*))
 
   ;; void glColor4ubv( const GLubyte *v )
-  (define-function void glColor4ubv (byte*))
+  (define-function void glColor4ubv (void*))
 
   ;; void glColor4uiv( const GLuint *v )
-  (define-function void glColor4uiv (byte*))
+  (define-function void glColor4uiv (void*))
 
   ;; void glColor4usv( const GLushort *v )
-  (define-function void glColor4usv (byte*))
+  (define-function void glColor4usv (void*))
 
   ;; void glTexCoord1d( GLdouble s )
   (define-function void glTexCoord1d (double))
@@ -2589,52 +2589,52 @@
   (define-function void glTexCoord4s (int int int int))
 
   ;; void glTexCoord1dv( const GLdouble *v )
-  (define-function void glTexCoord1dv (byte*))
+  (define-function void glTexCoord1dv (void*))
 
   ;; void glTexCoord1fv( const GLfloat *v )
-  (define-function void glTexCoord1fv (byte*))
+  (define-function void glTexCoord1fv (void*))
 
   ;; void glTexCoord1iv( const GLint *v )
-  (define-function void glTexCoord1iv (byte*))
+  (define-function void glTexCoord1iv (void*))
 
   ;; void glTexCoord1sv( const GLshort *v )
-  (define-function void glTexCoord1sv (byte*))
+  (define-function void glTexCoord1sv (void*))
 
   ;; void glTexCoord2dv( const GLdouble *v )
-  (define-function void glTexCoord2dv (byte*))
+  (define-function void glTexCoord2dv (void*))
 
   ;; void glTexCoord2fv( const GLfloat *v )
-  (define-function void glTexCoord2fv (byte*))
+  (define-function void glTexCoord2fv (void*))
 
   ;; void glTexCoord2iv( const GLint *v )
-  (define-function void glTexCoord2iv (byte*))
+  (define-function void glTexCoord2iv (void*))
 
   ;; void glTexCoord2sv( const GLshort *v )
-  (define-function void glTexCoord2sv (byte*))
+  (define-function void glTexCoord2sv (void*))
 
   ;; void glTexCoord3dv( const GLdouble *v )
-  (define-function void glTexCoord3dv (byte*))
+  (define-function void glTexCoord3dv (void*))
 
   ;; void glTexCoord3fv( const GLfloat *v )
-  (define-function void glTexCoord3fv (byte*))
+  (define-function void glTexCoord3fv (void*))
 
   ;; void glTexCoord3iv( const GLint *v )
-  (define-function void glTexCoord3iv (byte*))
+  (define-function void glTexCoord3iv (void*))
 
   ;; void glTexCoord3sv( const GLshort *v )
-  (define-function void glTexCoord3sv (byte*))
+  (define-function void glTexCoord3sv (void*))
 
   ;; void glTexCoord4dv( const GLdouble *v )
-  (define-function void glTexCoord4dv (byte*))
+  (define-function void glTexCoord4dv (void*))
 
   ;; void glTexCoord4fv( const GLfloat *v )
-  (define-function void glTexCoord4fv (byte*))
+  (define-function void glTexCoord4fv (void*))
 
   ;; void glTexCoord4iv( const GLint *v )
-  (define-function void glTexCoord4iv (byte*))
+  (define-function void glTexCoord4iv (void*))
 
   ;; void glTexCoord4sv( const GLshort *v )
-  (define-function void glTexCoord4sv (byte*))
+  (define-function void glTexCoord4sv (void*))
 
   ;; void glRasterPos2d( GLdouble x, GLdouble y )
   (define-function void glRasterPos2d (double double))
@@ -2673,40 +2673,40 @@
   (define-function void glRasterPos4s (int int int int))
 
   ;; void glRasterPos2dv( const GLdouble *v )
-  (define-function void glRasterPos2dv (byte*))
+  (define-function void glRasterPos2dv (void*))
 
   ;; void glRasterPos2fv( const GLfloat *v )
-  (define-function void glRasterPos2fv (byte*))
+  (define-function void glRasterPos2fv (void*))
 
   ;; void glRasterPos2iv( const GLint *v )
-  (define-function void glRasterPos2iv (byte*))
+  (define-function void glRasterPos2iv (void*))
 
   ;; void glRasterPos2sv( const GLshort *v )
-  (define-function void glRasterPos2sv (byte*))
+  (define-function void glRasterPos2sv (void*))
 
   ;; void glRasterPos3dv( const GLdouble *v )
-  (define-function void glRasterPos3dv (byte*))
+  (define-function void glRasterPos3dv (void*))
 
   ;; void glRasterPos3fv( const GLfloat *v )
-  (define-function void glRasterPos3fv (byte*))
+  (define-function void glRasterPos3fv (void*))
 
   ;; void glRasterPos3iv( const GLint *v )
-  (define-function void glRasterPos3iv (byte*))
+  (define-function void glRasterPos3iv (void*))
 
   ;; void glRasterPos3sv( const GLshort *v )
-  (define-function void glRasterPos3sv (byte*))
+  (define-function void glRasterPos3sv (void*))
 
   ;; void glRasterPos4dv( const GLdouble *v )
-  (define-function void glRasterPos4dv (byte*))
+  (define-function void glRasterPos4dv (void*))
 
   ;; void glRasterPos4fv( const GLfloat *v )
-  (define-function void glRasterPos4fv (byte*))
+  (define-function void glRasterPos4fv (void*))
 
   ;; void glRasterPos4iv( const GLint *v )
-  (define-function void glRasterPos4iv (byte*))
+  (define-function void glRasterPos4iv (void*))
 
   ;; void glRasterPos4sv( const GLshort *v )
-  (define-function void glRasterPos4sv (byte*))
+  (define-function void glRasterPos4sv (void*))
 
   ;; void glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 )
   (define-function void glRectd (double double double double))
@@ -2721,39 +2721,39 @@
   (define-function void glRects (int int int int))
 
   ;; void glRectdv( const GLdouble *v1, const GLdouble *v2 )
-  (define-function void glRectdv (byte* byte*))
+  (define-function void glRectdv (void* void*))
 
   ;; void glRectfv( const GLfloat *v1, const GLfloat *v2 )
-  (define-function void glRectfv (byte* byte*))
+  (define-function void glRectfv (void* void*))
 
   ;; void glRectiv( const GLint *v1, const GLint *v2 )
-  (define-function void glRectiv (byte* byte*))
+  (define-function void glRectiv (void* void*))
 
   ;; void glRectsv( const GLshort *v1, const GLshort *v2 )
-  (define-function void glRectsv (byte* byte*))
+  (define-function void glRectsv (void* void*))
 
   ;;;; Vertex Arrays 1.1
 
   ;; void glVertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *ptr )
-  (define-function void glVertexPointer (int int int byte*))
+  (define-function void glVertexPointer (int int int void*))
 
   ;; void glNormalPointer( GLenum type, GLsizei stride, const GLvoid *ptr )
-  (define-function void glNormalPointer (int int byte*))
+  (define-function void glNormalPointer (int int void*))
 
   ;; void glColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *ptr )
-  (define-function void glColorPointer (int int int byte*))
+  (define-function void glColorPointer (int int int void*))
 
   ;; void glIndexPointer( GLenum type, GLsizei stride, const GLvoid *ptr )
-  (define-function void glIndexPointer (int int byte*))
+  (define-function void glIndexPointer (int int void*))
 
   ;; void glTexCoordPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *ptr )
-  (define-function void glTexCoordPointer (int int int byte*))
+  (define-function void glTexCoordPointer (int int int void*))
 
   ;; void glEdgeFlagPointer( GLsizei stride, const GLvoid *ptr )
-  (define-function void glEdgeFlagPointer (int byte*))
+  (define-function void glEdgeFlagPointer (int void*))
 
   ;; void glGetPointerv( GLenum pname, GLvoid **params )
-  (define-function void glGetPointerv (int byte*))
+  (define-function void glGetPointerv (int void*))
 
   ;; void glArrayElement( GLint i )
   (define-function void glArrayElement (int))
@@ -2762,10 +2762,10 @@
   (define-function void glDrawArrays (int int int))
 
   ;; void glDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices )
-  (define-function void glDrawElements (int int int byte*))
+  (define-function void glDrawElements (int int int void*))
 
   ;; void glInterleavedArrays( GLenum format, GLsizei stride, const GLvoid *pointer )
-  (define-function void glInterleavedArrays (int int byte*))
+  (define-function void glInterleavedArrays (int int void*))
 
   ;;;; Lighting
 
@@ -2779,16 +2779,16 @@
   (define-function void glLighti (int int int))
 
   ;; void glLightfv( GLenum light, GLenum pname, const GLfloat *params )
-  (define-function void glLightfv (int int byte*))
+  (define-function void glLightfv (int int void*))
 
   ;; void glLightiv( GLenum light, GLenum pname, const GLint *params )
-  (define-function void glLightiv (int int byte*))
+  (define-function void glLightiv (int int void*))
 
   ;; void glGetLightfv( GLenum light, GLenum pname, GLfloat *params )
-  (define-function void glGetLightfv (int int byte*))
+  (define-function void glGetLightfv (int int void*))
 
   ;; void glGetLightiv( GLenum light, GLenum pname, GLint *params )
-  (define-function void glGetLightiv (int int byte*))
+  (define-function void glGetLightiv (int int void*))
 
   ;; void glLightModelf( GLenum pname, GLfloat param )
   (define-function void glLightModelf (int float))
@@ -2797,10 +2797,10 @@
   (define-function void glLightModeli (int int))
 
   ;; void glLightModelfv( GLenum pname, const GLfloat *params )
-  (define-function void glLightModelfv (int byte*))
+  (define-function void glLightModelfv (int void*))
 
   ;; void glLightModeliv( GLenum pname, const GLint *params )
-  (define-function void glLightModeliv (int byte*))
+  (define-function void glLightModeliv (int void*))
 
   ;; void glMaterialf( GLenum face, GLenum pname, GLfloat param )
   (define-function void glMaterialf (int int float))
@@ -2809,16 +2809,16 @@
   (define-function void glMateriali (int int int))
 
   ;; void glMaterialfv( GLenum face, GLenum pname, const GLfloat *params )
-  (define-function void glMaterialfv (int int byte*))
+  (define-function void glMaterialfv (int int void*))
 
   ;; void glMaterialiv( GLenum face, GLenum pname, const GLint *params )
-  (define-function void glMaterialiv (int int byte*))
+  (define-function void glMaterialiv (int int void*))
 
   ;; void glGetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
-  (define-function void glGetMaterialfv (int int byte*))
+  (define-function void glGetMaterialfv (int int void*))
 
   ;; void glGetMaterialiv( GLenum face, GLenum pname, GLint *params )
-  (define-function void glGetMaterialiv (int int byte*))
+  (define-function void glGetMaterialiv (int int void*))
 
   ;; void glColorMaterial( GLenum face, GLenum mode )
   (define-function void glColorMaterial (int int))
@@ -2841,31 +2841,31 @@
   (define-function void glPixelTransferi (int int))
 
   ;; void glPixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
-  (define-function void glPixelMapfv (int int byte*))
+  (define-function void glPixelMapfv (int int void*))
 
   ;; void glPixelMapuiv( GLenum map, GLsizei mapsize, const GLuint *values )
-  (define-function void glPixelMapuiv (int int byte*))
+  (define-function void glPixelMapuiv (int int void*))
 
   ;; void glPixelMapusv( GLenum map, GLsizei mapsize, const GLushort *values )
-  (define-function void glPixelMapusv (int int byte*))
+  (define-function void glPixelMapusv (int int void*))
 
   ;; void glGetPixelMapfv( GLenum map, GLfloat *values )
-  (define-function void glGetPixelMapfv (int byte*))
+  (define-function void glGetPixelMapfv (int void*))
 
   ;; void glGetPixelMapuiv( GLenum map, GLuint *values )
-  (define-function void glGetPixelMapuiv (int byte*))
+  (define-function void glGetPixelMapuiv (int void*))
 
   ;; void glGetPixelMapusv( GLenum map, GLushort *values )
-  (define-function void glGetPixelMapusv (int byte*))
+  (define-function void glGetPixelMapusv (int void*))
 
   ;; void glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap )
-  (define-function void glBitmap (int int float float float float byte*))
+  (define-function void glBitmap (int int float float float float void*))
 
   ;; void glReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
-  (define-function void glReadPixels (int int int int int int byte*))
+  (define-function void glReadPixels (int int int int int int void*))
 
   ;; void glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glDrawPixels (int int int int byte*))
+  (define-function void glDrawPixels (int int int int void*))
 
   ;; void glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
   (define-function void glCopyPixels (int int int int int))
@@ -2896,22 +2896,22 @@
   (define-function void glTexGeni (int int int))
 
   ;; void glTexGendv( GLenum coord, GLenum pname, const GLdouble *params )
-  (define-function void glTexGendv (int int byte*))
+  (define-function void glTexGendv (int int void*))
 
   ;; void glTexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
-  (define-function void glTexGenfv (int int byte*))
+  (define-function void glTexGenfv (int int void*))
 
   ;; void glTexGeniv( GLenum coord, GLenum pname, const GLint *params )
-  (define-function void glTexGeniv (int int byte*))
+  (define-function void glTexGeniv (int int void*))
 
   ;; void glGetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
-  (define-function void glGetTexGendv (int int byte*))
+  (define-function void glGetTexGendv (int int void*))
 
   ;; void glGetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
-  (define-function void glGetTexGenfv (int int byte*))
+  (define-function void glGetTexGenfv (int int void*))
 
   ;; void glGetTexGeniv( GLenum coord, GLenum pname, GLint *params )
-  (define-function void glGetTexGeniv (int int byte*))
+  (define-function void glGetTexGeniv (int int void*))
 
   ;; void glTexEnvf( GLenum target, GLenum pname, GLfloat param )
   (define-function void glTexEnvf (int int float))
@@ -2920,16 +2920,16 @@
   (define-function void glTexEnvi (int int int))
 
   ;; void glTexEnvfv( GLenum target, GLenum pname, const GLfloat *params )
-  (define-function void glTexEnvfv (int int byte*))
+  (define-function void glTexEnvfv (int int void*))
 
   ;; void glTexEnviv( GLenum target, GLenum pname, const GLint *params )
-  (define-function void glTexEnviv (int int byte*))
+  (define-function void glTexEnviv (int int void*))
 
   ;; void glGetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
-  (define-function void glGetTexEnvfv (int int byte*))
+  (define-function void glGetTexEnvfv (int int void*))
 
   ;; void glGetTexEnviv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetTexEnviv (int int byte*))
+  (define-function void glGetTexEnviv (int int void*))
 
   ;; void glTexParameterf( GLenum target, GLenum pname, GLfloat param )
   (define-function void glTexParameterf (int int float))
@@ -2938,57 +2938,57 @@
   (define-function void glTexParameteri (int int int))
 
   ;; void glTexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
-  (define-function void glTexParameterfv (int int byte*))
+  (define-function void glTexParameterfv (int int void*))
 
   ;; void glTexParameteriv( GLenum target, GLenum pname, const GLint *params )
-  (define-function void glTexParameteriv (int int byte*))
+  (define-function void glTexParameteriv (int int void*))
 
   ;; void glGetTexParameterfv( GLenum target, GLenum pname, GLfloat *params)
-  (define-function void glGetTexParameterfv (int int byte*))
+  (define-function void glGetTexParameterfv (int int void*))
 
   ;; void glGetTexParameteriv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetTexParameteriv (int int byte*))
+  (define-function void glGetTexParameteriv (int int void*))
 
   ;; void glGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, GLfloat *params )
-  (define-function void glGetTexLevelParameterfv (int int int byte*))
+  (define-function void glGetTexLevelParameterfv (int int int void*))
 
   ;; void glGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint *params )
-  (define-function void glGetTexLevelParameteriv (int int int byte*))
+  (define-function void glGetTexLevelParameteriv (int int int void*))
 
   ;; void glTexImage1D( GLenum target, GLint level, GLint internalFormat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glTexImage1D (int int int int int int int byte*))
+  (define-function void glTexImage1D (int int int int int int int void*))
 
   ;; void glTexImage2D( GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glTexImage2D (int int int int int int int int byte*))
+  (define-function void glTexImage2D (int int int int int int int int void*))
 
   ;; void glGetTexImage( GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels )
-  (define-function void glGetTexImage (int int int int byte*))
+  (define-function void glGetTexImage (int int int int void*))
 
   ;;;; 1.1 functions
 
   ;; void glGenTextures( GLsizei n, GLuint *textures )
-  (define-function void glGenTextures (int byte*))
+  (define-function void glGenTextures (int void*))
 
   ;; void glDeleteTextures( GLsizei n, const GLuint *textures)
-  (define-function void glDeleteTextures (int byte*))
+  (define-function void glDeleteTextures (int void*))
 
   ;; void glBindTexture( GLenum target, GLuint texture )
   (define-function void glBindTexture (int int))
 
   ;; void glPrioritizeTextures( GLsizei n, const GLuint *textures, const GLclampf *priorities )
-  (define-function void glPrioritizeTextures (int byte* byte*))
+  (define-function void glPrioritizeTextures (int void* void*))
 
   ;; GLboolean glAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences )
-  (define-function int glAreTexturesResident (int byte* byte*))
+  (define-function int glAreTexturesResident (int void* void*))
 
   ;; GLboolean glIsTexture( GLuint texture )
   (define-function int glIsTexture (int))
 
   ;; void glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glTexSubImage1D (int int int int int int byte*))
+  (define-function void glTexSubImage1D (int int int int int int void*))
 
   ;; void glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glTexSubImage2D (int int int int int int int int byte*))
+  (define-function void glTexSubImage2D (int int int int int int int int void*))
 
   ;; void glCopyTexImage1D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border )
   (define-function void glCopyTexImage1D (int int int int int int int))
@@ -3005,25 +3005,25 @@
   ;;;; Evaluators
 
   ;; void glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points )
-  (define-function void glMap1d (int double double int int byte*))
+  (define-function void glMap1d (int double double int int void*))
 
   ;; void glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points )
-  (define-function void glMap1f (int float float int int byte*))
+  (define-function void glMap1f (int float float int int void*))
 
   ;; void glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points )
-  (define-function void glMap2d (int double double int int double double int int byte*))
+  (define-function void glMap2d (int double double int int double double int int void*))
 
   ;; void glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points )
-  (define-function void glMap2f (int float float int int float float int int byte*))
+  (define-function void glMap2f (int float float int int float float int int void*))
 
   ;; void glGetMapdv( GLenum target, GLenum query, GLdouble *v )
-  (define-function void glGetMapdv (int int byte*))
+  (define-function void glGetMapdv (int int void*))
 
   ;; void glGetMapfv( GLenum target, GLenum query, GLfloat *v )
-  (define-function void glGetMapfv (int int byte*))
+  (define-function void glGetMapfv (int int void*))
 
   ;; void glGetMapiv( GLenum target, GLenum query, GLint *v )
-  (define-function void glGetMapiv (int int byte*))
+  (define-function void glGetMapiv (int int void*))
 
   ;; void glEvalCoord1d( GLdouble u )
   (define-function void glEvalCoord1d (double))
@@ -3032,10 +3032,10 @@
   (define-function void glEvalCoord1f (float))
 
   ;; void glEvalCoord1dv( const GLdouble *u )
-  (define-function void glEvalCoord1dv (byte*))
+  (define-function void glEvalCoord1dv (void*))
 
   ;; void glEvalCoord1fv( const GLfloat *u )
-  (define-function void glEvalCoord1fv (byte*))
+  (define-function void glEvalCoord1fv (void*))
 
   ;; void glEvalCoord2d( GLdouble u, GLdouble v )
   (define-function void glEvalCoord2d (double double))
@@ -3044,10 +3044,10 @@
   (define-function void glEvalCoord2f (float float))
 
   ;; void glEvalCoord2dv( const GLdouble *u )
-  (define-function void glEvalCoord2dv (byte*))
+  (define-function void glEvalCoord2dv (void*))
 
   ;; void glEvalCoord2fv( const GLfloat *u )
-  (define-function void glEvalCoord2fv (byte*))
+  (define-function void glEvalCoord2fv (void*))
 
   ;; void glMapGrid1d( GLint un, GLdouble u1, GLdouble u2 )
   (define-function void glMapGrid1d (int double double))
@@ -3082,21 +3082,21 @@
   (define-function void glFogi (int int))
 
   ;; void glFogfv( GLenum pname, const GLfloat *params )
-  (define-function void glFogfv (int byte*))
+  (define-function void glFogfv (int void*))
 
   ;; void glFogiv( GLenum pname, const GLint *params )
-  (define-function void glFogiv (int byte*))
+  (define-function void glFogiv (int void*))
 
   ;;;; Selection and Feedback
 
   ;; void glFeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
-  (define-function void glFeedbackBuffer (int int byte*))
+  (define-function void glFeedbackBuffer (int int void*))
 
   ;; void glPassThrough( GLfloat token )
   (define-function void glPassThrough (float))
 
   ;; void glSelectBuffer( GLsizei size, GLuint *buffer )
-  (define-function void glSelectBuffer (int byte*))
+  (define-function void glSelectBuffer (int void*))
 
   ;; void glInitNames( void )
   (define-function void glInitNames ())
@@ -3113,13 +3113,13 @@
   ;;;; OpenGL 1.2
 
   ;; void glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices )
-  (define-function void glDrawRangeElements (int int int int int byte*))
+  (define-function void glDrawRangeElements (int int int int int void*))
 
   ;; void glTexImage3D( GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glTexImage3D (int int int int int int int int int byte*))
+  (define-function void glTexImage3D (int int int int int int int int int void*))
 
   ;; void glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels)
-  (define-function void glTexSubImage3D (int int int int int int int int int int byte*))
+  (define-function void glTexSubImage3D (int int int int int int int int int int void*))
 
   ;; void glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
   (define-function void glCopyTexSubImage3D (int int int int int int int int int))
@@ -3127,16 +3127,16 @@
   ;;;; GL_ARB_imaging
 
   ;; void glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table )
-  (define-function void glColorTable (int int int int int byte*))
+  (define-function void glColorTable (int int int int int void*))
 
   ;; void glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data )
-  (define-function void glColorSubTable (int int int int int byte*))
+  (define-function void glColorSubTable (int int int int int void*))
 
   ;; void glColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
-  (define-function void glColorTableParameteriv (int int byte*))
+  (define-function void glColorTableParameteriv (int int void*))
 
   ;; void glColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
-  (define-function void glColorTableParameterfv (int int byte*))
+  (define-function void glColorTableParameterfv (int int void*))
 
   ;; void glCopyColorSubTable( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width )
   (define-function void glCopyColorSubTable (int int int int int))
@@ -3145,13 +3145,13 @@
   (define-function void glCopyColorTable (int int int int int))
 
   ;; void glGetColorTable( GLenum target, GLenum format, GLenum type, GLvoid *table )
-  (define-function void glGetColorTable (int int int byte*))
+  (define-function void glGetColorTable (int int int void*))
 
   ;; void glGetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
-  (define-function void glGetColorTableParameterfv (int int byte*))
+  (define-function void glGetColorTableParameterfv (int int void*))
 
   ;; void glGetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetColorTableParameteriv (int int byte*))
+  (define-function void glGetColorTableParameteriv (int int void*))
 
   ;; void glBlendEquation( GLenum mode )
   (define-function void glBlendEquation (int))
@@ -3166,13 +3166,13 @@
   (define-function void glResetHistogram (int))
 
   ;; void glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values )
-  (define-function void glGetHistogram (int int int int byte*))
+  (define-function void glGetHistogram (int int int int void*))
 
   ;; void glGetHistogramParameterfv( GLenum target, GLenum pname, GLfloat *params )
-  (define-function void glGetHistogramParameterfv (int int byte*))
+  (define-function void glGetHistogramParameterfv (int int void*))
 
   ;; void glGetHistogramParameteriv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetHistogramParameteriv (int int byte*))
+  (define-function void glGetHistogramParameteriv (int int void*))
 
   ;; void glMinmax( GLenum target, GLenum internalformat, GLboolean sink )
   (define-function void glMinmax (int int int))
@@ -3181,31 +3181,31 @@
   (define-function void glResetMinmax (int))
 
   ;; void glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum types, GLvoid *values )
-  (define-function void glGetMinmax (int int int int byte*))
+  (define-function void glGetMinmax (int int int int void*))
 
   ;; void glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat *params )
-  (define-function void glGetMinmaxParameterfv (int int byte*))
+  (define-function void glGetMinmaxParameterfv (int int void*))
 
   ;; void glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetMinmaxParameteriv (int int byte*))
+  (define-function void glGetMinmaxParameteriv (int int void*))
 
   ;; void glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image )
-  (define-function void glConvolutionFilter1D (int int int int int byte*))
+  (define-function void glConvolutionFilter1D (int int int int int void*))
 
   ;; void glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image )
-  (define-function void glConvolutionFilter2D (int int int int int int byte*))
+  (define-function void glConvolutionFilter2D (int int int int int int void*))
 
   ;; void glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params )
   (define-function void glConvolutionParameterf (int int float))
 
   ;; void glConvolutionParameterfv( GLenum target, GLenum pname, const GLfloat *params )
-  (define-function void glConvolutionParameterfv (int int byte*))
+  (define-function void glConvolutionParameterfv (int int void*))
 
   ;; void glConvolutionParameteri( GLenum target, GLenum pname, GLint params )
   (define-function void glConvolutionParameteri (int int int))
 
   ;; void glConvolutionParameteriv( GLenum target, GLenum pname, const GLint *params )
-  (define-function void glConvolutionParameteriv (int int byte*))
+  (define-function void glConvolutionParameteriv (int int void*))
 
   ;; void glCopyConvolutionFilter1D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width )
   (define-function void glCopyConvolutionFilter1D (int int int int int))
@@ -3214,19 +3214,19 @@
   (define-function void glCopyConvolutionFilter2D (int int int int int int))
 
   ;; void glGetConvolutionFilter( GLenum target, GLenum format, GLenum type, GLvoid *image )
-  (define-function void glGetConvolutionFilter (int int int byte*))
+  (define-function void glGetConvolutionFilter (int int int void*))
 
   ;; void glGetConvolutionParameterfv( GLenum target, GLenum pname, GLfloat *params )
-  (define-function void glGetConvolutionParameterfv (int int byte*))
+  (define-function void glGetConvolutionParameterfv (int int void*))
 
   ;; void glGetConvolutionParameteriv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetConvolutionParameteriv (int int byte*))
+  (define-function void glGetConvolutionParameteriv (int int void*))
 
   ;; void glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *row, const GLvoid *column )
-  (define-function void glSeparableFilter2D (int int int int int int byte* byte*))
+  (define-function void glSeparableFilter2D (int int int int int int void* void*))
 
   ;; void glGetSeparableFilter( GLenum target, GLenum format, GLenum type, GLvoid *row, GLvoid *column, GLvoid *span )
-  (define-function void glGetSeparableFilter (int int int byte* byte* byte*))
+  (define-function void glGetSeparableFilter (int int int void* void* void*))
 
   ;; void glActiveTexture( GLenum texture )
   (define-function void glActiveTexture (int))
@@ -3235,133 +3235,133 @@
   (define-function void glClientActiveTexture (int))
 
   ;; void glCompressedTexImage1D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexImage1D (int int int int int int byte*))
+  (define-function void glCompressedTexImage1D (int int int int int int void*))
 
   ;; void glCompressedTexImage2D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexImage2D (int int int int int int int byte*))
+  (define-function void glCompressedTexImage2D (int int int int int int int void*))
 
   ;; void glCompressedTexImage3D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexImage3D (int int int int int int int int byte*))
+  (define-function void glCompressedTexImage3D (int int int int int int int int void*))
 
   ;; void glCompressedTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexSubImage1D (int int int int int int byte*))
+  (define-function void glCompressedTexSubImage1D (int int int int int int void*))
 
   ;; void glCompressedTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexSubImage2D (int int int int int int int int byte*))
+  (define-function void glCompressedTexSubImage2D (int int int int int int int int void*))
 
   ;; void glCompressedTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexSubImage3D (int int int int int int int int int int byte*))
+  (define-function void glCompressedTexSubImage3D (int int int int int int int int int int void*))
 
   ;; void glGetCompressedTexImage( GLenum target, GLint lod, GLvoid *img )
-  (define-function void glGetCompressedTexImage (int int byte*))
+  (define-function void glGetCompressedTexImage (int int void*))
 
   ;; void glMultiTexCoord1d( GLenum target, GLdouble s )
   (define-function void glMultiTexCoord1d (int double))
 
   ;; void glMultiTexCoord1dv( GLenum target, const GLdouble *v )
-  (define-function void glMultiTexCoord1dv (int byte*))
+  (define-function void glMultiTexCoord1dv (int void*))
 
   ;; void glMultiTexCoord1f( GLenum target, GLfloat s )
   (define-function void glMultiTexCoord1f (int float))
 
   ;; void glMultiTexCoord1fv( GLenum target, const GLfloat *v )
-  (define-function void glMultiTexCoord1fv (int byte*))
+  (define-function void glMultiTexCoord1fv (int void*))
 
   ;; void glMultiTexCoord1i( GLenum target, GLint s )
   (define-function void glMultiTexCoord1i (int int))
 
   ;; void glMultiTexCoord1iv( GLenum target, const GLint *v )
-  (define-function void glMultiTexCoord1iv (int byte*))
+  (define-function void glMultiTexCoord1iv (int void*))
 
   ;; void glMultiTexCoord1s( GLenum target, GLshort s )
   (define-function void glMultiTexCoord1s (int int))
 
   ;; void glMultiTexCoord1sv( GLenum target, const GLshort *v )
-  (define-function void glMultiTexCoord1sv (int byte*))
+  (define-function void glMultiTexCoord1sv (int void*))
 
   ;; void glMultiTexCoord2d( GLenum target, GLdouble s, GLdouble t )
   (define-function void glMultiTexCoord2d (int double double))
 
   ;; void glMultiTexCoord2dv( GLenum target, const GLdouble *v )
-  (define-function void glMultiTexCoord2dv (int byte*))
+  (define-function void glMultiTexCoord2dv (int void*))
 
   ;; void glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t )
   (define-function void glMultiTexCoord2f (int float float))
 
   ;; void glMultiTexCoord2fv( GLenum target, const GLfloat *v )
-  (define-function void glMultiTexCoord2fv (int byte*))
+  (define-function void glMultiTexCoord2fv (int void*))
 
   ;; void glMultiTexCoord2i( GLenum target, GLint s, GLint t )
   (define-function void glMultiTexCoord2i (int int int))
 
   ;; void glMultiTexCoord2iv( GLenum target, const GLint *v )
-  (define-function void glMultiTexCoord2iv (int byte*))
+  (define-function void glMultiTexCoord2iv (int void*))
 
   ;; void glMultiTexCoord2s( GLenum target, GLshort s, GLshort t )
   (define-function void glMultiTexCoord2s (int int int))
 
   ;; void glMultiTexCoord2sv( GLenum target, const GLshort *v )
-  (define-function void glMultiTexCoord2sv (int byte*))
+  (define-function void glMultiTexCoord2sv (int void*))
 
   ;; void glMultiTexCoord3d( GLenum target, GLdouble s, GLdouble t, GLdouble r )
   (define-function void glMultiTexCoord3d (int double double double))
 
   ;; void glMultiTexCoord3dv( GLenum target, const GLdouble *v )
-  (define-function void glMultiTexCoord3dv (int byte*))
+  (define-function void glMultiTexCoord3dv (int void*))
 
   ;; void glMultiTexCoord3f( GLenum target, GLfloat s, GLfloat t, GLfloat r )
   (define-function void glMultiTexCoord3f (int float float float))
 
   ;; void glMultiTexCoord3fv( GLenum target, const GLfloat *v )
-  (define-function void glMultiTexCoord3fv (int byte*))
+  (define-function void glMultiTexCoord3fv (int void*))
 
   ;; void glMultiTexCoord3i( GLenum target, GLint s, GLint t, GLint r )
   (define-function void glMultiTexCoord3i (int int int int))
 
   ;; void glMultiTexCoord3iv( GLenum target, const GLint *v )
-  (define-function void glMultiTexCoord3iv (int byte*))
+  (define-function void glMultiTexCoord3iv (int void*))
 
   ;; void glMultiTexCoord3s( GLenum target, GLshort s, GLshort t, GLshort r )
   (define-function void glMultiTexCoord3s (int int int int))
 
   ;; void glMultiTexCoord3sv( GLenum target, const GLshort *v )
-  (define-function void glMultiTexCoord3sv (int byte*))
+  (define-function void glMultiTexCoord3sv (int void*))
 
   ;; void glMultiTexCoord4d( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q )
   (define-function void glMultiTexCoord4d (int double double double double))
 
   ;; void glMultiTexCoord4dv( GLenum target, const GLdouble *v )
-  (define-function void glMultiTexCoord4dv (int byte*))
+  (define-function void glMultiTexCoord4dv (int void*))
 
   ;; void glMultiTexCoord4f( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q )
   (define-function void glMultiTexCoord4f (int float float float float))
 
   ;; void glMultiTexCoord4fv( GLenum target, const GLfloat *v )
-  (define-function void glMultiTexCoord4fv (int byte*))
+  (define-function void glMultiTexCoord4fv (int void*))
 
   ;; void glMultiTexCoord4i( GLenum target, GLint s, GLint t, GLint r, GLint q )
   (define-function void glMultiTexCoord4i (int int int int int))
 
   ;; void glMultiTexCoord4iv( GLenum target, const GLint *v )
-  (define-function void glMultiTexCoord4iv (int byte*))
+  (define-function void glMultiTexCoord4iv (int void*))
 
   ;; void glMultiTexCoord4s( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q )
   (define-function void glMultiTexCoord4s (int int int int int))
 
   ;; void glMultiTexCoord4sv( GLenum target, const GLshort *v )
-  (define-function void glMultiTexCoord4sv (int byte*))
+  (define-function void glMultiTexCoord4sv (int void*))
 
   ;; void glLoadTransposeMatrixd( const GLdouble *m ) /* void glLoadTransposeMatrixd( const GLdouble m[16] ) */
-  (define-function void glLoadTransposeMatrixd (byte*))
+  (define-function void glLoadTransposeMatrixd (void*))
 
   ;; void glLoadTransposeMatrixf( const GLfloat *m ) /* void glLoadTransposeMatrixf( const GLfloat m[16] ) */
-  (define-function void glLoadTransposeMatrixf (byte*))
+  (define-function void glLoadTransposeMatrixf (void*))
 
   ;; void glMultTransposeMatrixd( const GLdouble *m ) /* void glMultTransposeMatrixd( const GLdouble m[16] ) */
-  (define-function void glMultTransposeMatrixd (byte*))
+  (define-function void glMultTransposeMatrixd (void*))
 
   ;; void glMultTransposeMatrixf( const GLfloat *m ) /* void glMultTransposeMatrixf( const GLfloat m[16] ) */
-  (define-function void glMultTransposeMatrixf (byte*))
+  (define-function void glMultTransposeMatrixf (void*))
 
   ;; void glSampleCoverage( GLclampf value, GLboolean invert )
   (define-function void glSampleCoverage (float int))
@@ -3378,96 +3378,96 @@
   (define-function void glMultiTexCoord1dARB (int double))
 
   ;; void glMultiTexCoord1dvARB(GLenum target, const GLdouble *v)
-  (define-function void glMultiTexCoord1dvARB (int byte*))
+  (define-function void glMultiTexCoord1dvARB (int void*))
 
   ;; void glMultiTexCoord1fARB(GLenum target, GLfloat s)
   (define-function void glMultiTexCoord1fARB (int float))
 
   ;; void glMultiTexCoord1fvARB(GLenum target, const GLfloat *v)
-  (define-function void glMultiTexCoord1fvARB (int byte*))
+  (define-function void glMultiTexCoord1fvARB (int void*))
 
   ;; void glMultiTexCoord1iARB(GLenum target, GLint s)
   (define-function void glMultiTexCoord1iARB (int int))
 
   ;; void glMultiTexCoord1ivARB(GLenum target, const GLint *v)
-  (define-function void glMultiTexCoord1ivARB (int byte*))
+  (define-function void glMultiTexCoord1ivARB (int void*))
 
   ;; void glMultiTexCoord1sARB(GLenum target, GLshort s)
   (define-function void glMultiTexCoord1sARB (int int))
 
   ;; void glMultiTexCoord1svARB(GLenum target, const GLshort *v)
-  (define-function void glMultiTexCoord1svARB (int byte*))
+  (define-function void glMultiTexCoord1svARB (int void*))
 
   ;; void glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t)
   (define-function void glMultiTexCoord2dARB (int double double))
 
   ;; void glMultiTexCoord2dvARB(GLenum target, const GLdouble *v)
-  (define-function void glMultiTexCoord2dvARB (int byte*))
+  (define-function void glMultiTexCoord2dvARB (int void*))
 
   ;; void glMultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t)
   (define-function void glMultiTexCoord2fARB (int float float))
 
   ;; void glMultiTexCoord2fvARB(GLenum target, const GLfloat *v)
-  (define-function void glMultiTexCoord2fvARB (int byte*))
+  (define-function void glMultiTexCoord2fvARB (int void*))
 
   ;; void glMultiTexCoord2iARB(GLenum target, GLint s, GLint t)
   (define-function void glMultiTexCoord2iARB (int int int))
 
   ;; void glMultiTexCoord2ivARB(GLenum target, const GLint *v)
-  (define-function void glMultiTexCoord2ivARB (int byte*))
+  (define-function void glMultiTexCoord2ivARB (int void*))
 
   ;; void glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t)
   (define-function void glMultiTexCoord2sARB (int int int))
 
   ;; void glMultiTexCoord2svARB(GLenum target, const GLshort *v)
-  (define-function void glMultiTexCoord2svARB (int byte*))
+  (define-function void glMultiTexCoord2svARB (int void*))
 
   ;; void glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r)
   (define-function void glMultiTexCoord3dARB (int double double double))
 
   ;; void glMultiTexCoord3dvARB(GLenum target, const GLdouble *v)
-  (define-function void glMultiTexCoord3dvARB (int byte*))
+  (define-function void glMultiTexCoord3dvARB (int void*))
 
   ;; void glMultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r)
   (define-function void glMultiTexCoord3fARB (int float float float))
 
   ;; void glMultiTexCoord3fvARB(GLenum target, const GLfloat *v)
-  (define-function void glMultiTexCoord3fvARB (int byte*))
+  (define-function void glMultiTexCoord3fvARB (int void*))
 
   ;; void glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r)
   (define-function void glMultiTexCoord3iARB (int int int int))
 
   ;; void glMultiTexCoord3ivARB(GLenum target, const GLint *v)
-  (define-function void glMultiTexCoord3ivARB (int byte*))
+  (define-function void glMultiTexCoord3ivARB (int void*))
 
   ;; void glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t, GLshort r)
   (define-function void glMultiTexCoord3sARB (int int int int))
 
   ;; void glMultiTexCoord3svARB(GLenum target, const GLshort *v)
-  (define-function void glMultiTexCoord3svARB (int byte*))
+  (define-function void glMultiTexCoord3svARB (int void*))
 
   ;; void glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q)
   (define-function void glMultiTexCoord4dARB (int double double double double))
 
   ;; void glMultiTexCoord4dvARB(GLenum target, const GLdouble *v)
-  (define-function void glMultiTexCoord4dvARB (int byte*))
+  (define-function void glMultiTexCoord4dvARB (int void*))
 
   ;; void glMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
   (define-function void glMultiTexCoord4fARB (int float float float float))
 
   ;; void glMultiTexCoord4fvARB(GLenum target, const GLfloat *v)
-  (define-function void glMultiTexCoord4fvARB (int byte*))
+  (define-function void glMultiTexCoord4fvARB (int void*))
 
   ;; void glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r, GLint q)
   (define-function void glMultiTexCoord4iARB (int int int int int))
 
   ;; void glMultiTexCoord4ivARB(GLenum target, const GLint *v)
-  (define-function void glMultiTexCoord4ivARB (int byte*))
+  (define-function void glMultiTexCoord4ivARB (int void*))
 
   ;; void glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q)
   (define-function void glMultiTexCoord4sARB (int int int int int))
 
   ;; void glMultiTexCoord4svARB(GLenum target, const GLshort *v)
-  (define-function void glMultiTexCoord4svARB (int byte*))
+  (define-function void glMultiTexCoord4svARB (int void*))
 
   ) ;[end]

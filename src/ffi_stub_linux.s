@@ -73,11 +73,13 @@
     .align  4,0x90
 
     .globl  c_func_stub_intptr
+    .globl  c_func_stub_int64
     .globl  c_func_stub_float
     .globl  c_func_stub_double
     .globl  c_callback_stub_intptr
 
 c_func_stub_intptr:
+c_func_stub_int64:
 c_func_stub_float:
 c_func_stub_double:
 
