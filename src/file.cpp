@@ -491,14 +491,14 @@
     scm_obj_t file_regular(VM* vm, scm_string_t path)
     {
         struct stat st;
-        if (lstat(path->name, &st) == 0) return S_ISREG(st.st_mode) ? scm_true : scm_false;
+        if (stat(path->name, &st) == 0) return S_ISREG(st.st_mode) ? scm_true : scm_false;
         return scm_false;
     }
 
     scm_obj_t file_directory(VM* vm, scm_string_t path)
     {
         struct stat st;
-        if (lstat(path->name, &st) == 0) return S_ISDIR(st.st_mode) ? scm_true : scm_false;
+        if (stat(path->name, &st) == 0) return S_ISDIR(st.st_mode) ? scm_true : scm_false;
         return scm_false;
     }
 

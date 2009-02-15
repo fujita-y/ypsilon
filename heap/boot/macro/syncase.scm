@@ -220,7 +220,8 @@
                           (filter values
                                   (map (lambda (id)
                                          (let ((lexname (lookup-lexical-name id env)))
-                                           (and (renamed-id? lexname)
+                                           (and (or (renamed-id? lexname)
+                                                    (local-macro-symbol? lexname))
                                                 (cond ((eq? id lexname) #f)
                                                       (else (cons id lexname))))))
                                        (collect-rename-ids template ranks)))))
