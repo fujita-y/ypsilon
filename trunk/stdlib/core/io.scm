@@ -214,6 +214,16 @@
           (core optargs)
           (core enums))
 
+  (define-syntax check-option-count
+    (lambda (x)
+      (syntax-case x ()
+        ((_ name n-args n-options args ... options)
+         (with-syntax ((n-limit (+ (datum n-args) (datum n-options))))
+           #'(or (<= (length options) n-options)
+                 (assertion-violation 'name
+                                      (format "expected ~a to ~a, but ~a arguments given" n-args n-limit (+ n-args (length options)))
+                                      (cons* args ... options))))))))
+
   ;; 8.2.2  File options
 
   (define-syntax file-options
@@ -283,6 +293,7 @@
 
   (define make-transcoder
     (lambda (codec . options)
+      (check-option-count make-transcoder 1 2 codec options)
       (let-optionals options ((eol-style (native-eol-style)) (error-handling-mode 'replace))
         (let ((bv (make-bytevector 3)))
           (bytevector-u8-set! bv 0 (port-lookup-codec-code (tuple-ref codec 1)))
@@ -291,23 +302,25 @@
           (tuple 'type:transcoder bv)))))
 
   (define transcoder-descriptor
-    (lambda (transcoder)
+    (lambda (who n transcoder)
+      (or (eq? (tuple-ref transcoder 0) 'type:transcoder)
+          (assertion-violation who (format "expected transcoder, but got ~r, as argument ~a" transcoder n)))
       (tuple-ref transcoder 1)))
 
   (define transcoder-codec
     (lambda (transcoder)
-      (case (port-reverse-lookup-codec-code (bytevector-u8-ref (transcoder-descriptor transcoder) 0))
+      (case (port-reverse-lookup-codec-code (bytevector-u8-ref (transcoder-descriptor 'transcoder-codec 1 transcoder) 0))
         ((latin-1) (latin-1-codec))
         ((utf-8) (utf-8-codec))
         ((utf-16) (utf-16-codec)))))
 
   (define transcoder-eol-style
     (lambda (transcoder)
-      (port-reverse-lookup-eol-style-code (bytevector-u8-ref (transcoder-descriptor transcoder) 1))))
+      (port-reverse-lookup-eol-style-code (bytevector-u8-ref (transcoder-descriptor 'transcoder-eol-style 1 transcoder) 1))))
 
   (define transcoder-error-handling-mode
     (lambda (transcoder)
-      (port-reverse-lookup-error-handling-mode-code (bytevector-u8-ref (transcoder-descriptor transcoder) 2))))
+      (port-reverse-lookup-error-handling-mode-code (bytevector-u8-ref (transcoder-descriptor 'transcoder-error-handling-mode 1 transcoder) 2))))
 
   (define native-transcoder
     (let ((transcoder (tuple 'type:transcoder (native-transcoder-descriptor))))
@@ -326,18 +339,6 @@
                     (else
                      (put-char out c)
                      (loop (get-char in))))))))))
-
-  #; (define string->bytevector
-    (lambda (string transcoder)
-      (let-values (((out extract) (open-bytevector-output-port transcoder)))
-        (call-with-port
-         (open-string-input-port string)
-         (lambda (in)
-           (let loop ((c (get-char in)))
-             (cond ((eof-object? c) (extract))
-                   (else
-                    (put-char out c)
-                    (loop (get-char in))))))))))
 
   (define string->bytevector
     (lambda (string transcoder)
@@ -371,32 +372,35 @@
 
   (define transcoded-port
     (lambda (port transcoder)
-      (make-transcoded-port port (transcoder-descriptor transcoder))))
+      (make-transcoded-port port (transcoder-descriptor 'transcoded-port 2 transcoder))))
 
   ;; 8.2.7  Input ports
 
   (define open-file-input-port
     (lambda (filename . options)
-      (let-optionals options
-          ((file-options (file-options))
-           (buffer-mode 'block)
-           (transcoder #f))
-        (open-port (port-type file)
+      (check-option-count open-file-input-port 1 3 filename options)
+      (let-optionals options ((file-options (file-options))
+                              (buffer-mode 'block)
+                              (transcoder #f))
+        (open-port 'open-file-input-port
+                   (port-type file)
                    (port-direction input)
                    filename
                    (file-options->bits file-options open-file-input-port (cons* filename options))
                    (port-lookup-buffer-mode-code buffer-mode)
-                   (and transcoder (transcoder-descriptor transcoder))))))
+                   (and transcoder (transcoder-descriptor 'open-file-input-port 4 transcoder))))))
 
   (define open-bytevector-input-port
     (lambda (bytes . options)
+      (check-option-count open-bytevector-input-port 1 1 bytes options)
       (let-optionals options ((transcoder #f))
-        (open-port (port-type bytevector)
+        (open-port 'open-bytevector-input-port
+                   (port-type bytevector)
                    (port-direction input)
                    'bytevector
                    bytes
                    #f
-                   (and transcoder (transcoder-descriptor transcoder))))))
+                   (and transcoder (transcoder-descriptor 'open-bytevector-input-port 2 transcoder))))))
 
   (define open-string-input-port
     (lambda (string)
@@ -404,7 +408,8 @@
 
   (define make-custom-binary-input-port
     (lambda (id read! get-position set-position! close)
-      (open-port (port-type custom)
+      (open-port 'make-custom-binary-input-port
+                 (port-type custom)
                  (port-direction input)
                  id
                  (vector #f read! #f get-position set-position! close)
@@ -413,7 +418,6 @@
 
   (define make-custom-textual-input-port
     (lambda (id read! get-position set-position! close)
-      (define port)
 
       (define ht-token (make-core-hashtable 'eqv?))
 
@@ -446,28 +450,29 @@
                 (else
                  (set-position! token)))))
 
-      (set! port (open-port (port-type custom)
-                            (port-direction input)
-                            id
-                            (vector #t (and read! bv-read!) #f (and get-position bv-get-position) (and set-position! bv-set-position!) close)
-                            #f
-                            #t))
-      port))
+      (open-port 'make-custom-textual-input-port
+                 (port-type custom)
+                 (port-direction input)
+                 id
+                 (vector #t (and read! bv-read!) #f (and get-position bv-get-position) (and set-position! bv-set-position!) close)
+                 #f
+                 #t)))
 
   ;; 8.2.10  Output ports
 
   (define open-file-output-port
     (lambda (filename . options)
-      (let-optionals options
-          ((file-options (file-options))
-           (buffer-mode 'block)
-           (transcoder #f))
-        (open-port (port-type file)
+      (check-option-count open-file-output-port 1 3 filename options)
+      (let-optionals options ((file-options (file-options))
+                              (buffer-mode 'block)
+                              (transcoder #f))
+        (open-port 'open-file-output-port
+                   (port-type file)
                    (port-direction output)
                    filename
                    (file-options->bits file-options open-file-output-port (cons* filename options))
                    (port-lookup-buffer-mode-code buffer-mode)
-                   (and transcoder (transcoder-descriptor transcoder))))))
+                   (and transcoder (transcoder-descriptor 'open-file-output-port 4 transcoder))))))
 
   (define bytevector-output-port-values
     (lambda (port)
@@ -475,31 +480,30 @@
 
   (define open-bytevector-output-port
     (lambda options
+      (check-option-count open-bytevector-output-port 0 1 options)
       (let-optionals options ((transcoder #f))
         (bytevector-output-port-values
-         (open-port (port-type bytevector)
+         (open-port 'open-bytevector-output-port
+                    (port-type bytevector)
                     (port-direction output)
                     'bytevector
                     #f
                     #f
-                    (and transcoder (transcoder-descriptor transcoder)))))))
+                    (and transcoder (transcoder-descriptor 'open-bytevector-output-port 1 transcoder)))))))
 
   (define call-with-bytevector-output-port
     (lambda (proc . options)
+      (check-option-count call-with-bytevector-output-port 1 1 proc options)
       (let-optionals options ((transcoder #f))
-        (let-values (((port extractor) (open-bytevector-output-port transcoder)))
-          (dynamic-wind
-           (lambda () #f)
-           (lambda () (proc port) (extractor))
-           (lambda () (close-port port)))))))
+        (let-values (((port extract) (open-bytevector-output-port transcoder)))
+          (proc port)
+          (let ((result (extract))) (close-port port) result)))))
 
   (define call-with-string-output-port
     (lambda (proc)
-      (let-values (((port extractor) (open-string-output-port)))
-        (dynamic-wind
-         (lambda () #f)
-         (lambda () (proc port) (extractor))
-         (lambda () (close-port port))))))
+      (let-values (((port extract) (open-string-output-port)))
+        (proc port)
+        (let ((result (extract))) (close-port port) result))))
 
   (define string-output-port-values
     (lambda (port)
@@ -511,7 +515,8 @@
 
   (define make-custom-binary-output-port
     (lambda (id write! get-position set-position! close)
-      (open-port (port-type custom)
+      (open-port 'make-custom-binary-output-port
+                 (port-type custom)
                  (port-direction output)
                  id
                  (vector #f #f write! get-position set-position! close)
@@ -520,8 +525,6 @@
 
   (define make-custom-textual-output-port
     (lambda (id write! get-position set-position! close)
-
-      (define port)
 
       (define ht-token (make-core-hashtable 'eqv?))
 
@@ -551,32 +554,34 @@
                 (else
                  (set-position! token)))))
 
-      (set! port (open-port (port-type custom)
-                            (port-direction output)
-                            id
-                            (vector #t #f (and write! bv-write!) (and get-position bv-get-position) (and set-position! bv-set-position!) close)
-                            #f
-                            #t))
-      port))
+      (open-port 'make-custom-textual-output-port
+                 (port-type custom)
+                 (port-direction output)
+                 id
+                 (vector #t #f (and write! bv-write!) (and get-position bv-get-position) (and set-position! bv-set-position!) close)
+                 #f
+                 #t)))
 
   ;; 8.2.13  Input/output ports
 
   (define open-file-input/output-port
     (lambda (filename . options)
-      (let-optionals options
-          ((file-options (file-options))
-           (buffer-mode 'block)
-           (transcoder #f))
-        (open-port (port-type file)
+      (check-option-count open-file-input/output-port 1 3 filename options)
+      (let-optionals options ((file-options (file-options))
+                              (buffer-mode 'block)
+                              (transcoder #f))
+        (open-port 'open-file-input/output-port
+                   (port-type file)
                    (port-direction input output)
                    filename
                    (file-options->bits file-options open-file-input/output-port (cons* filename options))
                    (port-lookup-buffer-mode-code buffer-mode)
-                   (and transcoder (transcoder-descriptor transcoder))))))
+                   (and transcoder (transcoder-descriptor 'open-file-input/output-port 4 transcoder))))))
 
   (define make-custom-binary-input/output-port
     (lambda (id read! write! get-position set-position! close)
-      (open-port (port-type custom)
+      (open-port 'make-custom-binary-input/output-port
+                 (port-type custom)
                  (port-direction input output)
                  id
                  (vector #f read! write! get-position set-position! close)
@@ -585,8 +590,6 @@
 
   (define make-custom-textual-input/output-port
     (lambda (id read! write! get-position set-position! close)
-
-      (define port)
 
       (define ht-token (make-core-hashtable 'eqv?))
 
@@ -630,13 +633,13 @@
                 (else
                  (set-position! token)))))
 
-      (set! port (open-port (port-type custom)
-                            (port-direction input output)
-                            id
-                            (vector #t (and read! bv-read!) (and write! bv-write!) (and get-position bv-get-position) (and set-position! bv-set-position!) close)
-                            #f
-                            #t))
-      port))
+      (open-port 'make-custom-textual-input/output-port
+                 (port-type custom)
+                 (port-direction input output)
+                 id
+                 (vector #t (and read! bv-read!) (and write! bv-write!) (and get-position bv-get-position) (and set-position! bv-set-position!) close)
+                 #f
+                 #t)))
 
   ;; 8.3  Simple I/O
 
@@ -685,6 +688,6 @@
   (define open-temporary-file-port
     (lambda options
       (let-optionals options ((name "temporary file") (transcoder #f))
-        (make-temporary-file-port name (and transcoder (transcoder-descriptor transcoder))))))
+        (make-temporary-file-port name (and transcoder (transcoder-descriptor 'open-temporary-file-port 1 transcoder))))))
 
   ) ;[end]

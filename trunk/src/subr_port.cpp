@@ -543,6 +543,188 @@ subr_make_string_input_port(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_open_port(VM* vm, int argc, scm_obj_t argv[])
 {
+    scm_symbol_t proc;
+    if (SYMBOLP(argv[0])) {
+        proc = (scm_symbol_t)argv[0];
+    } else {
+        wrong_type_argument_violation(vm, "open-port", 0, "symbol", argv[0], argc, argv);
+        return scm_undef;
+    }
+    int type = 0;
+    if (FIXNUMP(argv[1])) {
+        type = FIXNUM(argv[1]);
+        switch (type) {
+            case SCM_PORT_TYPE_NAMED_FILE: break;
+            case SCM_PORT_TYPE_BYTEVECTOR: break;
+            case SCM_PORT_TYPE_CUSTOM: break;
+            default:
+                invalid_argument_violation(vm, "open-port", "bad port type,", argv[1], 1, argc, argv);
+                return scm_undef;
+        }
+    } else {
+        wrong_type_argument_violation(vm, "open-port", 1, "fixnum", argv[1], argc, argv);
+        return scm_undef;
+    }
+    int direction = 0;
+    if (FIXNUMP(argv[2])) {
+        direction = FIXNUM(argv[2]);
+        switch (type) {
+            case SCM_PORT_DIRECTION_IN: break;
+            case SCM_PORT_DIRECTION_OUT: break;
+            case SCM_PORT_DIRECTION_BOTH: break;
+            default:
+                invalid_argument_violation(vm, "open-port", "bad port direction,", argv[2], 2, argc, argv);
+                return scm_undef;
+        }
+    } else {
+        wrong_type_argument_violation(vm, "open-port", 2, "fixnum", argv[2], argc, argv);
+        return scm_undef;
+    }
+    scm_obj_t name = argv[3];
+    if (!(STRINGP(name) || SYMBOLP(name))) {
+        wrong_type_argument_violation(vm, "open-port", 3, "string or symbol", argv[3], argc, argv);
+        return scm_undef;
+    }
+    switch (type) {
+        case SCM_PORT_TYPE_NAMED_FILE: {
+            if (STRINGP(name)) {
+                int file_options;
+                if (FIXNUMP(argv[4])) {
+                    file_options = FIXNUM(argv[4]);
+                } else if (argv[4] == scm_false) {
+                    file_options = SCM_PORT_FILE_OPTION_NONE;
+                } else {
+                    wrong_type_argument_violation(vm, "open-port", 4, "#f or fixnum", argv[4], argc, argv);
+                    return scm_undef;
+                }
+                if (file_options & ~(SCM_PORT_FILE_OPTION_NONE |
+                                     SCM_PORT_FILE_OPTION_NO_CREATE |
+                                     SCM_PORT_FILE_OPTION_NO_FAIL |
+                                     SCM_PORT_FILE_OPTION_NO_TRUNCATE)) {
+                    invalid_argument_violation(vm, "open-port", "bad file options,", argv[4], 4, argc, argv);
+                    return scm_undef;
+                }
+                int buffer_mode;
+                if (FIXNUMP(argv[5])) {
+                    buffer_mode = FIXNUM(argv[5]);
+                } else if (argv[5] == scm_false) {
+                    buffer_mode = SCM_PORT_BUFFER_MODE_NONE;
+                } else {
+                    wrong_type_argument_violation(vm, "open-port", 5, "#f or fixnum", argv[5], argc, argv);
+                }
+                switch (buffer_mode) {
+                    case SCM_PORT_BUFFER_MODE_NONE: break;
+                    case SCM_PORT_BUFFER_MODE_LINE: break;
+                    case SCM_PORT_BUFFER_MODE_BLOCK: break;
+                    default:
+                        invalid_argument_violation(vm, "open-port", "bad buffer mode,", argv[5], 5, argc, argv);
+                        return scm_undef;
+                }
+                scm_obj_t transcoder;
+                if (BOOLP(argv[6]) || BVECTORP(argv[6])) {
+                    transcoder = argv[6];
+                } else {
+                    wrong_type_argument_violation(vm, "open-port", 6, "#f, #t, or bytevector", argv[6], argc, argv);
+                    return scm_undef;
+                }
+                try {
+                    return make_file_port(vm->m_heap, name, direction, file_options, buffer_mode, transcoder);
+                } catch (io_exception_t& e) {
+                    raise_io_error(vm, proc->name, e.m_operation, e.m_message, e.m_err, scm_false, name);
+                    return scm_undef;
+                }
+                return scm_unspecified;
+            }
+            wrong_type_argument_violation(vm, "open-port", 3, "string", argv[3], argc, argv);
+            return scm_undef;
+        } break;
+
+        case SCM_PORT_TYPE_BYTEVECTOR: {
+            if (SYMBOLP(name)) {
+                scm_obj_t bytes;
+                if (BVECTORP(argv[4])) {
+                    if (direction == SCM_PORT_DIRECTION_OUT) {
+                        wrong_type_argument_violation(vm, "open-port", 4, "#f for bytevector output port", argv[4], argc, argv);
+                        return scm_undef;
+                    } else {
+                        bytes = argv[4];
+                    }
+                } else if (argv[4] == scm_false) {
+                    if (direction == SCM_PORT_DIRECTION_IN) {
+                        wrong_type_argument_violation(vm, "open-port", 4, "bytevector for bytevector input port", argv[4], argc, argv);
+                        return scm_undef;
+                    } else {
+                        bytes = scm_false;
+                    }
+                } else {
+                    wrong_type_argument_violation(vm, "open-port", 4, "#f or bytevector", argv[4], argc, argv);
+                    return scm_undef;
+                }
+                if (argv[5] != scm_false) {
+                    wrong_type_argument_violation(vm, "open-port", 5, "#f for bytevector port", argv[5], argc, argv);
+                    return scm_undef;
+                }
+                scm_obj_t transcoder;
+                if (BOOLP(argv[6]) || BVECTORP(argv[6])) {
+                    transcoder = argv[6];
+                } else {
+                    wrong_type_argument_violation(vm, "open-port", 6, "#f, #t, or bytevector", argv[6], argc, argv);
+                    return scm_undef;
+                }
+                try {
+                    return make_bytevector_port(vm->m_heap, name, direction, bytes, transcoder);
+                } catch (io_exception_t& e) {
+                    raise_io_error(vm, proc->name, e.m_operation, e.m_message, e.m_err, scm_false, scm_false);
+                    return scm_undef;
+                }
+                return scm_unspecified;
+            }
+            wrong_type_argument_violation(vm, "open-port", 3, "symbol", argv[3], argc, argv);
+            return scm_undef;
+        } break;
+
+        case SCM_PORT_TYPE_CUSTOM: {
+            if (STRINGP(name)) {
+                scm_obj_t handlers;
+                if (VECTORP(argv[4])) {
+                    handlers = argv[4];
+                } else {
+                    wrong_type_argument_violation(vm, "open-port", 4, "vector", argv[4], argc, argv);
+                    return scm_undef;
+                }
+                if (argv[5] != scm_false) {
+                    wrong_type_argument_violation(vm, "open-port", 5, "#f for custom port", argv[5], argc, argv);
+                    return scm_undef;
+                }
+                scm_obj_t transcoder;
+                if (BOOLP(argv[6])) {
+                    transcoder = argv[6];
+                } else {
+                    wrong_type_argument_violation(vm, "open-port", 6, "#f or #t for custom port", argv[6], argc, argv);
+                    return scm_undef;
+                }
+                try {
+                    return make_custom_port(vm->m_heap, name, direction, handlers, transcoder);
+                } catch (io_exception_t& e) {
+                    raise_io_error(vm, proc->name, e.m_operation, e.m_message, e.m_err, scm_false, scm_false);
+                    return scm_undef;
+                }
+                return scm_unspecified;
+            }
+            wrong_type_argument_violation(vm, "open-port", 3, "string", argv[3], argc, argv);
+            return scm_undef;
+        } break;
+
+        default: assert(false);
+
+    }
+    return scm_unspecified;
+}
+/*
+// open-port
+scm_obj_t
+subr_open_port(VM* vm, int argc, scm_obj_t argv[])
+{
     int type = 0;
     if (FIXNUMP(argv[0])) {
         type = FIXNUM(argv[0]);
@@ -714,6 +896,7 @@ subr_open_port(VM* vm, int argc, scm_obj_t argv[])
     return scm_unspecified;
 }
 
+*/
 // open-script-input-port
 scm_obj_t
 subr_open_script_input_port(VM* vm, int argc, scm_obj_t argv[])
