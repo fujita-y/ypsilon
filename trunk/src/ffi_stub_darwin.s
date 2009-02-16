@@ -78,6 +78,9 @@
     .globl  _c_func_stub_float
     .globl  _c_func_stub_double
     .globl  _c_callback_stub_intptr
+    .globl  _c_callback_stub_int64
+    .globl  _c_callback_stub_float
+    .globl  _c_callback_stub_double
 
 _c_func_stub_intptr:
 _c_func_stub_int64:
@@ -113,8 +116,31 @@ _c_func_stub_double:
 
     .align  4,0x90
 
+_c_callback_stub_double:
+    movl    $_c_callback_double, %edx
+    jmp     callback_stub_common
+    
+    .align  4,0x90
+    
+_c_callback_stub_float:
+    movl    $_c_callback_float, %edx
+    jmp     callback_stub_common
+    
+    .align  4,0x90
+    
+_c_callback_stub_int64:
+    movl    $_c_callback_int64, %edx
+    jmp     callback_stub_common
+    
+    .align  4,0x90
+    
 _c_callback_stub_intptr:
-
+    movl    $_c_callback_intptr, %edx
+    jmp     callback_stub_common
+    
+    .align  4,0x90
+    
+callback_stub_common:
     pushl   %ebp
     movl    %esp, %ebp
 
@@ -129,7 +155,7 @@ _c_callback_stub_intptr:
     leal    8(%ebp), %eax       # base
     movl    %eax, 8(%esp)
 
-    call    _c_callback_intptr
+    call    *%edx
 
     movl    %ebp, %esp
     popl    %ebp

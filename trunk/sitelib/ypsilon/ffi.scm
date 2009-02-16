@@ -173,7 +173,13 @@
   (define coerce-unsigned-long (coerce-unsigned-exact sizeof:long))
   (define coerce-void* (coerce-unsigned-exact sizeof:void*))
   (define coerce-bool (lambda (n) (= n 0)))
-
+  (define coerce-int8 (coerce-signed-exact 1))
+  (define coerce-int16 (coerce-signed-exact 2))
+  (define coerce-int32 (coerce-signed-exact 4))
+  (define coerce-uint8 (coerce-unsigned-exact 1))
+  (define coerce-uint16 (coerce-unsigned-exact 2))
+  (define coerce-uint32 (coerce-unsigned-exact 4))
+  
   (define c-function-return-type-alist
     `((void           . #x00)    ; FFI_RETURN_TYPE_VOID
       (bool           . #x01)    ; FFI_RETURN_TYPE_BOOL
@@ -201,8 +207,8 @@
 
   (define ht-cdecl-callback-trampolines (make-parameter (make-weak-hashtable)))
   (define ht-stdcall-callback-trampolines (make-parameter (make-weak-hashtable)))
-  (define callback-return-type-list '(void short int long unsigned-short unsigned-int unsigned-long size_t void*))
-  (define callback-argument-type-list '(bool short int long unsigned-short unsigned-int unsigned-long size_t void*))
+  (define callback-return-type-list '(void short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t size_t void*))
+  (define callback-argument-type-list '(bool short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t size_t void*))
 
   (define-syntax make-cdecl-callback-trampoline
     (syntax-rules ()
@@ -225,7 +231,13 @@
              (void* . ,coerce-void*)
              (unsigned-short . ,coerce-unsigned-short)
              (unsigned-int . ,coerce-unsigned-int)
-             (unsigned-long . ,coerce-unsigned-long))))
+             (unsigned-long . ,coerce-unsigned-long)
+             (int8_t . ,coerce-int8)
+             (int16_t . ,coerce-int16)
+             (int32_t . ,coerce-int32)
+             (uint8_t . ,coerce-uint8)
+             (uint16_t . ,coerce-uint16)
+             (uint32_t . ,coerce-uint32))))
 
       (define callback-thunk-closure
         (lambda (callee thunks)
