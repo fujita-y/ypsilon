@@ -155,8 +155,9 @@
                 if (signature == 'f') {
                     if (m_sse_count < array_sizeof(m_sse)) {
                         n.f64 = flonum->value;
-                        m_pre[m_sse_count] = 1;
+                        m_pre.u8[m_sse_count] = 1;
                         m_sse[m_sse_count] = n.u64;
+                        m_sse_float_count++;
                         m_sse_count++;
                     } else {
                         n.u64 = 0;
@@ -240,8 +241,12 @@
     c_stack_frame_t::compose()
     {
         int dst = m_count;
+        if (m_sse_count == m_sse_float_count) {
+            m_frame[dst++] = -1;
+        } else {
+            m_frame[dst++] = m_pre.u64;
+        }
         for (int i = 0; i < array_sizeof(m_sse); i++) m_frame[dst++] = m_sse[i];
-        for (int i = 0; i < array_sizeof(m_pre); i++) m_frame[dst++] = m_pre[i];
         for (int i = 0; i < array_sizeof(m_reg); i++) m_frame[dst++] = m_reg[i];
     }
 #endif
@@ -446,8 +451,74 @@
             return 0;
         }
     }
+    
+    int64_t callback_int64(uint32_t uid, uint32_t argc, uint32_t* base)
+    {
+        scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
+        scm_obj_t result;
+        try {
+            VM* vm = current_vm();
+             scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
+            for (int i = 0; i < argc; i++) argv[i] = intptr_to_integer(vm->m_heap, base[i]);
+            result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
+        } catch (vm_exit_t& e) {
+            exit(e.m_code);
+        } catch (...) {
+            fatal("fatal: unhandled exception in callback\n[exit]\n");
+        }
+        if (exact_integer_pred(result)) {
+            return coerce_exact_integer_to_int64(result);
+        } else {
+            return 0;
+        }
+    }
+    
+    float callback_float(uint32_t uid, uint32_t argc, uint32_t* base)
+    {
+        scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
+        scm_obj_t result;
+        try {
+            VM* vm = current_vm();
+             scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
+            for (int i = 0; i < argc; i++) argv[i] = intptr_to_integer(vm->m_heap, base[i]);
+            result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
+        } catch (vm_exit_t& e) {
+            exit(e.m_code);
+        } catch (...) {
+            fatal("fatal: unhandled exception in callback\n[exit]\n");
+        }
+        if (real_valued_pred(result)) {
+            return real_to_double(result);
+        } else {
+            return 0.0;
+        }
+    }
 
-    int __declspec(naked) c_callback_stub_intptr()
+    double callback_double(uint32_t uid, uint32_t argc, uint32_t* base)
+    {
+        scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
+        scm_obj_t result;
+        try {
+            VM* vm = current_vm();
+             scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
+            for (int i = 0; i < argc; i++) argv[i] = intptr_to_integer(vm->m_heap, base[i]);
+            result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
+        } catch (vm_exit_t& e) {
+            exit(e.m_code);
+        } catch (...) {
+            fatal("fatal: unhandled exception in callback\n[exit]\n");
+        }
+        if (real_valued_pred(result)) {
+            return real_to_double(result);
+        } else {
+            return 0.0;
+        }
+    }    
+
+    void __declspec(naked) c_callback_stub_intptr()
     {
         // note: uid adrs in ecx
         uint32_t*   base;
@@ -474,7 +545,95 @@
         }
     }
 
-    int __declspec(naked) stdcall_callback_stub_intptr()
+    void __declspec(naked) c_callback_stub_int64()
+    {
+        // note: uid adrs in ecx
+        uint32_t*   base;
+        uint32_t    uid;
+        uint32_t    argc;
+        union {
+            int64_t n64;
+            struct { 
+                uint32_t lo;
+                uint32_t hi; 
+            } u32;
+        } value;
+        __asm {
+            push    ebp
+            mov     ebp, esp
+            sub     esp, __LOCAL_SIZE
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
+            mov     uid, eax
+            mov     eax, [ecx + 4]
+            mov     argc, eax
+        }
+        value.n64 = callback_int64(uid, argc, base);
+        __asm {
+            mov     eax, value.u32.lo
+            mov     edx, value.u32.hi
+            mov     esp, ebp
+            pop     ebp
+            ret
+        }
+    }
+    
+    void __declspec(naked) c_callback_stub_float()
+    {
+        // note: uid adrs in ecx
+        uint32_t*   base;
+        uint32_t    uid;
+        uint32_t    argc;
+        float       value;
+        __asm {
+            push    ebp
+            mov     ebp, esp
+            sub     esp, __LOCAL_SIZE
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
+            mov     uid, eax
+            mov     eax, [ecx + 4]
+            mov     argc, eax
+        }
+        value = callback_float(uid, argc, base);
+        __asm {
+            fld     value
+            mov     esp, ebp
+            pop     ebp
+            ret
+        }
+    }
+    
+    void __declspec(naked) c_callback_stub_double()
+    {
+        // note: uid adrs in ecx
+        uint32_t*   base;
+        uint32_t    uid;
+        uint32_t    argc;
+        double      value;
+        __asm {
+            push    ebp
+            mov     ebp, esp
+            sub     esp, __LOCAL_SIZE
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
+            mov     uid, eax
+            mov     eax, [ecx + 4]
+            mov     argc, eax
+        }
+        value = callback_double(uid, argc, base);
+        __asm {
+            fld     value
+            mov     esp, ebp
+            pop     ebp
+            ret
+        }
+    }
+    
+    void __declspec(naked) stdcall_callback_stub_intptr()
     {
         // note: uid adrs in ecx
         uint32_t*   base;
@@ -496,12 +655,115 @@
         value = callback_intptr(uid, argc, base);
         bytes = argc * 4;
         __asm {
-            mov     edx, bytes
+            mov     ebx, bytes
             mov     eax, value
             mov     esp, ebp
             pop     ebp
             pop     ecx
-            add     esp, edx
+            add     esp, ebx
+            jmp     ecx
+        }
+    }
+
+    void __declspec(naked) stdcall_callback_stub_int64()
+    {
+        // note: uid adrs in ecx
+        uint32_t*   base;
+        uint32_t    uid;
+        uint32_t    argc;
+        union {
+            int64_t n64;
+            struct { 
+                uint32_t lo;
+                uint32_t hi; 
+            } u32;
+        } value;
+        uint32_t    bytes;
+        __asm {
+            push    ebp
+            mov     ebp, esp
+            sub     esp, __LOCAL_SIZE
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
+            mov     uid, eax
+            mov     eax, [ecx + 4]
+            mov     argc, eax
+        }
+        value.n64 = callback_int64(uid, argc, base);
+        bytes = argc * 4;
+        __asm {
+            mov     ebx, bytes
+            mov     eax, value.u32.lo
+            mov     edx, value.u32.hi
+            mov     esp, ebp
+            pop     ebp
+            pop     ecx
+            add     esp, ebx
+            jmp     ecx
+        }
+    }
+
+    void __declspec(naked) stdcall_callback_stub_float()
+    {
+        // note: uid adrs in ecx
+        uint32_t*   base;
+        uint32_t    uid;
+        uint32_t    argc;
+        double      value;
+        uint32_t    bytes;
+        __asm {
+            push    ebp
+            mov     ebp, esp
+            sub     esp, __LOCAL_SIZE
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
+            mov     uid, eax
+            mov     eax, [ecx + 4]
+            mov     argc, eax
+        }
+        value = callback_float(uid, argc, base);
+        bytes = argc * 4;
+        __asm {
+            mov     ebx, bytes
+            fld     value
+            mov     esp, ebp
+            pop     ebp
+            pop     ecx
+            add     esp, ebx
+            jmp     ecx
+        }
+    }
+    
+    void __declspec(naked) stdcall_callback_stub_double()
+    {
+        // note: uid adrs in ecx
+        uint32_t*   base;
+        uint32_t    uid;
+        uint32_t    argc;
+        double      value;
+        uint32_t    bytes;
+        __asm {
+            push    ebp
+            mov     ebp, esp
+            sub     esp, __LOCAL_SIZE
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
+            mov     uid, eax
+            mov     eax, [ecx + 4]
+            mov     argc, eax
+        }
+        value = callback_float(uid, argc, base);
+        bytes = argc * 4;
+        __asm {
+            mov     ebx, bytes
+            fld     value
+            mov     esp, ebp
+            pop     ebp
+            pop     ecx
+            add     esp, ebx
             jmp     ecx
         }
     }
@@ -602,6 +864,72 @@
             return 0;
         }
     }
+    
+    int64_t c_callback_int64(intptr_t uid, intptr_t argc, intptr_t* stack)
+    {
+        scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
+        scm_obj_t result;
+        try {
+            VM* vm = current_vm();
+            scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
+            for (int i = 0; i < argc; i++) argv[i] = intptr_to_integer(vm->m_heap, stack[i]);
+            result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
+        } catch (vm_exit_t& e) {
+            exit(e.m_code);
+        } catch (...) {
+            fatal("fatal: unhandled exception in callback\n[exit]\n");
+        }
+        if (exact_integer_pred(result)) {
+            return coerce_exact_integer_to_int64(result);
+        } else {
+            return 0;
+        }
+    }
+    
+    float c_callback_float(intptr_t uid, intptr_t argc, intptr_t* stack)
+    {
+        scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
+        scm_obj_t result;
+        try {
+            VM* vm = current_vm();
+            scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
+            for (int i = 0; i < argc; i++) argv[i] = intptr_to_integer(vm->m_heap, stack[i]);
+            result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
+        } catch (vm_exit_t& e) {
+            exit(e.m_code);
+        } catch (...) {
+            fatal("fatal: unhandled exception in callback\n[exit]\n");
+        }
+        if (real_valued_pred(result)) {
+            return real_to_double(result);
+        } else {
+            return 0.0;
+        }
+    }        
+        
+    double c_callback_double(intptr_t uid, intptr_t argc, intptr_t* stack)
+    {
+        scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
+        scm_obj_t result;
+        try {
+            VM* vm = current_vm();
+            scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
+            for (int i = 0; i < argc; i++) argv[i] = intptr_to_integer(vm->m_heap, stack[i]);
+            result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
+        } catch (vm_exit_t& e) {
+            exit(e.m_code);
+        } catch (...) {
+            fatal("fatal: unhandled exception in callback\n[exit]\n");
+        }
+        if (real_valued_pred(result)) {
+            return real_to_double(result);
+        } else {
+            return 0.0;
+        }
+    }        
 
     scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure)
     {
@@ -698,6 +1026,56 @@
             return coerce_exact_integer_to_intptr(result);
         } else {
             return 0;
+        }
+    }
+    
+    float c_callback_float_x64(intptr_t uid, intptr_t argc, intptr_t* reg, intptr_t* stack)
+    {
+        scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
+        scm_obj_t result;
+        try {
+            VM* vm = current_vm();
+            scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
+            for (int i = 0; i < argc; i++) {
+                if (i < 6) argv[i] = intptr_to_integer(vm->m_heap, reg[i]);
+                else argv[i] = intptr_to_integer(vm->m_heap, stack[i - 6]);
+            }
+            result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
+        } catch (vm_exit_t& e) {
+            exit(e.m_code);
+        } catch (...) {
+            fatal("fatal: unhandled exception in callback\n[exit]\n");
+        }
+        if (real_valued_pred(result)) {
+            return real_to_double(result);
+        } else {
+            return 0.0;
+        }
+    }
+
+    double c_callback_double_x64(intptr_t uid, intptr_t argc, intptr_t* reg, intptr_t* stack)
+    {
+        scm_obj_t obj = get_hashtable(current_vm()->m_heap->m_trampolines, MAKEFIXNUM(uid));
+        if (!CLOSUREP(obj)) fatal("fatal: callback was destroyed\n[exit]\n");
+        scm_obj_t result;
+        try {
+            VM* vm = current_vm();
+            scm_obj_t* argv = (scm_obj_t*)alloca(sizeof(scm_obj_t*) * argc);
+            for (int i = 0; i < argc; i++) {
+                if (i < 6) argv[i] = intptr_to_integer(vm->m_heap, reg[i]);
+                else argv[i] = intptr_to_integer(vm->m_heap, stack[i - 6]);
+            }
+            result = vm->call_scheme_argv((scm_closure_t)obj, argc, argv);
+        } catch (vm_exit_t& e) {
+            exit(e.m_code);
+        } catch (...) {
+            fatal("fatal: unhandled exception in callback\n[exit]\n");
+        }
+        if (real_valued_pred(result)) {
+            return real_to_double(result);
+        } else {
+            return 0.0;
         }
     }
 
