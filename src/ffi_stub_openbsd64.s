@@ -3,19 +3,8 @@
     Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
-/*
-    contents of argv[] = {
-        long stack_args[nstack];
-	uint8_t sse_prec[8]    ; // 0 double, 1 float
-        long sse_args[8]; // xmm0 - xmm7
-        long reg_args[6]; // rdi, rsi, rdx, rcx, r8, r9
-    }
 
-    intptr_t c_func_stub_intptr_x64(intptr_t adrs_rdi, intptr_t nstack_rsi, intptr_t nsse_rdx, intptr_t argv_rcx[])
-    double   c_func_stub_double_x64(intptr_t adrs_rdi, intptr_t nstack_rsi, intptr_t nsse_rdx, intptr_t argv_rcx[])
-*/
-
-    .file   "ffi_stub.s"
+    .file   "ffi_stub_openbsd64.s"
 
     .text
 
@@ -27,7 +16,7 @@
     .globl  c_callback_stub_intptr_x64
     .globl  c_callback_stub_float_x64
     .globl  c_callback_stub_double_x64
-            
+
 c_func_stub_intptr_x64:
 c_func_stub_float_x64:
 c_func_stub_double_x64:
@@ -60,6 +49,7 @@ done:
     js          sse_float
     jnz         sse_mixed
 
+sse_double:
     movsd        8(%r10), %xmm0
     movsd       16(%r10), %xmm1
     movsd       24(%r10), %xmm2
@@ -105,7 +95,7 @@ L2:
     cvtsd2ss    24(%r10), %xmm2
     jmp         L3
 D2:
-    movsd       24(%r10), %xmm2	
+    movsd       24(%r10), %xmm2
 
 L3:
     shrq        $8, %rax
@@ -114,7 +104,7 @@ L3:
     cvtsd2ss    32(%r10), %xmm3
     jmp         L4
 D3:
-    movsd       32(%r10), %xmm3	
+    movsd       32(%r10), %xmm3
 
 L4:
     shrq        $8, %rax
@@ -123,7 +113,7 @@ L4:
     cvtsd2ss    40(%r10), %xmm4
     jmp         L5
 D4:
-    movsd       40(%r10), %xmm4	
+    movsd       40(%r10), %xmm4
 
 L5:
     shrq        $8, %rax
@@ -132,7 +122,7 @@ L5:
     cvtsd2ss    48(%r10), %xmm5
     jmp         L6
 D5:
-    movsd       48(%r10), %xmm5	
+    movsd       48(%r10), %xmm5
 
 L6:
     shrq        $8, %rax
@@ -141,7 +131,7 @@ L6:
     cvtsd2ss    56(%r10), %xmm6
     jmp         L7
 D6:
-    movsd       56(%r10), %xmm6	
+    movsd       56(%r10), %xmm6
 
 L7:
     shrq        $8, %rax
@@ -150,7 +140,7 @@ L7:
     cvtsd2ss    64(%r10), %xmm7
     jmp         sse_done
 D7:
-    movsd       64(%r10), %xmm7	
+    movsd       64(%r10), %xmm7
 
 sse_done:
     leaq        72(%r10), %r10
@@ -174,15 +164,15 @@ sse_done:
 c_callback_stub_double_x64:
     movq        $c_callback_double_x64, %r11
     jmp         callback_stub_common
-    
+
 c_callback_stub_float_x64:
     movq        $c_callback_float_x64, %r11
     jmp         callback_stub_common
-        
+
 c_callback_stub_intptr_x64:
     movq        $c_callback_intptr_x64, %r11
     jmp         callback_stub_common
-    
+
 callback_stub_common:
     pushq       %rbp
     movq        %rsp, %rbp

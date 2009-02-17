@@ -149,39 +149,8 @@
     (lambda (s)
       (string->utf8 (string-append s "\x0;"))))
 
-  (define-syntax coerce-unsigned-exact
-    (syntax-rules ()
-      ((_ bytesize)
-       (let ((mask-bits (- (bitwise-arithmetic-shift 1 (* bytesize 8)) 1)))
-         (lambda (n)
-           (bitwise-and n mask-bits))))))
-
-  (define-syntax coerce-signed-exact
-    (syntax-rules ()
-      ((_ bytesize)
-       (let ((sign-bit (bitwise-arithmetic-shift 1 (- (* bytesize 8) 1)))
-             (mask-bits (- (bitwise-arithmetic-shift 1 (* bytesize 8)) 1)))
-         (lambda (n)
-           (let ((n (bitwise-and n mask-bits)))
-             (if (= (bitwise-and n sign-bit) 0) n (+ (bitwise-not n) 1))))))))
-
-  (define coerce-short (coerce-signed-exact sizeof:short))
-  (define coerce-int (coerce-signed-exact sizeof:int))
-  (define coerce-long (coerce-signed-exact sizeof:long))
-  (define coerce-unsigned-short (coerce-unsigned-exact sizeof:short))
-  (define coerce-unsigned-int (coerce-unsigned-exact sizeof:int))
-  (define coerce-unsigned-long (coerce-unsigned-exact sizeof:long))
-  (define coerce-void* (coerce-unsigned-exact sizeof:void*))
-  (define coerce-bool (lambda (n) (= n 0)))
-  (define coerce-int8 (coerce-signed-exact 1))
-  (define coerce-int16 (coerce-signed-exact 2))
-  (define coerce-int32 (coerce-signed-exact 4))
-  (define coerce-uint8 (coerce-unsigned-exact 1))
-  (define coerce-uint16 (coerce-unsigned-exact 2))
-  (define coerce-uint32 (coerce-unsigned-exact 4))
-  
   (define c-function-return-type-alist
-    `((void           . #x00)    ; FFI_RETURN_TYPE_VOID
+    '((void           . #x00)    ; FFI_RETURN_TYPE_VOID
       (bool           . #x01)    ; FFI_RETURN_TYPE_BOOL
       (short          . #x02)    ; FFI_RETURN_TYPE_SHORT
       (int            . #x03)    ; FFI_RETURN_TYPE_INT
@@ -203,118 +172,162 @@
       (int64_t        . #x12)    ; FFI_RETURN_TYPE_INT64_T
       (uint64_t       . #x13)))  ; FFI_RETURN_TYPE_UINT64_T
 
-  (define type-stdcall #x0100)
+  (define callback-return-type-alist
+    '((bool           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (void           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (short          . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (int            . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (long           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (unsigned-short . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (unsigned-int   . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (unsigned-long  . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (int8_t         . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (int16_t        . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (int32_t        . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (int64_t        . #x01)    ; CALLBACK_RETURN_TYPE_INT64_T
+      (uint8_t        . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (uint16_t       . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (uint32_t       . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (uint64_t       . #x01)    ; CALLBACK_RETURN_TYPE_INT64_T
+      (float          . #x02)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (double         . #x03)    ; CALLBACK_RETURN_TYPE_FLOAT
+      (size_t         . #x00)    ; CALLBACK_RETURN_TYPE_DOUBLE
+      (void*          . #x00)))  ; CALLBACK_RETURN_TYPE_INTPTR
+
+  (define STDCALL #x0100)
+
+  (define handle-bool
+    (lambda (x)
+      (cond ((eq? x #t) 1)
+            ((eq? x #f) 0)
+            ((unspecified? x) 0)
+            ((and (integer? x) (exact? x)) (if (= x 0) 0 1))
+            (else (assertion-violation 'callback (format "expected boolean or exact integer, but got ~r, as return value" x))))))
+
+  (define handle-int
+    (lambda (x)
+      (cond ((and (integer? x) (exact? x)) x)
+            ((unspecified? x) 0)
+            (else (assertion-violation 'callback (format "expected exact integer, but got ~r, as return value" x))))))
+
+  (define handle-real
+    (lambda (x)
+      (cond ((real? x) x)
+            ((unspecified? x) 0.0)
+            (else (assertion-violation 'callback (format "expected real, but got ~r, as return value" x))))))
+
+  (define callback-return-type-verifier
+    (lambda (type)
+      (case type
+        ((void) values)
+        ((bool) handle-bool)
+        ((float double) handle-real)
+        (else handle-int))))
+
+  (define callback-argument-type-class
+    `((bool           . #\L)
+      (short          . #\b)
+      (int            . ,(if (= sizeof:int 4) #\q #\o))
+      (long           . ,(if (= sizeof:long 4) #\q #\o))
+      (unsigned-short . #\B)
+      (unsigned-int   . ,(if (= sizeof:int 4) #\Q #\O))
+      (unsigned-long  . ,(if (= sizeof:long 4) #\Q #\O))
+      (int8_t         . #\u)
+      (int16_t        . #\b)
+      (int32_t        . #\q)
+      (int64_t        . #\o)
+      (uint8_t        . #\U)
+      (uint16_t       . #\B)
+      (uint32_t       . #\Q)
+      (uint64_t       . #\O)
+      (float          . #\f)
+      (double         . #\d)
+      (size_t         . ,(if (= sizeof:size_t 4) #\Q #\O))
+      (void*          . ,(if (= sizeof:void* 4) #\Q #\O))))
 
   (define ht-cdecl-callback-trampolines (make-parameter (make-weak-hashtable)))
-  (define ht-stdcall-callback-trampolines (make-parameter (make-weak-hashtable)))
-  (define callback-return-type-list '(void short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t size_t void*))
-  (define callback-argument-type-list '(bool short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t size_t void*))
 
-  (define-syntax make-cdecl-callback-trampoline
-    (syntax-rules ()
-      ((_ n proc)
-       (make-callback-trampoline 0 n proc))))
+  (define ht-stdcall-callback-trampolines (make-parameter (make-weak-hashtable)))
+
+  (define make-callback-thunk
+    (lambda (verifier callee)
+      (lambda x (verifier (apply callee x)))))
+
+  (define make-callback-signature
+    (lambda (name ret args proc)
+      (apply string
+             (map (lambda (a)
+                    (cond ((assq a callback-argument-type-class) => cdr)
+                          (else (assertion-violation name (format "invalid argument type ~u" a) (list ret args proc)))))
+                  args))))
+
+  (define check-callback-param
+    (lambda (name ret args proc)
+      (assert-argument name 1 ret "symbol" symbol? (list ret args proc))
+      (assert-argument name 2 args "list" list? (list ret args proc))
+      (assert-argument name 3 proc "procedure" procedure? (list ret args proc))))
 
   (define-syntax make-stdcall-callback-trampoline
     (syntax-rules ()
-      ((_ n proc)
-       (make-callback-trampoline 1 n proc))))
+      ((_ type args ret proc)
+       (begin
+         (check-callback-param 'make-stdcall-callback ret args proc)
+         (make-callback-trampoline (+ (cdr type) STDCALL)
+                                   (make-callback-signature 'make-stdcall-callback ret args proc)
+                                   (make-callback-thunk (callback-return-type-verifier ret) proc))))))
 
-  (define make-callback-thunk
-    (let ((coerce-thunk-alist
-           `((bool . ,coerce-bool)
-             (short . ,coerce-short)
-             (int . ,(if (= sizeof:int sizeof:void*) values coerce-int))
-             (long . ,(if (= sizeof:long sizeof:void*) values coerce-long))
-             (size_t . ,(cond ((= sizeof:size_t sizeof:int) coerce-unsigned-int)
-                              ((= sizeof:size_t sizeof:long) coerce-unsigned-long)))
-             (void* . ,coerce-void*)
-             (unsigned-short . ,coerce-unsigned-short)
-             (unsigned-int . ,coerce-unsigned-int)
-             (unsigned-long . ,coerce-unsigned-long)
-             (int8_t . ,coerce-int8)
-             (int16_t . ,coerce-int16)
-             (int32_t . ,coerce-int32)
-             (uint8_t . ,coerce-uint8)
-             (uint16_t . ,coerce-uint16)
-             (uint32_t . ,coerce-uint32))))
-
-      (define callback-thunk-closure
-        (lambda (callee thunks)
-          (lambda x
-            (let loop ((in x) (thunk thunks) (out '()))
-              (if (and (pair? in) (pair? thunk))
-                  (loop (cdr in) (cdr thunk) (cons ((car thunk) (car in)) out))
-                  (apply callee (reverse out)))))))
-
-      (lambda (ret args callee)
-        (callback-thunk-closure callee (map (lambda (e) (cdr (assq e coerce-thunk-alist))) args)))))
+  (define-syntax make-cdecl-callback-trampoline
+    (syntax-rules ()
+      ((_ type args ret proc)
+       (begin
+         (check-callback-param 'make-cdecl-callback ret args proc)
+         (make-callback-trampoline (cdr type)
+                                   (make-callback-signature 'make-cdecl-callback ret args proc)
+                                   (make-callback-thunk (callback-return-type-verifier ret) proc))))))
 
   (define make-cdecl-callback
     (lambda (ret args proc)
       (or (cond ((hashtable-ref (ht-cdecl-callback-trampolines) proc #f)
                  => (lambda (rec)
                       (destructuring-bind (trampoline ret-memo args-memo) rec
-                        (and (equal? ret ret-memo)
-                             (equal? args args-memo)
-                             trampoline))))
+                        (and (equal? ret ret-memo) (equal? args args-memo) trampoline))))
                 (else #f))
-          (begin
-            (assert-argument make-cdecl-callback 1 ret "symbol" symbol? (list ret args proc))
-            (assert-argument make-cdecl-callback 2 args "list" list? (list ret args proc))
-            (assert-argument make-cdecl-callback 3 proc "procedure" procedure? (list ret args proc))
-            (unless (memq ret callback-return-type-list)
-              (assertion-violation 'make-cdecl-callback (format "invalid return type ~u" ret) (list ret args proc)))
-            (for-each (lambda (a)
-                        (unless (memq a callback-argument-type-list)
-                          (assertion-violation 'make-cdecl-callback
-                                               (format "invalid argument type ~u" a)
-                                               (list ret args proc))))
-                      args)
-            (let ((trampoline (make-cdecl-callback-trampoline (length args) (make-callback-thunk ret args proc))))
-              (hashtable-set! (ht-cdecl-callback-trampolines) proc (list trampoline ret args))
-              trampoline)))))
+          (cond ((assq ret callback-return-type-alist)
+                 => (lambda (type)
+                      (let ((trampoline (make-cdecl-callback-trampoline type args ret proc)))
+                        (hashtable-set! (ht-cdecl-callback-trampolines) proc (list trampoline ret args))
+                        trampoline)))
+                (else
+                 (assertion-violation 'make-cdecl-callback (format "invalid return type ~u" ret) (list ret args proc)))))))
 
   (define make-stdcall-callback
     (lambda (ret args proc)
       (or (cond ((hashtable-ref (ht-stdcall-callback-trampolines) proc #f)
                  => (lambda (rec)
                       (destructuring-bind (trampoline ret-memo args-memo) rec
-                        (and (equal? ret ret-memo)
-                             (equal? args args-memo)
-                             trampoline))))
+                        (and (equal? ret ret-memo) (equal? args args-memo) trampoline))))
                 (else #f))
-          (begin
-            (assert-argument make-cdecl-callback 1 ret "symbol" symbol? (list ret args proc))
-            (assert-argument make-cdecl-callback 2 args "list" list? (list ret args proc))
-            (assert-argument make-cdecl-callback 3 proc "procedure" procedure? (list ret args proc))
-            (unless (memq ret callback-return-type-list)
-              (assertion-violation 'make-stdcall-callback (format "invalid return type ~u" ret) (list ret args proc)))
-            (for-each (lambda (a)
-                        (unless (memq a callback-argument-type-list)
-                          (assertion-violation 'make-cdecl-callback
-                                               (format "invalid argument type ~u" a)
-                                               (list ret args proc))))
-                      args)
-            (let ((trampoline (make-stdcall-callback-trampoline (length args) (make-callback-thunk ret args proc))))
-              (hashtable-set! (ht-stdcall-callback-trampolines) proc (list trampoline ret args))
-              trampoline)))))
+          (cond ((assq ret callback-return-type-alist)
+                 => (lambda (type)
+                      (let ((trampoline (make-stdcall-callback-trampoline type args ret proc)))
+                        (hashtable-set! (ht-stdcall-callback-trampolines) proc (list trampoline ret args))
+                        trampoline)))
+                (else
+                 (assertion-violation 'make-stdcall-callback (format "invalid return type ~u" ret) (list ret args proc)))))))
 
   (define make-argument-thunk
     (lambda (name type)
       (case type
-        ((short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t uint64_t size_t)
+        ((short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
          (cons #\i values))
+        ((int64_t uint64_t)
+         (cons #\x values))
         ((void*)
          (cons #\p values))
         ((float)
          (cons #\f values))
         ((double)
          (cons #\d values))
-        ((int64_t uint64_t)
-         (if (= sizeof:void* 8)
-             (cons #\i values)
-             (cons #\x values)))
         ((bool)
          (cons #\i
                (lambda (x)
@@ -406,7 +419,7 @@
                     ((or (pair? in) (pair? thunk))
                      (assertion-violation #f (format "stdcall-callout expected ~a, but ~a arguments given" (length thunks) (length x)) x))
                     (else
-                     (apply call-shared-object (+ type type-stdcall) addrs 'stdcall-callout signature (reverse out))))))))
+                     (apply call-shared-object (+ type STDCALL) addrs 'stdcall-callout signature (reverse out))))))))
 
       (assert-argument make-cdecl-callout 1 ret "symbol" symbol? (list ret args addrs))
       (assert-argument make-cdecl-callout 2 args "list" list? (list ret args addrs))
@@ -428,13 +441,13 @@
 
            (define c-callback-return
              (lambda (type)
-               (if (memq type callback-return-type-list)
+               (if (assq type callback-return-type-alist)
                    (datum->syntax #'k type)
                    (syntax-violation 'c-callback (format "invalid return type declarator ~u" type) x))))
 
            (define c-callback-arguments
              (lambda (lst)
-               (if (for-all (lambda (arg) (memq arg callback-argument-type-list)) lst)
+               (if (for-all (lambda (arg) (assq arg callback-argument-type-class)) lst)
                    (datum->syntax #'k lst)
                    (syntax-violation 'c-callback (format "invalid argument types declarator ~u" lst) x))))
 
@@ -445,16 +458,14 @@
                         (case type
                           ((short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
                            (list #\i #'var))
+                          ((int64_t uint64_t)
+                           (list #\x #'var))
                           ((void*)
                            (list #\p #'var))
                           ((float)
                            (list #\f #'var))
                           ((double)
                            (list #\d #'var))
-                          ((int64_t uint64_t)
-                           (if (= sizeof:void* 8)
-                               (list #\i #'var)
-                               (list #\x #'var)))
                           ((bool)
                            (list #\i #'(expect-bool 'func-name n var)))
                           ((char*)
@@ -486,7 +497,7 @@
                            ((type
                              (case (datum func-conv)
                                ((__cdecl) (cdr lst))
-                               ((__stdcall) (+ type-stdcall (cdr lst)))
+                               ((__stdcall) (+ (cdr lst) STDCALL))
                                (else (syntax-violation 'c-function "invalid syntax" x))))
                             ((args ...) (generate-temporaries (datum (arg-types ...))))
                             (msg (format "function not available in ~a" (datum lib-name))))
