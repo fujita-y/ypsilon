@@ -1247,7 +1247,7 @@ int
 port_get_bytes(scm_port_t port, uint8_t* p, int bsize)
 {
     assert(PORTP(port));
-    assert(bsize);
+    if (bsize == 0) return 0;
     port->lock.verify_locked();
     assert(port->direction & SCM_PORT_DIRECTION_IN);
     if (port->opened) {
