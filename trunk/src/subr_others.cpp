@@ -214,7 +214,7 @@ output:
                                 prt.format(tilded, argv[argp++]);
                                 continue;
                             }
-                            wrong_type_argument_violation(vm, "format", argp, "exact", argv[argp], argc, argv);
+                            wrong_type_argument_violation(vm, "format", argp, "exact number", argv[argp], argc, argv);
                             return scm_undef;
                         }
                         if (strchr("asumnrwASUMNRW", c)) {

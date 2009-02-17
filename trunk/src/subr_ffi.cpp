@@ -168,14 +168,15 @@ subr_make_callback_trampoline(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 3) {
         if (exact_non_negative_integer_pred(argv[0])) {
-            if (exact_non_negative_integer_pred(argv[1])) {
+            if (STRINGP(argv[1])) {
+                const char* signature = ((scm_string_t)argv[1])->name;
                 if (CLOSUREP(argv[2])) {
-                    return make_callback(vm, FIXNUM(argv[0]), FIXNUM(argv[1]), (scm_closure_t)argv[2]);
+                    return make_callback(vm, FIXNUM(argv[0]), signature, (scm_closure_t)argv[2]);
                 }
                 wrong_type_argument_violation(vm, "make-callback-trampoline", 2, "closure", argv[2], argc, argv);
                 return scm_undef;
             }
-            wrong_type_argument_violation(vm, "make-callback-trampoline", 1, "exact non-negative integer", argv[1], argc, argv);
+            wrong_type_argument_violation(vm, "make-callback-trampoline", 1, "string", argv[1], argc, argv);
             return scm_undef;
         }
         wrong_type_argument_violation(vm, "make-callback-trampoline", 0, "exact non-negative integer", argv[0], argc, argv);
@@ -235,7 +236,7 @@ call_cdecl_float(VM* vm, void* func, c_stack_frame_t& stack)
 {
     synchronize_errno sync(vm);
 #if ARCH_IA32
-    return c_func_stub_float(func, stack.count(), stack.frame());
+    return c_func_stub_double(func, stack.count(), stack.frame());
 #elif ARCH_X64
     return c_func_stub_float_x64(func, stack.count(), stack.sse_use(), stack.frame());
 #else
@@ -278,7 +279,7 @@ inline float call_stdcall_float(VM* vm, void* func, c_stack_frame_t& stack)
 {
 #if _MSC_VER && ARCH_IA32
     synchronize_errno sync(vm);
-    return stdcall_func_stub_float(func, stack.count(), stack.frame());
+    return stdcall_func_stub_double(func, stack.count(), stack.frame());
 #endif
     assert(false);
 }
@@ -351,7 +352,7 @@ subr_call_shared_object(VM* vm, int argc, scm_obj_t argv[])
                     intptr_t retval;
                     if (use_stdcall) retval = call_stdcall_intptr(vm, func, stack);
                     else retval = call_cdecl_intptr(vm, func, stack);
-                    return retval ? scm_true : scm_false;
+                    return (retval & 0xff) ? scm_true : scm_false;
                 }
                 case FFI_RETURN_TYPE_SHORT: {
                     short retval;

@@ -88,7 +88,7 @@ extern "C" {
 #endif
 }
 
-scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure);
+scm_obj_t make_callback(VM* vm, int type, const char* signature, scm_closure_t closure);
 
 #define FFI_RETURN_TYPE_VOID        0x0000
 #define FFI_RETURN_TYPE_BOOL        0x0001
@@ -114,5 +114,13 @@ scm_obj_t make_callback(VM* vm, int type, int argc, scm_closure_t closure);
 
 #define FFI_CALL_TYPE_STDCALL       0x0100
 #define FFI_CALL_TYPE_MASK          0xff00
+
+#define CALLBACK_RETURN_TYPE_INTPTR     0x0000
+#define CALLBACK_RETURN_TYPE_INT64_T    0x0001
+#define CALLBACK_RETURN_TYPE_FLOAT      0x0002
+#define CALLBACK_RETURN_TYPE_DOUBLE     0x0003
+#define CALLBACK_RETURN_TYPE_MASK       0x00ff
+#define CALLBACK_CALL_TYPE_STDCALL      0x0100
+#define CALLBACK_CALL_TYPE_MASK         0xff00
 
 #endif
