@@ -475,8 +475,7 @@
         int argc = strlen(signatures);
         for (int i = 0; i < argc; i++) {
             switch (signatures [i]) {
-                case 'd':
-                case 'o':
+                case 'd': case 'o': case 'O':
                     bytes = bytes + 8;
                     break;
                 default:
