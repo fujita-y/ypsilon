@@ -469,6 +469,24 @@
 #endif
 
 #if _MSC_VER
+    static int stack_frame_bytes(const char* signatures)
+    {
+        int bytes = 0;
+        int argc = strlen(signatures);
+        for (int i = 0; i < argc; i++) {
+            switch (signatures [i]) {
+                case 'd':
+                case 'o':
+                    bytes = bytes + 8;
+                    break;
+                default:
+                    bytes = bytes + 4;
+                    break;
+            }
+        }
+        return bytes;
+    }
+
     intptr_t
     stdcall_func_stub_intptr(void* adrs, intptr_t argc, intptr_t argv[])
     {
@@ -623,21 +641,21 @@
 
     intptr_t callback_intptr(intptr_t uid, intptr_t signatures, intptr_t* base)
     {
-        scm_obj_t ans = callback_scheme(uid, signatures, base)
+        scm_obj_t ans = callback_scheme(uid, signatures, base);
         if (exact_integer_pred(ans)) return coerce_exact_integer_to_intptr(ans);
         return 0;
     }
 
     int64_t callback_int64(intptr_t uid, intptr_t signatures, intptr_t* base)
     {
-        scm_obj_t ans = callback_scheme(uid, signatures, base)
+        scm_obj_t ans = callback_scheme(uid, signatures, base);
         if (exact_integer_pred(ans)) coerce_exact_integer_to_int64(ans);
         return 0;
     }
 
     double callback_double(intptr_t uid, intptr_t signatures, intptr_t* base)
     {
-        scm_obj_t ans = callback_scheme(uid, signatures, base)
+        scm_obj_t ans = callback_scheme(uid, signatures, base);
         if (real_valued_pred(ans)) real_to_double(ans);
         return 0.0;
     }
@@ -736,8 +754,8 @@
         intptr_t*   base;
         intptr_t    uid;
         intptr_t    signatures;
-        intptr_t    value;
         intptr_t    bytes;
+        intptr_t    value;
         __asm {
             push    ebp
             mov     ebp, esp
@@ -750,7 +768,7 @@
             mov     signatures, eax
         }
         value = callback_intptr(uid, signatures, base);
-        bytes = argc * 4; // calc bytes from signatures
+        bytes = stack_frame_bytes((const char*)signatures);
         __asm {
             mov     ebx, bytes
             mov     eax, value
@@ -768,6 +786,7 @@
         intptr_t*   base;
         intptr_t    uid;
         intptr_t    signatures;
+        intptr_t    bytes;
         union {
             int64_t n64;
             struct {
@@ -775,7 +794,6 @@
                 uint32_t hi;
             } u32;
         } value;
-        intptr_t    bytes;
         __asm {
             push    ebp
             mov     ebp, esp
@@ -785,10 +803,10 @@
             mov     eax, [ecx]
             mov     uid, eax
             mov     eax, [ecx + 4]
-            mov     argc, eax
+            mov     signatures, eax
         }
         value.n64 = callback_int64(uid, signatures, base);
-        bytes = argc * 4; // calc bytes from signatures
+        bytes = stack_frame_bytes((const char*)signatures);
         __asm {
             mov     ebx, bytes
             mov     eax, value.u32.lo
@@ -807,8 +825,8 @@
         intptr_t*   base;
         intptr_t    uid;
         intptr_t    signatures;
-        double      value;
         intptr_t    bytes;
+        double      value;
         __asm {
             push    ebp
             mov     ebp, esp
@@ -818,10 +836,10 @@
             mov     eax, [ecx]
             mov     uid, eax
             mov     eax, [ecx + 4]
-            mov     argc, eax
+            mov     signatures, eax
         }
         value = callback_double(uid, signatures, base);
-        bytes = argc * 4;
+        bytes = stack_frame_bytes((const char*)signatures);
         __asm {
             mov     ebx, bytes
             fld     value
