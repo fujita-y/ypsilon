@@ -469,25 +469,9 @@
 #endif
 
 #if _MSC_VER
-    static int stack_frame_bytes(const char* signatures)
-    {
-        int bytes = 0;
-        int argc = strlen(signatures);
-        for (int i = 0; i < argc; i++) {
-            switch (signatures [i]) {
-                case 'd': case 'o': case 'O':
-                    bytes = bytes + 8;
-                    break;
-                default:
-                    bytes = bytes + 4;
-                    break;
-            }
-        }
-        return bytes;
-    }
 
     intptr_t
-    stdcall_func_stub_intptr(void* adrs, intptr_t argc, intptr_t argv[])
+    c_func_stub_intptr(void* adrs, intptr_t argc, intptr_t argv[])
     {
         int bytes = (argc * sizeof(intptr_t) + 15) & ~15;
         intptr_t retval;
@@ -509,7 +493,7 @@
     }
 
     int64_t
-    stdcall_func_stub_int64(void* adrs, intptr_t argc, intptr_t argv[])
+    c_func_stub_int64(void* adrs, intptr_t argc, intptr_t argv[])
     {
         int bytes = (argc * sizeof(intptr_t) + 15) & ~15;
         union {
@@ -538,7 +522,7 @@
     }
 
     double
-    stdcall_func_stub_double(void* adrs, intptr_t argc, intptr_t argv[])
+    c_func_stub_double(void* adrs, intptr_t argc, intptr_t argv[])
     {
         int bytes = (argc * sizeof(intptr_t) + 15) & ~15;
         double retval;
@@ -557,24 +541,6 @@
         }
 
         return retval;
-    }
-
-    intptr_t
-    c_func_stub_intptr(void* adrs, intptr_t argc, intptr_t argv[])
-    {
-        return stdcall_func_stub_intptr(adrs, argc, argv);
-    }
-
-    int64_t
-    c_func_stub_int64(void* adrs, intptr_t argc, intptr_t argv[])
-    {
-        return stdcall_func_stub_int64(adrs, argc, argv);
-    }
-
-    double
-    c_func_stub_double(void* adrs, intptr_t argc, intptr_t argv[])
-    {
-        return stdcall_func_stub_double(adrs, argc, argv);
     }
 
     #pragma pack(push, 1)
@@ -659,7 +625,7 @@
         return 0.0;
     }
 
-    void __declspec(naked) c_callback_stub_intptr()
+    void __declspec(naked) callback_stub_intptr()
     {
         // note: uid adrs in ecx
         intptr_t*   base;
@@ -686,7 +652,7 @@
         }
     }
 
-    void __declspec(naked) c_callback_stub_int64()
+    void __declspec(naked) callback_stub_int64()
     {
         // note: uid adrs in ecx
         intptr_t*   base;
@@ -720,7 +686,7 @@
         }
     }
 
-    void __declspec(naked) c_callback_stub_double()
+    void __declspec(naked) callback_stub_double()
     {
         // note: uid adrs in ecx
         intptr_t*   base;
@@ -744,109 +710,6 @@
             mov     esp, ebp
             pop     ebp
             ret
-        }
-    }
-
-    void __declspec(naked) stdcall_callback_stub_intptr()
-    {
-        // note: uid adrs in ecx
-        intptr_t*   base;
-        intptr_t    uid;
-        intptr_t    signatures;
-        intptr_t    bytes;
-        intptr_t    value;
-        __asm {
-            push    ebp
-            mov     ebp, esp
-            sub     esp, __LOCAL_SIZE
-            lea     eax, [ebp + 8]
-            mov     base, eax
-            mov     eax, [ecx]
-            mov     uid, eax
-            mov     eax, [ecx + 4]
-            mov     signatures, eax
-        }
-        value = callback_intptr(uid, signatures, base);
-        bytes = stack_frame_bytes((const char*)signatures);
-        __asm {
-            mov     ebx, bytes
-            mov     eax, value
-            mov     esp, ebp
-            pop     ebp
-            pop     ecx
-            add     esp, ebx
-            jmp     ecx
-        }
-    }
-
-    void __declspec(naked) stdcall_callback_stub_int64()
-    {
-        // note: uid adrs in ecx
-        intptr_t*   base;
-        intptr_t    uid;
-        intptr_t    signatures;
-        intptr_t    bytes;
-        union {
-            int64_t n64;
-            struct {
-                uint32_t lo;
-                uint32_t hi;
-            } u32;
-        } value;
-        __asm {
-            push    ebp
-            mov     ebp, esp
-            sub     esp, __LOCAL_SIZE
-            lea     eax, [ebp + 8]
-            mov     base, eax
-            mov     eax, [ecx]
-            mov     uid, eax
-            mov     eax, [ecx + 4]
-            mov     signatures, eax
-        }
-        value.n64 = callback_int64(uid, signatures, base);
-        bytes = stack_frame_bytes((const char*)signatures);
-        __asm {
-            mov     ebx, bytes
-            mov     eax, value.u32.lo
-            mov     edx, value.u32.hi
-            mov     esp, ebp
-            pop     ebp
-            pop     ecx
-            add     esp, ebx
-            jmp     ecx
-        }
-    }
-
-    void __declspec(naked) stdcall_callback_stub_double()
-    {
-        // note: uid adrs in ecx
-        intptr_t*   base;
-        intptr_t    uid;
-        intptr_t    signatures;
-        intptr_t    bytes;
-        double      value;
-        __asm {
-            push    ebp
-            mov     ebp, esp
-            sub     esp, __LOCAL_SIZE
-            lea     eax, [ebp + 8]
-            mov     base, eax
-            mov     eax, [ecx]
-            mov     uid, eax
-            mov     eax, [ecx + 4]
-            mov     signatures, eax
-        }
-        value = callback_double(uid, signatures, base);
-        bytes = stack_frame_bytes((const char*)signatures);
-        __asm {
-            mov     ebx, bytes
-            fld     value
-            mov     esp, ebp
-            pop     ebp
-            pop     ecx
-            add     esp, ebx
-            jmp     ecx
         }
     }
 
@@ -855,36 +718,19 @@
         scoped_lock lock(vm->m_heap->m_trampolines->lock);
         static intptr_t uid;
         trampoline_t* thunk;
-        if ((type & CALLBACK_CALL_TYPE_MASK) == FFI_CALL_TYPE_STDCALL) {
-            switch (type & CALLBACK_RETURN_TYPE_MASK) {
+        switch (type & CALLBACK_RETURN_TYPE_MASK) {
             case CALLBACK_RETURN_TYPE_INTPTR:
-                thunk = new trampoline_t((intptr_t)stdcall_callback_stub_intptr, uid, signatures);
+                thunk = new trampoline_t((intptr_t)callback_stub_intptr, uid, signatures);
                 break;
             case CALLBACK_RETURN_TYPE_INT64_T:
-                thunk = new trampoline_t((intptr_t)stdcall_callback_stub_int64, uid, signatures);
+                thunk = new trampoline_t((intptr_t)callback_stub_int64, uid, signatures);
                 break;
             case CALLBACK_RETURN_TYPE_FLOAT:
             case CALLBACK_RETURN_TYPE_DOUBLE:
-                thunk = new trampoline_t((intptr_t)stdcall_callback_stub_double, uid, signatures);
+                thunk = new trampoline_t((intptr_t)callback_stub_double, uid, signatures);
                 break;
             default:
                 fatal("%s:%u invalid callback type specifier 0x%x", __FILE__, __LINE__, type);
-            }
-        } else {
-            switch (type & CALLBACK_RETURN_TYPE_MASK) {
-            case CALLBACK_RETURN_TYPE_INTPTR:
-                thunk = new trampoline_t((intptr_t)c_callback_stub_intptr, uid, signatures);
-                break;
-            case CALLBACK_RETURN_TYPE_INT64_T:
-                thunk = new trampoline_t((intptr_t)c_callback_stub_int64, uid, signatures);
-                break;
-            case CALLBACK_RETURN_TYPE_FLOAT:
-            case CALLBACK_RETURN_TYPE_DOUBLE:
-                thunk = new trampoline_t((intptr_t)c_callback_stub_double, uid, signatures);
-                break;
-            default:
-                fatal("%s:%u invalid callback type specifier 0x%x", __FILE__, __LINE__, type);
-            }
         }
         vm->m_heap->write_barrier(closure);
         int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);
