@@ -142,7 +142,7 @@
                     } break;
                     case 'U': {
                         uint8_t u8 = stack[offset];
-                        argv[i] = intptr_to_integer(vm->m_heap, u8);
+                        argv[i] = uintptr_to_integer(vm->m_heap, u8);
                         offset += 1;
                     } break;
                     case 'b': {
@@ -152,7 +152,7 @@
                     } break;
                     case 'B': {
                         uint16_t u16 = stack[offset];
-                        argv[i] = intptr_to_integer(vm->m_heap, u16);
+                        argv[i] = uintptr_to_integer(vm->m_heap, u16);
                         offset += 1;
                     } break;
                     case 'q': {
@@ -365,7 +365,7 @@
                             u8 = stack[stack_offset];
                             stack_offset += 1;
                         }
-                        argv[i] = intptr_to_integer(vm->m_heap, u8);
+                        argv[i] = uintptr_to_integer(vm->m_heap, u8);
                     } break;
                     case 'b': {
                         int16_t s16;
@@ -387,7 +387,7 @@
                             u16 = stack[stack_offset];
                             stack_offset += 1;
                         }
-                        argv[i] = intptr_to_integer(vm->m_heap, u16);
+                        argv[i] = uintptr_to_integer(vm->m_heap, u16);
                     } break;
                     case 'q': {
                         int32_t s32;
@@ -475,7 +475,6 @@
     {
         int bytes = (argc * sizeof(intptr_t) + 15) & ~15;
         intptr_t retval;
-
         __asm {
             mov     ecx, bytes
             mov     edx, esp
@@ -488,7 +487,6 @@
             mov     esp, edi
             mov     retval, eax
         }
-
         return retval;
     }
 
@@ -503,7 +501,6 @@
                 uint32_t hi;
             } s32;
         } retval;
-
         __asm {
             mov     ecx, bytes
             mov     edx, esp
@@ -517,7 +514,6 @@
             mov     retval.s32.lo, eax
             mov     retval.s32.hi, edx
         }
-
         return retval.s64;
     }
 
@@ -526,7 +522,6 @@
     {
         int bytes = (argc * sizeof(intptr_t) + 15) & ~15;
         double retval;
-
         __asm {
             mov     ecx, bytes
             mov     edx, esp
@@ -539,7 +534,6 @@
             mov     esp, edi
             fstp    retval
         }
-
         return retval;
     }
 
@@ -555,6 +549,7 @@
         intptr_t    m_stub;
         intptr_t    m_uid;
         intptr_t    m_signatures;
+        intptr_t    m_bytes;
 
         char        m_buffer[FFI_MAX_ARGC];
         static uint8_t* s_pool;
@@ -593,6 +588,14 @@
         m_stub = stub;
         m_uid = uid;
         m_signatures = (intptr_t)(&m_buffer[0]);
+        m_bytes = 0;
+        int argc = strlen(signatures);
+        for (int i = 0; i < argc; i++) {
+            switch (signatures[i]) {
+                case 'O': case 'o': case 'd': m_bytes += 8; break;
+                default: m_bytes += 4; break;
+            }
+        }
         mov_ecx_imm32 = 0xB9;
         imm32_uid = (uint32_t)&m_uid;
         mov_eax_imm32 = 0xB8;
@@ -614,18 +617,125 @@
     int64_t callback_int64(intptr_t uid, intptr_t signatures, intptr_t* base)
     {
         scm_obj_t ans = callback_scheme(uid, signatures, base);
-        if (exact_integer_pred(ans)) coerce_exact_integer_to_int64(ans);
+        if (exact_integer_pred(ans)) return coerce_exact_integer_to_int64(ans);
         return 0;
     }
 
     double callback_double(intptr_t uid, intptr_t signatures, intptr_t* base)
     {
         scm_obj_t ans = callback_scheme(uid, signatures, base);
-        if (real_valued_pred(ans)) real_to_double(ans);
+        if (real_valued_pred(ans)) return real_to_double(ans);
         return 0.0;
     }
 
-    void __declspec(naked) callback_stub_intptr()
+    void __declspec(naked) stdcall_callback_stub_intptr()
+    {
+        // note: uid adrs in ecx
+        intptr_t*   base;
+        intptr_t    uid;
+        intptr_t    signatures;
+        intptr_t    value;
+        intptr_t    bytes;
+        __asm {
+            push    ebp
+            mov     ebp, esp
+            sub     esp, __LOCAL_SIZE
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
+            mov     uid, eax
+            mov     eax, [ecx + 4]
+            mov     signatures, eax
+            mov     eax, [ecx + 8]
+            mov     bytes, eax
+        }
+        value = callback_intptr(uid, signatures, base);
+        __asm {
+            mov     edx, bytes
+            mov     eax, value
+            mov     esp, ebp
+            pop     ebp
+            pop     ecx
+            add     esp, edx
+            jmp     ecx
+        }
+    }
+
+    void __declspec(naked) stdcall_callback_stub_int64()
+    {
+        // note: uid adrs in ecx
+        intptr_t*   base;
+        intptr_t    uid;
+        intptr_t    signatures;
+        union {
+            int64_t n64;
+            struct {
+                uint32_t lo;
+                uint32_t hi;
+            } u32;
+        } value;
+        intptr_t    bytes;
+        __asm {
+            push    ebp
+            mov     ebp, esp
+            sub     esp, __LOCAL_SIZE
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
+            mov     uid, eax
+            mov     eax, [ecx + 4]
+            mov     signatures, eax
+            mov     eax, [ecx + 8]
+            mov     bytes, eax
+        }
+        value.n64 = callback_int64(uid, signatures, base);
+        __asm {
+            mov     eax, value.u32.lo
+            mov     edx, value.u32.hi
+            mov     ecx, bytes
+            mov     esp, ebp
+            mov     ebp, [esp + 4]
+            mov     [esp + ecx + 4], ebp
+            pop     ebp
+            add     esp, ecx
+            ret
+        }
+    }
+
+    void __declspec(naked) stdcall_callback_stub_double()
+    {
+        // note: uid adrs in ecx
+        intptr_t*   base;
+        intptr_t    uid;
+        intptr_t    signatures;
+        double      value;
+        intptr_t    bytes;
+        __asm {
+            push    ebp
+            mov     ebp, esp
+            sub     esp, __LOCAL_SIZE
+            lea     eax, [ebp + 8]
+            mov     base, eax
+            mov     eax, [ecx]
+            mov     uid, eax
+            mov     eax, [ecx + 4]
+            mov     signatures, eax
+            mov     eax, [ecx + 8]
+            mov     bytes, eax
+        }
+        value = callback_double(uid, signatures, base);
+        __asm {
+            mov     edx, bytes
+            fld     value
+            mov     esp, ebp
+            pop     ebp
+            pop     ecx
+            add     esp, edx
+            jmp     ecx
+        }
+    }
+
+    void __declspec(naked) c_callback_stub_intptr()
     {
         // note: uid adrs in ecx
         intptr_t*   base;
@@ -652,7 +762,7 @@
         }
     }
 
-    void __declspec(naked) callback_stub_int64()
+    void __declspec(naked) c_callback_stub_int64()
     {
         // note: uid adrs in ecx
         intptr_t*   base;
@@ -686,7 +796,7 @@
         }
     }
 
-    void __declspec(naked) callback_stub_double()
+    void __declspec(naked) c_callback_stub_double()
     {
         // note: uid adrs in ecx
         intptr_t*   base;
@@ -720,14 +830,26 @@
         trampoline_t* thunk;
         switch (type & CALLBACK_RETURN_TYPE_MASK) {
             case CALLBACK_RETURN_TYPE_INTPTR:
-                thunk = new trampoline_t((intptr_t)callback_stub_intptr, uid, signatures);
+                if ((type & CALLBACK_CALL_TYPE_MASK) == CALLBACK_CALL_TYPE_STDCALL) {
+                    thunk = new trampoline_t((intptr_t)stdcall_callback_stub_intptr, uid, signatures);
+                    break;
+                }
+                thunk = new trampoline_t((intptr_t)c_callback_stub_intptr, uid, signatures);
                 break;
             case CALLBACK_RETURN_TYPE_INT64_T:
-                thunk = new trampoline_t((intptr_t)callback_stub_int64, uid, signatures);
+                if ((type & CALLBACK_CALL_TYPE_MASK) == CALLBACK_CALL_TYPE_STDCALL) {
+                    thunk = new trampoline_t((intptr_t)stdcall_callback_stub_int64, uid, signatures);
+                    break;
+                }
+                thunk = new trampoline_t((intptr_t)c_callback_stub_int64, uid, signatures);
                 break;
             case CALLBACK_RETURN_TYPE_FLOAT:
             case CALLBACK_RETURN_TYPE_DOUBLE:
-                thunk = new trampoline_t((intptr_t)callback_stub_double, uid, signatures);
+                if ((type & CALLBACK_CALL_TYPE_MASK) == CALLBACK_CALL_TYPE_STDCALL) {
+                    thunk = new trampoline_t((intptr_t)stdcall_callback_stub_double, uid, signatures);
+                    break;
+                }
+                thunk = new trampoline_t((intptr_t)c_callback_stub_double, uid, signatures);
                 break;
             default:
                 fatal("%s:%u invalid callback type specifier 0x%x", __FILE__, __LINE__, type);

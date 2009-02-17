@@ -157,8 +157,8 @@ static scm_obj_t
 bn_to_integer(object_heap_t* heap, scm_bignum_t bn)
 {
     assert(bn_norm_pred(bn));
-    assert(bn_get_sign(bn) != 0);
     if (bn_get_count(bn) == 0) return MAKEFIXNUM(0);
+    assert(bn_get_sign(bn) != 0);
     if (bn_get_count(bn) == 1) {
         signed_digit2x_t n = bn->elts[0];
         if (bn_get_sign(bn) < 0) n = -n;

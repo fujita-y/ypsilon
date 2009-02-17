@@ -380,7 +380,7 @@ fasl_reader_t::get_lites()
             buf = (char*)malloc(len + 1);
             buflen = len;
         }
-        if (len) port_get_bytes(m_port, (uint8_t*)buf, len);
+        if (len != 0) port_get_bytes(m_port, (uint8_t*)buf, len);
         buf[len] = 0;
         switch (tag) {
         case FASL_TAG_SYMBOL:
