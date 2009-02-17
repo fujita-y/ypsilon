@@ -204,8 +204,8 @@ public:
     }
 };
 
-inline intptr_t
-call_cdecl_intptr(VM* vm, void* func, c_stack_frame_t& stack)
+static inline intptr_t
+call_c_intptr(VM* vm, void* func, c_stack_frame_t& stack)
 {
     synchronize_errno sync(vm);
 #if ARCH_IA32
@@ -217,8 +217,8 @@ call_cdecl_intptr(VM* vm, void* func, c_stack_frame_t& stack)
 #endif
 }
 
-inline int64_t
-call_cdecl_int64(VM* vm, void* func, c_stack_frame_t& stack)
+static inline int64_t
+call_c_int64(VM* vm, void* func, c_stack_frame_t& stack)
 {
     synchronize_errno sync(vm);
 #if ARCH_IA32
@@ -231,8 +231,8 @@ call_cdecl_int64(VM* vm, void* func, c_stack_frame_t& stack)
 }
 
 
-inline float
-call_cdecl_float(VM* vm, void* func, c_stack_frame_t& stack)
+static inline float
+call_c_float(VM* vm, void* func, c_stack_frame_t& stack)
 {
     synchronize_errno sync(vm);
 #if ARCH_IA32
@@ -244,8 +244,8 @@ call_cdecl_float(VM* vm, void* func, c_stack_frame_t& stack)
 #endif
 }
 
-inline double
-call_cdecl_double(VM* vm, void* func, c_stack_frame_t& stack)
+static inline double
+call_c_double(VM* vm, void* func, c_stack_frame_t& stack)
 {
     synchronize_errno sync(vm);
 #if ARCH_IA32
@@ -255,42 +255,6 @@ call_cdecl_double(VM* vm, void* func, c_stack_frame_t& stack)
 #else
     fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
 #endif
-}
-
-inline intptr_t call_stdcall_intptr(VM* vm, void* func, c_stack_frame_t& stack)
-{
-#if _MSC_VER && ARCH_IA32
-    synchronize_errno sync(vm);
-    return stdcall_func_stub_intptr(func, stack.count(), stack.frame());
-#endif
-    assert(false);
-}
-
-inline int64_t call_stdcall_int64(VM* vm, void* func, c_stack_frame_t& stack)
-{
-#if _MSC_VER && ARCH_IA32
-    synchronize_errno sync(vm);
-    return stdcall_func_stub_int64(func, stack.count(), stack.frame());
-#endif
-    assert(false);
-}
-
-inline float call_stdcall_float(VM* vm, void* func, c_stack_frame_t& stack)
-{
-#if _MSC_VER && ARCH_IA32
-    synchronize_errno sync(vm);
-    return stdcall_func_stub_double(func, stack.count(), stack.frame());
-#endif
-    assert(false);
-}
-
-inline double call_stdcall_double(VM* vm, void* func, c_stack_frame_t& stack)
-{
-#if _MSC_VER && ARCH_IA32
-    synchronize_errno sync(vm);
-    return stdcall_func_stub_double(func, stack.count(), stack.frame());
-#endif
-    assert(false);
 }
 
 // call-shared-object
@@ -337,136 +301,110 @@ subr_call_shared_object(VM* vm, int argc, scm_obj_t argv[])
                 }
                 signature++;
             }
-#if _MSC_VER && ARCH_IA32
-            const bool use_stdcall = ((type & FFI_CALL_TYPE_MASK) == FFI_CALL_TYPE_STDCALL);
-#else
-            const bool use_stdcall = false;
-#endif
             switch (type & FFI_RETURN_TYPE_MASK) {
                 case FFI_RETURN_TYPE_VOID: {
-                    if (use_stdcall) call_stdcall_intptr(vm, func, stack);
-                    else call_cdecl_intptr(vm, func, stack);
+                    call_c_intptr(vm, func, stack);
                     return scm_unspecified;
                 }
                 case FFI_RETURN_TYPE_BOOL: {
                     intptr_t retval;
-                    if (use_stdcall) retval = call_stdcall_intptr(vm, func, stack);
-                    else retval = call_cdecl_intptr(vm, func, stack);
+                    retval = call_c_intptr(vm, func, stack);
                     return (retval & 0xff) ? scm_true : scm_false;
                 }
                 case FFI_RETURN_TYPE_SHORT: {
                     short retval;
-                    if (use_stdcall) retval = (short)call_stdcall_intptr(vm, func, stack);
-                    else retval = (short)call_cdecl_intptr(vm, func, stack);
+                    retval = (short)call_c_intptr(vm, func, stack);
                     return int_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_INT: {
                     int retval;
-                    if (use_stdcall) retval = (int)call_stdcall_intptr(vm, func, stack);
-                    else retval = (int)call_cdecl_intptr(vm, func, stack);
+                    retval = (int)call_c_intptr(vm, func, stack);
                     return int_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_INTPTR: {
                     intptr_t retval;
-                    if (use_stdcall) retval = call_stdcall_intptr(vm, func, stack);
-                    else retval = call_cdecl_intptr(vm, func, stack);
+                    retval = call_c_intptr(vm, func, stack);
                     return intptr_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_USHORT: {
                     unsigned short retval;
-                    if (use_stdcall) retval = (unsigned short)call_stdcall_intptr(vm, func, stack);
-                    else retval = (unsigned short)call_cdecl_intptr(vm, func, stack);
+                    retval = (unsigned short)call_c_intptr(vm, func, stack);
                     return uint_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_UINT: {
                     unsigned int retval;
-                    if (use_stdcall) retval = (unsigned int)call_stdcall_intptr(vm, func, stack);
-                    else retval = (unsigned int)call_cdecl_intptr(vm, func, stack);
+                    retval = (unsigned int)call_c_intptr(vm, func, stack);
                     return uint_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_UINTPTR: {
                     uintptr_t retval;
-                    if (use_stdcall) retval = (uintptr_t)call_stdcall_intptr(vm, func, stack);
-                    else retval = (uintptr_t)call_cdecl_intptr(vm, func, stack);
+                    retval = (uintptr_t)call_c_intptr(vm, func, stack);
                     return uintptr_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_FLOAT: {
                     float retval;
-                    if (use_stdcall) retval = (uintptr_t)call_stdcall_float(vm, func, stack);
-                    else retval = call_cdecl_float(vm, func, stack);
+                    retval = call_c_float(vm, func, stack);
                     return make_flonum(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_DOUBLE: {
                     double retval;
-                    if (use_stdcall) retval = (uintptr_t)call_stdcall_double(vm, func, stack);
-                    else retval = call_cdecl_double(vm, func, stack);
+                    retval = call_c_double(vm, func, stack);
                     return make_flonum(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_STRING: {
                     char* p;
-                    if (use_stdcall) p = (char*)call_stdcall_intptr(vm, func, stack);
-                    else p = (char*)call_cdecl_intptr(vm, func, stack);
+                    p = (char*)call_c_intptr(vm, func, stack);
                     if (p == NULL) return MAKEFIXNUM(0);
                     return make_string(vm->m_heap, p);
                 }
                 case FFI_RETURN_TYPE_SIZE_T: {
                     if (sizeof(size_t) == sizeof(int)) {
                         unsigned int retval;
-                        if (use_stdcall) retval = (unsigned int)call_stdcall_intptr(vm, func, stack);
-                        else retval = (unsigned int)call_cdecl_intptr(vm, func, stack);
+                        retval = (unsigned int)call_c_intptr(vm, func, stack);
                         return uint_to_integer(vm->m_heap, retval);
                     }
                     uintptr_t retval;
-                    if (use_stdcall) retval = (uintptr_t)call_stdcall_intptr(vm, func, stack);
-                    else retval = (uintptr_t)call_cdecl_intptr(vm, func, stack);
+                    retval = (uintptr_t)call_c_intptr(vm, func, stack);
                     return uintptr_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_INT8_T: {
                     int8_t retval;
-                    if (use_stdcall) retval = (int8_t)call_stdcall_intptr(vm, func, stack);
-                    else retval = (int8_t)call_cdecl_intptr(vm, func, stack);
+                    retval = (int8_t)call_c_intptr(vm, func, stack);
                     return int_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_UINT8_T: {
                     uint8_t retval;
-                    if (use_stdcall) retval = (uint8_t)call_stdcall_intptr(vm, func, stack);
-                    else retval = (uint8_t)call_cdecl_intptr(vm, func, stack);
+                    retval = (uint8_t)call_c_intptr(vm, func, stack);
                     return uint_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_INT16_T: {
                     int16_t retval;
-                    if (use_stdcall) retval = (int16_t)call_stdcall_intptr(vm, func, stack);
-                    else retval = (int16_t)call_cdecl_intptr(vm, func, stack);
+                    retval = (int16_t)call_c_intptr(vm, func, stack);
                     return int_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_UINT16_T: {
                     uint16_t retval;
-                    if (use_stdcall) retval = (uint16_t)call_stdcall_intptr(vm, func, stack);
-                    else retval = (uint16_t)call_cdecl_intptr(vm, func, stack);
+                    retval = (uint16_t)call_c_intptr(vm, func, stack);
                     return uint_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_INT32_T: {
                     int32_t retval;
-                    if (use_stdcall) retval = (int32_t)call_stdcall_intptr(vm, func, stack);
-                    else retval = (int32_t)call_cdecl_intptr(vm, func, stack);
+                    retval = (int32_t)call_c_intptr(vm, func, stack);
                     return int_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_UINT32_T: {
                     uint32_t retval;
-                    if (use_stdcall) retval = (uint32_t)call_stdcall_intptr(vm, func, stack);
-                    else retval = (uint32_t)call_cdecl_intptr(vm, func, stack);
+                    retval = (uint32_t)call_c_intptr(vm, func, stack);
                     return uint_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_INT64_T: {
                     int64_t retval;
-                    if (use_stdcall) retval = (int64_t)call_stdcall_int64(vm, func, stack);
-                    else retval = (int64_t)call_cdecl_int64(vm, func, stack);
+                    retval = (int64_t)call_c_int64(vm, func, stack);
                     return int64_to_integer(vm->m_heap, retval);
                 }
                 case FFI_RETURN_TYPE_UINT64_T: {
                     uint64_t retval;
-                    if (use_stdcall) retval = (uint64_t)call_stdcall_int64(vm, func, stack);
-                    else retval = (uint64_t)call_cdecl_int64(vm, func, stack);
+                    retval = (uint64_t)call_c_int64(vm, func, stack);
                     return uint64_to_integer(vm->m_heap, retval);
                 }
             }

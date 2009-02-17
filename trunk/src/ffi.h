@@ -56,12 +56,6 @@
 
 extern "C" {
 #if ARCH_IA32
-  #if _MSC_VER
-    float       stdcall_func_stub_float(void* func, int argc, intptr_t argv[]);
-    double      stdcall_func_stub_double(void* func, int argc, intptr_t argv[]);
-    int64_t     stdcall_func_stub_int64(void* func, int argc, intptr_t argv[]);
-    intptr_t    stdcall_func_stub_intptr(void* func, int argc, intptr_t argv[]);
-  #endif
     float       c_func_stub_float(void* func, int argc, intptr_t argv[]);
     double      c_func_stub_double(void* func, int argc, intptr_t argv[]);
     int64_t     c_func_stub_int64(void* func, int argc, intptr_t argv[]);
