@@ -1,20 +1,21 @@
 #!/usr/bin/env ypsilon
-               
+
 (import (core))
-               
+
 (add-load-path "./gambit-benchmarks")
 (add-load-path "./bench/gambit-benchmarks")
-               
+
 (define-syntax time
   (syntax-rules ()
     ((_ expr)
-     (let-values (((real-start user-start sys-start) (time-usage)))
+     (destructuring-bind (real-start user-start sys-start) (time-usage)
        (let ((result (apply (lambda () expr) '())))
-         (let-values (((real-end user-end sys-end) (time-usage)))
-           (let ((real (format.6f (- real-end real-start)))
-                 (user (format.6f (- user-end user-start)))
-                 (sys  (format.6f (- sys-end sys-start))))
-             (format #t "~%;;  ~a real    ~a user    ~a sys~%~!" real user sys)))
+         (destructuring-bind (real-end user-end sys-end) (time-usage)
+           (format #t
+                   "~%;;~10,6f real ~11,6f user ~11,6f sys~%~!"
+                   (- real-end real-start)
+                   (- user-end user-start)
+                   (- sys-end sys-start)))
          result)))))
 
 (define (run-benchmark name count ok? run-maker . args)
@@ -45,7 +46,7 @@
       (if (<= pad 0)
           str
           (string-append str (make-string pad #\space))))))
-    
+
 (define format.6f
   (lambda (x)
     (let* ((str (number->string (/ (round (* x 1000000.0)) 1000000.0)))
