@@ -17,6 +17,7 @@ public:
                     ~printer_t();
     void            flush();
     void            format(const char* fmt, ...);
+    void            puts(const char* s);
     void            byte(uint8_t c);
     void            ucs4(uint32_t c);
     void            format_va_list(const char* fmt, va_list ap);

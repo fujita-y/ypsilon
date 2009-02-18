@@ -4484,7 +4484,7 @@ integer_init_n_alloc(object_heap_t* heap, int64_t m, int shift_left)
 
 // note: can optimize by using (mp = mm * 2) rule, but its very rare
 scm_string_t
-cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum)
+cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t flonum, bool no_exponential)
 {
     double v = flonum->value;
     char digits[32];
@@ -4614,10 +4614,10 @@ loop:
         }
     }
     // todo: support misc format
-    char out[32];
+    char out[512];
     int out_count = 0;
     digits[digit_count] = 0;
-    if (exponent >= -10 && exponent <= 10) {
+    if (no_exponential || (exponent >= -10 && exponent <= 10)) {
         if (sign == -1) out[out_count++] = '-';
         if (exponent <= 0) {
             out[out_count++] = '0';
@@ -4662,7 +4662,7 @@ cnvt_number_to_string(object_heap_t* heap, scm_obj_t obj, int radix)
     if (FIXNUMP(obj)) return cnvt_fixnum_to_string(heap, (scm_fixnum_t)obj, radix);
     if (BIGNUMP(obj)) return cnvt_bignum_to_string(heap, (scm_bignum_t)obj, radix);
     if (FLONUMP(obj)) {
-        if (radix == 10) return cnvt_flonum_to_string(heap, (scm_flonum_t)obj);
+        if (radix == 10) return cnvt_flonum_to_string(heap, (scm_flonum_t)obj, false);
         assert(false);
     }
     if (RATIONALP(obj)) {

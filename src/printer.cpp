@@ -224,6 +224,12 @@ printer_t::ucs4(uint32_t c)
 }
 
 void
+printer_t::puts(const char* s)
+{
+    port_puts(m_port, s);
+}
+
+void
 printer_t::format(const char* fmt, ...)
 {
     va_list ap;
