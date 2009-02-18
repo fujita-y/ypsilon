@@ -97,6 +97,44 @@ subr_interaction_environment(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+static int
+fixed_format_floating_point(object_heap_t* heap, char* buf, int buflen, int precision, scm_flonum_t flonum)
+{
+    scm_string_t string = cnvt_flonum_to_string(heap, flonum, true);
+    strncpy(buf, string->name, buflen);
+    if (isinf(flonum->value)) return 0;
+    if (isnan(flonum->value)) return 0;
+    char* decimal_point = strchr(buf, '.');
+    if (decimal_point == NULL) return 0;
+    int frac = strlen(decimal_point) - 1;
+    if (frac > precision) {
+        decimal_point[precision + 1] = 0;
+        return 0;
+    }
+    return precision - frac;
+}
+
+static const char* format_description =
+    ";; (format [#t|#f|<port>] <format-string> <argument> ...)\n"
+    ";;  ~a         display\n"
+    ";;  ~s         write\n"
+    ";;  ~w         write shared structure\n"
+    ";;  ~d         decimal\n"
+    ";;  ~x         hexadecimal\n"
+    ";;  ~o         octal\n"
+    ";;  ~b         binary\n"
+    ";;  ~c         character\n"
+    ";;  ~y         prettry print\n"
+    ";;  ~?         indirection\n"
+    ";;  ~k         indirection\n"
+    ";;  ~[w[,d]]f  fixed format floating point\n"
+    ";;  ~~         tilde\n"
+    ";;  ~t         tab\n"
+    ";;  ~%         newline\n"
+    ";;  ~&         freshline\n"
+    ";;  ~_         space\n"
+    ";;  ~h         help\n";
+
 // format
 scm_obj_t
 subr_format(VM* vm, int argc, scm_obj_t argv[])
@@ -175,11 +213,132 @@ output:
                         if (port->column != 1) prt.byte('\n');
                         continue;
                     }
+                    if (strchr("hH", c)) {
+                        prt.puts(format_description);
+                        continue;
+                    }
                     if (strchr("%~t_", c)) {
                         prt.format(tilded);
                         continue;
                     }
                     if (argp < argc) {
+                        if (strchr("0123456789", c)) {
+                            int width = c - '0';
+                            bool ok = false;
+                            while ((c = *p++) != 0) {
+                                if (strchr("0123456789", c)) {
+                                    width = width * 10 + c - '0';
+                                    continue;
+                                }
+                                if (c == ',') {
+                                    if (strchr("fF", p[0])) continue;
+                                    int fraction = 0;
+                                    while ((c = *p++) != 0) {
+                                        if (strchr("0123456789", c)) {
+                                            fraction = fraction * 10 + c - '0';
+                                            continue;
+                                        }
+                                        if (!strchr("fF", c)) break;
+                                        if (STRINGP(argv[argp])) {
+                                            scm_string_t string = (scm_string_t)argv[argp++];
+                                            int pad = width - strlen(string->name);
+                                            for (int i = 0; i < pad; i++) prt.byte(' ');
+                                            prt.format("~a", string);
+                                            ok = true;
+                                            break;
+                                        }
+                                        if (number_pred(argv[argp])) {
+                                            scm_obj_t obj = cnvt_to_inexact(vm->m_heap, argv[argp++]);
+                                            if (COMPLEXP(obj)) {
+                                                scm_complex_t complex = (scm_complex_t)obj;
+                                                char real_buf[512];
+                                                int real_n0 = fixed_format_floating_point(vm->m_heap, real_buf, sizeof(real_buf), fraction, (scm_flonum_t)complex->real);
+                                                char imag_buf[512];
+                                                int imag_n0 = fixed_format_floating_point(vm->m_heap, imag_buf, sizeof(imag_buf), fraction, (scm_flonum_t)complex->imag);
+                                                int pad = width - strlen(real_buf) - strlen(imag_buf) - real_n0 - imag_n0 + 2;
+                                                if (imag_buf[0] != '-') pad = pad - 1;
+                                                for (int i = 0; i < pad; i++) prt.byte(' ');
+                                                prt.puts(real_buf);
+                                                for (int i = 0; i < real_n0; i++) prt.byte('0');
+                                                if (imag_buf[0] != '-') prt.byte('+');
+                                                prt.puts(imag_buf);
+                                                for (int i = 0; i < imag_n0; i++) prt.byte('0');
+                                                prt.byte('i');
+                                                ok = true;
+                                                break;
+                                            } else {
+                                                assert(FLONUMP(obj));
+                                                char buf[512];
+                                                int n0 = fixed_format_floating_point(vm->m_heap, buf, sizeof(buf), fraction, (scm_flonum_t)obj);
+                                                int pad = width - strlen(buf) - n0;
+                                                for (int i = 0; i < pad; i++) prt.byte(' ');
+                                                prt.puts(buf);
+                                                for (int i = 0; i < n0; i++) prt.byte('0');
+                                                ok = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    break;
+                                }
+                                if (strchr("fF", c)) {
+                                    scm_string_t string;
+                                    if (STRINGP(argv[argp])) {
+                                        string = (scm_string_t)argv[argp++];
+                                        ok = true;
+                                    }
+                                    if (number_pred(argv[argp])) {
+                                        string = (scm_string_t)cnvt_number_to_string(vm->m_heap, argv[argp++], 10);
+                                        ok = true;
+                                    }
+                                    if (ok) {
+                                        int pad = width - strlen(string->name);
+                                        for (int i = 0; i < pad; i++) prt.byte(' ');
+                                        prt.format("~a", string);
+                                    }
+                                }
+                                break;
+                            }
+                            if (ok) continue;
+                            invalid_argument_violation(vm, "format", "wrong directive in control string", fmt, -1, argc, argv);
+                            return scm_undef;
+                        }
+                        if (strchr("fF", c)) {
+                            if (STRINGP(argv[argp]) || number_pred(argv[argp])) {
+                                scm_obj_t obj = argv[argp++];
+                                prt.format("~a", obj);
+                                continue;
+                            }
+                            wrong_type_argument_violation(vm, "format", argp, "number or string", argv[argp], argc, argv);
+                            return scm_undef;
+                        }
+                        if (strchr("kK?", c)) {
+                            if (STRINGP(argv[argp])) {
+                                scm_string_t fmt = (scm_string_t)argv[argp++];
+                                if (argp < argc) {
+                                    if (listp(argv[argp])) {
+                                        scm_obj_t param = argv[argp++];
+                                        int count = list_length(param);
+                                        scm_obj_t* args = (scm_obj_t*)alloca(sizeof(scm_obj_t) * (count + 2));
+                                        args[0] = dst;
+                                        args[1] = fmt;
+                                        for (int n = 0; n < count; n++) {
+                                            args[n + 2] = CAR(param);
+                                            param = CDR(param);
+                                        }
+                                        scm_obj_t ans = subr_format(vm, count + 2, args);
+                                        if (ans == scm_undef) return scm_undef;
+                                        continue;
+                                    }
+                                    wrong_type_argument_violation(vm, "format", argp, "proper list", argv[argp], argc, argv);
+                                    return scm_undef;
+                                }
+                                invalid_argument_violation(vm, "format", "too few arguments for control string", fmt, -1, argc, argv);
+                                return scm_undef;
+                            }
+                            wrong_type_argument_violation(vm, "format", argp, "string", argv[argp], argc, argv);
+                            return scm_undef;
+                        }
                         if (c == '/' || c == '\\') {
                             if (STRINGP(argv[argp])) {
                                 prt.format(tilded, argv[argp++]);

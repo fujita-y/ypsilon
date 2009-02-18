@@ -204,7 +204,7 @@ bool bignum_to_int64(scm_bignum_t bn, int64_t* ans);
 bool bignum_to_uint64(scm_bignum_t bn, uint64_t* ans);
 scm_string_t cnvt_bignum_to_string(object_heap_t* heap, scm_bignum_t bn, int radix);
 scm_string_t cnvt_fixnum_to_string(object_heap_t* heap, scm_fixnum_t bn, int radix);
-scm_string_t cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t bn);
+scm_string_t cnvt_flonum_to_string(object_heap_t* heap, scm_flonum_t bn, bool no_exponential);
 scm_obj_t cnvt_number_to_string(object_heap_t* heap, scm_obj_t obj, int radix);
 scm_obj_t cnvt_to_exact(object_heap_t* heap, scm_obj_t obj);
 scm_obj_t cnvt_to_inexact(object_heap_t* heap, scm_obj_t obj);
