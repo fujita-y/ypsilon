@@ -2192,7 +2192,7 @@
   (define-function int glGetError ())
 
   ;; const GLubyte * glGetString( GLenum name )
-  (define-function void* glGetString (int))
+  (define-function char* glGetString (int))
 
   ;; void glFinish( void )
   (define-function void glFinish ())

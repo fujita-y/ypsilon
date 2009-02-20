@@ -3352,6 +3352,36 @@ subr_rename_file(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// purge-system-environment!
+scm_obj_t
+subr_purge_system_environment(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (CLOSUREP(argv[0])) {
+            scm_environment_t empty = make_environment(vm->m_heap, "empty");
+            vm->m_current_environment = empty;
+            vm->m_heap->m_interaction_environment = empty;
+            vm->m_heap->m_system_environment = empty;
+            vm->m_heap->m_hidden_variables = make_weakhashtable(vm->m_heap, lookup_mutable_hashtable_size(0));
+            vm->m_current_dynamic_environment = make_weakhashtable(vm->m_heap, lookup_mutable_hashtable_size(0)); // note: fix cyclic dependency
+            vm->m_current_source_comments = scm_false;
+            vm->m_current_exception_handler = scm_false;
+            vm->m_current_dynamic_wind_record = scm_nil;
+            vm->m_cont = NULL;
+            vm->m_env = NULL;
+            vm->m_value = scm_unspecified;
+            vm->m_trace = scm_unspecified;
+            vm->m_trace_tail = scm_unspecified;
+            vm->apply_scheme(argv[0], 0);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "purge-system-environment!", 0, "closure", argv[0], argc, argv);
+        return scm_undef;        
+    }
+    wrong_number_of_arguments_violation(vm, "purge-system-environment!", 0, 0, argc, argv);
+    return scm_undef;
+}
+
 void
 init_subr_others(object_heap_t* heap)
 {
@@ -3477,4 +3507,5 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("create-symbolic-link", subr_create_symbolic_link);
     DEFSUBR("create-hard-link", subr_create_hard_link);
     DEFSUBR("rename-file", subr_rename_file);
+    DEFSUBR("purge-system-environment!", subr_purge_system_environment);
 }

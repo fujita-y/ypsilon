@@ -9,21 +9,10 @@
 #include "hash.h"
 #include "list.h"
 
-int
-list_length(scm_obj_t list)
-{
-    int n = 0;
-    while (list != scm_nil) {
-        list = CDR(list);
-        n++;
-    }
-    return n;
-}
-
 scm_obj_t
-list_ref(scm_obj_t list, int n)
+list_ref(scm_obj_t lst, int n)
 {
-    scm_obj_t obj = list;
+    scm_obj_t obj = lst;
     while (--n >= 0) {
         if (PAIRP(obj)) obj = CDR(obj);
         else return NULL;
@@ -33,15 +22,65 @@ list_ref(scm_obj_t list, int n)
 }
 
 scm_obj_t
-list_tail(scm_obj_t list, int n)
+list_tail(scm_obj_t lst, int n)
 {
     if (n < 0) return NULL;
-    scm_obj_t obj = list;
+    scm_obj_t obj = lst;
     while (--n >= 0) {
         if (PAIRP(obj)) obj = CDR(obj);
         else return NULL;
     }
     return obj;
+}
+
+scm_obj_t
+list_copy(object_heap_t* heap, scm_obj_t lst)
+{
+    if (PAIRP(lst)) {
+        scm_obj_t obj = make_pair(heap, CAR(lst), scm_nil);
+        scm_obj_t tail = obj;
+        lst = CDR(lst);
+        while (PAIRP(lst)) {
+            scm_obj_t e = make_pair(heap, CAR(lst), scm_nil);
+            CDR(tail) = e;
+            tail = e;
+            lst = CDR(lst);
+        }
+        CDR(tail) = lst;
+        return obj;
+    }
+    return lst;
+}
+
+int
+list_length(scm_obj_t lst)
+{
+    int n = 0;
+    while (lst != scm_nil) {
+        lst = CDR(lst);
+        n++;
+    }
+    return n;
+}
+
+int
+safe_list_length(scm_obj_t maybe_list)
+{
+    int count = 0;
+    scm_obj_t fast = maybe_list;
+    scm_obj_t slow = fast;
+    while (PAIRP(fast)) {
+        count++;
+        fast = CDR(fast);
+        if (fast == scm_nil) return count;
+        if (!PAIRP(fast)) return -2; // improper
+        count++;
+        fast = CDR(fast);
+        slow = CDR(slow);
+        if (slow == fast) return -1; // circular
+    }
+    if (fast == scm_nil) return count;
+    return -2; // improper
 }
 
 bool

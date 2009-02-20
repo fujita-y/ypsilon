@@ -445,17 +445,7 @@ subr_list_copy(VM* vm, int argc, scm_obj_t argv[])
                 wrong_type_argument_violation(vm, "list-copy", 0, "finite chain of pairs", argv[0], argc, argv);
                 return scm_undef;
             }
-            scm_obj_t obj = make_pair(vm->m_heap, CAR(lst), scm_nil);
-            scm_obj_t tail = obj;
-            lst = CDR(lst);
-            while (PAIRP(lst)) {
-                scm_obj_t e = make_pair(vm->m_heap, CAR(lst), scm_nil);
-                CDR(tail) = e;
-                tail = e;
-                lst = CDR(lst);
-            }
-            CDR(tail) = lst;
-            return obj;
+            return list_copy(vm->m_heap, lst);
         }
         return lst;
     }
