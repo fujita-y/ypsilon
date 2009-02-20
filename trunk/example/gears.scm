@@ -280,7 +280,7 @@
 
   (glEnable GL_NORMALIZE)
 
-  ;; glGetString dose not works correctly.
+  ;; fixed: glGetString dose not works correctly.
   (if (string? (glGetString GL_RENDERER))
       (begin
     (newline)

@@ -275,22 +275,17 @@ VM::apply_apply_closure(scm_obj_t lastarg)
 {
     scm_closure_t closure = (scm_closure_t)m_value;
     if (HDR_CLOSURE_ARGS(closure->hdr) < 0) {
-        int last_argc = 0;
-        scm_obj_t lst = lastarg;
-        while (PAIRP(lst)) {
-            last_argc++;
-            lst = CDR(lst);
-        }
-        if (lst == scm_nil) {
+        int last_argc = safe_list_length(lastarg);
+        if (last_argc >= 0) {
             intptr_t argc = m_sp - m_fp;
             intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
             args = -args - 1;
             if (argc == args) {
                 if (m_sp >= m_stack_limit) collect_stack(sizeof(scm_obj_t));
-                m_sp[0] = lastarg;
+                m_sp[0] = list_copy(m_heap, lastarg);
                 m_sp++;
             } else if (argc > args) {
-                scm_obj_t lst = lastarg;
+                scm_obj_t lst = list_copy(m_heap, lastarg);
                 do {
                     lst = make_pair(m_heap, m_sp[-1], lst);
                     m_sp--;
@@ -305,7 +300,7 @@ VM::apply_apply_closure(scm_obj_t lastarg)
                     m_sp++;
                     lst = CDR(lst);
                 } while (++argc < args);
-                m_sp[0] = lst;
+                m_sp[0] = list_copy(m_heap, lst);
                 m_sp++;
             } else {
                 return apply_apply_wrong_number_args;
@@ -353,12 +348,9 @@ VM::apply_apply_subr(scm_obj_t lastarg)
         if (m_sp >= m_stack_limit) {
             if (m_fp == m_stack_top) {
                 int argc = VM_STACK_BYTESIZE / sizeof(scm_obj_t);
-                scm_obj_t tmp = lst;
-                while (PAIRP(tmp)) {
-                    argc++;
-                    tmp = CDR(tmp);
-                }
-                if (tmp == scm_nil) {
+                int more = safe_list_length(lst);
+                if (more >= 0) {
+                    argc = argc + more;
                     scm_subr_t subr = (scm_subr_t)m_value;
                     scm_vector_t argv = make_vector(m_heap, argc, scm_unspecified);
                     memcpy(argv->elts, m_stack_top, VM_STACK_BYTESIZE);
