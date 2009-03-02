@@ -367,7 +367,7 @@
                              #`(define-syntax temp
                                  (lambda (x)
                                    (syntax-case x (temp)
-                                     (temp #'(apply tuple 'type:c-typedef 'lhs '#,(cdr spec))))))))))))
+                                     (temp #'(apply tuple 'type:c-typedef 'lhs '#,(datum->syntax #'k (cdr spec)))))))))))))
                     (check-c-typedef lhs rhs)))))
         ((_ lhs (struct field-specs ...))
          (and (identifier? #'lhs) (pair? #'(field-specs ...)))
