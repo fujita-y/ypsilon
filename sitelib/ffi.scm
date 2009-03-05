@@ -1,6 +1,7 @@
 #!nobacktrace
 (library (ffi)
-  (export alignof:double
+  (export alignof:bool
+          alignof:double
           alignof:float
           alignof:int
           alignof:int16_t
@@ -11,8 +12,8 @@
           alignof:short
           alignof:size_t
           alignof:void*
-          bytevector-c-char-ref
-          bytevector-c-char-set!
+          bytevector-c-bool-ref
+          bytevector-c-bool-set!
           bytevector-c-double-ref
           bytevector-c-double-set!
           bytevector-c-float-ref
@@ -46,6 +47,7 @@
           c-function/errno
           c-function/win32-lasterror
           c-sizeof
+          define-c-enum
           define-c-struct-methods
           define-c-struct-type
           define-c-typedef
@@ -66,6 +68,7 @@
           on-x64
           shared-object-errno
           shared-object-win32-lasterror
+          sizeof:bool
           sizeof:int
           sizeof:long
           sizeof:short

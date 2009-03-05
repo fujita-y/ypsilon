@@ -1709,11 +1709,13 @@ object_heap_t::init_architecture_feature()
 #define ARCH_FIXNUM(name, value) put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(value))
 #define ARCH_ALIGNOF(name, type) { int n; struct x { char y; type z; }; n = offsetof(x, z); ARCH_FIXNUM(name, n); }
     ARCH_FIXNUM(ypsilon-revision, PROGRAM_REVISION);
-    ARCH_FIXNUM(sizeof:short,    sizeof(short));
-    ARCH_FIXNUM(sizeof:int,      sizeof(int));
-    ARCH_FIXNUM(sizeof:long,     sizeof(long));
-    ARCH_FIXNUM(sizeof:void*,    sizeof(void*));
-    ARCH_FIXNUM(sizeof:size_t,   sizeof(size_t));
+    ARCH_FIXNUM(sizeof:bool,   sizeof(bool));
+    ARCH_FIXNUM(sizeof:short,  sizeof(short));
+    ARCH_FIXNUM(sizeof:int,    sizeof(int));
+    ARCH_FIXNUM(sizeof:long,   sizeof(long));
+    ARCH_FIXNUM(sizeof:void*,  sizeof(void*));
+    ARCH_FIXNUM(sizeof:size_t, sizeof(size_t));
+    ARCH_ALIGNOF(alignof:bool,    bool);
     ARCH_ALIGNOF(alignof:short,   short);
     ARCH_ALIGNOF(alignof:int,     int);
     ARCH_ALIGNOF(alignof:long,    long);

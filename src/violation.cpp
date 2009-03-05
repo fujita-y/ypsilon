@@ -118,7 +118,7 @@ invalid_application_violation(VM* vm, scm_obj_t value, int argc, scm_obj_t argv[
     form = make_pair(vm->m_heap, value, form);
     scoped_lock lock(port->lock);
     printer_t prt(vm, port);
-    prt.format("attempt call non-procedure: ~r", form);
+    prt.format("attempt to call non-procedure: ~r", form);
     scm_string_t message = port_extract_string(vm->m_heap, port);
     raise_assertion_violation(vm, scm_false, message, NULL);
 }

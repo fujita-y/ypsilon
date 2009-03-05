@@ -10,20 +10,20 @@
           c-sizeof
           c-coerce-void*
           make-bytevector-mapping
-          bytevector-c-int-ref
-          bytevector-c-char-ref
-          bytevector-c-long-ref
+          bytevector-c-bool-ref
           bytevector-c-short-ref
+          bytevector-c-int-ref
+          bytevector-c-long-ref
           bytevector-c-void*-ref
           bytevector-c-float-ref
           bytevector-c-double-ref
           bytevector-c-unsigned-short-ref
           bytevector-c-unsigned-int-ref
           bytevector-c-unsigned-long-ref
-          bytevector-c-int-set!
-          bytevector-c-char-set!
-          bytevector-c-long-set!
+          bytevector-c-bool-set!
           bytevector-c-short-set!
+          bytevector-c-int-set!
+          bytevector-c-long-set!
           bytevector-c-void*-set!
           bytevector-c-float-set!
           bytevector-c-double-set!
@@ -39,11 +39,13 @@
           bytevector-c-int16-set!
           bytevector-c-int32-set!
           bytevector-c-int64-set!
+          sizeof:bool
           sizeof:int
           sizeof:long
           sizeof:short
           sizeof:void*
           sizeof:size_t
+          alignof:bool
           alignof:int
           alignof:long
           alignof:short
@@ -58,11 +60,13 @@
 
   (import (core))
 
+  (define sizeof:bool      (architecture-feature 'sizeof:bool))
   (define sizeof:int       (architecture-feature 'sizeof:int))
   (define sizeof:long      (architecture-feature 'sizeof:long))
   (define sizeof:short     (architecture-feature 'sizeof:short))
   (define sizeof:void*     (architecture-feature 'sizeof:void*))
   (define sizeof:size_t    (architecture-feature 'sizeof:size_t))
+  (define alignof:bool     (architecture-feature 'alignof:bool))
   (define alignof:int      (architecture-feature 'alignof:int))
   (define alignof:long     (architecture-feature 'alignof:long))
   (define alignof:short    (architecture-feature 'alignof:short))
@@ -75,61 +79,64 @@
   (define alignof:int32_t  (architecture-feature 'alignof:int32_t))
   (define alignof:int64_t  (architecture-feature 'alignof:int64_t))
 
-  (define bytevector-c-char-ref
-    (lambda (bv index)
-      (bytevector-u8-ref bv index)))
+  (define coerce-bool
+    (lambda (x)
+      (cond ((eq? x #t) 1)
+            ((eq? x #f) 0)
+            ((and (integer? x) (exact? x))
+             (if (= x 0) 0 1))
+            (else
+             (assertion-violation 'bytevector-c-bool-set! (format "expected boolean or exact integer, but got ~r, as argument 3" x))))))
 
-  (define bytevector-c-char-set!
-    (lambda (bv index val)
-      (bytevector-u8-set! bv index val)))
+  (define bytevector-c-bool-ref
+    (case sizeof:bool
+      ((1) (lambda (bv offset) (> (bytevector-c-uint8-ref bv offset) 0)))
+      ((4) (lambda (bv offset) (> (bytevector-c-uint32-ref bv offset) 0)))
+      ((8) (lambda (bv offset) (> (bytevector-c-uint64-ref bv offset) 0)))
+      (else (assertion-violation 'bytevector-c-bool-ref "internal inconsistency"))))
 
-  (define bytevector-c-float-ref
-    (lambda (bv index)
-      (bytevector-ieee-single-ref bv index (native-endianness))))
+  (define bytevector-c-bool-set!
+    (case sizeof:bool
+      ((1) (lambda (bv offset value) (bytevector-c-int8-set! bv offset (coerce-bool value))))
+      ((4) (lambda (bv offset value) (bytevector-c-int32-set! bv offset (coerce-bool value))))
+      ((8) (lambda (bv offset value) (bytevector-c-int64-set! bv offset (coerce-bool value))))
+      (else (assertion-violation 'bytevector-c-bool-set! "internal inconsistency"))))
 
-  (define bytevector-c-float-set!
-    (lambda (bv index val)
-      (bytevector-ieee-single-set! bv index val (native-endianness))))
-
-  (define bytevector-c-double-ref
-    (lambda (bv index)
-      (bytevector-ieee-double-ref bv index (native-endianness))))
-
-  (define bytevector-c-double-set!
-    (lambda (bv index val)
-      (bytevector-ieee-double-set! bv index val (native-endianness))))
-
-  (define bytevector-c-int8-ref
-    (lambda (bv index)
-      (bytevector-s8-ref bv index)))
-
-  (define bytevector-c-int16-ref
-    (lambda (bv index)
-      (bytevector-s16-ref bv index (native-endianness))))
-
-  (define bytevector-c-int32-ref
-    (lambda (bv index)
-      (bytevector-s32-ref bv index (native-endianness))))
-
-  (define bytevector-c-int64-ref
-    (lambda (bv index)
-      (bytevector-s64-ref bv index (native-endianness))))
-
-  (define bytevector-c-uint8-ref
-    (lambda (bv index)
-      (bytevector-u8-ref bv index)))
-
-  (define bytevector-c-uint16-ref
-    (lambda (bv index)
-      (bytevector-u16-ref bv index (native-endianness))))
-
-  (define bytevector-c-uint32-ref
-    (lambda (bv index)
-      (bytevector-u32-ref bv index (native-endianness))))
-
-  (define bytevector-c-uint64-ref
-    (lambda (bv index)
-      (bytevector-u64-ref bv index (native-endianness))))
+  (define primitive-syntax
+    (let ((ht (make-eq-hashtable)))
+      (for-each (lambda (b) (hashtable-set! ht (car b) (cdr b)))
+                `((bytevector-c-int-ref . ,#'bytevector-c-int-ref)
+                  (bytevector-c-bool-ref . ,#'bytevector-c-bool-ref)
+                  (bytevector-c-long-ref . ,#'bytevector-c-long-ref)
+                  (bytevector-c-short-ref . ,#'bytevector-c-short-ref)
+                  (bytevector-c-void*-ref . ,#'bytevector-c-void*-ref)
+                  (bytevector-c-unsigned-int-ref . ,#'bytevector-c-unsigned-int-ref)
+                  (bytevector-c-unsigned-long-ref . ,#'bytevector-c-unsigned-long-ref)
+                  (bytevector-c-unsigned-short-ref . ,#'bytevector-c-unsigned-short-ref)
+                  (bytevector-c-float-ref . ,#'bytevector-c-float-ref)
+                  (bytevector-c-double-ref . ,#'bytevector-c-double-ref)
+                  (bytevector-c-int8-ref . ,#'bytevector-c-int8-ref)
+                  (bytevector-c-int16-ref . ,#'bytevector-c-int16-ref)
+                  (bytevector-c-int32-ref . ,#'bytevector-c-int32-ref)
+                  (bytevector-c-int64-ref . ,#'bytevector-c-int64-ref)
+                  (bytevector-c-uint8-ref . ,#'bytevector-c-uint8-ref)
+                  (bytevector-c-uint16-ref . ,#'bytevector-c-uint16-ref)
+                  (bytevector-c-uint32-ref . ,#'bytevector-c-uint32-ref)
+                  (bytevector-c-uint64-ref . ,#'bytevector-c-uint64-ref)
+                  (bytevector-c-bool-set! . ,#'bytevector-c-bool-set!)
+                  (bytevector-c-int-set! . ,#'bytevector-c-int-set!)
+                  (bytevector-c-long-set! . ,#'bytevector-c-long-set!)
+                  (bytevector-c-short-set! . ,#'bytevector-c-short-set!)
+                  (bytevector-c-void*-set! . ,#'bytevector-c-void*-set!)
+                  (bytevector-c-int8-set! . ,#'bytevector-c-int8-set!)
+                  (bytevector-c-int16-set! . ,#'bytevector-c-int16-set!)
+                  (bytevector-c-int32-set! . ,#'bytevector-c-int32-set!)
+                  (bytevector-c-int64-set! . ,#'bytevector-c-int64-set!)
+                  (make-bytevector . ,#'make-bytevector)
+                  (bytevector-copy! . ,#'bytevector-copy!)))
+      (lambda (id)
+        (or (hashtable-ref ht id #f)
+            (assertion-violation 'primitive-syntax "internal inconsistency")))))
 
   (define primitive-types
     (let ((ht (make-eq-hashtable)))
@@ -144,27 +151,32 @@
                                  (list 'primitive
                                        accessor
                                        mutator)))))
-       `((int    ,sizeof:int    ,alignof:int    ,#'bytevector-c-int-ref    ,#'bytevector-c-int-set!)
-         (char   1              1               ,#'bytevector-c-char-ref   ,#'bytevector-c-char-set!)
-         (long   ,sizeof:long   ,alignof:long   ,#'bytevector-c-long-ref   ,#'bytevector-c-long-set!)
-         (short  ,sizeof:short  ,alignof:short  ,#'bytevector-c-short-ref  ,#'bytevector-c-short-set!)
-         (void*  ,sizeof:void*  ,alignof:void*  ,#'bytevector-c-void*-ref  ,#'bytevector-c-void*-set!)
-         (unsigned-int   ,sizeof:int   ,alignof:int   ,#'bytevector-c-unsigned-int-ref   ,#'bytevector-c-int-set!)
-         (unsigned-long  ,sizeof:long  ,alignof:long  ,#'bytevector-c-unsigned-long-ref  ,#'bytevector-c-long-set!)
-         (unsigned-short ,sizeof:short ,alignof:short ,#'bytevector-c-unsigned-short-ref ,#'bytevector-c-short-set!)
-         (float    4 ,alignof:float   ,#'bytevector-c-float-ref  ,#'bytevector-c-float-set!)
-         (double   8 ,alignof:double  ,#'bytevector-c-double-ref ,#'bytevector-c-double-set!)
-         (int8_t   1 ,alignof:int8_t  ,#'bytevector-c-int8-ref   ,#'bytevector-c-int8-set!)
-         (int16_t  2 ,alignof:int16_t ,#'bytevector-c-int16-ref  ,#'bytevector-c-int16-set!)
-         (int32_t  4 ,alignof:int32_t ,#'bytevector-c-int32-ref  ,#'bytevector-c-int32-set!)
-         (int64_t  8 ,alignof:int64_t ,#'bytevector-c-int64-ref  ,#'bytevector-c-int64-set!)
-         (uint8_t  1 ,alignof:int8_t  ,#'bytevector-c-uint8-ref  ,#'bytevector-c-int8-set!)
-         (uint16_t 2 ,alignof:int16_t ,#'bytevector-c-uint16-ref ,#'bytevector-c-int16-set!)
-         (uint32_t 4 ,alignof:int32_t ,#'bytevector-c-uint32-ref ,#'bytevector-c-int32-set!)
-         (uint64_t 8 ,alignof:int64_t ,#'bytevector-c-uint64-ref ,#'bytevector-c-int64-set!)
-         (size_t ,sizeof:size_t ,alignof:size_t ,@(if (= sizeof:size_t sizeof:int)
-                                                      `(,#'bytevector-c-unsigned-int-ref  ,#'bytevector-c-int-set!)
-                                                      `(,#'bytevector-c-unsigned-long-ref ,#'bytevector-c-long-set!)))))
+       `((char   1              1               bytevector-c-uint8-ref  bytevector-c-int8-set!)
+         (bool   ,sizeof:bool   ,alignof:bool   bytevector-c-bool-ref   bytevector-c-bool-set!)
+         (short  ,sizeof:short  ,alignof:short  bytevector-c-short-ref  bytevector-c-short-set!)
+         (int    ,sizeof:int    ,alignof:int    bytevector-c-int-ref    bytevector-c-int-set!)
+         (long   ,sizeof:long   ,alignof:long   bytevector-c-long-ref   bytevector-c-long-set!)
+         (char*  ,sizeof:void*  ,alignof:void*  bytevector-c-void*-ref  bytevector-c-void*-set!)
+         (void*  ,sizeof:void*  ,alignof:void*  bytevector-c-void*-ref  bytevector-c-void*-set!)
+         (unsigned-short ,sizeof:short ,alignof:short bytevector-c-unsigned-short-ref bytevector-c-short-set!)
+         (unsigned-int   ,sizeof:int   ,alignof:int   bytevector-c-unsigned-int-ref   bytevector-c-int-set!)
+         (unsigned-long  ,sizeof:long  ,alignof:long  bytevector-c-unsigned-long-ref  bytevector-c-long-set!)
+         (float    4 ,alignof:float   bytevector-c-float-ref  bytevector-c-float-set!)
+         (double   8 ,alignof:double  bytevector-c-double-ref bytevector-c-double-set!)
+         (int8_t   1 ,alignof:int8_t  bytevector-c-int8-ref   bytevector-c-int8-set!)
+         (int16_t  2 ,alignof:int16_t bytevector-c-int16-ref  bytevector-c-int16-set!)
+         (int32_t  4 ,alignof:int32_t bytevector-c-int32-ref  bytevector-c-int32-set!)
+         (int64_t  8 ,alignof:int64_t bytevector-c-int64-ref  bytevector-c-int64-set!)
+         (uint8_t  1 ,alignof:int8_t  bytevector-c-uint8-ref  bytevector-c-int8-set!)
+         (uint16_t 2 ,alignof:int16_t bytevector-c-uint16-ref bytevector-c-int16-set!)
+         (uint32_t 4 ,alignof:int32_t bytevector-c-uint32-ref bytevector-c-int32-set!)
+         (uint64_t 8 ,alignof:int64_t bytevector-c-uint64-ref bytevector-c-int64-set!)
+         (size_t ,sizeof:size_t ,alignof:size_t ,@(cond ((= sizeof:size_t sizeof:int)
+                                                         '(bytevector-c-unsigned-int-ref  bytevector-c-int-set!))
+                                                        ((= sizeof:size_t sizeof:long)
+                                                         '(bytevector-c-unsigned-long-ref bytevector-c-long-set!))
+                                                        (else
+                                                         (assertion-violation 'primitive-types "internal inconsistency"))))))
       (hashtable-copy ht)))
 
   (define constructor-name
@@ -186,55 +198,32 @@
             (lambda ()
               (make-bytevector #,struct-size))))))
 
-  #;
   (define make-accessor/mutator
     (lambda (stx struct-name field-name index accessor mutator)
-      #`(begin
-          (define #,(accessor-name stx struct-name field-name)
-            (lambda (bv)
-              (#,(datum->syntax stx accessor) bv #,index)))
-          (define #,(mutator-name stx struct-name field-name)
-            (lambda (bv val)
-              (#,(datum->syntax stx mutator) bv #,index val))))))
-
-  #;
-  (define make-compound-accessor/mutator
-    (lambda (stx struct-name field-name index size make copy!)
-      (cond ((eq? field-name '_) #'(begin))
-            (else
-             #`(begin
-                 (define #,(accessor-name stx struct-name field-name)
-                   (lambda (bv)
-                     (let ((value (#,make #,size)))
-                       (begin (#,copy! bv #,index value 0 #,size) value))))
-                 (define #,(mutator-name stx struct-name field-name)
-                   (lambda (bv value)
-                     (#,copy! value 0 bv #,index #,size))))))))
-
-  (define make-accessor/mutator
-    (lambda (stx struct-name field-name index accessor mutator)
-      #`(begin
-          (define-syntax #,(accessor-name stx struct-name field-name)
-            (syntax-rules ()
-              ((_ bv)
-               (#,accessor bv #,index))))
-          (define-syntax #,(mutator-name stx struct-name field-name)
-            (syntax-rules ()
-              ((_ bv obj)
-               (#,mutator bv #,index obj)))))))
+      (let ((accessor (primitive-syntax accessor)) (mutator (primitive-syntax mutator)))
+        #`(begin
+            (define-syntax #,(accessor-name stx struct-name field-name)
+              (syntax-rules ()
+                ((_ bv)
+                 (#,accessor bv #,index))))
+            (define-syntax #,(mutator-name stx struct-name field-name)
+              (syntax-rules ()
+                ((_ bv obj)
+                 (#,mutator bv #,index obj))))))))
 
   (define make-compound-accessor/mutator
     (lambda (stx struct-name field-name index size make copy!)
-      #`(begin
-          (define-syntax #,(accessor-name stx struct-name field-name)
-            (syntax-rules ()
-              ((_ bv)
-               (let ((value (#,make #,size)))
-                 (begin (#,copy! bv #,index value 0 #,size) value)))))
-          (define-syntax #,(mutator-name stx struct-name field-name)
-            (syntax-rules ()
-              ((_ bv obj)
-               (#,copy! obj 0 bv #,index #,size)))))))
+      (let ((make (primitive-syntax make)) (copy! (primitive-syntax copy!)))
+        #`(begin
+            (define-syntax #,(accessor-name stx struct-name field-name)
+              (syntax-rules ()
+                ((_ bv)
+                 (let ((value (#,make #,size)))
+                   (begin (#,copy! bv #,index value 0 #,size) value)))))
+            (define-syntax #,(mutator-name stx struct-name field-name)
+              (syntax-rules ()
+                ((_ bv obj)
+                 (#,copy! obj 0 bv #,index #,size))))))))
 
   (define process-struct-fields
     (lambda (code? who stx struct-name compound-types field-specs)
@@ -267,10 +256,10 @@
                             (and code?
                                  (if (eq? field-name '_)
                                      field-defs
-                                     (cons (make-compound-accessor/mutator stx struct-name field-name index sizeof #'make-bytevector #'bytevector-copy!)
+                                     (cons (make-compound-accessor/mutator stx struct-name field-name index sizeof 'make-bytevector 'bytevector-copy!)
                                            field-defs))))))
                    (_
-                    (assertion-violation who "internal error")))))
+                    (assertion-violation who "internal inconsistency")))))
               ((field-type field-name [count])
                (cond ((or (hashtable-ref primitive-types field-type #f) (assq field-type compound-types))
                       => (lambda (rec)
@@ -285,9 +274,9 @@
                                               (cons (make-compound-accessor/mutator stx struct-name field-name index (* sizeof count) 'make-bytevector 'bytevector-copy!)
                                                     field-defs))))))))
                      (else
-                      (assertion-violation who "internal error"))))
+                      (assertion-violation who "internal inconsistency"))))
               (_
-               (assertion-violation who "internal error")))
+               (assertion-violation who "internal inconsistency")))
 
             (list (align-field-offset field-offset struct-align) struct-align field-defs)))))
 
@@ -375,8 +364,7 @@
                 (syntax-violation 'define-c-typedef "attempt to modify primitive type" x))
                ((find-maybe-compound x #'(field-specs ...))
                 => (lambda (lst)
-                     (with-syntax
-                         (((compounds ...) lst))
+                     (with-syntax (((compounds ...) lst))
                        #`(let-syntax
                            ((check-c-struct-fields
                              (lambda (x)

@@ -265,6 +265,19 @@
         return scm_undef;
     }
 
+    scm_obj_t change_file_mode(VM* vm, scm_string_t path, int mode) // no operation on windows
+    {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            if (ucs2_file_exists(ucs2)) return scm_unspecified;
+            _dosmaperr(GetLastError());
+            raise_io_error(vm, "change-file-mode", SCM_PORT_OPERATION_OPEN, win32_lasterror_message(), errno, scm_false, path);
+            return scm_undef;
+        }
+        raise_io_error(vm, "change-file-mode", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }    
+    
     scm_obj_t rename_file(VM* vm, scm_string_t old_path, scm_string_t new_path)
     {
         wchar_t old_ucs2[MAX_PATH];
@@ -533,6 +546,15 @@
     {
         if (remove(path->name) < 0) {
             raise_io_error(vm, "delete-file", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+            return scm_undef;
+        }
+        return scm_unspecified;
+    }
+
+    scm_obj_t change_file_mode(VM* vm, scm_string_t path, int mode)
+    {
+        if (chmod(path->name, mode) < 0) {
+            raise_io_error(vm, "change-file-mode", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
             return scm_undef;
         }
         return scm_unspecified;
