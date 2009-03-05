@@ -15,6 +15,12 @@
     {
         "Entry"
         {
+        "MsmKey" = "8:_004982426A914A7D9F2B38F80B9A6D8A"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_059D67DC08084AAEA1F9063A22ED629F"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -297,12 +303,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_5EECBF3DD68D448FAD975BADB33ACB6C"
-        "OwnerKey" = "8:_0F1B1AC3A3D64583BA2449CC213A8F0F"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_6411AE1DC2C744779952D6BFE927E273"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -334,6 +334,12 @@
         "Entry"
         {
         "MsmKey" = "8:_67DEF293EFC043AFA76F9AA371CFF43E"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_6D41AE8841664CC9B1A8EAFB1A9F984B"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -383,12 +389,6 @@
         {
         "MsmKey" = "8:_7B00EA9A11754F73B509C102CDC28E0C"
         "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_7DEEF478D83F4071A4BF57525C1E5512"
-        "OwnerKey" = "8:_5EECBF3DD68D448FAD975BADB33ACB6C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -477,7 +477,19 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_9F5A968B75414F78BB08EF947E196540"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_A0419C59AAE0481FA7ABDCE1489CCA14"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_A0A49FF2298E4D699BEC5D7FA8FFF0B6"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -633,12 +645,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_D253C8BA2EF64843BB40ECEE24B74518"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_D2AD90C6189B4165B54001FE4ED28D61"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -664,6 +670,18 @@
         "Entry"
         {
         "MsmKey" = "8:_D3BBADBD36B34D0FBDA742031A0FD4E4"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D43844A669164353B50EA00F6E216E4A"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D71655E0905C4E3084BBA4E42E801C00"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -700,6 +718,12 @@
         "Entry"
         {
         "MsmKey" = "8:_E540F6EA2E0B48FA822B9E340F90DCE6"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_E566197017414A3D9F69A01BB42FC365"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -759,12 +783,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_F3699D8A671F42538F134F7868E67E4B"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_F41F4FFCC8334A61A732243F0591DD37"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -790,6 +808,12 @@
         "Entry"
         {
         "MsmKey" = "8:_FB2DE29ECA834EB6AB708ECBA7947DC9"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_FB95F592205547479B0F26B98FD31FAD"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -898,6 +922,26 @@
         }
         "File"
         {
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_004982426A914A7D9F2B38F80B9A6D8A"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\sdl\\base.scm"
+            "TargetName" = "8:base.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_8305365E8C264B71A61B2B3D026F82F6"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_059D67DC08084AAEA1F9063A22ED629F"
             {
             "SourcePath" = "8:..\\sitelib\\srfi\\%3a28.scm"
@@ -1938,6 +1982,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6D41AE8841664CC9B1A8EAFB1A9F984B"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\c-enum.scm"
+            "TargetName" = "8:c-enum.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6D6BBE3C87F846B5B3BE6E050B6D2F87"
             {
             "SourcePath" = "8:..\\stdlib\\core\\unicode-assistants.scm"
@@ -2378,12 +2442,52 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9F5A968B75414F78BB08EF947E196540"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\sdl\\types.scm"
+            "TargetName" = "8:types.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_8305365E8C264B71A61B2B3D026F82F6"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A0419C59AAE0481FA7ABDCE1489CCA14"
             {
             "SourcePath" = "8:..\\stdlib\\rnrs\\io\\ports.scm"
             "TargetName" = "8:ports.scm"
             "Tag" = "8:"
             "Folder" = "8:_D717F8DCA9E142E7AF5BF53880268C12"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A0A49FF2298E4D699BEC5D7FA8FFF0B6"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\sdl\\mixer.scm"
+            "TargetName" = "8:mixer.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_8305365E8C264B71A61B2B3D026F82F6"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -2898,26 +3002,6 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D253C8BA2EF64843BB40ECEE24B74518"
-            {
-            "SourcePath" = "8:..\\sitelib\\ypsilon\\stdio.scm"
-            "TargetName" = "8:stdio.scm"
-            "Tag" = "8:"
-            "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D2AD90C6189B4165B54001FE4ED28D61"
             {
             "SourcePath" = "8:..\\sitelib\\srfi\\%3a13\\strings.scm"
@@ -3004,6 +3088,46 @@
             "TargetName" = "8:%3a42.scm"
             "Tag" = "8:"
             "Folder" = "8:_C1B0308C6E1547D1BB5365DB4BBBAB34"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D43844A669164353B50EA00F6E216E4A"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\sdl.scm"
+            "TargetName" = "8:sdl.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D71655E0905C4E3084BBA4E42E801C00"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\sdl\\image.scm"
+            "TargetName" = "8:image.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_8305365E8C264B71A61B2B3D026F82F6"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -3124,6 +3248,26 @@
             "TargetName" = "8:pregexp.scm"
             "Tag" = "8:"
             "Folder" = "8:_D08BED6DB01C4592A10D6EE72A4CD9F6"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E566197017414A3D9F69A01BB42FC365"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\sdl\\constants.scm"
+            "TargetName" = "8:constants.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_8305365E8C264B71A61B2B3D026F82F6"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -3318,26 +3462,6 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F3699D8A671F42538F134F7868E67E4B"
-            {
-            "SourcePath" = "8:..\\sitelib\\stdio.scm"
-            "TargetName" = "8:stdio.scm"
-            "Tag" = "8:"
-            "Folder" = "8:_D08BED6DB01C4592A10D6EE72A4CD9F6"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F41F4FFCC8334A61A732243F0591DD37"
             {
             "SourcePath" = "8:..\\sitelib\\srfi\\%3a42\\eager-comprehensions.scm"
@@ -3422,6 +3546,26 @@
             {
             "SourcePath" = "8:..\\sitelib\\ypsilon\\pregexp.scm"
             "TargetName" = "8:pregexp.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_FB95F592205547479B0F26B98FD31FAD"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\cairo.scm"
+            "TargetName" = "8:cairo.scm"
             "Tag" = "8:"
             "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
             "Condition" = "8:"
@@ -3565,6 +3709,17 @@
                             "Property" = "8:_3121F2E18C5B4FD6AE00E912059B2DC8"
                                 "Folders"
                                 {
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_8305365E8C264B71A61B2B3D026F82F6"
+                                    {
+                                    "Name" = "8:sdl"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_0A9CD99FC2544433B9AD74E5FD958C31"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
                                 }
                             }
                             "{9EF0B969-E518-4E46-987F-47570745A589}:_C1B0308C6E1547D1BB5365DB4BBBAB34"
@@ -4313,34 +4468,6 @@
         }
         "MergeModule"
         {
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_5EECBF3DD68D448FAD975BADB33ACB6C"
-            {
-            "UseDynamicProperties" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "SourcePath" = "8:policy_9_0_Microsoft_VC90_DebugCRT_x86.msm"
-                "Properties"
-                {
-                }
-            "LanguageId" = "3:0"
-            "Exclude" = "11:FALSE"
-            "Folder" = "8:"
-            "Feature" = "8:"
-            "IsolateTo" = "8:"
-            }
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_7DEEF478D83F4071A4BF57525C1E5512"
-            {
-            "UseDynamicProperties" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "SourcePath" = "8:microsoft_vc90_debugcrt_x86.msm"
-                "Properties"
-                {
-                }
-            "LanguageId" = "3:0"
-            "Exclude" = "11:FALSE"
-            "Folder" = "8:"
-            "Feature" = "8:"
-            "IsolateTo" = "8:"
-            }
         }
         "ProjectOutput"
         {
