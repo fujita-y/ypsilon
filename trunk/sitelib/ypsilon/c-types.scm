@@ -132,6 +132,8 @@
                   (bytevector-c-int16-set! . ,#'bytevector-c-int16-set!)
                   (bytevector-c-int32-set! . ,#'bytevector-c-int32-set!)
                   (bytevector-c-int64-set! . ,#'bytevector-c-int64-set!)
+                  (bytevector-c-float-set! . ,#'bytevector-c-float-set!)
+                  (bytevector-c-double-set! . ,#'bytevector-c-double-set!)
                   (make-bytevector . ,#'make-bytevector)
                   (bytevector-copy! . ,#'bytevector-copy!)))
       (lambda (id)
