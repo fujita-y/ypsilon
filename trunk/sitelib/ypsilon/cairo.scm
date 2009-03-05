@@ -455,7 +455,7 @@
           (on-linux   "libcairo.so.2")
           (on-freebsd "libcairo.so")
           (on-openbsd "libcairo.so")
-          (on-windows "libcairo.dll")
+          (on-windows "libcairo-2.dll")
           (else
            (assertion-violation #f "can not locate Cairo library, unknown operating system"))))
 
