@@ -446,7 +446,9 @@
           cairo_rectangle_t
           cairo_text_cluster_t
           cairo_text_extents_t
-          cairo_user_data_key_t)
+          cairo_user_data_key_t
+          c-coerce-void*
+          define-c-struct-methods)
 
   (import (rnrs) (ypsilon ffi))
 
