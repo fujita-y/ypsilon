@@ -50,6 +50,7 @@
       (cairo_select_font_face cairo-context "Sans" CAIRO_FONT_SLANT_NORMAL CAIRO_FONT_WEIGHT_NORMAL)
       (cairo_set_font_size cairo-context 32.0)
       (cairo_show_text cairo-context "Hello World")
+      (cairo_surface_flush cairo-surface)
       (SDL_Flip video-surface))))
 
 (define FRAME-INTERVAL 16000)
