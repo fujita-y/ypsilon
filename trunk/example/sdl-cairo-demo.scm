@@ -1,6 +1,22 @@
 #!/usr/bin/env ypsilon
 #!r6rs
-(import (rnrs) (ypsilon sdl) (ypsilon cairo) (ypsilon time))
+   
+;; sdl-cairo-hello.scm:
+;;   SDL/Cairo hello world
+;;
+;; Requirements:
+;;   Darwin:  SDL.framework Cairo.framework
+;;   Linux:   libSDL.so libcairo.so.2
+;;   FreeBSD: libSDL.so libcairo.so
+;;   OpenBSD: libSDL.so libcairo.so
+;;   Windows: SDL.dll libcairo-2.dll
+   
+(import (rnrs) 
+        (ypsilon sdl base)
+        (ypsilon sdl constants)
+        (ypsilon sdl types)
+        (ypsilon cairo) 
+        (ypsilon time))
 
 ;; init SDL
 (when (> (SDL_Init SDL_INIT_EVERYTHING) 0) (assertion-violation 'SDL_Init (SDL_GetError)))
