@@ -1517,6 +1517,84 @@ subr_bytevector_c_intptr_ref(VM* vm, int argc, scm_obj_t argv[])
     return c_u64_ref("bytevector-c-void*-ref", vm, argc, argv);
 }
 
+// bytevector-c-int8-ref
+scm_obj_t
+subr_bytevector_c_int8_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(1, "bytevector-c-int8-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return MAKEFIXNUM((int8_t)param.bytes[0]);
+}
+
+// bytevector-c-int16-ref
+scm_obj_t
+subr_bytevector_c_int16_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    return c_s16_ref("bytevector-c-int16-ref", vm, argc, argv);
+}
+
+// bytevector-c-int32-ref
+scm_obj_t
+subr_bytevector_c_int32_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    return c_s32_ref("bytevector-c-int32-ref", vm, argc, argv);
+}
+
+// bytevector-c-int64-ref
+scm_obj_t
+subr_bytevector_c_int64_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    return c_s64_ref("bytevector-c-int64-ref", vm, argc, argv);
+}
+
+// bytevector-c-uint8-ref
+scm_obj_t
+subr_bytevector_c_uint8_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    native_accessor_param_t param(1, "bytevector-c-uint8-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return MAKEFIXNUM(param.bytes[0]);
+}
+
+// bytevector-c-uint16-ref
+scm_obj_t
+subr_bytevector_c_uint16_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    return c_u16_ref("bytevector-c-uint16-ref", vm, argc, argv);
+}
+
+// bytevector-c-uint32-ref
+scm_obj_t
+subr_bytevector_c_uint32_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    return c_u32_ref("bytevector-c-uint32-ref", vm, argc, argv);
+}
+
+// bytevector-c-uint64-ref
+scm_obj_t
+subr_bytevector_c_uint64_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    return c_u64_ref("bytevector-c-uint64-ref", vm, argc, argv);
+}
+
+// bytevector-c-float-ref
+scm_obj_t
+subr_bytevector_c_float_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    c_accessor_param_t param(4, "bytevector-c-float-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return double_to_inexact(vm->m_heap, *(float*)param.bytes);
+}
+
+// bytevector-c-double-ref
+scm_obj_t
+subr_bytevector_c_double_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    c_accessor_param_t param(8, "bytevector-c-double-ref", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    return double_to_inexact(vm->m_heap, *(double*)param.bytes);
+}
+
 // bytevector-c-short-set!
 scm_obj_t
 subr_bytevector_c_short_set(VM* vm, int argc, scm_obj_t argv[])
@@ -1580,6 +1658,34 @@ subr_bytevector_c_int64_set(VM* vm, int argc, scm_obj_t argv[])
     return c_n64_set("bytevector-c-int64-set!", vm, argc, argv);
 }
 
+// bytevector-c-float-set!
+scm_obj_t
+subr_bytevector_c_float_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    c_mutator_param_t param(4, "bytevector-c-float-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (real_pred(argv[2])) {
+        *(float*)param.bytes = real_to_double(argv[2]);
+        return scm_unspecified;
+    }
+    wrong_type_argument_violation(vm, "bytevector-c-float-set!", 2, "real", argv[2], argc, argv);
+    return scm_undef;
+}
+
+// bytevector-c-double-set!
+scm_obj_t
+subr_bytevector_c_double_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    c_mutator_param_t param(8, "bytevector-c-double-set!", vm, argc, argv);
+    if (param.violation) return scm_undef;
+    if (real_pred(argv[2])) {
+        *(double*)param.bytes = real_to_double(argv[2]);
+        return scm_unspecified;
+    }
+    wrong_type_argument_violation(vm, "bytevector-c-double-set!", 2, "real", argv[2], argc, argv);
+    return scm_undef;
+}
+
 void init_subr_bvector(object_heap_t* heap)
 {
 #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
@@ -1640,6 +1746,16 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector-c-unsigned-short-ref", subr_bytevector_c_unsigned_short_ref);
     DEFSUBR("bytevector-c-unsigned-int-ref", subr_bytevector_c_unsigned_int_ref);
     DEFSUBR("bytevector-c-unsigned-long-ref", subr_bytevector_c_unsigned_long_ref);
+    DEFSUBR("bytevector-c-int8-ref", subr_bytevector_c_int8_ref);
+    DEFSUBR("bytevector-c-int16-ref", subr_bytevector_c_int16_ref);
+    DEFSUBR("bytevector-c-int32-ref", subr_bytevector_c_int32_ref);
+    DEFSUBR("bytevector-c-int64-ref", subr_bytevector_c_int64_ref);
+    DEFSUBR("bytevector-c-uint8-ref", subr_bytevector_c_uint8_ref);
+    DEFSUBR("bytevector-c-uint16-ref", subr_bytevector_c_uint16_ref);
+    DEFSUBR("bytevector-c-uint32-ref", subr_bytevector_c_uint32_ref);
+    DEFSUBR("bytevector-c-uint64-ref", subr_bytevector_c_uint64_ref);
+    DEFSUBR("bytevector-c-float-ref", subr_bytevector_c_float_ref);
+    DEFSUBR("bytevector-c-double-ref", subr_bytevector_c_double_ref);
     DEFSUBR("bytevector-c-short-set!", subr_bytevector_c_short_set);
     DEFSUBR("bytevector-c-int-set!", subr_bytevector_c_int_set);
     DEFSUBR("bytevector-c-long-set!", subr_bytevector_c_long_set);
@@ -1648,5 +1764,9 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector-c-int8-set!", subr_bytevector_c_int8_set);
     DEFSUBR("bytevector-c-int16-set!", subr_bytevector_c_int16_set);
     DEFSUBR("bytevector-c-int32-set!", subr_bytevector_c_int32_set);
-    DEFSUBR("bytevector-c-int64-set!", subr_bytevector_c_int64_set);
+    DEFSUBR("bytevector-c-int64-set!", subr_bytevector_c_int64_set);    
+    DEFSUBR("bytevector-c-float-set!", subr_bytevector_c_float_set);    
+    DEFSUBR("bytevector-c-double-set!", subr_bytevector_c_double_set);    
 }
+
+

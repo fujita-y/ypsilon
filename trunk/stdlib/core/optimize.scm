@@ -177,6 +177,9 @@
                   .bytevector-c-unsigned-short-ref
                   .bytevector-c-unsigned-int-ref
                   .bytevector-c-unsigned-long-ref
+                  .bytevector-c-int8-ref .bytevector-c-int16-ref .bytevector-c-int32-ref .bytevector-c-int64-ref
+                  .bytevector-c-uint8-ref .bytevector-c-uint16-ref .bytevector-c-uint32-ref .bytevector-c-uint64-ref
+                  .bytevector-c-float-ref .bytevector-c-double-ref
                   ))
       (core-hashtable-copy ht)))
 

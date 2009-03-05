@@ -3352,6 +3352,25 @@ subr_rename_file(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// change-file-mode
+scm_obj_t
+subr_change_file_mode(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 2) {
+        if (STRINGP(argv[0])) {
+            if (FIXNUMP(argv[1])) {
+                return change_file_mode(vm, (scm_string_t)argv[0], FIXNUM(argv[1]));
+            }
+            wrong_type_argument_violation(vm, "change-file-mode", 1, "fixnum", argv[1], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "change-file-mode", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "change-file-mode", 2, 2, argc, argv);
+    return scm_undef;
+}
+
 // purge-system-environment!
 scm_obj_t
 subr_purge_system_environment(VM* vm, int argc, scm_obj_t argv[])
@@ -3504,6 +3523,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("file-executable?", subr_file_executable_pred);
     DEFSUBR("file-stat-ctime", subr_file_stat_ctime);
     DEFSUBR("file-stat-mtime", subr_file_stat_mtime);
+    DEFSUBR("change-file-mode", subr_change_file_mode);
     DEFSUBR("create-symbolic-link", subr_create_symbolic_link);
     DEFSUBR("create-hard-link", subr_create_hard_link);
     DEFSUBR("rename-file", subr_rename_file);

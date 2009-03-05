@@ -23,7 +23,7 @@
           define-c-struct-methods
           c-sizeof
           c-coerce-void*
-          bytevector-c-char-ref
+          bytevector-c-bool-ref
           bytevector-c-short-ref
           bytevector-c-int-ref
           bytevector-c-long-ref
@@ -33,7 +33,7 @@
           bytevector-c-unsigned-short-ref
           bytevector-c-unsigned-int-ref
           bytevector-c-unsigned-long-ref
-          bytevector-c-char-set!
+          bytevector-c-bool-set!
           bytevector-c-short-set!
           bytevector-c-int-set!
           bytevector-c-long-set!
@@ -52,11 +52,13 @@
           bytevector-c-int16-set!
           bytevector-c-int32-set!
           bytevector-c-int64-set!
+          sizeof:bool
           sizeof:short
           sizeof:int
           sizeof:long
           sizeof:void*
           sizeof:size_t
+          alignof:bool
           alignof:short
           alignof:int
           alignof:long
@@ -75,9 +77,10 @@
           on-windows
           on-posix
           on-ia32
-          on-x64)
+          on-x64
+          define-c-enum)
 
-  (import (core) (ypsilon c-types) (ypsilon assert))
+  (import (core) (ypsilon c-types) (ypsilon c-enum) (ypsilon assert))
 
   (define on-darwin        (and (string-contains (architecture-feature 'operating-system) "darwin")  #t))
   (define on-linux         (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
@@ -91,9 +94,11 @@
 
   (define expect-bool
     (lambda (name n i)
-      (cond ((boolean? i) (if i 1 0))
+      (cond ((eq? i #t) 1)
+            ((eq? i #f) 0)
+            ((and (integer? i) (exact? i)) (if (= i 0) 0 1))
             (else
-             (assertion-violation name (format "expected #t or #f, but got ~r, as argument ~s" i n))))))
+             (assertion-violation name (format "expected boolean or exact integer, but got ~r, as argument ~s" i n))))))
 
   (define expect-string
     (lambda (name n s)
@@ -152,6 +157,7 @@
   (define c-function-return-type-alist
     '((void           . #x00)    ; FFI_RETURN_TYPE_VOID
       (bool           . #x01)    ; FFI_RETURN_TYPE_BOOL
+      (char           . #x0d)    ; FFI_RETURN_TYPE_UINT8_T
       (short          . #x02)    ; FFI_RETURN_TYPE_SHORT
       (int            . #x03)    ; FFI_RETURN_TYPE_INT
       (long           . #x04)    ; FFI_RETURN_TYPE_INTPTR
@@ -175,6 +181,7 @@
   (define callback-return-type-alist
     '((bool           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
       (void           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (char           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
       (short          . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
       (int            . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
       (long           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
@@ -226,6 +233,7 @@
 
   (define callback-argument-type-class
     `((bool           . #\L)
+      (char           . #\U)
       (short          . #\b)
       (int            . ,(if (= sizeof:int 4) #\q #\o))
       (long           . ,(if (= sizeof:long 4) #\q #\o))
@@ -318,7 +326,7 @@
   (define make-argument-thunk
     (lambda (name type)
       (case type
-        ((short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
+        ((char short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
          (cons #\i values))
         ((int64_t uint64_t)
          (cons #\x values))
@@ -331,9 +339,11 @@
         ((bool)
          (cons #\i
                (lambda (x)
-                 (if (boolean? x)
-                     (if x 1 0)
-                     (assertion-violation #f (format "c function expected #t or #f, but got ~r" x))))))
+                 (cond ((eq? x #t) 1)
+                       ((eq? x #f) 0)
+                       ((and (integer? x) (exact? x)) (if (= x 0) 0 1))
+                       (else
+                        (assertion-violation name (format "c function expected boolean or exact integer, but got ~r" x)))))))
         ((char*)
          (cons #\p
                (lambda (x)
@@ -456,7 +466,7 @@
                (map (lambda (type n var)
                       (with-syntax ((n n) (var var))
                         (case type
-                          ((short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
+                          ((char short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
                            (list #\i #'var))
                           ((int64_t uint64_t)
                            (list #\x #'var))
