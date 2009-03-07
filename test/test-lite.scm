@@ -1,8 +1,7 @@
-
 (library (test-lite)
   (export test-begin test-end test-section-begin test-comment test-report
-          test-lexical-exception test-syntax-violation test-assertion-violation test-violation
-          test-eval! test-eq test-eqv test-equal  test-equal-evaluated)
+          test-lexical-exception test-syntax-violation test-assertion-violation test-violation test-i/o-error
+          test-eval! test-eq test-eqv test-equal test-equal-evaluated)
   (import (core))
 
   (define-record-type section
@@ -202,6 +201,13 @@
        (test-error-condition name 'expr assertion-violation? '&assertion))
       ((_ expr)
        (test-error-condition "" 'expr assertion-violation? '&assertion))))
+  
+  (define-syntax test-i/o-error
+    (syntax-rules ()
+      ((_ name expr)
+       (test-error-condition name 'expr i/o-error? '&i/o))
+      ((_ expr)
+       (test-error-condition "" 'expr i/o-error? '&i/o))))
   
   (define-syntax test-section-begin
     (syntax-rules ()

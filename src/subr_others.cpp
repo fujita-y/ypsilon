@@ -3295,6 +3295,22 @@ subr_file_stat_mtime(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// file-stat-atime
+scm_obj_t
+subr_file_stat_atime(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            return file_stat_atime(vm, string);
+        }
+        wrong_type_argument_violation(vm, "file-stat-atime", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "file-stat-atime", 1, 1, argc, argv);
+    return scm_undef;
+}
+
 // create-symbolic-link
 scm_obj_t
 subr_create_symbolic_link(VM* vm, int argc, scm_obj_t argv[])
@@ -3523,6 +3539,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("file-executable?", subr_file_executable_pred);
     DEFSUBR("file-stat-ctime", subr_file_stat_ctime);
     DEFSUBR("file-stat-mtime", subr_file_stat_mtime);
+    DEFSUBR("file-stat-atime", subr_file_stat_atime);
     DEFSUBR("change-file-mode", subr_change_file_mode);
     DEFSUBR("create-symbolic-link", subr_create_symbolic_link);
     DEFSUBR("create-hard-link", subr_create_hard_link);

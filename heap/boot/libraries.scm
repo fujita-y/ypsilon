@@ -562,6 +562,7 @@
                         file-executable?
                         file-stat-ctime
                         file-stat-mtime
+                        file-stat-atime
                         create-symbolic-link
                         create-hard-link
                         rename-file
