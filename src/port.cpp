@@ -1334,7 +1334,7 @@ port_lookahead_utf8(scm_port_t port)
     if (port->opened) {
 
     top:
-        uint8_t utf8[4];
+        uint8_t utf8[6];
         int b = port_lookahead_byte(port);
         if (b == EOF) return scm_eof;
         if (b > 127) {
@@ -1439,7 +1439,7 @@ port_get_utf8(scm_port_t port)
     if (port->opened) {
 
     top:
-        uint8_t utf8[4];
+        uint8_t utf8[6];
         int b = port_get_byte(port);
         if (b == EOF) return scm_eof;
         if (b > 127) {

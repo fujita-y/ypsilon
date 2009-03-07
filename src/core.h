@@ -60,13 +60,13 @@
 #define PREBIND_CLOSE               1
 #define THREAD_LOCAL_SLAB_CACHE     1
 #define LOCKFREE_ALLOC              1
-#define CONCURRENT_COLLECT          1
+#define CONCURRENT_COLLECT          1 // 1
 #define PARALLEL_COLLECT            0
 #define BOOT_R6RS_COMPLIANT_SYNTAX  1
 
 #define USE_DEBUG_BOOT              0
 #define USE_DEBUG_CORE              0
-#define USE_INTERNED_CORE           1  // 1
+#define USE_INTERNED_CORE           1 // 1
 #define USE_SNPRINT_FOR_FLONUM      0
 #define USE_INLINED_CXR             0
 #define USE_FLONUM_CONST            1

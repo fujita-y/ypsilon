@@ -50,7 +50,7 @@ cnvt_ucs4_to_utf8(uint32_t ucs4, uint8_t utf8[4])
 }
 
 int
-cnvt_utf8_to_ucs4(const uint8_t utf8[4], uint32_t* ucs4)
+cnvt_utf8_to_ucs4(const uint8_t* utf8, uint32_t* ucs4)
 {
     int sv;
     if (utf8[0] < 0x80) {
