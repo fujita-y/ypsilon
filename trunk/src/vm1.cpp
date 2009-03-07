@@ -279,7 +279,7 @@ VM::apply_apply_closure(scm_obj_t lastarg)
         if (last_argc >= 0) {
             intptr_t argc = m_sp - m_fp;
             intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
-            args = -args - 1;
+            args = - args - 1;
             if (argc == args) {
                 if (m_sp >= m_stack_limit) collect_stack(sizeof(scm_obj_t));
                 m_sp[0] = list_copy(m_heap, lastarg);
@@ -300,6 +300,7 @@ VM::apply_apply_closure(scm_obj_t lastarg)
                     m_sp++;
                     lst = CDR(lst);
                 } while (++argc < args);
+                if (m_sp >= m_stack_limit) collect_stack(sizeof(scm_obj_t));
                 m_sp[0] = list_copy(m_heap, lst);
                 m_sp++;
             } else {
@@ -315,20 +316,18 @@ VM::apply_apply_closure(scm_obj_t lastarg)
             return apply_apply_trace_n_loop;
         }
         return apply_apply_bad_last_args;
-    }
+    }    
     scm_obj_t lst = lastarg;
     while (PAIRP(lst)) {
-        if (m_sp >= m_stack_limit)
-            collect_stack(sizeof(scm_obj_t));
+        if (m_sp >= m_stack_limit) collect_stack(sizeof(scm_obj_t));
         m_sp[0] = CAR(lst);
         m_sp++;
         lst = CDR(lst);
     }
     if (lst == scm_nil) {
-        const int req = sizeof(vm_env_rec_t) + sizeof(scm_obj_t);
-        if ((uintptr_t)m_sp + req >= (uintptr_t)m_stack_limit)
-            collect_stack(req);
+        if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) >= (uintptr_t)m_stack_limit) collect_stack(sizeof(vm_env_rec_t));
         intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
+        if (m_sp - m_fp != args) return apply_apply_wrong_number_args;
         vm_env_t env = (vm_env_t)m_sp;
         env->count = args;
         env->up = closure->env;

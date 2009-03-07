@@ -337,7 +337,8 @@
 (define expand-library-body
   (lambda (form library-id library-version body exports imports depends env libenv)
 
-    (define initial-libenv libenv)
+   ;(define initial-libenv libenv)
+    (define initial-libenv #f)
     
     (define internal-definition?
       (lambda (lst)
@@ -670,7 +671,8 @@
 (define expand-top-level-program-body
   (lambda (form library-id library-version body imports depends env libenv)
 
-    (define initial-libenv libenv)
+   ;(define initial-libenv libenv)
+    (define initial-libenv #f)
     
     (define internal-definition?
       (lambda (lst)

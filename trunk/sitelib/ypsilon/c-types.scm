@@ -193,12 +193,18 @@
     (lambda (stx struct-name field-name)
       (datum->syntax stx (string->symbol (format "~a-~a-set!" struct-name field-name)))))
 
-  (define make-constructor
+  #;(define make-constructor
     (lambda (stx struct-name struct-size)
       #`(begin
           (define #,(constructor-name stx struct-name)
             (lambda ()
               (make-bytevector #,struct-size))))))
+  
+  (define make-constructor
+    (lambda (stx struct-name struct-size)
+      #`(define-syntax #,(constructor-name stx struct-name)
+          (syntax-rules ()
+            ((_) (make-bytevector #,struct-size))))))
 
   (define make-accessor/mutator
     (lambda (stx struct-name field-name index accessor mutator)
