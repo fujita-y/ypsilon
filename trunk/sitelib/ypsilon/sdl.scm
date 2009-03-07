@@ -677,10 +677,9 @@
           SDL_strupr
           SDL_ulltoa
           SDL_ultoa
-          make-SDL_Event
           c-coerce-void*
-          define-c-struct-methods)
-  
+          define-c-struct-methods
+          make-SDL_Event)
   (import (ypsilon sdl constants)
           (ypsilon sdl types)
           (ypsilon sdl base)

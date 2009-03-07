@@ -370,6 +370,7 @@
     file-readable?
     file-regular?
     file-size-in-bytes
+    file-stat-atime
     file-stat-ctime
     file-stat-mtime
     file-symbolic-link?

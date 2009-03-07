@@ -103,6 +103,28 @@
         return false;
     }
 
+    scm_obj_t file_stat_atime(VM* vm, scm_string_t path)
+    {
+        wchar_t ucs2[MAX_PATH];
+        if (win32path(path, ucs2, array_sizeof(ucs2))) {
+            HANDLE fd = CreateFileW(ucs2, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, NULL);
+            if (fd != INVALID_HANDLE_VALUE) {
+                BY_HANDLE_FILE_INFORMATION fileInfo;
+                if (GetFileInformationByHandle(fd, &fileInfo)) {
+                    CloseHandle(fd);
+                    int64_t tm = ((int64_t)fileInfo.ftLastAccessTime.dwHighDateTime << 32) + fileInfo.ftLastAccessTime.dwLowDateTime;
+                    return int64_to_integer(vm->m_heap, tm);
+                }
+                CloseHandle(fd);
+            }
+            _dosmaperr(GetLastError());
+            raise_io_error(vm, "file-stat-atime", SCM_PORT_OPERATION_OPEN, win32_lasterror_message(), errno, scm_false, path);
+            return scm_undef;
+        }
+        raise_io_error(vm, "file-stat-atime", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
+        return scm_undef;
+    }
+
     scm_obj_t file_stat_mtime(VM* vm, scm_string_t path)
     {
         wchar_t ucs2[MAX_PATH];
@@ -441,6 +463,32 @@
         return win32_lasterror_message();
     }
 #else
+    scm_obj_t file_stat_atime(VM* vm, scm_string_t path)
+    {
+        struct stat st;
+        if (stat(path->name, &st) == 0) {
+  #if __DARWIN_64_BIT_INO_T
+            return arith_add(vm->m_heap,
+                        int32_to_integer(vm->m_heap, st.st_atimespec.tv_nsec),
+                        arith_mul(vm->m_heap,
+                            MAKEFIXNUM(1000000000),
+                            int32_to_integer(vm->m_heap, st.st_atimespec.tv_sec)));
+  #elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+            return arith_add(vm->m_heap,
+                        int32_to_integer(vm->m_heap, st.st_atim.tv_nsec),
+                        arith_mul(vm->m_heap,
+                            MAKEFIXNUM(1000000000),
+                            int32_to_integer(vm->m_heap, st.st_atim.tv_sec)));
+  #else
+            return arith_mul(vm->m_heap,
+                            MAKEFIXNUM(1000000000),
+                            int32_to_integer(vm->m_heap, st.st_atime));
+  #endif
+        }
+        raise_io_error(vm, "file-stat-atime", SCM_PORT_OPERATION_OPEN, strerror(errno), errno, scm_false, path);
+        return scm_undef;
+    }
+
     scm_obj_t file_stat_mtime(VM* vm, scm_string_t path)
     {
         struct stat st;
@@ -453,10 +501,10 @@
                             int32_to_integer(vm->m_heap, st.st_mtimespec.tv_sec)));
   #elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
             return arith_add(vm->m_heap,
-                        int32_to_integer(vm->m_heap, st.st_atim.tv_nsec),
+                        int32_to_integer(vm->m_heap, st.st_mtim.tv_nsec),
                         arith_mul(vm->m_heap,
                             MAKEFIXNUM(1000000000),
-                            int32_to_integer(vm->m_heap, st.st_atim.tv_sec)));
+                            int32_to_integer(vm->m_heap, st.st_mtim.tv_sec)));
   #else
             return arith_mul(vm->m_heap,
                             MAKEFIXNUM(1000000000),
