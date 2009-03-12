@@ -23,12 +23,8 @@ VPATH 	 = src
 UNAME 	 = $(shell uname -a)
 
 ifndef DATAMODEL
-  ifeq (, $(findstring x86_64, $(UNAME)))
-    ifeq (, $(findstring amd64, $(UNAME)))
-      DATAMODEL = ILP32
-    else
-      DATAMODEL = LP64
-    endif
+  ifeq ($(shell echo | $(CXX) -E -dM - | grep '__LP64__'), )
+    DATAMODEL = ILP32
   else
     DATAMODEL = LP64
   endif

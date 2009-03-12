@@ -276,59 +276,27 @@
 (define expand-initial-forms
   (lambda (form env)
 
-    (define rewrite-form-each
-      (lambda (form alist)
-        (let loop ((lst form))
-          (cond ((null? lst) '())
-                (else
-                 (let ((na (rewrite-form (car lst) alist))
-                       (nd (loop (cdr lst))))
-                   (if (and (eq? na (car lst)) (eq? nd (cdr lst)))
-                       lst
-                       (cons na nd))))))))
-
-    (define rewrite-form
-      (lambda (form alist)
-        (cond ((symbol? form)
-               (cond ((assq form alist) => cdr)
-                     (else form)))
-              ((null? form) '())
-              ((list? form)
-               (annotate (rewrite-form-each form alist) form))
-              ((pair? form)
-               (cons (rewrite-form (car form) alist) (rewrite-form (cdr form) alist)))
-              ((vector? form)
-               (list->vector (rewrite-form-each (vector->list form) alist)))
-              (else form))))
-
     (define rewrite-let-syntax
       (lambda (form env)
         (destructuring-match form
           ((_ bindings body ...)
            (begin
              (check-let-bindings form bindings)
-             (let ((vars (map car bindings))
-                   (specs (map cadr bindings))
-                   (suffix (fresh-rename-count)))
-               (let ((renamed (map (lambda (id) (rename-variable-id id suffix)) vars)))
-                 (let ((env (expand-let-syntax-bindings form (map list renamed specs) env)))
-                   (values `(begin ,@(rewrite-form body (map cons vars renamed))) env))))))
+             (fresh-rename-count)
+             (values `(.BEGIN ,@body) (expand-let-syntax-bindings form bindings env))))
           (_
            (syntax-violation (car form) "missing clause" form)))))
 
     (define rewrite-letrec-syntax
       (lambda (form env)
         (destructuring-match form
-          ((_ (? list? bindings) body ...)
+          ((_ bindings body ...)
            (begin
              (check-let-bindings form bindings)
-             (let ((vars (map car bindings))
-                   (specs (map cadr bindings))
-                   (suffix (fresh-rename-count)))
-               (let ((renames (map (lambda (id) (cons id (rename-variable-id id suffix))) vars)))
-                 (let ((env (expand-letrec-syntax-bindings form (rewrite-form bindings renames) env)))
-                   (values `(begin ,@(rewrite-form body renames)) env))))))
-          (_ (syntax-violation (car form) "missing clause" form)))))
+             (fresh-rename-count)
+             (values `(.BEGIN ,@body) (expand-letrec-syntax-bindings form bindings env))))
+          (_
+           (syntax-violation (car form) "missing clause" form)))))
 
     (cond ((and (pair? form) (symbol? (car form)))
            (let ((deno (env-lookup env (car form))))
@@ -337,7 +305,6 @@
                    ((eq? deno denote-letrec-syntax)
                     (rewrite-letrec-syntax form env))
                    ((macro? deno)
-
                     (let-values
                         (((expr renames)
                           (if (< (expansion-trace-level) (expansion-backtrace))
