@@ -3050,13 +3050,13 @@ subr_time_usage(VM* vm, int argc, scm_obj_t argv[])
             return make_list(vm->m_heap, 3,
                              make_flonum(vm->m_heap, ((double)real_time.dwLowDateTime 
                                                        + (double)real_time.dwHighDateTime 
-                                                       * (double)UINT32_MAX) / 10000000.0),
-                             make_flonum(vm->m_heap,  ((double)user_time.dwLowDateTime
+                                                       * ((double)UINT32_MAX + 1.0)) / 10000000.0),
+                             make_flonum(vm->m_heap, ((double)user_time.dwLowDateTime
                                                        + (double)user_time.dwHighDateTime
-                                                       * (double)UINT32_MAX) / 10000000.0),
+                                                       * ((double)UINT32_MAX + 1.0)) / 10000000.0),
                              make_flonum(vm->m_heap, ((double)kernel_time.dwLowDateTime
                                                        + (double)kernel_time.dwHighDateTime
-                                                       * (double)UINT32_MAX) / 10000000.0));
+                                                       * ((double)UINT32_MAX + 1.0)) / 10000000.0));
         }
         return scm_false;
 #else

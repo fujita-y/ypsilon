@@ -74,7 +74,6 @@
     (destructuring-match form
       ((_ bindings body ...)
        (begin
-         (and (null? body) (syntax-violation (car form) "missing body" form))
          (check-let-bindings form bindings)
          (fresh-rename-count)
          (expand-form `(.BEGIN ,@body) (expand-let-syntax-bindings form bindings env))))
@@ -86,7 +85,6 @@
     (destructuring-match form
       ((_ bindings body ...)
        (begin
-         (and (null? body) (syntax-violation (car form) "missing body" form))
          (check-let-bindings form bindings)
          (fresh-rename-count)
          (expand-form `(.BEGIN ,@body) (expand-letrec-syntax-bindings form bindings env))))
