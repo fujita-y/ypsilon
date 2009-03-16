@@ -26,8 +26,9 @@
           make-SDL_Event
           SDL_Event-type
           SDL_Event-type-set!
-          c-coerce-void*
-          define-c-struct-methods)
+          define-c-struct-methods
+          make-bytevector-mapping
+          c-coerce-void*)
 
   (import (rnrs) (ypsilon ffi))
 

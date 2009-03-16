@@ -309,7 +309,7 @@ subr_call_shared_object(VM* vm, int argc, scm_obj_t argv[])
                 case FFI_RETURN_TYPE_BOOL: {
                     intptr_t retval;
                     retval = call_c_intptr(vm, func, stack);
-                    return (retval & 0xff) ? scm_true : scm_false;
+                    return (retval & 0xff) ? MAKEFIXNUM(1) : MAKEFIXNUM(0);
                 }
                 case FFI_RETURN_TYPE_SHORT: {
                     short retval;

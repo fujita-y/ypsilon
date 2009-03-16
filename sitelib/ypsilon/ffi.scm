@@ -92,14 +92,6 @@
                                     (string-contains (architecture-feature 'machine-hardware) "amd64")) #t))
   (define on-ia32          (not on-x64))
 
-  (define expect-bool
-    (lambda (name n i)
-      (cond ((eq? i #t) 1)
-            ((eq? i #f) 0)
-            ((and (integer? i) (exact? i)) (if (= i 0) 0 1))
-            (else
-             (assertion-violation name (format "expected boolean or exact integer, but got ~r, as argument ~s" i n))))))
-
   (define expect-string
     (lambda (name n s)
       (cond ((eq? s 0) 0)
@@ -205,12 +197,10 @@
 
   (define handle-bool
     (lambda (x)
-      (cond ((eq? x #t) 1)
-            ((eq? x #f) 0)
+      (cond ((and (integer? x) (exact? x)) (if (= x 0) 0 1))
             ((unspecified? x) 0)
-            ((and (integer? x) (exact? x)) (if (= x 0) 0 1))
-            (else (assertion-violation 'callback (format "expected boolean or exact integer, but got ~r, as return value" x))))))
-
+            (else (assertion-violation 'callback (format "expected exact integer, but got ~r, as return value" x))))))
+  
   (define handle-int
     (lambda (x)
       (cond ((and (integer? x) (exact? x)) x)
@@ -326,7 +316,7 @@
   (define make-argument-thunk
     (lambda (name type)
       (case type
-        ((char short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
+        ((bool char short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
          (cons #\i values))
         ((int64_t uint64_t)
          (cons #\x values))
@@ -336,14 +326,6 @@
          (cons #\f values))
         ((double)
          (cons #\d values))
-        ((bool)
-         (cons #\i
-               (lambda (x)
-                 (cond ((eq? x #t) 1)
-                       ((eq? x #f) 0)
-                       ((and (integer? x) (exact? x)) (if (= x 0) 0 1))
-                       (else
-                        (assertion-violation name (format "c function expected boolean or exact integer, but got ~r" x)))))))
         ((char*)
          (cons #\p
                (lambda (x)
@@ -466,7 +448,7 @@
                (map (lambda (type n var)
                       (with-syntax ((n n) (var var))
                         (case type
-                          ((char short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
+                          ((bool char short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
                            (list #\i #'var))
                           ((int64_t uint64_t)
                            (list #\x #'var))
@@ -476,8 +458,6 @@
                            (list #\f #'var))
                           ((double)
                            (list #\d #'var))
-                          ((bool)
-                           (list #\i #'(expect-bool 'func-name n var)))
                           ((char*)
                            (list #\p #'(expect-string 'func-name n var)))
                           (else
@@ -509,15 +489,14 @@
                                ((__cdecl) (cdr lst))
                                ((__stdcall) (+ (cdr lst) STDCALL))
                                (else (syntax-violation 'c-function "invalid syntax" x))))
-                            ((args ...) (generate-temporaries (datum (arg-types ...))))
-                            (msg (format "function not available in ~a" (datum lib-name))))
+                            ((args ...) (generate-temporaries (datum (arg-types ...)))))
                          (with-syntax
                              ((((signature thunk) ...) (c-arguments #'(args ...))))
                            (with-syntax ((signature (apply string (datum (signature ...)))))
                              #'(let ((loc (lookup-shared-object lib-handle 'func-name)))
                                  (if loc
                                      (let ((func-name (lambda (args ...) (call-shared-object type loc 'func-name signature thunk ...)))) func-name)
-                                     (let ((func-name (lambda x (error 'func-name msg)))) func-name))))))))
+                                     (let ((func-name (lambda x (error 'func-name (format "function not available in ~a" lib-name))))) func-name))))))))
                  (else
                   (syntax-violation 'c-function (format "invalid return type ~u" (datum ret-type)) x)))))
         ((_ lib-handle lib-name ret-type func-name (arg-types ...))

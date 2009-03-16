@@ -52,8 +52,8 @@
     (g_signal_connect_data instance detailed_signal c_handler data 0 0)))
 
 (define g_signal_connect_swapped
-  (lambda (instance detailed_signal c_handler object)
-    (g_signal_connect_object instance detailed_signal c_handler object G_CONNECT_SWAPPED)))
+  (lambda (instance detailed_signal c_handler data)
+      (g_signal_connect_object instance detailed_signal c_handler data G_CONNECT_SWAPPED)))
 
 ; GTK hello world
 
