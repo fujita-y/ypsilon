@@ -132,7 +132,7 @@
                 switch (c) {
                     case 'L': {
                         int8_t s8 = stack[offset];
-                        argv[i] = s8 ? scm_true : scm_false;
+                        argv[i] = s8 ? MAKEFIXNUM(1) : MAKEFIXNUM(0);
                         offset += 1;
                     } break;
                     case 'u': {
@@ -343,7 +343,7 @@
                             s8 = stack[stack_offset];
                             stack_offset += 1;
                         }
-                        argv[i] = s8 ? scm_true : scm_false;
+                        argv[i] = s8 ? MAKEFIXNUM(1) : MAKEFIXNUM(0);
                     } break;
                     case 'u': {
                         int8_t s8;

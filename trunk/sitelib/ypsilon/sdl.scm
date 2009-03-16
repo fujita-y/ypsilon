@@ -679,7 +679,8 @@
           SDL_ultoa
           c-coerce-void*
           define-c-struct-methods
-          make-SDL_Event)
+          make-SDL_Event
+          make-bytevector-mapping)
   (import (ypsilon sdl constants)
           (ypsilon sdl types)
           (ypsilon sdl base)
