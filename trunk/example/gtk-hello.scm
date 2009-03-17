@@ -19,18 +19,21 @@
         (ypsilon gtk container)
         (ypsilon gtk button)
         (ypsilon gtk widget)
-        (ypsilon gobject signal))
+        (ypsilon gobject signal)
+        (ypsilon ffi))
 
 (gtk_init (vector (length (command-line))) (apply vector (command-line)))
 (let ((window (gtk_window_new GTK_WINDOW_TOPLEVEL))
       (button (gtk_button_new_with_label "Hello World"))
       (destroy
-       (lambda x
-         (format #t "[destory ~s]~%" x)
-         (gtk_main_quit)))
+       (signal-callback gboolean (GtkObject* gpointer)
+         (lambda (obj data)
+           (format #t "[destory ~s ~s]~%" obj data)
+           (gtk_main_quit))))
       (clicked
-       (lambda x
-         (format #t "[clicked ~s]~%" x))))
+       (signal-callback gboolean (GtkButton* gpointer)
+         (lambda (button data)
+           (format #t "[clicked ~s ~s]~%" button data)))))
   (gtk_container_set_border_width window 10)
   (gtk_window_set_title window "Hello World")
   (gtk_window_resize window 256 128)
