@@ -144,10 +144,18 @@
 
 (define get-gl-config
   (lambda ()
-    (let ((double-mode (gdk_gl_config_new_by_mode (bitwise-ior GDK_GL_MODE_RGB GDK_GL_MODE_DEPTH GDK_GL_MODE_DOUBLE))))
+    (let ((double-mode 
+           (gdk_gl_config_new_by_mode 
+            (bitwise-ior GDK_GL_MODE_RGB 
+                         GDK_GL_MODE_DEPTH
+                         GDK_GL_MODE_DOUBLE))))
       (cond ((= double-mode NULL)
-             (let ((single-mode (gdk_gl_config_new_by_mode (bitwise-ior GDK_GL_MODE_RGB GDK_GL_MODE_DEPTH))))
-               (cond ((= single-mode NULL) (error 'gdk_gl_config_new_by_mode "initialization failed"))
+             (let ((single-mode 
+                    (gdk_gl_config_new_by_mode 
+                     (bitwise-ior GDK_GL_MODE_RGB 
+                                  GDK_GL_MODE_DEPTH))))
+               (cond ((= single-mode NULL) 
+                      (error 'gdk_gl_config_new_by_mode "initialization failed"))
                      (else single-mode))))
             (else double-mode)))))
 

@@ -206,7 +206,7 @@
 
   (import (rnrs) (ypsilon ffi))
 
-  (define lib-name
+  (define libgtk-name
     (cond (on-darwin  "libgtkglext-x11-1.0.0.dylib")
           (on-linux   "libgtkglext-x11-1.0.so.0")
           (on-freebsd "libgtkglext-x11-1.0.so")
@@ -215,320 +215,341 @@
           (else
            (assertion-violation #f "can not locate GtkGLExt library, unknown operating system"))))
 
-  (define lib (load-shared-object lib-name))
+  (define libgtk (load-shared-object libgtk-name))
 
-  (define-syntax define-function
+  (define-syntax define-function/gtk
     (syntax-rules ()
       ((_ ret name args)
-       (define name (c-function lib lib-name ret name args)))))
+       (define name (c-function libgtk libgtk-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-variadic-function/gtk
+    (syntax-rules ()
+      ((_ ret name args)
+       (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+
+  (define libgdk-name
+    (cond (on-darwin  "libgdkglext-x11-1.0.0.dylib")
+          (on-linux   "libgdkglext-x11-1.0.so.0")
+          (on-freebsd "libgdkglext-x11-1.0.so")
+          (on-openbsd "libgdkglext-x11-1.0.so")
+          (on-windows "libgdkglext-win32-1.0-0.dll")
+          (else
+           (assertion-violation #f "can not locate GdkGLExt library, unknown operating system"))))
+
+  (define libgdk (load-shared-object libgdk-name))
+
+  (define-syntax define-function/gdk
+    (syntax-rules ()
+      ((_ ret name args)
+       (define name (c-function libgdk libgdk-name ret name args)))))
+
+  (define-syntax define-variadic-function/gdk
     (syntax-rules ()
       ((_ ret name args)
        (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
 
   ;; GType gdk_gl_buffer_mask_get_type (void)
-  (define-function unsigned-long gdk_gl_buffer_mask_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_buffer_mask_get_type ())
 
   ;; GType gdk_gl_config_attrib_get_type (void)
-  (define-function unsigned-long gdk_gl_config_attrib_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_config_attrib_get_type ())
 
   ;; GType gdk_gl_config_caveat_get_type (void)
-  (define-function unsigned-long gdk_gl_config_caveat_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_config_caveat_get_type ())
 
   ;; GType gdk_gl_config_error_get_type (void)
-  (define-function unsigned-long gdk_gl_config_error_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_config_error_get_type ())
 
   ;; gboolean gdk_gl_config_get_attrib (GdkGLConfig* glconfig, int attribute, int* value)
-  (define-function int gdk_gl_config_get_attrib (void* int void*))
+  (define-function/gdk int gdk_gl_config_get_attrib (void* int void*))
 
   ;; GdkColormap* gdk_gl_config_get_colormap (GdkGLConfig* glconfig)
-  (define-function void* gdk_gl_config_get_colormap (void*))
+  (define-function/gdk void* gdk_gl_config_get_colormap (void*))
 
   ;; gint gdk_gl_config_get_depth (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_get_depth (void*))
+  (define-function/gdk int gdk_gl_config_get_depth (void*))
 
   ;; gint gdk_gl_config_get_layer_plane (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_get_layer_plane (void*))
+  (define-function/gdk int gdk_gl_config_get_layer_plane (void*))
 
   ;; gint gdk_gl_config_get_n_aux_buffers (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_get_n_aux_buffers (void*))
+  (define-function/gdk int gdk_gl_config_get_n_aux_buffers (void*))
 
   ;; gint gdk_gl_config_get_n_sample_buffers (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_get_n_sample_buffers (void*))
+  (define-function/gdk int gdk_gl_config_get_n_sample_buffers (void*))
 
   ;; GdkScreen* gdk_gl_config_get_screen (GdkGLConfig* glconfig)
-  (define-function void* gdk_gl_config_get_screen (void*))
+  (define-function/gdk void* gdk_gl_config_get_screen (void*))
 
   ;; GType gdk_gl_config_get_type (void)
-  (define-function unsigned-long gdk_gl_config_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_config_get_type ())
 
   ;; GdkVisual* gdk_gl_config_get_visual (GdkGLConfig* glconfig)
-  (define-function void* gdk_gl_config_get_visual (void*))
+  (define-function/gdk void* gdk_gl_config_get_visual (void*))
 
   ;; gboolean gdk_gl_config_has_accum_buffer (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_has_accum_buffer (void*))
+  (define-function/gdk int gdk_gl_config_has_accum_buffer (void*))
 
   ;; gboolean gdk_gl_config_has_alpha (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_has_alpha (void*))
+  (define-function/gdk int gdk_gl_config_has_alpha (void*))
 
   ;; gboolean gdk_gl_config_has_depth_buffer (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_has_depth_buffer (void*))
+  (define-function/gdk int gdk_gl_config_has_depth_buffer (void*))
 
   ;; gboolean gdk_gl_config_has_stencil_buffer (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_has_stencil_buffer (void*))
+  (define-function/gdk int gdk_gl_config_has_stencil_buffer (void*))
 
   ;; gboolean gdk_gl_config_is_double_buffered (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_is_double_buffered (void*))
+  (define-function/gdk int gdk_gl_config_is_double_buffered (void*))
 
   ;; gboolean gdk_gl_config_is_rgba (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_is_rgba (void*))
+  (define-function/gdk int gdk_gl_config_is_rgba (void*))
 
   ;; gboolean gdk_gl_config_is_stereo (GdkGLConfig* glconfig)
-  (define-function int gdk_gl_config_is_stereo (void*))
+  (define-function/gdk int gdk_gl_config_is_stereo (void*))
 
   ;; GType gdk_gl_config_mode_get_type (void)
-  (define-function unsigned-long gdk_gl_config_mode_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_config_mode_get_type ())
 
   ;; GdkGLConfig* gdk_gl_config_new (const int* attrib_list)
-  (define-function void* gdk_gl_config_new (void*))
+  (define-function/gdk void* gdk_gl_config_new (void*))
 
   ;; GdkGLConfig* gdk_gl_config_new_by_mode (GdkGLConfigMode mode)
-  (define-function void* gdk_gl_config_new_by_mode (int))
+  (define-function/gdk void* gdk_gl_config_new_by_mode (int))
 
   ;; GdkGLConfig* gdk_gl_config_new_by_mode_for_screen (GdkScreen* screen, GdkGLConfigMode mode)
-  (define-function void* gdk_gl_config_new_by_mode_for_screen (void* int))
+  (define-function/gdk void* gdk_gl_config_new_by_mode_for_screen (void* int))
 
   ;; GdkGLConfig* gdk_gl_config_new_for_screen (GdkScreen* screen, const int* attrib_list)
-  (define-function void* gdk_gl_config_new_for_screen (void* void*))
+  (define-function/gdk void* gdk_gl_config_new_for_screen (void* void*))
 
   ;; gboolean gdk_gl_context_copy (GdkGLContext* glcontext, GdkGLContext* src, unsigned long mask)
-  (define-function int gdk_gl_context_copy (void* void* unsigned-long))
+  (define-function/gdk int gdk_gl_context_copy (void* void* unsigned-long))
 
   ;; void gdk_gl_context_destroy (GdkGLContext* glcontext)
-  (define-function void gdk_gl_context_destroy (void*))
+  (define-function/gdk void gdk_gl_context_destroy (void*))
 
   ;; GdkGLContext* gdk_gl_context_get_current (void)
-  (define-function void* gdk_gl_context_get_current ())
+  (define-function/gdk void* gdk_gl_context_get_current ())
 
   ;; GdkGLConfig* gdk_gl_context_get_gl_config (GdkGLContext* glcontext)
-  (define-function void* gdk_gl_context_get_gl_config (void*))
+  (define-function/gdk void* gdk_gl_context_get_gl_config (void*))
 
   ;; GdkGLDrawable* gdk_gl_context_get_gl_drawable (GdkGLContext* glcontext)
-  (define-function void* gdk_gl_context_get_gl_drawable (void*))
+  (define-function/gdk void* gdk_gl_context_get_gl_drawable (void*))
 
   ;; int gdk_gl_context_get_render_type (GdkGLContext* glcontext)
-  (define-function int gdk_gl_context_get_render_type (void*))
+  (define-function/gdk int gdk_gl_context_get_render_type (void*))
 
   ;; GdkGLContext* gdk_gl_context_get_share_list (GdkGLContext* glcontext)
-  (define-function void* gdk_gl_context_get_share_list (void*))
+  (define-function/gdk void* gdk_gl_context_get_share_list (void*))
 
   ;; GType gdk_gl_context_get_type (void)
-  (define-function unsigned-long gdk_gl_context_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_context_get_type ())
 
   ;; gboolean gdk_gl_context_is_direct (GdkGLContext* glcontext)
-  (define-function int gdk_gl_context_is_direct (void*))
+  (define-function/gdk int gdk_gl_context_is_direct (void*))
 
   ;; GdkGLContext* gdk_gl_context_new (GdkGLDrawable* gldrawable, GdkGLContext* share_list, gboolean direct, int render_type)
-  (define-function void* gdk_gl_context_new (void* void* int int))
+  (define-function/gdk void* gdk_gl_context_new (void* void* int int))
 
   ;; void gdk_gl_draw_cone (gboolean solid, double base, double height, int slices, int stacks)
-  (define-function void gdk_gl_draw_cone (int double double int int))
+  (define-function/gdk void gdk_gl_draw_cone (int double double int int))
 
   ;; void gdk_gl_draw_cube (gboolean solid, double size)
-  (define-function void gdk_gl_draw_cube (int double))
+  (define-function/gdk void gdk_gl_draw_cube (int double))
 
   ;; void gdk_gl_draw_dodecahedron (gboolean solid)
-  (define-function void gdk_gl_draw_dodecahedron (int))
+  (define-function/gdk void gdk_gl_draw_dodecahedron (int))
 
   ;; void gdk_gl_draw_icosahedron (gboolean solid)
-  (define-function void gdk_gl_draw_icosahedron (int))
+  (define-function/gdk void gdk_gl_draw_icosahedron (int))
 
   ;; void gdk_gl_draw_octahedron (gboolean solid)
-  (define-function void gdk_gl_draw_octahedron (int))
+  (define-function/gdk void gdk_gl_draw_octahedron (int))
 
   ;; void gdk_gl_draw_sphere (gboolean solid, double radius, int slices, int stacks)
-  (define-function void gdk_gl_draw_sphere (int double int int))
+  (define-function/gdk void gdk_gl_draw_sphere (int double int int))
 
   ;; void gdk_gl_draw_teapot (gboolean solid, double scale)
-  (define-function void gdk_gl_draw_teapot (int double))
+  (define-function/gdk void gdk_gl_draw_teapot (int double))
 
   ;; void gdk_gl_draw_tetrahedron (gboolean solid)
-  (define-function void gdk_gl_draw_tetrahedron (int))
+  (define-function/gdk void gdk_gl_draw_tetrahedron (int))
 
   ;; void gdk_gl_draw_torus (gboolean solid, double inner_radius, double outer_radius, int nsides, int rings)
-  (define-function void gdk_gl_draw_torus (int double double int int))
+  (define-function/gdk void gdk_gl_draw_torus (int double double int int))
 
   ;; GType gdk_gl_drawable_attrib_get_type (void)
-  (define-function unsigned-long gdk_gl_drawable_attrib_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_drawable_attrib_get_type ())
 
   ;; GdkGLDrawable* gdk_gl_drawable_get_current (void)
-  (define-function void* gdk_gl_drawable_get_current ())
+  (define-function/gdk void* gdk_gl_drawable_get_current ())
 
   ;; GdkGLConfig* gdk_gl_drawable_get_gl_config (GdkGLDrawable* gldrawable)
-  (define-function void* gdk_gl_drawable_get_gl_config (void*))
+  (define-function/gdk void* gdk_gl_drawable_get_gl_config (void*))
 
   ;; void gdk_gl_drawable_get_size (GdkGLDrawable* gldrawable, gint* width, gint* height)
-  (define-function void gdk_gl_drawable_get_size (void* void* void*))
+  (define-function/gdk void gdk_gl_drawable_get_size (void* void* void*))
 
   ;; GType gdk_gl_drawable_get_type (void)
-  (define-function unsigned-long gdk_gl_drawable_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_drawable_get_type ())
 
   ;; gboolean gdk_gl_drawable_gl_begin (GdkGLDrawable* gldrawable, GdkGLContext* glcontext)
-  (define-function int gdk_gl_drawable_gl_begin (void* void*))
+  (define-function/gdk int gdk_gl_drawable_gl_begin (void* void*))
 
   ;; void gdk_gl_drawable_gl_end (GdkGLDrawable* gldrawable)
-  (define-function void gdk_gl_drawable_gl_end (void*))
+  (define-function/gdk void gdk_gl_drawable_gl_end (void*))
 
   ;; gboolean gdk_gl_drawable_is_double_buffered (GdkGLDrawable* gldrawable)
-  (define-function int gdk_gl_drawable_is_double_buffered (void*))
+  (define-function/gdk int gdk_gl_drawable_is_double_buffered (void*))
 
   ;; gboolean gdk_gl_drawable_make_current (GdkGLDrawable* gldrawable, GdkGLContext* glcontext)
-  (define-function int gdk_gl_drawable_make_current (void* void*))
+  (define-function/gdk int gdk_gl_drawable_make_current (void* void*))
 
   ;; void gdk_gl_drawable_swap_buffers (GdkGLDrawable* gldrawable)
-  (define-function void gdk_gl_drawable_swap_buffers (void*))
+  (define-function/gdk void gdk_gl_drawable_swap_buffers (void*))
 
   ;; GType gdk_gl_drawable_type_get_type (void)
-  (define-function unsigned-long gdk_gl_drawable_type_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_drawable_type_get_type ())
 
   ;; GType gdk_gl_drawable_type_mask_get_type (void)
-  (define-function unsigned-long gdk_gl_drawable_type_mask_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_drawable_type_mask_get_type ())
 
   ;; void gdk_gl_drawable_wait_gdk (GdkGLDrawable* gldrawable)
-  (define-function void gdk_gl_drawable_wait_gdk (void*))
+  (define-function/gdk void gdk_gl_drawable_wait_gdk (void*))
 
   ;; void gdk_gl_drawable_wait_gl (GdkGLDrawable* gldrawable)
-  (define-function void gdk_gl_drawable_wait_gl (void*))
+  (define-function/gdk void gdk_gl_drawable_wait_gl (void*))
 
   ;; GType gdk_gl_event_mask_get_type (void)
-  (define-function unsigned-long gdk_gl_event_mask_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_event_mask_get_type ())
 
   ;; GType gdk_gl_event_type_get_type (void)
-  (define-function unsigned-long gdk_gl_event_type_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_event_type_get_type ())
 
   ;; PangoFont* gdk_gl_font_use_pango_font (const PangoFontDescription* font_desc, int first, int count, int list_base)
-  (define-function void* gdk_gl_font_use_pango_font (void* int int int))
+  (define-function/gdk void* gdk_gl_font_use_pango_font (void* int int int))
 
   ;; PangoFont* gdk_gl_font_use_pango_font_for_display (GdkDisplay* display, const PangoFontDescription* font_desc, int first, int count, int list_base)
-  (define-function void* gdk_gl_font_use_pango_font_for_display (void* void* int int int))
+  (define-function/gdk void* gdk_gl_font_use_pango_font_for_display (void* void* int int int))
 
   ;; GdkGLProc gdk_gl_get_proc_address (const char* proc_name)
-  (define-function void* gdk_gl_get_proc_address (char*))
+  (define-function/gdk void* gdk_gl_get_proc_address (char*))
 
   ;; void gdk_gl_init (int* argc, char** *argv)
-  (define-function void gdk_gl_init ((int) (* (char*))))
+  (define-function/gdk void gdk_gl_init ((int) (* (char*))))
 
   ;; gboolean gdk_gl_init_check (int* argc, char** *argv)
-  (define-function int gdk_gl_init_check ((int) (* (char*))))
+  (define-function/gdk int gdk_gl_init_check ((int) (* (char*))))
 
   ;; gboolean gdk_gl_parse_args (int* argc, char** *argv)
-  (define-function int gdk_gl_parse_args ((int) (* (char*))))
+  (define-function/gdk int gdk_gl_parse_args ((int) (* (char*))))
 
   ;; GType gdk_gl_pbuffer_attrib_get_type (void)
-  (define-function unsigned-long gdk_gl_pbuffer_attrib_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_pbuffer_attrib_get_type ())
 
   ;; void gdk_gl_pixmap_destroy (GdkGLPixmap* glpixmap)
-  (define-function void gdk_gl_pixmap_destroy (void*))
+  (define-function/gdk void gdk_gl_pixmap_destroy (void*))
 
   ;; GdkPixmap* gdk_gl_pixmap_get_pixmap (GdkGLPixmap* glpixmap)
-  (define-function void* gdk_gl_pixmap_get_pixmap (void*))
+  (define-function/gdk void* gdk_gl_pixmap_get_pixmap (void*))
 
   ;; GType gdk_gl_pixmap_get_type (void)
-  (define-function unsigned-long gdk_gl_pixmap_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_pixmap_get_type ())
 
   ;; GdkGLPixmap* gdk_gl_pixmap_new (GdkGLConfig* glconfig, GdkPixmap* pixmap, const int* attrib_list)
-  (define-function void* gdk_gl_pixmap_new (void* void* void*))
+  (define-function/gdk void* gdk_gl_pixmap_new (void* void* void*))
 
   ;; gboolean gdk_gl_query_extension (void)
-  (define-function int gdk_gl_query_extension ())
+  (define-function/gdk int gdk_gl_query_extension ())
 
   ;; gboolean gdk_gl_query_extension_for_display (GdkDisplay* display)
-  (define-function int gdk_gl_query_extension_for_display (void*))
+  (define-function/gdk int gdk_gl_query_extension_for_display (void*))
 
   ;; gboolean gdk_gl_query_gl_extension (const char* extension)
-  (define-function int gdk_gl_query_gl_extension (char*))
+  (define-function/gdk int gdk_gl_query_gl_extension (char*))
 
   ;; gboolean gdk_gl_query_version (int* major, int* minor)
-  (define-function int gdk_gl_query_version (void* void*))
+  (define-function/gdk int gdk_gl_query_version (void* void*))
 
   ;; gboolean gdk_gl_query_version_for_display (GdkDisplay* display, int* major, int* minor)
-  (define-function int gdk_gl_query_version_for_display (void* void* void*))
+  (define-function/gdk int gdk_gl_query_version_for_display (void* void* void*))
 
   ;; GType gdk_gl_render_type_get_type (void)
-  (define-function unsigned-long gdk_gl_render_type_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_render_type_get_type ())
 
   ;; GType gdk_gl_render_type_mask_get_type (void)
-  (define-function unsigned-long gdk_gl_render_type_mask_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_render_type_mask_get_type ())
 
   ;; GType gdk_gl_transparent_type_get_type (void)
-  (define-function unsigned-long gdk_gl_transparent_type_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_transparent_type_get_type ())
 
   ;; GType gdk_gl_visual_type_get_type (void)
-  (define-function unsigned-long gdk_gl_visual_type_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_visual_type_get_type ())
 
   ;; void gdk_gl_window_destroy (GdkGLWindow* glwindow)
-  (define-function void gdk_gl_window_destroy (void*))
+  (define-function/gdk void gdk_gl_window_destroy (void*))
 
   ;; GType gdk_gl_window_get_type (void)
-  (define-function unsigned-long gdk_gl_window_get_type ())
+  (define-function/gdk unsigned-long gdk_gl_window_get_type ())
 
   ;; GdkWindow* gdk_gl_window_get_window (GdkGLWindow* glwindow)
-  (define-function void* gdk_gl_window_get_window (void*))
+  (define-function/gdk void* gdk_gl_window_get_window (void*))
 
   ;; GdkGLWindow* gdk_gl_window_new (GdkGLConfig* glconfig, GdkWindow* window, const int* attrib_list)
-  (define-function void* gdk_gl_window_new (void* void* void*))
+  (define-function/gdk void* gdk_gl_window_new (void* void* void*))
 
   ;; GdkGLPixmap* gdk_pixmap_get_gl_pixmap (GdkPixmap* pixmap)
-  (define-function void* gdk_pixmap_get_gl_pixmap (void*))
+  (define-function/gdk void* gdk_pixmap_get_gl_pixmap (void*))
 
   ;; gboolean gdk_pixmap_is_gl_capable (GdkPixmap* pixmap)
-  (define-function int gdk_pixmap_is_gl_capable (void*))
+  (define-function/gdk int gdk_pixmap_is_gl_capable (void*))
 
   ;; GdkGLPixmap* gdk_pixmap_set_gl_capability (GdkPixmap* pixmap, GdkGLConfig* glconfig, const int* attrib_list)
-  (define-function void* gdk_pixmap_set_gl_capability (void* void* void*))
+  (define-function/gdk void* gdk_pixmap_set_gl_capability (void* void* void*))
 
   ;; void gdk_pixmap_unset_gl_capability (GdkPixmap* pixmap)
-  (define-function void gdk_pixmap_unset_gl_capability (void*))
+  (define-function/gdk void gdk_pixmap_unset_gl_capability (void*))
 
   ;; GdkGLWindow* gdk_window_get_gl_window (GdkWindow* window)
-  (define-function void* gdk_window_get_gl_window (void*))
+  (define-function/gdk void* gdk_window_get_gl_window (void*))
 
   ;; gboolean gdk_window_is_gl_capable (GdkWindow* window)
-  (define-function int gdk_window_is_gl_capable (void*))
+  (define-function/gdk int gdk_window_is_gl_capable (void*))
 
   ;; GdkGLWindow* gdk_window_set_gl_capability (GdkWindow* window, GdkGLConfig* glconfig, const int* attrib_list)
-  (define-function void* gdk_window_set_gl_capability (void* void* void*))
+  (define-function/gdk void* gdk_window_set_gl_capability (void* void* void*))
 
   ;; void gdk_window_unset_gl_capability (GdkWindow* window)
-  (define-function void gdk_window_unset_gl_capability (void*))
+  (define-function/gdk void gdk_window_unset_gl_capability (void*))
 
   ;; void gtk_gl_init (int* argc, char** *argv)
-  (define-function void gtk_gl_init ((int) (* (char*))))
+  (define-function/gtk void gtk_gl_init ((int) (* (char*))))
 
   ;; gboolean gtk_gl_init_check (int* argc, char** *argv)
-  (define-function int gtk_gl_init_check ((int) (* (char*))))
+  (define-function/gtk int gtk_gl_init_check ((int) (* (char*))))
 
   ;; gboolean gtk_gl_parse_args (int* argc, char** *argv)
-  (define-function int gtk_gl_parse_args ((int) (* (char*))))
+  (define-function/gtk int gtk_gl_parse_args ((int) (* (char*))))
 
   ;; GdkGLContext* gtk_widget_create_gl_context (GtkWidget* widget, GdkGLContext* share_list, gboolean direct, int render_type)
-  (define-function void* gtk_widget_create_gl_context (void* void* int int))
+  (define-function/gtk void* gtk_widget_create_gl_context (void* void* int int))
 
   ;; GdkGLConfig* gtk_widget_get_gl_config (GtkWidget* widget)
-  (define-function void* gtk_widget_get_gl_config (void*))
+  (define-function/gtk void* gtk_widget_get_gl_config (void*))
 
   ;; GdkGLContext* gtk_widget_get_gl_context (GtkWidget* widget)
-  (define-function void* gtk_widget_get_gl_context (void*))
+  (define-function/gtk void* gtk_widget_get_gl_context (void*))
 
   ;; GdkGLWindow* gtk_widget_get_gl_window (GtkWidget* widget)
-  (define-function void* gtk_widget_get_gl_window (void*))
+  (define-function/gtk void* gtk_widget_get_gl_window (void*))
 
   ;; gboolean gtk_widget_is_gl_capable (GtkWidget* widget)
-  (define-function int gtk_widget_is_gl_capable (void*))
+  (define-function/gtk int gtk_widget_is_gl_capable (void*))
 
   ;; gboolean gtk_widget_set_gl_capability (GtkWidget* widget, GdkGLConfig* glconfig, GdkGLContext* share_list, gboolean direct, int render_type)
-  (define-function int gtk_widget_set_gl_capability (void* void* void* int int))
+  (define-function/gtk int gtk_widget_set_gl_capability (void* void* void* int int))
 
   (define GDK_GL_USE_GL 1)
   (define GDK_GL_BUFFER_SIZE 2)
