@@ -5,19 +5,16 @@
 
 (library (ypsilon gobject signal)
 
-  (export g_signal_connect
+  (export signal-callback
+          g_signal_connect
           g_signal_connect_after
           g_signal_connect_swapped
-          g_signal_connect/generic
-          g_signal_connect_after/generic
-          g_signal_connect_data
-          g_signal_connect_object
           g_signal_handler_block
           g_signal_handler_disconnect
           g_signal_handler_is_connected
           g_signal_handler_unblock)
 
-  (import (rnrs) (ypsilon ffi))
+  (import (rnrs) (ypsilon ffi) (only (core) string-contains))
 
   (define lib-name
     (cond (on-linux   "libgobject-2.0.so.0")
@@ -36,8 +33,7 @@
        (define name (c-function lib lib-name ret name args)))))
 
   ;; gulong g_signal_connect_data (gpointer instance, const gchar* detailed_signal, GCallback c_handler, gpointer data, GClosureNotify destroy_data, GConnectFlags connect_flags)
-  (define-function unsigned-long g_signal_connect_data (void* char* (c-callback int (void* void* void*)) void* void* int))
-  (define-function unsigned-long g_signal_connect_data/generic (void* char* void* void* void* int))
+  (define-function unsigned-long g_signal_connect_data (void* char* void* void* void* int))
 
   ;; gulong g_signal_connect_object (gpointer instance, const gchar* detailed_signal, GCallback c_handler, gpointer gobject, GConnectFlags connect_flags)
   (define-function unsigned-long g_signal_connect_object (void* char* (c-callback int (void*)) void* int))
@@ -66,12 +62,46 @@
     (lambda (instance detailed_signal c_handler data)
       (g_signal_connect_object instance detailed_signal c_handler data 2)))
 
-  (define g_signal_connect/generic
-    (lambda (instance detailed_signal c_handler data)
-      (g_signal_connect_data/generic instance detailed_signal c_handler data 0 0)))
+  (define-syntax signal-callback
+    (lambda (x)
 
-  (define g_signal_connect_after/generic
-    (lambda (instance detailed_signal c_handler data)
-      (g_signal_connect_data/generic instance detailed_signal c_handler data 0 1)))
+      (define marshal
+        (lambda (type)
+          (let ((name (symbol->string type)))
+            (cond ((or (eq? (string-contains name "Gtk") 0)
+                       (eq? (string-contains name "Gdk") 0))
+                   (if (string-contains name "*") 'void* 'int))
+                  ((assq type
+                         '((gboolean . int)
+                           (gpointer . void*)
+                           (gconstpointer . void*)
+                           (gchar . int8_t)
+                           (guchar . uint8_t)
+                           (gint . int)
+                           (guint . unsigned-int)
+                           (gshort . short)
+                           (gushort . unsigned-short)
+                           (glong . long)
+                           (gulong . unsigned-long)
+                           (gint8 . int8_t)
+                           (guint8 . uint8_t)
+                           (gint16 . int16_t)
+                           (guint16 . uint16_t)
+                           (gint32 . int32_t)
+                           (guint32 . uint32_t)
+                           (gint64 . int64_t)
+                           (guint64 . uint64_t)
+                           (gfloat . float)
+                           (gdouble . double)
+                           (gsize . unsigned-long)
+                           (gssize . long))) => cdr)
+                  (else type)))))
+
+      (syntax-case x ()
+        ((_ ret args body)
+         (with-syntax
+             ((ret (datum->syntax #'k (marshal (syntax->datum #'ret))))
+              (args (datum->syntax #'k (map marshal (syntax->datum #'args)))))
+           #'(make-cdecl-callback 'ret 'args body))))))
 
   ) ;[end]

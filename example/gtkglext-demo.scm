@@ -73,36 +73,38 @@
                     (/ (+ x y) 20.0 100.0))))))
 
 (define expose-event
-  (lambda (drawing-area event data)
-    (let ((context (gtk_widget_get_gl_context drawing-area))
-          (drawable (gtk_widget_get_gl_window drawing-area)))
-      (unless (= (gdk_gl_drawable_gl_begin drawable context) FALSE)
-        (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-        (rendering)
-        (if (= (gdk_gl_drawable_is_double_buffered drawable) TRUE)
-            (gdk_gl_drawable_swap_buffers drawable)
-            (glFlush))
-        (gdk_gl_drawable_gl_end drawable)))))
+  (signal-callback gboolean (GtkWidget* GdkEvent* gpointer)
+    (lambda (drawing-area event data)
+      (let ((context (gtk_widget_get_gl_context drawing-area))
+            (drawable (gtk_widget_get_gl_window drawing-area)))
+        (unless (= (gdk_gl_drawable_gl_begin drawable context) FALSE)
+          (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+          (rendering)
+          (if (= (gdk_gl_drawable_is_double_buffered drawable) TRUE)
+              (gdk_gl_drawable_swap_buffers drawable)
+              (glFlush))
+          (gdk_gl_drawable_gl_end drawable))))))
 
 (define realize
-  (lambda (drawing-area data _)
-    (let ((context (gtk_widget_get_gl_context drawing-area))
-          (drawable (gtk_widget_get_gl_window drawing-area)))
-      (unless (= (gdk_gl_drawable_gl_begin drawable context) FALSE)
-        (glLightfv GL_LIGHT0 GL_AMBIENT (f32vector 0.0 0.0 0.0 1.0))
-        (glLightfv GL_LIGHT0 GL_DIFFUSE (f32vector 1.0 1.0 1.0 1.0))
-        (glLightfv GL_LIGHT0 GL_POSITION (f32vector 0.0 3.0 3.0 0.0))
-        (glLightModelfv GL_LIGHT_MODEL_AMBIENT (f32vector 0.2 0.2 0.2 1.0))
-        (glLightModelfv GL_LIGHT_MODEL_LOCAL_VIEWER (f32vector 0.0))
-        (glShadeModel GL_FLAT)
-        (glFrontFace GL_CW)
-        (glEnable GL_LIGHTING)
-        (glEnable GL_LIGHT0)
-        (glEnable GL_AUTO_NORMAL)
-        (glEnable GL_NORMALIZE)
-        (glEnable GL_DEPTH_TEST)
-        (glDepthFunc GL_LESS)
-        (gdk_gl_drawable_gl_end drawable)))))
+  (signal-callback gboolean (GtkWidget* gpointer)
+    (lambda (drawing-area data)
+      (let ((context (gtk_widget_get_gl_context drawing-area))
+            (drawable (gtk_widget_get_gl_window drawing-area)))
+        (unless (= (gdk_gl_drawable_gl_begin drawable context) FALSE)
+          (glLightfv GL_LIGHT0 GL_AMBIENT (f32vector 0.0 0.0 0.0 1.0))
+          (glLightfv GL_LIGHT0 GL_DIFFUSE (f32vector 1.0 1.0 1.0 1.0))
+          (glLightfv GL_LIGHT0 GL_POSITION (f32vector 0.0 3.0 3.0 0.0))
+          (glLightModelfv GL_LIGHT_MODEL_AMBIENT (f32vector 0.2 0.2 0.2 1.0))
+          (glLightModelfv GL_LIGHT_MODEL_LOCAL_VIEWER (f32vector 0.0))
+          (glShadeModel GL_FLAT)
+          (glFrontFace GL_CW)
+          (glEnable GL_LIGHTING)
+          (glEnable GL_LIGHT0)
+          (glEnable GL_AUTO_NORMAL)
+          (glEnable GL_NORMALIZE)
+          (glEnable GL_DEPTH_TEST)
+          (glDepthFunc GL_LESS)
+          (gdk_gl_drawable_gl_end drawable))))))
 
 (define get-drawable-size
   (lambda (drawable)
@@ -111,20 +113,27 @@
       (values (gint-ref w) (gint-ref h)))))
 
 (define configure-event
-  (lambda (drawing-area event data)
-    (let ((context (gtk_widget_get_gl_context drawing-area))
-          (drawable (gtk_widget_get_gl_window drawing-area)))
-      (unless (= (gdk_gl_drawable_gl_begin drawable context) FALSE)
-        (let-values (((w h) (get-drawable-size drawable)))
-          (when (and (> w 0) (> h 0))
-            (glViewport 0 0 w h)
-            (glMatrixMode GL_PROJECTION)
-            (glLoadIdentity)
-            (if (<= w h)
-                (glOrtho 0.0 16.0 0.0 (/ (* 16.0 h) w) -10.0 10.0)
-                (glOrtho 0.0 (/ (* 16.0 w) h) 0.0 16.0 -10.0 10.0))
-            (glMatrixMode GL_MODELVIEW)))
-        (gdk_gl_drawable_gl_end drawable)))))
+  (signal-callback gboolean (GtkWidget* GdkEvent* gpointer)
+    (lambda (drawing-area event data)
+      (let ((context (gtk_widget_get_gl_context drawing-area))
+            (drawable (gtk_widget_get_gl_window drawing-area)))
+        (unless (= (gdk_gl_drawable_gl_begin drawable context) FALSE)
+          (let-values (((w h) (get-drawable-size drawable)))
+            (when (and (> w 0) (> h 0))
+              (glViewport 0 0 w h)
+              (glMatrixMode GL_PROJECTION)
+              (glLoadIdentity)
+              (if (<= w h)
+                  (glOrtho 0.0 16.0 0.0 (/ (* 16.0 h) w) -10.0 10.0)
+                  (glOrtho 0.0 (/ (* 16.0 w) h) 0.0 16.0 -10.0 10.0))
+              (glMatrixMode GL_MODELVIEW)))
+          (gdk_gl_drawable_gl_end drawable))))))
+
+(define destroy
+  (signal-callback gboolean (GtkObject* gpointer)
+    (lambda x
+      (set! terminating #t)
+      (gtk_main_quit))))
 
 (define timeout
   (lambda (widget)
@@ -137,24 +146,19 @@
       (gdk_window_process_updates (gtk_widget_get_window widget) FALSE))
     (if terminating FALSE TRUE)))
 
-(define destroy
-  (lambda x
-    (set! terminating #t)
-    (gtk_main_quit)))
-
 (define get-gl-config
   (lambda ()
-    (let ((double-mode 
-           (gdk_gl_config_new_by_mode 
-            (bitwise-ior GDK_GL_MODE_RGB 
+    (let ((double-mode
+           (gdk_gl_config_new_by_mode
+            (bitwise-ior GDK_GL_MODE_RGB
                          GDK_GL_MODE_DEPTH
                          GDK_GL_MODE_DOUBLE))))
       (cond ((= double-mode NULL)
-             (let ((single-mode 
-                    (gdk_gl_config_new_by_mode 
-                     (bitwise-ior GDK_GL_MODE_RGB 
+             (let ((single-mode
+                    (gdk_gl_config_new_by_mode
+                     (bitwise-ior GDK_GL_MODE_RGB
                                   GDK_GL_MODE_DEPTH))))
-               (cond ((= single-mode NULL) 
+               (cond ((= single-mode NULL)
                       (error 'gdk_gl_config_new_by_mode "initialization failed"))
                      (else single-mode))))
             (else double-mode)))))
