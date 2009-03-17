@@ -99,7 +99,7 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gdk.framework/Gdk")
+    (cond (on-darwin  "Gtk.framework/Gtk")
           (on-linux   "libgdk-x11-2.0.so.0")
           (on-freebsd "libgdk-x11-2.0.so.0")
           (on-openbsd "libgdk-x11-2.0.so.0")

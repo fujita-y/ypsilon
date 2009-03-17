@@ -10,7 +10,7 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Pango.framework/Pango")
+    (cond (on-darwin  "Gtk.framework/Gtk")
           (on-linux   "libpango-1.0.so.0")
           (on-freebsd "libpango-1.0.so.0")
           (on-openbsd "libpango-1.0.so.0")
