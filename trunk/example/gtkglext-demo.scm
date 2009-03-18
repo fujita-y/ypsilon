@@ -1,7 +1,9 @@
 #!/usr/bin/env ypsilon
 
 ;; gtkglext-demo.scm:
-;;   GTK, GDK, GLIB, OpenGL, FFI tiny demo program (experimental)
+;;   GTK, GDK, GLIB, OpenGL, FFI demo program (experimental)
+;; requirements:
+;;   GTK 2.14 or later.
 
 (import (only (core) auto-compile-verbose scheme-load-verbose))
 
