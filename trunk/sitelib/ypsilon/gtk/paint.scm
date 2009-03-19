@@ -44,10 +44,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; void gtk_paint_arrow (GtkStyle* style, GdkWindow* window, GtkStateType state_type, GtkShadowType shadow_type, const GdkRectangle* area, GtkWidget* widget, const gchar* detail, GtkArrowType arrow_type, gboolean fill, gint x, gint y, gint width, gint height)
   (define-function void gtk_paint_arrow (void* void* int int void* void* char* int int int int int int))

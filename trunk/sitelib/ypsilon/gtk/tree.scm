@@ -321,10 +321,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; gboolean gtk_tree_drag_dest_drag_data_received (GtkTreeDragDest* drag_dest, GtkTreePath* dest, GtkSelectionData* selection_data)
   (define-function int gtk_tree_drag_dest_drag_data_received (void* void* void*))
@@ -402,7 +402,7 @@
   (define-function void gtk_tree_model_foreach (void* (c-callback int (void* void* void* void*)) void*))
 
   ;; void gtk_tree_model_get (GtkTreeModel* tree_model, GtkTreeIter* iter, ...)
-  (define-variadic-function void gtk_tree_model_get (void* void* ...))
+  (define-function void gtk_tree_model_get (void* void* ...))
 
   ;; GType gtk_tree_model_get_column_type (GtkTreeModel* tree_model, gint index_)
   (define-function unsigned-long gtk_tree_model_get_column_type (void* int))
@@ -432,7 +432,7 @@
   (define-function unsigned-long gtk_tree_model_get_type ())
 
   ;; void gtk_tree_model_get_valist (GtkTreeModel* tree_model, GtkTreeIter* iter, va_list var_args)
-  (define-variadic-function void gtk_tree_model_get_valist (void* void* va_list))
+  (define-function/va_list void gtk_tree_model_get_valist (void* void* va_list))
 
   ;; void gtk_tree_model_get_value (GtkTreeModel* tree_model, GtkTreeIter* iter, gint column, GValue* value)
   (define-function void gtk_tree_model_get_value (void* void* int void*))
@@ -543,7 +543,7 @@
   (define-function void* gtk_tree_path_new_first ())
 
   ;; GtkTreePath* gtk_tree_path_new_from_indices (gint first_index, ...)
-  (define-variadic-function void* gtk_tree_path_new_from_indices (int ...))
+  (define-function void* gtk_tree_path_new_from_indices (int ...))
 
   ;; GtkTreePath* gtk_tree_path_new_from_string (const gchar* path)
   (define-function void* gtk_tree_path_new_from_string (char*))
@@ -702,7 +702,7 @@
   (define-function void gtk_tree_store_insert_before (void* void* void* void*))
 
   ;; void gtk_tree_store_insert_with_values (GtkTreeStore* tree_store, GtkTreeIter* iter, GtkTreeIter* parent, gint position, ...)
-  (define-variadic-function void gtk_tree_store_insert_with_values (void* void* void* int ...))
+  (define-function void gtk_tree_store_insert_with_values (void* void* void* int ...))
 
   ;; void gtk_tree_store_insert_with_valuesv (GtkTreeStore* tree_store, GtkTreeIter* iter, GtkTreeIter* parent, gint position, gint* columns, GValue* values, gint n_values)
   (define-function void gtk_tree_store_insert_with_valuesv (void* void* void* int void* void* int))
@@ -723,7 +723,7 @@
   (define-function void gtk_tree_store_move_before (void* void* void*))
 
   ;; GtkTreeStore* gtk_tree_store_new (gint n_columns, ...)
-  (define-variadic-function void* gtk_tree_store_new (int ...))
+  (define-function void* gtk_tree_store_new (int ...))
 
   ;; GtkTreeStore* gtk_tree_store_newv (gint n_columns, GType* types)
   (define-function void* gtk_tree_store_newv (int void*))
@@ -738,13 +738,13 @@
   (define-function void gtk_tree_store_reorder (void* void* void*))
 
   ;; void gtk_tree_store_set (GtkTreeStore* tree_store, GtkTreeIter* iter, ...)
-  (define-variadic-function void gtk_tree_store_set (void* void* ...))
+  (define-function void gtk_tree_store_set (void* void* ...))
 
   ;; void gtk_tree_store_set_column_types (GtkTreeStore* tree_store, gint n_columns, GType* types)
   (define-function void gtk_tree_store_set_column_types (void* int void*))
 
   ;; void gtk_tree_store_set_valist (GtkTreeStore* tree_store, GtkTreeIter* iter, va_list var_args)
-  (define-variadic-function void gtk_tree_store_set_valist (void* void* va_list))
+  (define-function/va_list void gtk_tree_store_set_valist (void* void* va_list))
 
   ;; void gtk_tree_store_set_value (GtkTreeStore* tree_store, GtkTreeIter* iter, gint column, GValue* value)
   (define-function void gtk_tree_store_set_value (void* void* int void*))
@@ -855,7 +855,7 @@
   (define-function void* gtk_tree_view_column_new ())
 
   ;; GtkTreeViewColumn* gtk_tree_view_column_new_with_attributes (const gchar* title, GtkCellRenderer* cell, ...)
-  (define-variadic-function void* gtk_tree_view_column_new_with_attributes (char* void* ...))
+  (define-function void* gtk_tree_view_column_new_with_attributes (char* void* ...))
 
   ;; void gtk_tree_view_column_pack_end (GtkTreeViewColumn* tree_column, GtkCellRenderer* cell, gboolean expand)
   (define-function void gtk_tree_view_column_pack_end (void* void* int))
@@ -870,7 +870,7 @@
   (define-function void gtk_tree_view_column_set_alignment (void* float))
 
   ;; void gtk_tree_view_column_set_attributes (GtkTreeViewColumn* tree_column, GtkCellRenderer* cell_renderer, ...)
-  (define-variadic-function void gtk_tree_view_column_set_attributes (void* void* ...))
+  (define-function void gtk_tree_view_column_set_attributes (void* void* ...))
 
   ;; void gtk_tree_view_column_set_cell_data_func (GtkTreeViewColumn* tree_column, GtkCellRenderer* cell_renderer, GtkTreeCellDataFunc func, gpointer func_data, GDestroyNotify destroy)
   (define-function void gtk_tree_view_column_set_cell_data_func (void* void* (c-callback void (void* void* void* void* void*)) void* (c-callback void (void*))))
@@ -1083,7 +1083,7 @@
   (define-function int gtk_tree_view_insert_column (void* void* int))
 
   ;; gint gtk_tree_view_insert_column_with_attributes (GtkTreeView* tree_view, gint position, const gchar* title, GtkCellRenderer* cell, ...)
-  (define-variadic-function int gtk_tree_view_insert_column_with_attributes (void* int char* void* ...))
+  (define-function int gtk_tree_view_insert_column_with_attributes (void* int char* void* ...))
 
   ;; gint gtk_tree_view_insert_column_with_data_func (GtkTreeView* tree_view, gint position, const gchar* title, GtkCellRenderer* cell, GtkTreeCellDataFunc func, gpointer data, GDestroyNotify dnotify)
   (define-function int gtk_tree_view_insert_column_with_data_func (void* int char* void* (c-callback void (void* void* void* void* void*)) void* (c-callback void (void*))))

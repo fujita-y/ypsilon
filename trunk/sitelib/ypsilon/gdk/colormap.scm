@@ -33,11 +33,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; gboolean gdk_colormap_alloc_color (GdkColormap* colormap, GdkColor* color, gboolean writeable, gboolean best_match)
   (define-function int gdk_colormap_alloc_color (void* void* int int))
 

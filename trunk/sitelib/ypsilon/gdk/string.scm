@@ -26,11 +26,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; gint gdk_string_to_compound_text (const gchar* str, GdkAtom* encoding, gint* format, guchar** ctext, gint* length)
   (define-function int gdk_string_to_compound_text (char* void* void* void* void*))
 

@@ -28,11 +28,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; GdkGrabStatus gdk_pointer_grab (GdkWindow* window, gboolean owner_events, GdkEventMask event_mask, GdkWindow* confine_to, GdkCursor* cursor, guint32 time_)
   (define-function int gdk_pointer_grab (void* int int void* void* uint32_t))
 

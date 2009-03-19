@@ -26,10 +26,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; GdkGC* gtk_gc_get (gint depth, GdkColormap* colormap, GdkGCValues* values, GdkGCValuesMask values_mask)
   (define-function void* gtk_gc_get (int void* void* int))

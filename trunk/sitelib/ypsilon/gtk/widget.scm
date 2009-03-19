@@ -165,10 +165,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; gboolean gtk_widget_activate (GtkWidget* widget)
   (define-function int gtk_widget_activate (void*))
@@ -417,7 +417,7 @@
   (define-function void gtk_widget_modify_text (void* int void*))
 
   ;; GtkWidget* gtk_widget_new (GType type, const gchar* first_property_name, ...)
-  (define-variadic-function void* gtk_widget_new (unsigned-long char* ...))
+  (define-function void* gtk_widget_new (unsigned-long char* ...))
 
   ;; void gtk_widget_path (GtkWidget* widget, guint* path_length, gchar** path, gchar** path_reversed)
   (define-function void gtk_widget_path (void* void* void* void*))
@@ -567,13 +567,13 @@
   (define-function void gtk_widget_size_request (void* void*))
 
   ;; void gtk_widget_style_get (GtkWidget* widget, const gchar* first_property_name, ...)
-  (define-variadic-function void gtk_widget_style_get (void* char* ...))
+  (define-function void gtk_widget_style_get (void* char* ...))
 
   ;; void gtk_widget_style_get_property (GtkWidget* widget, const gchar* property_name, GValue* value)
   (define-function void gtk_widget_style_get_property (void* char* void*))
 
   ;; void gtk_widget_style_get_valist (GtkWidget* widget, const gchar* first_property_name, va_list var_args)
-  (define-variadic-function void gtk_widget_style_get_valist (void* char* va_list))
+  (define-function/va_list void gtk_widget_style_get_valist (void* char* va_list))
 
   ;; void gtk_widget_thaw_child_notify (GtkWidget* widget)
   (define-function void gtk_widget_thaw_child_notify (void*))

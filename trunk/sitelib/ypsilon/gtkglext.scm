@@ -222,11 +222,6 @@
       ((_ ret name args)
        (define name (c-function libgtk libgtk-name ret name args)))))
 
-  (define-syntax define-variadic-function/gtk
-    (syntax-rules ()
-      ((_ ret name args)
-       (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   (define libgdk-name
     (cond (on-darwin  "libgdkglext-x11-1.0.0.dylib")
           (on-linux   "libgdkglext-x11-1.0.so.0")
@@ -242,11 +237,6 @@
     (syntax-rules ()
       ((_ ret name args)
        (define name (c-function libgdk libgdk-name ret name args)))))
-
-  (define-syntax define-variadic-function/gdk
-    (syntax-rules ()
-      ((_ ret name args)
-       (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
 
   ;; GType gdk_gl_buffer_mask_get_type (void)
   (define-function/gdk unsigned-long gdk_gl_buffer_mask_get_type ())

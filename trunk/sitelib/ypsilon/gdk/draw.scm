@@ -48,11 +48,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; void gdk_draw_arc (GdkDrawable* drawable, GdkGC* gc, gboolean filled, gint x, gint y, gint width, gint height, gint angle1, gint angle2)
   (define-function void gdk_draw_arc (void* void* int int int int int int int))
 

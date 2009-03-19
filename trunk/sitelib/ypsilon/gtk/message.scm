@@ -33,16 +33,16 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; void gtk_message_dialog_format_secondary_markup (GtkMessageDialog* message_dialog, const gchar* message_format, ...)
-  (define-variadic-function void gtk_message_dialog_format_secondary_markup (void* char* ...))
+  (define-function void gtk_message_dialog_format_secondary_markup (void* char* ...))
 
   ;; void gtk_message_dialog_format_secondary_text (GtkMessageDialog* message_dialog, const gchar* message_format, ...)
-  (define-variadic-function void gtk_message_dialog_format_secondary_text (void* char* ...))
+  (define-function void gtk_message_dialog_format_secondary_text (void* char* ...))
 
   ;; GtkWidget* gtk_message_dialog_get_image (GtkMessageDialog* dialog)
   (define-function void* gtk_message_dialog_get_image (void*))
@@ -51,10 +51,10 @@
   (define-function unsigned-long gtk_message_dialog_get_type ())
 
   ;; GtkWidget* gtk_message_dialog_new (GtkWindow* parent, GtkDialogFlags flags, GtkMessageType type, GtkButtonsType buttons, const gchar* message_format, ...)
-  (define-variadic-function void* gtk_message_dialog_new (void* int int int char* ...))
+  (define-function void* gtk_message_dialog_new (void* int int int char* ...))
 
   ;; GtkWidget* gtk_message_dialog_new_with_markup (GtkWindow* parent, GtkDialogFlags flags, GtkMessageType type, GtkButtonsType buttons, const gchar* message_format, ...)
-  (define-variadic-function void* gtk_message_dialog_new_with_markup (void* int int int char* ...))
+  (define-function void* gtk_message_dialog_new_with_markup (void* int int int char* ...))
 
   ;; void gtk_message_dialog_set_image (GtkMessageDialog* dialog, GtkWidget* image)
   (define-function void gtk_message_dialog_set_image (void* void*))

@@ -25,11 +25,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; GType gdk_overlap_type_get_type (void)
   (define-function unsigned-long gdk_overlap_type_get_type ())
 

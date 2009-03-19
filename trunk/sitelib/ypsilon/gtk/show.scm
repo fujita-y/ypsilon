@@ -26,13 +26,13 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; void gtk_show_about_dialog (GtkWindow* parent, const gchar* first_property_name, ...)
-  (define-variadic-function void gtk_show_about_dialog (void* char* ...))
+  (define-function void gtk_show_about_dialog (void* char* ...))
 
   ;; gboolean gtk_show_uri (GdkScreen* screen, const gchar* uri, guint32 timestamp, GError** error)
   (define-function int gtk_show_uri (void* char* uint32_t void*))

@@ -32,11 +32,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; void gdk_selection_convert (GdkWindow* requestor, GdkAtom selection, GdkAtom target, guint32 time_)
   (define-function void gdk_selection_convert (void* void* void* uint32_t))
 

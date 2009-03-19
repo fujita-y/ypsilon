@@ -35,11 +35,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; void gdk_rgb_cmap_free (GdkRgbCmap* cmap)
   (define-function void gdk_rgb_cmap_free (void*))
 

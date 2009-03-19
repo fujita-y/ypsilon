@@ -80,10 +80,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; void gtk_cell_editable_editing_done (GtkCellEditable* cell_editable)
   (define-function void gtk_cell_editable_editing_done (void*))
@@ -122,7 +122,7 @@
   (define-function void gtk_cell_layout_reorder (void* void* int))
 
   ;; void gtk_cell_layout_set_attributes (GtkCellLayout* cell_layout, GtkCellRenderer* cell, ...)
-  (define-variadic-function void gtk_cell_layout_set_attributes (void* void* ...))
+  (define-function void gtk_cell_layout_set_attributes (void* void* ...))
 
   ;; void gtk_cell_layout_set_cell_data_func (GtkCellLayout* cell_layout, GtkCellRenderer* cell, GtkCellLayoutDataFunc func, gpointer func_data, GDestroyNotify destroy)
   (define-function void gtk_cell_layout_set_cell_data_func (void* void* (c-callback void (void* void* void* void* void*)) void* (c-callback void (void*))))

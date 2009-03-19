@@ -42,10 +42,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; void gtk_dialog_add_action_widget (GtkDialog* dialog, GtkWidget* child, gint response_id)
   (define-function void gtk_dialog_add_action_widget (void* void* int))
@@ -54,7 +54,7 @@
   (define-function void* gtk_dialog_add_button (void* char* int))
 
   ;; void gtk_dialog_add_buttons (GtkDialog* dialog, const gchar* first_button_text, ...)
-  (define-variadic-function void gtk_dialog_add_buttons (void* char* ...))
+  (define-function void gtk_dialog_add_buttons (void* char* ...))
 
   ;; GType gtk_dialog_flags_get_type (void)
   (define-function unsigned-long gtk_dialog_flags_get_type ())
@@ -78,7 +78,7 @@
   (define-function void* gtk_dialog_new ())
 
   ;; GtkWidget* gtk_dialog_new_with_buttons (const gchar* title, GtkWindow* parent, GtkDialogFlags flags, const gchar* first_button_text, ...)
-  (define-variadic-function void* gtk_dialog_new_with_buttons (char* void* int char* ...))
+  (define-function void* gtk_dialog_new_with_buttons (char* void* int char* ...))
 
   ;; void gtk_dialog_response (GtkDialog* dialog, gint response_id)
   (define-function void gtk_dialog_response (void* int))
@@ -87,7 +87,7 @@
   (define-function int gtk_dialog_run (void*))
 
   ;; void gtk_dialog_set_alternative_button_order (GtkDialog* dialog, gint first_response_id, ...)
-  (define-variadic-function void gtk_dialog_set_alternative_button_order (void* int ...))
+  (define-function void gtk_dialog_set_alternative_button_order (void* int ...))
 
   ;; void gtk_dialog_set_alternative_button_order_from_array (GtkDialog* dialog, gint n_params, gint* new_order)
   (define-function void gtk_dialog_set_alternative_button_order_from_array (void* int void*))

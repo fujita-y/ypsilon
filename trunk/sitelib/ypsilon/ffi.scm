@@ -127,6 +127,26 @@
                   lst)
         lst)))
 
+  (define expect-arg
+    (lambda (x)
+      (cond ((or (bytevector? x) (flonum? x) (and (integer? x) (exact? x))) x)
+            ((string? x) (string->utf8+nul x))
+            (else
+             (assertion-violation #f (format "expected exact integer, string, flonum, or bytevector, but got ~r" x))))))
+
+  (define expect-args
+    (lambda (name n lst)
+      (let loop ((n n) (lst lst) (args '()))
+        (cond ((null? lst) (reverse args))
+              ((or (bytevector? (car lst))
+                   (flonum? (car lst))
+                   (and (integer? (car lst)) (exact? (car lst))))
+               (loop (+ n 1) (cdr lst) (cons (car lst) args)))
+              ((string? (car lst))
+               (loop (+ n 1) (cdr lst) (cons (string->utf8+nul (car lst)) args)))
+              (else
+               (assertion-violation name (format "expected exact integer, string, flonum, or bytevector, but got ~r, as argument ~s" (car lst) n)))))))
+
   (define make-binary-array-of-int
     (lambda (argv)
       (let ((bv (make-bytevector (* alignof:int (length argv)))))
@@ -200,7 +220,7 @@
       (cond ((and (integer? x) (exact? x)) (if (= x 0) 0 1))
             ((unspecified? x) 0)
             (else (assertion-violation 'callback (format "expected exact integer, but got ~r, as return value" x))))))
-  
+
   (define handle-int
     (lambda (x)
       (cond ((and (integer? x) (exact? x)) x)
@@ -316,6 +336,8 @@
   (define make-argument-thunk
     (lambda (name type)
       (case type
+        ((...)
+         (cons #\* values))
         ((bool char short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
          (cons #\i values))
         ((int64_t uint64_t)
@@ -338,40 +360,41 @@
            (['int]
             (cons #\p
                   (lambda (x)
-                    (or (vector? x) (assertion-violation name (format "expected vector, but got ~r" x)))
+                    (or (vector? x) (assertion-violation #f (format "expected vector, but got ~r" x)))
                     (make-binary-array-of-int
                      (let ((lst (vector->list x)))
                        (for-each (lambda (i)
                                    (or (and (integer? i) (exact? i))
-                                       (assertion-violation name (format "expected list of exact integer, but got ~r" x))))
+                                       (assertion-violation #f (format "expected list of exact integer, but got ~r" x))))
                                  lst)
                        lst)))))
            (['char*]
             (cons #\c
                   (lambda (x)
-                    (or (vector? x) (assertion-violation name (format "expected vector, but got ~r" x)))
+                    (or (vector? x) (assertion-violation #f (format "expected vector, but got ~r" x)))
                     (make-binary-array-of-char*
                      0
                      (let ((lst (vector->list x)))
                        (for-each (lambda (s)
                                    (or (string? s)
-                                       (assertion-violation name (format "expected list of string, but got ~r" x))))
+                                       (assertion-violation #f (format "expected list of string, but got ~r" x))))
                                  lst)
                        lst)))))
            (('* ['char*])
             (cons #\c
                   (lambda (x)
-                    (or (vector? x) (assertion-violation name (format "expected vector, but got ~r" x)))
+                    (or (vector? x) (assertion-violation #f (format "expected vector, but got ~r" x)))
                     (make-binary-array-of-char*
                      1
                      (let ((lst (vector->list x)))
                        (for-each (lambda (s)
                                    (or (string? s)
-                                       (assertion-violation name (format "expected list of string, but got ~r" x))))
+                                       (assertion-violation #f (format "expected list of string, but got ~r" x))))
                                  lst)
                        lst)))))
            (_
-            (assertion-violation name (format "invalid argument type ~u" type))))))))
+            (assertion-violation name (format "invalid argument type ~u" type))
+            (assertion-violation 'make-cdecl-callout (format "invalid argument type ~u" type))))))))
 
   (define make-cdecl-callout
     (lambda (ret args addrs)
@@ -383,21 +406,45 @@
               (cond ((and (pair? in) (pair? thunk))
                      (loop (cdr in) (cdr thunk) (cons ((car thunk) (car in)) out)))
                     ((or (pair? in) (pair? thunk))
-                     (assertion-violation #f (format "cdecl-callout expected ~a, but ~a arguments given" (length thunks) (length x)) x))
+                     (assertion-violation #f (format "expected ~a, but ~a arguments given" (length thunks) (length x)) x))
                     (else
-                     (apply call-shared-object type addrs 'cdecl-callout signature (reverse out))))))))
+                     (apply call-shared-object type addrs #f signature (reverse out))))))))
+
+      (define make-variadic-cdecl-callout-closure
+        (lambda (type addrs signature thunks)
+          (lambda x
+            (let loop ((in x) (thunk thunks) (out '()))
+              (cond ((and (pair? in) (pair? thunk))
+                     (loop (cdr in) (cdr thunk) (cons ((car thunk) (car in)) out)))
+                    ((pair? in)
+                     (loop (cdr in) thunk (cons (expect-arg (car in)) out)))
+                    ((pair? thunk)
+                     (assertion-violation #f (format "required at least ~a, but ~a arguments given" (length thunks) (length x)) x))
+                    (else
+                     (apply call-shared-object type addrs #f signature (reverse out))))))))
 
       (assert-argument make-cdecl-callout 1 ret "symbol" symbol? (list ret args addrs))
       (assert-argument make-cdecl-callout 2 args "list" list? (list ret args addrs))
       (assert-argument make-cdecl-callout 3 addrs "c function address" (and (integer? addrs) (exact? addrs)) (list ret args addrs))
-      (let ((lst (map (lambda (a) (make-argument-thunk 'cdecl-callout a)) args)))
+      (let ((lst (map (lambda (a) (make-argument-thunk 'make-cdecl-callout a)) args)))
         (let ((signature (apply string (map car lst))) (thunk (map cdr lst)))
-          (make-cdecl-callout-closure (cond ((assq ret c-function-return-type-alist) => cdr)
-                                            (else
-                                             (assertion-violation 'make-cdecl-callout
-                                                                  (format "invalid return type ~u" ret)
-                                                                  (list ret args addrs))))
-                                      addrs signature thunk)))))
+          (let ((variadic (memq '... args)))
+            (cond (variadic
+                   (or (= (length variadic) 1)
+                       (assertion-violation 'make-cdecl-callout "invalid argument type list" args))
+                   (make-variadic-cdecl-callout-closure (cond ((assq ret c-function-return-type-alist) => cdr)
+                                                              (else
+                                                               (assertion-violation 'make-cdecl-callout
+                                                                                    (format "invalid return type ~u" ret)
+                                                                                    (list ret args addrs))))
+                                                        addrs signature (list-head thunk (- (length thunk) 1))))
+                  (else
+                   (make-cdecl-callout-closure (cond ((assq ret c-function-return-type-alist) => cdr)
+                                                     (else
+                                                      (assertion-violation 'make-cdecl-callout
+                                                                           (format "invalid return type ~u" ret)
+                                                                           (list ret args addrs))))
+                                               addrs signature thunk))))))))
 
   (define make-stdcall-callout
     (lambda (ret args addrs)
@@ -409,14 +456,15 @@
               (cond ((and (pair? in) (pair? thunk))
                      (loop (cdr in) (cdr thunk) (cons ((car thunk) (car in)) out)))
                     ((or (pair? in) (pair? thunk))
-                     (assertion-violation #f (format "stdcall-callout expected ~a, but ~a arguments given" (length thunks) (length x)) x))
+                     (assertion-violation #f (format "expected ~a, but ~a arguments given" (length thunks) (length x)) x))
                     (else
-                     (apply call-shared-object (+ type STDCALL) addrs 'stdcall-callout signature (reverse out))))))))
+                     (apply call-shared-object (+ type STDCALL) addrs #f signature (reverse out))))))))
 
       (assert-argument make-cdecl-callout 1 ret "symbol" symbol? (list ret args addrs))
       (assert-argument make-cdecl-callout 2 args "list" list? (list ret args addrs))
       (assert-argument make-cdecl-callout 3 addrs "c function address" (and (integer? addrs) (exact? addrs)) (list ret args addrs))
-      (let ((lst (map (lambda (a) (make-argument-thunk 'cdecl-callout a)) args)))
+      (and (memq '... args) (assertion-violation 'make-stdcall-callout "... in argument type list" args))
+      (let ((lst (map (lambda (a) (make-argument-thunk 'make-stdcall-callout a)) args)))
         (let ((signature (apply string (map car lst))) (thunk (map cdr lst)))
           (make-stdcall-callout-closure (cond ((assq ret c-function-return-type-alist) => cdr)
                                               (else
@@ -448,6 +496,8 @@
                (map (lambda (type n var)
                       (with-syntax ((n n) (var var))
                         (case type
+                          ((...)
+                           (list #\* #'(expect-args 'func-name n var)))
                           ((bool char short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
                            (list #\i #'var))
                           ((int64_t uint64_t)
@@ -483,20 +533,31 @@
 
            (cond ((assq (datum ret-type) c-function-return-type-alist)
                   => (lambda (lst)
-                       (with-syntax
-                           ((type
-                             (case (datum func-conv)
-                               ((__cdecl) (cdr lst))
-                               ((__stdcall) (+ (cdr lst) STDCALL))
-                               (else (syntax-violation 'c-function "invalid syntax" x))))
-                            ((args ...) (generate-temporaries (datum (arg-types ...)))))
-                         (with-syntax
-                             ((((signature thunk) ...) (c-arguments #'(args ...))))
-                           (with-syntax ((signature (apply string (datum (signature ...)))))
-                             #'(let ((loc (lookup-shared-object lib-handle 'func-name)))
-                                 (if loc
-                                     (let ((func-name (lambda (args ...) (call-shared-object type loc 'func-name signature thunk ...)))) func-name)
-                                     (let ((func-name (lambda x (error 'func-name (format "function not available in ~a" lib-name))))) func-name))))))))
+                       (let ((symbolic-arg-types (datum (arg-types ...))))
+                         (let ((variadic (memq '... symbolic-arg-types)))
+                           (with-syntax
+                               ((type
+                                 (case (datum func-conv)
+                                   ((__cdecl) (cdr lst))
+                                   ((__stdcall)
+                                    (and variadic (syntax-violation 'c-function "invalid syntax" x))
+                                    (+ (cdr lst) STDCALL))
+                                   (else (syntax-violation 'c-function "invalid syntax" x))))
+                                ((args ...) (generate-temporaries symbolic-arg-types)))
+                             (with-syntax ((((signature thunk) ...) (c-arguments #'(args ...))))
+                               (with-syntax ((signature (apply string (datum (signature ...)))))
+                                 (cond (variadic
+                                        (or (= (length variadic) 1) (syntax-violation 'c-function "invalid syntax" x))
+                                        (with-syntax (((args ... last) #'(args ...)))
+                                          #'(let ((loc (lookup-shared-object lib-handle 'func-name)))
+                                              (if loc
+                                                  (let ((func-name (lambda (args ... . last) (apply call-shared-object type loc 'func-name signature thunk ...)))) func-name)
+                                                  (let ((func-name (lambda x (error 'func-name (format "function not available in ~a" lib-name))))) func-name)))))
+                                       (else
+                                        #'(let ((loc (lookup-shared-object lib-handle 'func-name)))
+                                            (if loc
+                                                (let ((func-name (lambda (args ...) (call-shared-object type loc 'func-name signature thunk ...)))) func-name)
+                                                (let ((func-name (lambda x (error 'func-name (format "function not available in ~a" lib-name))))) func-name))))))))))))
                  (else
                   (syntax-violation 'c-function (format "invalid return type ~u" (datum ret-type)) x)))))
         ((_ lib-handle lib-name ret-type func-name (arg-types ...))

@@ -152,6 +152,7 @@
           SDL_SetColorKey
           SDL_SetColors
           SDL_SetCursor
+          SDL_SetError
           SDL_SetEventFilter
           SDL_SetGamma
           SDL_SetGammaRamp
@@ -202,7 +203,6 @@
           SDL_ulltoa
           SDL_ultoa)
 
-  ;; SDL_SetError -- variadic arguments not supported
   ;; SDL_AddTimer -- incompatible thread callback
   ;; SDL_SetTimer -- incompatible thread callback
 
@@ -670,7 +670,7 @@
   (define-function void SDL_SetCursor (void*))
 
   ;; void SDL_SetError(const char* fmt, ...)
-  ;; (define-function void SDL_SetError (char* ...))
+  (define-function void SDL_SetError (char* ...))
 
   ;; void SDL_SetEventFilter(SDL_EventFilter filter)
   (define-function void SDL_SetEventFilter (void*))

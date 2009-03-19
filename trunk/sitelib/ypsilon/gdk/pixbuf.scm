@@ -114,11 +114,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; GdkPixbuf* gdk_pixbuf_add_alpha (const GdkPixbuf* pixbuf, gboolean substitute_color, guchar r, guchar g, guchar b)
   (define-function void* gdk_pixbuf_add_alpha (void* int uint8_t uint8_t uint8_t))
 
@@ -348,22 +343,22 @@
   (define-function void gdk_pixbuf_saturate_and_pixelate (void* void* float int))
 
   ;; gboolean gdk_pixbuf_save (GdkPixbuf* pixbuf, const char* filename, const char* type, GError** error, ...)
-  (define-variadic-function int gdk_pixbuf_save (void* char* char* void* ...))
+  (define-function int gdk_pixbuf_save (void* char* char* void* ...))
 
   ;; gboolean gdk_pixbuf_save_to_buffer (GdkPixbuf* pixbuf, gchar** buffer, gsize* buffer_size, const char* type, GError** error, ...)
-  (define-variadic-function int gdk_pixbuf_save_to_buffer (void* void* void* char* void* ...))
+  (define-function int gdk_pixbuf_save_to_buffer (void* void* void* char* void* ...))
 
   ;; gboolean gdk_pixbuf_save_to_bufferv (GdkPixbuf* pixbuf, gchar** buffer, gsize* buffer_size, const char* type, char** option_keys, char** option_values, GError** error)
   (define-function int gdk_pixbuf_save_to_bufferv (void* void* void* char* void* void* void*))
 
   ;; gboolean gdk_pixbuf_save_to_callback (GdkPixbuf* pixbuf, GdkPixbufSaveFunc save_func, gpointer user_data, const char* type, GError** error, ...)
-  (define-variadic-function int gdk_pixbuf_save_to_callback (void* (c-callback int (void* unsigned-long void* void*)) void* char* void* ...))
+  (define-function int gdk_pixbuf_save_to_callback (void* (c-callback int (void* unsigned-long void* void*)) void* char* void* ...))
 
   ;; gboolean gdk_pixbuf_save_to_callbackv (GdkPixbuf* pixbuf, GdkPixbufSaveFunc save_func, gpointer user_data, const char* type, char** option_keys, char** option_values, GError** error)
   (define-function int gdk_pixbuf_save_to_callbackv (void* (c-callback int (void* unsigned-long void* void*)) void* char* void* void* void*))
 
   ;; gboolean gdk_pixbuf_save_to_stream (GdkPixbuf* pixbuf, GOutputStream* stream, const char* type, GCancellable* cancellable, GError** error, ...)
-  (define-variadic-function int gdk_pixbuf_save_to_stream (void* void* char* void* void* ...))
+  (define-function int gdk_pixbuf_save_to_stream (void* void* char* void* void* ...))
 
   ;; gboolean gdk_pixbuf_savev (GdkPixbuf* pixbuf, const char* filename, const char* type, char** option_keys, char** option_values, GError** error)
   (define-function int gdk_pixbuf_savev (void* char* char* void* void* void*))

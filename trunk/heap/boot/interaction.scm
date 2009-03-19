@@ -36,9 +36,8 @@
                                                  (format port "~a" (car lst))
                                                  (cond ((pair? (cdr lst))
                                                         (format port " ")
-                                                        (loop (cdr lst)))
-                                                       (else
-                                                        (format port ")")))))))
+                                                        (loop (cdr lst)))))))
+                                        (format port ")"))
                                        (else (format port " ~r" e))))
                                (condition-irritants c))))))
 

@@ -25,7 +25,7 @@
                     m_frame[m_count++] = n.u32.hi;
                     return NULL;
                 }
-                if (signature == 'i' || signature == 'p') {
+                if (signature == 'i' || signature == 'p' || signature == '*') {
                     m_frame[m_count++] = coerce_exact_integer_to_intptr(obj);
                     return NULL;
                 }
@@ -52,7 +52,7 @@
                     m_frame[m_count++] = n.u32;
                     return NULL;
                 }
-                if (signature == 'd') {
+                if (signature == 'd' || signature == '*') {
                     union { double f64; struct { uint32_t lo; uint32_t hi; } u32; } n;
                     scm_flonum_t flonum = (scm_flonum_t)obj;
                     n.f64 = flonum->value;
@@ -63,7 +63,7 @@
                 goto bad_signature;
             }
             if (BVECTORP(obj)) {
-                if (signature != 'p') goto bad_signature;
+                if (signature != 'p' && signature != '*') goto bad_signature;
                 scm_bvector_t bvector = (scm_bvector_t)obj;
                 m_frame[m_count++] = (intptr_t)bvector->elts;
                 return NULL;
@@ -109,6 +109,8 @@
             case 'f':
             case 'd':
                 return "real";
+            case '*':
+                return "exact integer, real, or bytevector";
             default:
                 fatal("fatal: invalid c function argument type specifier");
         }
@@ -204,7 +206,7 @@
     {
         if (m_count < array_sizeof(m_frame) - array_sizeof(m_reg) - array_sizeof(m_sse)) {
             if (FIXNUMP(obj) || BIGNUMP(obj)) {
-                if (signature == 'x' || signature == 'i' || signature == 'p') {
+                if (signature == 'x' || signature == 'i' || signature == 'p' || signature == '*') {
                     intptr_t value = coerce_exact_integer_to_intptr(obj);
                     if (m_reg_count < array_sizeof(m_reg)) m_reg[m_reg_count++] = value;
                     else m_frame[m_count++] = value;
@@ -245,7 +247,7 @@
                     }
                     return NULL;
                 }
-                if (signature == 'd') {
+                if (signature == 'd' || signature == '*') {
                     if (m_sse_count < array_sizeof(m_sse)) m_sse[m_sse_count++] = n.u64;
                     else m_frame[m_count++] = n.u64;
                     return NULL;
@@ -253,7 +255,7 @@
                 goto bad_signature;
             }
             if (BVECTORP(obj)) {
-                if (signature != 'p') goto bad_signature;
+                if (signature != 'p' && signature != '*') goto bad_signature;
                 scm_bvector_t bvector = (scm_bvector_t)obj;
                 if (m_reg_count < array_sizeof(m_reg)) m_reg[m_reg_count++] = (intptr_t)bvector->elts;
                 else m_frame[m_count++] = (intptr_t)bvector->elts;
@@ -298,6 +300,8 @@
             case 'f':
             case 'd':
                 return "real";
+            case '*':
+                return "exact integer, real, or bytevector";
             default:
                 fatal("fatal: invalid c function argument type specifier");
         }
