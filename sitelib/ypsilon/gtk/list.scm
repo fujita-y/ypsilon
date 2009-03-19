@@ -46,10 +46,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; void gtk_list_store_append (GtkListStore* list_store, GtkTreeIter* iter)
   (define-function void gtk_list_store_append (void* void*))
@@ -70,7 +70,7 @@
   (define-function void gtk_list_store_insert_before (void* void* void*))
 
   ;; void gtk_list_store_insert_with_values (GtkListStore* list_store, GtkTreeIter* iter, gint position, ...)
-  (define-variadic-function void gtk_list_store_insert_with_values (void* void* int ...))
+  (define-function void gtk_list_store_insert_with_values (void* void* int ...))
 
   ;; void gtk_list_store_insert_with_valuesv (GtkListStore* list_store, GtkTreeIter* iter, gint position, gint* columns, GValue* values, gint n_values)
   (define-function void gtk_list_store_insert_with_valuesv (void* void* int void* void* int))
@@ -85,7 +85,7 @@
   (define-function void gtk_list_store_move_before (void* void* void*))
 
   ;; GtkListStore* gtk_list_store_new (gint n_columns, ...)
-  (define-variadic-function void* gtk_list_store_new (int ...))
+  (define-function void* gtk_list_store_new (int ...))
 
   ;; GtkListStore* gtk_list_store_newv (gint n_columns, GType* types)
   (define-function void* gtk_list_store_newv (int void*))
@@ -100,13 +100,13 @@
   (define-function void gtk_list_store_reorder (void* void*))
 
   ;; void gtk_list_store_set (GtkListStore* list_store, GtkTreeIter* iter, ...)
-  (define-variadic-function void gtk_list_store_set (void* void* ...))
+  (define-function void gtk_list_store_set (void* void* ...))
 
   ;; void gtk_list_store_set_column_types (GtkListStore* list_store, gint n_columns, GType* types)
   (define-function void gtk_list_store_set_column_types (void* int void*))
 
   ;; void gtk_list_store_set_valist (GtkListStore* list_store, GtkTreeIter* iter, va_list var_args)
-  (define-variadic-function void gtk_list_store_set_valist (void* void* va_list))
+  (define-function/va_list void gtk_list_store_set_valist (void* void* va_list))
 
   ;; void gtk_list_store_set_value (GtkListStore* list_store, GtkTreeIter* iter, gint column, GValue* value)
   (define-function void gtk_list_store_set_value (void* void* int void*))

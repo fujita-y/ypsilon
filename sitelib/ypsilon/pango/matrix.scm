@@ -27,7 +27,7 @@
           (on-openbsd "libpango-1.0.so.0")
           (on-windows "libpango-1.0-0.dll")
           (else
-           (assertion-violation #f "can not locate GDK library, unknown operating system"))))
+           (assertion-violation #f "can not locate Pango library, unknown operating system"))))
 
   (define lib (load-shared-object lib-name))
 
@@ -35,11 +35,6 @@
     (syntax-rules ()
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
-
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
 
   ;; void pango_matrix_concat (PangoMatrix* matrix, const PangoMatrix* new_matrix)
   (define-function void pango_matrix_concat (void* void*))

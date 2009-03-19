@@ -58,37 +58,37 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; void gtk_container_add (GtkContainer* container, GtkWidget* widget)
   (define-function void gtk_container_add (void* void*))
 
   ;; void gtk_container_add_with_properties (GtkContainer* container, GtkWidget* widget, const gchar* first_prop_name, ...)
-  (define-variadic-function void gtk_container_add_with_properties (void* void* char* ...))
+  (define-function void gtk_container_add_with_properties (void* void* char* ...))
 
   ;; void gtk_container_check_resize (GtkContainer* container)
   (define-function void gtk_container_check_resize (void*))
 
   ;; void gtk_container_child_get (GtkContainer* container, GtkWidget* child, const gchar* first_prop_name, ...)
-  (define-variadic-function void gtk_container_child_get (void* void* char* ...))
+  (define-function void gtk_container_child_get (void* void* char* ...))
 
   ;; void gtk_container_child_get_property (GtkContainer* container, GtkWidget* child, const gchar* property_name, GValue* value)
   (define-function void gtk_container_child_get_property (void* void* char* void*))
 
   ;; void gtk_container_child_get_valist (GtkContainer* container, GtkWidget* child, const gchar* first_property_name, va_list var_args)
-  (define-variadic-function void gtk_container_child_get_valist (void* void* char* va_list))
+  (define-function/va_list void gtk_container_child_get_valist (void* void* char* va_list))
 
   ;; void gtk_container_child_set (GtkContainer* container, GtkWidget* child, const gchar* first_prop_name, ...)
-  (define-variadic-function void gtk_container_child_set (void* void* char* ...))
+  (define-function void gtk_container_child_set (void* void* char* ...))
 
   ;; void gtk_container_child_set_property (GtkContainer* container, GtkWidget* child, const gchar* property_name, const GValue* value)
   (define-function void gtk_container_child_set_property (void* void* char* void*))
 
   ;; void gtk_container_child_set_valist (GtkContainer* container, GtkWidget* child, const gchar* first_property_name, va_list var_args)
-  (define-variadic-function void gtk_container_child_set_valist (void* void* char* va_list))
+  (define-function/va_list void gtk_container_child_set_valist (void* void* char* va_list))
 
   ;; GType gtk_container_child_type (GtkContainer* container)
   (define-function unsigned-long gtk_container_child_type (void*))

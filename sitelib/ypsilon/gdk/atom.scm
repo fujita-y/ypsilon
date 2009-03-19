@@ -27,11 +27,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; GdkAtom gdk_atom_intern (const gchar* atom_name, gboolean only_if_exists)
   (define-function void* gdk_atom_intern (char* int))
 

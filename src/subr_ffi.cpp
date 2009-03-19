@@ -280,8 +280,10 @@ subr_call_shared_object(VM* vm, int argc, scm_obj_t argv[])
         const char* who;
         if (SYMBOLP(argv[2])) {
             who = ((scm_symbol_t)argv[2])->name;
+        } else if (argv[2] == scm_false) {
+            who = "call-shared-object";
         } else {
-            wrong_type_argument_violation(vm, "call-shared-object", 2, "symbol", argv[2], argc, argv);
+            wrong_type_argument_violation(vm, "call-shared-object", 2, "symbol or #f", argv[2], argc, argv);
             return scm_undef;
         }
         const char* signature;
@@ -299,7 +301,7 @@ subr_call_shared_object(VM* vm, int argc, scm_obj_t argv[])
                     wrong_type_argument_violation(vm, who, i, err, argv[i], argc, argv);
                     return scm_undef;
                 }
-                signature++;
+                if (signature[0] != '*') signature++;
             }
             switch (type & FFI_RETURN_TYPE_MASK) {
                 case FFI_RETURN_TYPE_VOID: {

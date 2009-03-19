@@ -27,7 +27,7 @@
           (on-openbsd "libpango-1.0.so.0")
           (on-windows "libpango-1.0-0.dll")
           (else
-           (assertion-violation #f "can not locate GDK library, unknown operating system"))))
+           (assertion-violation #f "can not locate Pango library, unknown operating system"))))
 
   (define lib (load-shared-object lib-name))
 
@@ -35,11 +35,6 @@
     (syntax-rules ()
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
-
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
 
   ;; GType pango_tab_align_get_type (void)
   (define-function unsigned-long pango_tab_align_get_type ())
@@ -69,7 +64,7 @@
   (define-function void* pango_tab_array_new (int int))
 
   ;; PangoTabArray* pango_tab_array_new_with_positions (gint size, gboolean positions_in_pixels, PangoTabAlign first_alignment, gint first_position, ...)
-  (define-variadic-function void* pango_tab_array_new_with_positions (int int int int ...))
+  (define-function void* pango_tab_array_new_with_positions (int int int int ...))
 
   ;; void pango_tab_array_resize (PangoTabArray* tab_array, gint new_size)
   (define-function void pango_tab_array_resize (void* int))

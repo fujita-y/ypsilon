@@ -109,10 +109,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; GType gtk_file_chooser_action_get_type (void)
   (define-function unsigned-long gtk_file_chooser_action_get_type ())
@@ -160,7 +160,7 @@
   (define-function unsigned-long gtk_file_chooser_dialog_get_type ())
 
   ;; GtkWidget* gtk_file_chooser_dialog_new (const gchar* title, GtkWindow* parent, GtkFileChooserAction action, const gchar* first_button_text, ...)
-  (define-variadic-function void* gtk_file_chooser_dialog_new (char* void* int char* ...))
+  (define-function void* gtk_file_chooser_dialog_new (char* void* int char* ...))
 
   ;; GType gtk_file_chooser_error_get_type (void)
   (define-function unsigned-long gtk_file_chooser_error_get_type ())

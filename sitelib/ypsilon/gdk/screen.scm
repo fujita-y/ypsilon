@@ -64,11 +64,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; void gdk_screen_broadcast_client_message (GdkScreen* screen, GdkEvent* event)
   (define-function void gdk_screen_broadcast_client_message (void* void*))
 

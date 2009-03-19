@@ -56,10 +56,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; guint16 gtk_color_button_get_alpha (GtkColorButton* color_button)
   (define-function uint16_t gtk_color_button_get_alpha (void*))

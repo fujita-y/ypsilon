@@ -40,19 +40,19 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; GtkWidget* gtk_test_create_simple_window (const gchar* window_title, const gchar* dialog_text)
   (define-function void* gtk_test_create_simple_window (char* char*))
 
   ;; GtkWidget* gtk_test_create_widget (GType widget_type, const gchar* first_property_name, ...)
-  (define-variadic-function void* gtk_test_create_widget (unsigned-long char* ...))
+  (define-function void* gtk_test_create_widget (unsigned-long char* ...))
 
   ;; GtkWidget* gtk_test_display_button_window (const gchar* window_title, const gchar* dialog_text, ...)
-  (define-variadic-function void* gtk_test_display_button_window (char* char* ...))
+  (define-function void* gtk_test_display_button_window (char* char* ...))
 
   ;; GtkWidget* gtk_test_find_label (GtkWidget* widget, const gchar* label_pattern)
   (define-function void* gtk_test_find_label (void* char*))
@@ -64,7 +64,7 @@
   (define-function void* gtk_test_find_widget (void* char* unsigned-long))
 
   ;; void gtk_test_init (int* argcp, char** *argvp, ...)
-  (define-variadic-function void gtk_test_init (void* void* ...))
+  (define-function void gtk_test_init (void* void* ...))
 
   ;; const GType* gtk_test_list_all_types (guint* n_types)
   (define-function void* gtk_test_list_all_types (void*))

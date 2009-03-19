@@ -26,11 +26,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; gint gdk_error_trap_pop (void)
   (define-function int gdk_error_trap_pop ())
 

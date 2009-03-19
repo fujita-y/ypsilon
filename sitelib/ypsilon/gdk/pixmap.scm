@@ -36,11 +36,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; GdkPixmap* gdk_pixmap_colormap_create_from_xpm (GdkDrawable* drawable, GdkColormap* colormap, GdkBitmap** mask, const GdkColor* transparent_color, const gchar* filename)
   (define-function void* gdk_pixmap_colormap_create_from_xpm (void* void* void* void* char*))
 

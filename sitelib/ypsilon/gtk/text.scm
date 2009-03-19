@@ -281,10 +281,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; GtkTextAttributes* gtk_text_attributes_copy (GtkTextAttributes* src)
   (define-function void* gtk_text_attributes_copy (void*))
@@ -332,7 +332,7 @@
   (define-function void* gtk_text_buffer_create_mark (void* char* void* int))
 
   ;; GtkTextTag* gtk_text_buffer_create_tag (GtkTextBuffer* buffer, const gchar* tag_name, const gchar* first_property_name, ...)
-  (define-variadic-function void* gtk_text_buffer_create_tag (void* char* char* ...))
+  (define-function void* gtk_text_buffer_create_tag (void* char* char* ...))
 
   ;; void gtk_text_buffer_cut_clipboard (GtkTextBuffer* buffer, GtkClipboard* clipboard, gboolean default_editable)
   (define-function void gtk_text_buffer_cut_clipboard (void* void* int))
@@ -464,10 +464,10 @@
   (define-function int gtk_text_buffer_insert_range_interactive (void* void* void* void* int))
 
   ;; void gtk_text_buffer_insert_with_tags (GtkTextBuffer* buffer, GtkTextIter* iter, const gchar* text, gint len, GtkTextTag* first_tag, ...)
-  (define-variadic-function void gtk_text_buffer_insert_with_tags (void* void* char* int void* ...))
+  (define-function void gtk_text_buffer_insert_with_tags (void* void* char* int void* ...))
 
   ;; void gtk_text_buffer_insert_with_tags_by_name (GtkTextBuffer* buffer, GtkTextIter* iter, const gchar* text, gint len, const gchar* first_tag_name, ...)
-  (define-variadic-function void gtk_text_buffer_insert_with_tags_by_name (void* void* char* int char* ...))
+  (define-function void gtk_text_buffer_insert_with_tags_by_name (void* void* char* int char* ...))
 
   ;; void gtk_text_buffer_move_mark (GtkTextBuffer* buffer, GtkTextMark* mark, const GtkTextIter* where)
   (define-function void gtk_text_buffer_move_mark (void* void* void*))

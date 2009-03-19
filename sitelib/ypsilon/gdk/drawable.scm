@@ -36,11 +36,6 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
-    (syntax-rules ()
-      ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
-
   ;; GdkImage* gdk_drawable_copy_to_image (GdkDrawable* drawable, GdkImage* image, gint src_x, gint src_y, gint dest_x, gint dest_y, gint width, gint height)
   (define-function void* gdk_drawable_copy_to_image (void* void* int int int int int int))
 

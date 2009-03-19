@@ -34,10 +34,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; void gtk_style_apply_default_background (GtkStyle* style, GdkWindow* window, gboolean set_bg, GtkStateType state_type, const GdkRectangle* area, gint x, gint y, gint width, gint height)
   (define-function void gtk_style_apply_default_background (void* void* int int void* int int int int))

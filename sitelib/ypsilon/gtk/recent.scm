@@ -128,10 +128,10 @@
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
 
-  (define-syntax define-variadic-function
+  (define-syntax define-function/va_list
     (syntax-rules ()
       ((_ ret name args)
-      (define name (lambda x (assertion-violation 'name "variadic function not supported"))))))
+      (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
   ;; gboolean gtk_recent_action_get_show_numbers (GtkRecentAction* action)
   (define-function int gtk_recent_action_get_show_numbers (void*))
@@ -155,10 +155,10 @@
   (define-function unsigned-long gtk_recent_chooser_dialog_get_type ())
 
   ;; GtkWidget* gtk_recent_chooser_dialog_new (const gchar* title, GtkWindow* parent, const gchar* first_button_text, ...)
-  (define-variadic-function void* gtk_recent_chooser_dialog_new (char* void* char* ...))
+  (define-function void* gtk_recent_chooser_dialog_new (char* void* char* ...))
 
   ;; GtkWidget* gtk_recent_chooser_dialog_new_for_manager (const gchar* title, GtkWindow* parent, GtkRecentManager* manager, const gchar* first_button_text, ...)
-  (define-variadic-function void* gtk_recent_chooser_dialog_new_for_manager (char* void* void* char* ...))
+  (define-function void* gtk_recent_chooser_dialog_new_for_manager (char* void* void* char* ...))
 
   ;; GType gtk_recent_chooser_error_get_type (void)
   (define-function unsigned-long gtk_recent_chooser_error_get_type ())
