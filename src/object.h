@@ -532,11 +532,12 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_SYMBOL_INHERENT_BIT             ((uintptr_t)1 << HDR_SYMBOL_INHERENT_SHIFT)
 #define HDR_SYMBOL_UNINTERNED_BIT           ((uintptr_t)1 << HDR_SYMBOL_UNINTERNED_SHIFT)
 
-#define OPCODESYMBOLP(obj)                  (CELLP(obj) \
-                                                && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_INHERENT_BIT)) \
-                                                && (HDR_SYMBOL_CODE(HDR(obj)) < VMOP_INSTRUCTION_COUNT))
+#define INHERENTSYMBOLP(obj)                (CELLP(obj) \
+                                                && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_INHERENT_BIT)))
 #define UNINTERNEDSYMBOLP(obj)              (CELLP(obj) \
                                                 && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_UNINTERNED_BIT)))
+#define OPCODESYMBOLP(obj)                  (INHERENTSYMBOLP(obj) && (HDR_SYMBOL_CODE(HDR(obj)) < VMOP_INSTRUCTION_COUNT))
+
 #define BOTHFLONUMP(x, y)                   (CELLP((intptr_t)(x) | (intptr_t)(y)) \
                                                 && ((((scm_flonum_t)(x))->hdr == scm_hdr_flonum) & (((scm_flonum_t)(y))->hdr == scm_hdr_flonum)))
 #define BVECTORMAPPINGP(obj)                (BVECTORP(obj) && HDR_BVECTOR_MAPPING(HDR(obj)))

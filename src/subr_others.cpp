@@ -3417,6 +3417,32 @@ subr_purge_system_environment(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// vmi-instruction-set
+scm_obj_t
+subr_vmi_instruction_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) {
+        scm_obj_t obj = make_pair(vm->m_heap,
+                                  make_pair(vm->m_heap, 
+                                            vm->symbol_to_instruction(vm->m_heap->m_inherents[0]),
+                                            vm->m_heap->m_inherents[0]),
+                                  scm_nil);
+        scm_obj_t tail = obj;
+        for (int i = 1; i < VMOP_INSTRUCTION_COUNT; i++) {
+            scm_obj_t e = make_pair(vm->m_heap,
+                                    make_pair(vm->m_heap, 
+                                              vm->symbol_to_instruction(vm->m_heap->m_inherents[i]),
+                                              vm->m_heap->m_inherents[i]),
+                                    scm_nil);
+            CDR(tail) = e;
+            tail = e;
+        }
+        return obj;
+    }
+    wrong_number_of_arguments_violation(vm, "vmi-instruction-set", 0, 0, argc, argv);
+    return scm_undef;
+}
+
 void
 init_subr_others(object_heap_t* heap)
 {
@@ -3545,4 +3571,5 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("create-hard-link", subr_create_hard_link);
     DEFSUBR("rename-file", subr_rename_file);
     DEFSUBR("purge-system-environment!", subr_purge_system_environment);
+    DEFSUBR("vmi-instruction-set", subr_vmi_instruction_set);
 }
