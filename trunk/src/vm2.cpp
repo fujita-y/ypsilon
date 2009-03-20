@@ -105,11 +105,9 @@ VM::prebind_list(scm_obj_t code)
         assert(!FIXNUMP(CAAR(code)));
 #endif
         scm_symbol_t symbol = (scm_symbol_t)CAAR(code);
-#ifndef NDEBUG
-        if (!OPCODESYMBOLP(symbol)) printf("invalid instruction: %s\n", symbol->name);
-#endif
-        assert(OPCODESYMBOLP(symbol));
+        assert(INHERENTSYMBOLP(symbol));
         int opcode = HDR_SYMBOL_CODE(symbol->hdr);
+        assert (opcode < VMOP_MNEMNIC_COUNT);
         scm_obj_t operands = (scm_obj_t)CDAR(code);
         switch (opcode) {
 #if USE_CONST_LITERAL

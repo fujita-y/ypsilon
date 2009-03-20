@@ -2579,7 +2579,7 @@ port_puts(scm_port_t port, const char* s)
     port->lock.verify_locked();
     if (s) {
 #if USE_MULTIBYTE_WRITE
-        port_put_bytes(port, (uint8_t*)s, strlen(s));
+        if (s[0]) port_put_bytes(port, (uint8_t*)s, strlen(s));
 #else
         char c;
         while ((c = *s++) != 0) port_put_byte(port, c);

@@ -594,9 +594,6 @@
 (define .@apply-scheme-proc-assistant apply-scheme-proc-assistant);
 (define .@pretty-print pretty-print)
 
-;; for debug
-(set-top-level-value! '.run-vmi run-vmi)
-
 ;; top-level procs
 (let ((coreform-private-procs
        '(.set-top-level-macro!
@@ -605,8 +602,7 @@
          .syntax/i0n .syntax/i1n .syntax/i2n .syntax/i3n
          .syntax/c0n .syntax/c1n .syntax/c2n .syntax/c3n
          .syntax/i0e .syntax/i1e .syntax/i2e .syntax/i3e
-         .syntax/c0e .syntax/c1e .syntax/c2e .syntax/c3e
-         .run-vmi)))
+         .syntax/c0e .syntax/c1e .syntax/c2e .syntax/c3e)))
   (for-each (lambda (a) (core-hashtable-set! immutable-primitives a #t)) coreform-private-procs)
   (copy-environment-variables! (system-environment) (interaction-environment) coreform-private-procs))
 
