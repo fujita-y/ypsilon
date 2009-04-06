@@ -143,10 +143,16 @@ all: $(PROG)
 $(PROG): $(OBJS)
 	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
+subr_others.s: subr_others.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fverbose-asm -S src/subr_others.cpp
+	
+vm3.s: vm3.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fverbose-asm -S src/vm3.cpp
+
 vm1.s: vm1.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \
 	-fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps \
-	-fverbose-asm -S src/vm1.cpp
+	-fverbose-asm -masm=att -S src/vm1.cpp
 
 vm1.o: vm1.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \

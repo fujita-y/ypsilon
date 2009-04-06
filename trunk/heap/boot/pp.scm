@@ -106,7 +106,7 @@
                  (cond ((or (eq? n-more-lines #f) (> n-more-lines 0))
                         (and n-more-lines (set! n-more-lines (- n-more-lines 1)))
                         (put-char port #\newline)
-                        (let loop ((i i)) (and (> i 0) (put-char port #\space)  (loop (- i 1))))
+                        (let loop ((i i)) (and (> i 0) (put-char port #\space) (loop (- i 1))))
                         (print w i z))))
                 (((_ '.&FLAT #\;) . z)
                  (begin

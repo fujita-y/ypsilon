@@ -1,0 +1,2661 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <title>Ypsilon API Reference</title>
+  <meta name="generator" content="Ypsilon Document Maker 0.9" />
+  <link href="base.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<div class="top_jump_menu">
+  &bull; <a href="http://code.google.com/p/ypsilon/">Project Home</a> &bull; <a href="index.html">Document Home</a> &bull; <a href="index.html#master_toc">Contents</a>
+</div>
+<div class="library_head">Library: (ypsilon c-types)</div>
+<div class="library_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>This library provides C typedef and C struct interface.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<div id="summaries"></div>
+<div class="library_body">
+<table class="subject_box" border="0" cellspacing="0" cellpadding="0">
+<caption class="subject_box_caption">Summaries:</caption>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#define-c-typedef">define-c-typedef</a></span>
+    </td>
+    <td class="subject_td">
+      Defines a C structure type
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#define-c-struct-methods">define-c-struct-methods</a></span>
+    </td>
+    <td class="subject_td">
+      Defines a constructor, accessors, and mutators for a C structure type
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#define-c-struct-type">define-c-struct-type</a></span>
+    </td>
+    <td class="subject_td">
+      Is a handy macro that combines define-c-typedef and define-c-struct-methods
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-sizeof">c-sizeof</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a byte size of C primitive or C structure type
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-coerce-void*">c-coerce-void*</a></span>
+    </td>
+    <td class="subject_td">
+      Coerces a C void* value to a C structure object
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-short-ref">bytevector-c-short-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a short value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-int-ref">bytevector-c-int-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an int value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-long-ref">bytevector-c-long-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a long value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-void*-ref">bytevector-c-void*-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a void* value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-float-ref">bytevector-c-float-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a float value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-double-ref">bytevector-c-double-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a double value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-unsigned-short-ref">bytevector-c-unsigned-short-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an unsigned short value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-unsigned-int-ref">bytevector-c-unsigned-int-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an unsigned int value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-unsigned-long-ref">bytevector-c-unsigned-long-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an unsigned long value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-int8-ref">bytevector-c-int8-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an int8_t value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-int16-ref">bytevector-c-int16-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an int16_t value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-int32-ref">bytevector-c-int32-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an int32_t value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-int64-ref">bytevector-c-int64-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an int64_t value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-uint8-ref">bytevector-c-uint8-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an uint8_t value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-uint16-ref">bytevector-c-uint16-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an uint16_t value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-uint32-ref">bytevector-c-uint32-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an uint32_t value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-uint64-ref">bytevector-c-uint64-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an uint64_t value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-short-set!">bytevector-c-short-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a short value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-int-set!">bytevector-c-int-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores an int value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-long-set!">bytevector-c-long-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a long value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-void*-set!">bytevector-c-void*-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a void* value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-float-set!">bytevector-c-float-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a float value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-double-set!">bytevector-c-double-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a double value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-int8-set!">bytevector-c-int8-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores an int8_t value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-int16-set!">bytevector-c-int16-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores an int16_t value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-int32-set!">bytevector-c-int32-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores an int32_t value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-int64-set!">bytevector-c-int64-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores an int64_t value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:bool">alignof:bool</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:short">alignof:short</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:int">alignof:int</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:long">alignof:long</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:size_t">alignof:size_t</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:void*">alignof:void*</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:float">alignof:float</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:double">alignof:double</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:int8_t">alignof:int8_t</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:int16_t">alignof:int16_t</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:int32_t">alignof:int32_t</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:int64_t">alignof:int64_t</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#sizeof:bool">sizeof:bool</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#sizeof:short">sizeof:short</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#sizeof:int">sizeof:int</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#sizeof:long">sizeof:long</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#sizeof:size_t">sizeof:size_t</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#sizeof:void*">sizeof:void*</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+</table>
+  <ul type="square" class="library_link_list">
+    <li><a href="#exports">List of identifiers exported from (ypsilon c-types) library</a></li>
+  </ul>
+</div>
+<span id="define-c-typedef"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Macro: define-c-typedef</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#define-c-typedef">define-c-typedef</a> defines a C structure type. This macro has an analogy to the C typedef statement.</div>
+    </td>
+  </tr>
+</table>
+<table class="subsection_box" border="0">
+<tr>
+<td>
+<table class="synopsis_box_macro" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>(define-c-typedef <span class="synopsis_argument">type-name</span> (<span class="synopsis_literal">struct</span> (<span class="synopsis_argument">field-type</span> <span class="synopsis_argument">field-name</span>) ...))</div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>type-name:</div>
+      <div>field-type:</div>
+      <div>field-name:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;symbol&gt;</div>
+      <div>&lt;symbol&gt;</div>
+      <div>&lt;symbol&gt;</div>
+    </td>
+  </tr>
+</table>
+<div class="indent">
+<dl class="dl_arguments">
+  <dt class="dt_arguments">type-name</dt>
+  <dd class="dd_arguments">—a type name.</dd>
+  <dt class="dt_arguments">field-type</dt>
+  <dd class="dd_arguments">—a field type declarator. Valid declarators are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>short, int, long, int8_t, int16_t, int32_t, and int64_t;</dt>
+  <dd class="dd_keywords">specifies a signed integer field, and a size of the field is the same as in C.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>bool, char, unsigned-short, unsigned-int, unsigned-long, size_t, uint8_t, uint16_t, uint32_t, uint64_t, and void*;</dt>
+  <dd class="dd_keywords">specifies an unsigned integer field, and a size of the field is the same as in C.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>float and double;</dt>
+  <dd class="dd_keywords">specifies an IEEE floating number field, and a size of the field is the same as in C.</dd>
+</dl>
+  </dd>
+  <dt class="dt_arguments">field-name</dt>
+  <dd class="dd_arguments">—a field name.</dd>
+</dl>
+</div>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>A defined type is bound to <span class="desc_argument">type-name</span>, and subsequent <a href="libref.ypsilon.c-types.html#define-c-typedef">define-c-typedef</a> can use it for field names to define compound types.</div>
+    </td>
+  </tr>
+</table>
+</td>
+</tr>
+</table>
+<table class="subsection_box" border="0">
+<tr>
+<td>
+<table class="synopsis_box_macro" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>(define-c-typedef <span class="synopsis_argument">new-name old-name</span>)</div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>new-name:</div>
+      <div>old-name:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;symbol&gt;</div>
+      <div>&lt;symbol&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>This syntax defines an alias type name for an existing type.</div>
+    </td>
+  </tr>
+</table>
+</td>
+</tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">notes:</caption>
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#define-c-typedef">define-c-typedef</a> does not define a constructor, accessors, nor mutators, use <a href="libref.ypsilon.c-types.html#define-c-struct-methods">define-c-struct-methods</a> to define them.</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon c-types))</div>
+      <div>&gt; (define-c-typedef time_t long)</div>
+      <div>&gt; (define-c-typedef suseconds_t long)</div>
+      <div>&gt; (define-c-typedef timeval (struct (time_t tv_sec) (suseconds_t tv_usec)))</div>
+      <div>&gt; timeval</div>
+      <div><span class="example_stdout">#&lt;c-typedef timeval 8 4 (struct (time_t tv_sec) (suseconds_t tv_usec))&gt;</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="define-c-struct-methods"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Macro: define-c-struct-methods</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#define-c-struct-methods">define-c-struct-methods</a> defines a constructor, accessors, and mutators for a C structure type.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box_macro" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>(define-c-struct-methods <span class="synopsis_argument">type-name</span> ...)</div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>type-name:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;symbol&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>The constructor returns a bytevector for a strage to hold field values. The mutator stores a two's complement representation of a value to a field, and it is an assertion violation if the value does not fit to the field. Methods defined by <a href="libref.ypsilon.c-types.html#define-c-struct-methods">define-c-struct-methods</a> are macro, and following naming convention is used to name them:</div>
+    </td>
+  </tr>
+</table>
+<div class="indent">
+<table class="subsection_box" border="0">
+<tr>
+<td>
+<table class="text_box" border="0">
+<tr>
+<td>
+  <div>The constructor's name is generated by appending 'make-' and <span class="desc_argument">type-name</span>. Each accessor's name is generated by appending <span class="desc_argument">type-name</span>, '-', and a field name. Each mutator's name is generated by appending <span class="desc_argument">type-name</span>, '-', a field name, and '-set!'.</div>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon c-types))</div>
+      <div>&gt; (define-c-typedef point (struct (int x) (int y)))</div>
+      <div>&gt; point</div>
+      <div><span class="example_stdout">#&lt;c-typedef point 8 4 (struct (int x) (int y))&gt;</span></div>
+      <div>&gt; (define-c-struct-methods point)</div>
+      <div>&gt; (define pt (make-point)) <span class="example_comment">; make-point</span></div>
+      <div>&gt; pt</div>
+      <div><span class="example_stdout">#vu8(0 0 0 0 0 0 0 0)</span></div>
+      <div>&gt; (point-x-set! pt 1000) &nbsp; <span class="example_comment">; point-x-set!</span></div>
+      <div>&gt; (point-y-set! pt -500) &nbsp; <span class="example_comment">; point-y-set!</span></div>
+      <div>&gt; pt</div>
+      <div><span class="example_stdout">#vu8(232 3 0 0 12 254 255 255)</span></div>
+      <div>&gt; (point-x pt) &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="example_comment">; point-x</span></div>
+      <div><span class="example_stdout">1000</span></div>
+      <div>&gt; (point-y pt) &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="example_comment">; point-y</span></div>
+      <div><span class="example_stdout">-500</span></div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <tr>
+    <td>
+      <div><span class="example_comment">;; demonstrate assignments to 32bit fields</span></div>
+      <div>&gt; (import (rnrs) (ypsilon c-types))</div>
+      <div>&gt; (define-c-typedef type32b (struct (uint32_t u) (int32_t s)))</div>
+      <div>&gt; (define-c-struct-methods type32b)</div>
+      <div>&gt; (define nums (make-type32b))</div>
+      <div>&gt; (type32b-u-set! nums #xffffffff)</div>
+      <div>&gt; (type32b-u nums)</div>
+      <div><span class="example_stdout">4294967295</span></div>
+      <div><br /></div>
+      <div><span class="example_comment">;; int32_t s = (signed)4294967295U;</span></div>
+      <div><span class="example_comment">;; cout &lt;&lt; s; /* prints -1 */</span></div>
+      <div>&gt; (type32b-s-set! nums 4294967295)</div>
+      <div>&gt; (type32b-s nums)</div>
+      <div><span class="example_stdout">-1</span></div>
+      <div><br /></div>
+      <div><span class="example_comment">;; uint32_t u = (unsigned)-1;</span></div>
+      <div><span class="example_comment">;; cout &lt;&lt; u; /* prints 4294967295 */</span></div>
+      <div>&gt; (type32b-u-set! nums -1)</div>
+      <div>&gt; (type32b-u nums)</div>
+      <div><span class="example_stdout">4294967295</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="define-c-struct-type"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Macro: define-c-struct-type</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#define-c-struct-type">define-c-struct-type</a> is a handy macro that combines <a href="libref.ypsilon.c-types.html#define-c-typedef">define-c-typedef</a> and <a href="libref.ypsilon.c-types.html#define-c-struct-methods">define-c-struct-methods</a>.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box_macro" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>(define-c-struct-type <span class="synopsis_argument">type-name</span> (<span class="synopsis_argument">field-type</span> <span class="synopsis_argument">field-name</span>) ...)</div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>type-name:</div>
+      <div>field-type:</div>
+      <div>field-name:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;symbol&gt;</div>
+      <div>&lt;symbol&gt;</div>
+      <div>&lt;symbol&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon c-types))</div>
+      <div>&gt; (define-c-struct-type point (int x) (int y))</div>
+      <div>&gt; (define pt (make-point))</div>
+      <div>&gt; (point-x-set! pt 1000)</div>
+      <div>&gt; (point-y-set! pt -500)</div>
+      <div>&gt; pt</div>
+      <div><span class="example_stdout">#vu8(232 3 0 0 12 254 255 255)</span></div>
+      <div>&gt; (point-x pt)</div>
+      <div><span class="example_stdout">1000</span></div>
+      <div>&gt; (point-y pt)</div>
+      <div><span class="example_stdout">-500</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-sizeof"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Macro: c-sizeof</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-sizeof">c-sizeof</a> returns a byte size of C primitive or C structure type.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box_macro" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>(c-sizeof <span class="synopsis_argument">type-name</span>)</div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>type-name:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;symbol&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (ypsilon c-types))</div>
+      <div><span class="example_comment">;; primitive type</span></div>
+      <div>&gt; (c-sizeof unsigned-int)</div>
+      <div><span class="example_stdout">4</span></div>
+      <div><span class="example_comment">;; structure type</span></div>
+      <div>&gt; (define-c-typedef foo (struct (int8_t u8) (int32_t u32)))</div>
+      <div>&gt; (c-sizeof foo)</div>
+      <div><span class="example_stdout">8</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-coerce-void*"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Macro: c-coerce-void*</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-coerce-void*">c-coerce-void*</a> coerces a C void* value to a C structure object.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box_macro" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>(c-coerce-void* <span class="synopsis_argument">expression type-name</span>)</div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>expression:</div>
+      <div>type-name:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;subform&gt;</div>
+      <div>&lt;symbol&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">expression</span> must be evaluated as an exact integer.</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">notes:</caption>
+  <tr>
+    <td>
+      <div>Be aware that misuse of this procedure causes a fatal error, segmentation fault for an example.</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (ypsilon sdl))</div>
+      <div>&gt; (SDL_Init SDL_INIT_EVERYTHING)</div>
+      <div><span class="example_stdout">0 <span class="example_comment">; init success</span></span></div>
+      <div>&gt; (define screen (SDL_SetVideoMode 256 256 32 SDL_SWSURFACE))</div>
+      <div>&gt; screen</div>
+      <div><span class="example_stdout">159419344 <span class="example_comment">; 0x9808bd0</span></span></div>
+      <div>&gt; (define surface (c-coerce-void* screen SDL_Surface))</div>
+      <div>&gt; surface</div>
+      <div><span class="example_stdout">#&lt;bytevector-mapping 0x9808bd0 60&gt;</span></div>
+      <div>&gt; (SDL_MapRGB (SDL_Surface-format surface) #x20 #xff #x10)</div>
+      <div><span class="example_stdout">2162448 <span class="example_comment">; 0x20ff10</span></span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-short-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-short-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-short-ref">bytevector-c-short-ref</a> retrieves a short value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-short-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-int-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-int-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-int-ref">bytevector-c-int-ref</a> retrieves an int value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-int-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-long-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-long-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-long-ref">bytevector-c-long-ref</a> retrieves a long value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-long-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-void*-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-void*-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-void*-ref">bytevector-c-void*-ref</a> retrieves a void* value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-void*-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-float-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-float-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-float-ref">bytevector-c-float-ref</a> retrieves a float value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-float-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;flonum&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-double-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-double-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-double-ref">bytevector-c-double-ref</a> retrieves a double value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-double-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;flonum&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-unsigned-short-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-unsigned-short-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-unsigned-short-ref">bytevector-c-unsigned-short-ref</a> retrieves an unsigned short value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-unsigned-short-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-unsigned-int-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-unsigned-int-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-unsigned-int-ref">bytevector-c-unsigned-int-ref</a> retrieves an unsigned int value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-unsigned-int-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-unsigned-long-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-unsigned-long-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-unsigned-long-ref">bytevector-c-unsigned-long-ref</a> retrieves an unsigned long value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-unsigned-long-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-int8-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-int8-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-int8-ref">bytevector-c-int8-ref</a> retrieves an int8_t value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-int8-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-int16-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-int16-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-int16-ref">bytevector-c-int16-ref</a> retrieves an int16_t value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-int16-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-int32-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-int32-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-int32-ref">bytevector-c-int32-ref</a> retrieves an int32_t value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-int32-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-int64-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-int64-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-int64-ref">bytevector-c-int64-ref</a> retrieves an int64_t value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-int64-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-uint8-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-uint8-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-uint8-ref">bytevector-c-uint8-ref</a> retrieves an uint8_t value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-uint8-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-uint16-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-uint16-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-uint16-ref">bytevector-c-uint16-ref</a> retrieves an uint16_t value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-uint16-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-uint32-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-uint32-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-uint32-ref">bytevector-c-uint32-ref</a> retrieves an uint32_t value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-uint32-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-uint64-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-uint64-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-uint64-ref">bytevector-c-uint64-ref</a> retrieves an uint64_t value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-uint64-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-short-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-short-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-short-set!">bytevector-c-short-set!</a> stores a short value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-short-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+      <div>The <span class="desc_argument">value</span> must be within the range [SHORT_MIN, USHORT_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-int-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-int-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-int-set!">bytevector-c-int-set!</a> stores an int value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-int-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT_MIN, UINT_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-long-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-long-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-long-set!">bytevector-c-long-set!</a> stores a long value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-long-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+      <div>The <span class="desc_argument">value</span> must be within the range [LONG_MIN, ULONG_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-void*-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-void*-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-void*-set!">bytevector-c-void*-set!</a> stores a void* value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-void*-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+      <div>The <span class="desc_argument">value</span> must be within the range [INTPTR_MIN, UINTPTR_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-float-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-float-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-float-set!">bytevector-c-float-set!</a> stores a float value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-float-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;flonum&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-double-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-double-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-double-set!">bytevector-c-double-set!</a> stores a double value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-double-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;flonum&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-int8-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-int8-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-int8-set!">bytevector-c-int8-set!</a> stores an int8_t value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-int8-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT8_MIN, UINT8_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-int16-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-int16-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-int16-set!">bytevector-c-int16-set!</a> stores an int16_t value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-int16-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT16_MIN, UINT16_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-int32-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-int32-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-int32-set!">bytevector-c-int32-set!</a> stores an int32_t value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-int32-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT32_MIN, UINT32_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-int64-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-int64-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-int64-set!">bytevector-c-int64-set!</a> stores an int64_t value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-int64-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT64_MIN, UINT64_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="alignof:bool"></span>
+<span id="alignof:short"></span>
+<span id="alignof:int"></span>
+<span id="alignof:long"></span>
+<span id="alignof:size_t"></span>
+<span id="alignof:void*"></span>
+<span id="alignof:float"></span>
+<span id="alignof:double"></span>
+<span id="alignof:int8_t"></span>
+<span id="alignof:int16_t"></span>
+<span id="alignof:int32_t"></span>
+<span id="alignof:int64_t"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
+  <td valign="top">
+    Constants:&nbsp;
+  </td>
+  <td class="const_word" valign="top">
+    alignof:bool<span class="const_comma">,</span> alignof:short<span class="const_comma">,</span> alignof:int<span class="const_comma">,</span> alignof:long<span class="const_comma">,</span> alignof:size_t<span class="const_comma">,</span> alignof:void*<span class="const_comma">,</span> alignof:float<span class="const_comma">,</span> alignof:double<span class="const_comma">,</span> alignof:int8_t<span class="const_comma">,</span> alignof:int16_t<span class="const_comma">,</span> alignof:int32_t<span class="const_comma">,</span> alignof:int64_t
+  </td>
+  </tr>
+</table>
+</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>Each constant is defined to an alignment size of correspondent C types.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="sizeof:bool"></span>
+<span id="sizeof:short"></span>
+<span id="sizeof:int"></span>
+<span id="sizeof:long"></span>
+<span id="sizeof:size_t"></span>
+<span id="sizeof:void*"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
+  <td valign="top">
+    Constants:&nbsp;
+  </td>
+  <td class="const_word" valign="top">
+    sizeof:bool<span class="const_comma">,</span> sizeof:short<span class="const_comma">,</span> sizeof:int<span class="const_comma">,</span> sizeof:long<span class="const_comma">,</span> sizeof:size_t<span class="const_comma">,</span> sizeof:void*
+  </td>
+  </tr>
+</table>
+</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>Each constant is defined to a byte size of correspondent C types.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<div id="exports"></div>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+  <div class="library_head">Identifiers exported from (ypsilon c-types)</a> library</div>
+    <div class="library_body">
+<table class="exports_parent_box" border="0" width="800">
+<tr>
+<td width="50%">
+<table class="exports_box" border="0" width="100%">
+<caption class="exports_box_caption">Contexual list of all exports:</div>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#define-c-typedef">define-c-typedef</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#define-c-struct-methods">define-c-struct-methods</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#define-c-struct-type">define-c-struct-type</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-sizeof">c-sizeof</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-coerce-void*">c-coerce-void*</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-short-ref">bytevector-c-short-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int-ref">bytevector-c-int-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-long-ref">bytevector-c-long-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-void*-ref">bytevector-c-void*-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-float-ref">bytevector-c-float-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-double-ref">bytevector-c-double-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-unsigned-short-ref">bytevector-c-unsigned-short-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-unsigned-int-ref">bytevector-c-unsigned-int-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-unsigned-long-ref">bytevector-c-unsigned-long-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int8-ref">bytevector-c-int8-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int16-ref">bytevector-c-int16-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int32-ref">bytevector-c-int32-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int64-ref">bytevector-c-int64-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-uint8-ref">bytevector-c-uint8-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-uint16-ref">bytevector-c-uint16-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-uint32-ref">bytevector-c-uint32-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-uint64-ref">bytevector-c-uint64-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-short-set!">bytevector-c-short-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int-set!">bytevector-c-int-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-long-set!">bytevector-c-long-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-void*-set!">bytevector-c-void*-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-float-set!">bytevector-c-float-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-double-set!">bytevector-c-double-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int8-set!">bytevector-c-int8-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int16-set!">bytevector-c-int16-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int32-set!">bytevector-c-int32-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int64-set!">bytevector-c-int64-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:bool">alignof:bool</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:short">alignof:short</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:int">alignof:int</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:long">alignof:long</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:size_t">alignof:size_t</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:void*">alignof:void*</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:float">alignof:float</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:double">alignof:double</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:int8_t">alignof:int8_t</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:int16_t">alignof:int16_t</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:int32_t">alignof:int32_t</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:int64_t">alignof:int64_t</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:bool">sizeof:bool</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:short">sizeof:short</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:int">sizeof:int</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:long">sizeof:long</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:size_t">sizeof:size_t</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:void*">sizeof:void*</a></span>
+    </td>
+</table>
+</td>
+<td width="50%">
+<table class="exports_index_box" border="0" width="100%">
+<caption class="exports_box_caption">Alphabetical list of all exports:</div>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:bool">alignof:bool</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:double">alignof:double</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:float">alignof:float</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:int">alignof:int</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:int16_t">alignof:int16_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:int32_t">alignof:int32_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:int64_t">alignof:int64_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:int8_t">alignof:int8_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:long">alignof:long</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:short">alignof:short</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:size_t">alignof:size_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:void*">alignof:void*</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-double-ref">bytevector-c-double-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-double-set!">bytevector-c-double-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-float-ref">bytevector-c-float-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-float-set!">bytevector-c-float-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int-ref">bytevector-c-int-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int-set!">bytevector-c-int-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int16-ref">bytevector-c-int16-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int16-set!">bytevector-c-int16-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int32-ref">bytevector-c-int32-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int32-set!">bytevector-c-int32-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int64-ref">bytevector-c-int64-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int64-set!">bytevector-c-int64-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int8-ref">bytevector-c-int8-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-int8-set!">bytevector-c-int8-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-long-ref">bytevector-c-long-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-long-set!">bytevector-c-long-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-short-ref">bytevector-c-short-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-short-set!">bytevector-c-short-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-uint16-ref">bytevector-c-uint16-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-uint32-ref">bytevector-c-uint32-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-uint64-ref">bytevector-c-uint64-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-uint8-ref">bytevector-c-uint8-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-unsigned-int-ref">bytevector-c-unsigned-int-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-unsigned-long-ref">bytevector-c-unsigned-long-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-unsigned-short-ref">bytevector-c-unsigned-short-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-void*-ref">bytevector-c-void*-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-void*-set!">bytevector-c-void*-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-coerce-void*">c-coerce-void*</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-sizeof">c-sizeof</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#define-c-struct-methods">define-c-struct-methods</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#define-c-struct-type">define-c-struct-type</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#define-c-typedef">define-c-typedef</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:bool">sizeof:bool</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:int">sizeof:int</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:long">sizeof:long</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:short">sizeof:short</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:size_t">sizeof:size_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#sizeof:void*">sizeof:void*</a></span>
+    </td>
+  </tr>
+</table>
+</td>
+</tr>
+</table>
+
+    </div>
+  </div>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="footer">Ypsilon API Reference (c) 2009 Y.FUJITA / LittleWing Co.Ltd.</div>
+</body>
+</html>
+

@@ -1959,7 +1959,11 @@ subr_system(VM* vm, int argc, scm_obj_t argv[])
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
             int retval = system(string->name);
-            if(retval >= 0) return MAKEFIXNUM(retval);
+#if _MSC_VER
+            if (retval >= 0) return int_to_integer(vm->m_heap, retval);
+#else
+            if (WIFEXITED(retval)) return int_to_integer(vm->m_heap, WEXITSTATUS(retval));
+#endif
             int err = errno;
             char message[256];
             snprintf(message, sizeof(message), "system() failed. %s", strerror(err));
@@ -2246,6 +2250,7 @@ wait_fail:
                     break;
                 }
                 if (WIFEXITED(status)) return int_to_integer(vm->m_heap, WEXITSTATUS(status));
+                if (WIFSIGNALED(status)) return int_to_integer(vm->m_heap, -WTERMSIG(status));
                 return scm_false;
             }
             invalid_argument_violation(vm, "process-wait", "value out of bounds,", argv[0], 0, argc, argv);
@@ -3387,61 +3392,160 @@ subr_change_file_mode(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
-// purge-system-environment!
-scm_obj_t
-subr_purge_system_environment(VM* vm, int argc, scm_obj_t argv[])
+#if USE_NATIVE_CODE
+
+static uint8_t* s_pool;
+static uint8_t* s_pool_limit;
+
+static void vmi_init_pool()
 {
-    if (argc == 1) {
-        if (CLOSUREP(argv[0])) {
-            scm_environment_t empty = make_environment(vm->m_heap, "empty");
-            vm->m_current_environment = empty;
-            vm->m_heap->m_interaction_environment = empty;
-            vm->m_heap->m_system_environment = empty;
-            vm->m_heap->m_hidden_variables = make_weakhashtable(vm->m_heap, lookup_mutable_hashtable_size(0));
-            vm->m_current_dynamic_environment = make_weakhashtable(vm->m_heap, lookup_mutable_hashtable_size(0)); // note: fix cyclic dependency
-            vm->m_current_source_comments = scm_false;
-            vm->m_current_exception_handler = scm_false;
-            vm->m_current_dynamic_wind_record = scm_nil;
-            vm->m_cont = NULL;
-            vm->m_env = NULL;
-            vm->m_value = scm_unspecified;
-            vm->m_trace = scm_unspecified;
-            vm->m_trace_tail = scm_unspecified;
-            vm->apply_scheme(argv[0], 0);
-            return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "purge-system-environment!", 0, "closure", argv[0], argc, argv);
-        return scm_undef;        
+    int pool_alloc_size = getpagesize() * 32;
+    s_pool = (uint8_t*)valloc(pool_alloc_size);
+    if (mprotect(s_pool, pool_alloc_size, PROT_READ | PROT_WRITE | PROT_EXEC)) {
+        fatal("%s:%u mprotect failed %d", __FILE__, __LINE__, errno);
     }
-    wrong_number_of_arguments_violation(vm, "purge-system-environment!", 0, 0, argc, argv);
+    s_pool_limit = s_pool + pool_alloc_size;
+}
+
+// vmi-native-code-address
+scm_obj_t
+subr_vmi_native_code_address(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (s_pool == NULL) vmi_init_pool();
+    if (argc == 0) return uintptr_to_integer(vm->m_heap, (uintptr_t)s_pool);
+    wrong_number_of_arguments_violation(vm, "vmi-native-code-address", 0, 0, argc, argv);
     return scm_undef;
 }
 
-// vmi-instruction-set
+// vmi-set-native-code!
 scm_obj_t
-subr_vmi_instruction_set(VM* vm, int argc, scm_obj_t argv[])
+subr_vmi_set_native_code(VM* vm, int argc, scm_obj_t argv[])
 {
-    if (argc == 0) {
-        scm_obj_t obj = make_pair(vm->m_heap,
-                                  make_pair(vm->m_heap, 
-                                            vm->symbol_to_instruction(vm->m_heap->m_inherents[0]),
-                                            vm->m_heap->m_inherents[0]),
-                                  scm_nil);
-        scm_obj_t tail = obj;
-        for (int i = 1; i < VMOP_INSTRUCTION_COUNT; i++) {
-            scm_obj_t e = make_pair(vm->m_heap,
-                                    make_pair(vm->m_heap, 
-                                              vm->symbol_to_instruction(vm->m_heap->m_inherents[i]),
-                                              vm->m_heap->m_inherents[i]),
-                                    scm_nil);
-            CDR(tail) = e;
-            tail = e;
+    if (argc == 2) {
+        if (CLOSUREP(argv[0])) {
+            scm_closure_t closure = (scm_closure_t)argv[0];
+            if (BVECTORP(argv[1])) {
+                assert(VMINSTP(s_pool));
+                scm_bvector_t bvect = (scm_bvector_t)argv[1];
+                int bsize = bvect->count;
+                if (s_pool + bsize > s_pool_limit) fatal("%s:%u native code pool overflow", __FILE__, __LINE__);
+                memcpy(s_pool, bvect->elts, bsize);
+                uint8_t* code = s_pool;
+                s_pool += bsize;
+                s_pool = (uint8_t*)(((uintptr_t)s_pool + 7) & (~7));
+                closure->code = make_pair(vm->m_heap, make_pair(vm->m_heap, code, scm_nil), scm_nil);
+                return scm_unspecified;
+            }
+            wrong_type_argument_violation(vm, "vmi-set-native-code!", 1, "bytevector", argv[1], argc, argv);
+            return scm_undef;
         }
-        return obj;
+        wrong_type_argument_violation(vm, "vmi-set-native-code!", 0, "closure", argv[0], argc, argv);
+        return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "vmi-instruction-set", 0, 0, argc, argv);
+    wrong_number_of_arguments_violation(vm, "vmi-set-native-code!", 2, 2, argc, argv);
     return scm_undef;
 }
+
+// vmi-lookup-gloc-address
+scm_obj_t
+subr_vmi_lookup_gloc_address(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (SYMBOLP(argv[0])) {
+            scm_symbol_t symbol = (scm_symbol_t)argv[0];
+            scoped_lock lock(vm->m_current_environment->variable->lock);
+            scm_obj_t obj = get_hashtable(vm->m_current_environment->variable, symbol);
+            if (GLOCP(obj)) {
+                scm_gloc_t gloc = (scm_gloc_t)obj;
+                return uintptr_to_integer(vm->m_heap, (uintptr_t)&gloc->value); 
+            }
+        }
+        wrong_type_argument_violation(vm, "vmi-lookup-gloc-address", 0, "variable symbol", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "vmi-lookup-gloc-address", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// vmi-lookup-subr-address
+scm_obj_t
+subr_vmi_lookup_subr_address(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (SUBRP(argv[0])) {
+            scm_subr_t subr = (scm_subr_t)argv[0];
+            return uintptr_to_integer(vm->m_heap, (uintptr_t)subr->adrs);
+        }
+        wrong_type_argument_violation(vm, "vmi-lookup-subr-address", 0, "subr", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "vmi-lookup-subr-address", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// vmi-get-object-bits
+scm_obj_t subr_vmi_get_object_bits(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) return uintptr_to_integer(vm->m_heap, (uintptr_t)argv[0]); 
+    wrong_number_of_arguments_violation(vm, "vmi-get-object-bits", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+extern "C" scm_obj_t vmi_stub_allocate_cons(VM* vm)
+{
+    return vm->m_heap->allocate_cons();
+}
+
+extern "C" void vmi_stub_collect_stack(VM* vm, int n)
+{
+    vm->collect_stack(n);
+}
+
+// vmi-allocate-cons-address
+scm_obj_t
+subr_vmi_allocate_cons_address(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return uintptr_to_integer(vm->m_heap, (uintptr_t)&vmi_stub_allocate_cons);
+    wrong_number_of_arguments_violation(vm, "vmi-allocate-cons-address", 0, 0, argc, argv);
+    return scm_undef;
+}
+
+// vmi-collect-stack-address
+scm_obj_t
+subr_vmi_collect_stack_address(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return uintptr_to_integer(vm->m_heap, (uintptr_t)&vmi_stub_collect_stack);
+    wrong_number_of_arguments_violation(vm, "vmi-collect-stack-address", 0, 0, argc, argv);
+    return scm_undef;
+}
+
+// vmi-return-loop-address
+scm_obj_t
+subr_vmi_return_loop_address(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return uintptr_to_integer(vm->m_heap, (uintptr_t)VM::s_return_loop);
+    wrong_number_of_arguments_violation(vm, "vmi-return-loop-address", 0, 0, argc, argv);
+    return scm_undef;
+}
+
+// vmi-return-apply-address
+scm_obj_t
+subr_vmi_return_apply_address(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return uintptr_to_integer(vm->m_heap, (uintptr_t)VM::s_return_apply);
+    wrong_number_of_arguments_violation(vm, "vmi-return-apply-address", 0, 0, argc, argv);
+    return scm_undef;
+}
+
+// vmi-return-pop-cont-address
+scm_obj_t
+subr_vmi_return_pop_cont_address(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) return uintptr_to_integer(vm->m_heap, (uintptr_t)VM::s_return_pop_cont);
+    wrong_number_of_arguments_violation(vm, "vmi-return-pop-cont-address", 0, 0, argc, argv);
+    return scm_undef;
+}
+#endif
 
 void
 init_subr_others(object_heap_t* heap)
@@ -3570,6 +3674,16 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("create-symbolic-link", subr_create_symbolic_link);
     DEFSUBR("create-hard-link", subr_create_hard_link);
     DEFSUBR("rename-file", subr_rename_file);
-    DEFSUBR("purge-system-environment!", subr_purge_system_environment);
-    DEFSUBR("vmi-instruction-set", subr_vmi_instruction_set);
+#if USE_NATIVE_CODE
+    DEFSUBR("vmi-native-code-address", subr_vmi_native_code_address);
+    DEFSUBR("vmi-set-native-code!", subr_vmi_set_native_code);
+    DEFSUBR("vmi-return-loop-address", subr_vmi_return_loop_address);
+    DEFSUBR("vmi-return-apply-address", subr_vmi_return_apply_address);
+    DEFSUBR("vmi-return-pop-cont-address", subr_vmi_return_pop_cont_address);
+    DEFSUBR("vmi-lookup-gloc-address", subr_vmi_lookup_gloc_address);
+    DEFSUBR("vmi-lookup-subr-address", subr_vmi_lookup_subr_address);
+    DEFSUBR("vmi-allocate-cons-address", subr_vmi_allocate_cons_address);
+    DEFSUBR("vmi-collect-stack-address", subr_vmi_collect_stack_address);
+    DEFSUBR("vmi-get-object-bits", subr_vmi_get_object_bits);
+#endif
 }

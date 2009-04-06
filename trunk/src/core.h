@@ -76,6 +76,7 @@
 #define USE_CONST_LITERAL           1
 #define USE_MULTIBYTE_READ          1
 #define USE_MULTIBYTE_WRITE         1
+#define USE_NATIVE_CODE             0
 
 #if USE_GCC_EXTENSION
     #define USE_SYMBOL_THREAD       0

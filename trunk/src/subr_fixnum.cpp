@@ -685,13 +685,17 @@ subr_fx_arithmetic_shift(VM* vm, int argc, scm_obj_t argv[])
             intptr_t fx2 = FIXNUM(argv[1]);
             if (fx2 > -FIXNUM_BITS && fx2 < FIXNUM_BITS) {
                 intptr_t n;
-                if (fx2 > 0) n = fx1 << fx2;
-                else n = fx1 >> (-fx2);
-                if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
+                if (fx2 > 0) {
+                    n = fx1 << fx2;
+                    if (((n >> fx2) == fx1) & (n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
+                } else {
+                    n = fx1 >> (-fx2);
+                    if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
+                }
                 implementation_restriction_violation(vm,
                                                      "fxarithmetic-shift",
                                                      "return value out of fixnum range",
-                                                     intptr_to_integer(vm->m_heap, n),
+                                                     arith_logash(vm->m_heap, argv[0], argv[1]),
                                                      argc,
                                                      argv);
                 return scm_undef;
@@ -720,11 +724,11 @@ subr_fx_arithmetic_shift_left(VM* vm, int argc, scm_obj_t argv[])
             intptr_t fx2 = FIXNUM(argv[1]);
             if (fx2 >= 0 && fx2 < FIXNUM_BITS) {
                 intptr_t n = fx1 << fx2;
-                if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
+                if (((n >> fx2) == fx1) & (n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
                 implementation_restriction_violation(vm,
                                                      "fxarithmetic-shift-left",
                                                      "return value out of fixnum range",
-                                                     intptr_to_integer(vm->m_heap, n),
+                                                     arith_logash(vm->m_heap, argv[0], argv[1]),
                                                      argc,
                                                      argv);
                 return scm_undef;

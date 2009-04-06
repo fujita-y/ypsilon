@@ -622,9 +622,11 @@ proc_name(scm_obj_t obj)
 {
     if (SUBRP(obj)) {
         scm_subr_t subr = (scm_subr_t)obj;
-        assert(SYMBOLP(subr->doc));
-        scm_symbol_t symbol = (scm_symbol_t)subr->doc;
-        return symbol->name;
+        if (SYMBOLP(subr->doc)) {
+            scm_symbol_t symbol = (scm_symbol_t)subr->doc;
+            return symbol->name;
+        }
+        return NULL;
     }
     if (CLOSUREP(obj)) {
         scm_closure_t closure = (scm_closure_t)obj;
@@ -1148,7 +1150,8 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
         }
         case TC_SUBR: {
             scm_subr_t subr = (scm_subr_t)obj;
-            format("#<subr ~a>", subr->doc);
+            if (SYMBOLP(subr->doc)) format("#<subr ~a>", subr->doc);
+            else format("#<subr 0x%x>", obj);
             return;
         }
         case TC_WEAKMAPPING: {

@@ -1,0 +1,2141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <title>Ypsilon API Reference</title>
+  <meta name="generator" content="Ypsilon Document Maker 0.9" />
+  <link href="base.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<div class="top_jump_menu">
+  &bull; <a href="http://code.google.com/p/ypsilon/">Project Home</a> &bull; <a href="index.html">Document Home</a> &bull; <a href="index.html#master_toc">Contents</a>
+</div>
+<div class="library_head">Library: (ypsilon ffi)</div>
+<div class="library_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>This library provides an on the fly C foreign function interface.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<div id="summaries"></div>
+<div class="library_body">
+<table class="subject_box" border="0" cellspacing="0" cellpadding="0">
+<caption class="subject_box_caption">Summaries:</caption>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#load-shared-object">load-shared-object</a></span>
+    </td>
+    <td class="subject_td">
+      Loads a shared object, and returns its handle
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-function">c-function</a></span>
+    </td>
+    <td class="subject_td">
+      Transcribes a stub code—lambda expression—that calls a C foreign function
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-function/errno">c-function/errno</a></span>
+    </td>
+    <td class="subject_td">
+      Is similar to c-function, but it transcribes a stub code that returns two values
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-function/win32-lasterror">c-function/win32-lasterror</a></span>
+    </td>
+    <td class="subject_td">
+      Is similar to c-function, but it transcribes a stub code that returns two values
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#lookup-shared-object">lookup-shared-object</a></span>
+    </td>
+    <td class="subject_td">
+      Returns an address corresponding to a symbol name in a shared object
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-cdecl-callout">make-cdecl-callout</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a closure that calls a foreign function using the __cdecl calling convention
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-cdecl-callback">make-cdecl-callback</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a C callback function pointer using the __cdecl calling convention
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-stdcall-callout">make-stdcall-callout</a></span>
+    </td>
+    <td class="subject_td">
+      Is similar to make-cdecl-callout, but it uses the __stdcall calling convention
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-stdcall-callback">make-stdcall-callback</a></span>
+    </td>
+    <td class="subject_td">
+      Is similar to make-cdecl-callback, but it uses the __stdcall calling convention
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-bytevector-mapping">make-bytevector-mapping</a></span>
+    </td>
+    <td class="subject_td">
+      Provides transparent access to an arbitrary memory block
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-mapping?">bytevector-mapping?</a></span>
+    </td>
+    <td class="subject_td">
+      Returns #t if its argument is a bytevector-mapping object, and otherwise returns #f
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#shared-object-errno">shared-object-errno</a></span>
+    </td>
+    <td class="subject_td">
+      Is a parameter contains a copy of thread local errno value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#shared-object-win32-lasterror">shared-object-win32-lasterror</a></span>
+    </td>
+    <td class="subject_td">
+      Is a parameter contains a copy of thread local win32 lasterror value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#win32-error->string">win32-error-&gt;string</a></span>
+    </td>
+    <td class="subject_td">
+      Returns an error message string corresponding to a win32 error code
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#on-darwin">on-darwin</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#on-linux">on-linux</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#on-freebsd">on-freebsd</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#on-openbsd">on-openbsd</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#on-posix">on-posix</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#on-windows">on-windows</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#on-ia32">on-ia32</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#on-x64">on-x64</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+</table>
+  <ul type="square" class="library_link_list">
+    <li><a href="#exports">List of identifiers exported from (ypsilon ffi) library</a></li>
+  </ul>
+</div>
+<span id="load-shared-object"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Procedure: load-shared-object</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#load-shared-object">load-shared-object</a> loads a shared object, and returns its handle.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (load-shared-object <span class="synopsis_argument">filename</span>)
+      <span class="synopsis_retval"> =&gt; &lt;handle&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>filename:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;string&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon ffi))</div>
+      <div>&gt; (load-shared-object &quot;libc.so.6&quot;) <span class="example_comment">; Ubuntu 8.10</span></div>
+      <div><span class="example_stdout">3086288880</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-function"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Macro: c-function</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#c-function">c-function</a> transcribes a stub code—lambda expression—that calls a C foreign function. Ypsilon handles data conversion between C and Scheme.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box_macro" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>(c-function <span class="synopsis_argument">so-handle</span> <span class="synopsis_argument">so-name</span> <span class="synopsis_argument">return-type</span> <span class="synopsis_argument">function-name</span> <span class="synopsis_argument">(argument-type ...)</span>)</div>
+      <div>(c-function <span class="synopsis_argument">so-handle</span> <span class="synopsis_argument">so-name</span> <span class="synopsis_argument">return-type</span> <span class="synopsis_literal">__cdecl</span> <span class="synopsis_argument">function-name</span> <span class="synopsis_argument">(argument-type ...)</span>)</div>
+      <div>(c-function <span class="synopsis_argument">so-handle</span> <span class="synopsis_argument">so-name</span> <span class="synopsis_argument">return-type</span> <span class="synopsis_literal">__stdcall</span> <span class="synopsis_argument">function-name</span> <span class="synopsis_argument">(argument-type ...)</span>)</div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>so-handle:</div>
+      <div>so-name:</div>
+      <div>return-type:</div>
+      <div>function-name:</div>
+      <div>(argument-type ...):</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;handle&gt;</div>
+      <div>&lt;string&gt;</div>
+      <div>&lt;symbol&gt;</div>
+      <div>&lt;symbol&gt;</div>
+      <div>&lt;subform&gt;</div>
+    </td>
+  </tr>
+</table>
+<div class="indent">
+<dl class="dl_keywords">
+  <dt class="dt_keywords">__cdecl</dt>
+  <dt class="dt_keywords">__stdcall</dt>
+  <dd class="dd_keywords">—an optional calling convention declarator. The <span class="desc_literal">__stdcall</span> declarator is ignored on that other than Windows platforms. The <span class="desc_literal">__cdecl</span> is the default for all of platforms.</dd>
+</dl>
+<dl class="dl_arguments">
+  <dt class="dt_arguments">so-handle</dt>
+  <dd class="dd_arguments">—a value returned by <a href="libref.ypsilon.ffi.html#load-shared-object">load-shared-object</a>.</dd>
+  <dt class="dt_arguments">so-name</dt>
+  <dd class="dd_arguments">—a value for informational purposes.</dd>
+  <dt class="dt_arguments">return-type</dt>
+  <dd class="dd_arguments">—a foreign function return type declarator. Valid declarators are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>short</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>long</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int8_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int16_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int32_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int64_t</dt>
+  <dd class="dd_keywords">receives a corresponding type value from C.</dd>
+  <dd class="dd_keywords">returns an exact integer value to Scheme.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>char</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-short</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-int</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-long</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint8_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint16_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint32_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint64_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>size_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>void*</dt>
+  <dd class="dd_keywords">receives a corresponding type value from C.</dd>
+  <dd class="dd_keywords">returns a non-negative exact integer value to Scheme</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>float</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>double</dt>
+  <dd class="dd_keywords">receives a corresponding type value from C.</dd>
+  <dd class="dd_keywords">returns a flonum value to Scheme.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>bool</dt>
+  <dd class="dd_keywords">receives a corresponding type value from C.</dd>
+  <dd class="dd_keywords">returns 0 or 1 to Scheme.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>char*</dt>
+  <dd class="dd_keywords">receives a utf-8 null terminated string or NULL from C.</dd>
+  <dd class="dd_keywords">returns string or 0 to Scheme.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>void</dt>
+  <dd class="dd_keywords">receives no value from C.</dd>
+  <dd class="dd_keywords">returns an unspecified value to Scheme.</dd>
+</dl>
+  </dd>
+  <dt class="dt_arguments">(argument-type ...)</dt>
+  <dd class="dd_arguments">—a list of foreign function argument type declarators, (char* int int) for an example. Valid declarators are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>char</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>short</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>long</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-short</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-int</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-long</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int8_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int16_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int32_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int64_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint8_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint16_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint32_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint64_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>size_t</dt>
+  <dd class="dd_keywords">expects an exact integer value from Scheme.</dd>
+  <dd class="dd_keywords">passes it to C as a corresponding type value.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>float</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>double</dt>
+  <dd class="dd_keywords">expects a real value from Scheme.</dd>
+  <dd class="dd_keywords">passes it to C as a IEEE floating point number.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>bool</dt>
+  <dd class="dd_keywords">expects an exact integer value from Scheme.</dd>
+  <dd class="dd_keywords">passes it to C as a bool.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>char*</dt>
+  <dd class="dd_keywords">expects a string or 0 from Scheme.</dd>
+  <dd class="dd_keywords">passes it to C as a utf-8 null terminated string, or NULL.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>void*</dt>
+  <dd class="dd_keywords">expects an exact integer value or a bytevector from Scheme.</dd>
+  <dd class="dd_keywords">passes it to C as a void*.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>[int]</dt>
+  <dd class="dd_keywords">expects a vector of exact integer values from Scheme.</dd>
+  <dd class="dd_keywords">passes it to C as an address of int vector (i.e. int*).</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>[char*]</dt>
+  <dd class="dd_keywords">expects a vector of string from Scheme.</dd>
+  <dd class="dd_keywords">passes it to C as an address of char* vector (i.e. char**).</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>(*[char*])</dt>
+  <dd class="dd_keywords">expects a vector of string from Scheme.</dd>
+  <dd class="dd_keywords">passes it to C as an address of pointer to char* vector (i.e. char***).</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>(c-callback ...)</dt>
+  <dd class="dd_keywords">expects a Scheme procedure.</dd>
+  <dd class="dd_keywords">passes it to C as a C callback function pointer.</dd>
+  <dd class="dd_keywords">
+    <table class="subsection_box" border="0">
+    <tr>
+    <td>
+<table class="synopsis_box_macro" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>(c-callback <span class="synopsis_argument">return-type</span> <span class="synopsis_argument">(argument-type ...)</span>)</div>
+      <div>(c-callback <span class="synopsis_argument">return-type</span> <span class="synopsis_literal">__cdecl</span> <span class="synopsis_argument">(argument-type ...)</span>)</div>
+      <div>(c-callback <span class="synopsis_argument">return-type</span> <span class="synopsis_literal">__stdcall</span> <span class="synopsis_argument">(argument-type ...)</span>)</div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>return-type:</div>
+      <div>(argument-type ...):</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;symbol&gt;</div>
+      <div>&lt;subform&gt;</div>
+    </td>
+  </tr>
+</table>
+<div class="indent">
+<dl class="dl_keywords">
+  <dt class="dt_keywords">__cdecl</dt>
+  <dt class="dt_keywords">__stdcall</dt>
+  <dd class="dd_keywords">—an optional calling convention declarator. The <span class="desc_literal">__stdcall</span> declarator is ignored on that other than Windows platforms. The <span class="desc_literal">__cdecl</span> is the default for all of platforms.</dd>
+</dl>
+<dl class="dl_arguments">
+  <dt class="dt_arguments">return-type</dt>
+  <dd class="dd_arguments">—a foreign callback return type declarator. Valid declarators are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>char</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>short</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>long</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-short</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-int</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-long</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int8_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int16_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int32_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int64_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint8_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint16_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint32_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint64_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>size_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>void*</dt>
+  <dd class="dd_keywords">receives an exact integer value from Scheme.</dd>
+  <dd class="dd_keywords">returns it to C as a corresponding type value.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>float</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>double</dt>
+  <dd class="dd_keywords">receives a real value from Scheme.</dd>
+  <dd class="dd_keywords">returns it to C as a corresponding type value.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>bool</dt>
+  <dd class="dd_keywords">receives an exact integer value from Scheme.</dd>
+  <dd class="dd_keywords">returns false to C if the value is 0, and otherwise returns true to C.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>void</dt>
+  <dd class="dd_keywords">receives no value from Scheme.</dd>
+  <dd class="dd_keywords">returns no value to C.</dd>
+</dl>
+  </dd>
+  <dt class="dt_arguments">(argument-type ...)</dt>
+  <dd class="dd_arguments">—a list of foreign callback argument type declarators. Valid declarators are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>bool</dt>
+  <dd class="dd_keywords">expects a corresponding type value from C.</dd>
+  <dd class="dd_keywords">passes it to Scheme as 0 or 1.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>short</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>long</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int8_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int16_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int32_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>int64_t</dt>
+  <dd class="dd_keywords">expects a corresponding type value from C.</dd>
+  <dd class="dd_keywords">passes it to Scheme as an exact integer value.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>char</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-short</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-int</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>unsigned-long</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint8_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint16_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint32_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>uint64_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>size_t</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>void*</dt>
+  <dd class="dd_keywords">expects a corresponding type value from C.</dd>
+  <dd class="dd_keywords">passes it to Scheme as a non-negative exact integer value.</dd>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>float</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>double</dt>
+  <dd class="dd_keywords">expects a corresponding type value from C.</dd>
+  <dd class="dd_keywords">passes it to Scheme as a real value.</dd>
+</dl>
+  </dd>
+</dl>
+</div>
+    </td>
+    </tr>
+    </table>
+  </dd>
+</dl>
+  </dd>
+</dl>
+</div>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>(import (rnrs) (ypsilon ffi))</div>
+      <div><br /></div>
+      <div><span class="example_comment">;; load GLUT library</span></div>
+      <div>(define lib (load-shared-object &quot;libglut.so.3&quot;)) <span class="example_comment">; Ubuntu 8.10</span></div>
+      <div><br /></div>
+      <div><span class="example_comment">;; void glutPositionWindow(int x, int y)</span></div>
+      <div>(define glutPositionWindow</div>
+      <div>&nbsp; (c-function lib &quot;GLUT&quot;</div>
+      <div>&nbsp; &nbsp; void glutPositionWindow (int int)))</div>
+      <div><br /></div>
+      <div><span class="example_comment">;; void glutMouseFunc(void (*func)(int button, int state, int x, int y))</span></div>
+      <div>(define glutMouseFunc</div>
+      <div>&nbsp; (c-function lib &quot;GLUT&quot;</div>
+      <div>&nbsp; &nbsp; void glutMouseFunc ([c-callback void (int int int int)])))</div>
+      <div><br /></div>
+      <div><span class="example_comment">;; void glutAddMenuEntry(const char *label, int value)</span></div>
+      <div><span class="example_comment">;; void glutMotionFunc(void (*func)(int x, int y))</span></div>
+      <div>(let-syntax ((defun-glut <span class="example_comment">; with handy macro</span></div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (syntax-rules ()</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ((_ ret name args)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(define name (c-function lib &quot;GLUT&quot; ret name args))))))</div>
+      <div>&nbsp; (defun-glut void glutAddMenuEntry (char* int))</div>
+      <div>&nbsp; (defun-glut void glutMotionFunc ([c-callback void (int int)])))</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-function/errno"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Macro: c-function/errno</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#c-function/errno">c-function/errno</a> is similar to <a href="libref.ypsilon.ffi.html#c-function">c-function</a>, but it transcribes a stub code that returns two values. The first is a C function return value, and the second is a captured errno value on return of the C function.</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon ffi))</div>
+      <div>&gt; (define lib (load-shared-object &quot;libc.so.6&quot;)) <span class="example_comment">; Ubuntu 8.10</span></div>
+      <div>&gt; (define strerror</div>
+      <div>&nbsp; &nbsp; (c-function lib &quot;libc&quot;</div>
+      <div>&nbsp; &nbsp; &nbsp; char* strerror (int)))</div>
+      <div>&gt; (define chdir</div>
+      <div>&nbsp; &nbsp; (c-function/errno lib &quot;libc&quot;</div>
+      <div>&nbsp; &nbsp; &nbsp; int chdir (char*)))</div>
+      <div><br /></div>
+      <div>&gt; (chdir &quot;/&quot;)</div>
+      <div><span class="example_stdout">#&lt;values 0 0&gt; <span class="example_comment">; success, errno is meaningless on success as in C.</span></span></div>
+      <div><br /></div>
+      <div>&gt; (chdir &quot;/tmp/non-exists/foo/bar&quot;)</div>
+      <div><span class="example_stdout">#&lt;values -1 2&gt; <span class="example_comment">; failure, errno is 2 (ENOENT on linux).</span></span></div>
+      <div><br /></div>
+      <div>&gt; (define my-chdir <span class="example_comment">; define wrapper function</span></div>
+      <div>&nbsp; &nbsp; (lambda (path)</div>
+      <div>&nbsp; &nbsp; &nbsp; (let-values (((retval errno) (chdir path)))</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; (when (&lt; retval 0)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (assertion-violation 'my-chdir (strerror errno) (list path retval errno))))))</div>
+      <div>&gt; (my-chdir &quot;/tmp/non-exists/foo/bar&quot;)</div>
+      <div><br /></div>
+      <div><span class="example_stderr">error in my-chdir: No such file or directory</span></div>
+      <div><br /></div>
+      <div><span class="example_stderr">irritants:</span></div>
+      <div><span class="example_stderr">&nbsp; (&quot;/non-exist/foo/bar&quot; -1 2)</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-function/win32-lasterror"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Macro: c-function/win32-lasterror</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#c-function/win32-lasterror">c-function/win32-lasterror</a> is similar to <a href="libref.ypsilon.ffi.html#c-function">c-function</a>, but it transcribes a stub code that returns two values. The first is a C function return value, and the second is a value that obtained by calling GetLastError() on return of the C function.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="lookup-shared-object"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Procedure: lookup-shared-object</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#lookup-shared-object">lookup-shared-object</a> returns an address corresponding to a symbol name in a shared object.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (lookup-shared-object <span class="synopsis_argument">so-handle so-symbol</span>)
+      <span class="synopsis_retval"> =&gt; &lt;address&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>so-handle:</div>
+      <div>so-symbol:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;handle&gt;</div>
+      <div>&lt;string&gt; or &lt;symbol&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon ffi))</div>
+      <div>&gt; (define libc (load-shared-object &quot;libc.so.6&quot;)) <span class="example_comment">; Ubuntu 8.10</span></div>
+      <div>&gt; (lookup-shared-object libc 'puts)</div>
+      <div><span class="example_stdout">1075667872</span></div>
+      <div>&gt; (lookup-shared-object libc &quot;strlen&quot;)</div>
+      <div><span class="example_stdout">1075757712</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-cdecl-callout"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-cdecl-callout</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#make-cdecl-callout">make-cdecl-callout</a> returns a closure that calls a foreign function using the __cdecl calling convention.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-cdecl-callout <span class="synopsis_argument">return-type argument-types function-address</span>)
+      <span class="synopsis_retval"> =&gt; &lt;procedure&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>return-type:</div>
+      <div>argument-types:</div>
+      <div>function-address:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;symbol&gt;</div>
+      <div>&lt;list&gt;</div>
+      <div>&lt;address&gt;</div>
+    </td>
+  </tr>
+</table>
+<div class="indent">
+<dl class="dl_arguments">
+  <dt class="dt_arguments">return-type</dt>
+  <dd class="dd_arguments">—a foreign function return type declarator. Valid declarators are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix></span>short, int, long, int8_t, int16_t, int32_t, int64_t, unsigned-short, unsigned-int, unsigned-long, uint8_t, uint16_t, uint32_t, uint64_t, size_t, void*, float, double, bool, char*, and void</dt>
+</dl>
+  </dd>
+  <dt class="dt_arguments">argument-types</dt>
+  <dd class="dd_arguments">—a list of foreign function argument type declarators. Valid declarators are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix></span>bool, short, int, long, unsigned-short, unsigned-int, unsigned-long, int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t, size_t, float, double, char*, void*, [int], [char*], and (*[char*])</dt>
+</dl>
+  </dd>
+  <dt class="dt_arguments">function-address</dt>
+  <dd class="dd_arguments">—a value returned by <a href="libref.ypsilon.ffi.html#lookup-shared-object">lookup-shared-object</a>.</dd>
+</dl>
+</div>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">notes:</caption>
+  <tr>
+    <td>
+      <div>Refer <a href="libref.ypsilon.ffi.html#c-function">c-function</a> for details of declarators.</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon ffi))</div>
+      <div>&gt; (define libc (load-shared-object &quot;libc.so.6&quot;)) <span class="example_comment">; Ubuntu 8.10</span></div>
+      <div>&gt; (define strcmp <span class="example_comment">; int strcmp(const char *s1, const char *s2)</span></div>
+      <div>&nbsp; &nbsp; (make-cdecl-callout 'int '(char* char*) (lookup-shared-object libc &quot;strcmp&quot;)))</div>
+      <div>&gt; (strcmp &quot;foo&quot; &quot;bar&quot;)</div>
+      <div><span class="example_stdout">1</span></div>
+      <div>&gt; (strcmp &quot;hello&quot; &quot;hello&quot;)</div>
+      <div><span class="example_stdout">0</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-cdecl-callback"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-cdecl-callback</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#make-cdecl-callback">make-cdecl-callback</a> returns a C callback function pointer using the __cdecl calling convention.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-cdecl-callback <span class="synopsis_argument">return-type argument-types procedure</span>)
+      <span class="synopsis_retval"> =&gt; &lt;address&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>return-type:</div>
+      <div>argument-types:</div>
+      <div>procedure:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;symbol&gt;</div>
+      <div>&lt;list&gt;</div>
+      <div>&lt;procedure&gt;</div>
+    </td>
+  </tr>
+</table>
+<div class="indent">
+<dl class="dl_arguments">
+  <dt class="dt_arguments">return-type</dt>
+  <dd class="dd_arguments">—a foreign callback return type declarator. Valid declarators are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix></span>short, int, long, unsigned-short, unsigned-int, unsigned-long, int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t, size_t, void*, float, double, bool, and void</dt>
+</dl>
+  </dd>
+  <dt class="dt_arguments">argument-types</dt>
+  <dd class="dd_arguments">—a list of foreign callback argument type declarators. Valid declarators are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix></span>bool short, int, long, unsigned-short, unsigned-int, unsigned-long, int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t, size_t, void*, float, and double</dt>
+</dl>
+  </dd>
+  <dt class="dt_arguments">procedure</dt>
+  <dd class="dd_arguments">—a callback procedure.</dd>
+</dl>
+</div>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">notes:</caption>
+  <tr>
+    <td>
+      <div>Refer <a href="libref.ypsilon.ffi.html#c-function">c-function</a> for details of declarators.</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon ffi))</div>
+      <div>&gt; (define my-expt (lambda (n1 n2) (expt n1 n2)))</div>
+      <div>&gt; (define callback (make-cdecl-callback 'int '(int int) my-expt))</div>
+      <div>&gt; callback</div>
+      <div><span class="example_stdout">150958158 <span class="example_comment">; function address</span></span></div>
+      <div>&gt; (define callout (make-cdecl-callout 'int '(int int) callback))</div>
+      <div>&gt; callout</div>
+      <div><span class="example_stdout">#&lt;closure 0x77927a20&gt; <span class="example_comment">; wrapper closure</span></span></div>
+      <div>&gt; (callout 10 3)</div>
+      <div><span class="example_stdout">1000</span></div>
+      <div><span class="example_comment">;; -&gt; (callout 10 3) [Scheme]</span></div>
+      <div><span class="example_comment">;; &nbsp; &nbsp;-&gt; callback(10, 3) [C]</span></div>
+      <div><span class="example_comment">;; &nbsp; &nbsp; &nbsp; -&gt; (my-expt 10 3) [Scheme]</span></div>
+      <div><span class="example_comment">;; &nbsp; &nbsp; &nbsp; 1000 [Scheme]</span></div>
+      <div><span class="example_comment">;; &nbsp; &nbsp;1000 [C]</span></div>
+      <div><span class="example_comment">;; 1000 [Scheme]</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-stdcall-callout"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-stdcall-callout</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#make-stdcall-callout">make-stdcall-callout</a> is similar to <a href="libref.ypsilon.ffi.html#make-cdecl-callout">make-cdecl-callout</a>, but it uses the __stdcall calling convention.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-stdcall-callback"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-stdcall-callback</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#make-stdcall-callback">make-stdcall-callback</a> is similar to <a href="libref.ypsilon.ffi.html#make-cdecl-callback">make-cdecl-callback</a>, but it uses the __stdcall calling convention.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-bytevector-mapping"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-bytevector-mapping</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#make-bytevector-mapping">make-bytevector-mapping</a> provides transparent access to an arbitrary memory block.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-bytevector-mapping <span class="synopsis_argument">address bytesize</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector-mapping&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>address:</div>
+      <div>bytesize:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">bytesize</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#make-bytevector-mapping">make-bytevector-mapping</a> returns a bytevector-mapping object that can be used as an ordinary bytevector. Its contents are mapped to the memory block within the range of <span class="desc_argument">address</span> to (<span class="desc_argument">address</span> + <span class="desc_argument">bytesize</span> - 1).</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">notes:</caption>
+  <tr>
+    <td>
+      <div>Be aware that misuse of this procedure causes a fatal error, segmentation fault for an example.</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon ffi))</div>
+      <div>&gt; (define libc (load-shared-object &quot;libc.so.6&quot;)) <span class="example_comment">; Ubuntu 8.10</span></div>
+      <div>&gt; (define qsort</div>
+      <div>&nbsp; &nbsp; (c-function libc &quot;libc&quot;</div>
+      <div>&nbsp; &nbsp; &nbsp; void qsort (void* int int [c-callback int (void* void*)])))</div>
+      <div>&gt; (define comp</div>
+      <div>&nbsp; &nbsp; (lambda (a1 a2)</div>
+      <div>&nbsp; &nbsp; &nbsp; (let ((n1 (bytevector-u32-native-ref (make-bytevector-mapping a1 4) 0))</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (n2 (bytevector-u32-native-ref (make-bytevector-mapping a2 4) 0)))</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; (cond ((= n1 n2) 0)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ((&gt; n1 n2) 1)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (else -1)))))</div>
+      <div>&gt; (define nums (uint-list-&gt;bytevector '(10000 1000 10 100000 100) (native-endianness) 4))</div>
+      <div>&gt; (bytevector-&gt;uint-list nums (native-endianness) 4)</div>
+      <div><span class="example_stdout">(10000 1000 10 100000 100)</span></div>
+      <div>&gt; (qsort nums 5 4 comp)</div>
+      <div>&gt; (bytevector-&gt;uint-list nums (native-endianness) 4)</div>
+      <div><span class="example_stdout">(10 100 1000 10000 100000)</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-mapping?"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-mapping?</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#bytevector-mapping?">bytevector-mapping?</a> returns #t if its argument is a bytevector-mapping object, and otherwise returns #f.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-mapping? <span class="synopsis_argument">x</span>)
+      <span class="synopsis_retval"> =&gt; &lt;boolean&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>x:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;object&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="shared-object-errno"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Parameter: shared-object-errno</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#shared-object-errno">shared-object-errno</a> is a parameter contains a copy of thread local errno value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (shared-object-errno <span class="synopsis_argument">errno-value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+      <div>
+      (shared-object-errno)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>errno-value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">errno-value</span> must be within the range [INT_MIN, INT_MAX].</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>Ypsilon captures the thread local errno value for each return of a foreign C function call. An assignment to this parameter also changes the thread local errno value.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="shared-object-win32-lasterror"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Parameter: shared-object-win32-lasterror</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#shared-object-win32-lasterror">shared-object-win32-lasterror</a> is a parameter contains a copy of thread local win32 lasterror value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (shared-object-win32-lasterror <span class="synopsis_argument">lasterror-value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+      <div>
+      (shared-object-win32-lasterror)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>lasterror-value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">lasterror-value</span> must be within the range [INT32_MIN, UINT32_MAX].</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>On Windows platforms, Ypsilon captures a win32 lasterror value by calling GetLastError() for each return of a foreign C function call. An assignment to this parameter also changes the win32 lasterror value by calling SetLastError().</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">notes:</caption>
+  <tr>
+    <td>
+      <div>Using this parameter on that other than Windows platforms causes an assertion violation.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="win32-error->string"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">Procedure: win32-error-&gt;string</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#win32-error->string">win32-error-&gt;string</a> returns an error message string corresponding to a win32 error code.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (win32-error->string <span class="synopsis_argument">win32-error-code</span>)
+      <span class="synopsis_retval"> =&gt; &lt;string&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>win32-error-code:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">win32-error-code</span> must be within the range [INT32_MIN, UINT32_MAX].</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>On Windows platforms, this procedure uses FormatMessage() to get an error message from a system.</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">notes:</caption>
+  <tr>
+    <td>
+      <div>Using this procedure on that other than Windows platforms causes an assertion violation.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="on-darwin"></span>
+<span id="on-linux"></span>
+<span id="on-freebsd"></span>
+<span id="on-openbsd"></span>
+<span id="on-windows"></span>
+<span id="on-posix"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
+  <td valign="top">
+    Constants:&nbsp;
+  </td>
+  <td class="const_word" valign="top">
+    on-darwin<span class="const_comma">,</span> on-linux<span class="const_comma">,</span> on-freebsd<span class="const_comma">,</span> on-openbsd<span class="const_comma">,</span> on-windows<span class="const_comma">,</span> on-posix
+  </td>
+  </tr>
+</table>
+</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>Each constant is defined to a boolean value. It can be used to determine a operating system.</div>
+    </td>
+  </tr>
+</table>
+<div class="indent">
+<dl class="dl_constants">
+  <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-darwin</dt>
+  <dd class="dd_constants">is #t if the operating system is Darwin (Mac OS X).</dd>
+  <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-linux</dt>
+  <dd class="dd_constants">is #t if the operating system is Linux.</dd>
+  <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-freebsd</dt>
+  <dd class="dd_constants">is #t if the operating system is FreeBSD.</dd>
+  <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-openbsd</dt>
+  <dd class="dd_constants">is #t if the operating system is OpenBSD.</dd>
+  <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-posix</dt>
+  <dd class="dd_constants">is #t if the operating system is either Darwin, Linux, FreeBSD, or OpenBSD.</dd>
+  <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-windows</dt>
+  <dd class="dd_constants">is #t if the operating system is Windows.</dd>
+</dl>
+</div>
+</div>
+<span id="on-ia32"></span>
+<span id="on-x64"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="api_head">
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
+  <td valign="top">
+    Constants:&nbsp;
+  </td>
+  <td class="const_word" valign="top">
+    on-ia32<span class="const_comma">,</span> on-x64
+  </td>
+  </tr>
+</table>
+</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>Each constant is defined to a boolean value. It can be used to determine a CPU instruction set.</div>
+    </td>
+  </tr>
+</table>
+<div class="indent">
+<dl class="dl_constants">
+  <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-ia32</dt>
+  <dd class="dd_constants">is #t if the CPU instruction set is IA-32.</dd>
+  <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-x64</dt>
+  <dd class="dd_constants">is #t if the CPU instruction set is Intel64 or AMD64.</dd>
+</dl>
+</div>
+</div>
+<div id="exports"></div>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+  <div class="library_head">Identifiers exported from (ypsilon ffi)</a> library</div>
+    <div class="library_body">
+<table class="exports_parent_box" border="0" width="800">
+<tr>
+<td width="50%">
+<table class="exports_box" border="0" width="100%">
+<caption class="exports_box_caption">Contexual list of all exports:</div>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#load-shared-object">load-shared-object</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-function">c-function</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-function/errno">c-function/errno</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-function/win32-lasterror">c-function/win32-lasterror</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#lookup-shared-object">lookup-shared-object</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-cdecl-callout">make-cdecl-callout</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-cdecl-callback">make-cdecl-callback</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-stdcall-callout">make-stdcall-callout</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-stdcall-callback">make-stdcall-callback</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-bytevector-mapping">make-bytevector-mapping</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-mapping?">bytevector-mapping?</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#shared-object-errno">shared-object-errno</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#shared-object-win32-lasterror">shared-object-win32-lasterror</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#win32-error->string">win32-error-&gt;string</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-darwin">on-darwin</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-linux">on-linux</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-freebsd">on-freebsd</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-openbsd">on-openbsd</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-posix">on-posix</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-windows">on-windows</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-ia32">on-ia32</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-x64">on-x64</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#define-c-typedef">define-c-typedef</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#define-c-struct-methods">define-c-struct-methods</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#define-c-struct-type">define-c-struct-type</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#c-sizeof">c-sizeof</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#c-coerce-void*">c-coerce-void*</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-short-ref">bytevector-c-short-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int-ref">bytevector-c-int-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-long-ref">bytevector-c-long-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-void*-ref">bytevector-c-void*-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-float-ref">bytevector-c-float-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-double-ref">bytevector-c-double-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-unsigned-short-ref">bytevector-c-unsigned-short-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-unsigned-int-ref">bytevector-c-unsigned-int-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-unsigned-long-ref">bytevector-c-unsigned-long-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-short-set!">bytevector-c-short-set!</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int-set!">bytevector-c-int-set!</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-long-set!">bytevector-c-long-set!</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-void*-set!">bytevector-c-void*-set!</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-float-set!">bytevector-c-float-set!</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-double-set!">bytevector-c-double-set!</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int8-ref">bytevector-c-int8-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int16-ref">bytevector-c-int16-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int32-ref">bytevector-c-int32-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int64-ref">bytevector-c-int64-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-uint8-ref">bytevector-c-uint8-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-uint16-ref">bytevector-c-uint16-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-uint32-ref">bytevector-c-uint32-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-uint64-ref">bytevector-c-uint64-ref</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int8-set!">bytevector-c-int8-set!</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int16-set!">bytevector-c-int16-set!</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int32-set!">bytevector-c-int32-set!</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int64-set!">bytevector-c-int64-set!</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:bool">sizeof:bool</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:short">sizeof:short</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:int">sizeof:int</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:long">sizeof:long</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:size_t">sizeof:size_t</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:void*">sizeof:void*</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:bool">alignof:bool</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:short">alignof:short</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:int">alignof:int</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:long">alignof:long</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:size_t">alignof:size_t</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:void*">alignof:void*</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:float">alignof:float</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:double">alignof:double</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:int8_t">alignof:int8_t</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:int16_t">alignof:int16_t</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:int32_t">alignof:int32_t</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:int64_t">alignof:int64_t</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier">define-c-enum</span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-enum)</span>
+    </td>
+  </tr>
+</table>
+</td>
+<td width="50%">
+<table class="exports_index_box" border="0" width="100%">
+<caption class="exports_box_caption">Alphabetical list of all exports:</div>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:bool">alignof:bool</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:double">alignof:double</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:float">alignof:float</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:int">alignof:int</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:int16_t">alignof:int16_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:int32_t">alignof:int32_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:int64_t">alignof:int64_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:int8_t">alignof:int8_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:long">alignof:long</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:short">alignof:short</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:size_t">alignof:size_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#alignof:void*">alignof:void*</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-double-ref">bytevector-c-double-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-double-set!">bytevector-c-double-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-float-ref">bytevector-c-float-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-float-set!">bytevector-c-float-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int-ref">bytevector-c-int-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int-set!">bytevector-c-int-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int16-ref">bytevector-c-int16-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int16-set!">bytevector-c-int16-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int32-ref">bytevector-c-int32-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int32-set!">bytevector-c-int32-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int64-ref">bytevector-c-int64-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int64-set!">bytevector-c-int64-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int8-ref">bytevector-c-int8-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-int8-set!">bytevector-c-int8-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-long-ref">bytevector-c-long-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-long-set!">bytevector-c-long-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-short-ref">bytevector-c-short-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-short-set!">bytevector-c-short-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-uint16-ref">bytevector-c-uint16-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-uint32-ref">bytevector-c-uint32-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-uint64-ref">bytevector-c-uint64-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-uint8-ref">bytevector-c-uint8-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-unsigned-int-ref">bytevector-c-unsigned-int-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-unsigned-long-ref">bytevector-c-unsigned-long-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-unsigned-short-ref">bytevector-c-unsigned-short-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-void*-ref">bytevector-c-void*-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-void*-set!">bytevector-c-void*-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-mapping?">bytevector-mapping?</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#c-coerce-void*">c-coerce-void*</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-function">c-function</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-function/errno">c-function/errno</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-function/win32-lasterror">c-function/win32-lasterror</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#c-sizeof">c-sizeof</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier">define-c-enum</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#define-c-struct-methods">define-c-struct-methods</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#define-c-struct-type">define-c-struct-type</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#define-c-typedef">define-c-typedef</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#load-shared-object">load-shared-object</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#lookup-shared-object">lookup-shared-object</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-bytevector-mapping">make-bytevector-mapping</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-cdecl-callback">make-cdecl-callback</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-cdecl-callout">make-cdecl-callout</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-stdcall-callback">make-stdcall-callback</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-stdcall-callout">make-stdcall-callout</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-darwin">on-darwin</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-freebsd">on-freebsd</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-ia32">on-ia32</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-linux">on-linux</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-openbsd">on-openbsd</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-posix">on-posix</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-windows">on-windows</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-x64">on-x64</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#shared-object-errno">shared-object-errno</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#shared-object-win32-lasterror">shared-object-win32-lasterror</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:bool">sizeof:bool</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:int">sizeof:int</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:long">sizeof:long</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:short">sizeof:short</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:size_t">sizeof:size_t</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:void*">sizeof:void*</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#win32-error->string">win32-error-&gt;string</a></span>
+    </td>
+  </tr>
+</table>
+</td>
+</tr>
+</table>
+
+    </div>
+  </div>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.ffi.html">Top</a>]
+</div>
+<div class="footer">Ypsilon API Reference (c) 2009 Y.FUJITA / LittleWing Co.Ltd.</div>
+</body>
+</html>
+

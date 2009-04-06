@@ -179,7 +179,7 @@
              (s0 (mod0 s 2^fixnum-width))
              (s1 (div0 s 2^fixnum-width)))
         (values s0 s1))))
-
+  
   (define fxrotate-bit-field
     (lambda (ei1 ei2 ei3 ei4)
       (let* ((n ei1)
@@ -188,12 +188,12 @@
              (count ei4)
              (width (fx- end start)))
         (if (fxpositive? width)
-            (let* ((count (fxmod count width))
-                   (field0 (fxbit-field n start end))
-                   (field1 (fxarithmetic-shift-left field0 count))
-                   (field2 (fxarithmetic-shift-right field0 (fx- width count)))
-                   (field (fxior field1 field2)))
-              (fxcopy-bit-field n start end field))
+            (fxcopy-bit-field n start end
+                              (fxior
+                               (fxarithmetic-shift-left
+                                (fxbit-field n start (fx- end count)) count)
+                               (fxarithmetic-shift-right
+                                (fxbit-field n start end) (fx- width count))))
             n))))
 
   (define fxreverse-bit-field
