@@ -18,9 +18,9 @@ class Interpreter;
 
 class VM {
 public:
+    scm_obj_t           m_pc;
     scm_obj_t           m_trace;
     scm_obj_t*          m_fp;
-    scm_obj_t           m_pc;
     void*               m_env;
     void*               m_cont;
 
@@ -43,12 +43,12 @@ public:
 #if USE_GCC_EXTENSION
     void*               m_dispatch_table[VMOP_INSTRUCTION_COUNT];
 #endif
-
     bool            init(object_heap_t* heap);
     void            boot();
     void            standalone();
     void            reset();
-    void            run(bool init_dispatch_table);
+    void            run(bool init);
+    void            loop(bool init, bool resume);
 
     void            scheme_warning(const char* fmt, ...);
     void            scheme_error(const char* fmt, ...) ATTRIBUTE(noreturn);
@@ -217,8 +217,14 @@ public:
     scm_obj_t opcode_to_instruction(int opcode) {
         assert(opcode >= 0 && opcode < VMOP_INSTRUCTION_COUNT);
         return m_heap->inherent_symbol(opcode);
-    }
+    }    
 #endif
+#if USE_NATIVE_CODE
+    static void* s_return_loop;
+    static void* s_return_apply;
+    static void* s_return_pop_cont;
+#endif    
 } ATTRIBUTE(aligned(16));
+
 
 #endif

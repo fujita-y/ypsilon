@@ -422,9 +422,9 @@ OBJECT_ALIGNED(scm_sharedbag_rec_t) {
 
 struct vm_cont_rec_t {          // record size is variable
   //scm_obj_t   args[argc];
+    scm_obj_t   pc;
     scm_obj_t   trace;
     scm_obj_t*  fp;
-    scm_obj_t   pc;
     void*       env;
     void*       up;             // 'm_cont' and 'up' point here
 };

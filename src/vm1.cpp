@@ -316,7 +316,7 @@ VM::apply_apply_closure(scm_obj_t lastarg)
             return apply_apply_trace_n_loop;
         }
         return apply_apply_bad_last_args;
-    }    
+    }
     scm_obj_t lst = lastarg;
     while (PAIRP(lst)) {
         if (m_sp >= m_stack_limit) collect_stack(sizeof(scm_obj_t));
@@ -390,71 +390,37 @@ VM::apply_apply_subr(scm_obj_t lastarg)
 }
 
 void
-VM::run(bool init_dispatch_table)
+VM::run(bool init)
+{
+    if (init) {
+        loop(true, false);
+        return;
+    }
+    bool resume = false;
+again:
+    try {
+        loop(false, resume);
+    } catch (vm_continue_t& e) {
+        resume = true;
+        goto again;
+    } catch (...) {
+        throw;
+    }
+}
+
+#if USE_NATIVE_CODE
+void* VM::s_return_loop;
+void* VM::s_return_apply;
+void* VM::s_return_pop_cont;
+#endif
+
+void
+VM::loop(bool init, bool resume)
 {
 #if USE_GCC_EXTENSION
-    if (init_dispatch_table) {
-        assert(VMOP_INSTRUCTION_COUNT < 128);
-  #if USE_DIRECT_THREAD
-        PIN(ERROR_BAD_INSTRUCTION_ALIGN_STUB);
-        PIN(APPLY_ALIGN_STUB);
-        PIN(APPLY_APPLY);
-        PIN(APPLY_VALUES);
-        PIN(APPLY_CONT);
-        PIN(APPLY_CALLCC);
-        PIN(APPLY_VARIADIC);
-        PIN(COLLECT_STACK_ONE);
-        PIN(COLLECT_STACK_CONT_REC);
-        PIN(COLLECT_STACK_ENV_REC);
-        PIN(COLLECT_STACK_ENV_REC_N_ONE);
-        PIN(COLLECT_STACK_ENV_REC_N_APPLY);
-        PIN(COLLECT_STACK_ENV_REC_N_OPERAND);
-        PIN(FALLBACK_PUSH_NADD_ILOC);
-        PIN(FALLBACK_EQ_N_ILOC);
-        PIN(FALLBACK_LT_N_ILOC);
-        PIN(FALLBACK_LE_N_ILOC);
-        PIN(FALLBACK_GT_N_ILOC);
-        PIN(FALLBACK_GE_N_ILOC);
-        PIN(THUNK_TOUCH_GLOC_OF);
-        PIN(THUNK_SUBR_GLOC_OF);
-        PIN(THUNK_RET_SUBR_GLOC_OF);
-        PIN(THUNK_PUSH_SUBR_GLOC_OF);
-        PIN(ERROR_PUSH_NADD_ILOC);
-        PIN(ERROR_EQ_N_ILOC);
-        PIN(ERROR_LT_N_ILOC);
-        PIN(ERROR_LE_N_ILOC);
-        PIN(ERROR_GT_N_ILOC);
-        PIN(ERROR_GE_N_ILOC);
-        PIN(ERROR_PUSH_CAR_ILOC);
-        PIN(ERROR_CAR_ILOC);
-        PIN(ERROR_PUSH_CDR_ILOC);
-        PIN(ERROR_CDR_ILOC);
-        PIN(ERROR_PUSH_CADR_ILOC);
-        PIN(ERROR_CADR_ILOC);
-        PIN(ERROR_PUSH_CDDR_ILOC);
-        PIN(ERROR_CDDR_ILOC);
-        PIN(ERROR_PUSH_GLOC);
-        PIN(ERROR_GLOC);
-        PIN(ERROR_RET_ILOC);
-        PIN(ERROR_APPLY_ILOC);
-        PIN(ERROR_VECTREF_ILOC);
-        PIN(ERROR_LETREC_VIOLATION);
-        PIN(ERROR_RET_GLOC);
-        PIN(ERROR_TOUCH_GLOC);
-        PIN(ERROR_APPLY_GLOC);
-        PIN(ERROR_APPLY_WRONG_NUMBER_ARGS);
-        PIN(ERROR_PROC_APPLY_WRONG_NUMBER_ARGS);
-        PIN(ERROR_PROC_APPLY_BAD_LAST_ARGS);
-        PIN(ERROR_APPLY_VALUES_WRONG_NUMBER_ARGS);
-        PIN(ERROR_CALLCC_WRONG_NUMBER_ARGS);
-        PIN(ERROR_INVALID_APPLICATION);
-        PIN(ERROR_BAD_INSTRUCTION);
-    #if USE_PARALLEL_VM
-        PIN(ERROR_SET_GLOC_BAD_CONTEXT);
-        PIN(ERROR_SET_ILOC_BAD_CONTEXT);
-    #endif
-  #endif
+    if (init) {
         for (int i = 0; i < array_sizeof(m_dispatch_table); i++) m_dispatch_table[i] = &&ERROR_BAD_INSTRUCTION;
+        assert(VMOP_INSTRUCTION_COUNT < 128);
         LABEL(VMOP_EXTEND_ENCLOSE);
         LABEL(VMOP_EXTEND_ENCLOSE_LOCAL);
         LABEL(VMOP_EXTEND_UNBOUND);
@@ -538,8 +504,6 @@ VM::run(bool init_dispatch_table)
         LABEL(VMOP_GE_ILOC);
         LABEL(VMOP_PUSH_VECTREF_ILOC);
         LABEL(VMOP_VECTREF_ILOC);
-        // workaround for GCC bug
-        for (int i = 0; i < array_sizeof(m_dispatch_table); i++) s_volatile_stub = m_dispatch_table[i];
   #if USE_DIRECT_THREAD && !defined(NDEBUG)
         for (int i = 0; i < array_sizeof(m_dispatch_table); i++) {
             if ((uintptr_t)m_dispatch_table[i] & 1) {
@@ -550,32 +514,34 @@ VM::run(bool init_dispatch_table)
             fatal("%s:%u failed to initialize virtual machine for USE_DIRECT_THREAD", __FILE__, __LINE__);
         }
   #endif
+  #if USE_NATIVE_CODE
+        s_return_loop = &&return_loop;
+        s_return_apply = &&return_apply;
+        s_return_pop_cont = &&return_pop_cont;
+  #endif
         return;
     }
 #else
-    if (init_dispatch_table) return;
+    if (init) return;
 #endif
-    assert(PAIRP(m_pc));
     scm_obj_t operand_trace;
     scm_obj_t obj;
-    bool fresh_start = true;
-    goto begin;
+    assert(PAIRP(m_pc));
+    if (resume) goto pop_cont;
+    goto loop;
 
-resume:
-    fresh_start = false;
-
-begin:
-    try {
-        if (fresh_start) goto loop;
-        goto pop_cont;
 #if USE_GCC_EXTENSION
-APPLY_ALIGN_STUB:
+    begin:
+        __asm__ ("/* BEGIN */");
         __asm__ (".p2align 4");
 #endif
 
-apply:
+    apply:
 #if USE_GCC_EXTENSION
-        __asm__ ("/* VM APPLY */");
+        __asm__ ("/* APPLY */");
+#endif
+#if USE_NATIVE_CODE
+        __asm__ ("apply:");
 #endif
         if (CLOSUREP(m_value)) {
             if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) < (uintptr_t)m_stack_limit) {
@@ -601,7 +567,7 @@ apply:
         }
         goto APPLY_SPECIAL;
 
-trace_n_loop:
+    trace_n_loop:
         if (operand_trace != scm_nil) {
             if (m_trace == scm_unspecified) m_trace = operand_trace;
             else m_trace_tail = operand_trace;
@@ -634,7 +600,10 @@ trace_n_loop:
         }
         goto loop;
 
-pop_cont:
+    pop_cont:
+#if USE_NATIVE_CODE
+        __asm__ ("pop_cont:");
+#endif
         if (m_cont == NULL) return;
         {
             vm_cont_t cont = (vm_cont_t)((intptr_t)m_cont - offsetof(vm_cont_rec_t, up));
@@ -658,11 +627,11 @@ pop_cont:
         }
         m_trace_tail = scm_unspecified;
         if (m_heap->m_stop_the_world) stop();
-#if USE_GCC_EXTENSION
-        __asm__ ("/* VM INST DISPATCH */");
-#endif
 
-loop:
+    loop:
+#if USE_NATIVE_CODE
+        __asm__ ("loop:");
+#endif
         assert(m_sp <= m_stack_limit);
 #if USE_DIRECT_THREAD
         assert(VMINSTP(CAAR(m_pc)));
@@ -1316,6 +1285,9 @@ loop:
             }
 
             CASE(VMOP_RET_CONS) {
+#if USE_NATIVE_CODE
+                __asm__ ("ret_cons:");
+#endif
                 m_value = make_pair(m_heap, m_sp[-1], m_value);
                 goto pop_cont;
             }
@@ -1602,7 +1574,7 @@ loop:
         } // SWITCH()
         goto ERROR_BAD_INSTRUCTION;
 
-APPLY_APPLY:
+    APPLY_APPLY:
         if (m_sp - m_fp >= 2) {
             m_value = m_fp[0];
             m_fp++;
@@ -1634,7 +1606,7 @@ APPLY_APPLY:
         }
         goto ERROR_PROC_APPLY_WRONG_NUMBER_ARGS;
 
-APPLY_VALUES:
+    APPLY_VALUES:
         if (m_sp - m_fp == 2) {
             m_value = m_fp[0];
             scm_obj_t args = m_fp[1];
@@ -1655,7 +1627,7 @@ APPLY_VALUES:
         goto ERROR_APPLY_VALUES_WRONG_NUMBER_ARGS;
 
 #if USE_FAST_DYNAMIC_WIND
-APPLY_CONT: {
+    APPLY_CONT: {
             scm_cont_t cont = (scm_cont_t)m_value;
             if (cont->wind_rec == scm_unspecified || cont->wind_rec == m_current_dynamic_wind_record) {
                 intptr_t argc = m_sp - m_fp;
@@ -1680,7 +1652,7 @@ APPLY_CONT: {
             }
         }
 #else
-APPLY_CONT: {
+    APPLY_CONT: {
             intptr_t argc = m_sp - m_fp;
             scm_cont_t cont = (scm_cont_t)m_value;
             m_cont = cont->cont;
@@ -1695,7 +1667,7 @@ APPLY_CONT: {
         }
 #endif
 
-APPLY_CALLCC:
+    APPLY_CALLCC:
         if (m_sp - m_fp == 1) {
             scm_obj_t proc = m_fp[0];
             m_cont = save_cont(m_cont);
@@ -1712,14 +1684,14 @@ APPLY_CALLCC:
         }
         goto ERROR_CALLCC_WRONG_NUMBER_ARGS;
 
-APPLY_SPECIAL:
+    APPLY_SPECIAL:
         if (m_value == scm_proc_apply) goto APPLY_APPLY;
         if (m_value == scm_proc_apply_values) goto APPLY_VALUES;
         if (m_value == scm_proc_callcc) goto APPLY_CALLCC;
         if (CONTP(m_value)) goto APPLY_CONT;
         goto ERROR_INVALID_APPLICATION;
 
-APPLY_VARIADIC: {
+    APPLY_VARIADIC: {
             scm_closure_t closure = (scm_closure_t)m_value;
             intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
             int rest = 0;
@@ -1747,31 +1719,31 @@ APPLY_VARIADIC: {
             goto ERROR_APPLY_WRONG_NUMBER_ARGS;
         }
 
-COLLECT_STACK_ONE:
+    COLLECT_STACK_ONE:
         collect_stack(sizeof(scm_obj_t));
         goto loop;
 
-COLLECT_STACK_CONT_REC:
+    COLLECT_STACK_CONT_REC:
         collect_stack(sizeof(vm_cont_rec_t));
         goto loop;
 
-COLLECT_STACK_ENV_REC:
+    COLLECT_STACK_ENV_REC:
         collect_stack(sizeof(vm_env_rec_t));
         goto loop;
 
-COLLECT_STACK_ENV_REC_N_ONE:
+    COLLECT_STACK_ENV_REC_N_ONE:
         collect_stack(sizeof(vm_env_rec_t) + sizeof(scm_obj_t));
         goto loop;
 
-COLLECT_STACK_ENV_REC_N_APPLY:
+    COLLECT_STACK_ENV_REC_N_APPLY:
         collect_stack(sizeof(vm_env_rec_t));
         goto apply;
 
-COLLECT_STACK_ENV_REC_N_OPERAND:
+    COLLECT_STACK_ENV_REC_N_OPERAND:
         collect_stack(sizeof(vm_env_rec_t) + sizeof(scm_obj_t*) * FIXNUM(OPERANDS));
         goto loop;
 
-FALLBACK_PUSH_NADD_ILOC:
+    FALLBACK_PUSH_NADD_ILOC:
         if (number_pred(obj)) {
             m_sp[0] = arith_add(m_heap, obj, CADR(OPERANDS));
             m_sp++;
@@ -1780,7 +1752,7 @@ FALLBACK_PUSH_NADD_ILOC:
         }
         goto ERROR_PUSH_NADD_ILOC;
 
-FALLBACK_NADD_ILOC:
+    FALLBACK_NADD_ILOC:
         if (number_pred(obj)) {
             m_value = arith_add(m_heap, obj, CADR(OPERANDS));
             m_pc = CDR(m_pc);
@@ -1788,7 +1760,7 @@ FALLBACK_NADD_ILOC:
         }
         goto ERROR_NADD_ILOC;
 
-FALLBACK_EQ_N_ILOC:
+    FALLBACK_EQ_N_ILOC:
         if (number_pred(obj)) {
             m_value = n_equal_pred(m_heap, obj, CADR(OPERANDS)) ? scm_true : scm_false;
             m_pc = CDR(m_pc);
@@ -1796,7 +1768,7 @@ FALLBACK_EQ_N_ILOC:
         }
         goto ERROR_EQ_N_ILOC;
 
-FALLBACK_LT_N_ILOC:
+    FALLBACK_LT_N_ILOC:
         if (number_pred(obj)) {
             m_value = n_compare(m_heap, obj, CADR(OPERANDS)) < 0 ? scm_true : scm_false;
             m_pc = CDR(m_pc);
@@ -1804,7 +1776,7 @@ FALLBACK_LT_N_ILOC:
         }
         goto ERROR_LT_N_ILOC;
 
-FALLBACK_LE_N_ILOC:
+    FALLBACK_LE_N_ILOC:
         if (number_pred(obj)) {
             m_value = n_compare(m_heap, obj, CADR(OPERANDS)) <= 0 ? scm_true : scm_false;
             m_pc = CDR(m_pc);
@@ -1812,7 +1784,7 @@ FALLBACK_LE_N_ILOC:
         }
         goto ERROR_LE_N_ILOC;
 
-FALLBACK_GT_N_ILOC:
+    FALLBACK_GT_N_ILOC:
         if (number_pred(obj)) {
             m_value = n_compare(m_heap, obj, CADR(OPERANDS)) > 0 ? scm_true : scm_false;
             m_pc = CDR(m_pc);
@@ -1820,7 +1792,7 @@ FALLBACK_GT_N_ILOC:
         }
         goto ERROR_GT_N_ILOC;
 
-FALLBACK_GE_N_ILOC:
+    FALLBACK_GE_N_ILOC:
         if (number_pred(obj)) {
             m_value = n_compare(m_heap, obj, CADR(OPERANDS)) >= 0 ? scm_true : scm_false;
             m_pc = CDR(m_pc);
@@ -1828,7 +1800,7 @@ FALLBACK_GE_N_ILOC:
         }
         goto ERROR_GE_N_ILOC;
 
-FALLBACK_EQ_ILOC: {
+    FALLBACK_EQ_ILOC: {
             int bad;
             if (number_pred(m_value)) {
                 if (number_pred(obj)) {
@@ -1846,7 +1818,7 @@ FALLBACK_EQ_ILOC: {
             goto BACK_TO_LOOP;
         }
 
-FALLBACK_LT_ILOC: {
+    FALLBACK_LT_ILOC: {
             int bad;
             if (number_pred(m_value)) {
                 if (number_pred(obj)) {
@@ -1864,7 +1836,7 @@ FALLBACK_LT_ILOC: {
             goto BACK_TO_LOOP;
         }
 
-FALLBACK_LE_ILOC: {
+    FALLBACK_LE_ILOC: {
             int bad;
             if (number_pred(m_value)) {
                 if (number_pred(obj)) {
@@ -1882,7 +1854,7 @@ FALLBACK_LE_ILOC: {
             goto BACK_TO_LOOP;
         }
 
-FALLBACK_GT_ILOC: {
+    FALLBACK_GT_ILOC: {
             int bad;
             if (number_pred(m_value)) {
                 if (number_pred(obj)) {
@@ -1900,7 +1872,7 @@ FALLBACK_GT_ILOC: {
             goto BACK_TO_LOOP;
         }
 
-FALLBACK_GE_ILOC: {
+    FALLBACK_GE_ILOC: {
             int bad;
             if (number_pred(m_value)) {
                 if (number_pred(obj)) {
@@ -1918,7 +1890,7 @@ FALLBACK_GE_ILOC: {
             goto BACK_TO_LOOP;
         }
 
-THUNK_TOUCH_GLOC_OF: {
+    THUNK_TOUCH_GLOC_OF: {
             assert(GLOCP(OPERANDS));
             if (((scm_gloc_t)OPERANDS)->value != scm_undef) {
                 m_heap->write_barrier(CADR(m_pc));
@@ -1930,7 +1902,7 @@ THUNK_TOUCH_GLOC_OF: {
             goto ERROR_TOUCH_GLOC;
         }
 
-THUNK_SUBR_GLOC_OF: {
+    THUNK_SUBR_GLOC_OF: {
             assert(GLOCP(CAR(OPERANDS)));
             scm_subr_t subr = (scm_subr_t)(((scm_gloc_t)CAR(OPERANDS))->value);
             if (SUBRP(subr)) {
@@ -1942,7 +1914,7 @@ THUNK_SUBR_GLOC_OF: {
             system_error("system error: inconsistent code in auto compile cache");
         }
 
-THUNK_PUSH_SUBR_GLOC_OF: {
+    THUNK_PUSH_SUBR_GLOC_OF: {
             assert(GLOCP(CAR(OPERANDS)));
             scm_subr_t subr = (scm_subr_t)(((scm_gloc_t)CAR(OPERANDS))->value);
             if (SUBRP(subr)) {
@@ -1954,7 +1926,7 @@ THUNK_PUSH_SUBR_GLOC_OF: {
             system_error("system error: inconsistent code in auto compile cache");
         }
 
-THUNK_RET_SUBR_GLOC_OF: {
+    THUNK_RET_SUBR_GLOC_OF: {
             assert(GLOCP(CAR(OPERANDS)));
             scm_subr_t subr = (scm_subr_t)(((scm_gloc_t)CAR(OPERANDS))->value);
             if (SUBRP(subr)) {
@@ -1966,83 +1938,83 @@ THUNK_RET_SUBR_GLOC_OF: {
             system_error("system error: inconsistent code in auto compile cache");
         }
 
-ERROR_NADD_ILOC:
-ERROR_PUSH_NADD_ILOC: {
+    ERROR_NADD_ILOC:
+    ERROR_PUSH_NADD_ILOC: {
             if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "operator(+ -)", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
-ERROR_EQ_N_ILOC: {
+    ERROR_EQ_N_ILOC: {
             if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "=", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
-ERROR_LT_N_ILOC: {
+    ERROR_LT_N_ILOC: {
             if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
-ERROR_LE_N_ILOC: {
+    ERROR_LE_N_ILOC: {
             if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
-ERROR_GT_N_ILOC: {
+    ERROR_GT_N_ILOC: {
             if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
-ERROR_GE_N_ILOC: {
+    ERROR_GE_N_ILOC: {
             if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
             scm_obj_t argv[2] = { obj, CADR(OPERANDS) };
             wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "number", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
 
-ERROR_PUSH_CAR_ILOC:
-ERROR_CAR_ILOC:
+    ERROR_PUSH_CAR_ILOC:
+    ERROR_CAR_ILOC:
         if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
         wrong_type_argument_violation(this, "car", 0, "pair", obj, 1, &obj);
         goto BACK_TO_LOOP;
-ERROR_PUSH_CDR_ILOC:
-ERROR_CDR_ILOC:
+    ERROR_PUSH_CDR_ILOC:
+    ERROR_CDR_ILOC:
         if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
         wrong_type_argument_violation(this, "cdr", 0, "pair", obj, 1, &obj);
         goto BACK_TO_LOOP;
-ERROR_PUSH_CADR_ILOC:
-ERROR_CADR_ILOC:
+    ERROR_PUSH_CADR_ILOC:
+    ERROR_CADR_ILOC:
         if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
         wrong_type_argument_violation(this, "cadr", 0, "appropriate list structure", obj, 1, &obj);
         goto BACK_TO_LOOP;
-ERROR_PUSH_CDDR_ILOC:
-ERROR_CDDR_ILOC:
+    ERROR_PUSH_CDDR_ILOC:
+    ERROR_CDDR_ILOC:
         if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
         wrong_type_argument_violation(this, "cddr", 0, "appropriate list structure", obj, 1, &obj);
         goto BACK_TO_LOOP;
 
-ERROR_GLOC:
-ERROR_RET_GLOC:
-ERROR_PUSH_GLOC:
-ERROR_TOUCH_GLOC:
+    ERROR_GLOC:
+    ERROR_RET_GLOC:
+    ERROR_PUSH_GLOC:
+    ERROR_TOUCH_GLOC:
         undefined_violation(this, ((scm_gloc_t)OPERANDS)->variable, NULL);
         goto BACK_TO_LOOP;
 
-ERROR_RET_ILOC:
-ERROR_APPLY_ILOC:
+    ERROR_RET_ILOC:
+    ERROR_APPLY_ILOC:
         letrec_violation(this);
         goto BACK_TO_LOOP;
 
-ERROR_PUSH_VECTREF_ILOC:
+    ERROR_PUSH_VECTREF_ILOC:
         {
             scm_obj_t argv[2] = { obj, m_sp[-1] };
             if (VECTORP(argv[0])) {
@@ -2056,7 +2028,7 @@ ERROR_PUSH_VECTREF_ILOC:
             wrong_type_argument_violation(this, "vector-ref", 0, "vector", argv[0], 2, argv);
             goto BACK_TO_LOOP;
         }
-ERROR_VECTREF_ILOC:
+    ERROR_VECTREF_ILOC:
         {
             scm_obj_t argv[2] = { obj, m_value };
             if (VECTORP(argv[0])) {
@@ -2071,15 +2043,15 @@ ERROR_VECTREF_ILOC:
             goto BACK_TO_LOOP;
         }
 
-ERROR_LETREC_VIOLATION:
+    ERROR_LETREC_VIOLATION:
         letrec_violation(this);
         goto BACK_TO_LOOP;
 
-ERROR_APPLY_GLOC:
+    ERROR_APPLY_GLOC:
         undefined_violation(this, ((scm_gloc_t)CAR(OPERANDS))->variable, NULL);
         goto BACK_TO_TRACE_N_LOOP;
 
-ERROR_APPLY_WRONG_NUMBER_ARGS:
+    ERROR_APPLY_WRONG_NUMBER_ARGS:
         {
             scm_closure_t closure = (scm_closure_t)m_value;
             intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
@@ -2094,37 +2066,37 @@ ERROR_APPLY_WRONG_NUMBER_ARGS:
             goto BACK_TO_TRACE_N_LOOP;
         }
 
-ERROR_PROC_APPLY_WRONG_NUMBER_ARGS:
+    ERROR_PROC_APPLY_WRONG_NUMBER_ARGS:
         wrong_number_of_arguments_violation(this, "apply", 2, -1, m_sp - m_fp, m_fp);
         assert(CAR(m_pc) == scm_unspecified);
         goto BACK_TO_TRACE_N_LOOP;
 
-ERROR_PROC_APPLY_BAD_LAST_ARGS:
+    ERROR_PROC_APPLY_BAD_LAST_ARGS:
         wrong_type_argument_violation(this, "apply", -1, "proper list for last argument", obj, -1, NULL);
         assert(CAR(m_pc) == scm_unspecified);
         goto BACK_TO_TRACE_N_LOOP;
 
-ERROR_APPLY_VALUES_WRONG_NUMBER_ARGS:
+    ERROR_APPLY_VALUES_WRONG_NUMBER_ARGS:
         wrong_number_of_arguments_violation(this, "apply-values", 2, 2, m_sp - m_fp, m_fp);
         assert(CAR(m_pc) == scm_unspecified);
         goto BACK_TO_TRACE_N_LOOP;
 
-ERROR_CALLCC_WRONG_NUMBER_ARGS:
+    ERROR_CALLCC_WRONG_NUMBER_ARGS:
         wrong_number_of_arguments_violation(this, "call-with-current-continuation", 1, 1, m_sp - m_fp, m_fp);
         assert(CAR(m_pc) == scm_unspecified);
         goto BACK_TO_TRACE_N_LOOP;
 
-ERROR_INVALID_APPLICATION:
+    ERROR_INVALID_APPLICATION:
         invalid_application_violation(this, m_value, m_sp - m_fp, m_fp);
         goto BACK_TO_TRACE_N_LOOP;
 
 #if USE_PARALLEL_VM
-ERROR_SET_GLOC_BAD_CONTEXT:
+    ERROR_SET_GLOC_BAD_CONTEXT:
         operand_trace = CDR(OPERANDS);
         thread_global_access_violation(this, ((scm_gloc_t)CAR(OPERANDS))->variable, m_value);
         goto BACK_TO_TRACE_N_LOOP;
 
-ERROR_SET_ILOC_BAD_CONTEXT:
+    ERROR_SET_ILOC_BAD_CONTEXT:
         operand_trace = CDR(OPERANDS);
         if (PAIRP(operand_trace)) {
             thread_lexical_access_violation(this, CADAR(operand_trace), m_value);
@@ -2134,32 +2106,36 @@ ERROR_SET_ILOC_BAD_CONTEXT:
         goto BACK_TO_TRACE_N_LOOP;
 #endif
 
-BACK_TO_LOOP:
+    BACK_TO_LOOP:
         m_sp = m_fp;
         m_pc = CDR(m_pc);
         goto loop;
 
-BACK_TO_TRACE_N_LOOP:
+    BACK_TO_TRACE_N_LOOP:
         m_sp = m_fp;
         m_pc = CDR(m_pc);
         goto trace_n_loop;
 
 #if USE_GCC_EXTENSION
-ERROR_BAD_INSTRUCTION_ALIGN_STUB:
+    ERROR_BAD_INSTRUCTION_ALIGN_STUB:
         __asm__ ("/* ERROR_BAD_INSTRUCTION */");
         __asm__ (".p2align 3");
-ERROR_BAD_INSTRUCTION:
+    ERROR_BAD_INSTRUCTION:
         __asm__ ("nop");
         __asm__ ("nop");
         __asm__ ("nop");
         __asm__ ("nop");
 #else
-ERROR_BAD_INSTRUCTION:
+    ERROR_BAD_INSTRUCTION:
 #endif
         system_error("system error: invalid vm instruction %d", instruction_to_opcode(CAAR(m_pc)));
-    } catch (vm_continue_t& e) {
-        goto resume;
-    } catch (...) {
-        throw;
-    }
+        return;
+#if USE_NATIVE_CODE
+    return_pop_cont:
+        __asm__ ("jmp pop_cont");
+    return_apply:
+        __asm__ ("jmp apply");
+    return_loop:
+        __asm__ ("jmp loop");
+ #endif
 }

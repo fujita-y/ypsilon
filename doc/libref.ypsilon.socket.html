@@ -1,0 +1,1694 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <title>Ypsilon API Reference</title>
+  <meta name="generator" content="Ypsilon Document Maker 0.9" />
+  <link href="base.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<div class="top_jump_menu">
+  &bull; <a href="http://code.google.com/p/ypsilon/">Project Home</a> &bull; <a href="index.html">Document Home</a> &bull; <a href="index.html#master_toc">Contents</a>
+</div>
+<div class="library_head">Library: (ypsilon socket)</div>
+<div class="library_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>This library provides an Internet socket interface.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<div id="summaries"></div>
+<div class="library_body">
+<table class="subject_box" border="0" cellspacing="0" cellpadding="0">
+<caption class="subject_box_caption">Summaries:</caption>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-client-socket">make-client-socket</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a client socket connected to an Internet address
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-server-socket">make-server-socket</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a server socket waiting for connections
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#socket?">socket?</a></span>
+    </td>
+    <td class="subject_td">
+      Returns #t if its argument is a socket, and otherwise returns #f
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#socket-port">socket-port</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a fresh binary input/output port associated with a socket
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#call-with-socket">call-with-socket</a></span>
+    </td>
+    <td class="subject_td">
+      Calls a procedure with a socket as an argument
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#shutdown-output-port">shutdown-output-port</a></span>
+    </td>
+    <td class="subject_td">
+      Shutdowns output connection of a socket that associated with a port
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#socket-accept">socket-accept</a></span>
+    </td>
+    <td class="subject_td">
+      Wait for an incoming connection request, and returns a fresh connected client socket
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#socket-send">socket-send</a></span>
+    </td>
+    <td class="subject_td">
+      Sends a binary data block to a socket
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#socket-recv">socket-recv</a></span>
+    </td>
+    <td class="subject_td">
+      Receives a binary data block from a socket
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#socket-shutdown">socket-shutdown</a></span>
+    </td>
+    <td class="subject_td">
+      Shutdowns a socket
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#socket-close">socket-close</a></span>
+    </td>
+    <td class="subject_td">
+      Closes a socket
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#AF_UNSPEC">AF_UNSPEC</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#AF_INET">AF_INET</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#AF_INET6">AF_INET6</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#SOCK_STREAM">SOCK_STREAM</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#SOCK_DGRAM">SOCK_DGRAM</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#SOCK_RAW">SOCK_RAW</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#AI_ADDRCONFIG">AI_ADDRCONFIG</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#AI_ALL">AI_ALL</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#AI_CANONNAME">AI_CANONNAME</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#AI_NUMERICHOST">AI_NUMERICHOST</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#AI_NUMERICSERV">AI_NUMERICSERV</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#AI_PASSIVE">AI_PASSIVE</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#AI_V4MAPPED">AI_V4MAPPED</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#IPPROTO_TCP">IPPROTO_TCP</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#IPPROTO_UDP">IPPROTO_UDP</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#IPPROTO_RAW">IPPROTO_RAW</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#SHUT_RD">SHUT_RD</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#SHUT_WR">SHUT_WR</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#SHUT_RDWR">SHUT_RDWR</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_OOB">MSG_OOB</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_PEEK">MSG_PEEK</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_DONTROUTE">MSG_DONTROUTE</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_CTRUNC">MSG_CTRUNC</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_PROBE">MSG_PROBE</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_TRUNC">MSG_TRUNC</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_DONTWAIT">MSG_DONTWAIT</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_EOR">MSG_EOR</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_WAITALL">MSG_WAITALL</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_FIN">MSG_FIN</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_SYN">MSG_SYN</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_CONFIRM">MSG_CONFIRM</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_RST">MSG_RST</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_ERRQUEUE">MSG_ERRQUEUE</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_NOSIGNAL">MSG_NOSIGNAL</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_MORE">MSG_MORE</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#MSG_EOF">MSG_EOF</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+</table>
+  <ul type="square" class="library_link_list">
+    <li><a href="#exports">List of identifiers exported from (ypsilon socket) library</a></li>
+  </ul>
+</div>
+<span id="make-client-socket"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-client-socket</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#make-client-socket">make-client-socket</a> returns a client socket connected to an Internet address.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>(make-client-socket <span class="synopsis_argument">node service</span>)</div>
+      <div>(make-client-socket <span class="synopsis_argument">node service ai-family</span>)</div>
+      <div>(make-client-socket <span class="synopsis_argument">node service ai-family ai-socktype</span>)</div>
+      <div>(make-client-socket <span class="synopsis_argument">node service ai-family ai-socktype ai-flags</span>)</div>
+      <div>(make-client-socket <span class="synopsis_argument">node service ai-family ai-socktype ai-flags ai-protocol</span>)</div>
+      <div><span class="synopsis_retval"> =&gt; &lt;client-socket&gt;</span></div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>node:</div>
+      <div>service:</div>
+      <div>ai-family:</div>
+      <div>ai-socktype:</div>
+      <div>ai-flags:</div>
+      <div>ai-protocol:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;string&gt;</div>
+      <div>&lt;string&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+    <td class="param_detail">
+      <div>&nbsp;</div>
+      <div>&nbsp;</div>
+      <div>(default: AF_INET)</div>
+      <div>(default: SOCK_STREAM)</div>
+      <div>(default: AI_V4MAPPED + AI_ADDRCONFIG)</div>
+      <div>(default: 0)</div>
+    </td>
+  </tr>
+</table>
+<div class="indent">
+<dl class="dl_arguments">
+  <dt class="dt_arguments">node</dt>
+  <dd class="dd_arguments">—a network address. (examples: &quot;www.w3.org&quot;, &quot;localhost&quot;, &quot;128.30.52.45&quot;)</dd>
+  <dt class="dt_arguments">service</dt>
+  <dd class="dd_arguments">—a network service. (examples: &quot;http&quot;, &quot;ssh&quot;, &quot;80&quot;, &quot;22&quot;)</dd>
+  <dt class="dt_arguments">ai-family</dt>
+  <dd class="dd_arguments">—an address family specifier. Predefined specifiers are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AF_INET</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AF_INET6</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AF_UNSPEC</dt>
+</dl>
+  </dd>
+  <dt class="dt_arguments">ai-socktype</dt>
+  <dd class="dd_arguments">—a socket type specifier. Predefined specifiers are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>SOCK_STREAM</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>SOCK_DGRAM</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>SOCK_RAW</dt>
+</dl>
+  </dd>
+  <dt class="dt_arguments">ai-flags</dt>
+  <dd class="dd_arguments">—an additional options specifier. Predefined specifiers are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AI_ADDRCONFIG</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AI_ALL</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AI_CANONNAME</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AI_NUMERICHOST</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AI_NUMERICSERV</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AI_PASSIVE</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AI_V4MAPPED</dt>
+</dl>
+  </dd>
+  <dt class="dt_arguments">ai-protocol</dt>
+  <dd class="dd_arguments">—a protocol specifier. Predefined specifiers are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>IPPROTO_TCP</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>IPPROTO_UDP</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>IPPROTO_RAW</dt>
+</dl>
+  </dd>
+</dl>
+</div>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>The Internet address is identified by <span class="desc_argument">node</span> and <span class="desc_argument">service</span>. <a href="libref.ypsilon.socket.html#make-client-socket">make-client-socket</a> uses getaddrinfo(3) to look up it. The arguments <span class="desc_argument">node</span>, <span class="desc_argument">service</span>, <span class="desc_argument">ai-family</span>, <span class="desc_argument">ai-socktype</span>, <span class="desc_argument">ai-flags</span>, and <span class="desc_argument">ai-protocol</span> will be passed to getaddrinfo(3) as a correspondent parameter. Refer to getaddrinfo(3) manual page for details</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon socket))</div>
+      <div>&gt; (make-client-socket &quot;www.w3.org&quot; &quot;http&quot;)</div>
+      <div><span class="example_stdout">#&lt;client-socket tcp stream 128.30.52.38:80&gt;</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-server-socket"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-server-socket</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#make-server-socket">make-server-socket</a> returns a server socket waiting for connections.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-server-socket <span class="synopsis_argument">service ai-family ai-socktype ai-protocol</span>)
+      <span class="synopsis_retval"> =&gt; &lt;server-socket&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>service:</div>
+      <div>ai-family:</div>
+      <div>ai-socktype:</div>
+      <div>ai-protocol:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;string&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+    <td class="param_detail">
+      <div>&nbsp;</div>
+      <div>(default: AF_INET)</div>
+      <div>(default: SOCK_STREAM)</div>
+      <div>(default: 0)</div>
+    </td>
+  </tr>
+</table>
+<div class="indent">
+<dl class="dl_arguments">
+  <dt class="dt_arguments">service</dt>
+  <dd class="dd_arguments">—a network service. (examples: &quot;http&quot;, &quot;telnet&quot;, &quot;80&quot;, &quot;23&quot;)</dd>
+  <dt class="dt_arguments">ai-family</dt>
+  <dd class="dd_arguments">—an address family specifier. Predefined specifiers are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AF_INET</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AF_INET6</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>AF_UNSPEC</dt>
+</dl>
+  </dd>
+  <dt class="dt_arguments">ai-socktype</dt>
+  <dd class="dd_arguments">—a socket type specifier. Predefined specifiers are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>SOCK_STREAM</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>SOCK_DGRAM</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>SOCK_RAW</dt>
+</dl>
+  </dd>
+  <dt class="dt_arguments">ai-protocol</dt>
+  <dd class="dd_arguments">—a protocol specifier. Predefined specifiers are listed below:</dd>
+  <dd class="dd_arguments">
+<dl class="dl_keywords">
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>IPPROTO_TCP</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>IPPROTO_UDP</dt>
+  <dt class="dt_keywords"><span class=dt_keywords_prefix>&bull; </span>IPPROTO_RAW</dt>
+</dl>
+  </dd>
+</dl>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>The arguments <span class="desc_argument">service</span>, <span class="desc_argument">ai-family</span>, <span class="desc_argument">ai-socktype</span>, and <span class="desc_argument">ai-protocol</span> will be passed to getaddrinfo(3) as a correspondent parameter to setup server socket. Refer to getaddrinfo(3) manual page for details</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon socket))</div>
+      <div>&gt; (make-server-socket &quot;8080&quot;)</div>
+      <div><span class="example_stdout">#&lt;server-socket tcp stream 0.0.0.0:8080&gt;</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+</div>
+<span id="socket?"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: socket?</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#socket?">socket?</a> returns #t if its argument is a socket, and otherwise returns #f.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (socket? <span class="synopsis_argument">x</span>)
+      <span class="synopsis_retval"> =&gt; &lt;boolean&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>x:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;object&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="socket-port"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: socket-port</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#socket-port">socket-port</a> returns a fresh binary input/output port associated with a socket.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (socket-port <span class="synopsis_argument">socket</span>)
+      <span class="synopsis_retval"> =&gt; &lt;port&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>socket:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;socket&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>A port returned by <a href="libref.ypsilon.socket.html#socket-port">socket-port</a> can be used as an ordinary port.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="call-with-socket"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: call-with-socket</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#call-with-socket">call-with-socket</a> calls a procedure with a socket as an argument. This procedure has an analogy to call-with-port of (rnrs io ports).</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (call-with-socket <span class="synopsis_argument">socket proc</span>)
+      <span class="synopsis_retval"> =&gt; &lt;object&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>socket:</div>
+      <div>proc:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;socket&gt;</div>
+      <div>&lt;procedure&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>If <span class="desc_argument">proc</span> returns, <span class="desc_argument">socket</span> is closed implicitly, and <a href="libref.ypsilon.socket.html#call-with-socket">call-with-socket</a> returns a value returned by <span class="desc_argument">proc</span>.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="shutdown-output-port"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: shutdown-output-port</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#shutdown-output-port">shutdown-output-port</a> shutdowns output connection of a socket that associated with a port.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (shutdown-output-port <span class="synopsis_argument">port</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>port:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;port&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">port</span> must be associated with a socket.</div>
+    </td>
+  </tr>
+</table>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon socket))</div>
+      <div>&gt; (call-with-socket</div>
+      <div>&nbsp; &nbsp; (make-client-socket &quot;www.w3.org&quot; &quot;http&quot;)</div>
+      <div>&nbsp; &nbsp; (lambda (socket)</div>
+      <div>&nbsp; &nbsp; &nbsp; (call-with-port</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; (transcoded-port (socket-port socket)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(make-transcoder (utf-8-codec)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (eol-style none)))</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; (lambda (port)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (put-string port &quot;GET / HTTP/1.1\r\n&quot;)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (put-string port &quot;HOST: www.w3.org\r\n&quot;)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (put-string port &quot;\r\n&quot;)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (shutdown-output-port port)</div>
+      <div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (display (get-string-all port))))))</div>
+      <div><br /></div>
+      <div><span class="example_stdout">HTTP/1.1 200 OK</span></div>
+      <div><span class="example_stdout">Date: Thu, 29 Jan 2009 11:18:38 GMT</span></div>
+      <div><span class="example_stdout">Server: Apache/2</span></div>
+      <div><span class="example_stdout">Content-Location: Home.html</span></div>
+      <div><span class="example_stdout">Vary: negotiate,accept</span></div>
+      <div><span class="example_stdout">&nbsp; &nbsp; &nbsp; &nbsp; :</span></div>
+      <div><span class="example_stdout">&nbsp; &nbsp; &nbsp; &nbsp; :</span></div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="socket-accept"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: socket-accept</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#socket-accept">socket-accept</a> wait for an incoming connection request, and returns a fresh connected client socket.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (socket-accept <span class="synopsis_argument">socket</span>)
+      <span class="synopsis_retval"> =&gt; &lt;client-socket&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>socket:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;server-socket&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="socket-send"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: socket-send</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#socket-send">socket-send</a> sends a binary data block to a socket.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (socket-send <span class="synopsis_argument">socket buffer flags</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>socket:</div>
+      <div>buffer:</div>
+      <div>flags:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;socket&gt;</div>
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#socket-send">socket-send</a> uses send(2) to send data. The arguments <span class="desc_argument">flags</span> will be passed to send(2) as a correspondent parameter. Refer to send(2) manual page for details.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="socket-recv"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: socket-recv</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#socket-recv">socket-recv</a> receives a binary data block from a socket.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (socket-recv <span class="synopsis_argument">socket flags</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>socket:</div>
+      <div>flags:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;socket&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#socket-recv">socket-recv</a> uses recv(2) to receive data. The arguments <span class="desc_argument">flags</span> will be passed to recv(2) as a correspondent parameter. Refer to recv(2) manual page for details.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="socket-shutdown"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: socket-shutdown</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#socket-shutdown">socket-shutdown</a> shutdowns a socket.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (socket-shutdown <span class="synopsis_argument">socket how</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>socket:</div>
+      <div>how:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;socket&gt;</div>
+      <div>SHUT_RD, SHUT_WR, or SHUT_RDWR</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>If <span class="desc_argument">how</span> is <a href="libref.ypsilon.socket.html#SHUT_RD">SHUT_RD</a>, a input is shutdowned.</div>
+      <div>If <span class="desc_argument">how</span> is <a href="libref.ypsilon.socket.html#SHUT_WR">SHUT_WR</a>, an output is shutdowned.</div>
+      <div>If <span class="desc_argument">how</span> is <a href="libref.ypsilon.socket.html#SHUT_RDWR">SHUT_RDWR</a>, both input and output are shutdowned.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="socket-close"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">Procedure: socket-close</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.socket.html#socket-close">socket-close</a> closes a socket.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (socket-close <span class="synopsis_argument">socket</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>socket:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;socket&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="AF_UNSPEC"></span>
+<span id="AF_INET"></span>
+<span id="AF_INET6"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
+  <td valign="top">
+    Constants:&nbsp;
+  </td>
+  <td class="const_word" valign="top">
+    AF_UNSPEC<span class="const_comma">,</span> AF_INET<span class="const_comma">,</span> AF_INET6
+  </td>
+  </tr>
+</table>
+</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>Each constant is defined to an exact integer value of a correspondent C header file definition.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="SOCK_STREAM"></span>
+<span id="SOCK_DGRAM"></span>
+<span id="SOCK_RAW"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
+  <td valign="top">
+    Constants:&nbsp;
+  </td>
+  <td class="const_word" valign="top">
+    SOCK_STREAM<span class="const_comma">,</span> SOCK_DGRAM<span class="const_comma">,</span> SOCK_RAW
+  </td>
+  </tr>
+</table>
+</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>Each constant is defined to an exact integer value of a correspondent C header file definition.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="AI_ADDRCONFIG"></span>
+<span id="AI_ALL"></span>
+<span id="AI_CANONNAME"></span>
+<span id="AI_NUMERICHOST"></span>
+<span id="AI_NUMERICSERV"></span>
+<span id="AI_PASSIVE"></span>
+<span id="AI_V4MAPPED"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
+  <td valign="top">
+    Constants:&nbsp;
+  </td>
+  <td class="const_word" valign="top">
+    AI_ADDRCONFIG<span class="const_comma">,</span> AI_ALL<span class="const_comma">,</span> AI_CANONNAME<span class="const_comma">,</span> AI_NUMERICHOST<span class="const_comma">,</span> AI_NUMERICSERV<span class="const_comma">,</span> AI_PASSIVE<span class="const_comma">,</span> AI_V4MAPPED
+  </td>
+  </tr>
+</table>
+</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>Each constant is defined to an exact integer value of a correspondent C header file definition.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="IPPROTO_TCP"></span>
+<span id="IPPROTO_UDP"></span>
+<span id="IPPROTO_RAW"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
+  <td valign="top">
+    Constants:&nbsp;
+  </td>
+  <td class="const_word" valign="top">
+    IPPROTO_TCP<span class="const_comma">,</span> IPPROTO_UDP<span class="const_comma">,</span> IPPROTO_RAW
+  </td>
+  </tr>
+</table>
+</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>Each constant is defined to an exact integer value of a correspondent C header file definition.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="SHUT_RD"></span>
+<span id="SHUT_WR"></span>
+<span id="SHUT_RDWR"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
+  <td valign="top">
+    Constants:&nbsp;
+  </td>
+  <td class="const_word" valign="top">
+    SHUT_RD<span class="const_comma">,</span> SHUT_WR<span class="const_comma">,</span> SHUT_RDWR
+  </td>
+  </tr>
+</table>
+</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>Each constant is defined to an exact integer value of a correspondent C header file definition.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="MSG_OOB"></span>
+<span id="MSG_PEEK"></span>
+<span id="MSG_DONTROUTE"></span>
+<span id="MSG_CTRUNC"></span>
+<span id="MSG_PROBE"></span>
+<span id="MSG_TRUNC"></span>
+<span id="MSG_DONTWAIT"></span>
+<span id="MSG_EOR"></span>
+<span id="MSG_WAITALL"></span>
+<span id="MSG_FIN"></span>
+<span id="MSG_SYN"></span>
+<span id="MSG_CONFIRM"></span>
+<span id="MSG_RST"></span>
+<span id="MSG_ERRQUEUE"></span>
+<span id="MSG_NOSIGNAL"></span>
+<span id="MSG_MORE"></span>
+<span id="MSG_EOF"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="api_head">
+<table border="0" cellpadding="0" cellspacing="0">
+  <tr>
+  <td valign="top">
+    Constants:&nbsp;
+  </td>
+  <td class="const_word" valign="top">
+    MSG_OOB<span class="const_comma">,</span> MSG_PEEK<span class="const_comma">,</span> MSG_DONTROUTE<span class="const_comma">,</span> MSG_CTRUNC<span class="const_comma">,</span> MSG_PROBE<span class="const_comma">,</span> MSG_TRUNC<span class="const_comma">,</span> MSG_DONTWAIT<span class="const_comma">,</span> MSG_EOR<span class="const_comma">,</span> MSG_WAITALL<span class="const_comma">,</span> MSG_FIN<span class="const_comma">,</span> MSG_SYN<span class="const_comma">,</span> MSG_CONFIRM<span class="const_comma">,</span> MSG_RST<span class="const_comma">,</span> MSG_ERRQUEUE<span class="const_comma">,</span> MSG_NOSIGNAL<span class="const_comma">,</span> MSG_MORE<span class="const_comma">,</span> MSG_EOF
+  </td>
+  </tr>
+</table>
+</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>Each constant is defined to an exact integer value of a correspondent C header file definition.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<div id="exports"></div>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+  <div class="library_head">Identifiers exported from (ypsilon socket)</a> library</div>
+    <div class="library_body">
+<table class="exports_parent_box" border="0" width="800">
+<tr>
+<td width="50%">
+<table class="exports_box" border="0" width="100%">
+<caption class="exports_box_caption">Contexual list of all exports:</div>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-client-socket">make-client-socket</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-server-socket">make-server-socket</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket?">socket?</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-port">socket-port</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#call-with-socket">call-with-socket</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#shutdown-output-port">shutdown-output-port</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-accept">socket-accept</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-send">socket-send</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-recv">socket-recv</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-shutdown">socket-shutdown</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-close">socket-close</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AF_UNSPEC">AF_UNSPEC</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AF_INET">AF_INET</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AF_INET6">AF_INET6</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SOCK_STREAM">SOCK_STREAM</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SOCK_DGRAM">SOCK_DGRAM</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SOCK_RAW">SOCK_RAW</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_ADDRCONFIG">AI_ADDRCONFIG</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_ALL">AI_ALL</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_CANONNAME">AI_CANONNAME</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_NUMERICHOST">AI_NUMERICHOST</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_NUMERICSERV">AI_NUMERICSERV</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_PASSIVE">AI_PASSIVE</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_V4MAPPED">AI_V4MAPPED</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#IPPROTO_TCP">IPPROTO_TCP</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#IPPROTO_UDP">IPPROTO_UDP</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#IPPROTO_RAW">IPPROTO_RAW</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SHUT_RD">SHUT_RD</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SHUT_WR">SHUT_WR</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SHUT_RDWR">SHUT_RDWR</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_OOB">MSG_OOB</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_PEEK">MSG_PEEK</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_DONTROUTE">MSG_DONTROUTE</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_CTRUNC">MSG_CTRUNC</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_PROBE">MSG_PROBE</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_TRUNC">MSG_TRUNC</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_DONTWAIT">MSG_DONTWAIT</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_EOR">MSG_EOR</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_WAITALL">MSG_WAITALL</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_FIN">MSG_FIN</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_SYN">MSG_SYN</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_CONFIRM">MSG_CONFIRM</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_RST">MSG_RST</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_ERRQUEUE">MSG_ERRQUEUE</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_NOSIGNAL">MSG_NOSIGNAL</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_MORE">MSG_MORE</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_EOF">MSG_EOF</a></span>
+    </td>
+</table>
+</td>
+<td width="50%">
+<table class="exports_index_box" border="0" width="100%">
+<caption class="exports_box_caption">Alphabetical list of all exports:</div>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AF_INET">AF_INET</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AF_INET6">AF_INET6</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AF_UNSPEC">AF_UNSPEC</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_ADDRCONFIG">AI_ADDRCONFIG</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_ALL">AI_ALL</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_CANONNAME">AI_CANONNAME</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_NUMERICHOST">AI_NUMERICHOST</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_NUMERICSERV">AI_NUMERICSERV</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_PASSIVE">AI_PASSIVE</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#AI_V4MAPPED">AI_V4MAPPED</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#IPPROTO_RAW">IPPROTO_RAW</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#IPPROTO_TCP">IPPROTO_TCP</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#IPPROTO_UDP">IPPROTO_UDP</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_CONFIRM">MSG_CONFIRM</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_CTRUNC">MSG_CTRUNC</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_DONTROUTE">MSG_DONTROUTE</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_DONTWAIT">MSG_DONTWAIT</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_EOF">MSG_EOF</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_EOR">MSG_EOR</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_ERRQUEUE">MSG_ERRQUEUE</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_FIN">MSG_FIN</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_MORE">MSG_MORE</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_NOSIGNAL">MSG_NOSIGNAL</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_OOB">MSG_OOB</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_PEEK">MSG_PEEK</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_PROBE">MSG_PROBE</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_RST">MSG_RST</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_SYN">MSG_SYN</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_TRUNC">MSG_TRUNC</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#MSG_WAITALL">MSG_WAITALL</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SHUT_RD">SHUT_RD</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SHUT_RDWR">SHUT_RDWR</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SHUT_WR">SHUT_WR</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SOCK_DGRAM">SOCK_DGRAM</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SOCK_RAW">SOCK_RAW</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#SOCK_STREAM">SOCK_STREAM</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#call-with-socket">call-with-socket</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-client-socket">make-client-socket</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-server-socket">make-server-socket</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#shutdown-output-port">shutdown-output-port</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-accept">socket-accept</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-close">socket-close</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-port">socket-port</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-recv">socket-recv</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-send">socket-send</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket-shutdown">socket-shutdown</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#socket?">socket?</a></span>
+    </td>
+  </tr>
+</table>
+</td>
+</tr>
+</table>
+
+    </div>
+  </div>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.socket.html">Top</a>]
+</div>
+<div class="footer">Ypsilon API Reference (c) 2009 Y.FUJITA / LittleWing Co.Ltd.</div>
+</body>
+</html>
+
