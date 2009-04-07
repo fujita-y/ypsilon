@@ -1962,7 +1962,10 @@ subr_system(VM* vm, int argc, scm_obj_t argv[])
 #if _MSC_VER
             if (retval >= 0) return int_to_integer(vm->m_heap, retval);
 #else
-            if (WIFEXITED(retval)) return int_to_integer(vm->m_heap, WEXITSTATUS(retval));
+            if (retval != -1) {
+                if (WIFEXITED(retval)) return int_to_integer(vm->m_heap, WEXITSTATUS(retval)); 
+                if (WIFSIGNALED(retval)) return int_to_integer(vm->m_heap, -WTERMSIG(retval));
+            }
 #endif
             int err = errno;
             char message[256];
