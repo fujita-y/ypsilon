@@ -57,6 +57,11 @@
 
         (define parse-record-clauses
           (lambda (first-name record-clauses)
+
+            (define method-name
+              (lambda (spec second-name)
+                (datum->syntax second-name (string->symbol (format spec first-name (syntax->datum second-name))))))
+
             (for-each
              (lambda (c)
                (syntax-case c (parent protocol parent-rtd sealed opaque nongenerative fields)
@@ -82,29 +87,31 @@
                   (stash-set!
                    'fields
                    (map (lambda (spec)
-                          (destructuring-match spec
-                            (('immutable name accessor)
-                             (and (symbol? name) (symbol? accessor))
-                             `((immutable ,name) ,accessor #f))
-                            (('mutable name accessor mutator)
-                             (and (symbol? name) (symbol? accessor) (symbol? mutator))
-                             `((mutable ,name) ,accessor ,mutator))
-                            (('immutable name)
-                             (symbol? name)
-                             `((immutable ,name)
-                               ,(string->symbol (format "~a-~a" first-name name)) #f))
-                            (('mutable name)
-                             (symbol? name)
-                             `((mutable ,name)
-                               ,(string->symbol (format "~a-~a" first-name name))
-                               ,(string->symbol (format "~a-~a-set!" first-name name))))
+                          (syntax-case spec (immutable mutable)
+                            ((immutable name accessor)
+                             (and (identifier? #'name) (identifier? #'accessor))
+                             #'((immutable name) accessor #f))
+                            ((mutable name accessor mutator)
+                             (and (identifier? #'name) (identifier? #'accessor) (identifier? #'mutator))
+                             #'((mutable name) accessor mutator))
+                            ((immutable name)
+                             (identifier? #'name)
+                             (with-syntax ((proc (method-name "~a-~a" #'name)))
+                               #'((immutable name) proc #f)))
+                            ((mutable name)
+                             (identifier? #'name)
+                             (with-syntax
+                                 ((proc1 (method-name "~a-~a" #'name))
+                                  (proc2 (method-name "~a-~a-set!" #'name)))
+                               #'((mutable name) proc1 proc2)))
                             (name
-                             (symbol? name)
-                             `((immutable ,name)
-                               ,(string->symbol (format "~a-~a" first-name name)) #f))
+                             (identifier? #'name)
+                             (with-syntax ((proc (method-name "~a-~a" #'name)))
+                               #'((immutable name) proc #f)))
                             (_
                              (syntax-violation 'define-record-type "malformed field spec" x spec))))
-                        (syntax->datum (syntax (specs ...))))))
+                        #'(specs ...))))
+
                  (_ (syntax-violation 'define-record-type "malformed record clauses" x (syntax->datum c)))))
              record-clauses)))
 
@@ -118,62 +125,62 @@
                   (syntax-violation 'define-record-type "definition have both parent and parent-rtd clause" x))
              (with-syntax
                  ((record-type
-                   (with-syntax ((parent (stash-ref 'parent (syntax #f))))
+                   (with-syntax ((parent (stash-ref 'parent #f)))
                      (with-syntax ((rtd-parent (cond ((stash-ref 'parent-rtd #f) => car)
-                                                     ((stash-ref 'parent #f) (syntax (record-type-rtd parent)))
-                                                     (else (syntax #f))))
+                                                     ((stash-ref 'parent #f) #'(record-type-rtd parent))
+                                                     (else #f)))
                                    (rcd-parent (cond ((stash-ref 'parent-rtd #f) => cdr)
-                                                     ((stash-ref 'parent #f) (syntax (record-type-rcd parent)))
-                                                     (else (syntax #f))))
-                                   (uid (stash-ref 'nongenerative (syntax #f)))
-                                   (sealed (stash-ref 'sealed (syntax #f)))
-                                   (opaque (stash-ref 'opaque (syntax #f)))
-                                   (protocol (stash-ref 'protocol (syntax #f)))
+                                                     ((stash-ref 'parent #f) #'(record-type-rcd parent))
+                                                     (else #f)))
+                                   (uid (stash-ref 'nongenerative #f))
+                                   (sealed (stash-ref 'sealed #f))
+                                   (opaque (stash-ref 'opaque #f))
+                                   (protocol (stash-ref 'protocol #f))
                                    (((fields _ _) ...) (datum->syntax #'k (stash-ref 'fields '()))))
-                       (syntax (define record-name
-                                 (let* ((rtd (make-record-type-descriptor 'record-name rtd-parent 'uid sealed opaque '#(fields ...)))
-                                        (rcd (make-record-constructor-descriptor rtd rcd-parent protocol)))
-                                   (make-record-type 'record-name rtd rcd)))))))
+                       #'(define record-name
+                           (let* ((rtd (make-record-type-descriptor 'record-name rtd-parent 'uid sealed opaque '#(fields ...)))
+                                  (rcd (make-record-constructor-descriptor rtd rcd-parent protocol)))
+                             (make-record-type 'record-name rtd rcd))))))
                   (constructor
-                   (syntax (define constructor-name (record-constructor (record-type-rcd record-name)))))
+                   #'(define constructor-name (record-constructor (record-type-rcd record-name))))
                   (predicate
-                   (syntax (define predicate-name (record-predicate (record-type-rtd record-name)))))
+                   #'(define predicate-name (record-predicate (record-type-rtd record-name))))
                   ((accessors ...)
                    (let ((index -1))
                      (filter values
                              (map (lambda (spec)
                                     (set! index (+ index 1))
-                                    (and (cadr spec)
-                                         (with-syntax ((name (datum->syntax #'record-name (cadr spec))) (n (datum->syntax #'k index)))
-                                           (syntax (define name (record-accessor (record-type-rtd record-name) n))))))
+                                    (with-syntax (((_ name _) spec) (n index))
+                                      (and (identifier? #'name)
+                                           #'(define name (record-accessor (record-type-rtd record-name) n)))))
                                   (stash-ref 'fields '())))))
                   ((mutators ...)
                    (let ((index -1))
                      (filter values
                              (map (lambda (spec)
                                     (set! index (+ index 1))
-                                    (and (caddr spec)
-                                         (with-syntax ((name (datum->syntax #'record-name (caddr spec))) (n (datum->syntax #'k index)))
-                                           (syntax (define name (record-mutator (record-type-rtd record-name) n))))))
+                                    (with-syntax (((_ _ name) spec) (n index))
+                                      (and (identifier? #'name)
+                                           #'(define name (record-mutator (record-type-rtd record-name) n)))))
                                   (stash-ref 'fields '()))))))
-               (syntax (begin record-type constructor predicate accessors ... mutators ...)))))
-
+               #'(begin record-type constructor predicate accessors ... mutators ...))))
           ((_ record-name record-clauses ...)
            (identifier? #'record-name)
-           (let ((base-name (symbol->string (syntax->datum (syntax record-name)))))
-             (with-syntax ((constructor-name (datum->syntax #'record-name (string->symbol (string-append "make-" base-name))))
-                           (predicate-name (datum->syntax #'record-name (string->symbol (string-append base-name "?")))))
-               (syntax (define-record-type (record-name constructor-name predicate-name) record-clauses ...)))))))))
+           (let ((base-name (symbol->string (syntax->datum #'record-name))))
+             (with-syntax
+                 ((constructor-name (datum->syntax #'record-name (string->symbol (string-append "make-" base-name))))
+                  (predicate-name (datum->syntax #'record-name (string->symbol (string-append base-name "?")))))
+               #'(define-record-type (record-name constructor-name predicate-name) record-clauses ...))))))))
 
   (define-syntax record-type-descriptor
     (lambda (x)
       (syntax-case x ()
-        ((_ name) (identifier? #'name) (syntax (record-type-rtd name))))))
+        ((_ name) (identifier? #'name) #'(record-type-rtd name)))))
 
   (define-syntax record-constructor-descriptor
     (lambda (x)
       (syntax-case x ()
-        ((_ name) (identifier? #'name) (syntax (record-type-rcd name))))))
+        ((_ name) (identifier? #'name) #'(record-type-rcd name)))))
 
   (define-syntax fields
     (lambda (x)
