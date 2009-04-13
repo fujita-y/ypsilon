@@ -477,61 +477,80 @@ reader_t::read_escape_sequence()
 scm_obj_t
 reader_t::read_string()
 {
-    char buf[MAX_READ_STRING_LENGTH];
-    int i = 0;
-    while (i + 4 < array_sizeof(buf)) {
-        int c = get_ucs4();
-        if (c == EOF) lexical_error("unexpected end-of-file while reading string");
-        switch (c) {
-        case SCM_PORT_UCS4_CR:
-            c = get_ucs4();
-            if (c != SCM_PORT_UCS4_LF && c != SCM_PORT_UCS4_NEL) unget_ucs4();
-        case SCM_PORT_UCS4_LF: case SCM_PORT_UCS4_NEL: case SCM_PORT_UCS4_LS:
-            buf[i++] = SCM_PORT_UCS4_LF;
-            continue;
-        }
-        if (c == '"') {
-            buf[i] = 0;
-            return make_string_literal(m_vm->m_heap, buf, i);
-        }
-        if (c == '\\') {
-            c = get_ucs4();
-            if (ucs4_intraline_whitespace(c)) {
-                do {
-                    c = get_ucs4();
-                    if (c == EOF) lexical_error("unexpected end-of-file while reading intraline whitespeace");
-                } while (ucs4_intraline_whitespace(c));
-                switch (c) {
-                case SCM_PORT_UCS4_CR:
-                    c = get_ucs4();
-                    if (c != SCM_PORT_UCS4_LF && c != SCM_PORT_UCS4_NEL) unget_ucs4();
-                case SCM_PORT_UCS4_LF: case SCM_PORT_UCS4_NEL: case SCM_PORT_UCS4_LS:
-                    break;
-                default:
-                    lexical_error("unexpected charactor %U while reading intraline whitespeace", c);
+    char small_buf[READ_STRING_SMALL_BUFFER_SIZE];
+    char* buf = small_buf;
+    try {
+        int bufsize = array_sizeof(buf);
+        int i = 0;
+        while (true) {
+            if (bufsize <= i + 4) {
+                bufsize += bufsize;
+                if (buf == small_buf) {
+                    buf = (char*)malloc(bufsize);
+                    memcpy(buf, small_buf, i);
+                } else {
+                    buf = (char*)realloc(buf, bufsize);
                 }
-                do { c = get_ucs4(); } while (ucs4_intraline_whitespace(c));
-                unget_ucs4();
-                continue;
+                if (buf == NULL) fatal("%s:%u memory exhausted while reading string", __FILE__, __LINE__);
             }
+            int c = get_ucs4();
+            if (c == EOF) lexical_error("unexpected end-of-file while reading string");
             switch (c) {
             case SCM_PORT_UCS4_CR:
                 c = get_ucs4();
                 if (c != SCM_PORT_UCS4_LF && c != SCM_PORT_UCS4_NEL) unget_ucs4();
             case SCM_PORT_UCS4_LF: case SCM_PORT_UCS4_NEL: case SCM_PORT_UCS4_LS:
-                do { c = get_ucs4(); } while (ucs4_intraline_whitespace(c));
-                unget_ucs4();
+                buf[i++] = SCM_PORT_UCS4_LF;
                 continue;
             }
-            unget_ucs4();
-            c = read_escape_sequence();
-            i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
-            continue;
+            if (c == '"') {
+                buf[i] = 0;
+                scm_obj_t result = make_string_literal(m_vm->m_heap, buf, i);
+                if (buf != small_buf) free(buf);
+                return result;
+            }
+            if (c == '\\') {
+                c = get_ucs4();
+                if (ucs4_intraline_whitespace(c)) {
+                    do {
+                        c = get_ucs4();
+                        if (c == EOF) lexical_error("unexpected end-of-file while reading intraline whitespeace");
+                    } while (ucs4_intraline_whitespace(c));
+                    switch (c) {
+                    case SCM_PORT_UCS4_CR:
+                        c = get_ucs4();
+                        if (c != SCM_PORT_UCS4_LF && c != SCM_PORT_UCS4_NEL) unget_ucs4();
+                    case SCM_PORT_UCS4_LF: case SCM_PORT_UCS4_NEL: case SCM_PORT_UCS4_LS:
+                        break;
+                    default:
+                        lexical_error("unexpected charactor %U while reading intraline whitespeace", c);
+                    }
+                    do { c = get_ucs4(); } while (ucs4_intraline_whitespace(c));
+                    unget_ucs4();
+                    continue;
+                }
+                switch (c) {
+                case SCM_PORT_UCS4_CR:
+                    c = get_ucs4();
+                    if (c != SCM_PORT_UCS4_LF && c != SCM_PORT_UCS4_NEL) unget_ucs4();
+                case SCM_PORT_UCS4_LF: case SCM_PORT_UCS4_NEL: case SCM_PORT_UCS4_LS:
+                    do { c = get_ucs4(); } while (ucs4_intraline_whitespace(c));
+                    unget_ucs4();
+                    continue;
+                }
+                unget_ucs4();
+                c = read_escape_sequence();
+                i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
+                continue;
+            }
+            if (c < 128) buf[i++] = c;
+            else i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
         }
-        if (c < 128) buf[i++] = c;
-        else i += cnvt_ucs4_to_utf8(ensure_ucs4(c), (uint8_t*)buf + i);
+    } catch (...) {
+        if (buf != small_buf) free(buf);
+        throw;
     }
-    lexical_error("token buffer overflow while reading string");
+    assert(false);
 }
 
 scm_obj_t

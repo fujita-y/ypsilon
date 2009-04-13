@@ -586,8 +586,8 @@ struct vm_env_rec_t {           // record size is variable
 #define IDENTIFIER_PRIMITIVE_PREFIX         '.'
 #define IDENTIFIER_CSTUB_MARK               '@'
 
+#define READ_STRING_SMALL_BUFFER_SIZE       2048
 #define MAX_READ_SYMBOL_LENGTH              256
-#define MAX_READ_STRING_LENGTH              2048
 #define MAX_SOURCE_COLUMN                   1024
 
 struct reader_exception_t {
