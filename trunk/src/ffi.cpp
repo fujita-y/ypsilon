@@ -1034,14 +1034,14 @@
     intptr_t c_callback_intptr_x64(intptr_t uid, intptr_t signatures, intptr_t* reg, intptr_t* stack)
     {
         scm_obj_t ans = callback_scheme(uid, signatures, reg, stack);
-        if (exact_integer_pred(ans)) coerce_exact_integer_to_intptr(ans);
+        if (exact_integer_pred(ans)) return coerce_exact_integer_to_intptr(ans);
         return 0;
     }
 
     float c_callback_float_x64(intptr_t uid, intptr_t signatures, intptr_t* reg, intptr_t* stack)
     {
         scm_obj_t ans = callback_scheme(uid, signatures, reg, stack);
-        if (real_valued_pred(ans)) real_to_double(ans);
+        if (real_valued_pred(ans)) return real_to_double(ans);
         return 0.0;
     }
 

@@ -367,36 +367,41 @@ fasl_reader_t::get_datum()
 bool
 fasl_reader_t::get_lites()
 {
-    int buflen = MAX_READ_STRING_LENGTH;
-    char* buf = (char*)malloc(buflen + 1);
-    int count = fetch_u32();
-    m_lites = (scm_obj_t*)calloc(count, sizeof(scm_obj_t));
-    for (int i = 0; i < count; i++) {
-        uint8_t tag = fetch_u8();
-        uint32_t uid = fetch_u32();
-        uint32_t len = fetch_u32();
-        if (len > buflen) {
-            free(buf);
-            buf = (char*)malloc(len + 1);
-            buflen = len;
+    int bufsize = READ_STRING_SMALL_BUFFER_SIZE;
+    char* buf = (char*)malloc(bufsize + 1);
+    try {
+        int count = fetch_u32();
+        m_lites = (scm_obj_t*)calloc(count, sizeof(scm_obj_t));
+        for (int i = 0; i < count; i++) {
+            uint8_t tag = fetch_u8();
+            uint32_t uid = fetch_u32();
+            uint32_t len = fetch_u32();
+            if (len > bufsize) {
+                free(buf);
+                buf = (char*)malloc(len + 1);
+                bufsize = len;
+            }
+            if (len != 0) port_get_bytes(m_port, (uint8_t*)buf, len);
+            buf[len] = 0;
+            switch (tag) {
+            case FASL_TAG_SYMBOL:
+                m_lites[uid] = make_symbol(m_vm->m_heap, buf, len);
+                break;
+            case FASL_TAG_UNINTERNED_SYMBOL:
+                m_lites[uid] = make_symbol_uninterned(m_vm->m_heap, buf, len - 2, buf[len - 1]);
+                break;
+            case FASL_TAG_STRING:
+                m_lites[uid] = make_string_literal(m_vm->m_heap, buf, len);
+                break;
+            default:
+                fatal("%s:%u invalid fasl format", __FILE__, __LINE__);
+            }
         }
-        if (len != 0) port_get_bytes(m_port, (uint8_t*)buf, len);
-        buf[len] = 0;
-        switch (tag) {
-        case FASL_TAG_SYMBOL:
-            m_lites[uid] = make_symbol(m_vm->m_heap, buf, len);
-            break;
-        case FASL_TAG_UNINTERNED_SYMBOL:
-            m_lites[uid] = make_symbol_uninterned(m_vm->m_heap, buf, len - 2, buf[len - 1]);
-            break;
-        case FASL_TAG_STRING:
-            m_lites[uid] = make_string_literal(m_vm->m_heap, buf, len);
-            break;
-        default:
-            fatal("%s:%u invalid fasl format", __FILE__, __LINE__);
-        }
+        free(buf);
+    } catch (...) {
+        free(buf);
+        throw;
     }
-    free(buf);
     return false;
 }
 
