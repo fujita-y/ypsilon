@@ -188,6 +188,9 @@ static int opt_heap_limit(int argc, char* const argv[])
   #if HPDEBUG
         puts(";; HPDEBUG ON");
   #endif
+  #if ASDEBUG
+        puts(";; ASDEBUG ON");
+  #endif
         sigset_t set;
         sigemptyset(&set);
         sigaddset(&set, SIGINT);

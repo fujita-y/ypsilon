@@ -188,6 +188,7 @@
   (define-c-typedef SDL_MouseButtonEvent
     (struct (uint8_t type)
             (uint8_t which)
+            (uint8_t button)
             (uint8_t state)
             (uint16_t x)
             (uint16_t y)))

@@ -358,6 +358,9 @@
           SDL_ACTIVEEVENTMASK
           SDL_ADDEVENT
           SDL_ANYFORMAT
+          SDL_APPACTIVE
+          SDL_APPINPUTFOCUS
+          SDL_APPMOUSEFOCUS
           SDL_ASYNCBLIT
           SDL_AUDIO_PAUSED
           SDL_AUDIO_PLAYING
@@ -367,9 +370,18 @@
           SDL_AudioDriverName
           SDL_AudioInit
           SDL_AudioQuit
+          SDL_BUTTON_LEFT
           SDL_BUTTON_LMASK
+          SDL_BUTTON_MIDDLE
           SDL_BUTTON_MMASK
+          SDL_BUTTON_RIGHT
           SDL_BUTTON_RMASK
+          SDL_BUTTON_WHEELDOWN
+          SDL_BUTTON_WHEELUP
+          SDL_BUTTON_X1
+          SDL_BUTTON_X1MASK
+          SDL_BUTTON_X2
+          SDL_BUTTON_X2MASK
           SDL_BlitSurface
           SDL_BuildAudioCVT
           SDL_CDClose
@@ -484,6 +496,15 @@
           SDL_GetTicks
           SDL_GetVideoInfo
           SDL_GetVideoSurface
+          SDL_HAT_CENTERED
+          SDL_HAT_DOWN
+          SDL_HAT_LEFT
+          SDL_HAT_LEFTDOWN
+          SDL_HAT_LEFTUP
+          SDL_HAT_RIGHT
+          SDL_HAT_RIGHTDOWN
+          SDL_HAT_RIGHTUP
+          SDL_HAT_UP
           SDL_HWACCEL
           SDL_HWPALETTE
           SDL_HWSURFACE
@@ -574,6 +595,7 @@
           SDL_OpenAudio
           SDL_PEEKEVENT
           SDL_PREALLOC
+          SDL_PRESSED
           SDL_PauseAudio
           SDL_PeepEvents
           SDL_PixelFormat
@@ -585,6 +607,7 @@
           SDL_Quit
           SDL_QuitEvent
           SDL_QuitSubSystem
+          SDL_RELEASED
           SDL_RESIZABLE
           SDL_RLEACCEL
           SDL_RLEACCELOK
