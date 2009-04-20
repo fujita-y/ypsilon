@@ -43,6 +43,7 @@
     #define STDEBUG                 0
     #define WBDEBUG                 0
     #define HPDEBUG                 0
+    #define ASDEBUG                 0
 #else
     #define MTDEBUG                 0
     #define GCDEBUG                 0
@@ -50,6 +51,7 @@
     #define STDEBUG                 0
     #define WBDEBUG                 0
     #define HPDEBUG                 0
+    #define ASDEBUG                 1
 #endif
 
 #define PROFILE_OPCODE              0

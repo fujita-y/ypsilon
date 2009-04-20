@@ -382,10 +382,38 @@
           MUS_OGG
           MUS_MP3
           MUS_MP3_MAD
-          
+
+          SDL_APPMOUSEFOCUS
+          SDL_APPINPUTFOCUS
+          SDL_APPACTIVE
+
+          SDL_RELEASED
+          SDL_PRESSED
+
+          SDL_BUTTON_LEFT
+          SDL_BUTTON_MIDDLE
+          SDL_BUTTON_RIGHT
+          SDL_BUTTON_WHEELUP
+          SDL_BUTTON_WHEELDOWN
+          SDL_BUTTON_X1
+          SDL_BUTTON_X2
+
           SDL_BUTTON_LMASK
           SDL_BUTTON_MMASK
           SDL_BUTTON_RMASK
+          SDL_BUTTON_X1MASK
+          SDL_BUTTON_X2MASK
+
+          SDL_HAT_CENTERED
+          SDL_HAT_UP
+          SDL_HAT_RIGHT
+          SDL_HAT_DOWN
+          SDL_HAT_LEFT
+
+          SDL_HAT_RIGHTUP
+          SDL_HAT_RIGHTDOWN
+          SDL_HAT_LEFTUP
+          SDL_HAT_LEFTDOWN
 
           KMOD_CTRL
           KMOD_SHIFT
@@ -595,13 +623,46 @@
   ;; enum Mix_MusicType
   (define-c-enum MUS_NONE MUS_CMD MUS_WAV MUS_MOD MUS_MID MUS_OGG MUS_MP3 MUS_MP3_MAD)
 
-  (define SDL_BUTTON_LMASK    1)
-  (define SDL_BUTTON_MMASK    2)
-  (define SDL_BUTTON_RMASK    4)
+  ;; struct SDL_ActiveEvent.state
+  (define SDL_APPMOUSEFOCUS     1)
+  (define SDL_APPINPUTFOCUS     2)
+  (define SDL_APPACTIVE         4)
+
+  ;; struct SDL_{Keyboard, MouseButton, JoyButton}Event.state
+  (define SDL_RELEASED    0)
+  (define SDL_PRESSED     1)
+
+  ;; struct SDL_MouseButtonEvent.button
+  (define SDL_BUTTON_LEFT       1)
+  (define SDL_BUTTON_MIDDLE     2)
+  (define SDL_BUTTON_RIGHT      3)
+  (define SDL_BUTTON_WHEELUP    4)
+  (define SDL_BUTTON_WHEELDOWN  5)
+  (define SDL_BUTTON_X1         6)
+  (define SDL_BUTTON_X2         7)
+
+  ;; struct SDL_MouseMotionEvent.state masks
+  (define SDL_BUTTON_LMASK      (bitwise-arithmetic-shift-left 1 (- SDL_BUTTON_LEFT 1)))
+  (define SDL_BUTTON_MMASK      (bitwise-arithmetic-shift-left 1 (- SDL_BUTTON_MIDDLE 1)))
+  (define SDL_BUTTON_RMASK      (bitwise-arithmetic-shift-left 1 (- SDL_BUTTON_RIGHT 1)))
+  (define SDL_BUTTON_X1MASK     (bitwise-arithmetic-shift-left 1 (- SDL_BUTTON_X1 1)))
+  (define SDL_BUTTON_X2MASK     (bitwise-arithmetic-shift-left 1 (- SDL_BUTTON_X2 1)))
+
+  ;; struct SDL_JoyHatEvent.value
+  (define SDL_HAT_CENTERED      0)
+  (define SDL_HAT_UP            1)
+  (define SDL_HAT_RIGHT         2)
+  (define SDL_HAT_DOWN          4)
+  (define SDL_HAT_LEFT          8)
+
+  (define SDL_HAT_RIGHTUP       (+ SDL_HAT_RIGHT SDL_HAT_UP))
+  (define SDL_HAT_RIGHTDOWN     (+ SDL_HAT_RIGHT SDL_HAT_DOWN))
+  (define SDL_HAT_LEFTUP        (+ SDL_HAT_LEFT SDL_HAT_UP))
+  (define SDL_HAT_LEFTDOWN      (+ SDL_HAT_LEFT SDL_HAT_DOWN))
 
   (define KMOD_CTRL (bitwise-ior KMOD_LCTRL KMOD_RCTRL))
   (define KMOD_SHIFT (bitwise-ior KMOD_LSHIFT KMOD_RSHIFT))
   (define KMOD_ALT (bitwise-ior KMOD_LALT KMOD_RALT))
   (define KMOD_META (bitwise-ior KMOD_LMETA KMOD_RMETA))
-  
+
   ) ;[end]
