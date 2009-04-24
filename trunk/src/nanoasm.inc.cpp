@@ -3575,7 +3575,6 @@ void nanoasm::mov(const reg64_t& dst, const reg64_t& src) {
 void nanoasm::mov(const mem8_t& dst, const reg8_t& src) {
 #if ARCH_LP64
     if (src.m_regcode == RAX && dst.direct64()) {
-        REX(RXB(dst));
         DB(0xA2); DQ(dst.m_disp);
     } else {
         REX(RXB(dst));
@@ -3592,7 +3591,6 @@ void nanoasm::mov(const mem8_t& dst, const reg8_t& src) {
 void nanoasm::mov(const mem8si_t& dst, const reg8_t& src) {
 #if ARCH_LP64
     if (src.m_regcode == RAX && dst.direct64()) {
-        REX(RXB(dst));
         DB(0xA2); DQ(dst.m_disp);
     } else {
         REX(RXB(dst));
@@ -3649,7 +3647,6 @@ void nanoasm::mov(const mem64si_t& dst, const reg64_t& src) {
 void nanoasm::mov(const reg8_t& dst, const mem8_t& src) {
 #if ARCH_LP64
     if (dst.m_regcode == RAX && src.direct64()) {
-        REX(RXB(src));
         DB(0xA0); DQ(src.m_disp);
     } else {
         REX(RXB(src));
@@ -3666,7 +3663,6 @@ void nanoasm::mov(const reg8_t& dst, const mem8_t& src) {
 void nanoasm::mov(const reg8_t& dst, const mem8si_t& src) {
 #if ARCH_LP64
     if (dst.m_regcode == RAX && src.direct64()) {
-        REX(RXB(src));
         DB(0xA0); DQ(src.m_disp);
     } else {
         REX(RXB(src));
@@ -3826,27 +3822,27 @@ void nanoasm::movsxd(const reg64_t& dst, const mem32si_t& src) {
 }
 #if ARCH_LP64
 void nanoasm::lea(const reg64_t& dst, const mem8_t& src) {
-    REX(W + RXB(src));
+    REX(W + RXB(dst, src));
     DB(0x8D); MOD(dst, src);
 }
 void nanoasm::lea(const reg64_t& dst, const mem8si_t& src) {
-    REX(W + RXB(src));
+    REX(W + RXB(dst, src));
     DB(0x8D); MOD(dst, src);
 }
 void nanoasm::lea(const reg64_t& dst, const mem32_t& src) {
-    REX(W + RXB(src));
+    REX(W + RXB(dst, src));
     DB(0x8D); MOD(dst, src);
 }
 void nanoasm::lea(const reg64_t& dst, const mem32si_t& src) {
-    REX(W + RXB(src));
+    REX(W + RXB(dst, src));
     DB(0x8D); MOD(dst, src);
 }
 void nanoasm::lea(const reg64_t& dst, const mem64_t& src) {
-    REX(W + RXB(src));
+    REX(W + RXB(dst, src));
     DB(0x8D); MOD(dst, src);
 }
 void nanoasm::lea(const reg64_t& dst, const mem64si_t& src) {
-    REX(W + RXB(src));
+    REX(W + RXB(dst, src));
     DB(0x8D); MOD(dst, src);
 }
 void nanoasm::lea(const reg64_t& dst, const symbol_t& target) {
@@ -3948,12 +3944,15 @@ void nanoasm::jmp(const symbol_t& target) {
 }
 #if ARCH_LP64
 void nanoasm::jmp(const reg64_t& dst) {
+    REX(RXB(dst));
     DB(0xFF); MOD(4, dst);
 }
 void nanoasm::jmp(const mem64_t& dst) {
+    REX(RXB(dst));
     DB(0xFF); MOD(4, dst);
 }
 void nanoasm::jmp(const mem64si_t& dst) {
+    REX(RXB(dst));
     DB(0xFF); MOD(4, dst);
 }
 #else
@@ -3972,12 +3971,15 @@ void nanoasm::call(const symbol_t& target) {
 }
 #if ARCH_LP64
 void nanoasm::call(const reg64_t& dst) {
+    REX(RXB(dst));
     DB(0xFF); MOD(2, dst);
 }
 void nanoasm::call(const mem64_t& dst) {
+    REX(RXB(dst));
     DB(0xFF); MOD(2, dst);
 }
 void nanoasm::call(const mem64si_t& dst) {
+    REX(RXB(dst));
     DB(0xFF); MOD(2, dst);
 }
 #else

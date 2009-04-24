@@ -12,7 +12,7 @@
 
 (define quick-test (not (and (= (length (command-line)) 2)
                              (string=? (cadr (command-line)) "full"))))
-(define code-chunk-count (if quick-test 100 1000))
+(define code-chunk-count (if quick-test (if on-x64 500 100) 1000))
 (define total-count 0)
 (define operator-alias-alist '((or . or_) (and . and_) (xor . xor_) (not . not_)))
 
@@ -64,8 +64,7 @@
     (when on-x64
       (yield "[rip]")
       (yield "[rip+0x34]")
-      (yield "[rip+0x62AC55]")
-      (yield "[0x4AC625534EF883]"))
+      (yield "[rip+0x62AC55]"))
     (yield #f)))
 
 (define-generator every-combination
@@ -464,25 +463,29 @@
       (format #t ";; mov al,moffs8\n")
       (call-with-code-output
        (lambda (yasm nano)
-         (put-inst yasm nano ('mov 'al : 'byte "[0x76A3B127ED5465]"))))
+         (format yasm "mov al,byte[qword 0x76A3B127ED5465]\n")
+         (format nano "__ mov(al,byte[0x76A3B127ED5465]);\n")))
       (run-test)
 
       (format #t ";; mov moffs8,al\n")
       (call-with-code-output
        (lambda (yasm nano)
-         (put-inst yasm nano ('mov 'byte "[0x76A3B127ED5465]" : 'al))))
+         (format yasm "mov byte[qword 0x76A3B127ED5465],al\n")
+         (format nano "__ mov(byte[0x76A3B127ED5465],al);\n")))
       (run-test)
 
       (format #t ";; mov rax,moffs64\n")
       (call-with-code-output
        (lambda (yasm nano)
-         (put-inst yasm nano ('mov 'rax : 'qword "[0x76A3B127ED5465]"))))
+         (format yasm "mov rax,qword[qword 0x76A3B127ED5465]\n")
+         (format nano "__ mov(rax,qword[0x76A3B127ED5465]);\n")))
       (run-test)
 
       (format #t ";; mov moffs64,rax\n")
       (call-with-code-output
        (lambda (yasm nano)
-         (put-inst yasm nano ('mov 'qword "[0x76A3B127ED5465]" : 'rax))))
+         (format yasm "mov qword[qword 0x76A3B127ED5465],rax\n")
+         (format nano "__ mov(qword[0x76A3B127ED5465],rax);\n")))
       (run-test))))
 
 (define test-add-group
