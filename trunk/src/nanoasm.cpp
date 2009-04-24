@@ -153,7 +153,7 @@ nanoasm::branch_inrel32(const symbol_t& target)
 {
     symbol_map_t::iterator iter = m_symbol.find(target);
     if (iter == m_symbol.end()) return false;
-    intptr_t rel = iter->second - (m_pc + 2);
+    intptr_t rel = iter->second - (m_pc + 6);
     return (rel >= INT32_MIN) & (rel <= INT32_MAX);
 }
 
