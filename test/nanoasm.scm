@@ -1,5 +1,5 @@
 ;; usage: ypsilon nanoasm.scm [full]
-;; requirement: yasm-0.7.1 and udis86-1.7
+;; requirement: linux, yasm-0.7.1, udis86-1.7
 #!r6rs
 
 (import (rnrs)
