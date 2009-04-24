@@ -148,7 +148,8 @@ subr_socket_recv(VM* vm, int argc, scm_obj_t argv[])
                     int n = socket_recv(socket, bv->elts, bv->count, flags, &again);
                     if (n == 0) {
                         if (again) return scm_false;
-                        return scm_eof;
+                        if (socket->socktype == SOCK_STREAM) return scm_eof;
+                        return make_bvector(vm->m_heap, 0);
                     }
                     if (n == len) return bv;
                     scm_bvector_t bv2 = make_bvector(vm->m_heap, n);
