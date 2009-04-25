@@ -240,16 +240,17 @@
           const int limit = 1024 * 1024 * 4;
           void* code = mmap(NULL, limit, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
           if (code == NULL) { perror(\"mmap\"); exit(1); }
-          using_nanoasm;    
-          GLOBAL(L0);
-          GLOBAL(L1);
-      __  org(code, limit);
-      LABEL(L0);
+          nanoasm_t nas;
+          #define __ nas.
+          nanoasm_t::symbol_t L0 = nas.unique(\"L0\");
+          nanoasm_t::symbol_t L1 = nas.unique(\"L1\");
+          nas.org(code, limit);
+          nas.label(L0);
       " nano-obj-filename))
 
 (define nano-template-tail
   "
-    LABEL(L1);   
+        nas.label(L1);   
         if (write(fd, code, nas.commit()) != nas.commit()) { perror(\"write\"); exit(1); }
         if (close(fd) < 0) { perror(\"close\"); exit(1); }
         munmap(code, limit);
@@ -1418,7 +1419,7 @@
             (lambda (yasm nano)
               (for-each (lambda (r64) (put-inst yasm nano ('jmp r64))) GPR64)))
            (run-test)
-           (format #t ";; jmp m32\n")
+           (format #t ";; jmp m64\n")
            (call-with-code-output
             (lambda (yasm nano)
               (define generate (every-memory-operands))
@@ -1459,7 +1460,7 @@
             (lambda (yasm nano)
               (for-each (lambda (r64) (put-inst yasm nano ('call r64))) GPR64)))
            (run-test)
-           (format #t ";; call m32\n")
+           (format #t ";; call m64\n")
            (call-with-code-output
             (lambda (yasm nano)
               (define generate (every-memory-operands))

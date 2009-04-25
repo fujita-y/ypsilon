@@ -7,7 +7,7 @@
 #include "core.h"
 #include "nanoasm.h"
 
-nanoasm::nanoasm()
+nanoasm_t::nanoasm_t()
     : al(0), cl(1), dl(2), bl(3)
     , eax(0), ecx(1), edx(2), ebx(3), esp(4), ebp(5), esi(6), edi(7)
 #if ARCH_LP64
@@ -19,7 +19,7 @@ nanoasm::nanoasm()
 }
 
 void
-nanoasm::emit_b8(uint8_t i8)
+nanoasm_t::emit_b8(uint8_t i8)
 {
     if (m_pc == m_limit) return;
     *(uint8_t*)m_pc = i8;
@@ -27,7 +27,7 @@ nanoasm::emit_b8(uint8_t i8)
 }
 
 void
-nanoasm::emit_b32(int32_t i32)
+nanoasm_t::emit_b32(int32_t i32)
 {
     emit_b8(i32 & 0xff);
     emit_b8((i32 >> 8) & 0xff);
@@ -36,7 +36,7 @@ nanoasm::emit_b32(int32_t i32)
 }
 
 void
-nanoasm::emit_b64(int64_t i64)
+nanoasm_t::emit_b64(int64_t i64)
 {
     emit_b8(i64 & 0xff);
     emit_b8((i64 >> 8) & 0xff);
@@ -49,19 +49,19 @@ nanoasm::emit_b64(int64_t i64)
 }
 
 void
-nanoasm::emit_mod(const aform_t& aform)
+nanoasm_t::emit_mod(const aform_t& aform)
 {
     for (int i = 0; i < aform.m_bytecount; i++) emit_b8(aform.m_octets[i]);
 }
 
 void
-nanoasm::emit_mod(uint8_t aform)
+nanoasm_t::emit_mod(uint8_t aform)
 {
     emit_b8(aform);
 }
 
 int32_t
-nanoasm::check_reloc(int64_t rel, int size)
+nanoasm_t::check_reloc(int64_t rel, int size)
 {
     if (size == 1) {
         if (rel < INT8_MIN || rel > INT8_MAX) fatal("error:%s:%u reloc out of 8 bit range", __FILE__, __LINE__);
@@ -72,7 +72,7 @@ nanoasm::check_reloc(int64_t rel, int size)
 }
 
 void
-nanoasm::resolve(const symbol_t& symbol)
+nanoasm_t::resolve(const symbol_t& symbol)
 {
     while (true) {
         reloc_map_t::iterator iter = m_reloc_map.find(symbol);
@@ -102,7 +102,7 @@ nanoasm::resolve(const symbol_t& symbol)
 }
 
 void
-nanoasm::bind(const symbol_t& symbol, uintptr_t value)
+nanoasm_t::bind(const symbol_t& symbol, uintptr_t value)
 {
     symbol_map_t::iterator iter = m_symbol.find(symbol);
     if (iter == m_symbol.end()) {
@@ -115,7 +115,7 @@ nanoasm::bind(const symbol_t& symbol, uintptr_t value)
 }
 
 int32_t
-nanoasm::branch_reloc(const symbol_t& target, int size)
+nanoasm_t::branch_reloc(const symbol_t& target, int size)
 {
     symbol_map_t::iterator iter = m_symbol.find(target);
     if (iter == m_symbol.end()) {
@@ -128,19 +128,19 @@ nanoasm::branch_reloc(const symbol_t& target, int size)
 }
 
 int32_t
-nanoasm::branch_reloc8(const symbol_t& target)
+nanoasm_t::branch_reloc8(const symbol_t& target)
 {
     return branch_reloc(target, 1);
 }
 
 int32_t
-nanoasm::branch_reloc32(const symbol_t& target)
+nanoasm_t::branch_reloc32(const symbol_t& target)
 {
     return branch_reloc(target, 4);
 }
 
 bool
-nanoasm::branch_inrel8(const symbol_t& target)
+nanoasm_t::branch_inrel8(const symbol_t& target)
 {
     symbol_map_t::iterator iter = m_symbol.find(target);
     if (iter == m_symbol.end()) return false;
@@ -149,7 +149,7 @@ nanoasm::branch_inrel8(const symbol_t& target)
 }
 
 bool
-nanoasm::branch_inrel32(const symbol_t& target)
+nanoasm_t::branch_inrel32(const symbol_t& target)
 {
     symbol_map_t::iterator iter = m_symbol.find(target);
     if (iter == m_symbol.end()) return false;
@@ -158,7 +158,7 @@ nanoasm::branch_inrel32(const symbol_t& target)
 }
 
 uintptr_t
-nanoasm::absolute_reloc(const symbol_t& target)
+nanoasm_t::absolute_reloc(const symbol_t& target)
 {
     symbol_map_t::iterator iter = m_symbol.find(target);
     if (iter == m_symbol.end()) {
@@ -171,7 +171,7 @@ nanoasm::absolute_reloc(const symbol_t& target)
 }
 
 int32_t
-nanoasm::relative_reloc(const symbol_t& target)
+nanoasm_t::relative_reloc(const symbol_t& target)
 {
     symbol_map_t::iterator iter = m_symbol.find(target);
     if (iter == m_symbol.end()) {
@@ -183,30 +183,36 @@ nanoasm::relative_reloc(const symbol_t& target)
     return check_reloc((int64_t)iter->second - m_pc - sizeof(int32_t), sizeof(int32_t));
 }
 
-nanoasm::symbol_t
-nanoasm::unique(const char* info)
+nanoasm_t::symbol_t
+nanoasm_t::common(const char* name)
+{
+    return symbol_t(name);
+}
+
+nanoasm_t::symbol_t
+nanoasm_t::unique(const char* hint)
 {
     char name[64];
-    if (ASDEBUG && info) snprintf(name, sizeof(name), ".%s(%x)", info, m_unique_count);
+    if (ASDEBUG && hint) snprintf(name, sizeof(name), ".%s(%x)", hint, m_unique_count);
     else snprintf(name, sizeof(name), ".%x", m_unique_count);
     m_unique_count++;
     return symbol_t(name);
 }
 
 void
-nanoasm::equ(const symbol_t& symbol, void* value)
+nanoasm_t::equ(const symbol_t& symbol, void* value)
 {
     bind(symbol, (uintptr_t)value);
 }
 
 void
-nanoasm::label(const symbol_t& symbol)
+nanoasm_t::label(const symbol_t& symbol)
 {
     bind(symbol, m_pc);
 }
 
 uintptr_t
-nanoasm::commit()
+nanoasm_t::commit()
 {
 #if ASDEBUG
     if (m_reloc_map.empty() != true) {
@@ -228,8 +234,8 @@ nanoasm::commit()
     return m_pc - m_org;
 }
 
-nanoasm::amode_si_t
-nanoasm::optimize_amode_si(const amode_si_t& amode)
+nanoasm_t::amode_si_t
+nanoasm_t::optimize_amode_si(const amode_si_t& amode)
 {
     if (amode.m_scale == 1) {
         if (amode.m_base == undefined) {
@@ -245,8 +251,8 @@ nanoasm::optimize_amode_si(const amode_si_t& amode)
     return amode;
 }
 
-nanoasm::aform_t
-nanoasm::mod(uint8_t reg, uint8_t base, uint8_t index, uint8_t scale, intptr_t disp)
+nanoasm_t::aform_t
+nanoasm_t::mod(uint8_t reg, uint8_t base, uint8_t index, uint8_t scale, intptr_t disp)
 {
 #if ARCH_LP64
     if (disp < INT32_MIN || disp > INT32_MAX) ASSEMBLE_ERROR("displacement out of 32 bit range");
@@ -384,46 +390,47 @@ nanoasm::mod(uint8_t reg, uint8_t base, uint8_t index, uint8_t scale, intptr_t d
 #define INREL32(X)  branch_inrel32(X)
 #define NA          undefined
 #define RAX         regcode_rax
+#define RCX         regcode_rcx
 
-void nanoasm::org(void* adrs, int size)
+void nanoasm_t::org(void* adrs, int size)
 {
     m_org = m_pc = (uintptr_t)adrs;
     m_limit = m_org + size;
 }
 
-void nanoasm::align(int n)
+void nanoasm_t::align(int n)
 {
     if (n != 2 && n !=4 && n != 8 && n != 16) ASSEMBLE_ERROR("bad align value");
     int pad = ((m_pc + (n - 1)) & ~(n - 1)) - m_pc;
     for (int i = 0; i < pad; i++) emit_b8(0x90);
 }
 
-void nanoasm::align_bits(int width, int bits)
+void nanoasm_t::align_bits(int width, int bits)
 {
     int pad = 0;
     while (((m_pc + pad) & ((1 << width) - 1)) != bits) pad++;
     for (int i = 0; i < pad; i++) emit_b8(0x90);
 }
 
-void nanoasm::db(uint8_t u8)
+void nanoasm_t::db(uint8_t u8)
 {
     DB(u8);
 }
-void nanoasm::dd(uint32_t u32)
+void nanoasm_t::dd(uint32_t u32)
 {
     DD(u32);
 }
-void nanoasm::dq(uint64_t u64)
+void nanoasm_t::dq(uint64_t u64)
 {
     DQ(u64);
 }
-void nanoasm::ds(const char* s)
+void nanoasm_t::ds(const char* s)
 {
     while (*s) DB(*s++); DB(0);
 }
 
 #if ARCH_LP64
-    void nanoasm::dq(const symbol_t& symbol)
+    void nanoasm_t::dq(const symbol_t& symbol)
     {
         symbol_map_t::iterator iter = m_symbol.find(symbol);
         if (iter == m_symbol.end()) {
@@ -434,7 +441,7 @@ void nanoasm::ds(const char* s)
         }
     }
 #else
-    void nanoasm::dd(const symbol_t& symbol)
+    void nanoasm_t::dd(const symbol_t& symbol)
     {
         symbol_map_t::iterator iter = m_symbol.find(symbol);
         if (iter == m_symbol.end()) {
