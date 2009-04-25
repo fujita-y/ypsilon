@@ -1,40 +1,49 @@
-#define using_nanoasm   nanoasm nas
-#define __              nas.
-#define qword           nas.qword
-#define dword           nas.dword
-#define byte            nas.byte
-#define eax             nas.eax
-#define ecx             nas.ecx
-#define edx             nas.edx
-#define ebx             nas.ebx
-#define esp             nas.esp
-#define ebp             nas.ebp
-#define esi             nas.esi
-#define edi             nas.edi
-#define al              nas.al
-#define cl              nas.cl
-#define dl              nas.dl
-#define bl              nas.bl
+/*
+    Ypsilon Scheme System
+    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
+    See license.txt for terms and conditions of use
+*/
+
+#ifndef NANOASM_MACRO_H_INCLUDED
+#define NANOASM_MACRO_H_INCLUDED
+
+#define GLOBAL(X,Y) nanoasm_t::symbol_t X = __ common(#X); __ equ((X), (Y))
+#define EXTERN(X)   nanoasm_t::symbol_t X = __ common(#X)
+#define LOCAL(X)    nanoasm_t::symbol_t X = __ unique(#X)
+#define LABEL(X)    __ label(X)
+#define qword       __ qword
+#define dword       __ dword
+#define byte        __ byte
+#define eax         __ eax
+#define ecx         __ ecx
+#define edx         __ edx
+#define ebx         __ ebx
+#define esp         __ esp
+#define ebp         __ ebp
+#define esi         __ esi
+#define edi         __ edi
+#define al          __ al
+#define cl          __ cl
+#define dl          __ dl
+#define bl          __ bl
 #if ARCH_LP64
-#define rax             nas.rax
-#define rcx             nas.rcx
-#define rdx             nas.rdx
-#define rbx             nas.rbx
-#define rsp             nas.rsp
-#define rbp             nas.rbp
-#define rsi             nas.rsi
-#define rdi             nas.rdi
-#define r8              nas.r8
-#define r9              nas.r9
-#define r10             nas.r10
-#define r11             nas.r11
-#define r12             nas.r12
-#define r13             nas.r13
-#define r14             nas.r14
-#define r15             nas.r15
-#define rip             nas.rip
+#define rax         __ rax
+#define rcx         __ rcx
+#define rdx         __ rdx
+#define rbx         __ rbx
+#define rsp         __ rsp
+#define rbp         __ rbp
+#define rsi         __ rsi
+#define rdi         __ rdi
+#define r8          __ r8
+#define r9          __ r9
+#define r10         __ r10
+#define r11         __ r11
+#define r12         __ r12
+#define r13         __ r13
+#define r14         __ r14
+#define r15         __ r15
+#define rip         __ rip
 #endif
-#define LOCAL(X)        nanoasm::symbol_t X = nas.unique(#X)
-#define GLOBAL(X)       nanoasm::symbol_t X (#X)
-#define LABEL(X)        nas.label(X)
-#define EQU(X,Y)        nas.equ((X), (Y))
+
+#endif

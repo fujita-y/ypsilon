@@ -18,9 +18,9 @@
   #define ASSEMBLE_ERROR(X) do {} while (0)
 #endif
 
-class nanoasm {
+class nanoasm_t {
 public:
-    nanoasm();
+    nanoasm_t();
 
     struct reg8_t {
         const uint8_t m_regcode;
@@ -401,7 +401,8 @@ private:
 public:
     void org(void* adrs, int size);
     uintptr_t commit();
-    symbol_t unique(const char* info = NULL);
+    symbol_t common(const char* name);
+    symbol_t unique(const char* hint = NULL);
     void label(const symbol_t& symbol);
     void equ(const symbol_t& symbol, void* value);
     void align(int n);
@@ -421,89 +422,89 @@ public:
 };
 
 #if ARCH_LP64
-    inline nanoasm::amode_t operator+(const nanoasm::reg64_t& base, intptr_t disp) {
-        return nanoasm::amode_t(base.m_regcode, disp);
+    inline nanoasm_t::amode_t operator+(const nanoasm_t::reg64_t& base, intptr_t disp) {
+        return nanoasm_t::amode_t(base.m_regcode, disp);
     }
 
-    inline nanoasm::amode_t operator+(const nanoasm::amode_t& amode, intptr_t disp) {
-        return nanoasm::amode_t(amode.m_base, amode.m_disp + disp);
+    inline nanoasm_t::amode_t operator+(const nanoasm_t::amode_t& amode, intptr_t disp) {
+        return nanoasm_t::amode_t(amode.m_base, amode.m_disp + disp);
     }
 
-    inline nanoasm::amode_t operator-(const nanoasm::reg64_t& base, intptr_t disp) {
-        return nanoasm::amode_t(base.m_regcode, - disp);
+    inline nanoasm_t::amode_t operator-(const nanoasm_t::reg64_t& base, intptr_t disp) {
+        return nanoasm_t::amode_t(base.m_regcode, - disp);
     }
 
-    inline nanoasm::amode_t operator-(const nanoasm::amode_t& amode, intptr_t disp) {
-        return nanoasm::amode_t(amode.m_base, amode.m_disp - disp);
+    inline nanoasm_t::amode_t operator-(const nanoasm_t::amode_t& amode, intptr_t disp) {
+        return nanoasm_t::amode_t(amode.m_base, amode.m_disp - disp);
     }
     
-    inline nanoasm::amode_si_t operator*(const nanoasm::reg64_t& index, int scale) {
-        return nanoasm::amode_si_t(nanoasm::undefined, index.m_regcode, scale, 0);
+    inline nanoasm_t::amode_si_t operator*(const nanoasm_t::reg64_t& index, int scale) {
+        return nanoasm_t::amode_si_t(nanoasm_t::undefined, index.m_regcode, scale, 0);
     }
 
-    inline nanoasm::amode_si_t operator+(const nanoasm::reg64_t& base, const nanoasm::reg64_t& index) {
-        return nanoasm::amode_si_t(base.m_regcode, index.m_regcode, 1, 0);
+    inline nanoasm_t::amode_si_t operator+(const nanoasm_t::reg64_t& base, const nanoasm_t::reg64_t& index) {
+        return nanoasm_t::amode_si_t(base.m_regcode, index.m_regcode, 1, 0);
     }
 
-    inline nanoasm::amode_si_t operator+(const nanoasm::reg64_t& base, const nanoasm::amode_si_t& amode) {
-        if (amode.m_base != nanoasm::undefined) ASSEMBLE_ERROR("invalid base and index register combination");
-        return nanoasm::amode_si_t(base.m_regcode, amode.m_index, amode.m_scale, amode.m_disp);
+    inline nanoasm_t::amode_si_t operator+(const nanoasm_t::reg64_t& base, const nanoasm_t::amode_si_t& amode) {
+        if (amode.m_base != nanoasm_t::undefined) ASSEMBLE_ERROR("invalid base and index register combination");
+        return nanoasm_t::amode_si_t(base.m_regcode, amode.m_index, amode.m_scale, amode.m_disp);
     }
 
-    inline nanoasm::amode_si_t operator+(const nanoasm::amode_si_t& amode, const nanoasm::reg64_t& base) {
-        if (amode.m_base != nanoasm::undefined) ASSEMBLE_ERROR("invalid base and index register combination");
-        return nanoasm::amode_si_t(base.m_regcode, amode.m_index, amode.m_scale, amode.m_disp);
+    inline nanoasm_t::amode_si_t operator+(const nanoasm_t::amode_si_t& amode, const nanoasm_t::reg64_t& base) {
+        if (amode.m_base != nanoasm_t::undefined) ASSEMBLE_ERROR("invalid base and index register combination");
+        return nanoasm_t::amode_si_t(base.m_regcode, amode.m_index, amode.m_scale, amode.m_disp);
     }
 
-    inline nanoasm::amode_si_t operator+(const nanoasm::amode_si_t& amode, intptr_t disp) {
-        return nanoasm::amode_si_t(amode.m_base, amode.m_index, amode.m_scale, amode.m_disp + disp);
+    inline nanoasm_t::amode_si_t operator+(const nanoasm_t::amode_si_t& amode, intptr_t disp) {
+        return nanoasm_t::amode_si_t(amode.m_base, amode.m_index, amode.m_scale, amode.m_disp + disp);
     }
 
-    inline nanoasm::amode_si_t operator-(const nanoasm::amode_si_t& amode, intptr_t disp) {
-        return nanoasm::amode_si_t(amode.m_base, amode.m_index, amode.m_scale, amode.m_disp - disp);
+    inline nanoasm_t::amode_si_t operator-(const nanoasm_t::amode_si_t& amode, intptr_t disp) {
+        return nanoasm_t::amode_si_t(amode.m_base, amode.m_index, amode.m_scale, amode.m_disp - disp);
     }
     
 #else
-    inline nanoasm::amode_t operator+(const nanoasm::reg32_t& base, intptr_t disp) {
-        return nanoasm::amode_t(base.m_regcode, disp);
+    inline nanoasm_t::amode_t operator+(const nanoasm_t::reg32_t& base, intptr_t disp) {
+        return nanoasm_t::amode_t(base.m_regcode, disp);
     }
 
-    inline nanoasm::amode_t operator+(const nanoasm::amode_t& amode, intptr_t disp) {
-        return nanoasm::amode_t(amode.m_base, amode.m_disp + disp);
+    inline nanoasm_t::amode_t operator+(const nanoasm_t::amode_t& amode, intptr_t disp) {
+        return nanoasm_t::amode_t(amode.m_base, amode.m_disp + disp);
     }
 
-    inline nanoasm::amode_t operator-(const nanoasm::reg32_t& base, intptr_t disp) {
-        return nanoasm::amode_t(base.m_regcode, - disp);
+    inline nanoasm_t::amode_t operator-(const nanoasm_t::reg32_t& base, intptr_t disp) {
+        return nanoasm_t::amode_t(base.m_regcode, - disp);
     }
 
-    inline nanoasm::amode_t operator-(const nanoasm::amode_t& amode, intptr_t disp) {
-        return nanoasm::amode_t(amode.m_base, amode.m_disp - disp);
+    inline nanoasm_t::amode_t operator-(const nanoasm_t::amode_t& amode, intptr_t disp) {
+        return nanoasm_t::amode_t(amode.m_base, amode.m_disp - disp);
     }
 
-    inline nanoasm::amode_si_t operator*(const nanoasm::reg32_t& index, int scale) {
-        return nanoasm::amode_si_t(nanoasm::undefined, index.m_regcode, scale, 0);
+    inline nanoasm_t::amode_si_t operator*(const nanoasm_t::reg32_t& index, int scale) {
+        return nanoasm_t::amode_si_t(nanoasm_t::undefined, index.m_regcode, scale, 0);
     }
 
-    inline nanoasm::amode_si_t operator+(const nanoasm::reg32_t& base, const nanoasm::reg32_t& index) {
-        return nanoasm::amode_si_t(base.m_regcode, index.m_regcode, 1, 0);
+    inline nanoasm_t::amode_si_t operator+(const nanoasm_t::reg32_t& base, const nanoasm_t::reg32_t& index) {
+        return nanoasm_t::amode_si_t(base.m_regcode, index.m_regcode, 1, 0);
     }
 
-    inline nanoasm::amode_si_t operator+(const nanoasm::reg32_t& base, const nanoasm::amode_si_t& amode) {
-        if (amode.m_base != nanoasm::undefined) ASSEMBLE_ERROR("invalid base and index register combination");
-        return nanoasm::amode_si_t(base.m_regcode, amode.m_index, amode.m_scale, amode.m_disp);
+    inline nanoasm_t::amode_si_t operator+(const nanoasm_t::reg32_t& base, const nanoasm_t::amode_si_t& amode) {
+        if (amode.m_base != nanoasm_t::undefined) ASSEMBLE_ERROR("invalid base and index register combination");
+        return nanoasm_t::amode_si_t(base.m_regcode, amode.m_index, amode.m_scale, amode.m_disp);
     }
 
-    inline nanoasm::amode_si_t operator+(const nanoasm::amode_si_t& amode, const nanoasm::reg32_t& base) {
-        if (amode.m_base != nanoasm::undefined) ASSEMBLE_ERROR("invalid base and index register combination");
-        return nanoasm::amode_si_t(base.m_regcode, amode.m_index, amode.m_scale, amode.m_disp);
+    inline nanoasm_t::amode_si_t operator+(const nanoasm_t::amode_si_t& amode, const nanoasm_t::reg32_t& base) {
+        if (amode.m_base != nanoasm_t::undefined) ASSEMBLE_ERROR("invalid base and index register combination");
+        return nanoasm_t::amode_si_t(base.m_regcode, amode.m_index, amode.m_scale, amode.m_disp);
     }
 
-    inline nanoasm::amode_si_t operator+(const nanoasm::amode_si_t& amode, intptr_t disp) {
-        return nanoasm::amode_si_t(amode.m_base, amode.m_index, amode.m_scale, amode.m_disp + disp);
+    inline nanoasm_t::amode_si_t operator+(const nanoasm_t::amode_si_t& amode, intptr_t disp) {
+        return nanoasm_t::amode_si_t(amode.m_base, amode.m_index, amode.m_scale, amode.m_disp + disp);
     }
 
-    inline nanoasm::amode_si_t operator-(const nanoasm::amode_si_t& amode, intptr_t disp) {
-        return nanoasm::amode_si_t(amode.m_base, amode.m_index, amode.m_scale, amode.m_disp - disp);
+    inline nanoasm_t::amode_si_t operator-(const nanoasm_t::amode_si_t& amode, intptr_t disp) {
+        return nanoasm_t::amode_si_t(amode.m_base, amode.m_index, amode.m_scale, amode.m_disp - disp);
     }
 
 #endif
