@@ -39,6 +39,7 @@
           bytevector-c-int16-set!
           bytevector-c-int32-set!
           bytevector-c-int64-set!
+          bytevector-c-strlen
           sizeof:bool
           sizeof:int
           sizeof:long

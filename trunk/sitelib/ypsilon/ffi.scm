@@ -95,7 +95,7 @@
   (define expect-string
     (lambda (name n s)
       (cond ((eq? s 0) 0)
-            ((string? s) (string->utf8+nul s))
+            ((string? s) (string->utf8/nul s))
             (else
              (assertion-violation name (format "expected string or 0, but got ~r, as argument ~s" s n))))))
 
@@ -130,7 +130,7 @@
   (define expect-arg
     (lambda (x)
       (cond ((or (bytevector? x) (flonum? x) (and (integer? x) (exact? x))) x)
-            ((string? x) (string->utf8+nul x))
+            ((string? x) (string->utf8/nul x))
             (else
              (assertion-violation #f (format "expected exact integer, string, flonum, or bytevector, but got ~r" x))))))
 
@@ -143,7 +143,7 @@
                    (and (integer? (car lst)) (exact? (car lst))))
                (loop (+ n 1) (cdr lst) (cons (car lst) args)))
               ((string? (car lst))
-               (loop (+ n 1) (cdr lst) (cons (string->utf8+nul (car lst)) args)))
+               (loop (+ n 1) (cdr lst) (cons (string->utf8/nul (car lst)) args)))
               (else
                (assertion-violation name (format "expected exact integer, string, flonum, or bytevector, but got ~r, as argument ~s" (car lst) n)))))))
 
@@ -160,11 +160,7 @@
     (lambda (ref argv)
       (apply vector
              ref
-             (map (lambda (value) (string->utf8+nul value)) argv))))
-
-  (define string->utf8+nul
-    (lambda (s)
-      (string->utf8 (string-append s "\x0;"))))
+             (map (lambda (value) (string->utf8/nul value)) argv))))
 
   (define c-function-return-type-alist
     '((void           . #x00)    ; FFI_RETURN_TYPE_VOID
@@ -352,7 +348,7 @@
          (cons #\p
                (lambda (x)
                  (cond ((eq? x 0) 0)
-                       ((string? x) (string->utf8+nul x))
+                       ((string? x) (string->utf8/nul x))
                        (else
                         (assertion-violation #f (format "c function expected string or 0, but got ~r" x)))))))
         (else
@@ -582,4 +578,5 @@
                  (values ret err))))
            (lambda x
              (error 'c-function/win32-lasterror (format "only available on windows")))))))
+
   ) ;[end]

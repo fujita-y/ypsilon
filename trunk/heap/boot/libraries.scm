@@ -464,6 +464,9 @@
                         bytevector-c-float-ref bytevector-c-double-ref 
                         bytevector-c-int8-set! bytevector-c-int16-set! bytevector-c-int32-set! bytevector-c-int64-set!
                         bytevector-c-float-set! bytevector-c-double-set!
+;                        string->utf8+nul
+                        string->utf8/nul
+                        bytevector-c-strlen
                         collect collect-notify collect-stack-notify collect-trip-bytes display-heap-statistics display-object-statistics
                         backtrace expansion-backtrace backtrace-line-length display-backtrace
                         warning-level
