@@ -30,7 +30,7 @@ ifndef DATAMODEL
   endif
 endif
 
-ifneq (, $(findstring Linux, $(UNAME)))
+ifneq (,$(findstring Linux, $(UNAME)))
   ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
     ifeq ($(DATAMODEL), ILP32)  
       CXXFLAGS += -march=i686
@@ -38,12 +38,15 @@ ifneq (, $(findstring Linux, $(UNAME)))
   else
     CXXFLAGS += -march=native
   endif
-  ifeq ($(shell grep -i sse2 /proc/cpuinfo), )
+  ifeq (,$(shell grep -i sse2 /proc/cpuinfo))
     CXXFLAGS += -msse
   else
     CXXFLAGS += -msse2
   endif
   CXXFLAGS += -mfpmath=sse -pthread
+  ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
+    CXXFLAGS += -fno-stack-protector
+  endif
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -60,7 +63,7 @@ ifneq (, $(findstring Linux, $(UNAME)))
   LDLIBS = -lpthread -ldl
 endif
 
-ifneq (, $(findstring FreeBSD, $(UNAME)))
+ifneq (,$(findstring FreeBSD, $(UNAME)))
   ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
     ifeq ($(DATAMODEL), ILP32)  
       CXXFLAGS += -march=i686
@@ -75,6 +78,9 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
   endif
   CXXFLAGS += -mfpmath=sse -pthread
   CPPFLAGS += -D__LITTLE_ENDIAN__
+  ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
+    CXXFLAGS += -fno-stack-protector
+  endif
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -91,7 +97,7 @@ ifneq (, $(findstring FreeBSD, $(UNAME)))
   LDLIBS = -pthread
 endif
 
-ifneq (, $(findstring OpenBSD, $(UNAME)))
+ifneq (,$(findstring OpenBSD, $(UNAME)))
   ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
     ifeq ($(DATAMODEL), ILP32)  
       CXXFLAGS += -march=i686
@@ -106,6 +112,9 @@ ifneq (, $(findstring OpenBSD, $(UNAME)))
   endif
   CXXFLAGS += -mfpmath=sse -pthread
   CPPFLAGS += -D__LITTLE_ENDIAN__ -DNO_TLS
+  ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
+    CXXFLAGS += -fno-stack-protector
+  endif
   ifeq ($(DATAMODEL), ILP32)  
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
@@ -122,11 +131,11 @@ ifneq (, $(findstring OpenBSD, $(UNAME)))
   LDLIBS = -pthread
 endif
 
-ifneq (, $(findstring Darwin, $(UNAME)))
+ifneq (,$(findstring Darwin, $(UNAME)))
   CXXFLAGS += -arch i386 -msse2 -mfpmath=sse
   CPPFLAGS += -DNO_TLS
   SRCS += ffi_stub_darwin.s
-  ifneq (, $(USE_SDL))
+  ifneq (,$(USE_SDL))
     CPPFLAGS += -DUSE_SDL
     LDFLAGS = extension/SDL/darwin/i386/SDLmain.o -framework SDL -framework Cocoa 
   endif

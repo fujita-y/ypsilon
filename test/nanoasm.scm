@@ -241,7 +241,7 @@
           void* code = mmap(NULL, limit, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
           if (code == NULL) { perror(\"mmap\"); exit(1); }
           nanoasm_t nas;
-          #define __ nas.
+          using_nanoasm(nas);
           nanoasm_t::symbol_t L0 = nas.unique(\"L0\");
           nanoasm_t::symbol_t L1 = nas.unique(\"L1\");
           nas.org(code, limit);
