@@ -140,13 +140,13 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #define PORT_STDERR_FD      GetStdHandle(STD_ERROR_HANDLE)
 
   #ifndef SHUT_RD
-    #define SHUT_RD SD_RECEIVE
+    #define SHUT_RD             SD_RECEIVE
   #endif
   #ifndef SHUT_WR
-    #define SHUT_WR SD_SEND
+    #define SHUT_WR             SD_SEND
   #endif
   #ifndef SHUT_RDWR
-    #define SHUT_RDWR SD_BOTH
+    #define SHUT_RDWR           SD_BOTH
   #endif
   #ifndef HOST_NAME_MAX
     #define HOST_NAME_MAX       255

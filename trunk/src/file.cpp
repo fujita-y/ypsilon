@@ -437,6 +437,7 @@
     void*
     load_shared_object(scm_string_t path)
     {
+        if (path == NULL) return GetModuleHandleW(NULL);
         wchar_t ucs2[MAX_PATH];
         if (win32path(path, ucs2, array_sizeof(ucs2))) return LoadLibraryW(ucs2);
         return NULL;
@@ -685,6 +686,7 @@
     void*
     load_shared_object(scm_string_t path)
     {
+        if (path == NULL) return dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL);
         return dlopen(path->name, RTLD_LAZY | RTLD_GLOBAL);
     }
 
