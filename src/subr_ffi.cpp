@@ -17,6 +17,12 @@
 scm_obj_t
 subr_load_shared_object(VM* vm, int argc, scm_obj_t argv[])
 {
+    if (argc == 0) {
+        void* hdl = load_shared_object(NULL);
+        if (hdl) return uintptr_to_integer(vm->m_heap, (uintptr_t)hdl);
+        invalid_argument_violation(vm, "load-shared-object", last_shared_object_error(), NULL, -1, argc, argv);
+        return scm_undef;
+    }
     if (argc == 1) {
         if (STRINGP(argv[0])) {
             scm_string_t string = (scm_string_t)argv[0];
@@ -28,7 +34,7 @@ subr_load_shared_object(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "load-shared-object", 0, "string", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "load-shared-object", 1, 1, argc, argv);
+    wrong_number_of_arguments_violation(vm, "load-shared-object", 0, 1, argc, argv);
     return scm_undef;
 }
 
