@@ -110,6 +110,7 @@
     bytevector-c-long-set!
     bytevector-c-short-ref
     bytevector-c-short-set!
+    bytevector-c-strlen
     bytevector-c-uint16-ref
     bytevector-c-uint32-ref
     bytevector-c-uint64-ref
@@ -834,6 +835,7 @@
     string->utf16
     string->utf32
     string->utf8
+    string->utf8/nul
     string-append
     string-ci-hash
     string-ci<=?

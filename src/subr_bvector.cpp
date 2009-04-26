@@ -1282,6 +1282,26 @@ subr_utf8_string(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+
+// string->utf8/nul
+scm_obj_t
+subr_string_utf8_nul(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            int size = string->size;
+            scm_bvector_t bvector = make_bvector(vm->m_heap, size + 1);
+            memcpy(bvector->elts, string->name, size + 1);
+            return bvector;
+        }
+        wrong_type_argument_violation(vm, "string->utf8/nul", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "string->utf8/nul", 1, 1, argc, argv);
+    return scm_undef;
+}
+
 // make-bytevector-mapping
 scm_obj_t
 subr_make_bytevector_mapping(VM* vm, int argc, scm_obj_t argv[])
@@ -1686,6 +1706,28 @@ subr_bytevector_c_double_set(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// bytevector-c-strlen
+scm_obj_t
+subr_bytevector_c_strlen(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (BVECTORP(argv[0])) {
+            scm_bvector_t bvector = (scm_bvector_t)argv[0];
+            int end = bvector->count;
+            int count = 0;
+            while (count < end) {
+                if (bvector->elts[count] == 0) break;
+                count++;
+            }
+            return MAKEFIXNUM(count);
+        }
+        wrong_type_argument_violation(vm, "bytevector-c-strlen", 0, "bytevector", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "bytevector-c-strlen", 1, 1, argc, argv);
+    return scm_undef;
+}
+
 void init_subr_bvector(object_heap_t* heap)
 {
 #define DEFSUBR(SYM, FUNC)  heap->intern_system_subr(SYM, FUNC)
@@ -1737,6 +1779,7 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector->u8-list", subr_bytevector_u8_list);
     DEFSUBR("u8-list->bytevector", subr_u8_list_bytevector);
     DEFSUBR("string->utf8", subr_string_utf8);
+    DEFSUBR("string->utf8/nul", subr_string_utf8_nul);
     DEFSUBR("utf8->string", subr_utf8_string);
     DEFSUBR("make-bytevector-mapping", subr_make_bytevector_mapping);
     DEFSUBR("bytevector-mapping?", subr_bytevector_mapping_pred);
@@ -1767,6 +1810,7 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector-c-int64-set!", subr_bytevector_c_int64_set);    
     DEFSUBR("bytevector-c-float-set!", subr_bytevector_c_float_set);    
     DEFSUBR("bytevector-c-double-set!", subr_bytevector_c_double_set);    
+    DEFSUBR("bytevector-c-strlen", subr_bytevector_c_strlen);    
 }
 
 
