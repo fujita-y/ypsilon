@@ -226,6 +226,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\nanoasm.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\object_factory.cpp"
 				>
 			</File>
@@ -421,6 +425,14 @@
 			</File>
 			<File
 				RelativePath=".\src\mutex.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\nanoasm.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\nanoasm_macro.h"
 				>
 			</File>
 			<File

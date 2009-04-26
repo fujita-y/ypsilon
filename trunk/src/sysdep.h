@@ -139,18 +139,27 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #define PORT_STDOUT_FD      GetStdHandle(STD_OUTPUT_HANDLE)
     #define PORT_STDERR_FD      GetStdHandle(STD_ERROR_HANDLE)
 
-  #ifndef SHUT_RD
+    #ifndef IPPROTO_TCP
+    #define IPPROTO_TCP         IPPROTO_TCP
+    #endif
+    #ifndef IPPROTO_UDP
+    #define IPPROTO_UDP         IPPROTO_UDP
+    #endif
+    #ifndef IPPROTO_RAW
+    #define IPPROTO_RAW         IPPROTO_RAW
+    #endif
+    #ifndef SHUT_RD
     #define SHUT_RD             SD_RECEIVE
-  #endif
-  #ifndef SHUT_WR
+    #endif
+    #ifndef SHUT_WR
     #define SHUT_WR             SD_SEND
-  #endif
-  #ifndef SHUT_RDWR
+    #endif
+    #ifndef SHUT_RDWR
     #define SHUT_RDWR           SD_BOTH
-  #endif
-  #ifndef HOST_NAME_MAX
+    #endif
+    #ifndef HOST_NAME_MAX
     #define HOST_NAME_MAX       255
-  #endif
+    #endif
 
     inline int      isnan(double x) { return _isnan(x); }
     inline int      isinf(double x) { return (!_finite(x) && !_isnan(x)); }
