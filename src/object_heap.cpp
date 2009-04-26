@@ -1754,7 +1754,11 @@ object_heap_t::init_architecture_feature()
 #undef ARCH_STRING
 
 #define ARCH_CCONST(name) put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(name))
-#define ARCH_CFALSE(name) put_hashtable(m_architecture_feature, make_symbol(this, #name), scm_false)
+#ifdef NDEBUG
+  #define ARCH_CFALSE(name) put_hashtable(m_architecture_feature, make_symbol(this, #name), scm_false)
+#else
+  #define ARCH_CFALSE(name) do { printf("ARCH_CFALSE(%s)\n", #name); put_hashtable(m_architecture_feature, make_symbol(this, #name), scm_false); } while(0)
+#endif
   #ifdef AF_UNSPEC
     ARCH_CCONST(AF_UNSPEC);
   #else
