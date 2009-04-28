@@ -2094,11 +2094,9 @@ create_fail:
                 return scm_undef;
             }
         }
-  #if !USE_CLOEXEC
         sysfunc = "sysconf";
         int open_max;
         if ((open_max = sysconf(_SC_OPEN_MAX)) < 0) goto sysconf_fail;
-  #endif
         sysfunc = "pipe";
         if (pipe(pipe0)) goto pipe_fail;
         if (pipe(pipe1)) goto pipe_fail;
@@ -2116,14 +2114,7 @@ create_fail:
             if (dup(pipe1[1]) == -1) goto dup_fail;
             if (close(2)) goto close_fail;
             if (dup(pipe2[1]) == -1) goto dup_fail;
-  #if !USE_CLOEXEC
-            for (int i = 3; i < open_max; i++) {
-                if (i == pipe0[0]) continue;
-                if (i == pipe1[1]) continue;
-                if (i == pipe2[1]) continue;
-                close(i);
-            }
-  #endif
+            for (int i = 3; i < open_max; i++) close(i);
             const char* command_name = ((scm_string_t)argv[0])->name;
             char** command_argv = (char**)alloca(sizeof(char*) * (argc + 1));
             for (int i = 0; i < argc; i++) command_argv[i] = ((scm_string_t)argv[i])->name;
@@ -2249,11 +2240,12 @@ wait_fail:
             int pid;
             if (exact_integer_to_int(argv[0], &pid)) {
                 while (true) {
-                    pid = waitpid(pid, &status, option);
-                    if (pid == -1) {
+                    int pid2 = waitpid(pid, &status, option);
+                    if (pid2 == -1) {
                         if (errno == EINTR) continue;
                         goto waitpid_fail;
                     }
+                    if (pid2 != pid) return scm_false;
                     break;
                 }
                 if (WIFEXITED(status)) return int_to_integer(vm->m_heap, WEXITSTATUS(status));
@@ -3554,6 +3546,233 @@ subr_vmi_return_pop_cont_address(VM* vm, int argc, scm_obj_t argv[])
 }
 #endif
 
+/************/
+
+static scm_bvector_t make_env_data(VM* vm, scm_obj_t env)
+{
+    scm_obj_t lst = env;
+    if (listp(lst)) {
+        int count = list_length(lst);
+        int bsize = (count + 1) * sizeof(void*);
+        while (PAIRP(lst)) {
+            if (PAIRP(CAR(lst)) && STRINGP(CAAR(lst)) && STRINGP(CDAR(lst))) {
+                scm_string_t lhs = (scm_string_t)CAAR(lst);
+                scm_string_t rhs = (scm_string_t)CDAR(lst);
+                bsize += strlen(lhs->name) + strlen(rhs->name) + 1 + 1;
+            } else {
+                return NULL;
+            }
+            lst = CDR(lst);
+        }
+        if (lst != scm_nil) return NULL;
+        scm_bvector_t bv = make_bvector(vm->m_heap, bsize);
+        char** index = (char**)bv->elts;
+        char* datum = (char*)(index + count + 1);
+        lst = env;
+        int i = 0;
+        while (PAIRP(lst)) {
+            scm_string_t lhs = (scm_string_t)CAAR(lst);
+            scm_string_t rhs = (scm_string_t)CDAR(lst);
+            index[i++] = datum;
+            strcpy(datum, lhs->name);
+            datum += strlen(lhs->name);
+            *datum++ = '=';
+            strcpy(datum, rhs->name);
+            datum += strlen(rhs->name);
+            *datum++ = '\0';
+            lst = CDR(lst);
+        }
+        index[i] = NULL;
+        assert((uintptr_t)datum - (uintptr_t)index == bsize);
+        return bv;
+    }
+    return NULL;
+}
+
+// process-spawn
+scm_obj_t
+subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
+{
+#if _MSC_VER
+    raise_error(vm, "process-spawn", "windows not supported yet", 0);
+    return scm_undef;
+#else
+    fd_t fd0 = INVALID_FD;
+    fd_t fd1 = INVALID_FD;
+    fd_t fd2 = INVALID_FD;
+    int pipe0[2] = { INVALID_FD, INVALID_FD };
+    int pipe1[2] = { INVALID_FD, INVALID_FD };
+    int pipe2[2] = { INVALID_FD, INVALID_FD };
+    const char* sysfunc = NULL;
+    int res = 0;
+    if (argc >= 6) {
+        if (!BOOLP(argv[0])) { // search
+            wrong_type_argument_violation(vm, "process-spawn", 0, "#t or #f", argv[0], argc, argv);
+            return scm_undef;
+        }
+        bool search = (argv[0] == scm_true);
+        scm_bvector_t env = NULL;
+        if (argv[1] != scm_false) { // environment
+            env = make_env_data(vm, argv[1]);
+            if (env == NULL) {
+                wrong_type_argument_violation(vm, "process-spawn", 1, "#f or environment variable alist", argv[1], argc, argv);
+                return scm_undef;
+            }
+        }
+        if (argv[2] != scm_false) { // stdin
+            if (PORTP(argv[2])) {
+                scm_port_t port = (scm_port_t)argv[2];
+                switch (port->type) {
+                    case SCM_PORT_TYPE_NAMED_FILE: fd0 = port->fd; break;
+                    case SCM_PORT_TYPE_SOCKET: fd0 = ((scm_socket_t)port_socket(port))->fd; break;
+                }
+            } else if (SOCKETP(argv[2])) {
+                fd0 = ((scm_socket_t)argv[2])->fd;
+            }
+            if (fd0 == INVALID_FD) {
+                wrong_type_argument_violation(vm, "process-spawn", 2, "#f, opened file port, or opend socket", argv[2], argc, argv);
+                return scm_undef;
+            }
+        }
+        if (argv[3] != scm_false) { // stdout
+            if (PORTP(argv[3])) {
+                scm_port_t port = (scm_port_t)argv[3];
+                switch (port->type) {
+                    case SCM_PORT_TYPE_NAMED_FILE: fd1 = port->fd; break;
+                    case SCM_PORT_TYPE_SOCKET: fd1 = ((scm_socket_t)port_socket(port))->fd; break;
+                }
+            } else if (SOCKETP(argv[3])) {
+                fd1 = ((scm_socket_t)argv[3])->fd;
+            }
+            if (fd1 == INVALID_FD) {
+                wrong_type_argument_violation(vm, "process-spawn", 3, "#f, opened file port, or opend socket", argv[3], argc, argv);
+                return scm_undef;
+            }
+        }
+        if (argv[4] != scm_false) { // stderr
+            if (PORTP(argv[4])) {
+                scm_port_t port = (scm_port_t)argv[4];
+                switch (port->type) {
+                    case SCM_PORT_TYPE_NAMED_FILE: fd2 = port->fd; break;
+                    case SCM_PORT_TYPE_SOCKET: fd2 = ((scm_socket_t)port_socket(port))->fd; break;
+                }
+            } else if (SOCKETP(argv[4])) {
+                fd2 = ((scm_socket_t)argv[4])->fd;
+            }
+            if (fd2 == INVALID_FD) {
+                wrong_type_argument_violation(vm, "process-spawn", 4, "#f, opened file port, or opend socket", argv[4], argc, argv);
+                return scm_undef;
+            }
+        }
+        for (int i = 5; i < argc; i++) {
+            if (!STRINGP(argv[i])) {
+                wrong_type_argument_violation(vm, "process-spawn", i, "string", argv[i], argc, argv);
+                return scm_undef;
+            }
+        }
+        int b = (fd0 != INVALID_FD && fd0 != 0) + ((fd1 != INVALID_FD && fd1 != 1) << 1);
+        bool extra_fd = (fd1 == 0 && (b & 0x01)) || (fd2 == 0 && (b & 0x01)) || (fd2 == 1 && (b & 0x02));
+        if (extra_fd) {
+            sysfunc = "dup";        
+            if (fd0 != INVALID_FD) while (fd0 < 3) if ((fd0 = dup(fd0)) == -1) goto dup_fail;
+            if (fd1 != INVALID_FD) while (fd1 < 3) if ((fd1 = dup(fd1)) == -1) goto dup_fail;
+            if (fd2 != INVALID_FD) while (fd2 < 3) if ((fd2 = dup(fd2)) == -1) goto dup_fail;
+        }        
+        sysfunc = "pipe";        
+        if (fd0 == INVALID_FD && pipe(pipe0)) goto pipe_fail;
+        if (fd1 == INVALID_FD && pipe(pipe1)) goto pipe_fail;
+        if (fd2 == INVALID_FD && pipe(pipe2)) goto pipe_fail;
+        const char* command_name = ((scm_string_t)argv[5])->name;
+        char** command_argv = (char**)alloca(sizeof(char*) * (argc - 5 + 1));
+        for (int i = 5; i < argc; i++) command_argv[i - 5] = ((scm_string_t)argv[i])->name;
+        command_argv[argc - 5] = (char*)NULL;
+        posix_spawn_file_actions_t file_actions;
+        posix_spawn_file_actions_init(&file_actions);
+        sysfunc = "posix_spawn_file_actions_addclose";
+        if (pipe0[1] != INVALID_FD && (res = posix_spawn_file_actions_addclose(&file_actions, pipe0[1])) != 0) goto addclose_fail;
+        if (pipe1[0] != INVALID_FD && (res = posix_spawn_file_actions_addclose(&file_actions, pipe1[0])) != 0) goto addclose_fail;
+        if (pipe2[0] != INVALID_FD && (res = posix_spawn_file_actions_addclose(&file_actions, pipe2[0])) != 0) goto addclose_fail;
+        sysfunc = "posix_spawn_file_actions_adddup2";
+        if ((res = posix_spawn_file_actions_adddup2(&file_actions, (pipe0[0] != INVALID_FD ? pipe0[0] : fd0), 0)) != 0) goto adddup2_fail;
+        if ((res = posix_spawn_file_actions_adddup2(&file_actions, (pipe1[1] != INVALID_FD ? pipe1[1] : fd1), 1)) != 0) goto adddup2_fail;
+        if ((res = posix_spawn_file_actions_adddup2(&file_actions, (pipe2[1] != INVALID_FD ? pipe2[1] : fd2), 2)) != 0) goto adddup2_fail;
+        sysfunc = "posix_spawn_file_actions_addclose";
+        if (pipe0[0] != INVALID_FD && (res = posix_spawn_file_actions_addclose(&file_actions, pipe0[0])) != 0) goto addclose_fail;
+        if (pipe1[1] != INVALID_FD && (res = posix_spawn_file_actions_addclose(&file_actions, pipe1[1])) != 0) goto addclose_fail;
+        if (pipe2[1] != INVALID_FD && (res = posix_spawn_file_actions_addclose(&file_actions, pipe2[1])) != 0) goto addclose_fail;
+        if (extra_fd) {
+            if (fd0 != INVALID_FD && (res = posix_spawn_file_actions_addclose(&file_actions, fd0)) != 0) goto addclose_fail;
+            if (fd1 != INVALID_FD && (res = posix_spawn_file_actions_addclose(&file_actions, fd1)) != 0) goto addclose_fail;
+            if (fd2 != INVALID_FD && (res = posix_spawn_file_actions_addclose(&file_actions, fd2)) != 0) goto addclose_fail;
+        }
+        pid_t cpid;
+        if (search) {
+            sysfunc = "posix_spawnp";        
+            res = posix_spawnp(&cpid, command_name, &file_actions, NULL, command_argv, env ? (char**)env->elts : environ);
+        } else {
+            sysfunc = "posix_spawn";        
+            res = posix_spawn(&cpid, command_name, &file_actions, NULL, command_argv, env ? (char**)env->elts : environ);
+        }
+        posix_spawn_file_actions_destroy(&file_actions);
+        if (res) goto spawn_fail;
+        sysfunc = "close";
+        if (pipe0[0] != INVALID_FD && close(pipe0[0])) goto close_fail;
+        if (pipe1[1] != INVALID_FD && close(pipe1[1])) goto close_fail;
+        if (pipe2[1] != INVALID_FD && close(pipe2[1])) goto close_fail;
+        if (extra_fd) {
+            if (fd0 != INVALID_FD && close(fd0)) goto close_fail;
+            if (fd1 != INVALID_FD && close(fd1)) goto close_fail;
+            if (fd2 != INVALID_FD && close(fd2)) goto close_fail;
+        }
+        assert(sizeof(pid_t) == sizeof(int));
+        return make_list(vm->m_heap,
+                         4,
+                         int_to_integer(vm->m_heap, cpid),
+                         (pipe0[1] != INVALID_FD) ? make_std_port(vm->m_heap,
+                                                                  pipe0[1],
+                                                                  make_string_literal(vm->m_heap, "process-stdin"),
+                                                                  SCM_PORT_DIRECTION_OUT,
+                                                                  SCM_PORT_FILE_OPTION_NONE,
+                                                                  SCM_PORT_BUFFER_MODE_BLOCK,
+                                                                  scm_false)
+                                                  : scm_false,
+                         (pipe1[0] != INVALID_FD) ? make_std_port(vm->m_heap,
+                                                                  pipe1[0],
+                                                                  make_string_literal(vm->m_heap, "process-stdout"),
+                                                                  SCM_PORT_DIRECTION_IN,
+                                                                  SCM_PORT_FILE_OPTION_NONE,
+                                                                  SCM_PORT_BUFFER_MODE_BLOCK,
+                                                                  scm_false)
+                                                  : scm_false,
+                         (pipe2[0] != INVALID_FD) ? make_std_port(vm->m_heap,
+                                                                  pipe2[0],
+                                                                  make_string_literal(vm->m_heap, "process-stderr"),
+                                                                  SCM_PORT_DIRECTION_IN,
+                                                                  SCM_PORT_FILE_OPTION_NONE,
+                                                                  SCM_PORT_BUFFER_MODE_BLOCK,
+                                                                  scm_false)
+                                                  : scm_false);
+    }
+    wrong_number_of_arguments_violation(vm, "process-spawn", 6, -1, argc, argv);
+    return scm_undef;
+
+    pipe_fail: close_fail: dup_fail:
+        res = errno;
+    spawn_fail: addclose_fail: adddup2_fail: {
+        char message[256];
+        snprintf(message, sizeof(message), "%s() failed. %s", sysfunc, strerror(res));
+        if (pipe0[0] != INVALID_FD) close(pipe0[0]);
+        if (pipe0[1] != INVALID_FD) close(pipe0[1]);
+        if (pipe1[0] != INVALID_FD) close(pipe1[0]);
+        if (pipe1[1] != INVALID_FD) close(pipe1[1]);
+        if (pipe2[0] != INVALID_FD) close(pipe2[0]);
+        if (pipe2[1] != INVALID_FD) close(pipe2[1]);
+        raise_error(vm, "process-spawn", message, res, argc, argv);
+        return scm_undef;
+    }
+#endif
+}
+
 void
 init_subr_others(object_heap_t* heap)
 {
@@ -3629,6 +3848,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("system-share-path", subr_system_share_path);
     DEFSUBR("system",subr_system);
     DEFSUBR("process",subr_process);
+    DEFSUBR("process-spawn",subr_process_spawn);
     DEFSUBR("process-wait", subr_process_wait);
     DEFSUBR("getenv",subr_getenv);
     DEFSUBR("gethostname", subr_gethostname);

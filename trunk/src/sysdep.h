@@ -267,6 +267,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #include <netdb.h>
     #include <dirent.h>
     #include <errno.h>
+    #include <spawn.h>
 
     typedef int     fd_t;
 
