@@ -54,7 +54,7 @@ public:
 #endif
     const reg32_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
     const reg8_t al, cl, dl, bl;
-    
+
 private:
     enum { undefined = 0x40 };
 
@@ -72,10 +72,7 @@ private:
         uint8_t m_octets[8];
         int m_bytecount;
         void set_disp32(int i, int32_t disp) {
-            m_octets[i] = disp & 0xff;
-            m_octets[i+1] = (disp >> 8) & 0xff;
-            m_octets[i+2] = (disp >> 16) & 0xff;
-            m_octets[i+3] = (disp >> 24) & 0xff;
+            *(int32_t*)(m_octets + i) = disp;
         }
     };
 
@@ -238,101 +235,29 @@ private:
     #endif
     };
 
-    int rex(uint8_t dst, const uint8_t src) {
-        return ((dst >> 1) & 0x4) + ((src >> 3) & 0x1);
-    }
-
-    int rex(const reg64_t& dst, const reg64_t& src) {
-        return rex(dst.m_regcode, src.m_regcode);
-    }
-
-    int rex(const reg64_t reg) {
-        return ((reg.m_regcode >> 3) & 0x1);
-    }
-
-    int rex(const amode_t& amode) {
-        return ((amode.m_base >> 3) & 0x1);
-    }
-
-    int rex(const amode_si_t& amode) {
-        amode_si_t amode2 = optimize_amode_si(amode);
-        return ((amode2.m_base >> 3) & 0x1) + ((amode2.m_index >> 2) & 0x2);
-    }
-
-    int rex(const reg64_t& reg, const amode_t& amode) {
-        return ((reg.m_regcode >> 1) & 0x4) + ((amode.m_base >> 3) & 0x1);
-    }
-
-    int rex(const reg64_t& reg, const amode_si_t& amode) {
-        amode_si_t amode2 = optimize_amode_si(amode);
-        return ((reg.m_regcode >> 1) & 0x4) + ((amode2.m_base >> 3) & 0x1) + ((amode2.m_index >> 2) & 0x2);
-    }
-
-    int mod(uint8_t dst, const uint8_t src) {
-        return 0xC0 + ((dst & 7) << 3) + (src & 7);
-    }
-
-    int mod(const reg8_t& dst, const reg8_t& src) {
-        return mod(dst.m_regcode, src.m_regcode);
-    }
-
-    int mod(const reg32_t& dst, const reg32_t& src) {
-        return mod(dst.m_regcode, src.m_regcode);
-    }
-
-    int mod(const reg64_t& dst, const reg64_t& src) {
-        if (dst.m_regcode == regcode_rip) ASSEMBLE_ERROR("rip can not be used for register operand");
-        if (src.m_regcode == regcode_rip) ASSEMBLE_ERROR("rip can not be used for register operand");
-        return 0xC0 + ((dst.m_regcode & 7) << 3) + (src.m_regcode & 7);
-    }
-
-    int mod(uint8_t regcode, const reg8_t& reg) {
-        return 0xC0 + ((regcode & 7) << 3) + (reg.m_regcode & 7);
-    }
-
-    int mod(uint8_t regcode, const reg32_t& reg) {
-        return 0xC0 + ((regcode & 7) << 3) + (reg.m_regcode & 7);
-    }
-
-    int mod(uint8_t regcode, const reg64_t& reg) {
-        return 0xC0 + ((regcode & 7) << 3) + (reg.m_regcode & 7);
-    }
-
-    aform_t mod(uint8_t regcode, uint8_t base, uint8_t index, uint8_t scale, intptr_t disp);
-
-    aform_t mod(uint8_t regcode, const amode_t& amode) {
-        return mod(regcode, amode.m_base, undefined, undefined, amode.m_disp);
-    }
-
-    aform_t mod(uint8_t regcode, const amode_si_t& amode) {
-        amode_si_t amode2 = optimize_amode_si(amode);
-        return mod(regcode, amode2.m_base, amode2.m_index, amode2.m_scale, amode2.m_disp);
-    }
-
-    aform_t mod(const reg8_t& reg, const amode_t& amode) {
-        return mod(reg.m_regcode, amode);
-    }
-
-    aform_t mod(const reg32_t& reg, const amode_t& amode) {
-        return mod(reg.m_regcode, amode);
-    }
-
-    aform_t mod(const reg64_t& reg, const amode_t& amode) {
-        return mod(reg.m_regcode, amode);
-    }
-
-    aform_t mod(const reg8_t& reg, const amode_si_t& amode) {
-        return mod(reg.m_regcode, amode);
-    }
-
-    aform_t mod(const reg32_t& reg, const amode_si_t& amode) {
-        return mod(reg.m_regcode, amode);
-    }
-
-    aform_t mod(const reg64_t& reg, const amode_si_t& amode) {
-        return mod(reg.m_regcode, amode);
-    }
-
+    int rex(uint8_t dst, uint8_t src);
+    int rex(const reg64_t& dst, const reg64_t& src);
+    int rex(const reg64_t& reg, const amode_t& amode);
+    int rex(const reg64_t& reg, const amode_si_t& amode);
+    int rex(const reg64_t& reg);
+    int rex(const amode_t& amode);
+    int rex(const amode_si_t& amode);
+    int mod(uint8_t dst, uint8_t src);
+    int mod(uint8_t dst, const reg8_t& src);
+    int mod(uint8_t dst, const reg32_t& src);
+    int mod(uint8_t dst, const reg64_t& src);
+    int mod(const reg8_t& dst, const reg8_t& src);
+    int mod(const reg32_t& dst, const reg32_t& src);
+    int mod(const reg64_t& dst, const reg64_t& src);
+    aform_t mod(uint8_t reg, uint8_t base, uint8_t index, uint8_t scale, intptr_t disp);
+    aform_t mod(uint8_t reg, const amode_t& amode);
+    aform_t mod(uint8_t reg, const amode_si_t& amode);
+    aform_t mod(const reg8_t& reg, const amode_t& amode);
+    aform_t mod(const reg32_t& reg, const amode_t& amode);
+    aform_t mod(const reg64_t& reg, const amode_t& amode);
+    aform_t mod(const reg8_t& reg, const amode_si_t& amode);
+    aform_t mod(const reg32_t& reg, const amode_si_t& amode);
+    aform_t mod(const reg64_t& reg, const amode_si_t& amode);
     amode_si_t optimize_amode_si(const amode_si_t& amode);
 
 public:
@@ -372,7 +297,7 @@ private:
         int m_size;
         bool m_absolute;
     };
-    
+
     typedef std::map<const symbol_t, const uintptr_t> symbol_map_t;
     typedef std::multimap<const symbol_t, const reloc_t> reloc_map_t;
     symbol_map_t m_symbol;
@@ -382,16 +307,16 @@ private:
     uintptr_t m_pc;
     int m_unique_count;
 
-    void resolve(const symbol_t& symbol);
-    void bind(const symbol_t& symbol, uintptr_t value);
+    uintptr_t absolute_reloc(const symbol_t& target);
     int32_t check_reloc(int64_t rel, int size);
+    int32_t relative_reloc(const symbol_t& target);
     int32_t branch_reloc(const symbol_t& target, int size);
     int32_t branch_reloc8(const symbol_t& target);
     int32_t branch_reloc32(const symbol_t& target);
-    int32_t relative_reloc(const symbol_t& target);
-    uintptr_t absolute_reloc(const symbol_t& target);
     bool branch_inrel8(const symbol_t& target);
     bool branch_inrel32(const symbol_t& target);
+    void resolve(const symbol_t& symbol);
+    void bind(const symbol_t& symbol, uintptr_t value);
     void emit_b8(uint8_t i8);
     void emit_b32(int32_t i32);
     void emit_b64(int64_t i64);
@@ -437,7 +362,7 @@ public:
     inline nanoasm_t::amode_t operator-(const nanoasm_t::amode_t& amode, intptr_t disp) {
         return nanoasm_t::amode_t(amode.m_base, amode.m_disp - disp);
     }
-    
+
     inline nanoasm_t::amode_si_t operator*(const nanoasm_t::reg64_t& index, int scale) {
         return nanoasm_t::amode_si_t(nanoasm_t::undefined, index.m_regcode, scale, 0);
     }
@@ -463,7 +388,7 @@ public:
     inline nanoasm_t::amode_si_t operator-(const nanoasm_t::amode_si_t& amode, intptr_t disp) {
         return nanoasm_t::amode_si_t(amode.m_base, amode.m_index, amode.m_scale, amode.m_disp - disp);
     }
-    
+
 #else
     inline nanoasm_t::amode_t operator+(const nanoasm_t::reg32_t& base, intptr_t disp) {
         return nanoasm_t::amode_t(base.m_regcode, disp);

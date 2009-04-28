@@ -640,6 +640,7 @@
           SDL_SetColorKey
           SDL_SetColors
           SDL_SetCursor
+          SDL_SetError
           SDL_SetEventFilter
           SDL_SetGamma
           SDL_SetGammaRamp

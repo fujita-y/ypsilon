@@ -273,7 +273,17 @@ static void throw_io_error(int operation, const char* message)
 
     static inline int io_open(const char* path, int oflag, int pmode)
     {
+  #if USE_CLOEXEC
+    #if defined(O_CLOEXEC)
+        return open(path, oflag | O_CLOEXEC, pmode);
+    #else
+        int fd = open(path, oflag, pmode);
+        if (fd >= 0) fcntl(fd, F_SETFD, FD_CLOEXEC);
+        return fd;        
+    #endif
+  #else
         return open(path, oflag, pmode);
+  #endif
     }
 
     static inline int io_close(fd_t fd)

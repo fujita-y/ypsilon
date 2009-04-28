@@ -225,10 +225,9 @@
   <caption class="synopsis_box_caption">syntax:</caption>
   <tr>
     <td>
-      <div>
-      (load-shared-object <span class="synopsis_argument">filename</span>)
-      <span class="synopsis_retval"> =&gt; &lt;handle&gt;</span>
-      </div>
+      <div>(load-shared-object)</div>
+      <div>(load-shared-object <span class="synopsis_argument">filename</span>)</div>
+      <div><span class="synopsis_retval"> =&gt; &lt;handle&gt;</span></div>
     </td>
   </tr>
 </table>
@@ -243,13 +242,22 @@
     </td>
   </tr>
 </table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">notes:</caption>
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.ffi.html#load-shared-object">load-shared-object</a> returns the handle for the main program if <span class="desc_argument">filename</span> is omitted.</div>
+    </td>
+  </tr>
+</table>
 <table class="example_box" border="0">
-  <caption class="example_box_caption">examples:</caption>
   <tr>
     <td>
       <div>&gt; (import (rnrs) (ypsilon ffi))</div>
-      <div>&gt; (load-shared-object &quot;libc.so.6&quot;) <span class="example_comment">; Ubuntu 8.10</span></div>
-      <div><span class="example_stdout">3086288880</span></div>
+      <div>&gt; (load-shared-object)</div>
+      <div><span class="example_stdout">3086820976</span></div>
+      <div>&gt; (load-shared-object &quot;libc.so.6&quot;) <span class="example_comment">; Ubuntu 9.04</span></div>
+      <div><span class="example_stdout">3086481440</span></div>
     </td>
   </tr>
 </table>
@@ -1606,6 +1614,14 @@
   </tr>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a></span>
+    </td>
+    <td>
+      <span class="exports_origin">(ypsilon c-types)</span>
+    </td>
+  </tr>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:bool">sizeof:bool</a></span>
     </td>
     <td>
@@ -1909,6 +1925,11 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-short-set!">bytevector-c-short-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a></span>
     </td>
   </tr>
   <tr>

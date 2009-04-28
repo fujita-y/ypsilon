@@ -2094,9 +2094,11 @@ create_fail:
                 return scm_undef;
             }
         }
+  #if !USE_CLOEXEC
         sysfunc = "sysconf";
         int open_max;
         if ((open_max = sysconf(_SC_OPEN_MAX)) < 0) goto sysconf_fail;
+  #endif
         sysfunc = "pipe";
         if (pipe(pipe0)) goto pipe_fail;
         if (pipe(pipe1)) goto pipe_fail;
@@ -2114,12 +2116,14 @@ create_fail:
             if (dup(pipe1[1]) == -1) goto dup_fail;
             if (close(2)) goto close_fail;
             if (dup(pipe2[1]) == -1) goto dup_fail;
+  #if !USE_CLOEXEC
             for (int i = 3; i < open_max; i++) {
                 if (i == pipe0[0]) continue;
                 if (i == pipe1[1]) continue;
                 if (i == pipe2[1]) continue;
                 close(i);
             }
+  #endif
             const char* command_name = ((scm_string_t)argv[0])->name;
             char** command_argv = (char**)alloca(sizeof(char*) * (argc + 1));
             for (int i = 0; i < argc; i++) command_argv[i] = ((scm_string_t)argv[i])->name;

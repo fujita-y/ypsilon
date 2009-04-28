@@ -18,6 +18,282 @@ nanoasm_t::nanoasm_t()
     m_org = m_limit = m_pc = m_unique_count = 0;
 }
 
+nanoasm_t::amode_si_t
+nanoasm_t::optimize_amode_si(const amode_si_t& amode)
+{
+    if (amode.m_scale == 1) {
+        if (amode.m_base == undefined) {
+            return amode_si_t(amode.m_index, undefined, 1, amode.m_disp);
+        } else {
+            if (amode.m_index == regcode_rsp) {
+                return amode_si_t(amode.m_index, amode.m_base, 1, amode.m_disp);
+            }
+        }
+    } else if (amode.m_scale == 2 && amode.m_base == undefined) {
+        return amode_si_t(amode.m_index, amode.m_index, 1, amode.m_disp);
+    }
+    return amode;
+}
+
+int
+nanoasm_t::rex(uint8_t dst, uint8_t src)
+{
+    return ((dst >> 1) & 0x4) + ((src >> 3) & 0x1);
+}
+
+int
+nanoasm_t::rex(const reg64_t& dst, const reg64_t& src)
+{
+    return rex(dst.m_regcode, src.m_regcode);
+}
+
+int
+nanoasm_t::rex(const reg64_t& reg)
+{
+    return ((reg.m_regcode >> 3) & 0x1);
+}
+
+int
+nanoasm_t::rex(const amode_t& amode)
+{
+    return ((amode.m_base >> 3) & 0x1);
+}
+
+int
+nanoasm_t::rex(const amode_si_t& amode)
+{
+    amode_si_t amode2 = optimize_amode_si(amode);
+    return ((amode2.m_base >> 3) & 0x1) + ((amode2.m_index >> 2) & 0x2);
+}
+
+int
+nanoasm_t::rex(const reg64_t& reg, const amode_t& amode)
+{
+    return ((reg.m_regcode >> 1) & 0x4) + ((amode.m_base >> 3) & 0x1);
+}
+
+int
+nanoasm_t::rex(const reg64_t& reg, const amode_si_t& amode)
+{
+    amode_si_t amode2 = optimize_amode_si(amode);
+    return ((reg.m_regcode >> 1) & 0x4) + ((amode2.m_base >> 3) & 0x1) + ((amode2.m_index >> 2) & 0x2);
+}
+
+int
+nanoasm_t::mod(uint8_t dst, uint8_t src)
+{
+    return 0xC0 + ((dst & 7) << 3) + (src & 7);
+}
+
+int
+nanoasm_t::mod(const reg8_t& dst, const reg8_t& src)
+{
+    return mod(dst.m_regcode, src.m_regcode);
+}
+
+int
+nanoasm_t::mod(const reg32_t& dst, const reg32_t& src)
+{
+    return mod(dst.m_regcode, src.m_regcode);
+}
+
+int
+nanoasm_t::mod(const reg64_t& dst, const reg64_t& src)
+{
+    if (dst.m_regcode == regcode_rip) ASSEMBLE_ERROR("rip can not be used for register operand");
+    if (src.m_regcode == regcode_rip) ASSEMBLE_ERROR("rip can not be used for register operand");
+    return 0xC0 + ((dst.m_regcode & 7) << 3) + (src.m_regcode & 7);
+}
+
+int
+nanoasm_t::mod(uint8_t dst, const reg8_t& src)
+{
+    return 0xC0 + ((dst & 7) << 3) + (src.m_regcode & 7);
+}
+
+int
+nanoasm_t::mod(uint8_t dst, const reg32_t& src)
+{
+    return 0xC0 + ((dst & 7) << 3) + (src.m_regcode & 7);
+}
+
+int
+nanoasm_t::mod(uint8_t dst, const reg64_t& src)
+{
+    return 0xC0 + ((dst & 7) << 3) + (src.m_regcode & 7);
+}
+
+nanoasm_t::aform_t
+nanoasm_t::mod(uint8_t reg, uint8_t base, uint8_t index, uint8_t scale, intptr_t disp)
+{
+#if ARCH_LP64
+    if (disp < INT32_MIN || disp > INT32_MAX) ASSEMBLE_ERROR("displacement out of 32 bit range");
+#endif
+    if (scale == 1) {
+        if (base == undefined) {
+            base = index;
+            index = scale = undefined;
+        } else {
+            if (index == regcode_rsp) {
+                int temp = index;
+                index = scale;
+                scale = temp;
+            }
+        }
+    } else if (scale == 2 && base == undefined) {
+        base = index;
+        scale = 1;
+    }
+    aform_t aform;
+    if (index == regcode_rip) ASSEMBLE_ERROR("rip can not be used as index");
+    if (index != undefined || base == regcode_rsp || base == regcode_r12) {
+        if (base == regcode_rip) ASSEMBLE_ERROR("invalid register combination");
+        int reg_mem = ((reg & 7) << 3) + 0x04;
+        if (base == undefined) {
+            aform.m_octets[0] = reg_mem;
+            aform.set_disp32(2, disp);
+            aform.m_bytecount = 6;
+        } else {
+            if (disp) {
+                if (disp >= -128 && disp <= 127) {
+                    aform.m_octets[0] = 0x40 + reg_mem;
+                    aform.m_octets[2] = disp;
+                    aform.m_bytecount = 3;
+                } else {
+                    aform.m_octets[0] = 0x80 + reg_mem;
+                    aform.set_disp32(2, disp);
+                    aform.m_bytecount = 6;
+                }
+            } else {
+                if (base == regcode_rbp || base == regcode_r13) {
+                    aform.m_octets[0] = 0x40 + reg_mem;
+                    aform.m_octets[2] = 0;
+                    aform.m_bytecount = 3;
+                } else {
+                    aform.m_octets[0] = reg_mem;
+                    aform.m_bytecount = 2;
+                }
+            }
+        }
+        int sib = 0;
+        switch (scale) {
+            case 1: break;
+            case 2: sib = 0x40; break;
+            case 4: sib = 0x80; break;
+            case 8: sib = 0xC0; break;
+            default:
+                if (index != undefined) ASSEMBLE_ERROR("invalid scale");
+                break;
+        }
+        if (index == regcode_rsp) ASSEMBLE_ERROR("esp and rsp can not be used as index");
+        if (index == undefined) {
+            aform.m_octets[1] = sib + 0x20 + (base & 7);
+            return aform;
+        } else if (base == undefined) {
+            aform.m_octets[1] = sib + ((index & 7) << 3) + 0x05;
+            return aform;
+        } else {
+            aform.m_octets[1] = sib + ((index & 7) << 3) + (base & 7);
+        }
+        return aform;
+    }
+#if ARCH_LP64
+    if (base == regcode_rip && index == undefined) {
+        aform.m_octets[0] = 0x05 + ((reg & 7) << 3);
+        aform.set_disp32(1, disp);
+        aform.m_bytecount = 5;
+        return aform;
+    }
+    if (base == undefined && index == undefined) {
+        aform.m_octets[0] = 0x04 + ((reg & 7) << 3);
+        aform.m_octets[1] = 0x25;
+        aform.set_disp32(2, disp);
+        aform.m_bytecount = 6;
+        return aform;
+    }
+#else
+    if (base == undefined && index == undefined) {
+        aform.m_octets[0] = 0x05 + ((reg & 7) << 3);
+        aform.set_disp32(1, disp);
+        aform.m_bytecount = 5;
+        return aform;
+    }
+#endif
+    if (reg == regcode_rip) ASSEMBLE_ERROR("rip can not be used as operand");
+    int reg_mem = ((reg & 7) << 3) + (base & 7);
+    if (disp) {
+        if (disp >= -128 && disp <= 127) {
+            aform.m_octets[0] = 0x40 + reg_mem;
+            aform.m_octets[1] = disp;
+            aform.m_bytecount = 2;
+            return aform;
+        } else {
+            aform.m_octets[0] = 0x80 + reg_mem;
+            aform.set_disp32(1, disp);
+            aform.m_bytecount = 5;
+            return aform;
+        }
+    }
+    if (base == regcode_rbp || base == regcode_r13) {
+        aform.m_octets[0] = 0x40 + reg_mem;
+        aform.m_octets[1] = 0;
+        aform.m_bytecount = 2;
+        return aform;
+    }
+    aform.m_octets[0] = reg_mem;
+    aform.m_bytecount = 1;
+    return aform;
+}
+
+nanoasm_t::aform_t
+nanoasm_t::mod(uint8_t reg, const amode_t& amode)
+{
+    return mod(reg, amode.m_base, undefined, undefined, amode.m_disp);
+}
+
+nanoasm_t::aform_t
+nanoasm_t::mod(uint8_t reg, const amode_si_t& amode)
+{
+    amode_si_t amode2 = optimize_amode_si(amode);
+    return mod(reg, amode2.m_base, amode2.m_index, amode2.m_scale, amode2.m_disp);
+}
+
+nanoasm_t::aform_t
+nanoasm_t::mod(const reg8_t& reg, const amode_t& amode)
+{
+    return mod(reg.m_regcode, amode);
+}
+
+nanoasm_t::aform_t
+nanoasm_t::mod(const reg32_t& reg, const amode_t& amode)
+{
+    return mod(reg.m_regcode, amode);
+}
+
+nanoasm_t::aform_t
+nanoasm_t::mod(const reg64_t& reg, const amode_t& amode)
+{
+    return mod(reg.m_regcode, amode);
+}
+
+nanoasm_t::aform_t
+nanoasm_t::mod(const reg8_t& reg, const amode_si_t& amode)
+{
+    return mod(reg.m_regcode, amode);
+}
+
+nanoasm_t::aform_t
+nanoasm_t::mod(const reg32_t& reg, const amode_si_t& amode)
+{
+    return mod(reg.m_regcode, amode);
+}
+
+nanoasm_t::aform_t
+nanoasm_t::mod(const reg64_t& reg, const amode_si_t& amode)
+{
+    return mod(reg.m_regcode, amode);
+}
+
 void
 nanoasm_t::emit_b8(uint8_t i8)
 {
@@ -232,145 +508,6 @@ nanoasm_t::commit()
         else iter++;
     }
     return m_pc - m_org;
-}
-
-nanoasm_t::amode_si_t
-nanoasm_t::optimize_amode_si(const amode_si_t& amode)
-{
-    if (amode.m_scale == 1) {
-        if (amode.m_base == undefined) {
-            return amode_si_t(amode.m_index, undefined, 1, amode.m_disp);
-        } else {
-            if (amode.m_index == regcode_rsp) {
-                return amode_si_t(amode.m_index, amode.m_base, 1, amode.m_disp);
-            }
-        }
-    } else if (amode.m_scale == 2 && amode.m_base == undefined) {
-        return amode_si_t(amode.m_index, amode.m_index, 1, amode.m_disp);
-    }
-    return amode;
-}
-
-nanoasm_t::aform_t
-nanoasm_t::mod(uint8_t reg, uint8_t base, uint8_t index, uint8_t scale, intptr_t disp)
-{
-#if ARCH_LP64
-    if (disp < INT32_MIN || disp > INT32_MAX) ASSEMBLE_ERROR("displacement out of 32 bit range");
-#endif
-    if (scale == 1) {
-        if (base == undefined) {
-            base = index;
-            index = scale = undefined;
-        } else {
-            if (index == regcode_rsp) {
-                int temp = index;
-                index = scale;
-                scale = temp;
-            }
-        }
-    } else if (scale == 2 && base == undefined) {
-        base = index;
-        scale = 1;
-    }
-    aform_t aform;
-    if (index == regcode_rip) ASSEMBLE_ERROR("rip can not be used as index");
-    if (index != undefined || base == regcode_rsp || base == regcode_r12) {
-        if (base == regcode_rip) ASSEMBLE_ERROR("invalid register combination");
-        int reg_mem = ((reg & 7) << 3) + 0x04;
-        if (base == undefined) {
-            aform.m_octets[0] = reg_mem;
-            aform.set_disp32(2, disp);
-            aform.m_bytecount = 6;
-        } else {
-            if (disp) {
-                if (disp >= -128 && disp <= 127) {
-                    aform.m_octets[0] = 0x40 + reg_mem;
-                    aform.m_octets[2] = disp;
-                    aform.m_bytecount = 3;
-                } else {
-                    aform.m_octets[0] = 0x80 + reg_mem;
-                    aform.set_disp32(2, disp);
-                    aform.m_bytecount = 6;
-                }
-            } else {
-                if (base == regcode_rbp || base == regcode_r13) {
-                    aform.m_octets[0] = 0x40 + reg_mem;
-                    aform.m_octets[2] = 0;
-                    aform.m_bytecount = 3;
-                } else {
-                    aform.m_octets[0] = reg_mem;
-                    aform.m_bytecount = 2;
-                }
-            }
-        }
-        int sib = 0;
-        switch (scale) {
-            case 1: break;
-            case 2: sib = 0x40; break;
-            case 4: sib = 0x80; break;
-            case 8: sib = 0xC0; break;
-            default:
-                if (index != undefined) ASSEMBLE_ERROR("invalid scale");
-                break;
-        }
-        if (index == regcode_rsp) ASSEMBLE_ERROR("esp and rsp can not be used as index");
-        if (index == undefined) {
-            aform.m_octets[1] = sib + 0x20 + (base & 7);
-            return aform;
-        } else if (base == undefined) {
-            aform.m_octets[1] = sib + ((index & 7) << 3) + 0x05;
-            return aform;
-        } else {
-            aform.m_octets[1] = sib + ((index & 7) << 3) + (base & 7);
-        }
-        return aform;
-    }
-#if ARCH_LP64
-    if (base == regcode_rip && index == undefined) {
-        aform.m_octets[0] = 0x05 + ((reg & 7) << 3);
-        aform.set_disp32(1, disp);
-        aform.m_bytecount = 5;
-        return aform;
-    }
-    if (base == undefined && index == undefined) {
-        aform.m_octets[0] = 0x04 + ((reg & 7) << 3);
-        aform.m_octets[1] = 0x25;
-        aform.set_disp32(2, disp);
-        aform.m_bytecount = 6;
-        return aform;
-    }
-#else
-    if (base == undefined && index == undefined) {
-        aform.m_octets[0] = 0x05 + ((reg & 7) << 3);
-        aform.set_disp32(1, disp);
-        aform.m_bytecount = 5;
-        return aform;
-    }
-#endif
-    if (reg == regcode_rip) ASSEMBLE_ERROR("rip can not be used as operand");
-    int reg_mem = ((reg & 7) << 3) + (base & 7);
-    if (disp) {
-        if (disp >= -128 && disp <= 127) {
-            aform.m_octets[0] = 0x40 + reg_mem;
-            aform.m_octets[1] = disp;
-            aform.m_bytecount = 2;
-            return aform;
-        } else {
-            aform.m_octets[0] = 0x80 + reg_mem;
-            aform.set_disp32(1, disp);
-            aform.m_bytecount = 5;
-            return aform;
-        }
-    }
-    if (base == regcode_rbp || base == regcode_r13) {
-        aform.m_octets[0] = 0x40 + reg_mem;
-        aform.m_octets[1] = 0;
-        aform.m_bytecount = 2;
-        return aform;
-    }
-    aform.m_octets[0] = reg_mem;
-    aform.m_bytecount = 1;
-    return aform;
 }
 
 #if ARCH_LP64
