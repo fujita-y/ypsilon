@@ -286,8 +286,12 @@ subr_standard_input_port(VM* vm, int argc, scm_obj_t argv[])
                                  SCM_PORT_BUFFER_MODE_BLOCK,
                                  scm_false);
 #else
+            int fd = dup(PORT_STDIN_FD);
+  #if USE_CLOEXEC
+            if (fd >= 0) fcntl(fd, F_SETFD, FD_CLOEXEC);
+  #endif                
             port = make_std_port(vm->m_heap,
-                                 dup(PORT_STDIN_FD),
+                                 fd,
                                  make_string_literal(vm->m_heap, "/dev/stdin"),
                                  SCM_PORT_DIRECTION_IN,
                                  0,
@@ -327,8 +331,12 @@ subr_standard_output_port(VM* vm, int argc, scm_obj_t argv[])
                                  SCM_PORT_BUFFER_MODE_BLOCK,
                                  scm_false);
 #else
+            int fd = dup(PORT_STDOUT_FD);
+  #if USE_CLOEXEC
+            if (fd >= 0) fcntl(fd, F_SETFD, FD_CLOEXEC);
+  #endif                
             port = make_std_port(vm->m_heap,
-                                 dup(PORT_STDOUT_FD),
+                                 fd,
                                  make_string_literal(vm->m_heap, "/dev/stdout"),
                                  SCM_PORT_DIRECTION_OUT,
                                  0,
@@ -368,8 +376,12 @@ subr_standard_error_port(VM* vm, int argc, scm_obj_t argv[])
                                  SCM_PORT_BUFFER_MODE_NONE,
                                  scm_false);
 #else
+            int fd = dup(PORT_STDERR_FD);
+  #if USE_CLOEXEC
+            if (fd >= 0) fcntl(fd, F_SETFD, FD_CLOEXEC);
+  #endif                
             port = make_std_port(vm->m_heap,
-                                 dup(PORT_STDERR_FD),
+                                 fd,
                                  make_string_literal(vm->m_heap, "/dev/stderr"),
                                  SCM_PORT_DIRECTION_OUT,
                                  0,

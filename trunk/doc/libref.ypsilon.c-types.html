@@ -284,6 +284,14 @@
   </tr>
   <tr>
     <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-strlen">bytevector-c-strlen</a></span>
+    </td>
+    <td class="subject_td">
+      Returns an octed length of a C string in a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
       <span class="subject_identifier"><a href="#alignof:bool">alignof:bool</a></span>
     </td>
     <td class="subject_td_na">
@@ -2109,6 +2117,51 @@
   </tr>
 </table>
 </div>
+<span id="bytevector-c-strlen"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-strlen</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a> returns an octed length of a C string in a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-strlen <span class="synopsis_argument">bytevector</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>If no terminating '\0' character is exits, <a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a> returns length of the <span class="desc_argument">bytevector</span>.</div>
+    </td>
+  </tr>
+</table>
+</div>
 <span id="alignof:bool"></span>
 <span id="alignof:short"></span>
 <span id="alignof:int"></span>
@@ -2316,6 +2369,10 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#bytevector-c-int64-set!">bytevector-c-int64-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-strlen">bytevector-c-strlen</a></span>
     </td>
   <tr>
     <td>
@@ -2542,6 +2599,11 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#bytevector-c-short-set!">bytevector-c-short-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-strlen">bytevector-c-strlen</a></span>
     </td>
   </tr>
   <tr>
