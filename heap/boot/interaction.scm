@@ -182,6 +182,8 @@
                      (or (lookup-process-environment "HOME") "")))))
       (and (file-exists? path) path))))
 
+(define process (lambda args (apply process-spawn #t #f #f #f #f args)))
+
 (define process-shell-command
   (lambda (command)
     (cond ((string-contains (architecture-feature 'operating-system) "windows")

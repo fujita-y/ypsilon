@@ -127,7 +127,7 @@
 
   (setup-core-primitive-macros
    '(core primitives) '( do
-                         syntax-case
+                           syntax-case
                          syntax))
 
   (setup-core-primitive-procs
@@ -449,7 +449,7 @@
                         |#
                         call-shared-object
                         ;stdcall-shared-object
-                        
+
                         ;make-callback
                         make-callback-trampoline
                         ;flonum->float
@@ -461,7 +461,7 @@
                         bytevector-c-void*-ref bytevector-c-void*-set!
                         bytevector-c-int8-ref bytevector-c-int16-ref bytevector-c-int32-ref bytevector-c-int64-ref
                         bytevector-c-uint8-ref bytevector-c-uint16-ref bytevector-c-uint32-ref bytevector-c-uint64-ref
-                        bytevector-c-float-ref bytevector-c-double-ref 
+                        bytevector-c-float-ref bytevector-c-double-ref
                         bytevector-c-int8-set! bytevector-c-int16-set! bytevector-c-int32-set! bytevector-c-int64-set!
                         bytevector-c-float-set! bytevector-c-double-set!
 ;                        string->utf8+nul
@@ -522,8 +522,9 @@
                         gethostname
                         system
                         process
-                        process-wait
+                        process-spawn
                         process-shell-command
+                        process-wait
 
                         ;default-exception-handler
                         current-exception-printer

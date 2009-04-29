@@ -1980,6 +1980,7 @@ subr_system(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+/*
 // process
 scm_obj_t
 subr_process(VM* vm, int argc, scm_obj_t argv[])
@@ -2178,6 +2179,7 @@ exec_fail:
     exit(127);
 #endif
 }
+*/
 
 // process-wait
 scm_obj_t
@@ -2245,7 +2247,10 @@ wait_fail:
                         if (errno == EINTR) continue;
                         goto waitpid_fail;
                     }
-                    if (pid2 != pid) return scm_false;
+                    if (pid2 != pid) {
+                        if (option == WNOHANG) return scm_false;
+                        continue;
+                    }
                     break;
                 }
                 if (WIFEXITED(status)) return int_to_integer(vm->m_heap, WEXITSTATUS(status));
@@ -3719,7 +3724,7 @@ subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
         wchar_t command_line_ucs2[MAX_PATH] = { 0 };
         wchar_t module_name_ucs2[MAX_PATH] = { 0 };
         int bsize = 0;
-        for (int i = 5; i < argc; i++) bsize = bsize + ((scm_string_t)argv[i + 5])->size + 1;
+        for (int i = 5; i < argc; i++) bsize = bsize + ((scm_string_t)argv[i])->size + 1;
         if (bsize) {
             char* utf8 = (char*)malloc(bsize + 1);
             if (utf8 == NULL) fatal("fatal: memory overflow in malloc(%d)", bsize + 1);
@@ -4061,7 +4066,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("command-line-shift", subr_command_line_shift);
     DEFSUBR("system-share-path", subr_system_share_path);
     DEFSUBR("system",subr_system);
-    DEFSUBR("process",subr_process);
+//  DEFSUBR("process",subr_process);
     DEFSUBR("process-spawn",subr_process_spawn);
     DEFSUBR("process-wait", subr_process_wait);
     DEFSUBR("getenv",subr_getenv);

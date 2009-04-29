@@ -729,6 +729,7 @@
     process
     process-environment->alist
     process-shell-command
+    process-spawn
     process-wait
     protocol
     put-byte
