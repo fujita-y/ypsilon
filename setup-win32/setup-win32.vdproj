@@ -1383,6 +1383,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_86D3CF305063458ABE64AC292E9CBA6B"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_86D6E1BC4B4C441A97E54E22DAAB22B3"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -7284,6 +7290,26 @@
             "TargetName" = "8:random-bits.scm"
             "Tag" = "8:"
             "Folder" = "8:_EB8948F0D2EE42E083FD4972C7ED17BA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_86D3CF305063458ABE64AC292E9CBA6B"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\process.scm"
+            "TargetName" = "8:process.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
