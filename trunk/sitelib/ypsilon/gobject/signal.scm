@@ -18,10 +18,11 @@
 
   (define lib-name
     (cond (on-linux   "libgobject-2.0.so.0")
+          (on-linux   "libgobject-2.0.so.0")
           (on-freebsd "libgobject-2.0.so")
           (on-openbsd "libgobject-2.0.so")
-          (on-windows "libgobject-2.0-0.dll")
           (on-darwin  "GLib.framework/GLib")
+          (on-windows "libgobject-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GObject library, unknown operating system"))))
 

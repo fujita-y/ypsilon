@@ -275,6 +275,8 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #include <ieeefp.h>
     #include <alloca.h>
   #endif
+
+    extern char** environ;
     
     typedef int     fd_t;
   #if !defined(_LARGEFILE64_SOURCE) && !defined(__off64_t_defined)
@@ -292,7 +294,6 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     
   #if defined(__sun__)
     inline int isinf(double x) { return (!finite(x) && !isnan(x)); }
-    extern char** environ;
   #endif
 
     #define INVALID_FD          (-1)
