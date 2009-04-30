@@ -18,7 +18,7 @@
 
   (define lib-name
     (cond (on-linux   "libgobject-2.0.so.0")
-          (on-linux   "libgobject-2.0.so.0")
+          (on-sunos   "libgobject-2.0.so.0")
           (on-freebsd "libgobject-2.0.so")
           (on-openbsd "libgobject-2.0.so")
           (on-darwin  "GLib.framework/GLib")
