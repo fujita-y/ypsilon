@@ -52,6 +52,7 @@
           gtk_cell_type_get_type
           gtk_cell_view_get_cell_renderers
           gtk_cell_view_get_displayed_row
+          gtk_cell_view_get_model
           gtk_cell_view_get_size_of_row
           gtk_cell_view_get_type
           gtk_cell_view_new
@@ -65,10 +66,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -225,6 +227,9 @@
 
   ;; GtkTreePath* gtk_cell_view_get_displayed_row (GtkCellView* cell_view)
   (define-function void* gtk_cell_view_get_displayed_row (void*))
+
+  ;; GtkTreeModel* gtk_cell_view_get_model (GtkCellView* cell_view)
+  (define-function void* gtk_cell_view_get_model (void*))
 
   ;; gboolean gtk_cell_view_get_size_of_row (GtkCellView* cell_view, GtkTreePath* path, GtkRequisition* requisition)
   (define-function int gtk_cell_view_get_size_of_row (void* void* void*))

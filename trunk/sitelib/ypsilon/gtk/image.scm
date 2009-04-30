@@ -16,13 +16,18 @@
           gtk_image_get_stock
           gtk_image_get_storage_type
           gtk_image_get_type
+          gtk_image_menu_item_get_always_show_image
           gtk_image_menu_item_get_image
           gtk_image_menu_item_get_type
+          gtk_image_menu_item_get_use_stock
           gtk_image_menu_item_new
           gtk_image_menu_item_new_from_stock
           gtk_image_menu_item_new_with_label
           gtk_image_menu_item_new_with_mnemonic
+          gtk_image_menu_item_set_accel_group
+          gtk_image_menu_item_set_always_show_image
           gtk_image_menu_item_set_image
+          gtk_image_menu_item_set_use_stock
           gtk_image_new
           gtk_image_new_from_animation
           gtk_image_new_from_file
@@ -47,10 +52,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -100,11 +106,17 @@
   ;; GType gtk_image_get_type (void)
   (define-function unsigned-long gtk_image_get_type ())
 
+  ;; gboolean gtk_image_menu_item_get_always_show_image (GtkImageMenuItem* image_menu_item)
+  (define-function int gtk_image_menu_item_get_always_show_image (void*))
+
   ;; GtkWidget* gtk_image_menu_item_get_image (GtkImageMenuItem* image_menu_item)
   (define-function void* gtk_image_menu_item_get_image (void*))
 
   ;; GType gtk_image_menu_item_get_type (void)
   (define-function unsigned-long gtk_image_menu_item_get_type ())
+
+  ;; gboolean gtk_image_menu_item_get_use_stock (GtkImageMenuItem* image_menu_item)
+  (define-function int gtk_image_menu_item_get_use_stock (void*))
 
   ;; GtkWidget* gtk_image_menu_item_new (void)
   (define-function void* gtk_image_menu_item_new ())
@@ -118,8 +130,17 @@
   ;; GtkWidget* gtk_image_menu_item_new_with_mnemonic (const gchar* label)
   (define-function void* gtk_image_menu_item_new_with_mnemonic (char*))
 
+  ;; void gtk_image_menu_item_set_accel_group (GtkImageMenuItem* image_menu_item, GtkAccelGroup* accel_group)
+  (define-function void gtk_image_menu_item_set_accel_group (void* void*))
+
+  ;; void gtk_image_menu_item_set_always_show_image (GtkImageMenuItem* image_menu_item, gboolean always_show)
+  (define-function void gtk_image_menu_item_set_always_show_image (void* int))
+
   ;; void gtk_image_menu_item_set_image (GtkImageMenuItem* image_menu_item, GtkWidget* image)
   (define-function void gtk_image_menu_item_set_image (void* void*))
+
+  ;; void gtk_image_menu_item_set_use_stock (GtkImageMenuItem* image_menu_item, gboolean use_stock)
+  (define-function void gtk_image_menu_item_set_use_stock (void* int))
 
   ;; GtkWidget* gtk_image_new (void)
   (define-function void* gtk_image_new ())

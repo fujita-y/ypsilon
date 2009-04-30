@@ -19,10 +19,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libpango-1.0.so.0")
+    (cond (on-linux   "libpango-1.0.so.0")
+          (on-sunos   "libpango-1.0.so.0")
           (on-freebsd "libpango-1.0.so.0")
           (on-openbsd "libpango-1.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libpango-1.0-0.dll")
           (else
            (assertion-violation #f "can not locate Pango library, unknown operating system"))))

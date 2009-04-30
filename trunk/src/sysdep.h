@@ -40,6 +40,9 @@
     #else
       #error unknown __BYTE_ORDER
     #endif
+  #elif defined(__x86_64__) || defined(__i386__)
+    #define ARCH_LITTLE_ENDIAN      1
+    #define ARCH_BIG_ENDIAN         0
   #else
     #error unknown __BYTE_ORDER
   #endif
@@ -268,12 +271,16 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #include <dirent.h>
     #include <errno.h>
     #include <spawn.h>
-
+  #if defined(__sun__)
+    #include <ieeefp.h>
+    #include <alloca.h>
+  #endif
+    
     typedef int     fd_t;
-
-  #ifndef __off64_t_defined
+  #if !defined(_LARGEFILE64_SOURCE) && !defined(__off64_t_defined)
     typedef off_t   off64_t;
   #endif
+    
   #if ARCH_LP64
     typedef int int128_t __attribute__((__mode__(TI)));
     typedef unsigned int uint128_t __attribute__((__mode__(TI)));
@@ -282,6 +289,11 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #define VALUE_NAN           __builtin_nan("")   /* strtod("NAN", NULL) */
     #define VALUE_INF           __builtin_inf()     /* strtod("INF", NULL) */
     #define MEM_STORE_FENCE     __asm__ __volatile__ ("sfence" ::: "memory")
+    
+  #if defined(__sun__)
+    inline int isinf(double x) { return (!finite(x) && !isnan(x)); }
+    extern char** environ;
+  #endif
 
     #define INVALID_FD          (-1)
     #define INVALID_SOCKET      (-1)

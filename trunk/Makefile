@@ -141,6 +141,39 @@ ifneq (,$(findstring Darwin, $(UNAME)))
   endif
 endif
 
+ifneq (,$(findstring SunOS, $(UNAME)))
+  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
+    ifeq ($(DATAMODEL), ILP32)  
+      CXXFLAGS += -march=i686
+    endif
+  else
+    CXXFLAGS += -march=native
+  endif
+  ifeq ($(shell dmesg | grep -i sse2), )
+    CXXFLAGS += -msse
+  else
+    CXXFLAGS += -msse2
+  endif
+  CXXFLAGS += -mfpmath=sse
+  ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
+    CXXFLAGS += -fno-stack-protector
+  endif
+  ifeq ($(DATAMODEL), ILP32)  
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
+    CXXFLAGS += -m32
+    LDFLAGS = -m32
+    ASFLAGS = --32
+    SRCS += ffi_stub_sunos.s
+  else
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
+    CXXFLAGS += -m64
+    LDFLAGS = -m64
+    ASFLAGS = --64
+    SRCS += ffi_stub_sunos64.s
+  endif
+  LDLIBS = -lpthread -ldl -lxnet
+endif
+
 OBJS =	$(patsubst %.cpp, %.o, $(filter %.cpp, $(SRCS))) $(patsubst %.s, %.o, $(filter %.s, $(SRCS)))
 DEPS = 	$(patsubst %.cpp, %.d, $(filter %.cpp, $(SRCS)))
 
@@ -234,8 +267,6 @@ clean:
 
 distclean: clean
 	rm -f tmp1 tmp2 tmp3 spheres.pgm
-	find . -type f -name .DS_Store -print0 | xargs -0 rm -f
-	find . -type f -name '*~' -print0 | xargs -0 rm -f
 	rm -f ./test/tmp* 
 	rm -f ./bench/gambit-benchmarks/tmp*
 	rm -f ./bench/gambit-benchmarks/spheres.pgm
@@ -243,6 +274,10 @@ distclean: clean
 	rm -f ./ypsilon.xcodeproj/*.mode1v3 ./ypsilon.xcodeproj/*.pbxuser
 	rm -f ./ypsilon.ncb
 	rm -f ./ypsilon
+
+moreclean: distclean
+	find . -type f -name .DS_Store -print0 | xargs -0 rm -f
+	find . -type f -name '*~' -print0 | xargs -0 rm -f
 
 %.d: %.cpp
 	$(SHELL) -ec '$(CXX) -MM $(CPPFLAGS) $< \
@@ -253,6 +288,3 @@ ifeq ($(findstring clean, $(MAKECMDGOALS)), )
     -include $(DEPS)
   endif
 endif
-
-
-

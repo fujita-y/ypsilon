@@ -8,12 +8,15 @@
   (export gtk_status_icon_get_blinking
           gtk_status_icon_get_geometry
           gtk_status_icon_get_gicon
+          gtk_status_icon_get_has_tooltip
           gtk_status_icon_get_icon_name
           gtk_status_icon_get_pixbuf
           gtk_status_icon_get_screen
           gtk_status_icon_get_size
           gtk_status_icon_get_stock
           gtk_status_icon_get_storage_type
+          gtk_status_icon_get_tooltip_markup
+          gtk_status_icon_get_tooltip_text
           gtk_status_icon_get_type
           gtk_status_icon_get_visible
           gtk_status_icon_get_x11_window_id
@@ -31,17 +34,20 @@
           gtk_status_icon_set_from_icon_name
           gtk_status_icon_set_from_pixbuf
           gtk_status_icon_set_from_stock
+          gtk_status_icon_set_has_tooltip
           gtk_status_icon_set_screen
-          gtk_status_icon_set_tooltip
+          gtk_status_icon_set_tooltip_markup
+          gtk_status_icon_set_tooltip_text
           gtk_status_icon_set_visible)
 
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -67,6 +73,9 @@
   ;; GIcon* gtk_status_icon_get_gicon (GtkStatusIcon* status_icon)
   (define-function void* gtk_status_icon_get_gicon (void*))
 
+  ;; gboolean gtk_status_icon_get_has_tooltip (GtkStatusIcon* status_icon)
+  (define-function int gtk_status_icon_get_has_tooltip (void*))
+
   ;; const gchar* gtk_status_icon_get_icon_name (GtkStatusIcon* status_icon)
   (define-function char* gtk_status_icon_get_icon_name (void*))
 
@@ -84,6 +93,12 @@
 
   ;; GtkImageType gtk_status_icon_get_storage_type (GtkStatusIcon* status_icon)
   (define-function int gtk_status_icon_get_storage_type (void*))
+
+  ;; gchar* gtk_status_icon_get_tooltip_markup (GtkStatusIcon* status_icon)
+  (define-function char* gtk_status_icon_get_tooltip_markup (void*))
+
+  ;; gchar* gtk_status_icon_get_tooltip_text (GtkStatusIcon* status_icon)
+  (define-function char* gtk_status_icon_get_tooltip_text (void*))
 
   ;; GType gtk_status_icon_get_type (void)
   (define-function unsigned-long gtk_status_icon_get_type ())
@@ -136,11 +151,17 @@
   ;; void gtk_status_icon_set_from_stock (GtkStatusIcon* status_icon, const gchar* stock_id)
   (define-function void gtk_status_icon_set_from_stock (void* char*))
 
+  ;; void gtk_status_icon_set_has_tooltip (GtkStatusIcon* status_icon, gboolean has_tooltip)
+  (define-function void gtk_status_icon_set_has_tooltip (void* int))
+
   ;; void gtk_status_icon_set_screen (GtkStatusIcon* status_icon, GdkScreen* screen)
   (define-function void gtk_status_icon_set_screen (void* void*))
 
-  ;; void gtk_status_icon_set_tooltip (GtkStatusIcon* status_icon, const gchar* tooltip_text)
-  (define-function void gtk_status_icon_set_tooltip (void* char*))
+  ;; void gtk_status_icon_set_tooltip_markup (GtkStatusIcon* status_icon, const gchar* markup)
+  (define-function void gtk_status_icon_set_tooltip_markup (void* char*))
+
+  ;; void gtk_status_icon_set_tooltip_text (GtkStatusIcon* status_icon, const gchar* text)
+  (define-function void gtk_status_icon_set_tooltip_text (void* char*))
 
   ;; void gtk_status_icon_set_visible (GtkStatusIcon* status_icon, gboolean visible)
   (define-function void gtk_status_icon_set_visible (void* int))

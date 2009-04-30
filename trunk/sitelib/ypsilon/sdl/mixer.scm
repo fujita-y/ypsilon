@@ -73,6 +73,7 @@
 
   (define lib-name
     (cond (on-linux   "libSDL_mixer.so")
+          (on-sunos   "libSDL_mixer.so")
           (on-freebsd "libSDL_mixer.so")
           (on-openbsd "libSDL_mixer.so")
           (on-darwin  "SDL_mixer.framework/SDL_mixer")

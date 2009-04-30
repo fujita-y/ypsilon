@@ -377,11 +377,11 @@ OBJECT_ALIGNED(scm_environment_rec_t) {
 } END;
 
 OBJECT_ALIGNED(scm_gloc_rec_t) {
-    scm_hdr_t       hdr;
-    scm_obj_t       value;
-    scm_obj_t       variable;       // for error message
+    scm_hdr_t   hdr;
+    scm_obj_t   value;
+    scm_obj_t   variable;       // for error message
 #if GLOC_DEBUG_INFO
-    scm_obj_t       environment;
+    scm_obj_t   environment;
 #endif
 } END;
 
@@ -398,15 +398,15 @@ OBJECT_ALIGNED(scm_socket_rec_t) {
 } END;
 
 OBJECT_ALIGNED(scm_sharedqueue_rec_t) {
-    scm_hdr_t           hdr;
-    fifo_buffer_t       buf;
-    queue_t<intptr_t>   queue;
+    scm_hdr_t               hdr;
+    fifo_buffer_t           buf;
+    sync_queue_t<intptr_t>  queue;
 } END;
 
 struct sharedbag_slot_t {
-    char*               key;
-    fifo_buffer_t       buf;
-    queue_t<intptr_t>   queue;
+    char*                   key;
+    fifo_buffer_t           buf;
+    sync_queue_t<intptr_t>  queue;
 };
 
 OBJECT_ALIGNED(scm_sharedbag_rec_t) {
@@ -445,9 +445,9 @@ struct vm_env_rec_t {           // record size is variable
 #define FIXNUM_MAX                          (INTPTR_MAX / 2)
 #define FIXNUM_MIN                          (INTPTR_MIN / 2)
 #if ARCH_LP64
-  #define FIXNUM_BITS                         (64 - 1)
+  #define FIXNUM_BITS                       (64 - 1)
 #else
-  #define FIXNUM_BITS                         (32 - 1)
+  #define FIXNUM_BITS                       (32 - 1)
 #endif
 
 #define FIXNUM(obj)                         ((intptr_t)(obj) >> 1)

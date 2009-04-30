@@ -20,7 +20,6 @@
           gtk_font_button_set_title
           gtk_font_button_set_use_font
           gtk_font_button_set_use_size
-          gtk_font_selection_dialog_get_apply_button
           gtk_font_selection_dialog_get_cancel_button
           gtk_font_selection_dialog_get_font_name
           gtk_font_selection_dialog_get_ok_button
@@ -47,10 +46,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -111,9 +111,6 @@
 
   ;; void gtk_font_button_set_use_size (GtkFontButton* font_button, gboolean use_size)
   (define-function void gtk_font_button_set_use_size (void* int))
-
-  ;; GtkWidget* gtk_font_selection_dialog_get_apply_button (GtkFontSelectionDialog* fsd)
-  (define-function void* gtk_font_selection_dialog_get_apply_button (void*))
 
   ;; GtkWidget* gtk_font_selection_dialog_get_cancel_button (GtkFontSelectionDialog* fsd)
   (define-function void* gtk_font_selection_dialog_get_cancel_button (void*))

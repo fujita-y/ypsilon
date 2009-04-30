@@ -11,7 +11,6 @@
           gtk_toolbar_get_item_index
           gtk_toolbar_get_n_items
           gtk_toolbar_get_nth_item
-          gtk_toolbar_get_orientation
           gtk_toolbar_get_relief_style
           gtk_toolbar_get_show_arrow
           gtk_toolbar_get_style
@@ -20,7 +19,6 @@
           gtk_toolbar_new
           gtk_toolbar_set_drop_highlight_item
           gtk_toolbar_set_icon_size
-          gtk_toolbar_set_orientation
           gtk_toolbar_set_show_arrow
           gtk_toolbar_set_style
           gtk_toolbar_space_style_get_type
@@ -31,10 +29,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -69,9 +68,6 @@
   ;; GtkToolItem* gtk_toolbar_get_nth_item (GtkToolbar* toolbar, gint n)
   (define-function void* gtk_toolbar_get_nth_item (void* int))
 
-  ;; GtkOrientation gtk_toolbar_get_orientation (GtkToolbar* toolbar)
-  (define-function int gtk_toolbar_get_orientation (void*))
-
   ;; GtkReliefStyle gtk_toolbar_get_relief_style (GtkToolbar* toolbar)
   (define-function int gtk_toolbar_get_relief_style (void*))
 
@@ -95,9 +91,6 @@
 
   ;; void gtk_toolbar_set_icon_size (GtkToolbar* toolbar, GtkIconSize icon_size)
   (define-function void gtk_toolbar_set_icon_size (void* int))
-
-  ;; void gtk_toolbar_set_orientation (GtkToolbar* toolbar, GtkOrientation orientation)
-  (define-function void gtk_toolbar_set_orientation (void* int))
 
   ;; void gtk_toolbar_set_show_arrow (GtkToolbar* toolbar, gboolean show_arrow)
   (define-function void gtk_toolbar_set_show_arrow (void* int))

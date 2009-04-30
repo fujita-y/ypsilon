@@ -147,7 +147,7 @@ subr_list_head(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 2) {
         if (PAIRP(argv[0])) {
             if (FIXNUMP(argv[1])) {
-                int n = FIXNUM(argv[1]);
+                intptr_t n = FIXNUM(argv[1]);
                 scm_obj_t lst = argv[0];
                 if (n >= 0) {
                     if (n == 0) return scm_nil;

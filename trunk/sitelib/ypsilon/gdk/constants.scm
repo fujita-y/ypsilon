@@ -28,6 +28,7 @@
           GDK_AXIS_YTILT
           GDK_BASED_ARROW_DOWN
           GDK_BASED_ARROW_UP
+          GDK_BLANK_CURSOR
           GDK_BOAT
           GDK_BOGOSITY
           GDK_BOTTOM_LEFT_CORNER
@@ -629,6 +630,7 @@
   (define GDK_WATCH 150)
   (define GDK_XTERM 152)
   (define GDK_LAST_CURSOR 153)
+  (define GDK_BLANK_CURSOR -2)
   (define GDK_CURSOR_IS_PIXMAP -1)
   (define GDK_CAP_NOT_LAST 0)
   (define GDK_CAP_BUTT 1)

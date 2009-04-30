@@ -21,18 +21,21 @@
           gtk_im_context_simple_get_type
           gtk_im_context_simple_new
           gtk_im_multicontext_append_menuitems
+          gtk_im_multicontext_get_context_id
           gtk_im_multicontext_get_type
           gtk_im_multicontext_new
+          gtk_im_multicontext_set_context_id
           gtk_im_preedit_style_get_type
           gtk_im_status_style_get_type)
 
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -97,11 +100,17 @@
   ;; void gtk_im_multicontext_append_menuitems (GtkIMMulticontext* context, GtkMenuShell* menushell)
   (define-function void gtk_im_multicontext_append_menuitems (void* void*))
 
+  ;; const char* gtk_im_multicontext_get_context_id (GtkIMMulticontext* context)
+  (define-function char* gtk_im_multicontext_get_context_id (void*))
+
   ;; GType gtk_im_multicontext_get_type (void)
   (define-function unsigned-long gtk_im_multicontext_get_type ())
 
   ;; GtkIMContext* gtk_im_multicontext_new (void)
   (define-function void* gtk_im_multicontext_new ())
+
+  ;; void gtk_im_multicontext_set_context_id (GtkIMMulticontext* context, const char* context_id)
+  (define-function void gtk_im_multicontext_set_context_id (void* char*))
 
   ;; GType gtk_im_preedit_style_get_type (void)
   (define-function unsigned-long gtk_im_preedit_style_get_type ())

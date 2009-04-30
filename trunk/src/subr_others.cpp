@@ -1148,7 +1148,7 @@ subr_tuple_ref(VM* vm, int argc, scm_obj_t argv[])
         if (TUPLEP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_tuple_t tuple = (scm_tuple_t)argv[0];
-                int n = FIXNUM(argv[1]);
+                intptr_t n = FIXNUM(argv[1]);
                 if (n >= 0 && n < HDR_TUPLE_COUNT(tuple->hdr)) return tuple->elts[n];
             }
         }
@@ -1166,7 +1166,7 @@ subr_tuple_set(VM* vm, int argc, scm_obj_t argv[])
         if (TUPLEP(argv[0])) {
             if (FIXNUMP(argv[1])) {
                 scm_tuple_t tuple = (scm_tuple_t)argv[0];
-                int n = FIXNUM(argv[1]);
+                intptr_t n = FIXNUM(argv[1]);
                 if (n >= 0 && n < HDR_TUPLE_COUNT(tuple->hdr)) {
 #if USE_PARALLEL_VM
                     if (vm->m_interp->live_thread_count() > 1) {
@@ -3645,7 +3645,7 @@ subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
     HANDLE pipe2[2] = { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE };
     const char* sysfunc = NULL;
     if (argc >= 6) {
-        if (!BOOLP(argv[0])) { // search
+        if (!BOOLP(argv[0])) {      // search
             wrong_type_argument_violation(vm, "process-spawn", 0, "#t or #f", argv[0], argc, argv);
             return scm_undef;
         }
@@ -3822,7 +3822,7 @@ subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
     const char* sysfunc = NULL;
     int res = 0;
     if (argc >= 6) {
-        if (!BOOLP(argv[0])) { // search
+        if (!BOOLP(argv[0])) {      // search
             wrong_type_argument_violation(vm, "process-spawn", 0, "#t or #f", argv[0], argc, argv);
             return scm_undef;
         }

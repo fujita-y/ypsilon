@@ -23,10 +23,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -64,7 +65,7 @@
   ;; gint gtk_editable_get_position (GtkEditable* editable)
   (define-function int gtk_editable_get_position (void*))
 
-  ;; gboolean gtk_editable_get_selection_bounds (GtkEditable* editable, gint* start, gint* end)
+  ;; gboolean gtk_editable_get_selection_bounds (GtkEditable* editable, gint* start_pos, gint* end_pos)
   (define-function int gtk_editable_get_selection_bounds (void* void* void*))
 
   ;; GType gtk_editable_get_type (void)
@@ -76,7 +77,7 @@
   ;; void gtk_editable_paste_clipboard (GtkEditable* editable)
   (define-function void gtk_editable_paste_clipboard (void*))
 
-  ;; void gtk_editable_select_region (GtkEditable* editable, gint start, gint end)
+  ;; void gtk_editable_select_region (GtkEditable* editable, gint start_pos, gint end_pos)
   (define-function void gtk_editable_select_region (void* int int))
 
   ;; void gtk_editable_set_editable (GtkEditable* editable, gboolean is_editable)

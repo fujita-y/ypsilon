@@ -9,7 +9,10 @@
           gtk_style_attach
           gtk_style_copy
           gtk_style_detach
+          gtk_style_get
+          gtk_style_get_style_property
           gtk_style_get_type
+          gtk_style_get_valist
           gtk_style_lookup_color
           gtk_style_lookup_icon_set
           gtk_style_new
@@ -19,10 +22,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -51,8 +55,17 @@
   ;; void gtk_style_detach (GtkStyle* style)
   (define-function void gtk_style_detach (void*))
 
+  ;; void gtk_style_get (GtkStyle* style, GType widget_type, const gchar* first_property_name, ...)
+  (define-function void gtk_style_get (void* unsigned-long char* ...))
+
+  ;; void gtk_style_get_style_property (GtkStyle* style, GType widget_type, const gchar* property_name, GValue* value)
+  (define-function void gtk_style_get_style_property (void* unsigned-long char* void*))
+
   ;; GType gtk_style_get_type (void)
   (define-function unsigned-long gtk_style_get_type ())
+
+  ;; void gtk_style_get_valist (GtkStyle* style, GType widget_type, const gchar* first_property_name, va_list var_args)
+  (define-function/va_list void gtk_style_get_valist (void* unsigned-long char* va_list))
 
   ;; gboolean gtk_style_lookup_color (GtkStyle* style, const gchar* color_name, GdkColor* color)
   (define-function int gtk_style_lookup_color (void* char* void*))
