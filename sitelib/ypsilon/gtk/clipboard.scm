@@ -38,10 +38,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))

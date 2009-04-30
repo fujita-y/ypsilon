@@ -71,6 +71,7 @@
           alignof:int16_t
           alignof:int32_t
           alignof:int64_t
+          on-sunos
           on-darwin
           on-linux
           on-freebsd
@@ -83,6 +84,7 @@
 
   (import (core) (ypsilon c-types) (ypsilon c-enum) (ypsilon assert))
 
+  (define on-sunos         (and (string-contains (architecture-feature 'operating-system) "sunos")   #t))
   (define on-darwin        (and (string-contains (architecture-feature 'operating-system) "darwin")  #t))
   (define on-linux         (and (string-contains (architecture-feature 'operating-system) "linux")   #t))
   (define on-freebsd       (and (string-contains (architecture-feature 'operating-system) "freebsd") #t))

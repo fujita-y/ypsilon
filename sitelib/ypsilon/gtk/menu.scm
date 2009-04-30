@@ -27,16 +27,20 @@
           gtk_menu_item_activate
           gtk_menu_item_deselect
           gtk_menu_item_get_accel_path
+          gtk_menu_item_get_label
           gtk_menu_item_get_right_justified
           gtk_menu_item_get_submenu
           gtk_menu_item_get_type
+          gtk_menu_item_get_use_underline
           gtk_menu_item_new
           gtk_menu_item_new_with_label
           gtk_menu_item_new_with_mnemonic
           gtk_menu_item_select
           gtk_menu_item_set_accel_path
+          gtk_menu_item_set_label
           gtk_menu_item_set_right_justified
           gtk_menu_item_set_submenu
+          gtk_menu_item_set_use_underline
           gtk_menu_item_toggle_size_allocate
           gtk_menu_item_toggle_size_request
           gtk_menu_new
@@ -74,10 +78,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -160,6 +165,9 @@
   ;; const gchar* gtk_menu_item_get_accel_path (GtkMenuItem* menu_item)
   (define-function char* gtk_menu_item_get_accel_path (void*))
 
+  ;; const gchar* gtk_menu_item_get_label (GtkMenuItem* menu_item)
+  (define-function char* gtk_menu_item_get_label (void*))
+
   ;; gboolean gtk_menu_item_get_right_justified (GtkMenuItem* menu_item)
   (define-function int gtk_menu_item_get_right_justified (void*))
 
@@ -168,6 +176,9 @@
 
   ;; GType gtk_menu_item_get_type (void)
   (define-function unsigned-long gtk_menu_item_get_type ())
+
+  ;; gboolean gtk_menu_item_get_use_underline (GtkMenuItem* menu_item)
+  (define-function int gtk_menu_item_get_use_underline (void*))
 
   ;; GtkWidget* gtk_menu_item_new (void)
   (define-function void* gtk_menu_item_new ())
@@ -184,11 +195,17 @@
   ;; void gtk_menu_item_set_accel_path (GtkMenuItem* menu_item, const gchar* accel_path)
   (define-function void gtk_menu_item_set_accel_path (void* char*))
 
+  ;; void gtk_menu_item_set_label (GtkMenuItem* menu_item, const gchar* label)
+  (define-function void gtk_menu_item_set_label (void* char*))
+
   ;; void gtk_menu_item_set_right_justified (GtkMenuItem* menu_item, gboolean right_justified)
   (define-function void gtk_menu_item_set_right_justified (void* int))
 
   ;; void gtk_menu_item_set_submenu (GtkMenuItem* menu_item, GtkWidget* submenu)
   (define-function void gtk_menu_item_set_submenu (void* void*))
+
+  ;; void gtk_menu_item_set_use_underline (GtkMenuItem* menu_item, gboolean setting)
+  (define-function void gtk_menu_item_set_use_underline (void* int))
 
   ;; void gtk_menu_item_toggle_size_allocate (GtkMenuItem* menu_item, gint allocation)
   (define-function void gtk_menu_item_toggle_size_allocate (void* int))

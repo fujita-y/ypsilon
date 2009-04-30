@@ -207,10 +207,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define libgtk-name
-    (cond (on-darwin  "libgtkglext-x11-1.0.0.dylib")
-          (on-linux   "libgtkglext-x11-1.0.so.0")
+    (cond (on-linux   "libgtkglext-x11-1.0.so.0")
+          (on-sunos   "libgtkglext-x11-1.0.so.0")
           (on-freebsd "libgtkglext-x11-1.0.so")
           (on-openbsd "libgtkglext-x11-1.0.so")
+          (on-darwin  "libgtkglext-x11-1.0.0.dylib")
           (on-windows "libgtkglext-win32-1.0-0.dll")
           (else
            (assertion-violation #f "can not locate GtkGLExt library, unknown operating system"))))
@@ -225,6 +226,7 @@
   (define libgdk-name
     (cond (on-darwin  "libgdkglext-x11-1.0.0.dylib")
           (on-linux   "libgdkglext-x11-1.0.so.0")
+          (on-sunos   "libgdkglext-x11-1.0.so.0")
           (on-freebsd "libgdkglext-x11-1.0.so")
           (on-openbsd "libgdkglext-x11-1.0.so")
           (on-windows "libgdkglext-win32-1.0-0.dll")

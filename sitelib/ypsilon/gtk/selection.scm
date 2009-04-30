@@ -17,6 +17,7 @@
           gtk_selection_data_get_format
           gtk_selection_data_get_length
           gtk_selection_data_get_pixbuf
+          gtk_selection_data_get_selection
           gtk_selection_data_get_target
           gtk_selection_data_get_targets
           gtk_selection_data_get_text
@@ -38,10 +39,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -93,6 +95,9 @@
 
   ;; GdkPixbuf* gtk_selection_data_get_pixbuf (GtkSelectionData* selection_data)
   (define-function void* gtk_selection_data_get_pixbuf (void*))
+
+  ;; GdkAtom gtk_selection_data_get_selection (GtkSelectionData* selection_data)
+  (define-function void* gtk_selection_data_get_selection (void*))
 
   ;; GdkAtom gtk_selection_data_get_target (GtkSelectionData* selection_data)
   (define-function void* gtk_selection_data_get_target (void*))

@@ -2137,5 +2137,5 @@ VM::loop(bool init, bool resume)
         __asm__ ("jmp apply");
     return_loop:
         __asm__ ("jmp loop");
- #endif
+#endif
 }

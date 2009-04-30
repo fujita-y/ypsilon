@@ -21,6 +21,7 @@
           gtk_print_error_quark
           gtk_print_operation_action_get_type
           gtk_print_operation_cancel
+          gtk_print_operation_draw_page_finish
           gtk_print_operation_get_default_page_setup
           gtk_print_operation_get_error
           gtk_print_operation_get_print_settings
@@ -39,6 +40,7 @@
           gtk_print_operation_set_current_page
           gtk_print_operation_set_custom_tab_label
           gtk_print_operation_set_default_page_setup
+          gtk_print_operation_set_defer_drawing
           gtk_print_operation_set_export_filename
           gtk_print_operation_set_job_name
           gtk_print_operation_set_n_pages
@@ -78,8 +80,11 @@
           gtk_print_settings_get_paper_width
           gtk_print_settings_get_print_pages
           gtk_print_settings_get_printer
+          gtk_print_settings_get_printer_lpi
           gtk_print_settings_get_quality
           gtk_print_settings_get_resolution
+          gtk_print_settings_get_resolution_x
+          gtk_print_settings_get_resolution_y
           gtk_print_settings_get_reverse
           gtk_print_settings_get_scale
           gtk_print_settings_get_type
@@ -113,8 +118,10 @@
           gtk_print_settings_set_paper_width
           gtk_print_settings_set_print_pages
           gtk_print_settings_set_printer
+          gtk_print_settings_set_printer_lpi
           gtk_print_settings_set_quality
           gtk_print_settings_set_resolution
+          gtk_print_settings_set_resolution_xy
           gtk_print_settings_set_reverse
           gtk_print_settings_set_scale
           gtk_print_settings_set_use_color
@@ -126,10 +133,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -194,6 +202,9 @@
   ;; void gtk_print_operation_cancel (GtkPrintOperation* op)
   (define-function void gtk_print_operation_cancel (void*))
 
+  ;; void gtk_print_operation_draw_page_finish (GtkPrintOperation* op)
+  (define-function void gtk_print_operation_draw_page_finish (void*))
+
   ;; GtkPageSetup* gtk_print_operation_get_default_page_setup (GtkPrintOperation* op)
   (define-function void* gtk_print_operation_get_default_page_setup (void*))
 
@@ -247,6 +258,9 @@
 
   ;; void gtk_print_operation_set_default_page_setup (GtkPrintOperation* op, GtkPageSetup* default_page_setup)
   (define-function void gtk_print_operation_set_default_page_setup (void* void*))
+
+  ;; void gtk_print_operation_set_defer_drawing (GtkPrintOperation* op)
+  (define-function void gtk_print_operation_set_defer_drawing (void*))
 
   ;; void gtk_print_operation_set_export_filename (GtkPrintOperation* op, const gchar* filename)
   (define-function void gtk_print_operation_set_export_filename (void* char*))
@@ -365,11 +379,20 @@
   ;; const gchar* gtk_print_settings_get_printer (GtkPrintSettings* settings)
   (define-function char* gtk_print_settings_get_printer (void*))
 
+  ;; gdouble gtk_print_settings_get_printer_lpi (GtkPrintSettings* settings)
+  (define-function double gtk_print_settings_get_printer_lpi (void*))
+
   ;; GtkPrintQuality gtk_print_settings_get_quality (GtkPrintSettings* settings)
   (define-function int gtk_print_settings_get_quality (void*))
 
   ;; gint gtk_print_settings_get_resolution (GtkPrintSettings* settings)
   (define-function int gtk_print_settings_get_resolution (void*))
+
+  ;; gint gtk_print_settings_get_resolution_x (GtkPrintSettings* settings)
+  (define-function int gtk_print_settings_get_resolution_x (void*))
+
+  ;; gint gtk_print_settings_get_resolution_y (GtkPrintSettings* settings)
+  (define-function int gtk_print_settings_get_resolution_y (void*))
 
   ;; gboolean gtk_print_settings_get_reverse (GtkPrintSettings* settings)
   (define-function int gtk_print_settings_get_reverse (void*))
@@ -470,11 +493,17 @@
   ;; void gtk_print_settings_set_printer (GtkPrintSettings* settings, const gchar* printer)
   (define-function void gtk_print_settings_set_printer (void* char*))
 
+  ;; void gtk_print_settings_set_printer_lpi (GtkPrintSettings* settings, gdouble lpi)
+  (define-function void gtk_print_settings_set_printer_lpi (void* double))
+
   ;; void gtk_print_settings_set_quality (GtkPrintSettings* settings, GtkPrintQuality quality)
   (define-function void gtk_print_settings_set_quality (void* int))
 
   ;; void gtk_print_settings_set_resolution (GtkPrintSettings* settings, gint resolution)
   (define-function void gtk_print_settings_set_resolution (void* int))
+
+  ;; void gtk_print_settings_set_resolution_xy (GtkPrintSettings* settings, gint resolution_x, gint resolution_y)
+  (define-function void gtk_print_settings_set_resolution_xy (void* int int))
 
   ;; void gtk_print_settings_set_reverse (GtkPrintSettings* settings, gboolean reverse)
   (define-function void gtk_print_settings_set_reverse (void* int))

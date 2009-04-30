@@ -6,22 +6,29 @@
 (library (ypsilon gtk action)
 
   (export gtk_action_activate
-          gtk_action_block_activate_from
+          gtk_action_block_activate
           gtk_action_connect_accelerator
-          gtk_action_connect_proxy
           gtk_action_create_icon
           gtk_action_create_menu
           gtk_action_create_menu_item
           gtk_action_create_tool_item
           gtk_action_disconnect_accelerator
-          gtk_action_disconnect_proxy
           gtk_action_get_accel_closure
           gtk_action_get_accel_path
+          gtk_action_get_gicon
+          gtk_action_get_icon_name
+          gtk_action_get_is_important
+          gtk_action_get_label
           gtk_action_get_name
           gtk_action_get_proxies
           gtk_action_get_sensitive
+          gtk_action_get_short_label
+          gtk_action_get_stock_id
+          gtk_action_get_tooltip
           gtk_action_get_type
           gtk_action_get_visible
+          gtk_action_get_visible_horizontal
+          gtk_action_get_visible_vertical
           gtk_action_group_add_action
           gtk_action_group_add_action_with_accel
           gtk_action_group_add_actions
@@ -48,17 +55,27 @@
           gtk_action_new
           gtk_action_set_accel_group
           gtk_action_set_accel_path
+          gtk_action_set_gicon
+          gtk_action_set_icon_name
+          gtk_action_set_is_important
+          gtk_action_set_label
           gtk_action_set_sensitive
+          gtk_action_set_short_label
+          gtk_action_set_stock_id
+          gtk_action_set_tooltip
           gtk_action_set_visible
-          gtk_action_unblock_activate_from)
+          gtk_action_set_visible_horizontal
+          gtk_action_set_visible_vertical
+          gtk_action_unblock_activate)
 
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -78,14 +95,11 @@
   ;; void gtk_action_activate (GtkAction* action)
   (define-function void gtk_action_activate (void*))
 
-  ;; void gtk_action_block_activate_from (GtkAction* action, GtkWidget* proxy)
-  (define-function void gtk_action_block_activate_from (void* void*))
+  ;; void gtk_action_block_activate (GtkAction* action)
+  (define-function void gtk_action_block_activate (void*))
 
   ;; void gtk_action_connect_accelerator (GtkAction* action)
   (define-function void gtk_action_connect_accelerator (void*))
-
-  ;; void gtk_action_connect_proxy (GtkAction* action, GtkWidget* proxy)
-  (define-function void gtk_action_connect_proxy (void* void*))
 
   ;; GtkWidget* gtk_action_create_icon (GtkAction* action, GtkIconSize icon_size)
   (define-function void* gtk_action_create_icon (void* int))
@@ -102,14 +116,23 @@
   ;; void gtk_action_disconnect_accelerator (GtkAction* action)
   (define-function void gtk_action_disconnect_accelerator (void*))
 
-  ;; void gtk_action_disconnect_proxy (GtkAction* action, GtkWidget* proxy)
-  (define-function void gtk_action_disconnect_proxy (void* void*))
-
   ;; GClosure* gtk_action_get_accel_closure (GtkAction* action)
   (define-function void* gtk_action_get_accel_closure (void*))
 
   ;; const gchar* gtk_action_get_accel_path (GtkAction* action)
   (define-function char* gtk_action_get_accel_path (void*))
+
+  ;; GIcon* gtk_action_get_gicon (GtkAction* action)
+  (define-function void* gtk_action_get_gicon (void*))
+
+  ;; const gchar* gtk_action_get_icon_name (GtkAction* action)
+  (define-function char* gtk_action_get_icon_name (void*))
+
+  ;; gboolean gtk_action_get_is_important (GtkAction* action)
+  (define-function int gtk_action_get_is_important (void*))
+
+  ;; const gchar* gtk_action_get_label (GtkAction* action)
+  (define-function char* gtk_action_get_label (void*))
 
   ;; const gchar* gtk_action_get_name (GtkAction* action)
   (define-function char* gtk_action_get_name (void*))
@@ -120,11 +143,26 @@
   ;; gboolean gtk_action_get_sensitive (GtkAction* action)
   (define-function int gtk_action_get_sensitive (void*))
 
+  ;; const gchar* gtk_action_get_short_label (GtkAction* action)
+  (define-function char* gtk_action_get_short_label (void*))
+
+  ;; const gchar* gtk_action_get_stock_id (GtkAction* action)
+  (define-function char* gtk_action_get_stock_id (void*))
+
+  ;; const gchar* gtk_action_get_tooltip (GtkAction* action)
+  (define-function char* gtk_action_get_tooltip (void*))
+
   ;; GType gtk_action_get_type (void)
   (define-function unsigned-long gtk_action_get_type ())
 
   ;; gboolean gtk_action_get_visible (GtkAction* action)
   (define-function int gtk_action_get_visible (void*))
+
+  ;; gboolean gtk_action_get_visible_horizontal (GtkAction* action)
+  (define-function int gtk_action_get_visible_horizontal (void*))
+
+  ;; gboolean gtk_action_get_visible_vertical (GtkAction* action)
+  (define-function int gtk_action_get_visible_vertical (void*))
 
   ;; void gtk_action_group_add_action (GtkActionGroup* action_group, GtkAction* action)
   (define-function void gtk_action_group_add_action (void* void*))
@@ -204,13 +242,40 @@
   ;; void gtk_action_set_accel_path (GtkAction* action, const gchar* accel_path)
   (define-function void gtk_action_set_accel_path (void* char*))
 
+  ;; void gtk_action_set_gicon (GtkAction* action, GIcon* icon)
+  (define-function void gtk_action_set_gicon (void* void*))
+
+  ;; void gtk_action_set_icon_name (GtkAction* action, const gchar* icon_name)
+  (define-function void gtk_action_set_icon_name (void* char*))
+
+  ;; void gtk_action_set_is_important (GtkAction* action, gboolean is_important)
+  (define-function void gtk_action_set_is_important (void* int))
+
+  ;; void gtk_action_set_label (GtkAction* action, const gchar* label)
+  (define-function void gtk_action_set_label (void* char*))
+
   ;; void gtk_action_set_sensitive (GtkAction* action, gboolean sensitive)
   (define-function void gtk_action_set_sensitive (void* int))
+
+  ;; void gtk_action_set_short_label (GtkAction* action, const gchar* short_label)
+  (define-function void gtk_action_set_short_label (void* char*))
+
+  ;; void gtk_action_set_stock_id (GtkAction* action, const gchar* stock_id)
+  (define-function void gtk_action_set_stock_id (void* char*))
+
+  ;; void gtk_action_set_tooltip (GtkAction* action, const gchar* tooltip)
+  (define-function void gtk_action_set_tooltip (void* char*))
 
   ;; void gtk_action_set_visible (GtkAction* action, gboolean visible)
   (define-function void gtk_action_set_visible (void* int))
 
-  ;; void gtk_action_unblock_activate_from (GtkAction* action, GtkWidget* proxy)
-  (define-function void gtk_action_unblock_activate_from (void* void*))
+  ;; void gtk_action_set_visible_horizontal (GtkAction* action, gboolean visible_horizontal)
+  (define-function void gtk_action_set_visible_horizontal (void* int))
+
+  ;; void gtk_action_set_visible_vertical (GtkAction* action, gboolean visible_vertical)
+  (define-function void gtk_action_set_visible_vertical (void* int))
+
+  ;; void gtk_action_unblock_activate (GtkAction* action)
+  (define-function void gtk_action_unblock_activate (void*))
 
   ) ;[end]

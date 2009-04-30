@@ -27,7 +27,6 @@
           gtk_widget_flags_get_type
           gtk_widget_freeze_child_notify
           gtk_widget_get_accessible
-          gtk_widget_get_action
           gtk_widget_get_ancestor
           gtk_widget_get_child_requisition
           gtk_widget_get_child_visible
@@ -150,10 +149,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -235,9 +235,6 @@
 
   ;; AtkObject* gtk_widget_get_accessible (GtkWidget* widget)
   (define-function void* gtk_widget_get_accessible (void*))
-
-  ;; GtkAction* gtk_widget_get_action (GtkWidget* widget)
-  (define-function void* gtk_widget_get_action (void*))
 
   ;; GtkWidget* gtk_widget_get_ancestor (GtkWidget* widget, GType widget_type)
   (define-function void* gtk_widget_get_ancestor (void* unsigned-long))

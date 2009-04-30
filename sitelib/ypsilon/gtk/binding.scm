@@ -6,6 +6,7 @@
 (library (ypsilon gtk binding)
 
   (export gtk_binding_entry_add_signal
+          gtk_binding_entry_add_signall
           gtk_binding_entry_remove
           gtk_binding_entry_skip
           gtk_binding_set_activate
@@ -17,10 +18,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -39,6 +41,9 @@
 
   ;; void gtk_binding_entry_add_signal (GtkBindingSet* binding_set, guint keyval, GdkModifierType modifiers, const gchar* signal_name, guint n_args, ...)
   (define-function void gtk_binding_entry_add_signal (void* unsigned-int int char* unsigned-int ...))
+
+  ;; void gtk_binding_entry_add_signall (GtkBindingSet* binding_set, guint keyval, GdkModifierType modifiers, const gchar* signal_name, GSList* binding_args)
+  (define-function void gtk_binding_entry_add_signall (void* unsigned-int int char* void*))
 
   ;; void gtk_binding_entry_remove (GtkBindingSet* binding_set, guint keyval, GdkModifierType modifiers)
   (define-function void gtk_binding_entry_remove (void* unsigned-int int))

@@ -867,7 +867,7 @@ subr_string_ref(VM* vm, int argc, scm_obj_t argv[])
             if (FIXNUMP(argv[1])) {
                 scm_string_t string = (scm_string_t)argv[0];
                 int type = update_string_type(string);
-                int index = FIXNUM(argv[1]);
+                intptr_t index = FIXNUM(argv[1]);
                 if (type == STRING_TYPE_ASCII) {
                     if (index >= 0 && index < string->size) {
                         return MAKECHAR(string->name[index]);
@@ -908,7 +908,7 @@ subr_string_set(VM* vm, int argc, scm_obj_t argv[])
             if (CHARP(argv[2])) {
                 if (FIXNUMP(argv[1])) {
                     scm_string_t string = (scm_string_t)argv[0];
-                    int index = FIXNUM(argv[1]);
+                    intptr_t index = FIXNUM(argv[1]);
                     int ch = CHAR(argv[2]);
                     int type = update_string_type(string, ch);
                     if (type == STRING_TYPE_ASCII) {
@@ -1337,7 +1337,7 @@ subr_vector_ref(VM* vm, int argc, scm_obj_t argv[])
         if (VECTORP(argv[0])) {
             scm_vector_t vector = (scm_vector_t)argv[0];
             if (FIXNUMP(argv[1])) {
-                int n = FIXNUM(argv[1]);
+                intptr_t n = FIXNUM(argv[1]);
                 if (n >= 0 && n < vector->count) return vector->elts[n];
                 /*** FALL THROUGH ***/
             }
@@ -1364,7 +1364,7 @@ subr_vector_set(VM* vm, int argc, scm_obj_t argv[])
         if (VECTORP(argv[0])) {
             scm_vector_t vector = (scm_vector_t)argv[0];
             if (FIXNUMP(argv[1])) {
-                int n = FIXNUM(argv[1]);
+                intptr_t n = FIXNUM(argv[1]);
                 if (n >= 0 && n < vector->count) {
 #if USE_PARALLEL_VM
                     if (vm->m_interp->live_thread_count() > 1) {

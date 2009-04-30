@@ -5,9 +5,9 @@
 
 (library (ypsilon gtk scale)
 
-  (export gtk_scale_button_get_adjustment
+  (export gtk_scale_add_mark
+          gtk_scale_button_get_adjustment
           gtk_scale_button_get_minus_button
-          gtk_scale_button_get_orientation
           gtk_scale_button_get_plus_button
           gtk_scale_button_get_popup
           gtk_scale_button_get_type
@@ -15,8 +15,8 @@
           gtk_scale_button_new
           gtk_scale_button_set_adjustment
           gtk_scale_button_set_icons
-          gtk_scale_button_set_orientation
           gtk_scale_button_set_value
+          gtk_scale_clear_marks
           gtk_scale_get_digits
           gtk_scale_get_draw_value
           gtk_scale_get_layout
@@ -30,10 +30,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -50,14 +51,14 @@
       ((_ ret name args)
       (define name (lambda x (assertion-violation 'name "va_list argument not supported"))))))
 
+  ;; void gtk_scale_add_mark (GtkScale* scale, gdouble value, GtkPositionType position, const gchar* markup)
+  (define-function void gtk_scale_add_mark (void* double int char*))
+
   ;; GtkAdjustment* gtk_scale_button_get_adjustment (GtkScaleButton* button)
   (define-function void* gtk_scale_button_get_adjustment (void*))
 
   ;; GtkWidget* gtk_scale_button_get_minus_button (GtkScaleButton* button)
   (define-function void* gtk_scale_button_get_minus_button (void*))
-
-  ;; GtkOrientation gtk_scale_button_get_orientation (GtkScaleButton* button)
-  (define-function int gtk_scale_button_get_orientation (void*))
 
   ;; GtkWidget* gtk_scale_button_get_plus_button (GtkScaleButton* button)
   (define-function void* gtk_scale_button_get_plus_button (void*))
@@ -80,11 +81,11 @@
   ;; void gtk_scale_button_set_icons (GtkScaleButton* button, const gchar** icons)
   (define-function void gtk_scale_button_set_icons (void* void*))
 
-  ;; void gtk_scale_button_set_orientation (GtkScaleButton* button, GtkOrientation orientation)
-  (define-function void gtk_scale_button_set_orientation (void* int))
-
   ;; void gtk_scale_button_set_value (GtkScaleButton* button, gdouble value)
   (define-function void gtk_scale_button_set_value (void* double))
+
+  ;; void gtk_scale_clear_marks (GtkScale* scale)
+  (define-function void gtk_scale_clear_marks (void*))
 
   ;; gint gtk_scale_get_digits (GtkScale* scale)
   (define-function int gtk_scale_get_digits (void*))

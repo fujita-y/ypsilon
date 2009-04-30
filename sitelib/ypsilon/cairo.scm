@@ -453,10 +453,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Cairo.framework/Cairo")
-          (on-linux   "libcairo.so.2")
+    (cond (on-linux   "libcairo.so.2")
+          (on-sunos   "libcairo.so.2")
           (on-freebsd "libcairo.so")
           (on-openbsd "libcairo.so")
+          (on-darwin  "Cairo.framework/Cairo")
           (on-windows "libcairo-2.dll")
           (else
            (assertion-violation #f "can not locate Cairo library, unknown operating system"))))

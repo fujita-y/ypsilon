@@ -44,7 +44,7 @@ struct mutator_param_t {
                         return;
                     }
 #endif
-                    int offset = FIXNUM(argv[1]);
+                    intptr_t offset = FIXNUM(argv[1]);
                     if (offset >= 0 && (offset + octets) <= bvector->count) {
                         bytes = bvector->elts + offset;
                         if (SYMBOLP(argv[3])) {
@@ -97,7 +97,7 @@ struct native_mutator_param_t {
                         return;
                     }
 #endif
-                    int offset = FIXNUM(argv[1]);
+                    intptr_t offset = FIXNUM(argv[1]);
                     if (offset >= 0 && (offset + octets) <= bvector->count) {
                         if ((offset & (octets - 1)) == 0) {
                             bytes = bvector->elts + offset;
@@ -145,7 +145,7 @@ struct c_mutator_param_t {
                         return;
                     }
 #endif
-                    int offset = FIXNUM(argv[1]);
+                    intptr_t offset = FIXNUM(argv[1]);
                     if (offset >= 0 && (offset + octets) <= bvector->count) {
                         bytes = bvector->elts + offset;
                         return;
@@ -183,7 +183,7 @@ struct accessor_param_t {
             if (BVECTORP(argv[0])) {
                 if (FIXNUMP(argv[1])) {
                     scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                    int offset = FIXNUM(argv[1]);
+                    intptr_t offset = FIXNUM(argv[1]);
                     if (offset >= 0 && (offset + octets) <= bvector->count) {
                         bytes = bvector->elts + offset;
                         if (SYMBOLP(argv[2])) {
@@ -229,7 +229,7 @@ struct native_accessor_param_t {
             if (BVECTORP(argv[0])) {
                 if (FIXNUMP(argv[1])) {
                     scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                    int offset = FIXNUM(argv[1]);
+                    intptr_t offset = FIXNUM(argv[1]);
                     if (offset >= 0 && (offset + octets) <= bvector->count) {
                         if ((offset & (octets - 1)) == 0) {
                             bytes = bvector->elts + offset;
@@ -270,7 +270,7 @@ struct c_accessor_param_t {
             if (BVECTORP(argv[0])) {
                 if (FIXNUMP(argv[1])) {
                     scm_bvector_t bvector = (scm_bvector_t)argv[0];
-                    int offset = FIXNUM(argv[1]);
+                    intptr_t offset = FIXNUM(argv[1]);
                     if (offset >= 0 && (offset + octets) <= bvector->count) {
                         bytes = bvector->elts + offset;
                         return;
@@ -968,8 +968,8 @@ subr_make_bytevector(VM* vm, int argc, scm_obj_t argv[])
         if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
             int count = FIXNUM(argv[0]);
             if (FIXNUMP(argv[1])) {
-                int val = FIXNUM(argv[1]);
-                if (val >= INT8_MIN && val <= UINT8_MAX) {
+                intptr_t val = FIXNUM(argv[1]);
+                if (val >= INT8_MIN && val <= (intptr_t)UINT8_MAX) {
                     scm_bvector_t bvector = make_bvector(vm->m_heap, count);
                     memset(bvector->elts, val & 0xff, count);
                     return bvector;
@@ -1047,8 +1047,8 @@ subr_bytevector_fill(VM* vm, int argc, scm_obj_t argv[])
                     return scm_undef;
                 }
 #endif
-                int val = FIXNUM(argv[1]);
-                if (val >= INT8_MIN && val <= UINT8_MAX) {
+                intptr_t val = FIXNUM(argv[1]);
+                if (val >= INT8_MIN && val <= (intptr_t)UINT8_MAX) {
                     memset(bvector->elts, val & 0xff, bvector->count);
                     return scm_unspecified;
                 }
@@ -1189,7 +1189,7 @@ subr_u8_list_bytevector(VM* vm, int argc, scm_obj_t argv[])
                 scm_obj_t datum = CAR(obj);
                 obj = CDR(obj);
                 if (FIXNUMP(datum)) {
-                    int val = FIXNUM(datum);
+                    intptr_t val = FIXNUM(datum);
                     if (val >= 0 && val <= UINT8_MAX) {
                         bvector->elts[i] = val & 0xff;
                         continue;
@@ -1308,7 +1308,7 @@ subr_make_bytevector_mapping(VM* vm, int argc, scm_obj_t argv[])
 {
     if (argc == 2) {
         if (FIXNUMP(argv[1])) {
-            int size = FIXNUM(argv[1]);
+            intptr_t size = FIXNUM(argv[1]);
             if (exact_integer_pred(argv[0])) {
                 if (n_positive_pred(argv[0])) {
                     uintptr_t adrs;
@@ -1395,7 +1395,7 @@ c_n8_set(const char* subr, VM* vm, int argc, scm_obj_t argv[])
     if (param.violation) return scm_undef;
     if (FIXNUMP(argv[2])) {
         intptr_t n8 = FIXNUM(argv[2]);
-        if (n8 >= INT8_MIN && n8 <= UINT16_MAX) {
+        if (n8 >= INT8_MIN && n8 <= (intptr_t)UINT16_MAX) {
             *(uint8_t*)param.bytes = n8;
             return scm_unspecified;
         }
@@ -1413,7 +1413,7 @@ c_n16_set(const char* subr, VM* vm, int argc, scm_obj_t argv[])
     if (param.violation) return scm_undef;
     if (FIXNUMP(argv[2])) {
         intptr_t n16 = FIXNUM(argv[2]);
-        if (n16 >= INT16_MIN && n16 <= UINT16_MAX) {
+        if (n16 >= INT16_MIN && n16 <= (intptr_t)UINT16_MAX) {
             *(uint16_t*)param.bytes = n16;
             return scm_unspecified;
         }

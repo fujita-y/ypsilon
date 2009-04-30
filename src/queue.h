@@ -12,9 +12,9 @@
 #if _MSC_VER
   #if USE_CRITICAL_SECTION
         template< typename T >
-        class queue_t {
-            queue_t(const queue_t&);
-            queue_t& operator=(const queue_t&);
+        class sync_queue_t {
+            sync_queue_t(const sync_queue_t&);
+            sync_queue_t& operator=(const sync_queue_t&);
             typedef T           element_t;
             int                 n;
             int                 capacity;
@@ -29,7 +29,7 @@
             bool                terminate;
 
         public:
-            queue_t() { }
+            sync_queue_t() { }
 
             void init(int nelts)
             {
@@ -56,7 +56,7 @@
             bool put(element_t datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::put after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::put after shutdown\n", __FILE__, __LINE__);
     #endif
                 EnterCriticalSection(&lock);
                 if (terminate) {
@@ -85,7 +85,7 @@
             bool put(element_t datum, int msec)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::put after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::put after shutdown\n", __FILE__, __LINE__);
     #endif
                 EnterCriticalSection(&lock);
                 if (terminate) {
@@ -119,7 +119,7 @@
             bool get(element_t* datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::get after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::get after shutdown\n", __FILE__, __LINE__);
     #endif
                 EnterCriticalSection(&lock);
                 if (n == 0 && terminate) {
@@ -148,7 +148,7 @@
             bool get(element_t* datum, int msec)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::get after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::get after shutdown\n", __FILE__, __LINE__);
     #endif
                 EnterCriticalSection(&lock);
                 if (n == 0 && terminate) {
@@ -182,7 +182,7 @@
             bool try_put(element_t datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::try_put after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::try_put after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (n == capacity || TryEnterCriticalSection(&lock) == 0) return false;
                 if (n == capacity || terminate) {
@@ -200,7 +200,7 @@
             bool wait_lock_try_put(element_t datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::wait_lock_try_put after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::wait_lock_try_put after shutdown\n", __FILE__, __LINE__);
     #endif
                 EnterCriticalSection(&lock);
                 if (n == capacity || terminate) {
@@ -218,7 +218,7 @@
             bool try_get(element_t* datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::try_get after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::try_get after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (n == 0 || TryEnterCriticalSection(&lock) == 0) return false;
                 if (n == 0 || terminate) {
@@ -236,7 +236,7 @@
             bool wait_lock_try_get(element_t* datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::try_get after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::try_get after shutdown\n", __FILE__, __LINE__);
     #endif
                 EnterCriticalSection(&lock);
                 if (n == 0) {
@@ -254,7 +254,7 @@
             void clear()
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::clear after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::clear after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (n == 0) return;
                 EnterCriticalSection(&lock);
@@ -310,9 +310,9 @@
   #else
 
         template< typename T >
-        class queue_t {
-            queue_t(const queue_t&);
-            queue_t& operator=(const queue_t&);
+        class sync_queue_t {
+            sync_queue_t(const sync_queue_t&);
+            sync_queue_t& operator=(const sync_queue_t&);
 
             typedef T       element_t;
             int             n;
@@ -328,7 +328,7 @@
             bool            terminate;
 
         public:
-            queue_t() { }
+            sync_queue_t() { }
 
             void init(int nelts)
             {
@@ -356,7 +356,7 @@
             bool put(element_t datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::put after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::put after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (WaitForSingleObject(lock, INFINITE) != WAIT_OBJECT_0) return false;
                 if (terminate) {
@@ -384,7 +384,7 @@
             bool put(element_t datum, int msec)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::put after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::put after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (WaitForSingleObject(lock, INFINITE) != WAIT_OBJECT_0) return false;
                 if (terminate) {
@@ -417,7 +417,7 @@
             bool get(element_t* datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::get after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::get after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (WaitForSingleObject(lock, INFINITE) != WAIT_OBJECT_0) return false;
                 if (n == 0 && terminate) {
@@ -445,7 +445,7 @@
             bool get(element_t* datum, int msec)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::get after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::get after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (WaitForSingleObject(lock, INFINITE) != WAIT_OBJECT_0) return false;
                 if (n == 0 && terminate) {
@@ -478,7 +478,7 @@
             bool try_put(element_t datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::try_put after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::try_put after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (n == capacity || (WaitForSingleObject(lock, 0) != WAIT_OBJECT_0)) return false;
                 if (n == capacity || terminate) {
@@ -496,7 +496,7 @@
             bool wait_lock_try_put(element_t datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::wait_lock_try_put after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::wait_lock_try_put after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (WaitForSingleObject(lock, INFINITE) != WAIT_OBJECT_0) return false;
                 if (n == capacity || terminate) {
@@ -514,7 +514,7 @@
             bool try_get(element_t* datum)
             {
      #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::try_get after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::try_get after shutdown\n", __FILE__, __LINE__);
      #endif
                 if (n == 0 || (WaitForSingleObject(lock, 0) != WAIT_OBJECT_0)) return false;
                 if (n == 0 || terminate) {
@@ -532,7 +532,7 @@
             bool wait_lock_try_get(element_t* datum)
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::wait_lock_try_get after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::wait_lock_try_get after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (WaitForSingleObject(lock, INFINITE) != WAIT_OBJECT_0) return false;
                 if (n == 0) {
@@ -550,7 +550,7 @@
             void clear()
             {
     #ifndef NDEBUG
-                if (terminate) warning("warning:%s:%u queue_t::clear after shutdown\n", __FILE__, __LINE__);
+                if (terminate) warning("warning:%s:%u sync_queue_t::clear after shutdown\n", __FILE__, __LINE__);
     #endif
                 if (n == 0) return;
                 if (WaitForSingleObject(lock, INFINITE) != WAIT_OBJECT_0) return;
@@ -605,9 +605,9 @@
     #endif
 #else
     template< typename T >
-    class queue_t {
-        queue_t(const queue_t&);
-        queue_t& operator=(const queue_t&);
+    class sync_queue_t {
+        sync_queue_t(const sync_queue_t&);
+        sync_queue_t& operator=(const sync_queue_t&);
 
         typedef T       element_t;
         pthread_mutex_t lock;
@@ -636,7 +636,7 @@
         }
 
     public:
-        queue_t() { }
+        sync_queue_t() { }
 
         void init(int nelts)
         {
@@ -661,7 +661,7 @@
         bool put(element_t datum)
         {
   #ifndef NDEBUG
-            if (terminate) warning("warning:%s:%u queue_t::put after shutdown\n", __FILE__, __LINE__);
+            if (terminate) warning("warning:%s:%u sync_queue_t::put after shutdown\n", __FILE__, __LINE__);
   #endif
             MTVERIFY(pthread_mutex_lock(&lock));
             if (terminate) {
@@ -688,7 +688,7 @@
         bool put(element_t datum, int msec)
         {
   #ifndef NDEBUG
-            if (terminate) warning("warning:%s:%u queue_t::put after shutdown\n", __FILE__, __LINE__);
+            if (terminate) warning("warning:%s:%u sync_queue_t::put after shutdown\n", __FILE__, __LINE__);
   #endif
             MTVERIFY(pthread_mutex_lock(&lock));
             if (terminate) {
@@ -724,7 +724,7 @@
         bool get(element_t* datum)
         {
   #ifndef NDEBUG
-            if (terminate) warning("warning:%s:%u queue_t::get after shutdown\n", __FILE__, __LINE__);
+            if (terminate) warning("warning:%s:%u sync_queue_t::get after shutdown\n", __FILE__, __LINE__);
   #endif
             MTVERIFY(pthread_mutex_lock(&lock));
             if (n == 0 && terminate) {
@@ -751,7 +751,7 @@
         bool get(element_t* datum, int msec)
         {
   #ifndef NDEBUG
-            if (terminate) warning("warning:%s:%u queue_t::get after shutdown\n", __FILE__, __LINE__);
+            if (terminate) warning("warning:%s:%u sync_queue_t::get after shutdown\n", __FILE__, __LINE__);
   #endif
             MTVERIFY(pthread_mutex_lock(&lock));
             if (n == 0 && terminate) {
@@ -787,7 +787,7 @@
         bool try_put(element_t datum)
         {
   #ifndef NDEBUG
-            if (terminate) warning("warning:%s:%u queue_t::try_put after shutdown\n", __FILE__, __LINE__);
+            if (terminate) warning("warning:%s:%u sync_queue_t::try_put after shutdown\n", __FILE__, __LINE__);
   #endif
             if (n == capacity || pthread_mutex_trylock(&lock)) return false;
             if (n == capacity || terminate) {
@@ -805,7 +805,7 @@
         bool wait_lock_try_put(element_t datum)
         {
   #ifndef NDEBUG
-            if (terminate) warning("warning:%s:%u queue_t::wait_lock_try_put after shutdown\n", __FILE__, __LINE__);
+            if (terminate) warning("warning:%s:%u sync_queue_t::wait_lock_try_put after shutdown\n", __FILE__, __LINE__);
   #endif
             MTVERIFY(pthread_mutex_lock(&lock));
             if (n == capacity || terminate) {
@@ -823,7 +823,7 @@
         bool try_get(element_t* datum)
         {
   #ifndef NDEBUG
-            if (terminate) warning("warning:%s:%u queue_t::try_get after shutdown\n", __FILE__, __LINE__);
+            if (terminate) warning("warning:%s:%u sync_queue_t::try_get after shutdown\n", __FILE__, __LINE__);
   #endif
             if (n == 0 || pthread_mutex_trylock(&lock)) return false;
             if (n == 0 || terminate) {
@@ -841,7 +841,7 @@
         bool wait_lock_try_get(element_t* datum)
         {
   #ifndef NDEBUG
-            if (terminate) warning("warning:%s:%u queue_t::wait_lock_try_get after shutdown\n", __FILE__, __LINE__);
+            if (terminate) warning("warning:%s:%u sync_queue_t::wait_lock_try_get after shutdown\n", __FILE__, __LINE__);
   #endif
             MTVERIFY(pthread_mutex_lock(&lock));
             if (n == 0) {
@@ -859,7 +859,7 @@
         void clear()
         {
   #ifndef NDEBUG
-            if (terminate) warning("warning:%s:%u queue_t::clear after shutdown\n", __FILE__, __LINE__);
+            if (terminate) warning("warning:%s:%u sync_queue_t::clear after shutdown\n", __FILE__, __LINE__);
   #endif
             if (n == 0) return;
             MTVERIFY(pthread_mutex_lock(&lock));

@@ -18,6 +18,7 @@
           gtk_window_get_accept_focus
           gtk_window_get_decorated
           gtk_window_get_default_icon_list
+          gtk_window_get_default_icon_name
           gtk_window_get_default_size
           gtk_window_get_default_widget
           gtk_window_get_deletable
@@ -116,10 +117,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgtk-x11-2.0.so.0")
+    (cond (on-linux   "libgtk-x11-2.0.so.0")
+          (on-sunos   "libgtk-x11-2.0.so.0")
           (on-freebsd "libgtk-x11-2.0.so.0")
           (on-openbsd "libgtk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgtk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GTK library, unknown operating system"))))
@@ -174,6 +176,9 @@
 
   ;; GList* gtk_window_get_default_icon_list (void)
   (define-function void* gtk_window_get_default_icon_list ())
+
+  ;; constgchar* gtk_window_get_default_icon_name (void)
+  (define-function char* gtk_window_get_default_icon_name ())
 
   ;; void gtk_window_get_default_size (GtkWindow* window, gint* width, gint* height)
   (define-function void gtk_window_get_default_size (void* void* void*))

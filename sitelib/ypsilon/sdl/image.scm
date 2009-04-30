@@ -38,6 +38,7 @@
 
   (define lib-name
     (cond (on-linux   "libSDL_image.so")
+          (on-sunos   "libSDL_image.so")
           (on-freebsd "libSDL_image.so")
           (on-openbsd "libSDL_image.so")
           (on-darwin  "SDL_image.framework/SDL_image")

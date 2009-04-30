@@ -44,7 +44,6 @@
           gdk_window_get_root_origin
           gdk_window_get_state
           gdk_window_get_toplevel
-          gdk_window_get_toplevels
           gdk_window_get_type_hint
           gdk_window_get_update_area
           gdk_window_get_user_data
@@ -131,10 +130,11 @@
   (import (rnrs) (ypsilon ffi))
 
   (define lib-name
-    (cond (on-darwin  "Gtk.framework/Gtk")
-          (on-linux   "libgdk-x11-2.0.so.0")
+    (cond (on-linux   "libgdk-x11-2.0.so.0")
+          (on-sunos   "libgdk-x11-2.0.so.0")
           (on-freebsd "libgdk-x11-2.0.so.0")
           (on-openbsd "libgdk-x11-2.0.so.0")
+          (on-darwin  "Gtk.framework/Gtk")
           (on-windows "libgdk-win32-2.0-0.dll")
           (else
            (assertion-violation #f "can not locate GDK library, unknown operating system"))))
@@ -262,9 +262,6 @@
 
   ;; GdkWindow* gdk_window_get_toplevel (GdkWindow* window)
   (define-function void* gdk_window_get_toplevel (void*))
-
-  ;; GList* gdk_window_get_toplevels (void)
-  (define-function void* gdk_window_get_toplevels ())
 
   ;; GdkWindowTypeHint gdk_window_get_type_hint (GdkWindow* window)
   (define-function int gdk_window_get_type_hint (void*))

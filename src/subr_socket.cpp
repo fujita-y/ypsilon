@@ -56,7 +56,7 @@ subr_socket_shutdown(VM* vm, int argc, scm_obj_t argv[])
     if (argc == 2) {
         if (SOCKETP(argv[0])) {
             if (FIXNUMP(argv[1])) {
-                int how = FIXNUM(argv[1]);
+                intptr_t how = FIXNUM(argv[1]);
                 if (how >= 0 && how <= 2) {
                     try {
                         socket_shutdown((scm_socket_t)argv[0], FIXNUM(argv[1]));

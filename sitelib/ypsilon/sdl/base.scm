@@ -210,6 +210,7 @@
 
   (define lib-name
     (cond (on-linux   "libSDL.so")
+          (on-sunos   "libSDL.so")
           (on-freebsd "libSDL.so")
           (on-openbsd "libSDL.so")
           (on-darwin  "SDL.framework/SDL")
