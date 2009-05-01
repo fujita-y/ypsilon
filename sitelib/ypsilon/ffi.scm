@@ -92,7 +92,10 @@
   (define on-windows       (and (string-contains (architecture-feature 'operating-system) "windows") #t))
   (define on-posix         (not on-windows))
   (define on-x64           (and (or (string-contains (architecture-feature 'machine-hardware) "x86_64")
-                                    (string-contains (architecture-feature 'machine-hardware) "amd64")) #t))
+                                    (string-contains (architecture-feature 'machine-hardware) "amd64")
+                                    (and on-sunos
+                                         (string-contains (architecture-feature 'machine-hardware) "i86")
+                                         (= (architecture-feature 'sizeof:void*) 8))) #t))
   (define on-ia32          (not on-x64))
 
   (define expect-string

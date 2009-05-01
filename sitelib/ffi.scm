@@ -65,6 +65,7 @@
           on-linux
           on-openbsd
           on-posix
+          on-sunos
           on-windows
           on-x64
           shared-object-errno
