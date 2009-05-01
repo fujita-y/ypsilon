@@ -22,23 +22,22 @@ VPATH 	 = src
 
 UNAME 	 = $(shell uname -a)
 
-ifndef DATAMODEL
-  ifeq ($(shell echo | $(CXX) -E -dM - | grep '__LP64__'), )
-    DATAMODEL = ILP32
-  else
-    DATAMODEL = LP64
-  endif
-endif
-
 ifneq (,$(findstring Linux, $(UNAME)))
-  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
+  ifndef DATAMODEL
+    ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
+      DATAMODEL = ILP32
+    else
+      DATAMODEL = LP64
+    endif
+  endif
+  ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
     ifeq ($(DATAMODEL), ILP32)  
       CXXFLAGS += -march=i686
     endif
   else
     CXXFLAGS += -march=native
   endif
-  ifeq (,$(shell grep -i sse2 /proc/cpuinfo))
+  ifeq (,$(shell grep -i 'sse2' /proc/cpuinfo))
     CXXFLAGS += -msse
   else
     CXXFLAGS += -msse2
@@ -64,14 +63,21 @@ ifneq (,$(findstring Linux, $(UNAME)))
 endif
 
 ifneq (,$(findstring FreeBSD, $(UNAME)))
-  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
+  ifndef DATAMODEL
+    ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
+      DATAMODEL = ILP32
+    else
+      DATAMODEL = LP64
+    endif
+  endif
+  ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
     ifeq ($(DATAMODEL), ILP32)  
       CXXFLAGS += -march=i686
     endif
   else
     CXXFLAGS += -march=native
   endif
-  ifeq ($(shell dmesg | grep -i sse2), )
+  ifeq (,$(shell dmesg | grep -i 'sse2'))
     CXXFLAGS += -msse
   else
     CXXFLAGS += -msse2
@@ -98,14 +104,21 @@ ifneq (,$(findstring FreeBSD, $(UNAME)))
 endif
 
 ifneq (,$(findstring OpenBSD, $(UNAME)))
-  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
+  ifndef DATAMODEL
+    ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
+      DATAMODEL = ILP32
+    else
+      DATAMODEL = LP64
+    endif
+  endif
+  ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
     ifeq ($(DATAMODEL), ILP32)  
       CXXFLAGS += -march=i686
     endif
   else
     CXXFLAGS += -march=native
   endif
-  ifeq ($(shell dmesg | grep -i sse2), )
+  ifeq (,$(shell dmesg | grep -i 'sse2'))
     CXXFLAGS += -msse
   else
     CXXFLAGS += -msse2
@@ -131,25 +144,22 @@ ifneq (,$(findstring OpenBSD, $(UNAME)))
   LDLIBS = -pthread
 endif
 
-ifneq (,$(findstring Darwin, $(UNAME)))
-  CXXFLAGS += -arch i386 -msse2 -mfpmath=sse
-  CPPFLAGS += -DNO_TLS
-  SRCS += ffi_stub_darwin.s
-  ifneq (,$(USE_SDL))
-    CPPFLAGS += -DUSE_SDL
-    LDFLAGS = extension/SDL/darwin/i386/SDLmain.o -framework SDL -framework Cocoa 
-  endif
-endif
-
 ifneq (,$(findstring SunOS, $(UNAME)))
-  ifeq ($(shell $(CXX) -dumpspecs | grep 'march=native'), )
+  ifndef DATAMODEL
+    ifeq (,$(shell isainfo -b | grep '64'))
+      DATAMODEL = ILP32
+    else
+      DATAMODEL = LP64
+    endif
+  endif
+  ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
     ifeq ($(DATAMODEL), ILP32)  
       CXXFLAGS += -march=i686
     endif
   else
     CXXFLAGS += -march=native
   endif
-  ifeq ($(shell dmesg | grep -i sse2), )
+  ifeq (,$(shell isainfo -x | grep -i 'sse2'))
     CXXFLAGS += -msse
   else
     CXXFLAGS += -msse2
@@ -174,6 +184,16 @@ ifneq (,$(findstring SunOS, $(UNAME)))
   LDLIBS = -lpthread -ldl -lxnet
 endif
 
+ifneq (,$(findstring Darwin, $(UNAME)))
+  CXXFLAGS += -arch i386 -msse2 -mfpmath=sse
+  CPPFLAGS += -DNO_TLS
+  SRCS += ffi_stub_darwin.s
+  ifneq (,$(USE_SDL))
+    CPPFLAGS += -DUSE_SDL
+    LDFLAGS = extension/SDL/darwin/i386/SDLmain.o -framework SDL -framework Cocoa 
+  endif
+endif
+
 OBJS =	$(patsubst %.cpp, %.o, $(filter %.cpp, $(SRCS))) $(patsubst %.s, %.o, $(filter %.s, $(SRCS)))
 DEPS = 	$(patsubst %.cpp, %.d, $(filter %.cpp, $(SRCS)))
 
@@ -187,7 +207,7 @@ $(PROG): $(OBJS)
 
 subr_others.s: subr_others.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fverbose-asm -S src/subr_others.cpp
-	
+
 vm3.s: vm3.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fverbose-asm -S src/vm3.cpp
 
@@ -280,8 +300,7 @@ moreclean: distclean
 	find . -type f -name '*~' -print0 | xargs -0 rm -f
 
 %.d: %.cpp
-	$(SHELL) -ec '$(CXX) -MM $(CPPFLAGS) $< \
-	| sed '\''s/\($*\)\.o[ :]*/\1.o $@ : /g'\'' > $@; [ -s $@ ] || rm -f $@'
+	$(SHELL) -ec '$(CXX) -MM $(CPPFLAGS) $< | sed '\''s/\($*\)\.o[ :]*/\1.o $@ : /g'\'' > $@; [ -s $@ ] || rm -f $@'
 
 ifeq ($(findstring clean, $(MAKECMDGOALS)), )
   ifeq ($(findstring uninstall, $(MAKECMDGOALS)), )
