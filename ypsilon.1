@@ -60,6 +60,11 @@ Ypsilon implements "mostly concurrent mark and sweep garbage collector".
 It is optimized to achieve a remarkably short pause time which is essential for the best quality real-time video games.
 .SH OPTIONS
 .TP
+\fB--r6rs\fP, \fB-6\fP
+Conforms R6RS top-level program syntax and semantics.
+.br
+#!r6rs directive is available to be used in the script files for the precise control.
+.TP
 \fB--mute\fP, \fB-m\fP
 Suppresses greeting.
 .TP
@@ -74,11 +79,6 @@ Prints warnings.
 .TP
 \fB--interactive\fP, \fB-i\fP
 Enters repl after running the script file.
-.TP
-\fB--r6rs\fP, \fB-6\fP
-Conforms R6RS top-level program syntax.
-.br
-#!r6rs directive is available to be used in the script files for the precise control.
 .TP
 \fB--compatible\fP, \fB-c\fP
 Extends the lexical syntax for the compatibility of the existing scripts.
