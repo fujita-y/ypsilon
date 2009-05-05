@@ -544,6 +544,7 @@ VM::loop(bool init, bool resume)
         __asm__ ("apply:");
 #endif
         if (CLOSUREP(m_value)) {
+            if (m_heap->m_stop_the_world) stop();
             if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) < (uintptr_t)m_stack_limit) {
                 scm_closure_t closure = (scm_closure_t)m_value;
                 intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
