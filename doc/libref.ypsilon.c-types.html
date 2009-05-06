@@ -287,7 +287,7 @@
       <span class="subject_identifier"><a href="#bytevector-c-strlen">bytevector-c-strlen</a></span>
     </td>
     <td class="subject_td">
-      Returns an octed length of a C string in a bytevector
+      Assumes the bytevector contains C string, and returns its length
     </td>
   </tr>
   <tr>
@@ -2127,7 +2127,7 @@
 <table class="abstract_box" border="0">
   <tr>
     <td>
-      <div><a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a> returns an octed length of a C string in a bytevector.</div>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a> assumes the bytevector contains C string, and returns its length.</div>
     </td>
   </tr>
 </table>
@@ -2157,7 +2157,7 @@
   <caption class="desc_box_caption">description:</caption>
   <tr>
     <td>
-      <div>If no terminating '\0' character is exits, <a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a> returns length of the <span class="desc_argument">bytevector</span>.</div>
+      <div>If no terminating zero byte exists in the <span class="desc_argument">bytevector</span>, <a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a> returns bytevector-length of the <span class="desc_argument">bytevector</span>.</div>
     </td>
   </tr>
 </table>
