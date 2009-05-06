@@ -440,7 +440,7 @@
                                                   (type (cadr e))
                                                   (spec (caddr e)))
                                               (case type
-                                                ((template) 
+                                                ((template)
                                                  `(.set-top-level-macro! 'syntax ',id ',spec ,shared-env))
                                                 ((procedure)
                                                  (let ((x (generate-temporary-symbol)))
@@ -448,7 +448,7 @@
                                                 ((variable)
                                                  (let ((x (generate-temporary-symbol)))
                                                    `(.set-top-level-macro! 'variable ',id (lambda (,x) (,spec ,x)) ,shared-env)))
-                                                (else 
+                                                (else
                                                  (scheme-error "internal error in rewrite body: bad macro spec ~s" e)))))
                                           macros))))))))
                    (rewrited-exports
@@ -545,6 +545,15 @@
 
 (define import-top-level-bindings
   (lambda (bindings)
+    (let ((ht1 (make-core-hashtable)) (ht2 (current-top-level-renames)))
+      (for-each (lambda (binding)
+                  (core-hashtable-delete! ht2 (car bindings))
+                  (cond ((core-hashtable-ref ht1 (cddr binding) #f)
+                         => (lambda (id) (core-hashtable-set! ht2 (car binding) id)))
+                        (else
+                         (core-hashtable-set! ht1 (cddr binding) (car binding)))))
+                bindings)
+      (current-top-level-renames ht2))
     (for-each (lambda (binding)
                 (let ((intern (car binding)) (extern (cddr binding)))
                   (or (eq? intern extern)
