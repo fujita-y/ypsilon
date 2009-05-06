@@ -70,7 +70,7 @@
 
     (if (symbol? id)
         (let ((deno (env-lookup env id)))
-          (cond ((uninterned-symbol? deno) ; deno)
+          (cond ((uninterned-symbol? deno)
                  (cond ((local-macro-symbol? deno) deno)
                        ((renamed-variable-id? deno) deno)
                        ((eq? id deno)
@@ -78,7 +78,7 @@
                        (else
                         (lookup-topmost-subst deno env))))
                 ((symbol? deno)
-                 (unrename-primitive-id deno))
+                 (unrename-primitive-id (core-hashtable-ref (current-top-level-renames) deno deno)))
                 ((unbound? deno)
                  (unrename-primitive-id (original-id id)))
                 ((and (macro? deno) (assq deno env)) => cdr)

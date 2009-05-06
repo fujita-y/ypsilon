@@ -18,6 +18,7 @@
 (define current-temporaries (make-parameter #f))
 (define current-closure-comments (make-parameter #f))
 (define current-top-level-exterior (make-parameter #f))
+(define current-top-level-renames (make-parameter (make-core-hashtable)))
 
 (set-top-level-value! '.set-top-level-macro!
   (lambda (type keyword datum env)
