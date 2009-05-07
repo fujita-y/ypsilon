@@ -188,7 +188,7 @@
                                       (core-hashtable-set! ht (car e) deno))))
                            env)
                  (core-hashtable->alist ht))))
-          (let ((expr `(.transformer-thunk ,(expand-form transformer (extend-env out-of-context env)))))
+          (let ((expr `(.transformer-thunk ,(expand-form transformer (extend-env (cons '(.vars . .vars) out-of-context) env)))))
             (let ((proc (interpret-coreform expr)))
               (cond ((procedure? proc) (values proc expr))
                     ((variable-transformer-token? proc)
