@@ -6,6 +6,7 @@
 (library (ypsilon sdl types)
   (export SDLKey
           SDLMod
+          SDL_Color
           SDL_Rect
           SDL_PixelFormat
           SDL_Surface
@@ -39,7 +40,19 @@
   ;; typdef enum { ... } SDLMod;
   ;;
   (define-c-typedef SDLMod int)
-
+  
+  ;; typedef struct SDL_Color {
+  ;;     Uint8 r;
+  ;;     Uint8 g;
+  ;;     Uint8 b;
+  ;;     Uint8 unused;
+  ;; } SDL_Color;
+  (define-c-typedef SDL_Color
+    (struct (uint8_t r)
+            (uint8_t g)
+            (uint8_t b)
+            (uint8_t unused)))
+  
   ;; typedef struct SDL_Rect {
   ;;     Sint16 x, y;
   ;;     Uint16 w, h;

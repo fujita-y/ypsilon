@@ -397,6 +397,7 @@
           SDL_CDStop
           SDL_ClearError
           SDL_CloseAudio
+          SDL_Color
           SDL_CondBroadcast
           SDL_CondSignal
           SDL_CondWait

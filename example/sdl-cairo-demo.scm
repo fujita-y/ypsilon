@@ -1,7 +1,7 @@
 #!/usr/bin/env ypsilon
 #!r6rs
    
-;; sdl-cairo-hello.scm:
+;; sdl-cairo-demo.scm:
 ;;   SDL/Cairo hello world
 ;;
 ;; Requirements:

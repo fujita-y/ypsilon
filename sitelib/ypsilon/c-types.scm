@@ -4,7 +4,8 @@
 ;;; See license.txt for terms and conditions of use.
 
 (library (ypsilon c-types)
-  (export define-c-typedef
+  (export define-c-enum
+          define-c-typedef
           define-c-struct-type
           define-c-struct-methods
           c-sizeof
@@ -40,6 +41,49 @@
           bytevector-c-int32-set!
           bytevector-c-int64-set!
           bytevector-c-strlen
+          make-c-bool
+          make-c-short
+          make-c-int
+          make-c-long
+          make-c-void*
+          make-c-float
+          make-c-double
+          make-c-int8
+          make-c-int16
+          make-c-int32
+          make-c-int64
+          make-c-string
+          c-bool-ref
+          c-short-ref
+          c-int-ref
+          c-long-ref
+          c-void*-ref
+          c-float-ref
+          c-double-ref
+          c-unsigned-short-ref
+          c-unsigned-int-ref
+          c-unsigned-long-ref
+          c-int8-ref
+          c-int16-ref
+          c-int32-ref
+          c-int64-ref
+          c-uint8-ref
+          c-uint16-ref
+          c-uint32-ref
+          c-uint64-ref
+          c-string-ref
+          c-bool-set!
+          c-short-set!
+          c-int-set!
+          c-long-set!
+          c-void*-set!
+          c-float-set!
+          c-double-set!
+          c-int8-set!
+          c-int16-set!
+          c-int32-set!
+          c-int64-set!
+          c-string-set!
           sizeof:bool
           sizeof:int
           sizeof:long
@@ -91,9 +135,9 @@
 
   (define bytevector-c-bool-ref
     (case sizeof:bool
-      ((1) (lambda (bv offset) (> (bytevector-c-uint8-ref bv offset) 0)))
-      ((4) (lambda (bv offset) (> (bytevector-c-uint32-ref bv offset) 0)))
-      ((8) (lambda (bv offset) (> (bytevector-c-uint64-ref bv offset) 0)))
+      ((1) (lambda (bv offset) (if (> (bytevector-c-uint8-ref bv offset) 0) 1 0)))
+      ((4) (lambda (bv offset) (if (> (bytevector-c-uint32-ref bv offset) 0) 1 0)))
+      ((8) (lambda (bv offset) (if (> (bytevector-c-uint64-ref bv offset) 0) 1 0)))
       (else (assertion-violation 'bytevector-c-bool-ref "internal inconsistency"))))
 
   (define bytevector-c-bool-set!
@@ -200,7 +244,7 @@
           (define #,(constructor-name stx struct-name)
             (lambda ()
               (make-bytevector #,struct-size))))))
-  
+
   #;(define make-constructor
     (lambda (stx struct-name struct-size)
       #`(define-syntax #,(constructor-name stx struct-name)
@@ -461,5 +505,104 @@
     (syntax-rules ()
       ((_ var type)
        (make-bytevector-mapping var (c-sizeof type)))))
+  
+  (define-syntax define-c-enum
+    (lambda (x)
+      (syntax-case x ()
+        ((stx . elts)
+         (let ((exact-integer? (lambda (x) (and (integer? x) (exact? x)))))
+           (let loop ((n 0) (defs '()) (elts (syntax->datum #'elts)))
+             (destructuring-match elts
+               (()
+                (datum->syntax #'stx (cons 'begin (reverse defs))))
+               ((([? symbol? name] . [? exact-integer? n]) . more)
+                (loop (+ n 1) (cons `(define ,name ,n) defs) more))
+               (([? symbol? name] . more)
+                (loop (+ n 1) (cons `(define ,name ,n) defs) more))
+               (_
+                (syntax-violation 'define-c-enum "invalid syntax" x (car elts))))))))))
+
+  (let-syntax
+    ((define-methods
+      (lambda (x)
+        (syntax-case x ()
+          ((stx base size)
+           (let ((base (syntax->datum #'base)))
+             (define make-id (lambda (s) (datum->syntax #'stx (string->symbol (format s base)))))
+             (with-syntax
+                 ((constructor (make-id "make-c-~a"))
+                  (accessor (make-id "c-~a-ref"))
+                  (mutator (make-id "c-~a-set!"))
+                  (bv-accessor (make-id "bytevector-c-~a-ref"))
+                  (bv-mutator (make-id "bytevector-c-~a-set!")))
+               #'(begin
+                   (define constructor
+                     (lambda (val)
+                       (let ((obj (make-bytevector size)))
+                         (bv-mutator obj 0 val) obj)))
+                   (define accessor
+                     (lambda (obj)
+                       (bv-accessor
+                        (if (bytevector? obj) obj (make-bytevector-mapping obj size))
+                        0)))
+                   (define mutator
+                     (lambda (obj val)
+                       (bv-mutator
+                        (if (bytevector? obj) obj (make-bytevector-mapping obj size))
+                        val 0))))))))))
+     (define-accessor
+      (lambda (x)
+        (syntax-case x ()
+          ((stx base size)
+           (let ((base (syntax->datum #'base)))
+             (define make-id (lambda (s) (datum->syntax #'stx (string->symbol (format s base)))))
+             (with-syntax ((accessor (make-id "c-~a-ref")) (bv-accessor (make-id "bytevector-c-~a-ref")))
+               #'(define accessor
+                   (lambda (obj)
+                     (bv-accessor
+                      (if (bytevector? obj) obj (make-bytevector-mapping obj size))
+                      0))))))))))
+    (define-methods bool sizeof:bool)
+    (define-methods short sizeof:short)
+    (define-methods int sizeof:int)
+    (define-methods long sizeof:long)
+    (define-methods void* sizeof:void*)
+    (define-methods float 4)
+    (define-methods double 8)
+    (define-methods int8 1)
+    (define-methods int16 2)
+    (define-methods int32 3)
+    (define-methods int64 4)
+    (define-accessor uint8 1)
+    (define-accessor uint16 2)
+    (define-accessor uint32 3)
+    (define-accessor uint64 4)
+    (define-accessor unsigned-short sizeof:short)
+    (define-accessor unsigned-int sizeof:int)
+    (define-accessor unsigned-long sizeof:long))
+
+  (define make-c-string (lambda (s) (string->utf8/nul s)))
+
+  (define c-string-ref
+    (lambda (obj)
+      (if (bytevector? obj)
+          (let ((n (bytevector-c-strlen obj)))
+            (if (= n (bytevector-length obj))
+                (utf8->string obj)
+                (let ((bv (make-bytevector n)))
+                  (bytevector-copy! obj 0 bv 0 n)
+                  (utf8->string bv))))
+          (let loop ((m 1024))
+            (let ((bv (make-bytevector-mapping obj m)))
+              (let ((n (bytevector-c-strlen bv)))
+                (if (= n (bytevector-length bv))
+                    (loop (+ m m))
+                    (utf8->string (make-bytevector-mapping obj n)))))))))
+
+  (define c-string-set!
+    (lambda (obj s)
+      (let ((src (string->utf8/nul s)))
+        (let ((dst (if (bytevector? obj) obj (make-bytevector-mapping obj (bytevector-length src)))))
+          (bytevector-copy! src 0 dst 0 (bytevector-length src))))))
 
   ) ;[end]
