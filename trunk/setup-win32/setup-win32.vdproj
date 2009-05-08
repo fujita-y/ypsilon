@@ -231,6 +231,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_177C9EC2369348DF93E6F13F52ECE9BA"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_17A765C30F7C4F71B3471F1A50176CF4"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -1102,12 +1108,6 @@
         "Entry"
         {
         "MsmKey" = "8:_6C0D53D639D145669D30712599BF3826"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_6D41AE8841664CC9B1A8EAFB1A9F984B"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -2218,6 +2218,12 @@
         "Entry"
         {
         "MsmKey" = "8:_D43844A669164353B50EA00F6E216E4A"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D5E69D92E94D4A27A5873FC88249A9E6"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -3450,6 +3456,26 @@
             "TargetName" = "8:parse.scm"
             "Tag" = "8:"
             "Folder" = "8:_B526C94D65CB418093434E31F87B181B"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_177C9EC2369348DF93E6F13F52ECE9BA"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\sdl\\ttf.scm"
+            "TargetName" = "8:ttf.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_8305365E8C264B71A61B2B3D026F82F6"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -6370,26 +6396,6 @@
             "TargetName" = "8:plug.scm"
             "Tag" = "8:"
             "Folder" = "8:_B526C94D65CB418093434E31F87B181B"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6D41AE8841664CC9B1A8EAFB1A9F984B"
-            {
-            "SourcePath" = "8:..\\sitelib\\ypsilon\\c-enum.scm"
-            "TargetName" = "8:c-enum.scm"
-            "Tag" = "8:"
-            "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -10088,6 +10094,26 @@
             {
             "SourcePath" = "8:..\\sitelib\\ypsilon\\sdl.scm"
             "TargetName" = "8:sdl.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D5E69D92E94D4A27A5873FC88249A9E6"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\mysql.scm"
+            "TargetName" = "8:mysql.scm"
             "Tag" = "8:"
             "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
             "Condition" = "8:"

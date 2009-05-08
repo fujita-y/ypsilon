@@ -420,7 +420,7 @@
           KMOD_ALT
           KMOD_META)
 
-  (import (core) (rnrs) (ypsilon c-enum))
+  (import (core) (rnrs) (ypsilon c-types))
 
   (define SDL_INIT_TIMER       #x00000001)
   (define SDL_INIT_AUDIO       #x00000010)

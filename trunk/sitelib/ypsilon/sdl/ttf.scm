@@ -59,7 +59,7 @@
           (on-freebsd "libSDL_ttf.so")
           (on-openbsd "libSDL_ttf.so")
           (on-darwin  "SDL_ttf.framework/SDL_ttf")
-          (on-windows "libSDL_ttf.dll")
+          (on-windows "SDL_ttf.dll")
           (else
            (assertion-violation #f "can not locate SDL TTF library, unknown operating system"))))
 

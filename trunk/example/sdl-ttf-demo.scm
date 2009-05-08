@@ -21,10 +21,10 @@
 
 (define NULL 0)
 
-(define font-path "./font.ttf")
+(define font-path "./VeraMono.ttf")
 
 (unless (file-exists? font-path)
-  (error 'sdl-ttf-demo.scm "this demo program expect './font.ttf' file in current directory."))
+  (error 'sdl-ttf-demo.scm "this demo program expect './VeraMono.ttf' file in current directory."))
 
 ;; init SDL
 (when (> (SDL_Init SDL_INIT_EVERYTHING) 0) (assertion-violation 'SDL_Init (SDL_GetError)))
