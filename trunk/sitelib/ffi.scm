@@ -43,11 +43,42 @@
           bytevector-c-void*-ref
           bytevector-c-void*-set!
           bytevector-mapping?
+          c-bool-ref
+          c-bool-set!
           c-coerce-void*
+          c-double-ref
+          c-double-set!
+          c-float-ref
+          c-float-set!
           c-function
           c-function/errno
           c-function/win32-lasterror
+          c-int-ref
+          c-int-set!
+          c-int16-ref
+          c-int16-set!
+          c-int32-ref
+          c-int32-set!
+          c-int64-ref
+          c-int64-set!
+          c-int8-ref
+          c-int8-set!
+          c-long-ref
+          c-long-set!
+          c-short-ref
+          c-short-set!
           c-sizeof
+          c-string-ref
+          c-string-set!
+          c-uint16-ref
+          c-uint32-ref
+          c-uint64-ref
+          c-uint8-ref
+          c-unsigned-int-ref
+          c-unsigned-long-ref
+          c-unsigned-short-ref
+          c-void*-ref
+          c-void*-set!
           define-c-enum
           define-c-struct-methods
           define-c-struct-type
@@ -55,6 +86,18 @@
           load-shared-object
           lookup-shared-object
           make-bytevector-mapping
+          make-c-bool
+          make-c-double
+          make-c-float
+          make-c-int
+          make-c-int16
+          make-c-int32
+          make-c-int64
+          make-c-int8
+          make-c-long
+          make-c-short
+          make-c-string
+          make-c-void*
           make-cdecl-callback
           make-cdecl-callout
           make-stdcall-callback

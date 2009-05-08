@@ -28,6 +28,14 @@
 <caption class="subject_box_caption">Summaries:</caption>
   <tr>
     <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#define-c-enum">define-c-enum</a></span>
+    </td>
+    <td class="subject_td">
+      Defines C enumeration constant
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
       <span class="subject_identifier"><a href="#define-c-typedef">define-c-typedef</a></span>
     </td>
     <td class="subject_td">
@@ -287,7 +295,343 @@
       <span class="subject_identifier"><a href="#bytevector-c-strlen">bytevector-c-strlen</a></span>
     </td>
     <td class="subject_td">
-      Assumes the bytevector contains C string, and returns its length
+      Returns a C string length of its contents
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-bool">make-c-bool</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains a bool value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-short">make-c-short</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains a short value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-int">make-c-int</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains an int value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-long">make-c-long</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains a long value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-void*">make-c-void*</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains a void* value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-float">make-c-float</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains a float value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-double">make-c-double</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains a double value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-int8">make-c-int8</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains an int8_t value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-int16">make-c-int16</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains an int16_t value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-int32">make-c-int32</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains an int32_t value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-int64">make-c-int64</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains an int64_t value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-bool-ref">c-bool-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a bool value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-short-ref">c-short-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a short value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-int-ref">c-int-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an int value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-long-ref">c-long-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a long value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-void*-ref">c-void*-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a void* value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-float-ref">c-float-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a float value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-double-ref">c-double-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a double value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-unsigned-short-ref">c-unsigned-short-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an unsigned short value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-unsigned-int-ref">c-unsigned-int-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an unsigned int value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-unsigned-long-ref">c-unsigned-long-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an unsigned long value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-int8-ref">c-int8-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an int8_t value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-int16-ref">c-int16-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an int16_t value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-int32-ref">c-int32-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an int32_t value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-int64-ref">c-int64-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an int64_t value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-uint8-ref">c-uint8-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an uint8_t value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-uint16-ref">c-uint16-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an uint16_t value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-uint32-ref">c-uint32-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an uint32_t value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-uint64-ref">c-uint64-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an uint64_t value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-string-ref">c-string-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a C string from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-bool-set!">c-bool-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a bool value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-short-set!">c-short-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a short value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-int-set!">c-int-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a int value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-long-set!">c-long-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a long value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-void*-set!">c-void*-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a void* value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-float-set!">c-float-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a float value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-double-set!">c-double-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a double value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-int8-set!">c-int8-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a int8_t value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-int16-set!">c-int16-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a int16_t value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-int32-set!">c-int32-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a int32_t value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-int64-set!">c-int64-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a int64_t value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-string-set!">c-string-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a C string to a memory
     </td>
   </tr>
   <tr>
@@ -438,6 +782,55 @@
   <ul type="square" class="library_link_list">
     <li><a href="#exports">List of identifiers exported from (ypsilon c-types) library</a></li>
   </ul>
+</div>
+<span id="define-c-enum"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Macro: define-c-enum</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#define-c-enum">define-c-enum</a> defines C enumeration constant. This macro has an analogy to the C enum statement.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box_macro" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>(define-c-enum <span class="synopsis_argument">spec</span> ...)</div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>spec:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;subform&gt;</div>
+    </td>
+  </tr>
+</table>
+<dl class="dl_arguments">
+  <dt class="dt_arguments">spec</dt>
+  <dd class="dd_arguments">—a enumeration specifier. It should be either <span class="desc_literal">symbol</span> or (<span class="desc_literal">symbol</span> . <span class="desc_literal">value</span>). In the later case, constant will be assigned to the <span class="desc_literal">value</span>.</dd>
+</dl>
+<table class="example_box" border="0">
+  <caption class="example_box_caption">examples:</caption>
+  <tr>
+    <td>
+      <div>&gt; (import (rnrs) (ypsilon c-types))</div>
+      <div>&gt; (define-c-enum FOO (BAR . 10) BAZ)</div>
+      <div>&gt; (list FOO BAR BAZ)</div>
+      <div><span class="example_stdout">(0 10 11)</span></div>
+    </td>
+  </tr>
+</table>
 </div>
 <span id="define-c-typedef"></span>
 <div class="jump_menu">
@@ -2127,7 +2520,7 @@
 <table class="abstract_box" border="0">
   <tr>
     <td>
-      <div><a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a> assumes the bytevector contains C string, and returns its length.</div>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a> returns a C string length of its contents.</div>
     </td>
   </tr>
 </table>
@@ -2158,6 +2551,1757 @@
   <tr>
     <td>
       <div>If no terminating zero byte exists in the <span class="desc_argument">bytevector</span>, <a href="libref.ypsilon.c-types.html#bytevector-c-strlen">bytevector-c-strlen</a> returns bytevector-length of the <span class="desc_argument">bytevector</span>.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-bool"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-bool</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-bool">make-c-bool</a> returns a bytevector contains a bool value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-bool <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-short"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-short</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-short">make-c-short</a> returns a bytevector contains a short value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-short <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [SHORT_MIN, USHORT_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-int"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-int</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-int">make-c-int</a> returns a bytevector contains an int value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-int <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT_MIN, UINT_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-long"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-long</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-long">make-c-long</a> returns a bytevector contains a long value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-long <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [LONG_MIN, ULONG_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-void*"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-void*</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-void*">make-c-void*</a> returns a bytevector contains a void* value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-void* <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INTPTR_MIN, UINTPTR_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-float"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-float</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-float">make-c-float</a> returns a bytevector contains a float value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-float <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;flonum&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-double"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-double</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-double">make-c-double</a> returns a bytevector contains a double value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-double <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;flonum&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-int8"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-int8</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-int8">make-c-int8</a> returns a bytevector contains an int8_t value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-int8 <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT8_MIN, UINT8_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-int16"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-int16</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-int16">make-c-int16</a> returns a bytevector contains an int16_t value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-int16 <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT16_MIN, UINT16_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-int32"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-int32</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-int32">make-c-int32</a> returns a bytevector contains an int32_t value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-int32 <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT32_MIN, UINT32_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-int64"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-int64</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-int64">make-c-int64</a> returns a bytevector contains an int64_t value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-int64 <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT64_MIN, UINT64_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="make-c-string"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-string</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div>make-c-string returns a bytevector contains a C string.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-string <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;string&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>A terminating zero byte will be appended.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-bool-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-bool-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-bool-ref">c-bool-ref</a> retrieves a bool value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-bool-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-short-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-short-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-short-ref">c-short-ref</a> retrieves a short value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-short-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-int-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-int-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-int-ref">c-int-ref</a> retrieves an int value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-int-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-long-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-long-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-long-ref">c-long-ref</a> retrieves a long value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-long-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-void*-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-void*-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-void*-ref">c-void*-ref</a> retrieves a void* value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-void*-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-float-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-float-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-float-ref">c-float-ref</a> retrieves a float value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-float-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;flonum&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-double-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-double-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-double-ref">c-double-ref</a> retrieves a double value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-double-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;flonum&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-unsigned-short-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-unsigned-short-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-unsigned-short-ref">c-unsigned-short-ref</a> retrieves an unsigned short value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-unsigned-short-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-unsigned-int-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-unsigned-int-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-unsigned-int-ref">c-unsigned-int-ref</a> retrieves an unsigned int value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-unsigned-int-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-unsigned-long-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-unsigned-long-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-unsigned-long-ref">c-unsigned-long-ref</a> retrieves an unsigned long value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-unsigned-long-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-int8-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-int8-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-int8-ref">c-int8-ref</a> retrieves an int8_t value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-int8-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-int16-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-int16-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-int16-ref">c-int16-ref</a> retrieves an int16_t value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-int16-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-int32-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-int32-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-int32-ref">c-int32-ref</a> retrieves an int32_t value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-int32-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-int64-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-int64-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-int64-ref">c-int64-ref</a> retrieves an int64_t value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-int64-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-uint8-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-uint8-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-uint8-ref">c-uint8-ref</a> retrieves an uint8_t value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-uint8-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-uint16-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-uint16-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-uint16-ref">c-uint16-ref</a> retrieves an uint16_t value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-uint16-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-uint32-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-uint32-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-uint32-ref">c-uint32-ref</a> retrieves an uint32_t value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-uint32-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-uint64-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-uint64-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-uint64-ref">c-uint64-ref</a> retrieves an uint64_t value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-uint64-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-string-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-string-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-string-ref">c-string-ref</a> retrieves a C string from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-string-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;string&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>A terminating zero byte will be removed.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-bool-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-bool-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-bool-set!">c-bool-set!</a> stores a bool value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-bool-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-short-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-short-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-short-set!">c-short-set!</a> stores a short value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-short-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [SHORT_MIN, USHORT_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-int-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-int-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-int-set!">c-int-set!</a> stores a int value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-int-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT_MIN, UINT_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-long-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-long-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-long-set!">c-long-set!</a> stores a long value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-long-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [LONG_MIN, ULONG_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-void*-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-void*-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-void*-set!">c-void*-set!</a> stores a void* value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-void*-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INTPTR_MIN, UINTPTR_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-float-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-float-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-float-set!">c-float-set!</a> stores a float value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-float-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;flonum&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-double-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-double-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-double-set!">c-double-set!</a> stores a double value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-double-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;flonum&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-int8-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-int8-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-int8-set!">c-int8-set!</a> stores a int8_t value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-int8-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT8_MIN, UINT8_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-int16-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-int16-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-int16-set!">c-int16-set!</a> stores a int16_t value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-int16-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT16_MIN, UINT16_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-int32-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-int32-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-int32-set!">c-int32-set!</a> stores a int32_t value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-int32-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT32_MIN, UINT32_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-int64-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-int64-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-int64-set!">c-int64-set!</a> stores a int64_t value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-int64-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [INT64_MIN, UINT64_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-string-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-string-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-string-set!">c-string-set!</a> stores a C string to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-string-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;string&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <caption class="desc_box_caption">description:</caption>
+  <tr>
+    <td>
+      <div>A terminating zero byte will be appended.</div>
     </td>
   </tr>
 </table>
@@ -2244,6 +4388,10 @@
 <caption class="exports_box_caption">Contexual list of all exports:</div>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="#define-c-enum">define-c-enum</a></span>
+    </td>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="#define-c-typedef">define-c-typedef</a></span>
     </td>
   <tr>
@@ -2262,6 +4410,11 @@
     <td>
       <span class="exports_identifier"><a href="#c-coerce-void*">c-coerce-void*</a></span>
     </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#make-bytevector-mapping">make-bytevector-mapping</a></span>
+    </td>
+  </tr>
   <tr>
     <td>
       <span class="exports_identifier"><a href="#bytevector-c-short-ref">bytevector-c-short-ref</a></span>
@@ -2373,6 +4526,174 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#bytevector-c-strlen">bytevector-c-strlen</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-bool">make-c-bool</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-short">make-c-short</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-int">make-c-int</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-long">make-c-long</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-void*">make-c-void*</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-float">make-c-float</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-double">make-c-double</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-int8">make-c-int8</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-int16">make-c-int16</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-int32">make-c-int32</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-int64">make-c-int64</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-bool-ref">c-bool-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-short-ref">c-short-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int-ref">c-int-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-long-ref">c-long-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-void*-ref">c-void*-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-float-ref">c-float-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-double-ref">c-double-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-unsigned-short-ref">c-unsigned-short-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-unsigned-int-ref">c-unsigned-int-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-unsigned-long-ref">c-unsigned-long-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int8-ref">c-int8-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int16-ref">c-int16-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int32-ref">c-int32-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int64-ref">c-int64-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-uint8-ref">c-uint8-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-uint16-ref">c-uint16-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-uint32-ref">c-uint32-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-uint64-ref">c-uint64-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-string-ref">c-string-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-bool-set!">c-bool-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-short-set!">c-short-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int-set!">c-int-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-long-set!">c-long-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-void*-set!">c-void*-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-float-set!">c-float-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-double-set!">c-double-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int8-set!">c-int8-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int16-set!">c-int16-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int32-set!">c-int32-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int64-set!">c-int64-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-string-set!">c-string-set!</a></span>
     </td>
   <tr>
     <td>
@@ -2653,12 +4974,172 @@
   </tr>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="#c-bool-ref">c-bool-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-bool-set!">c-bool-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="#c-coerce-void*">c-coerce-void*</a></span>
     </td>
   </tr>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="#c-double-ref">c-double-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-double-set!">c-double-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-float-ref">c-float-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-float-set!">c-float-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int-ref">c-int-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int-set!">c-int-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int16-ref">c-int16-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int16-set!">c-int16-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int32-ref">c-int32-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int32-set!">c-int32-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int64-ref">c-int64-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int64-set!">c-int64-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int8-ref">c-int8-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-int8-set!">c-int8-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-long-ref">c-long-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-long-set!">c-long-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-short-ref">c-short-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-short-set!">c-short-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="#c-sizeof">c-sizeof</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-string-ref">c-string-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-string-set!">c-string-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-uint16-ref">c-uint16-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-uint32-ref">c-uint32-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-uint64-ref">c-uint64-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-uint8-ref">c-uint8-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-unsigned-int-ref">c-unsigned-int-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-unsigned-long-ref">c-unsigned-long-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-unsigned-short-ref">c-unsigned-short-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-void*-ref">c-void*-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-void*-set!">c-void*-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#define-c-enum">define-c-enum</a></span>
     </td>
   </tr>
   <tr>
@@ -2674,6 +5155,66 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#define-c-typedef">define-c-typedef</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#make-bytevector-mapping">make-bytevector-mapping</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-bool">make-c-bool</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-double">make-c-double</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-float">make-c-float</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-int">make-c-int</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-int16">make-c-int16</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-int32">make-c-int32</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-int64">make-c-int64</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-int8">make-c-int8</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-long">make-c-long</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-short">make-c-short</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#make-c-void*">make-c-void*</a></span>
     </td>
   </tr>
   <tr>

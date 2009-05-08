@@ -18,6 +18,7 @@
           make-stdcall-callback
           bytevector-mapping?
           make-bytevector-mapping
+          define-c-enum
           define-c-typedef
           define-c-struct-type
           define-c-struct-methods
@@ -53,6 +54,49 @@
           bytevector-c-int32-set!
           bytevector-c-int64-set!
           bytevector-c-strlen
+          make-c-bool
+          make-c-short
+          make-c-int
+          make-c-long
+          make-c-void*
+          make-c-float
+          make-c-double
+          make-c-int8
+          make-c-int16
+          make-c-int32
+          make-c-int64
+          make-c-string
+          c-bool-ref
+          c-short-ref
+          c-int-ref
+          c-long-ref
+          c-void*-ref
+          c-float-ref
+          c-double-ref
+          c-unsigned-short-ref
+          c-unsigned-int-ref
+          c-unsigned-long-ref
+          c-int8-ref
+          c-int16-ref
+          c-int32-ref
+          c-int64-ref
+          c-uint8-ref
+          c-uint16-ref
+          c-uint32-ref
+          c-uint64-ref
+          c-string-ref
+          c-bool-set!
+          c-short-set!
+          c-int-set!
+          c-long-set!
+          c-void*-set!
+          c-float-set!
+          c-double-set!
+          c-int8-set!
+          c-int16-set!
+          c-int32-set!
+          c-int64-set!
+          c-string-set!
           sizeof:bool
           sizeof:short
           sizeof:int
@@ -79,10 +123,9 @@
           on-windows
           on-posix
           on-ia32
-          on-x64
-          define-c-enum)
+          on-x64)
 
-  (import (core) (ypsilon c-types) (ypsilon c-enum) (ypsilon assert))
+  (import (core) (ypsilon c-types) (ypsilon assert))
 
   (define on-sunos         (and (string-contains (architecture-feature 'operating-system) "sunos")   #t))
   (define on-darwin        (and (string-contains (architecture-feature 'operating-system) "darwin")  #t))
