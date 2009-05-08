@@ -113,7 +113,7 @@
           (on-freebsd "libmysqlclient.so")
           (on-openbsd "libmysqlclient.so")
           (on-darwin  "/usr/local/mysql/libmysqlclient.dylib")
-          (on-windows "libmysqlclient.dll")
+          (on-windows "libmySQL.dll")
           (else
            (assertion-violation #f "can not locate MySQL client library, unknown operating system"))))
 
