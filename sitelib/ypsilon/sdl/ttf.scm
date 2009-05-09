@@ -55,7 +55,7 @@
 
   (define lib-name
     (cond (on-linux   "libSDL_ttf.so")
-          (on-sunos   "libSDL_ttfso")
+          (on-sunos   "libSDL_ttf.so")
           (on-freebsd "libSDL_ttf.so")
           (on-openbsd "libSDL_ttf.so")
           (on-darwin  "SDL_ttf.framework/SDL_ttf")

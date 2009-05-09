@@ -5,11 +5,12 @@
 ;;   SDL/TTF hello world
 ;;
 ;; Requirements:
-;;   Darwin:  SDL_ttf.framework
 ;;   Linux:   libSDL_ttf.so
+;;   SunOS:   libSDL_ttf.so
 ;;   FreeBSD: libSDL_ttf.so
 ;;   OpenBSD: libSDL_ttf.so
-;;   Windows: libSDL_ttf.dll
+;;   Darwin:  SDL_ttf.framework
+;;   Windows: SDL_ttf.dll
 
 (import (rnrs)
         (ypsilon sdl base)
@@ -19,8 +20,8 @@
         (ypsilon ffi)
         (ypsilon time))
 
+(define-c-struct-methods SDL_Rect)
 (define NULL 0)
-
 (define font-path "./VeraMono.ttf")
 
 (unless (file-exists? font-path)
@@ -41,26 +42,20 @@
 
 ;; define draw
 (define draw
-  (lambda (delta)
-
-    (define make-rect
-      (lambda (x y w h)
-        (define-c-struct-methods SDL_Rect)
-        (let ((r (make-SDL_Rect)))
-          (SDL_Rect-x-set! r x)
-          (SDL_Rect-y-set! r y)
-          (SDL_Rect-w-set! r w)
-          (SDL_Rect-h-set! r h) r)))
-
+  (lambda (delta msg)
     (define color (TTF_Color (+ 128 (div delta 4))
                              (+ 128 (div delta 2))
                              (- 255 (div delta 4))))
-
-    (let ((text-surf (TTF_RenderUTF8_Blended font "Hello World" color)))
+    (let ((text-surf (TTF_RenderUTF8_Blended font msg color)))
       (let ((w (make-c-int 0)) (h (make-c-int 0)))
-        (TTF_SizeUTF8 font "Hello World" w h)
+        (define rect (make-SDL_Rect))
+        (TTF_SizeUTF8 font msg w h)
+        (SDL_Rect-x-set! rect (div (- 320 (c-int-ref w)) 2))
+        (SDL_Rect-y-set! rect (+ 16 delta))
+        (SDL_Rect-w-set! rect 320)
+        (SDL_Rect-h-set! rect 320)
         (SDL_FillRect video-surface 0 #xffffffff)
-        (SDL_BlitSurface text-surf NULL video-surface (make-rect (div (- 320 (c-int-ref w)) 2) (+ 16 delta) 320 320))
+        (SDL_BlitSurface text-surf NULL video-surface rect)
         (SDL_FreeSurface text-surf)
         (SDL_Flip video-surface)))))
 
@@ -78,7 +73,7 @@
           (SDL_Quit)
           (exit 0)))
       (cond ((> (microsecond) next-update)
-             (draw (if (< delta 256) delta (- 511 delta)))
+             (draw (if (< delta 256) delta (- 511 delta)) "Hello World")
              (let ((new-delta (+ delta 1)))
                (loop (+ next-update FRAME-INTERVAL)
                      (if (> new-delta 511) 0 new-delta))))
