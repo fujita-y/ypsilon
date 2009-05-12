@@ -398,6 +398,27 @@
                     (else
                      (loop (cdr lst) (cons (car lst) acc)))))))
 
+        (define make-rule-macro
+          (lambda (type id spec shared-env)
+            `(.set-top-level-macro! ',type ',id ',spec ,shared-env)))
+
+        (define make-proc-macro
+          (lambda (type id spec shared-env)
+            (cond ((and (pair? spec) (eq? (car spec) 'lambda))
+                   `(.set-top-level-macro! ',type ',id (.transformer-thunk ,spec) ,shared-env))
+                  (else
+                   (let ((x (generate-temporary-symbol)))
+                     `(.set-top-level-macro! ',type
+                                             ',id
+                                             (let ((proc #f))
+                                               (lambda (,x)
+                                                 (if proc
+                                                     (proc ,x)
+                                                     (begin
+                                                       (set! proc (.transformer-thunk ,spec))
+                                                       (proc ,x)))))
+                                             ,shared-env))))))
+
         (check-duplicate-definition defs macros renames)
         (let ((env (rewrite-env env)))
           (let ((rewrited-body (expand-each body env)))
@@ -441,13 +462,11 @@
                                                   (spec (caddr e)))
                                               (case type
                                                 ((template)
-                                                 `(.set-top-level-macro! 'syntax ',id ',spec ,shared-env))
+                                                 (make-rule-macro 'syntax id spec shared-env))
                                                 ((procedure)
-                                                 (let ((x (generate-temporary-symbol)))
-                                                   `(.set-top-level-macro! 'syntax ',id (lambda (,x) (,spec ,x)) ,shared-env)))
+                                                 (make-proc-macro 'syntax id spec shared-env))
                                                 ((variable)
-                                                 (let ((x (generate-temporary-symbol)))
-                                                   `(.set-top-level-macro! 'variable ',id (lambda (,x) (,spec ,x)) ,shared-env)))
+                                                 (make-proc-macro 'variable id spec shared-env))
                                                 (else
                                                  (scheme-error "internal error in rewrite body: bad macro spec ~s" e)))))
                                           macros))))))))

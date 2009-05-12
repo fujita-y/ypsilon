@@ -21,20 +21,22 @@
 (define current-top-level-renames (make-parameter (make-core-hashtable)))
 
 (set-top-level-value! '.set-top-level-macro!
-  (lambda (type keyword datum env)
+  (lambda (type keyword spec env)
     (and (top-level-bound? keyword) (set-top-level-value! keyword .&UNDEF))
     (core-hashtable-set! (current-macro-environment)
                          keyword
                          (case type
                            ((syntax)
-                            (make-macro datum env))
+                            (make-macro spec env))
                            ((variable)
-                            (cond ((procedure? datum)
-                                   (make-macro-variable datum env))
-                                  ((variable-transformer-token? datum)
-                                   (make-macro-variable (tuple-ref datum 1) env))
+                            (cond ((procedure? spec)
+                                   (make-macro-variable spec env))
+                                  ((variable-transformer-token? spec)
+                                   (make-macro-variable (tuple-ref spec 1) env))
                                   (else
-                                   (scheme-error "internal error in .set-top-level-macro!: bad transformer type:~s keyword:~s datum:~s" type keyword datum))))))))
+                                   (scheme-error "internal error: .set-top-level-macro! ~s" (list type keyword spec)))))
+                           (else
+                            (scheme-error "internal error: .set-top-level-macro! ~s" (list type keyword spec)))))))
 
 (define core-primitive-name
   (lambda (e)
