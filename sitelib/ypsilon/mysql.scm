@@ -103,7 +103,76 @@
           mysql_use_result
           mysql_warning_count
           (rename (mysql_server_init mysql_library_init))
-          (rename (mysql_server_end mysql_library_end)))
+          (rename (mysql_server_end mysql_library_end))
+          c-coerce-void*
+          define-c-struct-methods
+          AUTO_INCREMENT_FLAG
+          BINARY_FLAG
+          CLIENT_COMPRESS
+          CLIENT_FOUND_ROWS
+          CLIENT_IGNORE_SPACE
+          CLIENT_INTERACTIVE
+          CLIENT_LOCAL_FILES
+          CLIENT_MULTI_RESULTS
+          CLIENT_MULTI_STATEMENTS
+          CLIENT_NO_SCHEMA
+          CLIENT_ODBC
+          MULTIPLE_KEY_FLAG
+          MYSQL_FIELD
+          MYSQL_INIT_COMMAND
+          MYSQL_OPT_COMPRESS
+          MYSQL_OPT_CONNECT_TIMEOUT
+          MYSQL_OPT_GUESS_CONNECTION
+          MYSQL_OPT_LOCAL_INFILE
+          MYSQL_OPT_NAMED_PIPE
+          MYSQL_OPT_PROTOCOL
+          MYSQL_OPT_READ_TIMEOUT
+          MYSQL_OPT_RECONNECT
+          MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+          MYSQL_OPT_USE_EMBEDDED_CONNECTION
+          MYSQL_OPT_USE_REMOTE_CONNECTION
+          MYSQL_OPT_USE_RESULT
+          MYSQL_OPT_WRITE_TIMEOUT
+          MYSQL_READ_DEFAULT_FILE
+          MYSQL_READ_DEFAULT_GROUP
+          MYSQL_REPORT_DATA_TRUNCATION
+          MYSQL_SECURE_AUTH
+          MYSQL_SET_CHARSET_DIR
+          MYSQL_SET_CHARSET_NAME
+          MYSQL_SET_CLIENT_IP
+          MYSQL_SHARED_MEMORY_BASE_NAME
+          MYSQL_TYPE_BIT
+          MYSQL_TYPE_BLOB
+          MYSQL_TYPE_DATE
+          MYSQL_TYPE_DATETIME
+          MYSQL_TYPE_DECIMAL
+          MYSQL_TYPE_DOUBLE
+          MYSQL_TYPE_ENUM
+          MYSQL_TYPE_FLOAT
+          MYSQL_TYPE_GEOMETRY
+          MYSQL_TYPE_INT24
+          MYSQL_TYPE_LONG
+          MYSQL_TYPE_LONGLONG
+          MYSQL_TYPE_LONG_BLOB
+          MYSQL_TYPE_MEDIUM_BLOB
+          MYSQL_TYPE_NEWDATE
+          MYSQL_TYPE_NEWDECIMAL
+          MYSQL_TYPE_NULL
+          MYSQL_TYPE_SET
+          MYSQL_TYPE_SHORT
+          MYSQL_TYPE_STRING
+          MYSQL_TYPE_TIME
+          MYSQL_TYPE_TIMESTAMP
+          MYSQL_TYPE_TINY
+          MYSQL_TYPE_TINY_BLOB
+          MYSQL_TYPE_VARCHAR
+          MYSQL_TYPE_VAR_STRING
+          MYSQL_TYPE_YEAR
+          NOT_NULL_FLAG
+          PRI_KEY_FLAG
+          UNIQUE_KEY_FLAG
+          UNSIGNED_FLAG
+          ZEROFILL_FLAG)
 
   (import (rnrs) (ypsilon ffi))
 
@@ -125,6 +194,98 @@
        (define name (c-function lib lib-name ret __stdcall name args)))))
 
   ;; based on MySQL 5.1 C API (deprecated functions are excluded)
+
+  (define-c-typedef MYSQL_FIELD
+    (struct (void* name)
+            (void* org_name)
+            (void* table)
+            (void* org_table)
+            (void* db)
+            (void* catalog)
+            (void* def)
+            (unsigned-long length)
+            (unsigned-long max_length)
+            (unsigned-int name_length)
+            (unsigned-int org_name_length)
+            (unsigned-int table_length)
+            (unsigned-int org_table_length)
+            (unsigned-int db_length)
+            (unsigned-int catalog_length)
+            (unsigned-int def_length)
+            (unsigned-int flags)
+            (unsigned-int decimals)
+            (unsigned-int charsetnr)
+            (int type)))
+
+  (define-c-enum MYSQL_TYPE_DECIMAL
+                 MYSQL_TYPE_TINY
+                 MYSQL_TYPE_SHORT
+                 MYSQL_TYPE_LONG
+                 MYSQL_TYPE_FLOAT
+                 MYSQL_TYPE_DOUBLE
+                 MYSQL_TYPE_NULL
+                 MYSQL_TYPE_TIMESTAMP
+                 MYSQL_TYPE_LONGLONG
+                 MYSQL_TYPE_INT24
+                 MYSQL_TYPE_DATE
+                 MYSQL_TYPE_TIME
+                 MYSQL_TYPE_DATETIME
+                 MYSQL_TYPE_YEAR
+                 MYSQL_TYPE_NEWDATE
+                 MYSQL_TYPE_VARCHAR
+                 MYSQL_TYPE_BIT
+                 (MYSQL_TYPE_NEWDECIMAL . 246)
+                 MYSQL_TYPE_ENUM
+                 MYSQL_TYPE_SET
+                 MYSQL_TYPE_TINY_BLOB
+                 MYSQL_TYPE_MEDIUM_BLOB
+                 MYSQL_TYPE_LONG_BLOB
+                 MYSQL_TYPE_BLOB
+                 MYSQL_TYPE_VAR_STRING
+                 MYSQL_TYPE_STRING
+                 MYSQL_TYPE_GEOMETRY)
+
+  (define-c-enum MYSQL_OPT_CONNECT_TIMEOUT
+                 MYSQL_OPT_COMPRESS
+                 MYSQL_OPT_NAMED_PIPE
+                 MYSQL_INIT_COMMAND
+                 MYSQL_READ_DEFAULT_FILE
+                 MYSQL_READ_DEFAULT_GROUP
+                 MYSQL_SET_CHARSET_DIR
+                 MYSQL_SET_CHARSET_NAME
+                 MYSQL_OPT_LOCAL_INFILE
+                 MYSQL_OPT_PROTOCOL
+                 MYSQL_SHARED_MEMORY_BASE_NAME
+                 MYSQL_OPT_READ_TIMEOUT
+                 MYSQL_OPT_WRITE_TIMEOUT
+                 MYSQL_OPT_USE_RESULT
+                 MYSQL_OPT_USE_REMOTE_CONNECTION
+                 MYSQL_OPT_USE_EMBEDDED_CONNECTION
+                 MYSQL_OPT_GUESS_CONNECTION
+                 MYSQL_SET_CLIENT_IP
+                 MYSQL_SECURE_AUTH
+                 MYSQL_REPORT_DATA_TRUNCATION
+                 MYSQL_OPT_RECONNECT
+                 MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+
+  (define NOT_NULL_FLAG 1)
+  (define PRI_KEY_FLAG 2)
+  (define UNIQUE_KEY_FLAG 4)
+  (define MULTIPLE_KEY_FLAG 8)
+  (define UNSIGNED_FLAG 32)
+  (define ZEROFILL_FLAG 64)
+  (define BINARY_FLAG 128)
+  (define AUTO_INCREMENT_FLAG 512)
+
+  (define CLIENT_COMPRESS 32)
+  (define CLIENT_FOUND_ROWS 2)
+  (define CLIENT_IGNORE_SPACE 256)
+  (define CLIENT_INTERACTIVE 1024)
+  (define CLIENT_LOCAL_FILES 128)
+  (define CLIENT_MULTI_RESULTS 131072)
+  (define CLIENT_MULTI_STATEMENTS 65536)
+  (define CLIENT_NO_SCHEMA 16)
+  (define CLIENT_ODBC 64)
 
   ;; void my_init(void)
   (define-function void my_init ())
