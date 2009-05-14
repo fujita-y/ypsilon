@@ -895,14 +895,8 @@
         }
         assert(size < s_pool_alloc_size);
         if (s_pool + size > s_pool_limit) {
-            s_pool = (uint8_t*)mmap(NULL, s_pool_alloc_size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+            s_pool = (uint8_t*)mmap(NULL, s_pool_alloc_size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
             if (s_pool == (uint8_t*)MAP_FAILED) fatal("%s:%u mmap failed %d", __FILE__, __LINE__, errno);
-            /*
-            s_pool = (uint8_t*)valloc(s_pool_alloc_size);
-            if (mprotect(s_pool, s_pool_alloc_size, PROT_READ | PROT_WRITE |PROT_EXEC)) {
-                fatal("%s:%u mprotect failed %d", __FILE__, __LINE__, errno);
-            }
-            */
             s_pool_limit = s_pool + s_pool_alloc_size;
         }
         void* p = s_pool;
@@ -1004,14 +998,8 @@
         }
         assert(size < s_pool_alloc_size);
         if (s_pool + size > s_pool_limit) {
-            s_pool = (uint8_t*)mmap(NULL, s_pool_alloc_size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+            s_pool = (uint8_t*)mmap(NULL, s_pool_alloc_size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
             if (s_pool == (uint8_t*)MAP_FAILED) fatal("%s:%u mmap failed %d", __FILE__, __LINE__, errno);
-            /*
-            s_pool = (uint8_t*)valloc(s_pool_alloc_size);
-            if (mprotect(s_pool, s_pool_alloc_size, PROT_READ | PROT_WRITE |PROT_EXEC)) {
-                fatal("%s:%u mprotect failed %d", __FILE__, __LINE__, errno);
-            }
-            */
             s_pool_limit = s_pool + s_pool_alloc_size;
         }
         void* p = s_pool;
