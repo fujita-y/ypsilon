@@ -23,43 +23,72 @@ VPATH 	 = src
 UNAME 	 = $(shell uname -a)
 
 ifneq (,$(findstring Linux, $(UNAME)))
-  ifndef DATAMODEL
-    ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
-      DATAMODEL = ILP32
-    else
-      DATAMODEL = LP64
+  ifneq (,$(findstring ppc, $(UNAME)))
+    ifndef DATAMODEL
+      ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
+        DATAMODEL = ILP32
+      else
+        DATAMODEL = LP64
+      endif
     endif
-  endif
-  ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
+    ifneq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
+      CXXFLAGS += -march=native
+    endif
+    CXXFLAGS += -pthread
+    ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
+      CXXFLAGS += -fno-stack-protector
+    endif
     ifeq ($(DATAMODEL), ILP32)  
-      CXXFLAGS += -march=i686
+      CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
+      CXXFLAGS += -m32
+      LDFLAGS = -m32
+      ASFLAGS = --32
+    else
+      CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
+      CXXFLAGS += -m64
+      LDFLAGS = -m64
+      ASFLAGS = --64
     endif
+    LDLIBS = -lpthread -ldl
   else
-    CXXFLAGS += -march=native
+    ifndef DATAMODEL
+      ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
+        DATAMODEL = ILP32
+      else
+        DATAMODEL = LP64
+      endif
+    endif
+    ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
+      ifeq ($(DATAMODEL), ILP32)  
+        CXXFLAGS += -march=i686
+      endif
+    else
+      CXXFLAGS += -march=native
+    endif
+    ifeq (,$(shell grep -i 'sse2' /proc/cpuinfo))
+      CXXFLAGS += -msse
+    else
+      CXXFLAGS += -msse2
+    endif
+    CXXFLAGS += -mfpmath=sse -pthread
+    ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
+      CXXFLAGS += -fno-stack-protector
+    endif
+    ifeq ($(DATAMODEL), ILP32)  
+      CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
+      CXXFLAGS += -m32
+      LDFLAGS = -m32
+      ASFLAGS = --32
+      SRCS += ffi_stub_linux.s
+    else
+      CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
+      CXXFLAGS += -m64
+      LDFLAGS = -m64
+      ASFLAGS = --64
+      SRCS += ffi_stub_linux64.s
+    endif
+    LDLIBS = -lpthread -ldl
   endif
-  ifeq (,$(shell grep -i 'sse2' /proc/cpuinfo))
-    CXXFLAGS += -msse
-  else
-    CXXFLAGS += -msse2
-  endif
-  CXXFLAGS += -mfpmath=sse -pthread
-  ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
-    CXXFLAGS += -fno-stack-protector
-  endif
-  ifeq ($(DATAMODEL), ILP32)  
-    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
-    CXXFLAGS += -m32
-    LDFLAGS = -m32
-    ASFLAGS = --32
-    SRCS += ffi_stub_linux.s
-  else
-    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
-    CXXFLAGS += -m64
-    LDFLAGS = -m64
-    ASFLAGS = --64
-    SRCS += ffi_stub_linux64.s
-  endif
-  LDLIBS = -lpthread -ldl
 endif
 
 ifneq (,$(findstring FreeBSD, $(UNAME)))

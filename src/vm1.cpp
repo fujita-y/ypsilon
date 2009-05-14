@@ -221,7 +221,8 @@ VM::lookup_iloc(scm_obj_t operands)
   #if USE_DIRECT_THREAD
     volatile void* s_volatile_stub;
     #define PIN(tag)        do { s_volatile_stub = &&tag; } while(0)
-    #define CASE(code)      M_##code: \
+    #if ARCH_IA32 || ARCH_X64
+      #define CASE(code)    M_##code: \
                             __asm__ ("ud2"); \
                             __asm__ (".p2align 3"); \
                             L_##code: \
@@ -230,6 +231,16 @@ VM::lookup_iloc(scm_obj_t operands)
                             __asm__ ("nop"); \
                             __asm__ ("nop"); \
                             __asm__ ("/* "#code" */");
+    #else
+      #define CASE(code)    M_##code: \
+                            __asm__ (".p2align 3"); \
+                            L_##code: \
+                            __asm__ ("nop"); \
+                            __asm__ ("nop"); \
+                            __asm__ ("nop"); \
+                            __asm__ ("nop"); \
+                            __asm__ ("/* "#code" */");
+    #endif
     #define LABEL(code)     do { \
                                 assert(code < array_sizeof(m_dispatch_table)); \
                                 m_dispatch_table[code] = &&L_##code; \

@@ -26,7 +26,6 @@
 #if ARCH_X64
     #define FFI_MAX_ARGC 32
     class c_stack_frame_t {
-
         intptr_t m_frame[FFI_MAX_ARGC + 1 + 8 + 6];
         int m_count;
         union {
@@ -51,6 +50,25 @@
         intptr_t* frame() { compose(); return m_frame; }
         int count() { return m_count; }
         int sse_use() { return m_sse_count; }
+    };
+#endif
+
+#if ARCH_PPC
+    #define FFI_MAX_ARGC 64
+    class c_stack_frame_t {
+    public:
+        c_stack_frame_t(VM* vm) {
+            fatal("%s:%u no implementation", __FILE__, __LINE__);
+        }
+        const char* push(scm_obj_t obj, int signature) {
+            fatal("%s:%u no implementation", __FILE__, __LINE__);
+        }
+        intptr_t* frame() {
+            fatal("%s:%u no implementation", __FILE__, __LINE__);
+        }
+        int count() {
+            fatal("%s:%u no implementation", __FILE__, __LINE__);
+        }
     };
 #endif
 
