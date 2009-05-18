@@ -518,7 +518,8 @@
                            (interpret '(import (core) (rnrs)))
                            (load path)))
                     (flush-output-port (current-error-port))
-                    (flush-output-port (current-output-port)))))))))
+                    (flush-output-port (current-output-port))
+                    (exit #f))))))))
 
     (define exec-repl
       (lambda ()
