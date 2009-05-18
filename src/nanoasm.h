@@ -8,6 +8,9 @@
 #define NANOASM_H_INCLUDED
 
 #include "core.h"
+
+#if ARCH_IA32 || ARCH_X64
+
 #include <map>
 #include <string>
 #include <iostream>
@@ -433,5 +436,6 @@ public:
     }
 
 #endif
-
+    
+#endif
 #endif
