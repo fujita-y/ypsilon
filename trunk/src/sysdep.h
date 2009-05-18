@@ -54,7 +54,7 @@
     #define ARCH_IA32               1
     #define ARCH_X64                0
     #define ARCH_PPC                0
-  #elif defined(__ppc__)
+  #elif defined(__powerpc__)
     #define ARCH_IA32               0
     #define ARCH_X64                0
     #define ARCH_PPC                1

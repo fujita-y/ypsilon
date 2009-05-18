@@ -8,7 +8,7 @@ PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
 
-CXXFLAGS = -pipe -x c++ -O3 -fstrict-aliasing -fomit-frame-pointer -momit-leaf-frame-pointer
+CXXFLAGS = -pipe -x c++ -O3 -fstrict-aliasing
 
 SRCS 	 = file.cpp main.cpp vm0.cpp object_heap_compact.cpp subr_flonum.cpp vm1.cpp object_set.cpp \
 	   subr_hash.cpp vm2.cpp object_slab.cpp subr_list.cpp interpreter.cpp serialize.cpp nanoasm.cpp \
@@ -34,7 +34,7 @@ ifneq (,$(findstring Linux, $(UNAME)))
     ifneq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
       CXXFLAGS += -march=native
     endif
-    CXXFLAGS += -pthread
+    CXXFLAGS += -pthread -fomit-frame-pointer
     ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
       CXXFLAGS += -fno-stack-protector
     endif
@@ -70,7 +70,7 @@ ifneq (,$(findstring Linux, $(UNAME)))
     else
       CXXFLAGS += -msse2
     endif
-    CXXFLAGS += -mfpmath=sse -pthread
+    CXXFLAGS += -mfpmath=sse -pthread -fomit-frame-pointer -momit-leaf-frame-pointer
     ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
       CXXFLAGS += -fno-stack-protector
     endif
@@ -111,7 +111,7 @@ ifneq (,$(findstring FreeBSD, $(UNAME)))
   else
     CXXFLAGS += -msse2
   endif
-  CXXFLAGS += -mfpmath=sse -pthread
+  CXXFLAGS += -mfpmath=sse -pthread -fomit-frame-pointer -momit-leaf-frame-pointer
   CPPFLAGS += -D__LITTLE_ENDIAN__
   ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
     CXXFLAGS += -fno-stack-protector
@@ -152,7 +152,7 @@ ifneq (,$(findstring OpenBSD, $(UNAME)))
   else
     CXXFLAGS += -msse2
   endif
-  CXXFLAGS += -mfpmath=sse -pthread
+  CXXFLAGS += -mfpmath=sse -pthread -fomit-frame-pointer -momit-leaf-frame-pointer
   CPPFLAGS += -D__LITTLE_ENDIAN__ -DNO_TLS
   ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
     CXXFLAGS += -fno-stack-protector
@@ -193,7 +193,7 @@ ifneq (,$(findstring SunOS, $(UNAME)))
   else
     CXXFLAGS += -msse2
   endif
-  CXXFLAGS += -mfpmath=sse
+  CXXFLAGS += -mfpmath=sse -fomit-frame-pointer -momit-leaf-frame-pointer
   ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
     CXXFLAGS += -fno-stack-protector
   endif
@@ -214,7 +214,7 @@ ifneq (,$(findstring SunOS, $(UNAME)))
 endif
 
 ifneq (,$(findstring Darwin, $(UNAME)))
-  CXXFLAGS += -arch i386 -msse2 -mfpmath=sse
+  CXXFLAGS += -arch i386 -msse2 -mfpmath=sse -fomit-frame-pointer -momit-leaf-frame-pointer
   CPPFLAGS += -DNO_TLS
   SRCS += ffi_stub_darwin.s
   ifneq (,$(USE_SDL))

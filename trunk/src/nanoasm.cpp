@@ -7,6 +7,8 @@
 #include "core.h"
 #include "nanoasm.h"
 
+#if ARCH_IA32 || ARCH_X64
+
 nanoasm_t::nanoasm_t()
     : al(0), cl(1), dl(2), bl(3)
     , eax(0), ecx(1), edx(2), ebx(3), esp(4), ebp(5), esi(6), edi(7)
@@ -591,3 +593,5 @@ void nanoasm_t::ds(const char* s)
 #endif
 
 #include "nanoasm.inc.cpp"
+
+#endif
