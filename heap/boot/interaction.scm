@@ -519,7 +519,7 @@
                            (load path)))
                     (flush-output-port (current-error-port))
                     (flush-output-port (current-output-port))
-                    (exit #f))))))))
+                    (exit))))))))
 
     (define exec-repl
       (lambda ()
