@@ -2441,7 +2441,7 @@ subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
         raise_error(vm, "process-spawn", message, errno, argc, argv);
         return scm_undef;
     }
-#else
+#elif !defined(NO_POSIX_SPAWN)
     fd_t fd0 = INVALID_FD;
     fd_t fd1 = INVALID_FD;
     fd_t fd2 = INVALID_FD;
@@ -2618,6 +2618,8 @@ subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
         raise_error(vm, "process-spawn", message, res, argc, argv);
         return scm_undef;
     }
+#else
+    fatal("%s:%u process-spawn not supported on this build", __FILE__, __LINE__);
 #endif
 }
 
@@ -2793,8 +2795,7 @@ subr_spawn(VM* vm, int argc, scm_obj_t argv[])
         if (CLOSUREP(argv[0])) {
             int n = vm->m_interp->spawn(vm, (scm_closure_t)argv[0], argc - 1, argv + 1);
             if (n < 0) {
-                fatal("fatal: can not spawn more than %d threads simultaneously under current configuration", 32);
-            //  return scm_false;
+                fatal("fatal: can not spawn more than %d threads simultaneously under current configuration", MAX_VIRTUAL_MACHINE);
             }
             return MAKEFIXNUM(n);
         }

@@ -276,7 +276,9 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #include <netdb.h>
     #include <dirent.h>
     #include <errno.h>
+  #if !defined(NO_POSIX_SPAWN)
     #include <spawn.h>
+  #endif
   #if defined(__sun__)
     #include <ieeefp.h>
     #include <alloca.h>
