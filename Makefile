@@ -42,12 +42,13 @@ ifneq (,$(findstring Linux, $(UNAME)))
       CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
       CXXFLAGS += -m32
       LDFLAGS = -m32
-      ASFLAGS = --32
+      ASFLAGS = -a32
+      SRCS += ffi_stub_linux_ppc.s
     else
       CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
       CXXFLAGS += -m64
       LDFLAGS = -m64
-      ASFLAGS = --64
+      ASFLAGS = -a64
     endif
     LDLIBS = -lpthread -ldl
   else
