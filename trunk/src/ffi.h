@@ -53,22 +53,30 @@
     };
 #endif
 
-#if ARCH_PPC
-    #define FFI_MAX_ARGC 64
+#if ARCH_PPC 
+    #define FFI_MAX_ARGC 32 // update .s files if changed
     class c_stack_frame_t {
+  #if ARCH_ILP32
+        intptr_t m_frame[FFI_MAX_ARGC + 8 + 16];
+  #else
+        intptr_t m_frame[FFI_MAX_ARGC + 8 + 8];
+  #endif
+        int m_count;
+        intptr_t m_gpr[8];
+        double m_fpr[8];
+        int m_gpr_count;
+        int m_fpr_count;
+        VM* m_vm;
+        void compose();
     public:
-        c_stack_frame_t(VM* vm) {
-            fatal("%s:%u no implementation", __FILE__, __LINE__);
+        c_stack_frame_t(VM* vm)
+            : m_vm(vm), m_count(0), m_gpr_count(0), m_fpr_count(0) {
+            memset(m_gpr, 0, sizeof(m_gpr));
+            memset(m_fpr, 0, sizeof(m_fpr));
         }
-        const char* push(scm_obj_t obj, int signature) {
-            fatal("%s:%u no implementation", __FILE__, __LINE__);
-        }
-        intptr_t* frame() {
-            fatal("%s:%u no implementation", __FILE__, __LINE__);
-        }
-        int count() {
-            fatal("%s:%u no implementation", __FILE__, __LINE__);
-        }
+        const char* push(scm_obj_t obj, int signature);
+        intptr_t* frame() { compose(); return m_frame; }
+        int count() { return m_count; }
     };
 #endif
 
@@ -97,6 +105,12 @@ extern "C" {
     float       c_callback_float_x64(intptr_t uid, intptr_t argc, intptr_t* reg, intptr_t* stack);
     double      c_callback_double_x64(intptr_t uid, intptr_t argc, intptr_t* reg, intptr_t* stack);
     intptr_t    c_callback_intptr_x64(intptr_t uid, intptr_t argc, intptr_t* reg, intptr_t* stack);
+#endif
+#if ARCH_PPC && ARCH_ILP32
+    intptr_t    c_func_stub_intptr_ppc(void* func, intptr_t nstack, intptr_t argv[]);
+    float       c_func_stub_float_ppc(void* func, intptr_t nstack, intptr_t argv[]);
+    int64_t     c_func_stub_int64_ppc(void* func, intptr_t nstack, intptr_t argv[]);
+    double      c_func_stub_double_ppc(void* func, intptr_t nstack, intptr_t argv[]);
 #endif
 }
 

@@ -218,6 +218,8 @@ call_c_intptr(VM* vm, void* func, c_stack_frame_t& stack)
     return c_func_stub_intptr(func, stack.count(), stack.frame());
 #elif ARCH_X64
     return c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
+#elif ARCH_PPC && ARCH_ILP32
+    return c_func_stub_intptr_ppc(func, stack.count(), stack.frame());    
 #else
     fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
 #endif
@@ -231,6 +233,8 @@ call_c_int64(VM* vm, void* func, c_stack_frame_t& stack)
     return c_func_stub_int64(func, stack.count(), stack.frame());
 #elif ARCH_X64
     return (int64_t)c_func_stub_intptr_x64(func, stack.count(), stack.sse_use(), stack.frame());
+#elif ARCH_PPC && ARCH_ILP32
+    return c_func_stub_int64_ppc(func, stack.count(), stack.frame());    
 #else
     fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
 #endif
@@ -245,6 +249,8 @@ call_c_float(VM* vm, void* func, c_stack_frame_t& stack)
     return c_func_stub_double(func, stack.count(), stack.frame());
 #elif ARCH_X64
     return c_func_stub_float_x64(func, stack.count(), stack.sse_use(), stack.frame());
+#elif ARCH_PPC && ARCH_ILP32
+    return c_func_stub_float_ppc(func, stack.count(), stack.frame());    
 #else
     fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
 #endif
@@ -258,6 +264,8 @@ call_c_double(VM* vm, void* func, c_stack_frame_t& stack)
     return c_func_stub_double(func, stack.count(), stack.frame());
 #elif ARCH_X64
     return c_func_stub_double_x64(func, stack.count(), stack.sse_use(), stack.frame());
+#elif ARCH_PPC && ARCH_ILP32
+    return c_func_stub_double_ppc(func, stack.count(), stack.frame());    
 #else
     fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
 #endif
