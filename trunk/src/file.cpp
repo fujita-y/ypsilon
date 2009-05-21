@@ -298,8 +298,8 @@
         }
         raise_io_error(vm, "change-file-mode", SCM_PORT_OPERATION_OPEN, strerror(ENOENT), ENOENT, scm_false, path);
         return scm_undef;
-    }    
-    
+    }
+
     scm_obj_t rename_file(VM* vm, scm_string_t old_path, scm_string_t new_path)
     {
         wchar_t old_ucs2[MAX_PATH];

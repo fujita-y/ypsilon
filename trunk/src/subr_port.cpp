@@ -289,7 +289,7 @@ subr_standard_input_port(VM* vm, int argc, scm_obj_t argv[])
             int fd = dup(PORT_STDIN_FD);
   #if USE_CLOEXEC
             if (fd >= 0) fcntl(fd, F_SETFD, FD_CLOEXEC);
-  #endif                
+  #endif
             port = make_std_port(vm->m_heap,
                                  fd,
                                  make_string_literal(vm->m_heap, "/dev/stdin"),
@@ -334,7 +334,7 @@ subr_standard_output_port(VM* vm, int argc, scm_obj_t argv[])
             int fd = dup(PORT_STDOUT_FD);
   #if USE_CLOEXEC
             if (fd >= 0) fcntl(fd, F_SETFD, FD_CLOEXEC);
-  #endif                
+  #endif
             port = make_std_port(vm->m_heap,
                                  fd,
                                  make_string_literal(vm->m_heap, "/dev/stdout"),
@@ -379,7 +379,7 @@ subr_standard_error_port(VM* vm, int argc, scm_obj_t argv[])
             int fd = dup(PORT_STDERR_FD);
   #if USE_CLOEXEC
             if (fd >= 0) fcntl(fd, F_SETFD, FD_CLOEXEC);
-  #endif                
+  #endif
             port = make_std_port(vm->m_heap,
                                  fd,
                                  make_string_literal(vm->m_heap, "/dev/stderr"),

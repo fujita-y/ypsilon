@@ -53,14 +53,10 @@
     };
 #endif
 
-#if ARCH_PPC 
+#if ARCH_PPC && ARCH_ILP32
     #define FFI_MAX_ARGC 32 // update .s files if changed
     class c_stack_frame_t {
-  #if ARCH_ILP32
         intptr_t m_frame[FFI_MAX_ARGC + 8 + 16];
-  #else
-        intptr_t m_frame[FFI_MAX_ARGC + 8 + 8];
-  #endif
         int m_count;
         intptr_t m_gpr[8];
         double m_fpr[8];
@@ -73,6 +69,30 @@
             : m_vm(vm), m_count(0), m_gpr_count(0), m_fpr_count(0) {
             memset(m_gpr, 0, sizeof(m_gpr));
             memset(m_fpr, 0, sizeof(m_fpr));
+        }
+        const char* push(scm_obj_t obj, int signature);
+        intptr_t* frame() { compose(); return m_frame; }
+        int count() { return m_count; }
+    };
+#endif
+
+#if ARCH_PPC && ARCH_LP64
+    #define FFI_MAX_ARGC 32 // update .s files if changed
+    class c_stack_frame_t {
+        intptr_t m_frame[FFI_MAX_ARGC + 8 + 13];
+        int m_count;
+        intptr_t m_gpr[8];
+        double m_fpr[13];
+        int m_gpr_count;
+        int m_fpr_count;
+        VM* m_vm;
+        void compose();
+    public:
+        c_stack_frame_t(VM* vm)
+            : m_vm(vm), m_count(0), m_gpr_count(0), m_fpr_count(0) {
+            memset(m_gpr, 0, sizeof(m_gpr));
+            memset(m_fpr, 0, sizeof(m_fpr));
+            memset(m_frame, 0, sizeof(m_frame));
         }
         const char* push(scm_obj_t obj, int signature);
         intptr_t* frame() { compose(); return m_frame; }
@@ -109,8 +129,13 @@ extern "C" {
 #if ARCH_PPC && ARCH_ILP32
     intptr_t    c_func_stub_intptr_ppc(void* func, intptr_t nstack, intptr_t argv[]);
     float       c_func_stub_float_ppc(void* func, intptr_t nstack, intptr_t argv[]);
-    int64_t     c_func_stub_int64_ppc(void* func, intptr_t nstack, intptr_t argv[]);
     double      c_func_stub_double_ppc(void* func, intptr_t nstack, intptr_t argv[]);
+    int64_t     c_func_stub_int64_ppc(void* func, intptr_t nstack, intptr_t argv[]);
+#endif
+#if ARCH_PPC && ARCH_LP64
+    intptr_t    c_func_stub_intptr_ppc64(void* func, intptr_t nstack, intptr_t argv[]);
+    float       c_func_stub_float_ppc64(void* func, intptr_t nstack, intptr_t argv[]);
+    double      c_func_stub_double_ppc64(void* func, intptr_t nstack, intptr_t argv[]);
 #endif
 }
 

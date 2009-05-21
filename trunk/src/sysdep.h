@@ -7,10 +7,15 @@
 #ifndef SYSDEP_H_INCLUDED
 #define SYSDEP_H_INCLUDED
 
-#if __APPLE_C__ || defined(NO_TLS)
+#if defined(NO_TLS)
   #undef NO_TLS
   #define NO_TLS                    1
 #endif
+#if defined(NO_POSIX_SPAWN)
+  #undef NO_POSIX_SPAWN
+  #define NO_POSIX_SPAWN            1
+#endif
+
 #if _MSC_VER
   #define DECLSPEC(x)               __declspec(x)
   #define ATTRIBUTE(x)
@@ -285,12 +290,12 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
   #endif
 
     extern char** environ;
-    
+
     typedef int     fd_t;
   #if !defined(_LARGEFILE64_SOURCE) && !defined(__off64_t_defined)
     typedef off_t   off64_t;
   #endif
-    
+
   #if ARCH_LP64
     typedef int int128_t __attribute__((__mode__(TI)));
     typedef unsigned int uint128_t __attribute__((__mode__(TI)));
@@ -303,7 +308,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
   #else
     #define MEM_STORE_FENCE     __asm__ __volatile__ ("sfence" ::: "memory")
   #endif
-    
+
   #if defined(__sun__)
     inline int isinf(double x) { return (!finite(x) && !isnan(x)); }
   #endif

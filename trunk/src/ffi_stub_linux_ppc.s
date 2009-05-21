@@ -2,25 +2,16 @@
     Ypsilon Scheme System
     Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
-    
-    (import (ffi))
-    (define puts (c-function (load-shared-object) "self" int puts (char*)))
-    (puts "hello")
-    (define printf (c-function (load-shared-object) "self" int printf (char* ...)))
-    (printf "world %d %f\n" 10 2.3)
-    (printf "long world %d %d %d %d %d %d %d %d %d %d %f %f %f %f %f %f %f %f %f %f\n" 1 2 3 4 5 6 7 8 9 10 -1.0 -2.0 -3.0 -4.0 -5.0 -6.0 -7.0 -8.0 -9.0 -10.0)
- 
-    (import (ffi))
-    (define test64 (c-function (load-shared-object "./test-so/libtest.so.1.0") "libtest" int64_t test64 (int64_t int64_t)))
- 
-    (number->string (test64 #x2000000001 #x3000000002) 16)
 */
 
     .file            "ffi_stub_linux_ppc.s"
+
     .gnu_attribute  4, 1
     .gnu_attribute  8, 1
+
     .section        ".text"
     .align          2
+
     .globl          c_func_stub_intptr_ppc
     .type           c_func_stub_intptr_ppc, @function
     .globl          c_func_stub_float_ppc
@@ -37,7 +28,7 @@ c_func_stub_double_ppc:
     stwu    1,-144(1)
     mflr    0
     stw     0,148(1)
-    
+
     cmpwi   0,4,0
     ble     0,.L2
     mtctr   4
