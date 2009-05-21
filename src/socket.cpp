@@ -69,7 +69,7 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
             }
 #if USE_CLOEXEC
             fcntl(fd, F_SETFD, FD_CLOEXEC);
-#endif                
+#endif
             int one = 1;
             if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char *)&one, sizeof(one)) == 0) {
                 if (bind(fd, p->ai_addr, p->ai_addrlen) == 0) {
@@ -100,7 +100,7 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
             }
 #if USE_CLOEXEC
             fcntl(fd, F_SETFD, FD_CLOEXEC);
-#endif                
+#endif
             if (connect(fd, p->ai_addr, p->ai_addrlen) == 0) {
                 s->mode = SCM_SOCKET_MODE_CLIENT;
                 s->fd = fd;

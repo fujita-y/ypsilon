@@ -279,7 +279,7 @@ static void throw_io_error(int operation, const char* message)
     #else
         int fd = open(path, oflag, pmode);
         if (fd >= 0) fcntl(fd, F_SETFD, FD_CLOEXEC);
-        return fd;        
+        return fd;
     #endif
   #else
         return open(path, oflag, pmode);

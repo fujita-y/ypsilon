@@ -1807,10 +1807,8 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector-c-int8-set!", subr_bytevector_c_int8_set);
     DEFSUBR("bytevector-c-int16-set!", subr_bytevector_c_int16_set);
     DEFSUBR("bytevector-c-int32-set!", subr_bytevector_c_int32_set);
-    DEFSUBR("bytevector-c-int64-set!", subr_bytevector_c_int64_set);    
-    DEFSUBR("bytevector-c-float-set!", subr_bytevector_c_float_set);    
-    DEFSUBR("bytevector-c-double-set!", subr_bytevector_c_double_set);    
-    DEFSUBR("bytevector-c-strlen", subr_bytevector_c_strlen);    
+    DEFSUBR("bytevector-c-int64-set!", subr_bytevector_c_int64_set);
+    DEFSUBR("bytevector-c-float-set!", subr_bytevector_c_float_set);
+    DEFSUBR("bytevector-c-double-set!", subr_bytevector_c_double_set);
+    DEFSUBR("bytevector-c-strlen", subr_bytevector_c_strlen);
 }
-
-

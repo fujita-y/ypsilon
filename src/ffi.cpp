@@ -471,19 +471,14 @@
         }
     }
 #endif
-#if ARCH_PPC
+
+#if ARCH_PPC && ARCH_ILP32
     const char*
     c_stack_frame_t::push(scm_obj_t obj, int signature)
     {
         if (m_count < FFI_MAX_ARGC) {
             if (FIXNUMP(obj) || BIGNUMP(obj)) {
                 if (signature == 'x') {
-  #if ARCH_LP64
-                    intptr_t value = coerce_exact_integer_to_intptr(obj);
-                    if (m_gpr_count < array_sizeof(m_gpr)) m_gpr[m_gpr_count++] = value;
-                    else m_frame[m_count++] = value;
-                    return NULL;
-  #else
                     int64_t value = coerce_exact_integer_to_int64(obj);
                     if (m_gpr_count <= 6) {
                         if (m_gpr_count & 1) m_gpr_count++;
@@ -495,7 +490,6 @@
                     m_frame[m_count++] = value >> 32;
                     m_frame[m_count++] = value & 0xffffffff;
                     return NULL;
-  #endif
                 }
                 if (signature == 'i' || signature == 'p' || signature == '*') {
                     intptr_t value = coerce_exact_integer_to_intptr(obj);
@@ -510,15 +504,10 @@
                         m_fpr[m_fpr_count++] = n.f64;
                         return NULL;
                     }
-  #if ARCH_LP64
-                    m_frame[m_count++] = n.u64;
-                    return NULL;
-  #else
                     if (m_count & 1) m_count++;
                     m_frame[m_count++] = n.u64 >> 32;
                     m_frame[m_count++] = n.u64 & 0xffffffff;
                     return NULL;
-  #endif
                 }
                 goto bad_signature;
             }
@@ -531,15 +520,10 @@
                         m_fpr[m_fpr_count++] = n.f64;
                         return NULL;
                     }
-  #if ARCH_LP64
-                    m_frame[m_count++] = n.u64;
-                    return NULL;
-  #else
                     if (m_count & 1) m_count++;
                     m_frame[m_count++] = n.u64 >> 32;
                     m_frame[m_count++] = n.u64 & 0xffffffff;
                     return NULL;
-  #endif
                 }
                 goto bad_signature;
             }
@@ -599,28 +583,165 @@
     void
     c_stack_frame_t::compose()
     {
-        /*
+
         for (int i = 0; i < array_sizeof(m_gpr); i++) {
             printf("GPR%d: %ld\n", i + 3, m_gpr[i]);
         }
         for (int i = 0; i < array_sizeof(m_fpr); i++) {
             printf("FPR%d: %f\n", i + 1, m_fpr[i]);
         }
-        */
+
         int dst = m_count;
         for (int i = 0; i < array_sizeof(m_gpr); i++) m_frame[dst++] = m_gpr[i];
         for (int i = 0; i < array_sizeof(m_fpr); i++) {
             union { double f64; uint64_t u64; } n;
             n.f64 = m_fpr[i];
-  #if ARCH_LP64
-            m_frame[dst++] = n.u64;
-  #else
             m_frame[dst++] = n.u64 >> 32;
             m_frame[dst++] = n.u64 & 0xffffffff;
-  #endif
         }
     }
-#endif    
+#endif
+
+    ////
+
+#if ARCH_PPC && ARCH_LP64
+    const char*
+    c_stack_frame_t::push(scm_obj_t obj, int signature)
+    {
+        if (m_count < FFI_MAX_ARGC) {
+            if (FIXNUMP(obj) || BIGNUMP(obj)) {
+                if (signature == 'x') {
+                    intptr_t value = coerce_exact_integer_to_intptr(obj);
+                    if (m_gpr_count < array_sizeof(m_gpr)) {
+                        m_gpr[m_gpr_count++] = value;
+                        m_count++;
+                        return NULL;
+                    }
+                    m_frame[m_count++] = value;
+                    return NULL;
+                }
+                if (signature == 'i' || signature == 'p' || signature == '*') {
+                    intptr_t value = coerce_exact_integer_to_intptr(obj);
+                    if (m_gpr_count < array_sizeof(m_gpr)) {
+                        m_gpr[m_gpr_count++] = value;
+                        m_count++;
+                        return NULL;
+                    }
+                    m_frame[m_count++] = value;
+                    return NULL;
+                }
+                if (signature == 'f' || signature == 'd') {
+                    union { double f64; uint64_t u64; } n;
+                    n.f64 = real_to_double(obj);
+                    if (m_fpr_count < array_sizeof(m_fpr)) {
+                        if (m_gpr_count < array_sizeof(m_gpr)) m_gpr_count++;
+                        m_fpr[m_fpr_count++] = n.f64;
+                        m_count++;
+                        return NULL;
+                    }
+                    m_frame[m_count++] = n.u64;
+                    return NULL;
+                }
+                goto bad_signature;
+            }
+            if (FLONUMP(obj)) {
+                union { double f64; uint64_t u64; } n;
+                scm_flonum_t flonum = (scm_flonum_t)obj;
+                n.f64 = flonum->value;
+                if (signature == 'f' || signature == 'd') {
+                    if (m_fpr_count < array_sizeof(m_fpr)) {
+                        if (m_gpr_count < array_sizeof(m_gpr)) m_gpr_count++;
+                        m_fpr[m_fpr_count++] = n.f64;
+                        m_count++;
+                        return NULL;
+                    }
+                    m_frame[m_count++] = n.u64;
+                    return NULL;
+                }
+                if (signature == '*') {
+                    if (m_gpr_count < array_sizeof(m_gpr)) {
+                        m_gpr[m_gpr_count++] = n.u64;
+                        m_count++;
+                        return NULL;
+                    }
+                    m_frame[m_count++] = n.u64;
+                    return NULL;
+                }
+                goto bad_signature;
+            }
+            if (BVECTORP(obj)) {
+                if (signature != 'p' && signature != '*') goto bad_signature;
+                scm_bvector_t bvector = (scm_bvector_t)obj;
+                if (m_gpr_count < array_sizeof(m_gpr)) {
+                    m_gpr[m_gpr_count++] = (intptr_t)bvector->elts;
+                    m_count++;
+                    return NULL;
+                }
+                m_frame[m_count++] = (intptr_t)bvector->elts;
+                return NULL;
+            }
+            if (VECTORP(obj)) {
+                if (signature != 'c') goto bad_signature;
+                scm_vector_t vector = (scm_vector_t)obj;
+                int n = vector->count;
+                if (n == 0) return "nonempty vector";
+                assert(n);
+                if (!FIXNUMP(vector->elts[0])) return "vector contains fixnum in first element";
+                int ref = FIXNUM(vector->elts[0]);
+                scm_bvector_t bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t) * (n - 1));
+                for (int i = 0; i < n - 1; i++) {
+                    if (!BVECTORP(vector->elts[i + 1])) return "vector of bytevector";
+                    *(uint8_t**)(bvector->elts + sizeof(intptr_t) * i) = ((scm_bvector_t)vector->elts[i + 1])->elts;
+                }
+                while (ref) {
+                    intptr_t datum = (intptr_t)bvector->elts;
+                    bvector = make_bvector(m_vm->m_heap, sizeof(intptr_t));
+                    *(intptr_t*)(bvector->elts) = datum;
+                    ref--;
+                }
+                if (m_gpr_count < array_sizeof(m_gpr)) {
+                    m_gpr[m_gpr_count++] = (intptr_t)bvector->elts;
+                    m_count++;
+                    return NULL;
+                }
+                m_frame[m_count++] = (intptr_t)bvector->elts;
+                return NULL;
+            }
+            goto bad_signature;
+        }
+        fatal("fatal: c function stack frame overflow");
+
+    bad_signature:
+        switch (signature) {
+            case 'i':
+            case 'x':
+                return "exact integer";
+            case 'p':
+                return "exact integer or bytevector";
+            case 'c':
+                return "vector";
+            case 'f':
+            case 'd':
+                return "real";
+            case '*':
+                return "exact integer, real, or bytevector";
+            default:
+                fatal("fatal: invalid c function argument type specifier");
+        }
+    }
+
+    void
+    c_stack_frame_t::compose()
+    {
+        int dst = m_count;
+        for (int i = 0; i < array_sizeof(m_gpr); i++) m_frame[dst++] = m_gpr[i];
+        for (int i = 0; i < array_sizeof(m_fpr); i++) {
+            union { double f64; uint64_t u64; } n;
+            n.f64 = m_fpr[i];
+            m_frame[dst++] = n.u64;
+        }
+    }
+#endif
 
 #if _MSC_VER
 

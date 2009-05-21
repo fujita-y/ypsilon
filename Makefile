@@ -49,6 +49,7 @@ ifneq (,$(findstring Linux, $(UNAME)))
       CXXFLAGS += -m64
       LDFLAGS = -m64
       ASFLAGS = -a64
+      SRCS += ffi_stub_linux64_ppc.s
     endif
     LDLIBS = -lpthread -ldl
   else
