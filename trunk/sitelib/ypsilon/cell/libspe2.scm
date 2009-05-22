@@ -178,7 +178,7 @@
   (define SPE_TAG_ALL                  1)
   (define SPE_TAG_ANY                  2)
   (define SPE_TAG_IMMEDIATE            3)
-  (define SPE_DEFAULT_ENTRY            4294967295)
+  (define SPE_DEFAULT_ENTRY            #xFFFFFFFF)
   (define SPE_RUN_USER_REGS            #x00000001)
   (define SPE_NO_CALLBACKS             #x00000002)
   (define SPE_CALLBACK_NEW             1)

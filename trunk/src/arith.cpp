@@ -845,7 +845,7 @@ exact_integer_to_uint32(scm_obj_t obj, uint32_t* ans)
         return false;
 #else
         intptr_t value = FIXNUM(obj);
-        if (value >= 0 && value < UINT32_MAX) {
+        if (value >= 0 && value <= UINT32_MAX) {
             *ans = value;
             return true;
         }
