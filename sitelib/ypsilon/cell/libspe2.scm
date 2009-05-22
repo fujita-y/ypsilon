@@ -67,7 +67,7 @@
           spe_gang_context_destroy
           spe_image_open
           spe_image_close
-          spe_load_program
+          spe_program_load
           spe_context_run
           spe_stop_info_read
           spe_event_handler_create
@@ -211,7 +211,7 @@
   (define-function int spe_image_close (void*))
 
   ;; int spe_program_load (spe_context_ptr_t spe, spe_program_handle_t *program)
-  (define-function int spe_load_program (void* void*))
+  (define-function int spe_program_load (void* void*))
 
   ;; int spe_context_run (spe_context_ptr_t spe, unsigned int *entry, unsigned int runflags, void *argp, void *envp, spe_stop_info_t *stopinfo)
   (define-function int spe_context_run (void* void* unsigned-int void* void* void*))
