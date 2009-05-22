@@ -20,6 +20,12 @@
     .type           c_func_stub_int64_ppc, @function
     .globl          c_func_stub_double_ppc
     .type           c_func_stub_double_ppc, @function
+    .globl          c_callback_stub_intptr_ppc
+    .type           c_callback_stub_intptr_ppc, @function
+    .globl          c_callback_stub_int64_ppc
+    .type           c_callback_stub_int64_ppc, @function
+    .globl          c_callback_stub_double_ppc
+    .type           c_callback_stub_double_ppc, @function
 
 c_func_stub_intptr_ppc:
 c_func_stub_float_ppc:
@@ -65,6 +71,58 @@ c_func_stub_double_ppc:
     lwz     0,148(1)
     mtlr    0
     addi    1,1,144
+    blr
+
+c_callback_stub_double_ppc:
+    lis         12,c_callback_double_ppc@ha
+    la          12,c_callback_double_ppc@l(12)
+    mtctr       12
+    b           callback_stub_common
+
+c_callback_stub_int64_ppc:
+    lis         12,c_callback_int64_ppc@ha
+    la          12,c_callback_int64_ppc@l(12)
+    mtctr       12
+    b           callback_stub_common
+
+c_callback_stub_intptr_ppc:
+    lis         12,c_callback_intptr_ppc@ha
+    la          12,c_callback_intptr_ppc@l(12)
+    mtctr       12
+    b           callback_stub_common
+
+callback_stub_common:
+    stwu        1,-112(1)
+    mflr        0
+    stw         0,116(1)
+    crxor       6,6,6
+    
+    stw         3,8(1)
+    stw         4,12(1)
+    stw         5,16(1)
+    stw         6,20(1)
+    stw         7,24(1)
+    stw         8,28(1)
+    stw         9,32(1)
+    stw         10,36(1)
+    stfd        1,40(1)
+    stfd        2,48(1)
+    stfd        3,56(1)
+    stfd        4,64(1)
+    stfd        5,72(1)
+    stfd        6,80(1)
+    stfd        7,88(1)
+    stfd        8,96(1)
+    
+    lwz         3,0(11)
+    lwz         4,4(11)
+    addi        5,1,8
+    addi        6,1,120
+    bctrl
+    
+    lwz         0,116(1)
+    mtlr        0
+    addi        1,1,112
     blr
 
 .section .note.GNU-stack,"",%progbits
