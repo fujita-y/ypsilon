@@ -72,11 +72,101 @@ c_func_stub_double_ppc64:
     lfd     6,104(12)
     lfd     7,112(12)
     lfd     8,120(12)
+    lfd     9,128(12)
+    lfd     10,136(12)
+    lfd     11,144(12)
+    lfd     12,152(12)
+    lfd     13,160(12)
 
     bctrl
     ld      2,40(1)
 
     addi    1,1,368
+    ld      0,16(1)
+    mtlr    0
+    blr
+
+    .globl c_callback_stub_intptr_ppc64
+    .globl c_callback_stub_double_ppc64
+
+c_callback_stub_intptr_ppc64:
+    mflr    0
+    std     0,16(1)
+    stdu    1,-288(1) # (112 + 8GPR + 13GPR + 8 byte for align)
+    std     2,40(1)
+
+    std     3,112(1)
+    std     4,120(1)
+    std     5,128(1)
+    std     6,136(1)
+    std     7,144(1)
+    std     8,152(1)
+    std     9,160(1)
+    std     10,168(1)
+    stfd    1,176(1)
+    stfd    2,184(1)
+    stfd    3,192(1)
+    stfd    4,200(1)
+    stfd    5,208(1)
+    stfd    6,216(1)
+    stfd    7,224(1)
+    stfd    8,232(1)
+    stfd    9,240(1)
+    stfd    10,248(1)
+    stfd    11,256(1)
+    stfd    12,264(1)
+    stfd    13,272(1)
+
+    ld      3,0(11)
+    ld      4,8(11)
+    addi    5,1,112
+    addi    6,1,336 # 288 + 48
+    bl      c_callback_intptr_ppc64
+    nop
+
+    ld      2,40(1)
+    addi    1,1,288
+    ld      0,16(1)
+    mtlr    0
+    blr
+
+c_callback_stub_double_ppc64:
+    mflr    0
+    std     0,16(1)
+    stdu    1,-288(1) # (112 + 8GPR + 13GPR + 8 byte for align)
+    std     2,40(1)
+
+    std     3,112(1)
+    std     4,120(1)
+    std     5,128(1)
+    std     6,136(1)
+    std     7,144(1)
+    std     8,152(1)
+    std     9,160(1)
+    std     10,168(1)
+    stfd    1,176(1)
+    stfd    2,184(1)
+    stfd    3,192(1)
+    stfd    4,200(1)
+    stfd    5,208(1)
+    stfd    6,216(1)
+    stfd    7,224(1)
+    stfd    8,232(1)
+    stfd    9,240(1)
+    stfd    10,248(1)
+    stfd    11,256(1)
+    stfd    12,264(1)
+    stfd    13,272(1)
+
+    ld      3,0(11)
+    ld      4,8(11)
+    addi    5,1,112
+    addi    6,1,336 # 288 + 48
+    bl      c_callback_intptr_ppc64
+    nop
+
+    ld      2,40(1)
+    addi    1,1,288
     ld      0,16(1)
     mtlr    0
     blr

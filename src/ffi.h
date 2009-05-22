@@ -142,6 +142,10 @@ extern "C" {
     intptr_t    c_func_stub_intptr_ppc64(void* func, intptr_t nstack, intptr_t argv[]);
     float       c_func_stub_float_ppc64(void* func, intptr_t nstack, intptr_t argv[]);
     double      c_func_stub_double_ppc64(void* func, intptr_t nstack, intptr_t argv[]);
+    void        c_callback_stub_intptr_ppc64();
+    void        c_callback_stub_double_ppc64();
+    intptr_t    c_callback_intptr_ppc64(intptr_t uid, intptr_t signatures, intptr_t* reg, intptr_t* stack);
+    double      c_callback_double_ppc64(intptr_t uid, intptr_t signatures, intptr_t* reg, intptr_t* stack);
 #endif
 }
 
