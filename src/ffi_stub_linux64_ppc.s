@@ -151,7 +151,7 @@ c_callback_stub_double_ppc64:
     ld      4,8(11)
     addi    5,1,112
     addi    6,1,336 # 288 + 48
-    bl      c_callback_intptr_ppc64
+    bl      c_callback_double_ppc64
     nop
     ld      2,40(1)
     addi    1,1,288
