@@ -75,6 +75,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_06FFF709AD284B1B9F40729E5B30C734"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_07D194D4652C43B19C5B34A82B3931E0"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -220,6 +226,12 @@
         "Entry"
         {
         "MsmKey" = "8:_13855008C5ED43E9BC4447CF31A7B45D"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_1433313042FA4E8F9E590741CFDB0E3E"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -2970,6 +2982,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_06FFF709AD284B1B9F40729E5B30C734"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\generator.scm"
+            "TargetName" = "8:generator.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_A9DA73EA29FB451B9A839461C3233178"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_07D194D4652C43B19C5B34A82B3931E0"
             {
             "SourcePath" = "8:..\\sitelib\\ypsilon\\gdk\\selection.scm"
@@ -3436,6 +3468,26 @@
             "TargetName" = "8:target.scm"
             "Tag" = "8:"
             "Folder" = "8:_B526C94D65CB418093434E31F87B181B"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_1433313042FA4E8F9E590741CFDB0E3E"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\cell\\libspe2.scm"
+            "TargetName" = "8:libspe2.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_24DB3ED918F64134835923A27B07676E"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -11717,6 +11769,17 @@
                             "Property" = "8:_3121F2E18C5B4FD6AE00E912059B2DC8"
                                 "Folders"
                                 {
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_24DB3ED918F64134835923A27B07676E"
+                                    {
+                                    "Name" = "8:cell"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_FCB7162F5D5747CFB34B892195C9F148"
+                                        "Folders"
+                                        {
+                                        }
+                                    }
                                     "{9EF0B969-E518-4E46-987F-47570745A589}:_6B88B7D5C34049A492F31245B19DC7A2"
                                     {
                                     "Name" = "8:gobject"
