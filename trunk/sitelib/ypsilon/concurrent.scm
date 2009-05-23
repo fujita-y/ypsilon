@@ -6,30 +6,30 @@
 (library (ypsilon concurrent)
   (export define-thread-variable
           future
+          spawn
           call-with-spawn
-          mailbox?
           make-mailbox
-          shutdown-mailbox
+          mailbox?
           send
           recv
-          messenger-bag?
+          shutdown-mailbox
           make-messenger-bag
+          messenger-bag?
           messenger-bag-put!
           messenger-bag-get!
-          spawn
+          make-shared-queue
+          shared-queue?
+          shared-queue-push!
+          shared-queue-pop!
+          shared-queue-shutdown
+          make-shared-bag
+          shared-bag?
+          shared-bag-put!
+          shared-bag-get!
           thread-id
           make-uuid
           timeout-object?
           shutdown-object?
-          shared-queue?
-          make-shared-queue
-          shared-queue-push!
-          shared-queue-pop!
-          shared-queue-shutdown
-          shared-bag?
-          make-shared-bag
-          shared-bag-put!
-          shared-bag-get!
           current-exception-printer)
   (import (core))
 
@@ -112,21 +112,21 @@
       (tuple 'type:messenger-bag (apply make-shared-bag n))))
 
   (define messenger-bag-put!
-    (lambda (bag receiver obj . timeout)
+    (lambda (bag tag obj . timeout)
       (assert (messenger-bag? bag))
-      (assert (string? receiver))
-      (let ((retval (apply shared-bag-put! (tuple-ref bag 1) receiver obj timeout)))
+      (assert (string? tag))
+      (let ((retval (apply shared-bag-put! (tuple-ref bag 1) tag obj timeout)))
         (cond ((timeout-object? retval)
-               (error 'messenger-bag-put! "operation timed out" (cons* bag receiver obj timeout)))
+               (error 'messenger-bag-put! "operation timed out" (cons* bag tag obj timeout)))
               (else retval)))))
 
   (define messenger-bag-get!
-    (lambda (bag receiver . timeout)
+    (lambda (bag tag . timeout)
       (assert (messenger-bag? bag))
-      (assert (string? receiver))
-      (let ((obj (apply shared-bag-get! (tuple-ref bag 1) receiver timeout)))
+      (assert (string? tag))
+      (let ((obj (apply shared-bag-get! (tuple-ref bag 1) tag timeout)))
         (cond ((timeout-object? obj)
-               (error 'messenger-bag-get! "operation timed out" (cons* bag receiver timeout)))
+               (error 'messenger-bag-get! "operation timed out" (cons* bag tag timeout)))
               (else obj)))))
   ) ;[end]
 

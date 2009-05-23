@@ -34,7 +34,6 @@ c_func_stub_double_ppc:
     stwu    1,-144(1)
     mflr    0
     stw     0,148(1)
-
     cmpwi   0,4,0
     ble     0,.L2
     mtctr   4
@@ -46,7 +45,6 @@ c_func_stub_double_ppc:
     addi    9,9,4
     bdnz    .L1
 .L2:
-
     mtctr   3
     slwi    4,4,2
     add     11,5,4
@@ -95,7 +93,6 @@ callback_stub_common:
     stwu        1,-112(1)
     mflr        0
     stw         0,116(1)
-
     stw         3,8(1)
     stw         4,12(1)
     stw         5,16(1)
@@ -112,14 +109,12 @@ callback_stub_common:
     stfd        6,80(1)
     stfd        7,88(1)
     stfd        8,96(1)
-
     lwz         3,0(11)
     lwz         4,4(11)
     addi        5,1,8
     addi        6,1,120
     crxor       6,6,6
     bctrl
-
     lwz         0,116(1)
     mtlr        0
     addi        1,1,112
