@@ -24,6 +24,11 @@ UNAME 	 = $(shell uname -a)
 
 ifneq (,$(findstring Linux, $(UNAME)))
   ifneq (,$(findstring ppc, $(UNAME)))
+    ifneq (,$(findstring ps3, $(UNAME)))
+      ifneq (,$(shell which ppu-g++ 2>/dev/null))
+        CXX = ppu-g++
+      endif
+    endif
     ifndef DATAMODEL
       ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
         DATAMODEL = ILP32
@@ -61,7 +66,7 @@ ifneq (,$(findstring Linux, $(UNAME)))
       endif
     endif
     ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
-      ifeq ($(DATAMODEL), ILP32)  
+      ifeq ($(DATAMODEL), ILP32)
         CXXFLAGS += -march=i686
       endif
     else
