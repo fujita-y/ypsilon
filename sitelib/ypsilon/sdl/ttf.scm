@@ -83,9 +83,9 @@
              (u8-list->bytevector (list r g b 0))))
           (on-ppc64
            (lambda (r g b)
-             (+ (bitwise-arithmetic-shift-left r 56)
-                (bitwise-arithmetic-shift-left g 48)
-                (bitwise-arithmetic-shift-left r 42))))
+             (+ (bitwise-arithmetic-shift-left r 24)
+                (bitwise-arithmetic-shift-left g 16)
+                (bitwise-arithmetic-shift-left b 8))))
           (else
            (lambda (r g b)
              (+ (bitwise-arithmetic-shift-left b 16) (bitwise-arithmetic-shift-left g 8) r)))))
