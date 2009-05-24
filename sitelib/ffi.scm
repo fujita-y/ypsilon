@@ -108,6 +108,8 @@
           on-linux
           on-openbsd
           on-posix
+          on-ppc32
+          on-ppc64
           on-sunos
           on-windows
           on-x64

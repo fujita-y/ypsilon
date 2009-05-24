@@ -77,7 +77,18 @@
   (define TTF_STYLE_ITALIC #x02)
   (define TTF_STYLE_UNDERLINE #x04)
 
-  (define TTF_Color (lambda (r g b) (+ (fxarithmetic-shift-left b 16) (fxarithmetic-shift-left g 8) r)))
+  (define TTF_Color
+    (cond (on-ppc32
+           (lambda (r g b)
+             (u8-list->bytevector (list r g b 0))))
+          (on-ppc64
+           (lambda (r g b)
+             (+ (bitwise-arithmetic-shift-left r 56)
+                (bitwise-arithmetic-shift-left g 48)
+                (bitwise-arithmetic-shift-left r 42))))
+          (else
+           (lambda (r g b)
+             (+ (bitwise-arithmetic-shift-left b 16) (bitwise-arithmetic-shift-left g 8) r)))))
 
   ;; void TTF_ByteSwappedUNICODE(int swapped) 
   (define-function void TTF_ByteSwappedUNICODE (int))
@@ -140,40 +151,40 @@
   (define-function void TTF_Quit ())
 
   ;; SDL_Surface* TTF_RenderGlyph_Blended(TTF_Font* font, Uint16 ch, SDL_Color fg) 
-  (define-function void* TTF_RenderGlyph_Blended (void* uint16_t uint32_t))
+  (define-function void* TTF_RenderGlyph_Blended (void* uint16_t void*))
 
   ;; SDL_Surface* TTF_RenderGlyph_Shaded(TTF_Font* font, Uint16 ch, SDL_Color fg, SDL_Color bg) 
-  (define-function void* TTF_RenderGlyph_Shaded (void* uint16_t uint32_t uint32_t))
+  (define-function void* TTF_RenderGlyph_Shaded (void* uint16_t void* void*))
 
   ;; SDL_Surface* TTF_RenderGlyph_Solid(TTF_Font* font, Uint16 ch, SDL_Color fg) 
-  (define-function void* TTF_RenderGlyph_Solid (void* uint16_t uint32_t))
+  (define-function void* TTF_RenderGlyph_Solid (void* uint16_t void*))
 
   ;; SDL_Surface* TTF_RenderText_Blended(TTF_Font* font, const char* text, SDL_Color fg) 
-  (define-function void* TTF_RenderText_Blended (void* char* uint32_t))
+  (define-function void* TTF_RenderText_Blended (void* char* void*))
 
   ;; SDL_Surface* TTF_RenderText_Shaded(TTF_Font* font, const char* text, SDL_Color fg, SDL_Color bg) 
-  (define-function void* TTF_RenderText_Shaded (void* char* uint32_t uint32_t))
+  (define-function void* TTF_RenderText_Shaded (void* char* void* void*))
 
   ;; SDL_Surface* TTF_RenderText_Solid(TTF_Font* font, const char* text, SDL_Color fg) 
-  (define-function void* TTF_RenderText_Solid (void* char* uint32_t))
+  (define-function void* TTF_RenderText_Solid (void* char* void*))
 
   ;; SDL_Surface* TTF_RenderUNICODE_Blended(TTF_Font* font, const Uint16* text, SDL_Color fg) 
-  (define-function void* TTF_RenderUNICODE_Blended (void* void* uint32_t))
+  (define-function void* TTF_RenderUNICODE_Blended (void* void* void*))
 
   ;; SDL_Surface* TTF_RenderUNICODE_Shaded(TTF_Font* font, const Uint16* text, SDL_Color fg, SDL_Color bg) 
-  (define-function void* TTF_RenderUNICODE_Shaded (void* void* uint32_t uint32_t))
+  (define-function void* TTF_RenderUNICODE_Shaded (void* void* void* void*))
 
   ;; SDL_Surface* TTF_RenderUNICODE_Solid(TTF_Font* font, const Uint16* text, SDL_Color fg) 
-  (define-function void* TTF_RenderUNICODE_Solid (void* void* uint32_t))
+  (define-function void* TTF_RenderUNICODE_Solid (void* void* void*))
 
   ;; SDL_Surface* TTF_RenderUTF8_Blended(TTF_Font* font, const char* text, SDL_Color fg) 
-  (define-function void* TTF_RenderUTF8_Blended (void* char* uint32_t))
+  (define-function void* TTF_RenderUTF8_Blended (void* char* void*))
 
   ;; SDL_Surface* TTF_RenderUTF8_Shaded(TTF_Font* font, const char* text, SDL_Color fg, SDL_Color bg) 
-  (define-function void* TTF_RenderUTF8_Shaded (void* char* uint32_t uint32_t))
+  (define-function void* TTF_RenderUTF8_Shaded (void* char* void* void*))
 
   ;; SDL_Surface* TTF_RenderUTF8_Solid(TTF_Font* font, const char* text, SDL_Color fg) 
-  (define-function void* TTF_RenderUTF8_Solid (void* char* uint32_t))
+  (define-function void* TTF_RenderUTF8_Solid (void* char* void*))
 
   ;; void TTF_SetError(const char* fmt, ...) 
   (define-function void TTF_SetError (char* ...))

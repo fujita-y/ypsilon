@@ -122,6 +122,8 @@
           on-openbsd
           on-windows
           on-posix
+          on-ppc32
+          on-ppc64
           on-ia32
           on-x64)
 
@@ -134,12 +136,14 @@
   (define on-openbsd       (and (string-contains (architecture-feature 'operating-system) "openbsd") #t))
   (define on-windows       (and (string-contains (architecture-feature 'operating-system) "windows") #t))
   (define on-posix         (not on-windows))
-  (define on-x64           (and (or (string-contains (architecture-feature 'machine-hardware) "x86_64")
-                                    (string-contains (architecture-feature 'machine-hardware) "amd64")
+  (define on-ppc32         (and (string-contains (architecture-feature 'machine-hardware) "ppc") (= sizeof:long 4)))
+  (define on-ppc64         (and (string-contains (architecture-feature 'machine-hardware) "ppc") (= sizeof:long 8)))
+  (define on-x64           (and (or (string-contains (architecture-feature 'machine-hardware) "amd64")
+                                    (string-contains (architecture-feature 'machine-hardware) "x86_64")
                                     (and on-sunos
                                          (string-contains (architecture-feature 'machine-hardware) "i86")
-                                         (= (architecture-feature 'sizeof:void*) 8))) #t))
-  (define on-ia32          (not on-x64))
+                                         (= sizeof:void* 8))) #t))
+  (define on-ia32          (not (or on-x64 on-ppc32 on-ppc64)))
 
   (define expect-string
     (lambda (name n s)
