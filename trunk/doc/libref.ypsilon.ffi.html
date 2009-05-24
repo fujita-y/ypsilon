@@ -202,6 +202,22 @@
       &lt;constant&gt;
     </td>
   </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#on-ppc32">on-ppc32</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#on-ppc64">on-ppc64</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
 </table>
   <ul type="square" class="library_link_list">
     <li><a href="#exports">List of identifiers exported from (ypsilon ffi) library</a></li>
@@ -1223,6 +1239,8 @@
 </div>
 <span id="on-ia32"></span>
 <span id="on-x64"></span>
+<span id="on-ppc32"></span>
+<span id="on-ppc64"></span>
 <div class="jump_menu">
   [<a href="javascript:history.back()">Back</a>]
   [<a href="libref.ypsilon.ffi.html">Top</a>]
@@ -1234,7 +1252,7 @@
     Constants:&nbsp;
   </td>
   <td class="const_word" valign="top">
-    on-ia32<span class="const_comma">,</span> on-x64
+    on-ia32<span class="const_comma">,</span> on-x64<span class="const_comma">,</span> on-ppc32<span class="const_comma">,</span> on-ppc64
   </td>
   </tr>
 </table>
@@ -1253,6 +1271,10 @@
   <dd class="dd_constants">is #t if the CPU instruction set is IA-32.</dd>
   <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-x64</dt>
   <dd class="dd_constants">is #t if the CPU instruction set is Intel64 or AMD64.</dd>
+  <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-ppc32</dt>
+  <dd class="dd_constants">is #t if the CPU instruction set is 32-bit PowerPC.</dd>
+  <dt class="dt_constants"><span class=dt_constants_prefix>&bull; </span>on-ppc64</dt>
+  <dd class="dd_constants">is #t if the CPU instruction set is 64-bit PowerPC.</dd>
 </dl>
 </div>
 </div>
@@ -1355,6 +1377,14 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#on-x64">on-x64</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-ppc32">on-ppc32</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-ppc64">on-ppc64</a></span>
     </td>
   <tr>
     <td>
@@ -2090,6 +2120,16 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#on-posix">on-posix</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-ppc32">on-ppc32</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#on-ppc64">on-ppc64</a></span>
     </td>
   </tr>
   <tr>
