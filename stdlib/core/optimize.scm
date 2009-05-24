@@ -655,7 +655,6 @@
                                                           ((eq? proc 'quote)
                                                            (loop (cdr lst)))
                                                           ((eq? proc 'lambda)
-                                                           #;(and const (loop (cdr args)))
                                                            (and inline (loop (cdr args)))
                                                            (loop (cdr lst)))
                                                           ((memq proc '(let letrec*))
@@ -668,7 +667,7 @@
                                                           ((eq? proc 'set!)
                                                            (or const (done #f))
                                                            (and (eq? (car b) (car args)) (done #f))
-                                                           (and (eq? (cdr b) (car args)) (done #f)) ;new
+                                                           (and (eq? (cdr b) (car args)) (done #f))
                                                            (loop (cdr args))
                                                            (loop (cdr lst)))
                                                           ((eq? proc 'if)
@@ -683,15 +682,18 @@
                                                            (or const
                                                                (primitive-function? proc)
                                                                (variable-functional? proc)
-                                                               ;
                                                                (and (special-list-function? proc)
                                                                     (pair? args)
                                                                     (symbol? (car args))
                                                                     (or (primitive-function? (car args))
                                                                         (variable-functional? (car args))))
-                                                               ;
                                                                (done #f))
                                                            (loop (cdr lst))))))
+                                                 ((symbol? (car lst))
+                                                  (or const
+                                                      (and (core-hashtable-contains? ht-variable-assigned (car lst))
+                                                           (done #f)))
+                                                  (loop (cdr lst)))
                                                  (else
                                                   (loop (cdr lst)))))))))
                                  (and (eq? ans #t)
