@@ -822,6 +822,7 @@
     socket?
     spawn
     spawn-heap-limit
+    spawn-timeout
     sqrt
     standard-error-port
     standard-input-port

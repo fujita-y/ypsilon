@@ -28,6 +28,7 @@
           shutdown-object?
           call-with-spawn
           spawn
+          spawn-timeout
           spawn-heap-limit
           make-uuid
           current-exception-printer)
