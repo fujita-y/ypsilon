@@ -84,6 +84,7 @@ public:
     VM*                 m_parent;
     int                 m_id;
     int                 m_child;
+    scm_obj_t           m_spawn_timeout; // #f or fixnum, no gc protect
     size_t              m_spawn_heap_limit;
 #endif
 

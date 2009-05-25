@@ -26,5 +26,6 @@
           shutdown-object?
           spawn
           spawn-heap-limit
+          spawn-timeout
           timeout-object?)
   (import (ypsilon concurrent)))

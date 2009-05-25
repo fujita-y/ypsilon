@@ -543,6 +543,7 @@
                         shutdown-object?
 
                         spawn
+                        spawn-timeout
                         spawn-heap-limit
                         ;thread-id
                         on-primordial-thread?

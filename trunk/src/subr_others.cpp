@@ -2919,7 +2919,8 @@ subr_spawn(VM* vm, int argc, scm_obj_t argv[])
         if (CLOSUREP(argv[0])) {
             int n = vm->m_interp->spawn(vm, (scm_closure_t)argv[0], argc - 1, argv + 1);
             if (n < 0) {
-                fatal("fatal: can not spawn more than %d threads simultaneously under current configuration", MAX_VIRTUAL_MACHINE);
+                return scm_timeout;
+//                fatal("fatal: can not spawn more than %d threads simultaneously under current configuration", MAX_VIRTUAL_MACHINE);
             }
             return MAKEFIXNUM(n);
         }
@@ -2952,6 +2953,28 @@ subr_spawn_heap_limit(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 #else
     fatal("%s:%u spawn-heap-limit not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
+// spawn-timeout
+scm_obj_t
+subr_spawn_timeout(VM* vm, int argc, scm_obj_t argv[])
+{
+#if USE_PARALLEL_VM
+    if (argc == 1) {
+        if ((FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) || argv[0] == scm_false) {
+            vm->m_spawn_timeout = argv[0];
+            return scm_unspecified;
+        } else {
+            wrong_type_argument_violation(vm, "spawn-timeout", 0, "#f or non-negative fixnum", argv[0], argc, argv);
+            return scm_undef;
+        }
+    }
+    if (argc == 0) return vm->m_spawn_timeout;
+    wrong_number_of_arguments_violation(vm, "spawn-timeout", 0, 1, argc, argv);
+    return scm_undef;
+#else
+    fatal("%s:%u spawn-timeout not supported on this build", __FILE__, __LINE__);
 #endif
 }
 
@@ -4230,6 +4253,7 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("recursion-level", subr_recursion_level);
     DEFSUBR("spawn", subr_spawn);
     DEFSUBR("spawn-heap-limit", subr_spawn_heap_limit);
+    DEFSUBR("spawn-timeout", subr_spawn_timeout);
 //  DEFSUBR("live-thread-count", subr_live_thread_count);
 //  DEFSUBR("max-thread-count", subr_max_thread_count);
     DEFSUBR("display-thread-status", subr_display_thread_status);

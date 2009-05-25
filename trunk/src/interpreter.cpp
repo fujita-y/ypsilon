@@ -18,6 +18,7 @@
 #if USE_PARALLEL_VM
 
 #define SPAWN_INITIAL_HEAP_SIZE (OBJECT_SLAB_SIZE * 16)
+#define SPAWN_TIMEOUT_USLEEP    10000
 
 void
 Interpreter::init(VM* root, int n)
@@ -39,6 +40,7 @@ Interpreter::init(VM* root, int n)
     root->m_parent = NULL;
     root->m_id = 0;
     root->m_child = 0;
+    root->m_spawn_timeout = scm_false;
     root->m_spawn_heap_limit = DEFAULT_HEAP_LIMIT * 1024 * 1024;
     m_table[0]->interp = this;
     m_table[0]->state = VM_STATE_ACTIVE;
@@ -60,82 +62,91 @@ Interpreter::destroy()
 int
 Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
 {
-    scoped_lock lock(m_lock);
-    for (int i = 0; i < m_capacity; i++) {
-        if (m_table[i]->state == VM_STATE_FREE) {
-            object_heap_t* heap = new object_heap_t;
-            int heap_init = SPAWN_INITIAL_HEAP_SIZE;
-            int heap_limit = parent->m_spawn_heap_limit;
-            if (heap_limit <= heap_init + heap_init) heap_limit = heap_init + heap_init;
-            heap->init_child(heap_limit, heap_init, parent->m_heap);
-            VM* vm = new VM;
-            vm->m_heap = heap;
-            vm->m_stack_size = VM_STACK_BYTESIZE;
-            vm->m_stack_top = (scm_obj_t*)vm->m_heap->allocate(vm->m_stack_size, false, false);
-            vm->m_stack_limit = (scm_obj_t*)((intptr_t)vm->m_stack_top + vm->m_stack_size);
-            memset(vm->m_stack_top, 0, vm->m_stack_size);
-            vm->m_to_stack_top = (scm_obj_t*)vm->m_heap->allocate(vm->m_stack_size, false, false);
-            vm->m_to_stack_limit = (scm_obj_t*)((intptr_t)vm->m_to_stack_top + vm->m_stack_size);
-            memset(vm->m_to_stack_top, 0, vm->m_stack_size);
-            vm->m_interp = parent->m_interp;
-            vm->m_parent = parent;
-            vm->m_id = i;
-            vm->m_child = 0;
-            vm->m_spawn_heap_limit = parent->m_spawn_heap_limit;
-            vm->m_bootport = (scm_port_t)scm_unspecified;
-            vm->m_current_environment = parent->m_current_environment;
-            vm->m_current_input = parent->m_current_input;
-            vm->m_current_output = parent->m_current_output;
-            vm->m_current_error = parent->m_current_error;
-            vm->m_current_source_comments = scm_false;
-            vm->m_current_exception_handler = scm_false;
-            vm->m_current_dynamic_environment = clone_weakhashtable(vm->m_heap, parent->m_current_dynamic_environment, false);
-            vm->m_current_dynamic_wind_record = scm_nil;
-            vm->m_recursion_level = 0;
-            vm->m_shared_object_errno = 0;
-            vm->m_shared_object_win32_lasterror = 0;
-            memcpy(&vm->flags, &parent->flags, sizeof(parent->flags));
-            vm->run(true);
-            vm->reset();
-            for (int n = 0; n < argc; n++) vm->m_sp[n] = argv[n];
-            vm->m_sp += argc;
-            vm_env_t env = (vm_env_t)vm->m_sp;
-            env->count = argc;
-            env->up = func->env;
-            vm->m_sp = vm->m_fp = (scm_obj_t*)(env + 1);
-            vm->m_pc = func->code;
-            vm->m_env = &env->up;
-            scm_obj_t context = scm_nil;
-            if (argc > 0) {
-                for (int n = argc - 1; n >= 0; n--) context = make_pair(parent->m_heap, argv[n], context);
-                context = make_pair(parent->m_heap, func, context);
-            } else {
-                context = make_list(parent->m_heap, 1, func);
+    double timeout = (FIXNUMP(parent->m_spawn_timeout)) ? msec() + FIXNUM(parent->m_spawn_timeout) : 0.0;
+again:
+    {
+        scoped_lock lock(m_lock);
+        for (int i = 0; i < m_capacity; i++) {
+            if (m_table[i]->state == VM_STATE_FREE) {
+                object_heap_t* heap = new object_heap_t;
+                int heap_init = SPAWN_INITIAL_HEAP_SIZE;
+                int heap_limit = parent->m_spawn_heap_limit;
+                if (heap_limit <= heap_init + heap_init) heap_limit = heap_init + heap_init;
+                heap->init_child(heap_limit, heap_init, parent->m_heap);
+                VM* vm = new VM;
+                vm->m_heap = heap;
+                vm->m_stack_size = VM_STACK_BYTESIZE;
+                vm->m_stack_top = (scm_obj_t*)vm->m_heap->allocate(vm->m_stack_size, false, false);
+                vm->m_stack_limit = (scm_obj_t*)((intptr_t)vm->m_stack_top + vm->m_stack_size);
+                memset(vm->m_stack_top, 0, vm->m_stack_size);
+                vm->m_to_stack_top = (scm_obj_t*)vm->m_heap->allocate(vm->m_stack_size, false, false);
+                vm->m_to_stack_limit = (scm_obj_t*)((intptr_t)vm->m_to_stack_top + vm->m_stack_size);
+                memset(vm->m_to_stack_top, 0, vm->m_stack_size);
+                vm->m_interp = parent->m_interp;
+                vm->m_parent = parent;
+                vm->m_id = i;
+                vm->m_child = 0;
+                vm->m_spawn_timeout = parent->m_spawn_timeout;
+                vm->m_spawn_heap_limit = parent->m_spawn_heap_limit;
+                vm->m_bootport = (scm_port_t)scm_unspecified;
+                vm->m_current_environment = parent->m_current_environment;
+                vm->m_current_input = parent->m_current_input;
+                vm->m_current_output = parent->m_current_output;
+                vm->m_current_error = parent->m_current_error;
+                vm->m_current_source_comments = scm_false;
+                vm->m_current_exception_handler = scm_false;
+                vm->m_current_dynamic_environment = clone_weakhashtable(vm->m_heap, parent->m_current_dynamic_environment, false);
+                vm->m_current_dynamic_wind_record = scm_nil;
+                vm->m_recursion_level = 0;
+                vm->m_shared_object_errno = 0;
+                vm->m_shared_object_win32_lasterror = 0;
+                memcpy(&vm->flags, &parent->flags, sizeof(parent->flags));
+                vm->run(true);
+                vm->reset();
+                for (int n = 0; n < argc; n++) vm->m_sp[n] = argv[n];
+                vm->m_sp += argc;
+                vm_env_t env = (vm_env_t)vm->m_sp;
+                env->count = argc;
+                env->up = func->env;
+                vm->m_sp = vm->m_fp = (scm_obj_t*)(env + 1);
+                vm->m_pc = func->code;
+                vm->m_env = &env->up;
+                scm_obj_t context = scm_nil;
+                if (argc > 0) {
+                    for (int n = argc - 1; n >= 0; n--) context = make_pair(parent->m_heap, argv[n], context);
+                    context = make_pair(parent->m_heap, func, context);
+                } else {
+                    context = make_list(parent->m_heap, 1, func);
+                }
+                m_table[i]->param = make_list(parent->m_heap,
+                                              5,
+                                              context,
+                                              parent->m_current_environment,
+                                              parent->m_current_input,
+                                              parent->m_current_output,
+                                              parent->m_current_error);
+                m_table[i]->parent = parent->m_id;
+                m_table[i]->vm = vm;
+                m_table[i]->id = i;
+                m_table[i]->state = VM_STATE_ACTIVE;
+                if (func->doc == scm_nil) {
+                    snprintf(m_table[i]->name, sizeof(m_table[i]->name), "[%p]", func);
+                } else {
+                    const char* name = "";
+                    if (SYMBOLP(func->doc)) name = ((scm_symbol_t)func->doc)->name;
+                    if (STRINGP(func->doc)) name = ((scm_string_t)func->doc)->name;
+                    snprintf(m_table[i]->name, sizeof(m_table[i]->name), "%s", name);
+                }
+                m_live = m_live + 1;
+                parent->m_child++;
+                thread_start(mutator_thread, m_table[i]);
+                return i;
             }
-            m_table[i]->param = make_list(parent->m_heap,
-                                          5,
-                                          context,
-                                          parent->m_current_environment,
-                                          parent->m_current_input,
-                                          parent->m_current_output,
-                                          parent->m_current_error);
-            m_table[i]->parent = parent->m_id;
-            m_table[i]->vm = vm;
-            m_table[i]->id = i;
-            m_table[i]->state = VM_STATE_ACTIVE;
-            if (func->doc == scm_nil) {
-                snprintf(m_table[i]->name, sizeof(m_table[i]->name), "[%p]", func);
-            } else {
-                const char* name = "";
-                if (SYMBOLP(func->doc)) name = ((scm_symbol_t)func->doc)->name;
-                if (STRINGP(func->doc)) name = ((scm_string_t)func->doc)->name;
-                snprintf(m_table[i]->name, sizeof(m_table[i]->name), "%s", name);
-            }
-            m_live = m_live + 1;
-            parent->m_child++;
-            thread_start(mutator_thread, m_table[i]);
-            return i;
         }
+    }
+    if (timeout == 0.0 || timeout > msec()) {
+        usleep(SPAWN_TIMEOUT_USLEEP);
+        goto again;
     }
     return -1;
 }
