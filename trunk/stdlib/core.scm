@@ -575,7 +575,6 @@
     list-transpose*
     list-transpose+
     list?
-    live-thread-count
     load
     load-shared-object
     log
@@ -655,7 +654,6 @@
     make-who-condition
     map
     max
-    max-thread-count
     member
     memp
     memq
@@ -823,6 +821,7 @@
     socket-shutdown
     socket?
     spawn
+    spawn-heap-limit
     sqrt
     standard-error-port
     standard-input-port
@@ -887,7 +886,6 @@
     take
     tan
     textual-port?
-    thread-id
     time-usage
     timeout-object?
     top-level-bound?

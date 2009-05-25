@@ -25,6 +25,6 @@
           shutdown-mailbox
           shutdown-object?
           spawn
-          thread-id
+          spawn-heap-limit
           timeout-object?)
   (import (ypsilon concurrent)))
