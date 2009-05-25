@@ -6,8 +6,6 @@
 (library (ypsilon concurrent)
   (export define-thread-variable
           future
-          spawn
-          call-with-spawn
           make-mailbox
           mailbox?
           send
@@ -26,10 +24,12 @@
           shared-bag?
           shared-bag-put!
           shared-bag-get!
-          thread-id
-          make-uuid
           timeout-object?
           shutdown-object?
+          call-with-spawn
+          spawn
+          spawn-heap-limit
+          make-uuid
           current-exception-printer)
   (import (core))
 

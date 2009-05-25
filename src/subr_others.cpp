@@ -2262,11 +2262,12 @@ static scm_bvector_t make_posix_env(VM* vm, scm_obj_t env)
 }
 #endif
 
+
+#if _MSC_VER
 // process-spawn
 scm_obj_t
 subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
 {
-#if _MSC_VER
     HANDLE fd0 = INVALID_HANDLE_VALUE;
     HANDLE fd1 = INVALID_HANDLE_VALUE;
     HANDLE fd2 = INVALID_HANDLE_VALUE;
@@ -2442,7 +2443,131 @@ subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
         raise_error(vm, "process-spawn", message, errno, argc, argv);
         return scm_undef;
     }
-#elif !defined(NO_POSIX_SPAWN)
+}
+#elif NO_POSIX_SPAWN
+// process-spawn
+scm_obj_t
+subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
+{
+    int pipe0[2] = { -1, -1 };
+    int pipe1[2] = { -1, -1 };
+    int pipe2[2] = { -1, -1 };
+    const char* sysfunc = NULL;
+    if (argc >= 6) {
+        if (argv[0] != scm_true) {  // search
+            invalid_argument_violation(vm, "process-spawn", "should be #t on this platform, but got", argv[0], 0, argc, argv);
+            return scm_undef;
+        }
+        if (argv[1] != scm_false) { // environment
+            invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[1], 1, argc, argv);
+            return scm_undef;
+        }
+        if (argv[2] != scm_false) { // stdin
+            invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[2], 2, argc, argv);
+            return scm_undef;
+        }
+        if (argv[3] != scm_false) { // stdout
+            invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[3], 3, argc, argv);
+            return scm_undef;
+        }
+        if (argv[4] != scm_false) { // stderr
+            invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[4], 4, argc, argv);
+            return scm_undef;
+        }
+        for (int i = 5; i < argc; i++) {
+            if (!STRINGP(argv[i])) {
+                wrong_type_argument_violation(vm, "process-spawn", i, "string", argv[i], argc, argv);
+                return scm_undef;
+            }
+        }
+        sysfunc = "sysconf";
+        int open_max;
+        if ((open_max = sysconf(_SC_OPEN_MAX)) < 0) goto sysconf_fail;
+        sysfunc = "pipe";
+        if (pipe(pipe0)) goto pipe_fail;
+        if (pipe(pipe1)) goto pipe_fail;
+        if (pipe(pipe2)) goto pipe_fail;
+        sysfunc = "fork";
+        pid_t cpid = fork();
+        if (cpid == -1) goto fork_fail;
+        if (cpid == 0) {
+            if (close(pipe0[1])) goto close_fail;
+            if (close(pipe1[0])) goto close_fail;
+            if (close(pipe2[0])) goto close_fail;
+            if (close(0)) goto close_fail;
+            if (dup(pipe0[0]) == -1) goto dup_fail;
+            if (close(1)) goto close_fail;
+            if (dup(pipe1[1]) == -1) goto dup_fail;
+            if (close(2)) goto close_fail;
+            if (dup(pipe2[1]) == -1) goto dup_fail;
+            for (int i = 3; i < open_max; i++) close(i);
+            const char* command_name = ((scm_string_t)argv[5])->name;
+            char** command_argv = (char**)alloca(sizeof(char*) * (argc - 5 + 1));
+            for (int i = 5; i < argc; i++) command_argv[i - 5] = ((scm_string_t)argv[i])->name;
+            command_argv[argc - 5] = (char*)NULL;
+            execvp(command_name, command_argv);
+            goto exec_fail;
+        } else {
+            close(pipe0[0]);
+            close(pipe1[1]);
+            close(pipe2[1]);
+            assert(sizeof(pid_t) == sizeof(int));
+            return make_list(vm->m_heap,
+                             4,
+                             int_to_integer(vm->m_heap, cpid),
+                             make_std_port(vm->m_heap,
+                                           pipe0[1],
+                                           make_string_literal(vm->m_heap, "process-stdin"),
+                                           SCM_PORT_DIRECTION_OUT,
+                                           SCM_PORT_FILE_OPTION_NONE,
+                                           SCM_PORT_BUFFER_MODE_BLOCK,
+                                           scm_false),
+                             make_std_port(vm->m_heap,
+                                           pipe1[0],
+                                           make_string_literal(vm->m_heap, "process-stdout"),
+                                           SCM_PORT_DIRECTION_IN,
+                                           SCM_PORT_FILE_OPTION_NONE,
+                                           SCM_PORT_BUFFER_MODE_BLOCK,
+                                           scm_false),
+                             make_std_port(vm->m_heap,
+                                           pipe2[0],
+                                           make_string_literal(vm->m_heap, "process-stderr"),
+                                           SCM_PORT_DIRECTION_IN,
+                                           SCM_PORT_FILE_OPTION_NONE,
+                                           SCM_PORT_BUFFER_MODE_BLOCK,
+                                           scm_false));
+        }
+    }
+    wrong_number_of_arguments_violation(vm, "process-spawn", 1, -1, argc, argv);
+    return scm_undef;
+
+sysconf_fail:
+pipe_fail:
+fork_fail:
+    {
+        int err = errno;
+        char message[256];
+        snprintf(message, sizeof(message), "%s() failed. %s", sysfunc, strerror(err));
+        if (pipe0[0] != -1) close(pipe0[0]);
+        if (pipe0[1] != -1) close(pipe0[1]);
+        if (pipe1[0] != -1) close(pipe1[0]);
+        if (pipe1[1] != -1) close(pipe1[1]);
+        if (pipe2[0] != -1) close(pipe2[0]);
+        if (pipe2[1] != -1) close(pipe2[1]);
+        raise_error(vm, "process-spawn", message, err, argc, argv);
+        return scm_undef;
+    }
+
+close_fail:
+dup_fail:
+exec_fail:
+    exit(127);
+}
+#else
+// process-spawn
+scm_obj_t
+subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
+{
     fd_t fd0 = INVALID_FD;
     fd_t fd1 = INVALID_FD;
     fd_t fd2 = INVALID_FD;
@@ -2619,10 +2744,8 @@ subr_process_spawn(VM* vm, int argc, scm_obj_t argv[])
         raise_error(vm, "process-spawn", message, res, argc, argv);
         return scm_undef;
     }
-#else
-    fatal("%s:%u process-spawn not supported on this build", __FILE__, __LINE__);
-#endif
 }
+#endif
 
 // process-wait
 scm_obj_t
@@ -2810,6 +2933,28 @@ subr_spawn(VM* vm, int argc, scm_obj_t argv[])
 #endif
 }
 
+// spawn-heap-limit
+scm_obj_t
+subr_spawn_heap_limit(VM* vm, int argc, scm_obj_t argv[])
+{
+#if USE_PARALLEL_VM
+    if (argc == 1) {
+        if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
+            vm->m_spawn_heap_limit = FIXNUM(argv[0]);
+            return scm_unspecified;
+        } else {
+            wrong_type_argument_violation(vm, "spawn-heap-limit", 0, "non-negative fixnum", argv[0], argc, argv);
+            return scm_undef;
+        }
+    }
+    if (argc == 0) return MAKEFIXNUM(vm->m_spawn_heap_limit);
+    wrong_number_of_arguments_violation(vm, "spawn-heap-limit", 0, 1, argc, argv);
+    return scm_undef;
+#else
+    fatal("%s:%u spawn-heap-limit not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
 // on-primordial-thread?
 scm_obj_t
 subr_on_primordial_thread_pred(VM* vm, int argc, scm_obj_t argv[])
@@ -2841,6 +2986,7 @@ subr_display_thread_status(VM* vm, int argc, scm_obj_t argv[])
 #endif
 }
 
+/*
 // live-thread-count
 scm_obj_t
 subr_live_thread_count(VM* vm, int argc, scm_obj_t argv[])
@@ -2871,6 +3017,28 @@ subr_max_thread_count(VM* vm, int argc, scm_obj_t argv[])
 #endif
 }
 
+// thread-id
+scm_obj_t
+subr_thread_id(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (STRINGP(argv[0])) {
+            scm_string_t string = (scm_string_t)argv[0];
+            vm->m_interp->set_thread_name(vm->m_id, string->name);
+            return scm_unspecified;
+        }
+        wrong_type_argument_violation(vm, "thread-id", 0, "string", argv[0], argc, argv);
+        return scm_undef;
+    }
+    if (argc == 0) {
+        char name[128];
+        vm->m_interp->get_thread_name(vm->m_id, name, sizeof(name));
+        return make_string(vm->m_heap, name);
+    }
+    wrong_number_of_arguments_violation(vm, "thread-id", 0, 1, argc, argv);
+    return scm_undef;
+}
+*/
 
 // make-shared-queue
 scm_obj_t
@@ -3287,28 +3455,6 @@ subr_shared_bag_get(VM* vm, int argc, scm_obj_t argv[])
 #else
     fatal("%s:%u shared-bag-get! not supported on this build",__FILE__ , __LINE__);
 #endif
-}
-
-// thread-id
-scm_obj_t
-subr_thread_id(VM* vm, int argc, scm_obj_t argv[])
-{
-    if (argc == 1) {
-        if (STRINGP(argv[0])) {
-            scm_string_t string = (scm_string_t)argv[0];
-            vm->m_interp->set_thread_name(vm->m_id, string->name);
-            return scm_unspecified;
-        }
-        wrong_type_argument_violation(vm, "thread-id", 0, "string", argv[0], argc, argv);
-        return scm_undef;
-    }
-    if (argc == 0) {
-        char name[128];
-        vm->m_interp->get_thread_name(vm->m_id, name, sizeof(name));
-        return make_string(vm->m_heap, name);
-    }
-    wrong_number_of_arguments_violation(vm, "thread-id", 0, 1, argc, argv);
-    return scm_undef;
 }
 
 // microsecond
@@ -4083,15 +4229,17 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("escape", subr_escape);
     DEFSUBR("recursion-level", subr_recursion_level);
     DEFSUBR("spawn", subr_spawn);
-    DEFSUBR("live-thread-count", subr_live_thread_count);
-    DEFSUBR("max-thread-count", subr_max_thread_count);
+    DEFSUBR("spawn-heap-limit", subr_spawn_heap_limit);
+//  DEFSUBR("live-thread-count", subr_live_thread_count);
+//  DEFSUBR("max-thread-count", subr_max_thread_count);
     DEFSUBR("display-thread-status", subr_display_thread_status);
+//  DEFSUBR("thread-id", subr_thread_id);
+    DEFSUBR("on-primordial-thread?", subr_on_primordial_thread_pred);
     DEFSUBR("make-shared-queue", subr_make_shared_queue);
     DEFSUBR("shared-queue-shutdown", subr_shared_queue_shutdown);
     DEFSUBR("shared-queue-push!", subr_shared_queue_push);
     DEFSUBR("shared-queue-pop!", subr_shared_queue_pop);
     DEFSUBR("shared-queue?", subr_shared_queue_pred);
-    DEFSUBR("on-primordial-thread?", subr_on_primordial_thread_pred);
     DEFSUBR("timeout-object?", subr_timeout_object_pred);
     DEFSUBR("shutdown-object?", subr_shutdown_object_pred);
     DEFSUBR("make-uuid", subr_make_uuid);
@@ -4099,7 +4247,6 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("shared-bag?", subr_shared_bag_pred);
     DEFSUBR("shared-bag-put!", subr_shared_bag_put);
     DEFSUBR("shared-bag-get!", subr_shared_bag_get);
-    DEFSUBR("thread-id", subr_thread_id);
     DEFSUBR("microsecond", subr_microsecond);
     DEFSUBR("microsecond->utc", subr_microsecond_utc);
     DEFSUBR("microsecond->string", subr_microsecond_string);

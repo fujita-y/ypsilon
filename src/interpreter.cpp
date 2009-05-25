@@ -16,6 +16,9 @@
 #define REPORT_REMEMBER_SET     0
 
 #if USE_PARALLEL_VM
+
+#define SPAWN_INITIAL_HEAP_SIZE (OBJECT_SLAB_SIZE * 16)
+
 void
 Interpreter::init(VM* root, int n)
 {
@@ -36,6 +39,7 @@ Interpreter::init(VM* root, int n)
     root->m_parent = NULL;
     root->m_id = 0;
     root->m_child = 0;
+    root->m_spawn_heap_limit = DEFAULT_HEAP_LIMIT * 1024 * 1024;
     m_table[0]->interp = this;
     m_table[0]->state = VM_STATE_ACTIVE;
     m_table[0]->vm = root;
@@ -60,8 +64,9 @@ Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
     for (int i = 0; i < m_capacity; i++) {
         if (m_table[i]->state == VM_STATE_FREE) {
             object_heap_t* heap = new object_heap_t;
-            int heap_limit = DEFAULT_HEAP_LIMIT * 1024 * 1024;
-            int heap_init = 1 * 1024 * 1024;
+            int heap_init = SPAWN_INITIAL_HEAP_SIZE;
+            int heap_limit = parent->m_spawn_heap_limit;
+            if (heap_limit <= heap_init + heap_init) heap_limit = heap_init + heap_init;
             heap->init_child(heap_limit, heap_init, parent->m_heap);
             VM* vm = new VM;
             vm->m_heap = heap;
@@ -76,6 +81,7 @@ Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
             vm->m_parent = parent;
             vm->m_id = i;
             vm->m_child = 0;
+            vm->m_spawn_heap_limit = parent->m_spawn_heap_limit;
             vm->m_bootport = (scm_port_t)scm_unspecified;
             vm->m_current_environment = parent->m_current_environment;
             vm->m_current_input = parent->m_current_input;

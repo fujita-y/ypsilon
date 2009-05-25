@@ -543,11 +543,10 @@
                         shutdown-object?
 
                         spawn
-                        thread-id
+                        spawn-heap-limit
+                        ;thread-id
                         on-primordial-thread?
                         display-thread-status
-                        live-thread-count
-                        max-thread-count
 
                         make-uuid
                         time-usage
