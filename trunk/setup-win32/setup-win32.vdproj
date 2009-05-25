@@ -2367,6 +2367,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_E3D6075F803A47A09DDB5F25F172C7A6"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_E4736E3997F5456DA116FFFDC78BA4C2"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -2680,6 +2686,12 @@
         "Entry"
         {
         "MsmKey" = "8:_FE0CE8A178BE4541996E85B5F188929E"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_FE48093DCB3A4D24B722D824D46C3C7B"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -10602,6 +10614,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E3D6075F803A47A09DDB5F25F172C7A6"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\gtk\\orientable.scm"
+            "TargetName" = "8:orientable.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_B526C94D65CB418093434E31F87B181B"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E4736E3997F5456DA116FFFDC78BA4C2"
             {
             "SourcePath" = "8:..\\sitelib\\ypsilon\\pango\\itemize.scm"
@@ -11646,6 +11678,26 @@
             {
             "SourcePath" = "8:..\\sitelib\\ypsilon\\gtk\\clist.scm"
             "TargetName" = "8:clist.scm"
+            "Tag" = "8:"
+            "Folder" = "8:_B526C94D65CB418093434E31F87B181B"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_FE48093DCB3A4D24B722D824D46C3C7B"
+            {
+            "SourcePath" = "8:..\\sitelib\\ypsilon\\gtk\\activatable.scm"
+            "TargetName" = "8:activatable.scm"
             "Tag" = "8:"
             "Folder" = "8:_B526C94D65CB418093434E31F87B181B"
             "Condition" = "8:"
