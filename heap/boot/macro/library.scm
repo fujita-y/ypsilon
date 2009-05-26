@@ -436,6 +436,7 @@
                     (cond ((null? macros) '())
                           (else
                            (let ((ht-visibles (make-core-hashtable)))
+                             (for-each (lambda (e) (core-hashtable-set! ht-visibles (car e) #t)) macros) ; 090526
                              (let loop ((lst (map caddr macros)))
                                (cond ((pair? lst) (loop (car lst)) (loop (cdr lst)))
                                      ((symbol? lst) (core-hashtable-set! ht-visibles lst #t))
