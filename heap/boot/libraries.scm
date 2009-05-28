@@ -433,26 +433,8 @@
                         architecture-feature
                         load-shared-object
                         lookup-shared-object
-                        #|
-                        call-shared-object->void
-                        call-shared-object->int
-                        call-shared-object->intptr
-                        call-shared-object->float
-                        call-shared-object->double
-                        call-shared-object->char*
-                        stdcall-shared-object->void
-                        stdcall-shared-object->int
-                        stdcall-shared-object->intptr
-                        stdcall-shared-object->float
-                        stdcall-shared-object->double
-                        stdcall-shared-object->char*
-                        |#
                         call-shared-object
-                        ;stdcall-shared-object
-
-                        ;make-callback
                         make-callback-trampoline
-                        ;flonum->float
                         shared-object-errno
                         shared-object-win32-lasterror
                         bytevector-c-short-ref bytevector-c-unsigned-short-ref bytevector-c-short-set!
@@ -464,7 +446,6 @@
                         bytevector-c-float-ref bytevector-c-double-ref
                         bytevector-c-int8-set! bytevector-c-int16-set! bytevector-c-int32-set! bytevector-c-int64-set!
                         bytevector-c-float-set! bytevector-c-double-set!
-;                        string->utf8+nul
                         string->utf8/nul
                         bytevector-c-strlen
                         collect collect-notify collect-stack-notify collect-trip-bytes display-heap-statistics display-object-statistics
@@ -518,6 +499,8 @@
                         shutdown-output-port
                         port-closed?
 
+                        track-file-open
+
                         getenv
                         gethostname
                         system
@@ -526,7 +509,6 @@
                         process-shell-command
                         process-wait
 
-                        ;default-exception-handler
                         current-exception-printer
 
                         make-shared-queue
@@ -545,8 +527,6 @@
                         spawn
                         spawn-timeout
                         spawn-heap-limit
-                        ;thread-id
-                        on-primordial-thread?
                         display-thread-status
 
                         make-uuid
@@ -595,8 +575,9 @@
 (define .@raise-i/o-error raise-i/o-error)
 (define .@perform-dynamic-wind perform-dynamic-wind)
 (define .@start-scheme-session start-scheme-session)
-(define .@apply-scheme-proc-assistant apply-scheme-proc-assistant);
+(define .@apply-scheme-proc-assistant apply-scheme-proc-assistant)
 (define .@pretty-print pretty-print)
+(define .@nongenerative-record-types nongenerative-record-types)
 
 ;; top-level procs
 (let ((coreform-private-procs

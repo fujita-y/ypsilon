@@ -9,6 +9,7 @@
 #include "object_heap.h"
 #include "object_factory.h"
 #include "serialize.h"
+#include "vm.h"
 
 #define BVO_TAG_NOUSE               0
 #define BVO_TAG_LOOKUP              1
@@ -24,6 +25,13 @@
 #define BVO_TAG_SYMBOL              11
 #define BVO_TAG_STRING              12
 #define BVO_TAG_UNINTERNED_SYMBOL   13
+#if USE_CLOSURE_SERIALIZE
+#define BVO_TAG_SUBR                14
+#define BVO_TAG_GLOC                15
+#define BVO_TAG_UNINTERNED_GLOC     16
+#define BVO_TAG_CLOSURE             17
+#define BVO_TAG_TUPLE               18
+#endif
 #define MAX_BUNDLE_SIZE             sizeof(uint64_t)
 
 serializer_t::serializer_t(object_heap_t* heap)
@@ -162,6 +170,41 @@ loop:
             for (int i = 0; i < count; i++) scan(elts[i]);
             return;
         }
+#if USE_CLOSURE_SERIALIZE
+        if (CLOSUREP(obj)) {
+            scm_closure_t closure = (scm_closure_t)obj;
+            if (closure->env == NULL) {
+                scan(closure->code);
+                scan(closure->doc);
+                return;
+            }
+            if (m_bad == NULL) m_bad = obj;
+            return;
+        }
+        if (GLOCP(obj)) {
+            scm_gloc_t gloc = (scm_gloc_t)obj;
+            scan(gloc->variable);
+            if (UNINTERNEDGLOCP(gloc)) scan(gloc->value);
+            return;
+        }
+        if (TUPLEP(obj)) {
+            scm_tuple_t tuple = (scm_tuple_t)obj;
+            int count = HDR_TUPLE_COUNT(tuple->hdr);
+            if (count == 0) return;
+            scm_obj_t* elts = tuple->elts;
+            const char* type_name = get_tuple_type_name(tuple);
+            if (type_name && strcmp(type_name, "record-type-descriptor") == 0) {
+                scm_obj_t uid = tuple->elts[3];
+                if (!SYMBOLP(uid)) {
+                    if (m_bad == NULL) m_bad = obj;
+                    return;
+                }
+            }
+            for (int i = 0; i < count; i++) scan(elts[i]);
+            return;
+        }        
+        if (SUBRP(obj)) return;
+#endif
         if (BVECTORP(obj) || FLONUMP(obj) || BIGNUMP(obj) || RATIONALP(obj) || COMPLEXP(obj)) return;
         if (m_bad == NULL) m_bad = obj;
     }
@@ -321,6 +364,50 @@ serializer_t::put_datum(scm_obj_t obj)
         put_datum(comp->imag);
         return;
     }
+#if USE_CLOSURE_SERIALIZE
+    if (CLOSUREP(obj)) {
+        scm_closure_t closure = (scm_closure_t)obj;
+        emit_u8(BVO_TAG_CLOSURE);
+  #if ARCH_LP64
+        emit_u64((uint64_t)closure->hdr);
+  #else
+        emit_u32((uint32_t)closure->hdr);
+  #endif
+        put_datum(closure->code);
+        put_datum(closure->doc);
+        return;
+    }
+    if (GLOCP(obj)) {
+        scm_gloc_t gloc = (scm_gloc_t)obj;
+        if (UNINTERNEDGLOCP(gloc)) {
+            emit_u8(BVO_TAG_UNINTERNED_GLOC);
+            put_datum(gloc->variable);
+            put_datum(gloc->value);
+            return;
+        }
+        emit_u8(BVO_TAG_GLOC);
+        put_datum(gloc->variable);
+        return;
+    }
+    if (SUBRP(obj)) {
+        emit_u8(BVO_TAG_SUBR);
+  #if ARCH_LP64
+        emit_u64((uint64_t)obj);
+  #else
+        emit_u32((uint32_t)obj);
+  #endif
+        return;
+    }
+    if (TUPLEP(obj)) {
+        scm_tuple_t tuple = (scm_tuple_t)obj;
+        int count = HDR_TUPLE_COUNT(tuple->hdr);
+        emit_u8(BVO_TAG_TUPLE);
+        emit_u32(count);
+        scm_obj_t* elts = tuple->elts;
+        for (int i = 0; i < count; i++) put_datum(elts[i]);
+        return;
+    }            
+#endif
     fatal("%s:%u internal error: datum not supported in serialized object", __FILE__, __LINE__);
 }
 
@@ -481,6 +568,68 @@ deserializer_t::get_datum()
             fetch_bytes(bv->elts, count);
             return bv;
         }
+#if USE_CLOSURE_SERIALIZE
+        case BVO_TAG_SUBR: {
+  #if ARCH_LP64
+            return (scm_subr_t)fetch_u64();
+  #else
+            return (scm_subr_t)fetch_u32();
+  #endif
+        }
+        case BVO_TAG_GLOC: {
+            scm_symbol_t symbol = (scm_symbol_t)get_datum();
+            assert(SYMBOLP(symbol));
+            {
+                VM* vm = current_vm();
+                scm_hashtable_t ht = vm->m_current_environment->variable;
+                scoped_lock lock(ht->lock);
+                scm_obj_t obj = get_hashtable(ht, symbol);
+                if (obj != scm_undef) return obj;
+                scm_gloc_t gloc = make_gloc(m_heap, symbol);
+                gloc->value = scm_undef;
+                m_heap->write_barrier(symbol);
+                m_heap->write_barrier(gloc);
+                int nsize = put_hashtable(ht, symbol, gloc);
+                if (nsize) rehash_hashtable(m_heap, ht, nsize);
+                return gloc;
+            }
+        }
+        case BVO_TAG_UNINTERNED_GLOC: {
+            scm_symbol_t variable = (scm_symbol_t)get_datum();
+            scm_obj_t value = get_datum();
+            assert(SYMBOLP(variable));
+            scm_gloc_t gloc = make_gloc_uninterned(m_heap, (scm_symbol_t)variable);
+            gloc->value = value;
+            return gloc;
+        }
+        case BVO_TAG_CLOSURE: {
+  #if ARCH_LP64
+            scm_hdr_t hdr = fetch_u64();
+  #else
+            scm_hdr_t hdr = fetch_u32();
+  #endif
+            scm_obj_t code = get_datum();
+            scm_obj_t doc = get_datum();
+            return make_closure(m_heap, hdr, NULL, code, doc);
+        }
+        case BVO_TAG_TUPLE: {
+            int count = fetch_u32();
+            scm_tuple_t tuple = make_tuple(m_heap, count, scm_unspecified);
+            scm_obj_t* elts = tuple->elts;
+            for (int i = 0; i < count; i++) elts[i] = get_datum();
+            const char* type_name = get_tuple_type_name(tuple);
+            if (type_name && strcmp(type_name, "record-type-descriptor") == 0) {
+                scm_obj_t uid = tuple->elts[3];
+                if (SYMBOLP(uid)) {
+                    scm_hashtable_t ht = (scm_hashtable_t)m_heap->lookup_system_environment(make_symbol(m_heap, ".@nongenerative-record-types"));
+                    if (ht == scm_undef) fatal("fatal: .@nongenerative-record-types not available in system environment");
+                    scm_obj_t obj = get_hashtable(ht, uid);
+                    if (obj != scm_undef) return obj;                       
+                }
+            }
+            return tuple;
+        }
+#endif
     }
     throw true;
 }

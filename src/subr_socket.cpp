@@ -166,7 +166,7 @@ subr_socket_recv(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "socket-recv", 0, "socket", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "socket-recv", 2, 2, argc, argv);
+    wrong_number_of_arguments_violation(vm, "socket-recv", 3, 3, argc, argv);
     return scm_undef;
 }
 

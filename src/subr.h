@@ -24,6 +24,9 @@ void init_subr_flonum(object_heap_t* heap);
 void init_subr_unicode(object_heap_t* heap);
 void init_subr_hash(object_heap_t* heap);
 void init_subr_list(object_heap_t* heap);
+void init_subr_file(object_heap_t* heap);
+void init_subr_process(object_heap_t* heap);
+void init_subr_thread(object_heap_t* heap);
 void init_subr_others(object_heap_t* heap);
 
 #define CHECK_OPENED_INPUT_PORT(pos, subr)                                                              \

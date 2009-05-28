@@ -504,6 +504,17 @@ make_closure(object_heap_t* heap, scm_closure_t tmpl, void* env)
     return tmpl;
 }
 
+scm_closure_t
+make_closure(object_heap_t* heap, scm_hdr_t hdr, void* env, scm_obj_t code, scm_obj_t doc)
+{
+    scm_closure_t obj = (scm_closure_t)heap->allocate_collectible(sizeof(scm_closure_rec_t));
+    obj->hdr = hdr;
+    obj->env = env;
+    obj->code = code;
+    obj->doc = doc;
+    return obj;
+}
+
 scm_flonum_t
 make_flonum(object_heap_t* heap, double num)
 {
@@ -599,14 +610,21 @@ make_rational(object_heap_t* heap, scm_obj_t numerator, scm_obj_t denominator)
 }
 
 scm_gloc_t
-make_gloc(object_heap_t* heap, scm_environment_t environment, scm_symbol_t symbol)
+make_gloc(object_heap_t* heap, scm_symbol_t symbol)
 {
     scm_gloc_t obj = (scm_gloc_t)heap->allocate_collectible(sizeof(scm_gloc_rec_t));
     obj->hdr = scm_hdr_gloc;
     obj->variable = symbol;
-  #if GLOC_DEBUG_INFO
-    obj->environment = environment->name;
-  #endif
+    obj->value = scm_undef;
+    return obj;
+}
+
+scm_gloc_t
+make_gloc_uninterned(object_heap_t* heap, scm_symbol_t symbol)
+{
+    scm_gloc_t obj = (scm_gloc_t)heap->allocate_collectible(sizeof(scm_gloc_rec_t));
+    obj->hdr = scm_hdr_gloc | MAKEBITS(1, HDR_GLOC_UNINTERNED_SHIFT);
+    obj->variable = symbol;
     obj->value = scm_undef;
     return obj;
 }

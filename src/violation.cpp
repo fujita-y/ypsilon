@@ -340,7 +340,24 @@ void non_serializable_object_violation(VM* vm, const char* who, scm_obj_t obj, i
     vm->backtrace_seek();
     scm_port_t port = make_bytevector_port(vm->m_heap, make_symbol(vm->m_heap, "string"), SCM_PORT_DIRECTION_OUT, scm_false, scm_true);
     scoped_lock lock(port->lock);
+#if USE_CLOSURE_SERIALIZE
+    if (CLOSUREP(obj)) {
+        printer_t(vm, port).format("encountered non-serializable object, ~r have reference to free non-global variable", obj);
+    } else if (TUPLEP(obj)) {
+        scm_tuple_t tuple = (scm_tuple_t)obj;
+        const char* type_name = get_tuple_type_name(tuple);
+        if (type_name && strcmp(type_name, "record-type-descriptor") == 0) {
+            scm_symbol_t name = (scm_symbol_t)tuple->elts[1];       
+            printer_t(vm, port).format("encountered non-serializable object, record type ~r is generative", name);
+        } else {
+            printer_t(vm, port).format("encountered non-serializable object ~r", obj);
+        }
+    } else {
+        printer_t(vm, port).format("encountered non-serializable object ~r", obj);
+    }
+#else
     printer_t(vm, port).format("encountered non-serializable object ~r", obj);
+#endif
     scm_string_t message = port_extract_string(vm->m_heap, port);
     if (argc < 2) {
         raise_assertion_violation(vm, make_symbol(vm->m_heap, who), message, NULL);

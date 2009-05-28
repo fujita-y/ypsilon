@@ -58,7 +58,6 @@
 #define PROFILE_SUBR                0
 #define DISABLE_FASL                0
 #define DETAILED_STATISTIC          0
-#define GLOC_DEBUG_INFO             0
 #define PREBIND_CLOSE               1
 #define THREAD_LOCAL_SLAB_CACHE     1
 #define LOCKFREE_ALLOC              1
@@ -80,6 +79,7 @@
 #define USE_MULTIBYTE_WRITE         1
 #define USE_NATIVE_CODE             0
 #define USE_CLOEXEC                 defined(FD_CLOEXEC)
+#define USE_CLOSURE_SERIALIZE       1
 
 #if USE_GCC_EXTENSION
     #define USE_SYMBOL_THREAD       0

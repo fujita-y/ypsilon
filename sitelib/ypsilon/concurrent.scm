@@ -46,17 +46,40 @@
              (_ (temp))
              ((set! _ x) (temp x))))))))
 
+  (define future-condition
+    (condition
+     (make-error)
+     (make-who-condition 'future)
+     (make-message-condition "child thread has terminated by unhandled exception")))
+
   (define-syntax future
     (syntax-rules ()
       ((_ e0 e1 ...)
-       (let ((ans (make-shared-queue)))
+       (let ((queue (make-shared-queue)))
          (call-with-spawn
           (lambda () e0 e1 ...)
-          (lambda (c)
-            (unless (condition? c)
-              (shared-queue-push! ans c))
-            (shared-queue-shutdown ans)))
-         (lambda timeout (apply shared-queue-pop! ans timeout))))))
+          (lambda (ans)
+            (if (condition? ans)
+                (shared-queue-push! queue future-condition)
+                (shared-queue-push! queue ans))
+            (shared-queue-shutdown queue)))
+         (lambda timeout
+           (let ((ans (apply shared-queue-pop! queue timeout)))
+             (if (condition? ans) (raise ans) ans)))))))
+
+  (define indent2
+    (lambda (s)
+      (call-with-string-output-port
+       (lambda (out)
+         (let ((in (open-string-input-port s)))
+           (let loop ((ch (get-char in)))
+             (cond ((eof-object? ch))
+                   ((char=? ch #\linefeed)
+                    (put-string out "\n  ")
+                    (loop (get-char in)))
+                   (else
+                    (put-char out ch)
+                    (loop (get-char in))))))))))
 
   (define call-with-spawn
     (lambda (body finally)
@@ -67,7 +90,14 @@
            (lambda (resume)
              (with-exception-handler
               (lambda (c)
-                ((current-exception-printer) c)
+                (let ((e (current-error-port)))
+                  (format e "\nerror in thread: unhandled exception has occurred\n")
+                  (format e (indent2 (call-with-string-output-port
+                                      (lambda (s)
+                                        (set-current-error-port! s)
+                                        ((current-exception-printer) c)
+                                        (set-current-error-port! e)))))
+                  (format e "[exit]\n"))
                 (and (serious-condition? c) (resume c)))
               (lambda () (body))))))))))
 

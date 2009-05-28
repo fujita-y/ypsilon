@@ -52,7 +52,7 @@ VM::intern_current_environment(scm_symbol_t symbol, scm_obj_t value)
         ((scm_gloc_t)obj)->value = value;
         return;
     }
-    scm_gloc_t gloc = make_gloc(m_heap, m_current_environment, symbol);
+    scm_gloc_t gloc = make_gloc(m_heap, symbol);
     gloc->value = value;
     m_heap->write_barrier(symbol);
     m_heap->write_barrier(gloc);
