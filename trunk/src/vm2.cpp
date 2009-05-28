@@ -58,7 +58,7 @@ VM::prebind_gloc(scm_obj_t variable)
         scoped_lock lock(m_heap->m_hidden_variables->lock);
         scm_obj_t obj = lookup_weakhashtable(m_heap->m_hidden_variables, symbol);
         if (obj == scm_undef) {
-            scm_gloc_t gloc = make_gloc(m_heap, m_current_environment, make_symbol(m_heap, symbol->name));
+            scm_gloc_t gloc = make_gloc_uninterned(m_heap, make_symbol(m_heap, symbol->name));
             gloc->value = scm_undef;
             scm_weakmapping_t wmap = make_weakmapping(m_heap, symbol, gloc);
             m_heap->write_barrier(wmap);
@@ -76,7 +76,7 @@ VM::prebind_gloc(scm_obj_t variable)
         scoped_lock lock(m_current_environment->variable->lock);
         scm_gloc_t gloc = (scm_gloc_t)get_hashtable(m_current_environment->variable, symbol);
         if (gloc == scm_undef) {
-            gloc = make_gloc(m_heap, m_current_environment, symbol);
+            gloc = make_gloc(m_heap, symbol);
             gloc->value = scm_undef;
             m_heap->write_barrier(symbol);
             m_heap->write_barrier(gloc);

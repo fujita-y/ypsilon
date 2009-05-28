@@ -257,9 +257,9 @@
       (uint16_t       . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
       (uint32_t       . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
       (uint64_t       . #x01)    ; CALLBACK_RETURN_TYPE_INT64_T
-      (float          . #x02)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (double         . #x03)    ; CALLBACK_RETURN_TYPE_FLOAT
-      (size_t         . #x00)    ; CALLBACK_RETURN_TYPE_DOUBLE
+      (float          . #x02)    ; CALLBACK_RETURN_TYPE_FLOAT
+      (double         . #x03)    ; CALLBACK_RETURN_TYPE_DOUBLE
+      (size_t         . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
       (void*          . #x00)))  ; CALLBACK_RETURN_TYPE_INTPTR
 
   (define STDCALL #x0100)

@@ -388,6 +388,7 @@
       (let-optionals options ((file-options (file-options))
                               (buffer-mode 'block)
                               (transcoder #f))
+        (track-file-open filename)
         (open-port 'open-file-input-port
                    (port-type file)
                    (port-direction input)
@@ -472,6 +473,7 @@
       (let-optionals options ((file-options (file-options))
                               (buffer-mode 'block)
                               (transcoder #f))
+        (track-file-open filename)
         (open-port 'open-file-output-port
                    (port-type file)
                    (port-direction output)
@@ -576,6 +578,7 @@
       (let-optionals options ((file-options (file-options))
                               (buffer-mode 'block)
                               (transcoder #f))
+        (track-file-open filename)
         (open-port 'open-file-input/output-port
                    (port-type file)
                    (port-direction input output)

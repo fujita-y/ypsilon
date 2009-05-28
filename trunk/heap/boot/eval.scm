@@ -7,6 +7,13 @@
 (define scheme-load-verbose (make-parameter #f))
 (define scheme-load-paths (make-parameter '()))
 (define library-contains-implicit-main (make-parameter #t))
+(define current-include-files (make-parameter #f))
+(define library-include-dependencies (make-core-hashtable))
+
+(define track-file-open
+  (lambda (path)
+    (and (current-include-files)
+         (core-hashtable-set! (current-include-files) path #t))))
 
 (define library-extensions
   (make-parameter
@@ -284,14 +291,43 @@
                                     (call-with-port
                                       (make-file-input-port timestamp-path)
                                       (lambda (timestamp-port)
+
+                                        (define get-dependencies-list
+                                          (lambda ()
+                                            (let loop ((lst '()))
+                                              (let* ((dep-path (get-datum timestamp-port))
+                                                     (dep-time (get-datum timestamp-port)))
+                                                (if (eof-object? dep-path)
+                                                    lst
+                                                    (loop (cons (cons dep-path dep-time) lst)))))))
+
+                                        (define dependencies-exists?
+                                          (lambda (lst)
+                                            (every1 (lambda (b)
+                                                      (and (string? (car b))
+                                                           (number? (cdr b))
+                                                           (file-exists? (car b))))
+                                                    lst)))
+
+                                        (define dependencies-valid?
+                                          (lambda (lst)
+                                            (every1 (lambda (b) (= (file-stat-mtime (car b)) (cdr b))) lst)))
+
                                         (let* ((cache-timestamp (get-datum timestamp-port))
                                                (source-timestamp (get-datum timestamp-port))
                                                (source-path (get-datum timestamp-port))
-                                               (cache-signature (get-datum timestamp-port)))
+                                               (cache-signature (get-datum timestamp-port))
+                                               (dependencies (get-dependencies-list)))
                                           (close-port timestamp-port)
-                                          (cond ((not (and (number? cache-timestamp) (number? source-timestamp) (string? source-path) (eq? cache-signature auto-compile-cache-validation-signature) (file-exists? source-path)))
+                                          (cond ((not (and (number? cache-timestamp)
+                                                           (number? source-timestamp)
+                                                           (string? source-path)
+                                                           (eq? cache-signature auto-compile-cache-validation-signature)
+                                                           (file-exists? source-path)
+                                                           (dependencies-exists? dependencies)))
                                                  (inconsistent-cache-state cache-lst))
-                                                ((= (file-stat-mtime source-path) source-timestamp)
+                                                ((and (= (file-stat-mtime source-path) source-timestamp)
+                                                      (dependencies-valid? dependencies))
                                                  (loop (cdr lst) expiration))
                                                 (else
                                                  (loop (cdr lst)
@@ -410,10 +446,7 @@
                                  (get-datum timestamp-port)
                                  (get-datum timestamp-port)
                                  (cond ((equal? source-path (get-datum timestamp-port)) cache-path)
-                                       (else
-                                        (close-port timestamp-port)
-                                        (auto-compile-cache-clean)
-                                        #f))))))
+                                       (else (close-port timestamp-port) (auto-compile-cache-clean) #f))))))
                       cache-path)))))
 
       (define reorder-scheme-library-paths
@@ -435,7 +468,7 @@
                           (let ((cache-path (locate-cache ref source-path)))
                             (if cache-path
                                 (load-cache cache-path)
-                                (let ((ref (encode-library-ref ref)))
+                                (let ((ref (encode-library-ref ref)) (library-id (generate-library-id ref)))
                                   (let ((cache-path (format "~a/~a.cache" (auto-compile-cache) (symbol-list->string ref "."))))
                                     (and (auto-compile-verbose) (format #t "~&;; compile ~s~%~!" source-path))
                                     (if (make-cache source-path cache-path ref (file-stat-mtime source-path))
@@ -443,10 +476,17 @@
                                         (let ((timestamp-path (string-append cache-path ".time")))
                                           (call-with-port
                                             (make-file-output-port timestamp-path)
-                                            (lambda (output) (format output
-                                                                     "~s ~s ~s ~s"
-                                                                     (microsecond)
-                                                                     (file-stat-mtime source-path)
-                                                                     source-path
-                                                                     auto-compile-cache-validation-signature)))))))))
+                                            (lambda (output)
+                                              (format output
+                                                      "~s ~s ~s ~s~%"
+                                                      (microsecond)
+                                                      (file-stat-mtime source-path)
+                                                      source-path
+                                                      auto-compile-cache-validation-signature)
+                                              (cond ((core-hashtable-ref library-include-dependencies library-id #f)
+                                                     => (lambda (deps)
+                                                          (for-each (lambda (dep)
+                                                                      (format output "~s ~s~%" (car dep) (file-stat-mtime (car dep))))
+                                                                    (core-hashtable->alist deps))
+                                                          (core-hashtable-delete! library-include-dependencies library-id))))))))))))
                           (load source-path))))))))))

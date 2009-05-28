@@ -82,7 +82,7 @@
                   (identifier? #'e1)
                   (stash-set! 'nongenerative #'e1))
                  ((nongenerative)
-                  (stash-set! 'nongenerative (datum->syntax #'k (string->symbol (format "non-generative-record-type ~a" (gensym))))))
+                  (stash-set! 'nongenerative (datum->syntax #'k (string->symbol (format "<~a>" (make-uuid))))))
                  ((fields specs ...)
                   (stash-set!
                    'fields

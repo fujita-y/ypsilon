@@ -281,9 +281,6 @@ resolve_collectible(void* obj, int size, void* desc)
         case TC_GLOC: {
             scm_gloc_t gloc = (scm_gloc_t)obj;
             gloc->variable = heap->forward(gloc->variable);
-  #if GLOC_DEBUG_INFO
-            gloc->environment = heap->forward(gloc->environment);
-  #endif
             gloc->value = heap->forward(gloc->value);
         } break;
 

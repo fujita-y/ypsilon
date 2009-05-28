@@ -2,7 +2,7 @@
 ;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
-(define nongenerative-record-types (make-weak-core-hashtable))
+(define nongenerative-record-types (make-core-hashtable))
 
 (define make-rtd
   (lambda (name parent uid sealed? opaque? fields)
@@ -12,12 +12,12 @@
   (lambda (obj)
     (eq? (tuple-ref obj 0) 'type:record-type-descriptor)))
 
-(define rtd-name    (lambda (rtd) (tuple-ref rtd 1)))
-(define rtd-parent  (lambda (rtd) (tuple-ref rtd 2)))
-(define rtd-uid     (lambda (rtd) (tuple-ref rtd 3)))
-(define rtd-sealed? (lambda (rtd) (tuple-ref rtd 4)))
-(define rtd-opaque? (lambda (rtd) (tuple-ref rtd 5)))
-(define rtd-fields  (lambda (rtd) (tuple-ref rtd 6)))
+(define rtd-name        (lambda (rtd) (tuple-ref rtd 1)))
+(define rtd-parent      (lambda (rtd) (tuple-ref rtd 2)))
+(define rtd-uid         (lambda (rtd) (tuple-ref rtd 3)))
+(define rtd-sealed?     (lambda (rtd) (tuple-ref rtd 4)))
+(define rtd-opaque?     (lambda (rtd) (tuple-ref rtd 5)))
+(define rtd-fields      (lambda (rtd) (tuple-ref rtd 6)))
 
 (define rtd-ancestor?
   (lambda (parent rtd)
@@ -116,19 +116,24 @@
                            (_
                             (assertion-violation 'make-record-type-descriptor "malformed field specifiers" fields))))
                        (vector->list fields))))
-      (let ((new (make-rtd name parent uid sealed? opaque? fields)))
-        (cond ((not uid) new)
-              ((core-hashtable-ref nongenerative-record-types uid #f)
-               => (lambda (current)
-                    (if (and (eqv? (rtd-uid new) (rtd-uid current))
-                             (eqv? (rtd-parent new) (rtd-parent current))
-                             (equal? (rtd-fields new) (rtd-fields current)))
-                        current
-                        (assertion-violation 'make-record-type-descriptor
-                                             "mismatched subsequent call for nongenerative record-type"
-                                             (list name parent uid sealed? opaque? fields)))))
-              (else
-               (begin (core-hashtable-set! nongenerative-record-types uid new) new)))))))
+      (cond ((not uid)
+             (make-rtd name parent #f sealed? opaque? fields))
+            ((core-hashtable-ref nongenerative-record-types uid #f)
+             => (lambda (current)
+                  (if (and (eqv? uid (rtd-uid current))
+                           (eqv? parent (rtd-parent current))
+                           (equal? fields (rtd-fields current)))
+                      current
+                      (assertion-violation 'make-record-type-descriptor
+                                           "mismatched subsequent call for nongenerative record-type"
+                                           (list name parent uid sealed? opaque? fields)))))
+            (else
+             (or (on-primordial-thread?)
+                 (assertion-violation 'thread
+                                      "child thread attempt to create nongenerative record-type"
+                                      (list name parent uid sealed? opaque? fields)))
+             (let ((new (make-rtd name parent uid sealed? opaque? fields)))
+               (core-hashtable-set! nongenerative-record-types uid new) new))))))
 
 (define make-rcd
   (lambda (rtd protocol custom-protocol? parent)

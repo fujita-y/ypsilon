@@ -310,6 +310,9 @@ object_heap_t::init_primordial(size_t pool_size, size_t init_size)
     init_subr_flonum(this);
     init_subr_hash(this);
     init_subr_list(this);
+    init_subr_file(this);
+    init_subr_process(this);
+    init_subr_thread(this);
     init_subr_others(this);
     // procedure
     intern_system_environment(make_symbol(this, "apply"), scm_proc_apply);
@@ -369,7 +372,7 @@ object_heap_t::intern_system_environment(scm_symbol_t symbol, scm_obj_t value)
         ((scm_gloc_t)obj)->value = value;
         return;
     }
-    scm_gloc_t gloc = make_gloc(this, m_system_environment, symbol);
+    scm_gloc_t gloc = make_gloc(this, symbol);
     gloc->value = value;
     write_barrier(symbol);
     write_barrier(gloc);
@@ -1139,9 +1142,6 @@ object_heap_t::trace(scm_obj_t obj)
         case TC_GLOC: {
             scm_gloc_t gloc = (scm_gloc_t)obj;
             shade(gloc->variable);
-  #if GLOC_DEBUG_INFO
-            shade(gloc->environment);
-  #endif
             shade(gloc->value);
             break;
         }

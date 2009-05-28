@@ -46,12 +46,12 @@ class deserializer_t {
     uint8_t*        m_buf;
     uint8_t*        m_buf_tail;
 
-    uint8_t     fetch_u8();
-    uint32_t    fetch_u32();
-    uint64_t    fetch_u64();
-    void        fetch_bytes(uint8_t* p, int n);
-    void        get_lites();
-    scm_obj_t   get_datum();
+    uint8_t fetch_u8();
+    uint32_t fetch_u32();
+    uint64_t fetch_u64();
+    void fetch_bytes(uint8_t* p, int n);
+    void get_lites();
+    scm_obj_t get_datum();
 
 public:
     deserializer_t(object_heap_t* heap);

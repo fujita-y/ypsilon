@@ -48,7 +48,7 @@
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_port
     nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_values
     .... .... .... .... .... IU-- ---- 1010 : scm_hdr_hashtable     I: immutable U: unsafe
-    .... .... .... .... .... ..-- ---- 1010 : scm_hdr_gloc
+    .... .... .... .... .... .U-- ---- 1010 : scm_hdr_gloc          U: uninterned
     nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_tuple
     .... .... .... .... .... IU-- ---- 1010 : scm_hdr_weakhashtable I: immutable U: unsafe
     .... .... .... .... .... LM-- ---- 1010 : scm_hdr_bvector       L: literal M: mapped
@@ -380,9 +380,6 @@ OBJECT_ALIGNED(scm_gloc_rec_t) {
     scm_hdr_t   hdr;
     scm_obj_t   value;
     scm_obj_t   variable;       // for error message
-#if GLOC_DEBUG_INFO
-    scm_obj_t   environment;
-#endif
 } END;
 
 OBJECT_ALIGNED(scm_socket_rec_t) {
@@ -507,6 +504,7 @@ struct vm_env_rec_t {           // record size is variable
 #define HDR_FLONUM_32BIT_SHIFT              11
 #define HDR_VECTOR_LITERAL_SHIFT            11
 #define HDR_BVECTOR_LITERAL_SHIFT           11
+#define HDR_GLOC_UNINTERNED_SHIFT           10
 
 #define HDR_TC(hdr)                         (((hdr) >> 4) & TC_MASKBITS)
 #define HDR_CLOSURE_ARGS(hdr)               (((intptr_t)(hdr)) >> HDR_CLOSURE_ARGS_SHIFT)
@@ -531,13 +529,12 @@ struct vm_env_rec_t {           // record size is variable
 
 #define HDR_SYMBOL_INHERENT_BIT             ((uintptr_t)1 << HDR_SYMBOL_INHERENT_SHIFT)
 #define HDR_SYMBOL_UNINTERNED_BIT           ((uintptr_t)1 << HDR_SYMBOL_UNINTERNED_SHIFT)
+#define HDR_GLOC_UNINTERNED_BIT             ((uintptr_t)1 << HDR_GLOC_UNINTERNED_SHIFT)
 
-#define INHERENTSYMBOLP(obj)                (CELLP(obj) \
-                                                && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_INHERENT_BIT)))
-#define UNINTERNEDSYMBOLP(obj)              (CELLP(obj) \
-                                                && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_UNINTERNED_BIT)))
+#define INHERENTSYMBOLP(obj)                (CELLP(obj) && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_INHERENT_BIT)))
+#define UNINTERNEDSYMBOLP(obj)              (CELLP(obj) && ((HDR(obj) & 0xfff) == (scm_hdr_symbol | HDR_SYMBOL_UNINTERNED_BIT)))
+#define UNINTERNEDGLOCP(obj)                (CELLP(obj) && ((HDR(obj) & 0xfff) == (scm_hdr_gloc | HDR_GLOC_UNINTERNED_BIT)))
 #define OPCODESYMBOLP(obj)                  (INHERENTSYMBOLP(obj) && (HDR_SYMBOL_CODE(HDR(obj)) < VMOP_INSTRUCTION_COUNT))
-
 #define BOTHFLONUMP(x, y)                   (CELLP((intptr_t)(x) | (intptr_t)(y)) \
                                                 && ((((scm_flonum_t)(x))->hdr == scm_hdr_flonum) & (((scm_flonum_t)(y))->hdr == scm_hdr_flonum)))
 #define BVECTORMAPPINGP(obj)                (BVECTORP(obj) && HDR_BVECTOR_MAPPING(HDR(obj)))

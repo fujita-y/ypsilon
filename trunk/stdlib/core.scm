@@ -685,7 +685,6 @@
     number?
     numerator
     odd?
-    on-primordial-thread?
     opaque
     open-builtin-data-input-port
     open-bytevector-input-port
@@ -891,6 +890,7 @@
     timeout-object?
     top-level-bound?
     top-level-value
+    track-file-open
     transcoded-port
     transcoder-codec
     transcoder-eol-style

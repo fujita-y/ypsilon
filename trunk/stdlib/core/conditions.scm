@@ -37,6 +37,7 @@
            (syntax (begin
                      (define-record-type (condition-type constructor temp)
                        (parent supertype)
+                       (nongenerative)
                        (fields (immutable cond-fields rec-accessors) ...))
                      (define predicate
                        (condition-predicate (record-type-descriptor condition-type)))
