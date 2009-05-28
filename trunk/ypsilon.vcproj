@@ -290,6 +290,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\subr_file.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\subr_fixnum.cpp"
 				>
 			</File>
@@ -314,11 +318,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\subr_process.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\subr_r5rs_arith.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\src\subr_socket.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\subr_thread.cpp"
 				>
 			</File>
 			<File
@@ -331,6 +343,10 @@
 			</File>
 			<File
 				RelativePath=".\src\utf8.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\uuid.cpp"
 				>
 			</File>
 			<File
@@ -501,6 +517,10 @@
 			</File>
 			<File
 				RelativePath=".\src\utf8.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\uuid.h"
 				>
 			</File>
 			<File
