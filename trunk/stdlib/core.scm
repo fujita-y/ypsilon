@@ -788,6 +788,7 @@
     scheme-load-paths
     scheme-load-verbose
     sealed
+    serializable?
     serious-condition?
     set!
     set-car!

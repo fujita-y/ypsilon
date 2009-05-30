@@ -79,7 +79,6 @@
 #define USE_MULTIBYTE_WRITE         1
 #define USE_NATIVE_CODE             0
 #define USE_CLOEXEC                 defined(FD_CLOEXEC)
-#define USE_CLOSURE_SERIALIZE       1
 
 #if USE_GCC_EXTENSION
     #define USE_SYMBOL_THREAD       0

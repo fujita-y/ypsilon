@@ -10,10 +10,12 @@
 #include "serialize.h"
 #if USE_PARALLEL_VM
 #include "bag.h"
+#include "list.h"
 #include "interpreter.h"
 #endif
 
-#define USE_SHARED_QUEUE_QUICK_ENCODE   1
+#define USE_SHARED_QUEUE_QUICK_ENCODE    1
+#define CYCLIC_CHECK_BEFORE_SERIALIZE    1
 
 // spawn
 scm_obj_t
@@ -179,6 +181,12 @@ subr_shared_queue_push(VM* vm, int argc, scm_obj_t argv[])
             else
 #endif
             {
+#if CYCLIC_CHECK_BEFORE_SERIALIZE
+                if (cyclic_objectp(vm->m_heap, argv[1])) {
+                    serialize_cyclic_object_violation(vm, "shared-queue-push!", argv[1], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 scm_obj_t obj = serializer_t(vm->m_heap).translate(argv[1]);
                 if (BVECTORP(obj)) {
                     scm_bvector_t bvector = (scm_bvector_t)obj;
@@ -350,6 +358,12 @@ subr_shared_bag_put(VM* vm, int argc, scm_obj_t argv[])
                 scm_string_t string = (scm_string_t)argv[1];
                 sharedbag_slot_t* slot = lookup_sharedbag((scm_sharedbag_t)argv[0], string->name, string->size);
                 assert(slot);
+#if CYCLIC_CHECK_BEFORE_SERIALIZE
+                if (cyclic_objectp(vm->m_heap, argv[2])) {
+                    serialize_cyclic_object_violation(vm, "shared-bag-put!", argv[2], argc, argv);
+                    return scm_undef;
+                }
+#endif
                 scm_obj_t obj = serializer_t(vm->m_heap).translate(argv[2]);
                 if (BVECTORP(obj)) {
                     scm_bvector_t bvector = (scm_bvector_t)obj;
@@ -378,7 +392,7 @@ subr_shared_bag_put(VM* vm, int argc, scm_obj_t argv[])
         wrong_type_argument_violation(vm, "shared-bag-put!", 0, "shared bag", argv[0], argc, argv);
         return scm_undef;
     }
-    wrong_number_of_arguments_violation(vm, "shared-bag-put!", 2, 3, argc, argv);
+    wrong_number_of_arguments_violation(vm, "shared-bag-put!", 3, 4, argc, argv);
     return scm_undef;
 #else
     fatal("%s:%u shared-bag-put! not supported on this build", __FILE__, __LINE__);
@@ -470,6 +484,21 @@ subr_shutdown_object_pred(VM* vm, int argc, scm_obj_t argv[])
 #endif
 }
 
+// serializable?
+scm_obj_t
+subr_serializable_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+#if USE_PARALLEL_VM
+    if (argc == 1) {
+        if (cyclic_objectp(vm->m_heap, argv[0])) return scm_false;
+        return serializer_t(vm->m_heap).test(argv[0]) ? scm_true : scm_false;
+    }
+    wrong_number_of_arguments_violation(vm, "serializable?", 1, 1, argc, argv);
+    return scm_undef;
+#else
+    fatal("%s:%u serializable? not supported on this build", __FILE__, __LINE__);
+#endif
+}
 void
 init_subr_thread(object_heap_t* heap)
 {
@@ -491,4 +520,5 @@ init_subr_thread(object_heap_t* heap)
     DEFSUBR("shared-bag-get!", subr_shared_bag_get);
     DEFSUBR("on-primordial-thread?", subr_on_primordial_thread_pred);
     DEFSUBR("display-thread-status", subr_display_thread_status);
+    DEFSUBR("serializable?", subr_serializable_pred);
 }
