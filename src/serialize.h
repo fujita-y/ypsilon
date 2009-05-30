@@ -13,7 +13,7 @@
 
 class serializer_t {
     object_heap_t*  m_heap;
-    scm_hashtable_t m_lites;
+    scm_hashtable_t m_shared_datum;
     scm_obj_t*      m_stack;
     scm_obj_t*      m_stack_limit;
     scm_obj_t*      m_sp;
@@ -30,19 +30,20 @@ class serializer_t {
     void scan(scm_obj_t obj);
     void push(scm_obj_t obj);
     scm_obj_t pop();
-    void put_lites();
+    void put_shared();
     void put_list(scm_obj_t obj);
     void put_datum(scm_obj_t obj);
 
 public:
     serializer_t(object_heap_t* heap);
     ~serializer_t();
+    bool test(scm_obj_t obj);
     scm_obj_t translate(scm_obj_t obj);
 };
 
 class deserializer_t {
     object_heap_t*  m_heap;
-    scm_obj_t*      m_lites;
+    scm_obj_t*      m_shared_datum;
     uint8_t*        m_buf;
     uint8_t*        m_buf_tail;
 
@@ -50,8 +51,9 @@ class deserializer_t {
     uint32_t fetch_u32();
     uint64_t fetch_u64();
     void fetch_bytes(uint8_t* p, int n);
-    void get_lites();
+    void get_shared();
     scm_obj_t get_datum();
+    void* fetch_closure_env();
 
 public:
     deserializer_t(object_heap_t* heap);

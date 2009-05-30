@@ -15,6 +15,7 @@
           messenger-bag?
           recv
           send
+          serializable?
           shared-bag-get!
           shared-bag-put!
           shared-bag?

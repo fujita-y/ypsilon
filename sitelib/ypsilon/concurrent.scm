@@ -24,6 +24,7 @@
           shared-bag?
           shared-bag-put!
           shared-bag-get!
+          serializable?
           timeout-object?
           shutdown-object?
           call-with-spawn
@@ -46,7 +47,7 @@
              (_ (temp))
              ((set! _ x) (temp x))))))))
 
-  (define future-condition
+  (define future-error-condition
     (condition
      (make-error)
      (make-who-condition 'future)
@@ -60,7 +61,7 @@
           (lambda () e0 e1 ...)
           (lambda (ans)
             (if (condition? ans)
-                (shared-queue-push! queue future-condition)
+                (shared-queue-push! queue future-error-condition)
                 (shared-queue-push! queue ans))
             (shared-queue-shutdown queue)))
          (lambda timeout
@@ -72,6 +73,7 @@
       (call-with-string-output-port
        (lambda (out)
          (let ((in (open-string-input-port s)))
+           (or (char=? (lookahead-char in) #\linefeed) (put-string out "  "))
            (let loop ((ch (get-char in)))
              (cond ((eof-object? ch))
                    ((char=? ch #\linefeed)
@@ -97,7 +99,7 @@
                                         (set-current-error-port! s)
                                         ((current-exception-printer) c)
                                         (set-current-error-port! e)))))
-                  (format e "[exit]\n"))
+                  (format e "[thread exit]\n\n"))
                 (and (serious-condition? c) (resume c)))
               (lambda () (body))))))))))
 

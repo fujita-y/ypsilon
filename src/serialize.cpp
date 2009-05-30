@@ -9,35 +9,36 @@
 #include "object_heap.h"
 #include "object_factory.h"
 #include "serialize.h"
+#include "list.h"
 #include "vm.h"
 
-#define BVO_TAG_NOUSE               0
-#define BVO_TAG_LOOKUP              1
-#define BVO_TAG_IMMEDIATE           2
-#define BVO_TAG_PLIST               3
-#define BVO_TAG_DLIST               4
-#define BVO_TAG_VECTOR              5
-#define BVO_TAG_RATIONAL            6
-#define BVO_TAG_COMPLEX             7
-#define BVO_TAG_FLONUM              8
-#define BVO_TAG_BIGNUM              9
-#define BVO_TAG_BVECTOR             10
-#define BVO_TAG_SYMBOL              11
-#define BVO_TAG_STRING              12
-#define BVO_TAG_UNINTERNED_SYMBOL   13
-#if USE_CLOSURE_SERIALIZE
-#define BVO_TAG_SUBR                14
-#define BVO_TAG_GLOC                15
-#define BVO_TAG_UNINTERNED_GLOC     16
-#define BVO_TAG_CLOSURE             17
-#define BVO_TAG_TUPLE               18
-#endif
-#define MAX_BUNDLE_SIZE             sizeof(uint64_t)
+#define BVO_TAG_NOUSE                   0
+#define BVO_TAG_LOOKUP                  1
+#define BVO_TAG_IMMEDIATE               2
+#define BVO_TAG_PLIST                   3
+#define BVO_TAG_DLIST                   4
+#define BVO_TAG_VECTOR                  5
+#define BVO_TAG_RATIONAL                6
+#define BVO_TAG_COMPLEX                 7
+#define BVO_TAG_FLONUM                  8
+#define BVO_TAG_BIGNUM                  9
+#define BVO_TAG_BVECTOR                 10
+#define BVO_TAG_SUBR                    11
+#define BVO_TAG_GLOC                    12
+#define BVO_TAG_UNINTERNED_GLOC         13
+#define BVO_TAG_CLOSURE                 14
+#define BVO_TAG_TUPLE                   15
+#define BVO_TAG_SYMBOL                  16
+#define BVO_TAG_STRING                  17
+#define BVO_TAG_UNINTERNED_SYMBOL       18
+#define BVO_TAG_RESERVE_UNINTERNED_GLOC 19
+
+#define MAX_BUNDLE_SIZE                 sizeof(uint64_t)
 
 serializer_t::serializer_t(object_heap_t* heap)
 {
     m_heap = heap;
-    m_lites = make_hashtable(m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
+    m_shared_datum = make_hashtable(m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
     int depth = 32;
     m_stack = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * depth);
     m_stack_limit = m_stack + depth;
@@ -145,10 +146,72 @@ serializer_t::pop()
     return m_sp[0];
 }
 
+bool serializer_t::test(scm_obj_t obj)
+{
+loop:
+    if (CELLP(obj)) {
+        if (PAIRP(obj)) {
+            if (test(CAR(obj))) {
+                obj = CDR(obj);
+                goto loop;
+            }
+            return false;
+        }
+        int tc = HDR_TC(HDR(obj));
+        assert(tc >= 0);
+        assert(tc <= TC_MASKBITS);
+        switch (tc) {
+            case TC_VECTOR: {
+                scm_vector_t vector = (scm_vector_t)obj;
+                int count = vector->count;
+                if (count == 0) return true;
+                scm_obj_t* elts = vector->elts;
+                for (int i = 0; i < count; i++) {
+                    if (test(elts[i])) continue;
+                    return false;
+                }
+                return true;
+            }
+            case TC_CLOSURE: {
+                scm_closure_t closure = (scm_closure_t)obj;
+                if (closure->env == NULL && test(closure->code) && test(closure->doc)) return true;
+                return false;
+            }
+            case TC_TUPLE: {
+                scm_tuple_t tuple = (scm_tuple_t)obj;
+                int count = HDR_TUPLE_COUNT(tuple->hdr);
+                if (count == 0) return true;
+                scm_obj_t* elts = tuple->elts;
+                const char* type_name = get_tuple_type_name(tuple);
+                if (type_name && strcmp(type_name, "record-type-descriptor") == 0) {
+                    scm_obj_t uid = tuple->elts[3];
+                    if (!SYMBOLP(uid)) return false;
+                }
+                for (int i = 0; i < count; i++) {
+                    if (test(elts[i])) continue;
+                    return false;
+                }
+                return true;
+            }
+            case TC_SUBR:
+            case TC_GLOC:
+            case TC_SYMBOL:
+            case TC_STRING:
+            case TC_BVECTOR:
+            case TC_FLONUM:
+            case TC_BIGNUM:
+            case TC_RATIONAL:
+            case TC_COMPLEX:
+                return true;
+        }
+        return false;
+    }
+    return true;
+}
+
 void
 serializer_t::scan(scm_obj_t obj)
 {
-
 loop:
     if (CELLP(obj)) {
         if (PAIRP(obj)) {
@@ -156,79 +219,93 @@ loop:
             obj = CDR(obj);
             goto loop;
         }
-        if (SYMBOLP(obj) || STRINGP(obj)) {
-            if (get_hashtable(m_lites, obj) != scm_undef) return;
-            int nsize = put_hashtable(m_lites, obj, MAKEFIXNUM(m_lites->datum->live));
-            if (nsize) rehash_hashtable(m_heap, m_lites, nsize);
-            return;
-        }
-        if (VECTORP(obj)) {
-            scm_vector_t vector = (scm_vector_t)obj;
-            int count = vector->count;
-            if (count == 0) return;
-            scm_obj_t* elts = vector->elts;
-            for (int i = 0; i < count; i++) scan(elts[i]);
-            return;
-        }
-#if USE_CLOSURE_SERIALIZE
-        if (CLOSUREP(obj)) {
-            scm_closure_t closure = (scm_closure_t)obj;
-            if (closure->env == NULL) {
-                scan(closure->code);
-                scan(closure->doc);
+        int tc = HDR_TC(HDR(obj));
+        assert(tc >= 0);
+        assert(tc <= TC_MASKBITS);
+        switch (tc) {
+            case TC_SYMBOL:
+            case TC_STRING: {
+                if (get_hashtable(m_shared_datum, obj) != scm_undef) return;
+                int nsize = put_hashtable(m_shared_datum, obj, MAKEFIXNUM(m_shared_datum->datum->live));
+                if (nsize) rehash_hashtable(m_heap, m_shared_datum, nsize);
                 return;
             }
-            if (m_bad == NULL) m_bad = obj;
-            return;
-        }
-        if (GLOCP(obj)) {
-            scm_gloc_t gloc = (scm_gloc_t)obj;
-            scan(gloc->variable);
-            if (UNINTERNEDGLOCP(gloc)) scan(gloc->value);
-            return;
-        }
-        if (TUPLEP(obj)) {
-            scm_tuple_t tuple = (scm_tuple_t)obj;
-            int count = HDR_TUPLE_COUNT(tuple->hdr);
-            if (count == 0) return;
-            scm_obj_t* elts = tuple->elts;
-            const char* type_name = get_tuple_type_name(tuple);
-            if (type_name && strcmp(type_name, "record-type-descriptor") == 0) {
-                scm_obj_t uid = tuple->elts[3];
-                if (!SYMBOLP(uid)) {
-                    if (m_bad == NULL) m_bad = obj;
+            case TC_VECTOR: {
+                scm_vector_t vector = (scm_vector_t)obj;
+                int count = vector->count;
+                if (count == 0) return;
+                scm_obj_t* elts = vector->elts;
+                for (int i = 0; i < count; i++) scan(elts[i]);
+                return;
+            }
+            case TC_CLOSURE: {
+                scm_closure_t closure = (scm_closure_t)obj;
+                if (closure->env == NULL) {
+                    scan(closure->code);
+                    scan(closure->doc);
                     return;
                 }
+                if (m_bad == NULL) m_bad = obj;
+                return;
             }
-            for (int i = 0; i < count; i++) scan(elts[i]);
-            return;
-        }        
-        if (SUBRP(obj)) return;
-#endif
-        if (BVECTORP(obj) || FLONUMP(obj) || BIGNUMP(obj) || RATIONALP(obj) || COMPLEXP(obj)) return;
+            case TC_GLOC: {
+                scm_gloc_t gloc = (scm_gloc_t)obj;
+                scan(gloc->variable);
+                if (UNINTERNEDGLOCP(gloc)) {
+                    if (get_hashtable(m_shared_datum, obj) != scm_undef) return;
+                    int nsize = put_hashtable(m_shared_datum, obj, MAKEFIXNUM(m_shared_datum->datum->live));
+                    if (nsize) rehash_hashtable(m_heap, m_shared_datum, nsize);
+                    scan(gloc->value);
+                }
+                return;
+            }
+            case TC_TUPLE: {
+                scm_tuple_t tuple = (scm_tuple_t)obj;
+                int count = HDR_TUPLE_COUNT(tuple->hdr);
+                if (count == 0) return;
+                scm_obj_t* elts = tuple->elts;
+                const char* type_name = get_tuple_type_name(tuple);
+                if (type_name && strcmp(type_name, "record-type-descriptor") == 0) {
+                    scm_obj_t uid = tuple->elts[3];
+                    if (!SYMBOLP(uid)) {
+                        if (m_bad == NULL) m_bad = obj;
+                        return;
+                    }
+                }
+                for (int i = 0; i < count; i++) scan(elts[i]);
+                return;
+            }
+            case TC_SUBR:
+            case TC_BVECTOR:
+            case TC_FLONUM:
+            case TC_BIGNUM:
+            case TC_RATIONAL:
+            case TC_COMPLEX:
+                return;
+        }
         if (m_bad == NULL) m_bad = obj;
     }
 }
 
 void
-serializer_t::put_lites()
+serializer_t::put_shared()
 {
-    scm_obj_t* lites = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * m_lites->datum->live);
+    scm_obj_t* shared = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * m_shared_datum->datum->live);
     try {
-        hashtable_rec_t* ht_datum = m_lites->datum;
-        int nsize = m_lites->datum->capacity;
+        hashtable_rec_t* ht_datum = m_shared_datum->datum;
+        int nsize = m_shared_datum->datum->capacity;
         for (int i = 0; i < nsize; i++) {
             scm_obj_t key = ht_datum->elts[i];
             scm_obj_t value = ht_datum->elts[i + nsize];
             if (CELLP(key)) {
-                assert(FIXNUM(value) < m_lites->datum->live);
-                lites[FIXNUM(value)] = key;
+                assert(FIXNUM(value) < m_shared_datum->datum->live);
+                shared[FIXNUM(value)] = key;
             }
         }
-        emit_u32(m_lites->datum->live);
-        for (int i = 0; i < m_lites->datum->live; i++) {
-            if (SYMBOLP(lites[i])) {
-                scm_symbol_t symbol = (scm_symbol_t)lites[i];
+        emit_u32(m_shared_datum->datum->live);
+        for (int i = 0; i < m_shared_datum->datum->live; i++) {
+            if (SYMBOLP(shared[i])) {
+                scm_symbol_t symbol = (scm_symbol_t)shared[i];
                 if (UNINTERNEDSYMBOLP(symbol)) {
                     emit_u8(BVO_TAG_UNINTERNED_SYMBOL);
                     emit_u32(i);
@@ -244,8 +321,8 @@ serializer_t::put_lites()
                 }
                 continue;
             }
-            if (STRINGP(lites[i])) {
-                scm_string_t string = (scm_string_t)lites[i];
+            if (STRINGP(shared[i])) {
+                scm_string_t string = (scm_string_t)shared[i];
                 emit_u8(BVO_TAG_STRING);
                 emit_u32(i);
                 int n = string->size;
@@ -253,12 +330,19 @@ serializer_t::put_lites()
                 emit_bytes((uint8_t*)string->name, n);
                 continue;
             }
+            if (UNINTERNEDGLOCP(shared[i])) {
+                emit_u8(BVO_TAG_RESERVE_UNINTERNED_GLOC);
+                emit_u32(i);
+                emit_u32(0);
+                continue;
+            }
+            fatal("%s:%u internal error: something wrong", __FILE__, __LINE__);
         }
     } catch (...) {
-        m_heap->deallocate_private(lites);
+        m_heap->deallocate_private(shared);
         throw;
     }
-    m_heap->deallocate_private(lites);
+    m_heap->deallocate_private(shared);
 }
 
 void
@@ -302,7 +386,7 @@ serializer_t::put_datum(scm_obj_t obj)
         return;
     }
     if (SYMBOLP(obj) || STRINGP(obj)) {
-        scm_obj_t id = get_hashtable(m_lites, obj);
+        scm_obj_t id = get_hashtable(m_shared_datum, obj);
         emit_u8(BVO_TAG_LOOKUP);
         emit_u32((uint32_t)FIXNUM(id));
         return;
@@ -364,7 +448,6 @@ serializer_t::put_datum(scm_obj_t obj)
         put_datum(comp->imag);
         return;
     }
-#if USE_CLOSURE_SERIALIZE
     if (CLOSUREP(obj)) {
         scm_closure_t closure = (scm_closure_t)obj;
         emit_u8(BVO_TAG_CLOSURE);
@@ -380,10 +463,24 @@ serializer_t::put_datum(scm_obj_t obj)
     if (GLOCP(obj)) {
         scm_gloc_t gloc = (scm_gloc_t)obj;
         if (UNINTERNEDGLOCP(gloc)) {
-            emit_u8(BVO_TAG_UNINTERNED_GLOC);
-            put_datum(gloc->variable);
-            put_datum(gloc->value);
-            return;
+            scm_obj_t state = get_hashtable(m_shared_datum, obj);
+            if (FIXNUMP(state)) {
+                int id = FIXNUM(state);
+                if (id >= 0) {
+                    put_hashtable(m_shared_datum, obj, MAKEFIXNUM(- id - 1));
+                    emit_u8(BVO_TAG_UNINTERNED_GLOC);
+                    emit_u32(id);
+                    put_datum(gloc->variable);
+                    put_datum(gloc->value);
+                    return;
+                } else {
+                    id = - id - 1;
+                    emit_u8(BVO_TAG_LOOKUP);
+                    emit_u32(id);
+                    return;
+                }
+            }
+            fatal("%s:%u internal error: something wrong", __FILE__, __LINE__);
         }
         emit_u8(BVO_TAG_GLOC);
         put_datum(gloc->variable);
@@ -406,15 +503,14 @@ serializer_t::put_datum(scm_obj_t obj)
         scm_obj_t* elts = tuple->elts;
         for (int i = 0; i < count; i++) put_datum(elts[i]);
         return;
-    }            
-#endif
+    }
     fatal("%s:%u internal error: datum not supported in serialized object", __FILE__, __LINE__);
 }
 
 scm_obj_t
 serializer_t::translate(scm_obj_t obj)
 {
-    scoped_lock lock(m_lites->lock);
+    scoped_lock lock(m_shared_datum->lock);
     scan(obj);
     if (m_bad != NULL) return m_bad;
 #if ARCH_LP64
@@ -422,7 +518,7 @@ serializer_t::translate(scm_obj_t obj)
 #else
     emit_u8(32);
 #endif
-    put_lites();
+    put_shared();
     put_datum(obj);
     scm_bvector_t bytes = make_bvector(m_heap, m_buf_mark);
     memcpy(bytes->elts, m_buf, m_buf_mark);
@@ -432,12 +528,12 @@ serializer_t::translate(scm_obj_t obj)
 deserializer_t::deserializer_t(object_heap_t* heap)
 {
     m_heap = heap;
-    m_lites = NULL;
+    m_shared_datum = NULL;
 }
 
 deserializer_t::~deserializer_t()
 {
-    if (m_lites) m_heap->deallocate_private(m_lites);
+    if (m_shared_datum) m_heap->deallocate_private(m_shared_datum);
 }
 
 uint8_t
@@ -503,7 +599,7 @@ deserializer_t::get_datum()
     switch (octet) {
         case BVO_TAG_LOOKUP: {
             uint32_t uid = fetch_u32();
-            return m_lites[uid];
+            return m_shared_datum[uid];
         }
         case BVO_TAG_IMMEDIATE: {
 #if ARCH_LP64
@@ -568,7 +664,6 @@ deserializer_t::get_datum()
             fetch_bytes(bv->elts, count);
             return bv;
         }
-#if USE_CLOSURE_SERIALIZE
         case BVO_TAG_SUBR: {
   #if ARCH_LP64
             return (scm_subr_t)fetch_u64();
@@ -579,27 +674,25 @@ deserializer_t::get_datum()
         case BVO_TAG_GLOC: {
             scm_symbol_t symbol = (scm_symbol_t)get_datum();
             assert(SYMBOLP(symbol));
-            {
-                VM* vm = current_vm();
-                scm_hashtable_t ht = vm->m_current_environment->variable;
-                scoped_lock lock(ht->lock);
-                scm_obj_t obj = get_hashtable(ht, symbol);
-                if (obj != scm_undef) return obj;
-                scm_gloc_t gloc = make_gloc(m_heap, symbol);
-                gloc->value = scm_undef;
-                m_heap->write_barrier(symbol);
-                m_heap->write_barrier(gloc);
-                int nsize = put_hashtable(ht, symbol, gloc);
-                if (nsize) rehash_hashtable(m_heap, ht, nsize);
-                return gloc;
-            }
+            VM* vm = current_vm();
+            scm_hashtable_t ht = vm->m_current_environment->variable;
+            scoped_lock lock(ht->lock);
+            scm_obj_t obj = get_hashtable(ht, symbol);
+            if (obj != scm_undef) return obj;
+            scm_gloc_t gloc = make_gloc(m_heap, symbol);
+            gloc->value = scm_undef;
+            m_heap->write_barrier(symbol);
+            m_heap->write_barrier(gloc);
+            int nsize = put_hashtable(ht, symbol, gloc);
+            if (nsize) rehash_hashtable(m_heap, ht, nsize);
+            return gloc;
         }
         case BVO_TAG_UNINTERNED_GLOC: {
-            scm_symbol_t variable = (scm_symbol_t)get_datum();
-            scm_obj_t value = get_datum();
-            assert(SYMBOLP(variable));
-            scm_gloc_t gloc = make_gloc_uninterned(m_heap, (scm_symbol_t)variable);
-            gloc->value = value;
+            int id = fetch_u32();
+            scm_gloc_t gloc = (scm_gloc_t)m_shared_datum[id];
+            assert(GLOCP(gloc));
+            gloc->variable = (scm_symbol_t)get_datum();
+            gloc->value = get_datum();
             return gloc;
         }
         case BVO_TAG_CLOSURE: {
@@ -624,24 +717,23 @@ deserializer_t::get_datum()
                     scm_hashtable_t ht = (scm_hashtable_t)m_heap->lookup_system_environment(make_symbol(m_heap, ".@nongenerative-record-types"));
                     if (ht == scm_undef) fatal("fatal: .@nongenerative-record-types not available in system environment");
                     scm_obj_t obj = get_hashtable(ht, uid);
-                    if (obj != scm_undef) return obj;                       
+                    if (obj != scm_undef) return obj;
                 }
             }
             return tuple;
         }
-#endif
     }
     throw true;
 }
 
 void
-deserializer_t::get_lites()
+deserializer_t::get_shared()
 {
     int buflen = 128;
     char* buf = (char*)m_heap->allocate_private(buflen + 1);
     int count = fetch_u32();
     if (count < 0) throw true;
-    m_lites = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * count);
+    m_shared_datum = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * count);
     for (int i = 0; i < count; i++) {
         uint8_t tag = fetch_u8();
         uint32_t uid = fetch_u32();
@@ -657,13 +749,16 @@ deserializer_t::get_lites()
         buf[len] = 0;
         switch (tag) {
             case BVO_TAG_SYMBOL:
-                m_lites[uid] = make_symbol(m_heap, buf, len);
+                m_shared_datum[uid] = make_symbol(m_heap, buf, len);
                 break;
             case BVO_TAG_UNINTERNED_SYMBOL:
-                m_lites[uid] = make_symbol_uninterned(m_heap, buf, len - 2, buf[len - 1]);
+                m_shared_datum[uid] = make_symbol_uninterned(m_heap, buf, len - 2, buf[len - 1]);
                 break;
             case BVO_TAG_STRING:
-                m_lites[uid] = make_string_literal(m_heap, buf, len);
+                m_shared_datum[uid] = make_string_literal(m_heap, buf, len);
+                break;
+            case BVO_TAG_RESERVE_UNINTERNED_GLOC:
+                m_shared_datum[uid] = make_gloc_uninterned(m_heap, (scm_symbol_t)scm_undef);
                 break;
             default:
                 m_heap->deallocate_private(buf);
@@ -685,7 +780,7 @@ deserializer_t::translate(scm_bvector_t obj)
 #else
         if (fetch_u8() != 32) return NULL;
 #endif
-        get_lites();
+        get_shared();
         scm_obj_t obj = get_datum();
         if (m_buf != m_buf_tail) return NULL;
         return obj;
