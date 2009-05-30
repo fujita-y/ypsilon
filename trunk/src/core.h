@@ -64,6 +64,7 @@
 #define CONCURRENT_COLLECT          1 // 1
 #define PARALLEL_COLLECT            0
 #define BOOT_R6RS_COMPLIANT_SYNTAX  1
+#define UNSPECIFIED_GLOC_IS_SPECIAL 1
 
 #define USE_DEBUG_BOOT              0
 #define USE_DEBUG_CORE              0

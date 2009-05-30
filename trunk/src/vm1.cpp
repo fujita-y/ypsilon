@@ -1263,10 +1263,17 @@ VM::loop(bool init, bool resume)
                 scm_gloc_t gloc = (scm_gloc_t)CAR(OPERANDS);
                 assert(GLOCP(gloc));
 #if USE_PARALLEL_VM
+  #if UNSPECIFIED_GLOC_IS_SPECIAL
+                if (m_interp->live_thread_count() > 1 && gloc->value != scm_unspecified) {
+                    if (!m_heap->in_heap(gloc)) goto ERROR_SET_GLOC_BAD_CONTEXT;
+                    m_interp->remember(gloc->value, m_value);
+                }
+  #else
                 if (m_interp->live_thread_count() > 1) {
                     if (!m_heap->in_heap(gloc)) goto ERROR_SET_GLOC_BAD_CONTEXT;
                     m_interp->remember(gloc->value, m_value);
                 }
+  #endif
 #endif
                 m_heap->write_barrier(m_value);
                 gloc->value = m_value;
