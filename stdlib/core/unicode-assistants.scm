@@ -53,10 +53,9 @@
   (define-syntax autoload
     (syntax-rules ()
       ((_ var init)
-       (define var
-         (lambda ()
-           (let ((memo init))
-             (begin (set! var (lambda () memo)) memo)))))))
+       (begin
+         (define data)
+         (define var (lambda () (and (unspecified? data) (set! data init)) data))))))
 
   (autoload
    general-category-table-1
