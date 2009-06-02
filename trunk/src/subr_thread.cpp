@@ -499,6 +499,25 @@ subr_serializable_pred(VM* vm, int argc, scm_obj_t argv[])
     fatal("%s:%u serializable? not supported on this build", __FILE__, __LINE__);
 #endif
 }
+
+// local-heap-object?
+scm_obj_t
+subr_local_heap_object_pred(VM* vm, int argc, scm_obj_t argv[])
+{
+#if USE_PARALLEL_VM
+    if (argc == 1) {
+        if (CELLP(argv[0])) {
+            return vm->m_heap->in_heap(argv[0]) ? scm_true : scm_false;
+        }
+        return scm_true;
+    }
+    wrong_number_of_arguments_violation(vm, "local-heap-object?", 1, 1, argc, argv);
+    return scm_undef;
+#else
+    fatal("%s:%u local-heap-object? not supported on this build", __FILE__, __LINE__);
+#endif
+}
+
 void
 init_subr_thread(object_heap_t* heap)
 {
@@ -519,6 +538,7 @@ init_subr_thread(object_heap_t* heap)
     DEFSUBR("shared-bag-put!", subr_shared_bag_put);
     DEFSUBR("shared-bag-get!", subr_shared_bag_get);
     DEFSUBR("on-primordial-thread?", subr_on_primordial_thread_pred);
+    DEFSUBR("local-heap-object?", subr_local_heap_object_pred);
     DEFSUBR("display-thread-status", subr_display_thread_status);
     DEFSUBR("serializable?", subr_serializable_pred);
 }

@@ -528,6 +528,8 @@
                         spawn-timeout
                         spawn-heap-limit
                         display-thread-status
+                        on-primordial-thread?
+                        local-heap-object?
 
                         make-uuid
                         time-usage

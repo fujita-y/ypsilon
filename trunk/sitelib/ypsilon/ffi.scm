@@ -127,7 +127,7 @@
           on-ia32
           on-x64)
 
-  (import (core) (ypsilon c-types) (ypsilon assert))
+  (import (core) (ypsilon concurrent) (ypsilon c-types) (ypsilon assert))
 
   (define on-sunos         (and (string-contains (architecture-feature 'operating-system) "sunos")   #t))
   (define on-darwin        (and (string-contains (architecture-feature 'operating-system) "darwin")  #t))
@@ -312,9 +312,9 @@
       (size_t         . ,(if (= sizeof:size_t 4) #\Q #\O))
       (void*          . ,(if (= sizeof:void* 4) #\Q #\O))))
 
-  (define ht-cdecl-callback-trampolines (make-parameter (make-weak-hashtable)))
+  (define-thread-variable ht-cdecl-callback-trampolines (make-parameter (make-weak-hashtable)))
 
-  (define ht-stdcall-callback-trampolines (make-parameter (make-weak-hashtable)))
+  (define-thread-variable ht-stdcall-callback-trampolines (make-parameter (make-weak-hashtable)))
 
   (define make-callback-thunk
     (lambda (verifier callee)

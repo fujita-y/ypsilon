@@ -136,7 +136,12 @@ ifneq (,$(findstring FreeBSD, $(UNAME)))
     ASFLAGS = --64
     SRCS += ffi_stub_freebsd64.s
   endif
-  LDLIBS = -pthread
+  ifeq (,$(findstring kFreeBSD, $(UNAME)))
+    LDLIBS = -pthread -ldl
+  else     
+    CPPFLAGS += -DNO_POSIX_SPAWN
+    LDLIBS = -pthread
+  endif
 endif
 
 ifneq (,$(findstring OpenBSD, $(UNAME)))
