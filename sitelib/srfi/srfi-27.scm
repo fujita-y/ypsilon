@@ -82,6 +82,7 @@
           random-source-make-reals)
   (import (core)
           (srfi-27 mrg32k3a-a)
+          (only (ypsilon concurrent) define-thread-variable)
           (only (ypsilon time) microsecond))
 
 ; GENERIC PART OF MRG32k3a-GENERATOR FOR SRFI-27
@@ -387,11 +388,11 @@
 
     (define A                        ; the MRG32k3a recursion
       '#(     0 1403580 4294156359
-              1       0          0
-              0       1          0
-         527612       0 4293573854
-              1       0          0
-              0       1          0))
+                1       0          0
+                0       1          0
+                527612       0 4293573854
+                1       0          0
+                0       1          0))
 
     ; check arguments
     (if (not (and (integer? i)
@@ -565,23 +566,19 @@
   (define (random-source-pseudo-randomize! s i j)
     ((:random-source-pseudo-randomize! s) i j))
 
-; ---
-
   (define (random-source-make-integers s)
     ((:random-source-make-integers s)))
 
   (define (random-source-make-reals s . unit)
     (apply (:random-source-make-reals s) unit))
 
-; ---
-
-  (define default-random-source
+  (define-thread-variable default-random-source
     (make-random-source))
 
-  (define random-integer
+  (define-thread-variable random-integer
     (random-source-make-integers default-random-source))
 
-  (define random-real
+  (define-thread-variable random-real
     (random-source-make-reals default-random-source))
 
   ) ;[end]

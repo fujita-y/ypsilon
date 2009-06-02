@@ -28,10 +28,11 @@
 #define BVO_TAG_UNINTERNED_GLOC         13
 #define BVO_TAG_CLOSURE                 14
 #define BVO_TAG_TUPLE                   15
-#define BVO_TAG_SYMBOL                  16
-#define BVO_TAG_STRING                  17
-#define BVO_TAG_UNINTERNED_SYMBOL       18
-#define BVO_TAG_RESERVE_UNINTERNED_GLOC 19
+#define BVO_TAG_VALUES                  16
+#define BVO_TAG_SYMBOL                  17
+#define BVO_TAG_STRING                  18
+#define BVO_TAG_UNINTERNED_SYMBOL       19
+#define BVO_TAG_ALLOC_UNINTERNED_GLOC   20
 
 #define MAX_BUNDLE_SIZE                 sizeof(uint64_t)
 
@@ -193,6 +194,17 @@ loop:
                 }
                 return true;
             }
+            case TC_VALUES: {
+                scm_values_t values = (scm_values_t)obj;
+                int count = HDR_VALUES_COUNT(values->hdr);
+                if (count == 0) return true;
+                scm_obj_t* elts = values->elts;
+                for (int i = 0; i < count; i++) {
+                    if (test(elts[i])) continue;
+                    return false;
+                }
+                return true;
+            }
             case TC_SUBR:
             case TC_GLOC:
             case TC_SYMBOL:
@@ -275,6 +287,14 @@ loop:
                 for (int i = 0; i < count; i++) scan(elts[i]);
                 return;
             }
+            case TC_VALUES: {
+                scm_values_t values = (scm_values_t)obj;
+                int count = HDR_VALUES_COUNT(values->hdr);
+                if (count == 0) return;
+                scm_obj_t* elts = values->elts;
+                for (int i = 0; i < count; i++) scan(elts[i]);
+                return;
+            }
             case TC_SUBR:
             case TC_BVECTOR:
             case TC_FLONUM:
@@ -331,7 +351,7 @@ serializer_t::put_shared()
                 continue;
             }
             if (UNINTERNEDGLOCP(shared[i])) {
-                emit_u8(BVO_TAG_RESERVE_UNINTERNED_GLOC);
+                emit_u8(BVO_TAG_ALLOC_UNINTERNED_GLOC);
                 emit_u32(i);
                 emit_u32(0);
                 continue;
@@ -501,6 +521,15 @@ serializer_t::put_datum(scm_obj_t obj)
         emit_u8(BVO_TAG_TUPLE);
         emit_u32(count);
         scm_obj_t* elts = tuple->elts;
+        for (int i = 0; i < count; i++) put_datum(elts[i]);
+        return;
+    }
+    if (VALUESP(obj)) {
+        scm_values_t values = (scm_values_t)obj;
+        int count = HDR_VALUES_COUNT(values->hdr);
+        emit_u8(BVO_TAG_VALUES);
+        emit_u32(count);
+        scm_obj_t* elts = values->elts;
         for (int i = 0; i < count; i++) put_datum(elts[i]);
         return;
     }
@@ -722,6 +751,13 @@ deserializer_t::get_datum()
             }
             return tuple;
         }
+        case BVO_TAG_VALUES: {
+            int count = fetch_u32();
+            scm_values_t values = make_values(m_heap, count);
+            scm_obj_t* elts = values->elts;
+            for (int i = 0; i < count; i++) elts[i] = get_datum();
+            return values;
+        }
     }
     throw true;
 }
@@ -757,7 +793,7 @@ deserializer_t::get_shared()
             case BVO_TAG_STRING:
                 m_shared_datum[uid] = make_string_literal(m_heap, buf, len);
                 break;
-            case BVO_TAG_RESERVE_UNINTERNED_GLOC:
+            case BVO_TAG_ALLOC_UNINTERNED_GLOC:
                 m_shared_datum[uid] = make_gloc_uninterned(m_heap, (scm_symbol_t)scm_undef);
                 break;
             default:

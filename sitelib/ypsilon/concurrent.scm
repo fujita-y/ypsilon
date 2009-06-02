@@ -5,6 +5,7 @@
 
 (library (ypsilon concurrent)
   (export define-thread-variable
+          define-autoload-variable
           future
           make-mailbox
           mailbox?
@@ -37,15 +38,43 @@
 
   (define-syntax define-thread-variable
     (syntax-rules ()
-      ((_ (e0 . e1) e2 e3 ...)
-       (define-thread-variable e0 (lambda e1 e2 e3 ...)))
-      ((_ e0 e1)
+      ((_ var init)
        (begin
-         (define temp (make-parameter e1))
-         (define-syntax e0
+         (define param (make-parameter (list init)))
+         (define mutator (lambda (val) (param (list val))))
+         (define accessor
+           (lambda ()
+             (let ((p (param)))
+               (if (local-heap-object? p)
+                   (car p)
+                   (let ((val init))
+                     (param (list val)) val)))))
+         (define-syntax var
            (identifier-syntax
-             (_ (temp))
-             ((set! _ x) (temp x))))))))
+             (_ (accessor))
+             ((set! _ x) (mutator x))))))))
+
+  (define-syntax define-autoload-variable
+    (syntax-rules ()
+      ((_ var init)
+       (begin
+         (define undefined (list #f))
+         (define param (make-parameter undefined))
+         (define accessor
+           (lambda ()
+             (if (on-primordial-thread?)
+                 (let ((val init))
+                   (set! accessor (lambda () val)) val)
+                 (let ((val (param)))
+                   (if (not (eq? val undefined))
+                       val
+                       (let ((val init))
+                         (param val) val))))))
+         (define-syntax var
+           (identifier-syntax
+             (_ (accessor))
+             ((set! var x)
+              (assertion-violation 'set! (format "attempt to modify autoload variable ~u" 'var) '(set! var x)))))))))
 
   (define future-error-condition
     (condition
@@ -164,7 +193,7 @@
   ) ;[end]
 
 #|
-(import (concurrent))
+(import (ypsilon concurrent))
 (call-with-spawn (lambda () (car 3)) (lambda () 9))
 (import (concurrent))
 (define bag (make-messenger-bag 3))
@@ -235,4 +264,26 @@
 (recv answer 10)
 ; error in recv: mailbox is shutdowned
 (display-thread-status)
+(define-autoload-variable foo (begin (display "autoload triggered:") (list 1 2 3)))
+foo
+;=> prints "autoload triggered:"
+;=> (1 2 3)
+(begin (spawn (lambda () (display foo) (newline))) (unspecified))
+;=> prints "(1 2 3)"
+(define-autoload-variable foo2 (begin (display "autoload triggered:") (list 1 2 3)))
+(begin (spawn (lambda () (display foo2) (newline))) (unspecified))
+;=> prints "autoload triggered:"
+;=> prints (1 2 3)
+foo2
+;=> prints "autoload triggered:"
+;=> (1 2 3)
+foo2
+;=> (1 2 3)
 |#
+
+
+
+
+
+
+

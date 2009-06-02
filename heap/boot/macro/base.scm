@@ -99,11 +99,11 @@
       ((_ (? symbol? name) body)
        (begin
          (parameterize ((unexpect-top-level-form #t))
+           (env-delete! env name)
            (let-values (((code . expr) (compile-macro form body env)))
              (if (macro-variable? code)
                  (.set-top-level-macro! 'variable name (cadr code) env)
                  (.set-top-level-macro! 'syntax name code env))))
-         (env-delete! env name)
          '(begin)))
       (_
        (syntax-violation (car form) "expected symbol and single expression" form)))))
@@ -134,6 +134,7 @@
          (and (immutable? name)
               (syntax-violation (car form) "attempt to modify immutable binding" form))
          (let ((body (parameterize ((unexpect-top-level-form #t) (current-top-level-exterior name))
+                       (env-delete! env name)
                        (expand-form body env))))
            (destructuring-match body
              (((? let? _) _ e1)
@@ -141,5 +142,4 @@
              (_
               (set-closure-comment! body (original-id name))))
            (core-hashtable-delete! (current-macro-environment) name)
-           (env-delete! env name)
            (annotate `(define ,name ,body) form)))))))

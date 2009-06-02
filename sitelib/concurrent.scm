@@ -2,6 +2,7 @@
 (library (concurrent)
   (export call-with-spawn
           current-exception-printer
+          define-autoload-variable
           define-thread-variable
           future
           mailbox?

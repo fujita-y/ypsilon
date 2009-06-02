@@ -407,6 +407,10 @@
           (lambda (type id spec shared-env)
             `(.set-top-level-macro! ',type ',id ',spec ,shared-env)))
 
+        (define make-var-macro
+          (lambda (type id spec shared-env)
+            `(.set-top-level-macro! ',type ',id (.transformer-thunk ,spec) ,shared-env)))
+
         (define make-proc-macro
           (lambda (type id spec shared-env)
             (cond ((and (pair? spec) (eq? (car spec) 'lambda))
@@ -472,7 +476,7 @@
                                                 ((procedure)
                                                  (make-proc-macro 'syntax id spec shared-env))
                                                 ((variable)
-                                                 (make-proc-macro 'variable id spec shared-env))
+                                                 (make-var-macro 'variable id spec shared-env))
                                                 (else
                                                  (scheme-error "internal error in rewrite body: bad macro spec ~s" e)))))
                                           macros))))))))

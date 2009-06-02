@@ -577,6 +577,7 @@
     list?
     load
     load-shared-object
+    local-heap-object?
     log
     lookahead-char
     lookahead-u8
@@ -685,6 +686,7 @@
     number?
     numerator
     odd?
+    on-primordial-thread?
     opaque
     open-builtin-data-input-port
     open-bytevector-input-port

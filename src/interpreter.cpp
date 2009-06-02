@@ -14,7 +14,7 @@
 #include "printer.h"
 #include "uuid.h"
 
-#define REPORT_REMEMBER_SET     1
+#define REPORT_REMEMBER_SET     0
 
 #if USE_PARALLEL_VM
 
