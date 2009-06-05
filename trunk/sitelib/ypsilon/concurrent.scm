@@ -7,6 +7,7 @@
   (export define-thread-variable
           define-autoload-variable
           future
+          make-uuid
           make-mailbox
           mailbox?
           send
@@ -28,11 +29,10 @@
           serializable?
           timeout-object?
           shutdown-object?
-          call-with-spawn
           spawn
+          spawn*
           spawn-timeout
           spawn-heap-limit
-          make-uuid
           current-exception-printer)
   (import (core))
 
@@ -76,7 +76,7 @@
              ((set! var x)
               (assertion-violation 'set! (format "attempt to modify autoload variable ~u" 'var) '(set! var x)))))))))
 
-  (define future-error-condition
+  (define future-error
     (condition
      (make-error)
      (make-who-condition 'future)
@@ -86,51 +86,50 @@
     (syntax-rules ()
       ((_ e0 e1 ...)
        (let ((queue (make-shared-queue)))
-         (call-with-spawn
+         (spawn*
           (lambda () e0 e1 ...)
           (lambda (ans)
             (if (condition? ans)
-                (shared-queue-push! queue future-error-condition)
+                (shared-queue-push! queue future-error)
                 (shared-queue-push! queue ans))
             (shared-queue-shutdown queue)))
          (lambda timeout
            (let ((ans (apply shared-queue-pop! queue timeout)))
              (if (condition? ans) (raise ans) ans)))))))
 
-  (define indent2
-    (lambda (s)
-      (call-with-string-output-port
-       (lambda (out)
-         (let ((in (open-string-input-port s)))
-           (or (char=? (lookahead-char in) #\linefeed) (put-string out "  "))
-           (let loop ((ch (get-char in)))
-             (cond ((eof-object? ch))
-                   ((char=? ch #\linefeed)
-                    (put-string out "\n  ")
-                    (loop (get-char in)))
-                   (else
-                    (put-char out ch)
-                    (loop (get-char in))))))))))
-
-  (define call-with-spawn
+  (define spawn*
     (lambda (body finally)
-      (spawn
-       (lambda ()
-         (finally
-          (call/cc
-           (lambda (resume)
-             (with-exception-handler
-              (lambda (c)
-                (let ((e (current-error-port)))
-                  (format e "\nerror in thread: unhandled exception has occurred\n")
-                  (format e (indent2 (call-with-string-output-port
-                                      (lambda (s)
-                                        (set-current-error-port! s)
-                                        ((current-exception-printer) c)
-                                        (set-current-error-port! e)))))
-                  (format e "[thread exit]\n\n"))
-                (and (serious-condition? c) (resume c)))
-              (lambda () (body))))))))))
+
+      (define print-exception
+        (lambda (c)
+          (let ((e (current-error-port)))
+            (format e "\nerror in thread: unhandled exception has occurred\n")
+            (let ((in (open-string-input-port
+                       (call-with-string-output-port
+                        (lambda (s)
+                          (set-current-error-port! s)
+                          ((current-exception-printer) c)
+                          (set-current-error-port! e))))))
+              (or (char=? (lookahead-char in) #\linefeed) (put-string e "  "))
+              (let loop ((ch (get-char in)))
+                (cond ((eof-object? ch)
+                       (format e "[thread exit]\n\n"))
+                      ((char=? ch #\linefeed)
+                       (put-string e "\n  ")
+                       (loop (get-char in)))
+                      (else
+                       (put-char e ch)
+                       (loop (get-char in)))))))))
+
+      (spawn (lambda ()
+               (finally
+                (call/cc
+                 (lambda (escape)
+                   (with-exception-handler
+                    (lambda (c)
+                      (print-exception c)
+                      (and (serious-condition? c) (escape c)))
+                    (lambda () (body))))))))))
 
   (define mailbox?
     (lambda (x)
@@ -194,7 +193,7 @@
 
 #|
 (import (ypsilon concurrent))
-(call-with-spawn (lambda () (car 3)) (lambda () 9))
+(spawn* (lambda () (car 3)) (lambda () 9))
 (import (concurrent))
 (define bag (make-messenger-bag 3))
 (messenger-bag-put! bag "c1" '(hello) 100)
@@ -225,7 +224,7 @@
 (define (start out)
   (assert (mailbox? out))
   (let ((mbox (make-mailbox)))
-    (call-with-spawn
+    (spawn*
      (lambda ()
        (define name "reverse")
        (let loop ()
@@ -280,10 +279,3 @@ foo2
 foo2
 ;=> (1 2 3)
 |#
-
-
-
-
-
-
-

@@ -384,7 +384,6 @@ OBJECT_ALIGNED(scm_gloc_rec_t) {
 
 OBJECT_ALIGNED(scm_socket_rec_t) {
     scm_hdr_t   hdr;
-    mutex_t     lock;
     int         mode;
     int         fd;
     int         family;

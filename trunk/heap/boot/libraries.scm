@@ -554,6 +554,10 @@
                         rename-file
                         change-file-mode
                         win32-error->string
+                        
+                        make-cmwc-random-state
+                        cmwc-random-u32
+                        cmwc-random-real
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))

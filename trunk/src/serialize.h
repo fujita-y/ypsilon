@@ -13,7 +13,7 @@
 
 class serializer_t {
     object_heap_t*  m_heap;
-    scm_hashtable_t m_shared_datum;
+    scm_hashtable_t m_tagged_datum;
     scm_obj_t*      m_stack;
     scm_obj_t*      m_stack_limit;
     scm_obj_t*      m_sp;
@@ -26,11 +26,18 @@ class serializer_t {
     void emit_u32(uint32_t n);
     void emit_u64(uint64_t n);
     void emit_bytes(const uint8_t* s, int n);
+    void emit_uintptr(uintptr_t obj) {
+#if ARCH_LP64
+        emit_u64((uint64_t)obj);
+#else
+        emit_u32((uint32_t)obj);
+#endif
+    }
     void expand();
     void scan(scm_obj_t obj);
     void push(scm_obj_t obj);
     scm_obj_t pop();
-    void put_shared();
+    void put_tagged();
     void put_list(scm_obj_t obj);
     void put_datum(scm_obj_t obj);
 
@@ -43,7 +50,7 @@ public:
 
 class deserializer_t {
     object_heap_t*  m_heap;
-    scm_obj_t*      m_shared_datum;
+    scm_obj_t*      m_tagged_datum;
     uint8_t*        m_buf;
     uint8_t*        m_buf_tail;
 
@@ -51,7 +58,14 @@ class deserializer_t {
     uint32_t fetch_u32();
     uint64_t fetch_u64();
     void fetch_bytes(uint8_t* p, int n);
-    void get_shared();
+    uintptr_t fetch_uintptr() {
+#if ARCH_LP64
+        return fetch_u64();
+#else
+        return fetch_u32();
+#endif
+    }
+    void get_tagged();
     scm_obj_t get_datum();
     void* fetch_closure_env();
 

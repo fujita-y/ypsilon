@@ -2122,6 +2122,146 @@ subr_vector_copy(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// Reference:
+// Seeds for Random Number Generators, George Marsaglia - Communications of the ACM, Volume 46, Issue 5, May 2003
+// Reference:
+// Xorshift RNGs, George Marsaglia - Jurnal of Statistical Software, Vol. 8, Issue 14, Jul 2003
+
+#define CMWC_R  1359
+static const uint32_t CMWC_A = 3636507990U;
+static const uint32_t CMWC_B = 0xffffffffU;
+
+typedef struct {
+    uint32_t    i;
+    uint32_t    c;
+    uint32_t    q[CMWC_R];
+} cmwc_status_t;
+
+static void
+cmwc_status_init(cmwc_status_t* status, uint64_t seed)
+{
+    uint32_t x = 123456789;
+    uint32_t y = 362436069;
+    uint32_t z = 521288629;
+    uint32_t w = seed;
+    uint32_t t;
+    for (int i = 0; i < CMWC_R; i++) {
+        t = (x^(x<<11));
+        x = y;
+        y = z;
+        z = w;
+        w = (w^(w>>19))^(t^(t>>8));
+        status->q[i] = w;
+    }
+    status->i = 0;
+    status->c = (seed >> 32) % CMWC_A;
+}
+
+static uint32_t
+cmwc_random(cmwc_status_t* status)
+{
+    status->i = status->i + 1;
+    if (status->i >= CMWC_R) status->i = 0;
+    uint64_t t = (uint64_t)CMWC_A * status->q[status->i] + status->c;
+    status->c = (uint32_t)(t >> 32);
+    uint32_t x = CMWC_B - ((uint32_t)t & CMWC_B);
+    status->q[status->i] = x;
+    return x;
+}
+
+// make-cmwc-random-state
+scm_obj_t
+subr_make_cmwc_random_state(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (exact_integer_pred(argv[0])) {
+            int64_t seed = coerce_exact_integer_to_int64(argv[0]);
+            scm_bvector_t bvect = make_bvector(vm->m_heap, sizeof(cmwc_status_t));
+            cmwc_status_t* status = (cmwc_status_t*)bvect->elts;
+            cmwc_status_init(status, seed);
+            return bvect;
+        }
+        wrong_type_argument_violation(vm, "make-cmwc-random-state", 0, "exact integer", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "make-cmwc-random-state", 1, 1, argc, argv);
+    return scm_undef;
+}
+
+// cmwc-random-u32
+scm_obj_t
+subr_cmwc_random_u32(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (BVECTORP(argv[0])) {
+            scm_bvector_t bvect = (scm_bvector_t)argv[0];
+            if (bvect->count == sizeof(cmwc_status_t)) {
+                cmwc_status_t* status = (cmwc_status_t*)bvect->elts;
+                return uint32_to_integer(vm->m_heap, cmwc_random(status));
+            }
+            invalid_argument_violation(vm, "cmwc-random-u32", "invalid bytevector for random state,", argv[0], 0, argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "cmwc-random-u32", 0, "bytevector", argv[0], argc, argv);
+        return scm_undef;
+    }
+    if (argc == 2) {
+        if (BVECTORP(argv[0])) {
+            if (exact_positive_integer_pred(argv[1])) {
+                scm_bvector_t bvect = (scm_bvector_t)argv[0];
+                if (bvect->count == sizeof(cmwc_status_t)) {
+                    cmwc_status_t* status = (cmwc_status_t*)bvect->elts;
+                    uint32_t u32;
+                    if (exact_integer_to_uint32(argv[1], &u32)) {
+                        uint32_t q = UINT32_MAX / u32;
+                        uint32_t limit = q * u32;
+                        uint32_t temp;
+                        do { temp = cmwc_random(status); } while (temp >= limit);
+                        return uint32_to_integer(vm->m_heap, temp / q);
+                    }
+                    uint64_t u64;
+                    if (exact_integer_to_uint64(argv[1], &u64)) {
+                        if (u64 == 4294967296LL) return uint32_to_integer(vm->m_heap, cmwc_random(status));
+                    }
+                    wrong_type_argument_violation(vm, "cmwc-random-u32", 1, "positive exact integer less than or equal to 2^32", argv[1], argc, argv);
+                    return scm_undef;
+                }
+                invalid_argument_violation(vm, "cmwc-random-u32", "invalid bytevector for random state,", argv[0], 0, argc, argv);
+                return scm_undef;
+            }
+            wrong_type_argument_violation(vm, "cmwc-random-u32", 1, "non-negative exact integer", argv[1], argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "cmwc-random-u32", 0, "bytevector", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "cmwc-random-u32", 1, 2, argc, argv);
+    return scm_undef;
+}
+
+// cmwc-random-real
+scm_obj_t
+subr_cmwc_random_real(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 1) {
+        if (BVECTORP(argv[0])) {
+            scm_bvector_t bvect = (scm_bvector_t)argv[0];
+            if (bvect->count == sizeof(cmwc_status_t)) {
+                cmwc_status_t* status = (cmwc_status_t*)bvect->elts;
+                double hi = cmwc_random(status) >> 5;
+                double lo = cmwc_random(status) >> 6;
+                return make_flonum(vm->m_heap, (hi * 67108864.0 + lo + 1.0) * 1.1102230246251564e-16);
+            }
+            invalid_argument_violation(vm, "cmwc-random-real", "invalid bytevector for random state,", argv[0], 0, argc, argv);
+            return scm_undef;
+        }
+        wrong_type_argument_violation(vm, "cmwc-random-real", 0, "bytevector", argv[0], argc, argv);
+        return scm_undef;
+    }
+    wrong_number_of_arguments_violation(vm, "random-real", 1, 1, argc, argv);
+    return scm_undef;
+}
+
 #if USE_NATIVE_CODE
 
 static uint8_t* s_pool;
@@ -2361,6 +2501,9 @@ init_subr_others(object_heap_t* heap)
     DEFSUBR("read-with-shared-structure", subr_read_with_shared_structure);
     DEFSUBR("command-line", subr_command_line);
     DEFSUBR("command-line-shift", subr_command_line_shift);
+    DEFSUBR("make-cmwc-random-state", subr_make_cmwc_random_state);
+    DEFSUBR("cmwc-random-u32", subr_cmwc_random_u32);
+    DEFSUBR("cmwc-random-real", subr_cmwc_random_real);
 #if USE_NATIVE_CODE
     DEFSUBR("vmi-native-code-address", subr_vmi_native_code_address);
     DEFSUBR("vmi-set-native-code!", subr_vmi_set_native_code);

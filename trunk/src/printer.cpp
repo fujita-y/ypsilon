@@ -1037,7 +1037,6 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
         }
         case TC_SOCKET: {
             scm_socket_t socket = (scm_socket_t)obj;
-            scoped_lock lock(socket->lock);
             switch (socket->mode) {
                 case SCM_SOCKET_MODE_CLIENT: port_puts(m_port, "#<client-socket"); break;
                 case SCM_SOCKET_MODE_SERVER: port_puts(m_port, "#<server-socket"); break;

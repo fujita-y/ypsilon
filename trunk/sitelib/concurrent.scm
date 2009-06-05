@@ -1,7 +1,6 @@
 #!nobacktrace
 (library (concurrent)
-  (export call-with-spawn
-          current-exception-printer
+  (export current-exception-printer
           define-autoload-variable
           define-thread-variable
           future
@@ -27,6 +26,7 @@
           shutdown-mailbox
           shutdown-object?
           spawn
+          spawn*
           spawn-heap-limit
           spawn-timeout
           timeout-object?)
