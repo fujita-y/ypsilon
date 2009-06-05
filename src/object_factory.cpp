@@ -701,8 +701,6 @@ make_socket(object_heap_t* heap, const char* node, const char* service, int fami
     memset(obj, 0 , sizeof(scm_socket_rec_t));
     obj->hdr = scm_hdr_socket;
     obj->fd = INVALID_SOCKET;
-    obj->lock.init(true);
-    scoped_lock lock(obj->lock);
     socket_open(obj, node, service, family, type, protocol, flags);
     return obj;
 }
@@ -714,7 +712,6 @@ make_socket(object_heap_t* heap)
     memset(obj, 0 , sizeof(scm_socket_rec_t));
     obj->hdr = scm_hdr_socket;
     obj->fd = INVALID_SOCKET;
-    obj->lock.init(true);
     return obj;
 }
 
@@ -1038,11 +1035,7 @@ finalize(object_heap_t* heap, void* obj)
         }
         case TC_SOCKET: {
             scm_socket_t socket = (scm_socket_t)obj;
-            {
-                scoped_lock lock(socket->lock);
-                socket_close(socket);
-            }
-            socket->lock.destroy();
+            socket_close(socket);
             break;
         }
         case TC_SHAREDQUEUE: {
@@ -1095,11 +1088,7 @@ renounce(void* obj, int size, void* refcon)
         }
         case TC_SOCKET: {
             scm_socket_t socket = (scm_socket_t)obj;
-            {
-                scoped_lock lock(socket->lock);
-                socket_close(socket);
-            }
-            socket->lock.destroy();
+            socket_close(socket);
             break;
         }
         case TC_SHAREDQUEUE: {

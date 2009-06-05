@@ -179,7 +179,6 @@ subr_socket_port(VM* vm, int argc, scm_obj_t argv[])
             scm_socket_t socket = (scm_socket_t)argv[0];
             if (socket->fd != INVALID_SOCKET) {
                 try {
-                    socket->lock.verify_locked();
                     assert(socket->fd != INVALID_SOCKET);
                     return make_socket_port(vm->m_heap, socket, scm_false);
                 } catch (io_exception_t& e) {

@@ -29,17 +29,19 @@
 #define BVO_TAG_CLOSURE                 14
 #define BVO_TAG_TUPLE                   15
 #define BVO_TAG_VALUES                  16
-#define BVO_TAG_SYMBOL                  17
-#define BVO_TAG_STRING                  18
-#define BVO_TAG_UNINTERNED_SYMBOL       19
-#define BVO_TAG_ALLOC_UNINTERNED_GLOC   20
+#define BVO_TAG_SOCKET                  17
+#define BVO_TAG_HASHTABLE               18
+#define BVO_TAG_SYMBOL                  19
+#define BVO_TAG_STRING                  20
+#define BVO_TAG_UNINTERNED_SYMBOL       21
+#define BVO_TAG_ALLOC_UNINTERNED_GLOC   22
 
 #define MAX_BUNDLE_SIZE                 sizeof(uint64_t)
 
 serializer_t::serializer_t(object_heap_t* heap)
 {
     m_heap = heap;
-    m_shared_datum = make_hashtable(m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
+    m_tagged_datum = make_hashtable(m_heap, SCM_HASHTABLE_TYPE_EQ, lookup_mutable_hashtable_size(0));
     int depth = 32;
     m_stack = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * depth);
     m_stack_limit = m_stack + depth;
@@ -205,6 +207,19 @@ loop:
                 }
                 return true;
             }
+            case TC_HASHTABLE: {
+                scm_hashtable_t ht = (scm_hashtable_t)obj;
+                scoped_lock lock(ht->lock);
+                if (ht->type == SCM_HASHTABLE_TYPE_GENERIC) return false;
+                hashtable_rec_t* ht_datum = ht->datum;
+                assert(ht_datum);
+                int nsize = ht_datum->capacity;
+                for (int i = 0; i < nsize * 2; i++) {
+                    if (test(ht_datum->elts[i])) continue;
+                    return false;
+                }
+                return true;
+            }
             case TC_SUBR:
             case TC_GLOC:
             case TC_SYMBOL:
@@ -214,6 +229,7 @@ loop:
             case TC_BIGNUM:
             case TC_RATIONAL:
             case TC_COMPLEX:
+            case TC_SOCKET:
                 return true;
         }
         return false;
@@ -237,9 +253,9 @@ loop:
         switch (tc) {
             case TC_SYMBOL:
             case TC_STRING: {
-                if (get_hashtable(m_shared_datum, obj) != scm_undef) return;
-                int nsize = put_hashtable(m_shared_datum, obj, MAKEFIXNUM(m_shared_datum->datum->live));
-                if (nsize) rehash_hashtable(m_heap, m_shared_datum, nsize);
+                if (get_hashtable(m_tagged_datum, obj) != scm_undef) return;
+                int nsize = put_hashtable(m_tagged_datum, obj, MAKEFIXNUM(m_tagged_datum->datum->live));
+                if (nsize) rehash_hashtable(m_heap, m_tagged_datum, nsize);
                 return;
             }
             case TC_VECTOR: {
@@ -264,9 +280,9 @@ loop:
                 scm_gloc_t gloc = (scm_gloc_t)obj;
                 scan(gloc->variable);
                 if (UNINTERNEDGLOCP(gloc)) {
-                    if (get_hashtable(m_shared_datum, obj) != scm_undef) return;
-                    int nsize = put_hashtable(m_shared_datum, obj, MAKEFIXNUM(m_shared_datum->datum->live));
-                    if (nsize) rehash_hashtable(m_heap, m_shared_datum, nsize);
+                    if (get_hashtable(m_tagged_datum, obj) != scm_undef) return;
+                    int nsize = put_hashtable(m_tagged_datum, obj, MAKEFIXNUM(m_tagged_datum->datum->live));
+                    if (nsize) rehash_hashtable(m_heap, m_tagged_datum, nsize);
                     scan(gloc->value);
                 }
                 return;
@@ -295,12 +311,26 @@ loop:
                 for (int i = 0; i < count; i++) scan(elts[i]);
                 return;
             }
+            case TC_HASHTABLE: {
+                scm_hashtable_t ht = (scm_hashtable_t)obj;
+                scoped_lock lock(ht->lock);
+                if (ht->type == SCM_HASHTABLE_TYPE_GENERIC) {
+                    if (m_bad == NULL) m_bad = obj;
+                    return;
+                }
+                hashtable_rec_t* ht_datum = ht->datum;
+                assert(ht_datum);
+                int nsize = ht_datum->capacity;
+                for (int i = 0; i < nsize * 2; i++) scan(ht_datum->elts[i]);
+                return;
+            }
             case TC_SUBR:
             case TC_BVECTOR:
             case TC_FLONUM:
             case TC_BIGNUM:
             case TC_RATIONAL:
             case TC_COMPLEX:
+            case TC_SOCKET:
                 return;
         }
         if (m_bad == NULL) m_bad = obj;
@@ -308,22 +338,22 @@ loop:
 }
 
 void
-serializer_t::put_shared()
+serializer_t::put_tagged()
 {
-    scm_obj_t* shared = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * m_shared_datum->datum->live);
+    scm_obj_t* shared = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * m_tagged_datum->datum->live);
     try {
-        hashtable_rec_t* ht_datum = m_shared_datum->datum;
-        int nsize = m_shared_datum->datum->capacity;
+        hashtable_rec_t* ht_datum = m_tagged_datum->datum;
+        int nsize = m_tagged_datum->datum->capacity;
         for (int i = 0; i < nsize; i++) {
             scm_obj_t key = ht_datum->elts[i];
             scm_obj_t value = ht_datum->elts[i + nsize];
             if (CELLP(key)) {
-                assert(FIXNUM(value) < m_shared_datum->datum->live);
+                assert(FIXNUM(value) < m_tagged_datum->datum->live);
                 shared[FIXNUM(value)] = key;
             }
         }
-        emit_u32(m_shared_datum->datum->live);
-        for (int i = 0; i < m_shared_datum->datum->live; i++) {
+        emit_u32(m_tagged_datum->datum->live);
+        for (int i = 0; i < m_tagged_datum->datum->live; i++) {
             if (SYMBOLP(shared[i])) {
                 scm_symbol_t symbol = (scm_symbol_t)shared[i];
                 if (UNINTERNEDSYMBOLP(symbol)) {
@@ -394,152 +424,178 @@ serializer_t::put_datum(scm_obj_t obj)
 {
     if (!CELLP(obj)) {
         emit_u8(BVO_TAG_IMMEDIATE);
-#if ARCH_LP64
-        emit_u64((uint64_t)obj);
-#else
-        emit_u32((uint32_t)obj);
-#endif
+        emit_uintptr((uintptr_t)obj);
         return;
     }
     if (PAIRP(obj)) {
         put_list(obj);
         return;
     }
-    if (SYMBOLP(obj) || STRINGP(obj)) {
-        scm_obj_t id = get_hashtable(m_shared_datum, obj);
-        emit_u8(BVO_TAG_LOOKUP);
-        emit_u32((uint32_t)FIXNUM(id));
-        return;
-    }
-    if (VECTORP(obj)) {
-        scm_vector_t vector = (scm_vector_t)obj;
-        int count = vector->count;
-        emit_u8(BVO_TAG_VECTOR);
-        emit_u32(count);
-        scm_obj_t* elts = vector->elts;
-        for (int i = 0; i < count; i++) put_datum(elts[i]);
-        return;
-    }
-    if (BVECTORP(obj)) {
-        scm_bvector_t bv = (scm_bvector_t)obj;
-        int count = bv->count;
-        emit_u8(BVO_TAG_BVECTOR);
-        emit_u32(count);
-        emit_bytes(bv->elts, count);
-        return;
-    }
-    if (FLONUMP(obj)) {
-        union {
-            double      f64;
-            uint64_t    u64;
-        } n;
-        scm_flonum_t flonum = (scm_flonum_t)obj;
-        n.f64 = flonum->value;
-        emit_u8(BVO_TAG_FLONUM);
-        emit_u64(n.u64);
-        return;
-    }
-    if (BIGNUMP(obj)) {
-        scm_bignum_t bn = (scm_bignum_t)obj;
-        assert(sizeof(bn->elts[0]) == sizeof(uint32_t));
-        int sign = bn_get_sign(bn); // 0 or 1 or -1
-        int count = bn_get_count(bn);
-        emit_u8(BVO_TAG_BIGNUM);
-        emit_u32(sign);
-        emit_u32(count);
-#if USE_DIGIT32
-        for (int i = 0; i < count; i++) emit_u32(bn->elts[i]);
-#else
-        for (int i = 0; i < count; i++) emit_u64(bn->elts[i]);
-#endif
-        return;
-    }
-    if (RATIONALP(obj)) {
-        scm_rational_t rat = (scm_rational_t)obj;
-        emit_u8(BVO_TAG_RATIONAL);
-        put_datum(rat->nume);
-        put_datum(rat->deno);
-        return;
-    }
-    if (COMPLEXP(obj)) {
-        scm_complex_t comp = (scm_complex_t)obj;
-        emit_u8(BVO_TAG_COMPLEX);
-        put_datum(comp->real);
-        put_datum(comp->imag);
-        return;
-    }
-    if (CLOSUREP(obj)) {
-        scm_closure_t closure = (scm_closure_t)obj;
-        emit_u8(BVO_TAG_CLOSURE);
-  #if ARCH_LP64
-        emit_u64((uint64_t)closure->hdr);
-  #else
-        emit_u32((uint32_t)closure->hdr);
-  #endif
-        put_datum(closure->code);
-        put_datum(closure->doc);
-        return;
-    }
-    if (GLOCP(obj)) {
-        scm_gloc_t gloc = (scm_gloc_t)obj;
-        if (UNINTERNEDGLOCP(gloc)) {
-            scm_obj_t state = get_hashtable(m_shared_datum, obj);
-            if (FIXNUMP(state)) {
-                int id = FIXNUM(state);
-                if (id >= 0) {
-                    put_hashtable(m_shared_datum, obj, MAKEFIXNUM(- id - 1));
-                    emit_u8(BVO_TAG_UNINTERNED_GLOC);
-                    emit_u32(id);
-                    put_datum(gloc->variable);
-                    put_datum(gloc->value);
-                    return;
-                } else {
-                    id = - id - 1;
-                    emit_u8(BVO_TAG_LOOKUP);
-                    emit_u32(id);
-                    return;
+    int tc = HDR_TC(HDR(obj));
+    assert(tc >= 0);
+    assert(tc <= TC_MASKBITS);
+    switch (tc) {
+        case TC_SYMBOL: case TC_STRING: {
+            scm_obj_t id = get_hashtable(m_tagged_datum, obj);
+            emit_u8(BVO_TAG_LOOKUP);
+            emit_u32((uint32_t)FIXNUM(id));
+            return;
+        }
+        case TC_VECTOR: {
+            scm_vector_t vector = (scm_vector_t)obj;
+            int count = vector->count;
+            emit_u8(BVO_TAG_VECTOR);
+            emit_u32(count);
+            scm_obj_t* elts = vector->elts;
+            for (int i = 0; i < count; i++) put_datum(elts[i]);
+            return;
+        }
+        case TC_BVECTOR: {
+            scm_bvector_t bv = (scm_bvector_t)obj;
+            int count = bv->count;
+            emit_u8(BVO_TAG_BVECTOR);
+            emit_u32(count);
+            emit_bytes(bv->elts, count);
+            return;
+        }
+        case TC_FLONUM: {
+            union {
+                double      f64;
+                uint64_t    u64;
+            } n;
+            scm_flonum_t flonum = (scm_flonum_t)obj;
+            n.f64 = flonum->value;
+            emit_u8(BVO_TAG_FLONUM);
+            emit_u64(n.u64);
+            return;
+        }
+        case TC_BIGNUM: {
+            scm_bignum_t bn = (scm_bignum_t)obj;
+            assert(sizeof(bn->elts[0]) == sizeof(uint32_t));
+            int sign = bn_get_sign(bn); // 0 or 1 or -1
+            int count = bn_get_count(bn);
+            emit_u8(BVO_TAG_BIGNUM);
+            emit_u32(sign);
+            emit_u32(count);
+    #if USE_DIGIT32
+            for (int i = 0; i < count; i++) emit_u32(bn->elts[i]);
+    #else
+            for (int i = 0; i < count; i++) emit_u64(bn->elts[i]);
+    #endif
+            return;
+        }
+        case TC_RATIONAL: {
+            scm_rational_t rat = (scm_rational_t)obj;
+            emit_u8(BVO_TAG_RATIONAL);
+            put_datum(rat->nume);
+            put_datum(rat->deno);
+            return;
+        }
+        case TC_COMPLEX: {
+            scm_complex_t comp = (scm_complex_t)obj;
+            emit_u8(BVO_TAG_COMPLEX);
+            put_datum(comp->real);
+            put_datum(comp->imag);
+            return;
+        }
+        case TC_CLOSURE: {
+            scm_closure_t closure = (scm_closure_t)obj;
+            emit_u8(BVO_TAG_CLOSURE);
+            emit_uintptr(closure->hdr);
+            put_datum(closure->code);
+            put_datum(closure->doc);
+            return;
+        }
+        case TC_GLOC: {
+            scm_gloc_t gloc = (scm_gloc_t)obj;
+            if (UNINTERNEDGLOCP(gloc)) {
+                scm_obj_t state = get_hashtable(m_tagged_datum, obj);
+                if (FIXNUMP(state)) {
+                    int id = FIXNUM(state);
+                    if (id >= 0) {
+                        put_hashtable(m_tagged_datum, obj, MAKEFIXNUM(- id - 1));
+                        emit_u8(BVO_TAG_UNINTERNED_GLOC);
+                        emit_u32(id);
+                        put_datum(gloc->variable);
+                        put_datum(gloc->value);
+                        return;
+                    } else {
+                        id = - id - 1;
+                        emit_u8(BVO_TAG_LOOKUP);
+                        emit_u32(id);
+                        return;
+                    }
+                }
+                fatal("%s:%u internal error: something wrong", __FILE__, __LINE__);
+            }
+            emit_u8(BVO_TAG_GLOC);
+            put_datum(gloc->variable);
+            return;
+        }
+        case TC_SUBR: {
+            emit_u8(BVO_TAG_SUBR);
+            emit_uintptr((uintptr_t)obj);
+            return;
+        }
+        case TC_TUPLE: {
+            scm_tuple_t tuple = (scm_tuple_t)obj;
+            int count = HDR_TUPLE_COUNT(tuple->hdr);
+            emit_u8(BVO_TAG_TUPLE);
+            emit_u32(count);
+            scm_obj_t* elts = tuple->elts;
+            for (int i = 0; i < count; i++) put_datum(elts[i]);
+            return;
+        }
+        case TC_VALUES: {
+            scm_values_t values = (scm_values_t)obj;
+            int count = HDR_VALUES_COUNT(values->hdr);
+            emit_u8(BVO_TAG_VALUES);
+            emit_u32(count);
+            scm_obj_t* elts = values->elts;
+            for (int i = 0; i < count; i++) put_datum(elts[i]);
+            return;
+        }
+        case TC_SOCKET: {
+            assert(sizeof(int) == 4);
+            scm_socket_t socket = (scm_socket_t)obj;
+            emit_u8(BVO_TAG_SOCKET);
+            emit_u32(socket->mode);
+            emit_u32(socket->fd);
+            emit_u32(socket->family);
+            emit_u32(socket->socktype);
+            emit_u32(socket->protocol);
+            emit_u32(socket->addrlen);
+            emit_bytes((uint8_t*)&socket->addr, sizeof(socket->addr));
+            return;
+        }
+        case TC_HASHTABLE: {
+            assert(sizeof(int) == 4);
+            scm_hashtable_t ht = (scm_hashtable_t)obj;
+            scoped_lock lock(ht->lock);
+            if (ht->type == SCM_HASHTABLE_TYPE_GENERIC) fatal("%s:%u internal error: something wrong", __FILE__, __LINE__);
+            hashtable_rec_t* ht_datum = ht->datum;
+            assert(ht_datum);
+            emit_u8(BVO_TAG_HASHTABLE);
+            emit_u32(ht->type);
+            emit_u32(ht_datum->live);
+            int nsize = ht_datum->capacity;
+            for (int i = 0; i < nsize; i++) {
+                if (ht_datum->elts[i] != scm_hash_free && ht_datum->elts[i] != scm_hash_deleted) {
+                    put_datum(ht_datum->elts[i]);
+                    put_datum(ht_datum->elts[i + nsize]);
                 }
             }
-            fatal("%s:%u internal error: something wrong", __FILE__, __LINE__);
+            return;
         }
-        emit_u8(BVO_TAG_GLOC);
-        put_datum(gloc->variable);
-        return;
     }
-    if (SUBRP(obj)) {
-        emit_u8(BVO_TAG_SUBR);
-  #if ARCH_LP64
-        emit_u64((uint64_t)obj);
-  #else
-        emit_u32((uint32_t)obj);
-  #endif
-        return;
-    }
-    if (TUPLEP(obj)) {
-        scm_tuple_t tuple = (scm_tuple_t)obj;
-        int count = HDR_TUPLE_COUNT(tuple->hdr);
-        emit_u8(BVO_TAG_TUPLE);
-        emit_u32(count);
-        scm_obj_t* elts = tuple->elts;
-        for (int i = 0; i < count; i++) put_datum(elts[i]);
-        return;
-    }
-    if (VALUESP(obj)) {
-        scm_values_t values = (scm_values_t)obj;
-        int count = HDR_VALUES_COUNT(values->hdr);
-        emit_u8(BVO_TAG_VALUES);
-        emit_u32(count);
-        scm_obj_t* elts = values->elts;
-        for (int i = 0; i < count; i++) put_datum(elts[i]);
-        return;
-    }
+
     fatal("%s:%u internal error: datum not supported in serialized object", __FILE__, __LINE__);
 }
 
 scm_obj_t
 serializer_t::translate(scm_obj_t obj)
 {
-    scoped_lock lock(m_shared_datum->lock);
+    scoped_lock lock(m_tagged_datum->lock);
     scan(obj);
     if (m_bad != NULL) return m_bad;
 #if ARCH_LP64
@@ -547,7 +603,7 @@ serializer_t::translate(scm_obj_t obj)
 #else
     emit_u8(32);
 #endif
-    put_shared();
+    put_tagged();
     put_datum(obj);
     scm_bvector_t bytes = make_bvector(m_heap, m_buf_mark);
     memcpy(bytes->elts, m_buf, m_buf_mark);
@@ -557,12 +613,12 @@ serializer_t::translate(scm_obj_t obj)
 deserializer_t::deserializer_t(object_heap_t* heap)
 {
     m_heap = heap;
-    m_shared_datum = NULL;
+    m_tagged_datum = NULL;
 }
 
 deserializer_t::~deserializer_t()
 {
-    if (m_shared_datum) m_heap->deallocate_private(m_shared_datum);
+    if (m_tagged_datum) m_heap->deallocate_private(m_tagged_datum);
 }
 
 uint8_t
@@ -628,14 +684,10 @@ deserializer_t::get_datum()
     switch (octet) {
         case BVO_TAG_LOOKUP: {
             uint32_t uid = fetch_u32();
-            return m_shared_datum[uid];
+            return m_tagged_datum[uid];
         }
         case BVO_TAG_IMMEDIATE: {
-#if ARCH_LP64
-            return (scm_obj_t)fetch_u64();
-#else
-            return (scm_obj_t)fetch_u32();
-#endif
+            return (scm_obj_t)fetch_uintptr();
         }
         case BVO_TAG_PLIST: {
             int count = fetch_u32();
@@ -694,11 +746,7 @@ deserializer_t::get_datum()
             return bv;
         }
         case BVO_TAG_SUBR: {
-  #if ARCH_LP64
-            return (scm_subr_t)fetch_u64();
-  #else
-            return (scm_subr_t)fetch_u32();
-  #endif
+            return (scm_subr_t)fetch_uintptr();
         }
         case BVO_TAG_GLOC: {
             scm_symbol_t symbol = (scm_symbol_t)get_datum();
@@ -718,18 +766,14 @@ deserializer_t::get_datum()
         }
         case BVO_TAG_UNINTERNED_GLOC: {
             int id = fetch_u32();
-            scm_gloc_t gloc = (scm_gloc_t)m_shared_datum[id];
+            scm_gloc_t gloc = (scm_gloc_t)m_tagged_datum[id];
             assert(GLOCP(gloc));
             gloc->variable = (scm_symbol_t)get_datum();
             gloc->value = get_datum();
             return gloc;
         }
         case BVO_TAG_CLOSURE: {
-  #if ARCH_LP64
-            scm_hdr_t hdr = fetch_u64();
-  #else
-            scm_hdr_t hdr = fetch_u32();
-  #endif
+            scm_hdr_t hdr = fetch_uintptr();
             scm_obj_t code = get_datum();
             scm_obj_t doc = get_datum();
             return make_closure(m_heap, hdr, NULL, code, doc);
@@ -758,18 +802,45 @@ deserializer_t::get_datum()
             for (int i = 0; i < count; i++) elts[i] = get_datum();
             return values;
         }
+        case BVO_TAG_SOCKET: {
+            assert(sizeof(int) == 4);
+            scm_socket_t socket = make_socket(m_heap);
+            socket->mode = fetch_u32();
+            socket->fd = fetch_u32();
+            socket->family = fetch_u32();
+            socket->socktype = fetch_u32();
+            socket->protocol = fetch_u32();
+            socket->addrlen = fetch_u32();
+            fetch_bytes((uint8_t*)&socket->addr, sizeof(socket->addr));
+            return socket;
+        }
+        case BVO_TAG_HASHTABLE: {
+            assert(sizeof(int) == 4);
+            int type = fetch_u32();
+            int live = fetch_u32();
+            if (type == SCM_HASHTABLE_TYPE_GENERIC) fatal("%s:%u internal error: something wrong", __FILE__, __LINE__);
+            scm_hashtable_t ht = make_hashtable(m_heap, type, lookup_mutable_hashtable_size(live));
+            scoped_lock lock(ht->lock);
+            for (int i = 0; i < live; i++) {
+                scm_obj_t key = get_datum();
+                scm_obj_t value = get_datum();
+                int nsize = put_hashtable(ht, key, value);
+                if (nsize) rehash_hashtable(m_heap, ht, nsize);
+            }
+            return ht;
+        }
     }
     throw true;
 }
 
 void
-deserializer_t::get_shared()
+deserializer_t::get_tagged()
 {
     int buflen = 128;
     char* buf = (char*)m_heap->allocate_private(buflen + 1);
     int count = fetch_u32();
     if (count < 0) throw true;
-    m_shared_datum = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * count);
+    m_tagged_datum = (scm_obj_t*)m_heap->allocate_private(sizeof(scm_obj_t) * count);
     for (int i = 0; i < count; i++) {
         uint8_t tag = fetch_u8();
         uint32_t uid = fetch_u32();
@@ -785,16 +856,16 @@ deserializer_t::get_shared()
         buf[len] = 0;
         switch (tag) {
             case BVO_TAG_SYMBOL:
-                m_shared_datum[uid] = make_symbol(m_heap, buf, len);
+                m_tagged_datum[uid] = make_symbol(m_heap, buf, len);
                 break;
             case BVO_TAG_UNINTERNED_SYMBOL:
-                m_shared_datum[uid] = make_symbol_uninterned(m_heap, buf, len - 2, buf[len - 1]);
+                m_tagged_datum[uid] = make_symbol_uninterned(m_heap, buf, len - 2, buf[len - 1]);
                 break;
             case BVO_TAG_STRING:
-                m_shared_datum[uid] = make_string_literal(m_heap, buf, len);
+                m_tagged_datum[uid] = make_string_literal(m_heap, buf, len);
                 break;
             case BVO_TAG_ALLOC_UNINTERNED_GLOC:
-                m_shared_datum[uid] = make_gloc_uninterned(m_heap, (scm_symbol_t)scm_undef);
+                m_tagged_datum[uid] = make_gloc_uninterned(m_heap, (scm_symbol_t)scm_undef);
                 break;
             default:
                 m_heap->deallocate_private(buf);
@@ -816,7 +887,7 @@ deserializer_t::translate(scm_bvector_t obj)
 #else
         if (fetch_u8() != 32) return NULL;
 #endif
-        get_shared();
+        get_tagged();
         scm_obj_t obj = get_datum();
         if (m_buf != m_buf_tail) return NULL;
         return obj;

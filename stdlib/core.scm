@@ -238,6 +238,8 @@
     close-output-port
     close-port
     closure-code
+    cmwc-random-real
+    cmwc-random-u32
     collect
     collect-notify
     collect-stack-notify
@@ -589,6 +591,7 @@
     make-bytevector
     make-bytevector-mapping
     make-callback-trampoline
+    make-cmwc-random-state
     make-core-hashtable
     make-custom-binary-input-port
     make-custom-binary-input/output-port

@@ -30,7 +30,6 @@ throw_socket_error(int operation, const char* message)
 void
 socket_open(scm_socket_t s, const char* node, const char* service, int family, int type, int flags, int protocol)
 {
-    s->lock.verify_locked();
     struct addrinfo hints;
     struct addrinfo* list;
     memset(&hints, 0, sizeof(hints));
@@ -123,7 +122,6 @@ socket_open(scm_socket_t s, const char* node, const char* service, int family, i
 void
 socket_shutdown(scm_socket_t s, int how)
 {
-    s->lock.verify_locked();
     if (s->fd == INVALID_SOCKET) return;
     shutdown(s->fd, how);
 }
@@ -131,7 +129,6 @@ socket_shutdown(scm_socket_t s, int how)
 void
 socket_close(scm_socket_t s)
 {
-    s->lock.verify_locked();
     if (s->fd == INVALID_SOCKET) return;
     CLOSE_SOCKET(s->fd);
     s->fd = INVALID_SOCKET;
@@ -154,7 +151,6 @@ socket_name_string(object_heap_t* heap, scm_socket_t s)
 int
 socket_send(scm_socket_t s, uint8_t* buf, int len, int flags)
 {
-    s->lock.verify_locked();
     assert(s->fd != INVALID_SOCKET);
     uint8_t* p = buf;
     int rest = len;
@@ -176,7 +172,6 @@ socket_send(scm_socket_t s, uint8_t* buf, int len, int flags)
 int
 socket_recv(scm_socket_t s, uint8_t* buf, int len, int flags, bool* again)
 {
-    s->lock.verify_locked();
     assert(s->fd != INVALID_SOCKET);
 
 loop:
@@ -197,7 +192,6 @@ loop:
 scm_obj_t
 socket_accept(object_heap_t* heap, scm_socket_t s)
 {
-    s->lock.verify_locked();
     assert(s->fd != INVALID_SOCKET);
     struct sockaddr_storage addr;
     socklen_t addrlen = sizeof(addr);
