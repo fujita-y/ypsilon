@@ -83,7 +83,6 @@ public:
     Interpreter*        m_interp;
     VM*                 m_parent;
     int                 m_id;
-    int                 m_child;
     scm_obj_t           m_spawn_timeout; // #f or fixnum, no gc protect
     size_t              m_spawn_heap_limit;
 #endif
@@ -219,13 +218,13 @@ public:
     scm_obj_t opcode_to_instruction(int opcode) {
         assert(opcode >= 0 && opcode < VMOP_INSTRUCTION_COUNT);
         return m_heap->inherent_symbol(opcode);
-    }    
+    }
 #endif
 #if USE_NATIVE_CODE
     static void* s_return_loop;
     static void* s_return_apply;
     static void* s_return_pop_cont;
-#endif    
+#endif
 } ATTRIBUTE(aligned(16));
 
 

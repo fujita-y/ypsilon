@@ -1519,6 +1519,14 @@ subr_bytevector_c_long_ref(VM* vm, int argc, scm_obj_t argv[])
     return c_s64_ref("bytevector-c-long-ref", vm, argc, argv);
 }
 
+// bytevector-c-long-long-ref
+scm_obj_t
+subr_bytevector_c_long_long_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(long long) == 8);
+    return c_s64_ref("bytevector-c-long-long-ref", vm, argc, argv);
+}
+
 // bytevector-c-unsigend-long-ref
 scm_obj_t
 subr_bytevector_c_unsigned_long_ref(VM* vm, int argc, scm_obj_t argv[])
@@ -1526,6 +1534,14 @@ subr_bytevector_c_unsigned_long_ref(VM* vm, int argc, scm_obj_t argv[])
     assert(sizeof(unsigned long) == 4 || sizeof(unsigned long) == 8);
     if (sizeof(unsigned long) == 4) return c_u32_ref("bytevector-c-unsigned-long-ref", vm, argc, argv);
     return c_u64_ref("bytevector-c-unsigned-long-ref", vm, argc, argv);
+}
+
+// bytevector-c-unsigend-long-long-ref
+scm_obj_t
+subr_bytevector_c_unsigned_long_long_ref(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(unsigned long long) == 8);
+    return c_u64_ref("bytevector-c-unsigned-long-long-ref", vm, argc, argv);
 }
 
 // bytevector-c-void*-ref
@@ -1639,6 +1655,14 @@ subr_bytevector_c_long_set(VM* vm, int argc, scm_obj_t argv[])
     assert(sizeof(long) == 4 || sizeof(long) == 8);
     if (sizeof(long) == 4) return c_n32_set("bytevector-c-long-set!", vm, argc, argv);
     return c_n64_set("bytevector-c-long-set!", vm, argc, argv);
+}
+
+// bytevector-c-long-long-set!
+scm_obj_t
+subr_bytevector_c_long_long_set(VM* vm, int argc, scm_obj_t argv[])
+{
+    assert(sizeof(long long) == 8);
+    return c_n64_set("bytevector-c-long-long-set!", vm, argc, argv);
 }
 
 // bytevector-c-void*-set!
@@ -1786,9 +1810,11 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector-c-short-ref", subr_bytevector_c_short_ref);
     DEFSUBR("bytevector-c-int-ref", subr_bytevector_c_int_ref);
     DEFSUBR("bytevector-c-long-ref", subr_bytevector_c_long_ref);
+    DEFSUBR("bytevector-c-long-long-ref", subr_bytevector_c_long_long_ref);
     DEFSUBR("bytevector-c-unsigned-short-ref", subr_bytevector_c_unsigned_short_ref);
     DEFSUBR("bytevector-c-unsigned-int-ref", subr_bytevector_c_unsigned_int_ref);
     DEFSUBR("bytevector-c-unsigned-long-ref", subr_bytevector_c_unsigned_long_ref);
+    DEFSUBR("bytevector-c-unsigned-long-long-ref", subr_bytevector_c_unsigned_long_long_ref);
     DEFSUBR("bytevector-c-int8-ref", subr_bytevector_c_int8_ref);
     DEFSUBR("bytevector-c-int16-ref", subr_bytevector_c_int16_ref);
     DEFSUBR("bytevector-c-int32-ref", subr_bytevector_c_int32_ref);
@@ -1802,6 +1828,7 @@ void init_subr_bvector(object_heap_t* heap)
     DEFSUBR("bytevector-c-short-set!", subr_bytevector_c_short_set);
     DEFSUBR("bytevector-c-int-set!", subr_bytevector_c_int_set);
     DEFSUBR("bytevector-c-long-set!", subr_bytevector_c_long_set);
+    DEFSUBR("bytevector-c-long-long-set!", subr_bytevector_c_long_long_set);
     DEFSUBR("bytevector-c-void*-ref", subr_bytevector_c_intptr_ref);
     DEFSUBR("bytevector-c-void*-set!", subr_bytevector_c_intptr_set);
     DEFSUBR("bytevector-c-int8-set!", subr_bytevector_c_int8_set);

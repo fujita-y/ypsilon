@@ -15,16 +15,19 @@
           bytevector-c-short-ref
           bytevector-c-int-ref
           bytevector-c-long-ref
+          bytevector-c-long-long-ref
           bytevector-c-void*-ref
           bytevector-c-float-ref
           bytevector-c-double-ref
           bytevector-c-unsigned-short-ref
           bytevector-c-unsigned-int-ref
           bytevector-c-unsigned-long-ref
+          bytevector-c-unsigned-long-long-ref
           bytevector-c-bool-set!
           bytevector-c-short-set!
           bytevector-c-int-set!
           bytevector-c-long-set!
+          bytevector-c-long-long-set!
           bytevector-c-void*-set!
           bytevector-c-float-set!
           bytevector-c-double-set!
@@ -45,6 +48,7 @@
           make-c-short
           make-c-int
           make-c-long
+          make-c-long-long
           make-c-void*
           make-c-float
           make-c-double
@@ -57,12 +61,14 @@
           c-short-ref
           c-int-ref
           c-long-ref
+          c-long-long-ref
           c-void*-ref
           c-float-ref
           c-double-ref
           c-unsigned-short-ref
           c-unsigned-int-ref
           c-unsigned-long-ref
+          c-unsigned-long-long-ref
           c-int8-ref
           c-int16-ref
           c-int32-ref
@@ -76,6 +82,7 @@
           c-short-set!
           c-int-set!
           c-long-set!
+          c-long-long-set!
           c-void*-set!
           c-float-set!
           c-double-set!
@@ -85,15 +92,17 @@
           c-int64-set!
           c-string-set!
           sizeof:bool
+          sizeof:short
           sizeof:int
           sizeof:long
-          sizeof:short
+          sizeof:long-long
           sizeof:void*
           sizeof:size_t
           alignof:bool
+          alignof:short
           alignof:int
           alignof:long
-          alignof:short
+          alignof:long-long
           alignof:void*
           alignof:size_t
           alignof:float
@@ -105,24 +114,26 @@
 
   (import (core))
 
-  (define sizeof:bool      (architecture-feature 'sizeof:bool))
-  (define sizeof:int       (architecture-feature 'sizeof:int))
-  (define sizeof:long      (architecture-feature 'sizeof:long))
-  (define sizeof:short     (architecture-feature 'sizeof:short))
-  (define sizeof:void*     (architecture-feature 'sizeof:void*))
-  (define sizeof:size_t    (architecture-feature 'sizeof:size_t))
-  (define alignof:bool     (architecture-feature 'alignof:bool))
-  (define alignof:int      (architecture-feature 'alignof:int))
-  (define alignof:long     (architecture-feature 'alignof:long))
-  (define alignof:short    (architecture-feature 'alignof:short))
-  (define alignof:void*    (architecture-feature 'alignof:void*))
-  (define alignof:size_t   (architecture-feature 'alignof:size_t))
-  (define alignof:float    (architecture-feature 'alignof:float))
-  (define alignof:double   (architecture-feature 'alignof:double))
-  (define alignof:int8_t   (architecture-feature 'alignof:int8_t))
-  (define alignof:int16_t  (architecture-feature 'alignof:int16_t))
-  (define alignof:int32_t  (architecture-feature 'alignof:int32_t))
-  (define alignof:int64_t  (architecture-feature 'alignof:int64_t))
+  (define sizeof:bool       (architecture-feature 'sizeof:bool))
+  (define sizeof:int        (architecture-feature 'sizeof:int))
+  (define sizeof:long       (architecture-feature 'sizeof:long))
+  (define sizeof:long-long  (architecture-feature 'sizeof:long-long))
+  (define sizeof:short      (architecture-feature 'sizeof:short))
+  (define sizeof:void*      (architecture-feature 'sizeof:void*))
+  (define sizeof:size_t     (architecture-feature 'sizeof:size_t))
+  (define alignof:bool      (architecture-feature 'alignof:bool))
+  (define alignof:int       (architecture-feature 'alignof:int))
+  (define alignof:long      (architecture-feature 'alignof:long))
+  (define alignof:long-long (architecture-feature 'alignof:long-long))
+  (define alignof:short     (architecture-feature 'alignof:short))
+  (define alignof:void*     (architecture-feature 'alignof:void*))
+  (define alignof:size_t    (architecture-feature 'alignof:size_t))
+  (define alignof:float     (architecture-feature 'alignof:float))
+  (define alignof:double    (architecture-feature 'alignof:double))
+  (define alignof:int8_t    (architecture-feature 'alignof:int8_t))
+  (define alignof:int16_t   (architecture-feature 'alignof:int16_t))
+  (define alignof:int32_t   (architecture-feature 'alignof:int32_t))
+  (define alignof:int64_t   (architecture-feature 'alignof:int64_t))
 
   (define coerce-bool
     (lambda (x)
@@ -198,28 +209,30 @@
                                  (list 'primitive
                                        accessor
                                        mutator)))))
-       `((char   1              1               bytevector-c-uint8-ref  bytevector-c-int8-set!)
-         (bool   ,sizeof:bool   ,alignof:bool   bytevector-c-bool-ref   bytevector-c-bool-set!)
-         (short  ,sizeof:short  ,alignof:short  bytevector-c-short-ref  bytevector-c-short-set!)
-         (int    ,sizeof:int    ,alignof:int    bytevector-c-int-ref    bytevector-c-int-set!)
-         (long   ,sizeof:long   ,alignof:long   bytevector-c-long-ref   bytevector-c-long-set!)
-         (char*  ,sizeof:void*  ,alignof:void*  bytevector-c-void*-ref  bytevector-c-void*-set!)
-         (void*  ,sizeof:void*  ,alignof:void*  bytevector-c-void*-ref  bytevector-c-void*-set!)
+       `((char 1 1 bytevector-c-uint8-ref bytevector-c-int8-set!)
+         (bool ,sizeof:bool ,alignof:bool bytevector-c-bool-ref bytevector-c-bool-set!)
+         (short ,sizeof:short ,alignof:short bytevector-c-short-ref bytevector-c-short-set!)
+         (int ,sizeof:int ,alignof:int bytevector-c-int-ref bytevector-c-int-set!)
+         (long ,sizeof:long ,alignof:long bytevector-c-long-ref bytevector-c-long-set!)
+         (long-long ,sizeof:long-long ,alignof:long-long bytevector-c-long-long-ref bytevector-c-long-long-set!)
+         (char* ,sizeof:void* ,alignof:void* bytevector-c-void*-ref bytevector-c-void*-set!)
+         (void* ,sizeof:void* ,alignof:void* bytevector-c-void*-ref bytevector-c-void*-set!)
          (unsigned-short ,sizeof:short ,alignof:short bytevector-c-unsigned-short-ref bytevector-c-short-set!)
-         (unsigned-int   ,sizeof:int   ,alignof:int   bytevector-c-unsigned-int-ref   bytevector-c-int-set!)
-         (unsigned-long  ,sizeof:long  ,alignof:long  bytevector-c-unsigned-long-ref  bytevector-c-long-set!)
-         (float    4 ,alignof:float   bytevector-c-float-ref  bytevector-c-float-set!)
-         (double   8 ,alignof:double  bytevector-c-double-ref bytevector-c-double-set!)
-         (int8_t   1 ,alignof:int8_t  bytevector-c-int8-ref   bytevector-c-int8-set!)
-         (int16_t  2 ,alignof:int16_t bytevector-c-int16-ref  bytevector-c-int16-set!)
-         (int32_t  4 ,alignof:int32_t bytevector-c-int32-ref  bytevector-c-int32-set!)
-         (int64_t  8 ,alignof:int64_t bytevector-c-int64-ref  bytevector-c-int64-set!)
-         (uint8_t  1 ,alignof:int8_t  bytevector-c-uint8-ref  bytevector-c-int8-set!)
+         (unsigned-int ,sizeof:int ,alignof:int bytevector-c-unsigned-int-ref bytevector-c-int-set!)
+         (unsigned-long ,sizeof:long ,alignof:long bytevector-c-unsigned-long-ref bytevector-c-long-set!)
+         (unsigned-long-long ,sizeof:long-long ,alignof:long-long bytevector-c-unsigned-long-long-ref bytevector-c-long-long-set!)
+         (float 4 ,alignof:float bytevector-c-float-ref bytevector-c-float-set!)
+         (double 8 ,alignof:double bytevector-c-double-ref bytevector-c-double-set!)
+         (int8_t 1 ,alignof:int8_t bytevector-c-int8-ref bytevector-c-int8-set!)
+         (int16_t 2 ,alignof:int16_t bytevector-c-int16-ref bytevector-c-int16-set!)
+         (int32_t 4 ,alignof:int32_t bytevector-c-int32-ref bytevector-c-int32-set!)
+         (int64_t 8 ,alignof:int64_t bytevector-c-int64-ref bytevector-c-int64-set!)
+         (uint8_t 1 ,alignof:int8_t bytevector-c-uint8-ref bytevector-c-int8-set!)
          (uint16_t 2 ,alignof:int16_t bytevector-c-uint16-ref bytevector-c-int16-set!)
          (uint32_t 4 ,alignof:int32_t bytevector-c-uint32-ref bytevector-c-int32-set!)
          (uint64_t 8 ,alignof:int64_t bytevector-c-uint64-ref bytevector-c-int64-set!)
          (size_t ,sizeof:size_t ,alignof:size_t ,@(cond ((= sizeof:size_t sizeof:int)
-                                                         '(bytevector-c-unsigned-int-ref  bytevector-c-int-set!))
+                                                         '(bytevector-c-unsigned-int-ref bytevector-c-int-set!))
                                                         ((= sizeof:size_t sizeof:long)
                                                          '(bytevector-c-unsigned-long-ref bytevector-c-long-set!))
                                                         (else
@@ -566,6 +579,7 @@
     (define-methods short sizeof:short)
     (define-methods int sizeof:int)
     (define-methods long sizeof:long)
+    (define-methods long-long sizeof:long-long)
     (define-methods void* sizeof:void*)
     (define-methods float 4)
     (define-methods double 8)
@@ -579,7 +593,8 @@
     (define-accessor uint64 4)
     (define-accessor unsigned-short sizeof:short)
     (define-accessor unsigned-int sizeof:int)
-    (define-accessor unsigned-long sizeof:long))
+    (define-accessor unsigned-long sizeof:long)
+    (define-accessor unsigned-long-long sizeof:long-long))
 
   (define make-c-string (lambda (s) (string->utf8/nul s)))
 

@@ -24,7 +24,9 @@ subr_spawn(VM* vm, int argc, scm_obj_t argv[])
 #if USE_PARALLEL_VM
     if (argc >= 1) {
         if (CLOSUREP(argv[0])) {
+            vm->m_interp->update(vm, VM_STATE_BLOCK);
             int n = vm->m_interp->spawn(vm, (scm_closure_t)argv[0], argc - 1, argv + 1);
+            vm->m_interp->update(vm, VM_STATE_ACTIVE);
             if (n < 0) return scm_timeout;
             return MAKEFIXNUM(n);
         }

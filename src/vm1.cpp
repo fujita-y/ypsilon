@@ -1287,7 +1287,7 @@ VM::loop(bool init, bool resume)
 #if USE_PARALLEL_VM
                     if (m_interp->live_thread_count() > 1) {
                         if (!m_heap->in_heap(slot)) goto ERROR_SET_ILOC_BAD_CONTEXT;
-                        if (m_child > 0) m_interp->remember(*slot, m_value);
+                        if (m_heap->m_child > 0) m_interp->remember(*slot, m_value);
                     }
 #endif
                     m_heap->write_barrier(m_value);

@@ -208,7 +208,7 @@ subr_set_car(VM* vm, int argc, scm_obj_t argv[])
                     thread_object_access_violation(vm, "set-car!" ,argc, argv);
                     return scm_undef;
                 }
-                if (vm->m_child > 0) vm->m_interp->remember(CAR(argv[0]), argv[1]);
+                if (vm->m_heap->m_child > 0) vm->m_interp->remember(CAR(argv[0]), argv[1]);
             }
 #endif
 #if USE_CONST_LITERAL
@@ -240,7 +240,7 @@ subr_set_cdr(VM* vm, int argc, scm_obj_t argv[])
                     thread_object_access_violation(vm, "set-cdr!" ,argc, argv);
                     return scm_undef;
                 }
-                if (vm->m_child > 0) vm->m_interp->remember(CDR(argv[0]), argv[1]);
+                if (vm->m_heap->m_child > 0) vm->m_interp->remember(CDR(argv[0]), argv[1]);
             }
 #endif
 #if USE_CONST_LITERAL

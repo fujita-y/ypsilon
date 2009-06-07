@@ -133,6 +133,7 @@ public:
 #if USE_PARALLEL_VM
     object_heap_t*          m_primordial;
     object_heap_t*          m_parent;
+    int                     m_child;
 #endif
                             object_heap_t();
     void                    init_common(size_t pool_size, size_t initial_datum_size);

@@ -30,6 +30,9 @@ public:
     void            lock();
     void            unlock();
     void            sweep();
+#if USE_PARALLEL_VM
+    void            protect();
+#endif
     void            inplace_rehash();
     void            resolve();
     void            relocate(bool every);

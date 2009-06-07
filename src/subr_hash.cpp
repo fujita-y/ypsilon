@@ -294,7 +294,7 @@ subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[])
                         thread_object_access_violation(vm, "core-hashtable-set!" ,argc, argv);
                         return scm_undef;
                     }
-                    if (HDR_HASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                    if (HDR_HASHTABLE_SHARED(ht->hdr) && (vm->m_heap->m_child > 0)) {
                         vm->m_interp->remember(get_hashtable(ht, argv[1]), argv[2]);
                     }
                 }
@@ -321,7 +321,7 @@ subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[])
                         thread_object_access_violation(vm, "core-hashtable-set!" ,argc, argv);
                         return scm_undef;
                     }
-                    if (HDR_WEAKHASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                    if (HDR_WEAKHASHTABLE_SHARED(ht->hdr) && (vm->m_heap->m_child > 0)) {
                         vm->m_interp->remember(lookup_weakhashtable(ht, argv[1]), argv[2]);
                     }
                 }
@@ -398,7 +398,7 @@ subr_core_hashtable_delete(VM* vm, int argc, scm_obj_t argv[])
                         thread_object_access_violation(vm, "core-hashtable-delete!" ,argc, argv);
                         return scm_undef;
                     }
-                    if (HDR_HASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                    if (HDR_HASHTABLE_SHARED(ht->hdr) && (vm->m_heap->m_child > 0)) {
                         vm->m_interp->remember(argv[1], scm_undef);
                         vm->m_interp->remember(get_hashtable(ht, argv[1]), scm_undef);
                     }
@@ -427,7 +427,7 @@ subr_core_hashtable_delete(VM* vm, int argc, scm_obj_t argv[])
                         thread_object_access_violation(vm, "core-hashtable-delete!" ,argc, argv);
                         return scm_undef;
                     }
-                    if (HDR_WEAKHASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                    if (HDR_WEAKHASHTABLE_SHARED(ht->hdr) && (vm->m_heap->m_child > 0)) {
                         vm->m_interp->remember(argv[1], scm_undef);
                         vm->m_interp->remember(lookup_weakhashtable(ht, argv[1]), scm_undef);
                     }
@@ -475,7 +475,7 @@ subr_core_hashtable_clear(VM* vm, int argc, scm_obj_t argv[])
                             return scm_undef;
                         }
                         if (ht->handlers == scm_false) {
-                            if (HDR_HASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                            if (HDR_HASHTABLE_SHARED(ht->hdr) && (vm->m_heap->m_child > 0)) {
                                 hashtable_rec_t* ht_datum = ht->datum;
                                 int nsize = ht_datum->capacity;
                                 for (int i = 0; i < nsize + nsize; i++) vm->m_interp->remember(ht_datum->elts[i], scm_undef);
@@ -504,7 +504,7 @@ subr_core_hashtable_clear(VM* vm, int argc, scm_obj_t argv[])
                         thread_object_access_violation(vm, "core-hashtable-clear!" ,argc, argv);
                         return scm_undef;
                     }
-                    if (HDR_WEAKHASHTABLE_SHARED(ht->hdr) && (vm->m_child > 0)) {
+                    if (HDR_WEAKHASHTABLE_SHARED(ht->hdr) && (vm->m_heap->m_child > 0)) {
                         weakhashtable_rec_t* ht_datum = ht->datum;
                         int nsize = ht_datum->capacity;
                         for (int i = 0; i < nsize; i++) vm->m_interp->remember(ht_datum->elts[i], scm_undef);

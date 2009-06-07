@@ -215,6 +215,9 @@ object_heap_t::allocated_size(void* obj)
 void
 object_heap_t::init_common(size_t pool_size, size_t init_size)
 {
+#if USE_PARALLEL_VM
+    m_child = 0;
+#endif
     assert((OBJECT_SLAB_SIZE % getpagesize()) == 0);     // for optimal performance
     assert(pool_size >= OBJECT_SLAB_SIZE * 2);           // check minimum (1 directory + 1 datum)
     pool_size = pool_size < 2 ? 2 : pool_size;
@@ -414,7 +417,7 @@ object_heap_t::destroy()
         m_pool_size  = 0;
     }
 #if USE_PARALLEL_VM
-    if (this == m_primordial) {
+    if (m_parent == NULL) {
         free(m_inherents);
         m_inherents = NULL;
     }
@@ -738,7 +741,12 @@ object_heap_t::synchronized_collect(object_heap_t& heap)
 #endif
     GC_TRACE(";; [collector: sweep]\n");
     heap.m_sweep_wavefront = (uint8_t*)heap.m_pool;
+#if USE_PARALLEL_VM
+    if (heap.m_parent == NULL && heap.m_child > 0) heap.m_symbol.protect();
+    else heap.m_symbol.sweep();
+#else
     heap.m_symbol.sweep();
+#endif
     heap.m_string.sweep();
     heap.m_weakmappings.m_lock.lock();
     if (heap.m_weakmappings.m_vacant) {
@@ -890,7 +898,12 @@ fallback:
     GC_TRACE(";; [collector: start-the-world]\n");
     GC_TRACE(";; [collector: concurrent-sweeping]\n");
     double t5 = msec();
+#if USE_PARALLEL_VM
+    if (heap.m_parent == NULL && heap.m_child > 0) heap.m_symbol.protect();
+    else heap.m_symbol.sweep();
+#else
     heap.m_symbol.sweep();
+#endif
     heap.m_string.sweep();
     heap.m_read_barrier = false;
     heap.m_weakmappings.m_lock.lock();
@@ -1709,24 +1722,26 @@ object_heap_t::init_architecture_feature()
 #define ARCH_FIXNUM(name, value) put_hashtable(m_architecture_feature, make_symbol(this, #name), MAKEFIXNUM(value))
 #define ARCH_ALIGNOF(name, type) { int n; struct x { char y; type z; }; n = offsetof(x, z); ARCH_FIXNUM(name, n); }
     ARCH_FIXNUM(ypsilon-revision, PROGRAM_REVISION);
-    ARCH_FIXNUM(sizeof:bool,   sizeof(bool));
-    ARCH_FIXNUM(sizeof:short,  sizeof(short));
-    ARCH_FIXNUM(sizeof:int,    sizeof(int));
-    ARCH_FIXNUM(sizeof:long,   sizeof(long));
-    ARCH_FIXNUM(sizeof:void*,  sizeof(void*));
-    ARCH_FIXNUM(sizeof:size_t, sizeof(size_t));
-    ARCH_ALIGNOF(alignof:bool,    bool);
-    ARCH_ALIGNOF(alignof:short,   short);
-    ARCH_ALIGNOF(alignof:int,     int);
-    ARCH_ALIGNOF(alignof:long,    long);
-    ARCH_ALIGNOF(alignof:void*,   void*);
-    ARCH_ALIGNOF(alignof:size_t,  size_t);
-    ARCH_ALIGNOF(alignof:float,   float);
-    ARCH_ALIGNOF(alignof:double,  double);
-    ARCH_ALIGNOF(alignof:int8_t,  int8_t);
-    ARCH_ALIGNOF(alignof:int16_t, int16_t);
-    ARCH_ALIGNOF(alignof:int32_t, int32_t);
-    ARCH_ALIGNOF(alignof:int64_t, int64_t);
+    ARCH_FIXNUM(sizeof:bool,        sizeof(bool));
+    ARCH_FIXNUM(sizeof:short,       sizeof(short));
+    ARCH_FIXNUM(sizeof:int,         sizeof(int));
+    ARCH_FIXNUM(sizeof:long,        sizeof(long));
+    ARCH_FIXNUM(sizeof:long-long,   sizeof(long long));
+    ARCH_FIXNUM(sizeof:void*,       sizeof(void*));
+    ARCH_FIXNUM(sizeof:size_t,      sizeof(size_t));
+    ARCH_ALIGNOF(alignof:bool,      bool);
+    ARCH_ALIGNOF(alignof:short,     short);
+    ARCH_ALIGNOF(alignof:int,       int);
+    ARCH_ALIGNOF(alignof:long,      long);
+    ARCH_ALIGNOF(alignof:long-long, long long);
+    ARCH_ALIGNOF(alignof:void*,     void*);
+    ARCH_ALIGNOF(alignof:size_t,    size_t);
+    ARCH_ALIGNOF(alignof:float,     float);
+    ARCH_ALIGNOF(alignof:double,    double);
+    ARCH_ALIGNOF(alignof:int8_t,    int8_t);
+    ARCH_ALIGNOF(alignof:int16_t,   int16_t);
+    ARCH_ALIGNOF(alignof:int32_t,   int32_t);
+    ARCH_ALIGNOF(alignof:int64_t,   int64_t);
 #undef ARCH_FIXNUM
 #undef ARCH_ALIGNOF
 

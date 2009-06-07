@@ -28,16 +28,19 @@
           bytevector-c-short-ref
           bytevector-c-int-ref
           bytevector-c-long-ref
+          bytevector-c-long-long-ref
           bytevector-c-void*-ref
           bytevector-c-float-ref
           bytevector-c-double-ref
           bytevector-c-unsigned-short-ref
           bytevector-c-unsigned-int-ref
           bytevector-c-unsigned-long-ref
+          bytevector-c-unsigned-long-long-ref
           bytevector-c-bool-set!
           bytevector-c-short-set!
           bytevector-c-int-set!
           bytevector-c-long-set!
+          bytevector-c-long-long-set!
           bytevector-c-void*-set!
           bytevector-c-float-set!
           bytevector-c-double-set!
@@ -58,6 +61,7 @@
           make-c-short
           make-c-int
           make-c-long
+          make-c-long-long
           make-c-void*
           make-c-float
           make-c-double
@@ -70,12 +74,14 @@
           c-short-ref
           c-int-ref
           c-long-ref
+          c-long-long-ref
           c-void*-ref
           c-float-ref
           c-double-ref
           c-unsigned-short-ref
           c-unsigned-int-ref
           c-unsigned-long-ref
+          c-unsigned-long-long-ref
           c-int8-ref
           c-int16-ref
           c-int32-ref
@@ -101,12 +107,14 @@
           sizeof:short
           sizeof:int
           sizeof:long
+          sizeof:long-long
           sizeof:void*
           sizeof:size_t
           alignof:bool
           alignof:short
           alignof:int
           alignof:long
+          alignof:long-long
           alignof:void*
           alignof:size_t
           alignof:float
@@ -216,52 +224,56 @@
              (map (lambda (value) (string->utf8/nul value)) argv))))
 
   (define c-function-return-type-alist
-    '((void           . #x00)    ; FFI_RETURN_TYPE_VOID
-      (bool           . #x01)    ; FFI_RETURN_TYPE_BOOL
-      (char           . #x0d)    ; FFI_RETURN_TYPE_UINT8_T
-      (short          . #x02)    ; FFI_RETURN_TYPE_SHORT
-      (int            . #x03)    ; FFI_RETURN_TYPE_INT
-      (long           . #x04)    ; FFI_RETURN_TYPE_INTPTR
-      (unsigned-short . #x05)    ; FFI_RETURN_TYPE_USHORT
-      (unsigned-int   . #x06)    ; FFI_RETURN_TYPE_UINT
-      (unsigned-long  . #x07)    ; FFI_RETURN_TYPE_UINTPTR
-      (float          . #x08)    ; FFI_RETURN_TYPE_FLOAT
-      (double         . #x09)    ; FFI_RETURN_TYPE_DOUBLE
-      (void*          . #x07)    ; FFI_RETURN_TYPE_UINTPTR
-      (char*          . #x0a)    ; FFI_RETURN_TYPE_STRING
-      (size_t         . #x0b)    ; FFI_RETURN_TYPE_SIZE_T
-      (int8_t         . #x0c)    ; FFI_RETURN_TYPE_INT8_T
-      (uint8_t        . #x0d)    ; FFI_RETURN_TYPE_UINT8_T
-      (int16_t        . #x0e)    ; FFI_RETURN_TYPE_INT16_T
-      (uint16_t       . #x0f)    ; FFI_RETURN_TYPE_UINT16_T
-      (int32_t        . #x10)    ; FFI_RETURN_TYPE_INT32_T
-      (uint32_t       . #x11)    ; FFI_RETURN_TYPE_UINT32_T
-      (int64_t        . #x12)    ; FFI_RETURN_TYPE_INT64_T
-      (uint64_t       . #x13)))  ; FFI_RETURN_TYPE_UINT64_T
+    '((void               . #x00)    ; FFI_RETURN_TYPE_VOID
+      (bool               . #x01)    ; FFI_RETURN_TYPE_BOOL
+      (char               . #x0d)    ; FFI_RETURN_TYPE_UINT8_T
+      (short              . #x02)    ; FFI_RETURN_TYPE_SHORT
+      (int                . #x03)    ; FFI_RETURN_TYPE_INT
+      (long               . #x04)    ; FFI_RETURN_TYPE_INTPTR
+      (long-long          . #x12)    ; FFI_RETURN_TYPE_INT64_T
+      (unsigned-short     . #x05)    ; FFI_RETURN_TYPE_USHORT
+      (unsigned-int       . #x06)    ; FFI_RETURN_TYPE_UINT
+      (unsigned-long      . #x07)    ; FFI_RETURN_TYPE_UINTPTR
+      (unsigned-long-long . #x13)    ; FFI_RETURN_TYPE_UINT64_T
+      (float              . #x08)    ; FFI_RETURN_TYPE_FLOAT
+      (double             . #x09)    ; FFI_RETURN_TYPE_DOUBLE
+      (void*              . #x07)    ; FFI_RETURN_TYPE_UINTPTR
+      (char*              . #x0a)    ; FFI_RETURN_TYPE_STRING
+      (size_t             . #x0b)    ; FFI_RETURN_TYPE_SIZE_T
+      (int8_t             . #x0c)    ; FFI_RETURN_TYPE_INT8_T
+      (uint8_t            . #x0d)    ; FFI_RETURN_TYPE_UINT8_T
+      (int16_t            . #x0e)    ; FFI_RETURN_TYPE_INT16_T
+      (uint16_t           . #x0f)    ; FFI_RETURN_TYPE_UINT16_T
+      (int32_t            . #x10)    ; FFI_RETURN_TYPE_INT32_T
+      (uint32_t           . #x11)    ; FFI_RETURN_TYPE_UINT32_T
+      (int64_t            . #x12)    ; FFI_RETURN_TYPE_INT64_T
+      (uint64_t           . #x13)))  ; FFI_RETURN_TYPE_UINT64_T
 
   (define callback-return-type-alist
-    '((bool           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (void           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (char           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (short          . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (int            . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (long           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (unsigned-short . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (unsigned-int   . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (unsigned-long  . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (int8_t         . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (int16_t        . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (int32_t        . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (int64_t        . #x01)    ; CALLBACK_RETURN_TYPE_INT64_T
-      (uint8_t        . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (uint16_t       . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (uint32_t       . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (uint64_t       . #x01)    ; CALLBACK_RETURN_TYPE_INT64_T
-      (float          . #x02)    ; CALLBACK_RETURN_TYPE_FLOAT
-      (double         . #x03)    ; CALLBACK_RETURN_TYPE_DOUBLE
-      (size_t         . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
-      (void*          . #x00)))  ; CALLBACK_RETURN_TYPE_INTPTR
-
+    '((bool               . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (void               . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (char               . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (short              . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (int                . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (long               . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (long-long          . #x01)    ; CALLBACK_RETURN_TYPE_INT64_T
+      (unsigned-short     . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (unsigned-int       . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (unsigned-long      . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (unsigned-long-long . #x01)    ; CALLBACK_RETURN_TYPE_INT64_T
+      (int8_t             . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (int16_t            . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (int32_t            . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (int64_t            . #x01)    ; CALLBACK_RETURN_TYPE_INT64_T
+      (uint8_t            . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (uint16_t           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (uint32_t           . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (uint64_t           . #x01)    ; CALLBACK_RETURN_TYPE_INT64_T
+      (float              . #x02)    ; CALLBACK_RETURN_TYPE_FLOAT
+      (double             . #x03)    ; CALLBACK_RETURN_TYPE_DOUBLE
+      (size_t             . #x00)    ; CALLBACK_RETURN_TYPE_INTPTR
+      (void*              . #x00)))  ; CALLBACK_RETURN_TYPE_INTPTR
+      
   (define STDCALL #x0100)
 
   (define handle-bool
@@ -291,26 +303,28 @@
         (else handle-int))))
 
   (define callback-argument-type-class
-    `((bool           . #\L)
-      (char           . #\U)
-      (short          . #\b)
-      (int            . ,(if (= sizeof:int 4) #\q #\o))
-      (long           . ,(if (= sizeof:long 4) #\q #\o))
-      (unsigned-short . #\B)
-      (unsigned-int   . ,(if (= sizeof:int 4) #\Q #\O))
-      (unsigned-long  . ,(if (= sizeof:long 4) #\Q #\O))
-      (int8_t         . #\u)
-      (int16_t        . #\b)
-      (int32_t        . #\q)
-      (int64_t        . #\o)
-      (uint8_t        . #\U)
-      (uint16_t       . #\B)
-      (uint32_t       . #\Q)
-      (uint64_t       . #\O)
-      (float          . #\f)
-      (double         . #\d)
-      (size_t         . ,(if (= sizeof:size_t 4) #\Q #\O))
-      (void*          . ,(if (= sizeof:void* 4) #\Q #\O))))
+    `((bool               . #\L)
+      (char               . #\U)
+      (short              . #\b)
+      (int                . ,(if (= sizeof:int 4) #\q #\o))
+      (long               . ,(if (= sizeof:long 4) #\q #\o))
+      (long-long          . #\o)
+      (unsigned-short     . #\B)
+      (unsigned-int       . ,(if (= sizeof:int 4) #\Q #\O))
+      (unsigned-long      . ,(if (= sizeof:long 4) #\Q #\O))
+      (unsigned-long-long . #\O)
+      (int8_t             . #\u)
+      (int16_t            . #\b)
+      (int32_t            . #\q)
+      (int64_t            . #\o)
+      (uint8_t            . #\U)
+      (uint16_t           . #\B)
+      (uint32_t           . #\Q)
+      (uint64_t           . #\O)
+      (float              . #\f)
+      (double             . #\d)
+      (size_t             . ,(if (= sizeof:size_t 4) #\Q #\O))
+      (void*              . ,(if (= sizeof:void* 4) #\Q #\O))))
 
   (define-thread-variable ht-cdecl-callback-trampolines (make-parameter (make-weak-hashtable)))
 
@@ -389,7 +403,7 @@
          (cons #\* values))
         ((bool char short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
          (cons #\i values))
-        ((int64_t uint64_t)
+        ((int64_t uint64_t long-long unsigned-long-long)
          (cons #\x values))
         ((void*)
          (cons #\p values))
@@ -549,7 +563,7 @@
                            (list #\* #'(expect-args 'func-name n var)))
                           ((bool char short int long unsigned-short unsigned-int unsigned-long int8_t int16_t int32_t uint8_t uint16_t uint32_t size_t)
                            (list #\i #'var))
-                          ((int64_t uint64_t)
+                          ((int64_t uint64_t long-long unsigned-long-long)
                            (list #\x #'var))
                           ((void*)
                            (list #\p #'var))

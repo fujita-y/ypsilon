@@ -100,6 +100,14 @@
   </tr>
   <tr>
     <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-long-long-ref">bytevector-c-long-long-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a long long value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
       <span class="subject_identifier"><a href="#bytevector-c-void*-ref">bytevector-c-void*-ref</a></span>
     </td>
     <td class="subject_td">
@@ -144,6 +152,14 @@
     </td>
     <td class="subject_td">
       Retrieves an unsigned long value from a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-unsigned-long-long-ref">bytevector-c-unsigned-long-long-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an unsigned long long value from a bytevector
     </td>
   </tr>
   <tr>
@@ -232,6 +248,14 @@
     </td>
     <td class="subject_td">
       Stores a long value to a bytevector
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#bytevector-c-long-long-set!">bytevector-c-long-long-set!</a></span>
+    </td>
+    <td class="subject_td">
+      Stores a long long value to a bytevector
     </td>
   </tr>
   <tr>
@@ -332,6 +356,14 @@
   </tr>
   <tr>
     <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#make-c-long-long">make-c-long-long</a></span>
+    </td>
+    <td class="subject_td">
+      Returns a bytevector contains a long long value
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
       <span class="subject_identifier"><a href="#make-c-void*">make-c-void*</a></span>
     </td>
     <td class="subject_td">
@@ -420,6 +452,14 @@
   </tr>
   <tr>
     <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-long-long-ref">c-long-long-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves a long long value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
       <span class="subject_identifier"><a href="#c-void*-ref">c-void*-ref</a></span>
     </td>
     <td class="subject_td">
@@ -464,6 +504,14 @@
     </td>
     <td class="subject_td">
       Retrieves an unsigned long value from a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-unsigned-long-long-ref">c-unsigned-long-long-ref</a></span>
+    </td>
+    <td class="subject_td">
+      Retrieves an unsigned long long value from a memory
     </td>
   </tr>
   <tr>
@@ -572,6 +620,14 @@
   </tr>
   <tr>
     <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#c-long-long-set!">c-long-long-set!</a></span>
+    </td>
+    <td class="subject_td">
+      C-long-set! stores a long long value to a memory
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
       <span class="subject_identifier"><a href="#c-void*-set!">c-void*-set!</a></span>
     </td>
     <td class="subject_td">
@@ -661,6 +717,14 @@
   <tr>
     <td class="subject_td" nowrap>
       <span class="subject_identifier"><a href="#alignof:long">alignof:long</a></span>
+    </td>
+    <td class="subject_td_na">
+      &lt;constant&gt;
+    </td>
+  </tr>
+  <tr>
+    <td class="subject_td" nowrap>
+      <span class="subject_identifier"><a href="#alignof:long-long">alignof:long-long</a></span>
     </td>
     <td class="subject_td_na">
       &lt;constant&gt;
@@ -1378,6 +1442,52 @@
   </tr>
 </table>
 </div>
+<span id="bytevector-c-long-long-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-long-long-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-long-long-ref">bytevector-c-long-long-ref</a> retrieves a long long value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-long-long-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
 <span id="bytevector-c-void*-ref"></span>
 <div class="jump_menu">
   [<a href="javascript:history.back()">Back</a>]
@@ -1628,6 +1738,52 @@
     <td>
       <div>
       (bytevector-c-unsigned-long-ref <span class="synopsis_argument">bytevector byteoffset</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-unsigned-long-long-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-unsigned-long-long-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-unsigned-long-long-ref">bytevector-c-unsigned-long-long-ref</a> retrieves an unsigned long long value from a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-unsigned-long-long-ref <span class="synopsis_argument">bytevector byteoffset</span>)
       <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
       </div>
     </td>
@@ -2165,6 +2321,55 @@
     <td>
       <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
       <div>The <span class="desc_argument">value</span> must be within the range [LONG_MIN, ULONG_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="bytevector-c-long-long-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: bytevector-c-long-long-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#bytevector-c-long-long-set!">bytevector-c-long-long-set!</a> stores a long long value to a bytevector.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (bytevector-c-long-long-set! <span class="synopsis_argument">bytevector byteoffset value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>bytevector:</div>
+      <div>byteoffset:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">byteoffset</span> must be non-negative.</div>
+      <div>The <span class="desc_argument">value</span> must be within the range [LONGLONG_MIN, ULONGLONG_MAX].</div>
     </td>
   </tr>
 </table>
@@ -2724,6 +2929,50 @@
   </tr>
 </table>
 </div>
+<span id="make-c-long-long"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: make-c-long-long</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#make-c-long-long">make-c-long-long</a> returns a bytevector contains a long long value.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (make-c-long-long <span class="synopsis_argument">value</span>)
+      <span class="synopsis_retval"> =&gt; &lt;bytevector&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [LONGLONG_MIN, ULONGLONG_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
 <span id="make-c-void*"></span>
 <div class="jump_menu">
   [<a href="javascript:history.back()">Back</a>]
@@ -3211,6 +3460,43 @@
   </tr>
 </table>
 </div>
+<span id="c-long-long-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-long-long-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-long-long-ref">c-long-long-ref</a> retrieves a long long value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-long-long-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
 <span id="c-void*-ref"></span>
 <div class="jump_menu">
   [<a href="javascript:history.back()">Back</a>]
@@ -3416,6 +3702,43 @@
     <td>
       <div>
       (c-unsigned-long-ref <span class="synopsis_argument">location</span>)
+      <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+    </td>
+  </tr>
+</table>
+</div>
+<span id="c-unsigned-long-long-ref"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-unsigned-long-long-ref</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-unsigned-long-long-ref">c-unsigned-long-long-ref</a> retrieves an unsigned long long value from a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-unsigned-long-long-ref <span class="synopsis_argument">location</span>)
       <span class="synopsis_retval"> =&gt; &lt;int&gt;</span>
       </div>
     </td>
@@ -3951,6 +4274,52 @@
   </tr>
 </table>
 </div>
+<span id="c-long-long-set!"></span>
+<div class="jump_menu">
+  [<a href="javascript:history.back()">Back</a>]
+  [<a href="libref.ypsilon.c-types.html">Top</a>]
+</div>
+<div class="api_head">Procedure: c-long-long-set!</div>
+<div class="api_body">
+<table class="abstract_box" border="0">
+  <tr>
+    <td>
+      <div><a href="libref.ypsilon.c-types.html#c-long-set!">c-long-set!</a> stores a long long value to a memory.</div>
+    </td>
+  </tr>
+</table>
+<table class="synopsis_box" border="0">
+  <caption class="synopsis_box_caption">syntax:</caption>
+  <tr>
+    <td>
+      <div>
+      (c-long-long-set! <span class="synopsis_argument">location value</span>)
+      <span class="synopsis_unspecified"> =&gt; unspecified</span>
+      </div>
+    </td>
+  </tr>
+</table>
+<table class="param_box" border="0">
+  <caption class="param_box_caption">arguments:</caption>
+  <tr>
+    <td class="param_argument">
+      <div>location:</div>
+      <div>value:</div>
+    </td>
+    <td class="param_type">
+      <div>&lt;address&gt; or &lt;bytevector&gt;</div>
+      <div>&lt;int&gt;</div>
+    </td>
+  </tr>
+</table>
+<table class="desc_box" border="0">
+  <tr>
+    <td>
+      <div>The <span class="desc_argument">value</span> must be within the range [LONGLONG_MIN, ULONGLONG_MAX].</div>
+    </td>
+  </tr>
+</table>
+</div>
 <span id="c-void*-set!"></span>
 <div class="jump_menu">
   [<a href="javascript:history.back()">Back</a>]
@@ -4310,6 +4679,7 @@
 <span id="alignof:short"></span>
 <span id="alignof:int"></span>
 <span id="alignof:long"></span>
+<span id="alignof:long-long"></span>
 <span id="alignof:size_t"></span>
 <span id="alignof:void*"></span>
 <span id="alignof:float"></span>
@@ -4329,7 +4699,7 @@
     Constants:&nbsp;
   </td>
   <td class="const_word" valign="top">
-    alignof:bool<span class="const_comma">,</span> alignof:short<span class="const_comma">,</span> alignof:int<span class="const_comma">,</span> alignof:long<span class="const_comma">,</span> alignof:size_t<span class="const_comma">,</span> alignof:void*<span class="const_comma">,</span> alignof:float<span class="const_comma">,</span> alignof:double<span class="const_comma">,</span> alignof:int8_t<span class="const_comma">,</span> alignof:int16_t<span class="const_comma">,</span> alignof:int32_t<span class="const_comma">,</span> alignof:int64_t
+    alignof:bool<span class="const_comma">,</span> alignof:short<span class="const_comma">,</span> alignof:int<span class="const_comma">,</span> alignof:long<span class="const_comma">,</span> alignof:long-long<span class="const_comma">,</span> alignof:size_t<span class="const_comma">,</span> alignof:void*<span class="const_comma">,</span> alignof:float<span class="const_comma">,</span> alignof:double<span class="const_comma">,</span> alignof:int8_t<span class="const_comma">,</span> alignof:int16_t<span class="const_comma">,</span> alignof:int32_t<span class="const_comma">,</span> alignof:int64_t
   </td>
   </tr>
 </table>
@@ -4347,6 +4717,7 @@
 <span id="sizeof:short"></span>
 <span id="sizeof:int"></span>
 <span id="sizeof:long"></span>
+<span id="sizof:long-long"></span>
 <span id="sizeof:size_t"></span>
 <span id="sizeof:void*"></span>
 <div class="jump_menu">
@@ -4360,7 +4731,7 @@
     Constants:&nbsp;
   </td>
   <td class="const_word" valign="top">
-    sizeof:bool<span class="const_comma">,</span> sizeof:short<span class="const_comma">,</span> sizeof:int<span class="const_comma">,</span> sizeof:long<span class="const_comma">,</span> sizeof:size_t<span class="const_comma">,</span> sizeof:void*
+    sizeof:bool<span class="const_comma">,</span> sizeof:short<span class="const_comma">,</span> sizeof:int<span class="const_comma">,</span> sizeof:long<span class="const_comma">,</span> sizof:long-long<span class="const_comma">,</span> sizeof:size_t<span class="const_comma">,</span> sizeof:void*
   </td>
   </tr>
 </table>
@@ -4429,6 +4800,10 @@
     </td>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="#bytevector-c-long-long-ref">bytevector-c-long-long-ref</a></span>
+    </td>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="#bytevector-c-void*-ref">bytevector-c-void*-ref</a></span>
     </td>
   <tr>
@@ -4450,6 +4825,10 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#bytevector-c-unsigned-long-ref">bytevector-c-unsigned-long-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-unsigned-long-long-ref">bytevector-c-unsigned-long-long-ref</a></span>
     </td>
   <tr>
     <td>
@@ -4494,6 +4873,10 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#bytevector-c-long-set!">bytevector-c-long-set!</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-long-long-set!">bytevector-c-long-long-set!</a></span>
     </td>
   <tr>
     <td>
@@ -4545,6 +4928,10 @@
     </td>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="#make-c-long-long">make-c-long-long</a></span>
+    </td>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="#make-c-void*">make-c-void*</a></span>
     </td>
   <tr>
@@ -4589,6 +4976,10 @@
     </td>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="#c-long-long-ref">c-long-long-ref</a></span>
+    </td>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="#c-void*-ref">c-void*-ref</a></span>
     </td>
   <tr>
@@ -4610,6 +5001,10 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#c-unsigned-long-ref">c-unsigned-long-ref</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-unsigned-long-long-ref">c-unsigned-long-long-ref</a></span>
     </td>
   <tr>
     <td>
@@ -4665,6 +5060,10 @@
     </td>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="#c-long-long-set!">c-long-long-set!</a></span>
+    </td>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="#c-void*-set!">c-void*-set!</a></span>
     </td>
   <tr>
@@ -4710,6 +5109,10 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#alignof:long">alignof:long</a></span>
+    </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:long-long">alignof:long-long</a></span>
     </td>
   <tr>
     <td>
@@ -4759,6 +5162,11 @@
     <td>
       <span class="exports_identifier"><a href="#sizeof:long">sizeof:long</a></span>
     </td>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:long-long">sizeof:long-long</a></span>
+    </td>
+  </tr>
   <tr>
     <td>
       <span class="exports_identifier"><a href="#sizeof:size_t">sizeof:size_t</a></span>
@@ -4815,6 +5223,11 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#alignof:long">alignof:long</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#alignof:long-long">alignof:long-long</a></span>
     </td>
   </tr>
   <tr>
@@ -4904,6 +5317,16 @@
   </tr>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="#bytevector-c-long-long-ref">bytevector-c-long-long-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-long-long-set!">bytevector-c-long-long-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="#bytevector-c-long-ref">bytevector-c-long-ref</a></span>
     </td>
   </tr>
@@ -4950,6 +5373,11 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#bytevector-c-unsigned-int-ref">bytevector-c-unsigned-int-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#bytevector-c-unsigned-long-long-ref">bytevector-c-unsigned-long-long-ref</a></span>
     </td>
   </tr>
   <tr>
@@ -5059,6 +5487,16 @@
   </tr>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="#c-long-long-ref">c-long-long-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-long-long-set!">c-long-long-set!</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="#c-long-ref">c-long-ref</a></span>
     </td>
   </tr>
@@ -5115,6 +5553,11 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#c-unsigned-int-ref">c-unsigned-int-ref</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="#c-unsigned-long-long-ref">c-unsigned-long-long-ref</a></span>
     </td>
   </tr>
   <tr>
@@ -5209,6 +5652,11 @@
   </tr>
   <tr>
     <td>
+      <span class="exports_identifier"><a href="#make-c-long-long">make-c-long-long</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
       <span class="exports_identifier"><a href="#make-c-short">make-c-short</a></span>
     </td>
   </tr>
@@ -5230,6 +5678,11 @@
   <tr>
     <td>
       <span class="exports_identifier"><a href="#sizeof:long">sizeof:long</a></span>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span class="exports_identifier"><a href="libref.ypsilon.c-types.html#sizeof:long-long">sizeof:long-long</a></span>
     </td>
   </tr>
   <tr>

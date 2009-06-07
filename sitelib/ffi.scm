@@ -9,6 +9,7 @@
           alignof:int64_t
           alignof:int8_t
           alignof:long
+          alignof:long-long
           alignof:short
           alignof:size_t
           alignof:void*
@@ -28,6 +29,8 @@
           bytevector-c-int64-set!
           bytevector-c-int8-ref
           bytevector-c-int8-set!
+          bytevector-c-long-long-ref
+          bytevector-c-long-long-set!
           bytevector-c-long-ref
           bytevector-c-long-set!
           bytevector-c-short-ref
@@ -38,6 +41,7 @@
           bytevector-c-uint64-ref
           bytevector-c-uint8-ref
           bytevector-c-unsigned-int-ref
+          bytevector-c-unsigned-long-long-ref
           bytevector-c-unsigned-long-ref
           bytevector-c-unsigned-short-ref
           bytevector-c-void*-ref
@@ -63,6 +67,7 @@
           c-int64-set!
           c-int8-ref
           c-int8-set!
+          c-long-long-ref
           c-long-ref
           c-long-set!
           c-short-ref
@@ -75,6 +80,7 @@
           c-uint64-ref
           c-uint8-ref
           c-unsigned-int-ref
+          c-unsigned-long-long-ref
           c-unsigned-long-ref
           c-unsigned-short-ref
           c-void*-ref
@@ -95,6 +101,7 @@
           make-c-int64
           make-c-int8
           make-c-long
+          make-c-long-long
           make-c-short
           make-c-string
           make-c-void*
@@ -118,6 +125,7 @@
           sizeof:bool
           sizeof:int
           sizeof:long
+          sizeof:long-long
           sizeof:short
           sizeof:size_t
           sizeof:void*

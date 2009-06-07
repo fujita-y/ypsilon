@@ -106,6 +106,8 @@
     bytevector-c-int64-set!
     bytevector-c-int8-ref
     bytevector-c-int8-set!
+    bytevector-c-long-long-ref
+    bytevector-c-long-long-set!
     bytevector-c-long-ref
     bytevector-c-long-set!
     bytevector-c-short-ref
@@ -116,6 +118,7 @@
     bytevector-c-uint64-ref
     bytevector-c-uint8-ref
     bytevector-c-unsigned-int-ref
+    bytevector-c-unsigned-long-long-ref
     bytevector-c-unsigned-long-ref
     bytevector-c-unsigned-short-ref
     bytevector-c-void*-ref
