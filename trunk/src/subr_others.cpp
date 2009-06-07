@@ -749,7 +749,7 @@ scm_obj_t
 subr_collect(VM* vm, int argc, scm_obj_t argv[])
 {
 #if USE_PARALLEL_VM
-    if (vm->m_child > 0) {
+    if (vm->m_heap->m_child > 0) {
         if (argc == 0) {
             vm->m_heap->collect();
             return scm_unspecified;
@@ -1169,7 +1169,7 @@ subr_tuple_set(VM* vm, int argc, scm_obj_t argv[])
                             thread_object_access_violation(vm, "tuple-set!",argc, argv);
                             return scm_undef;
                         }
-                        if (vm->m_child > 0) vm->m_interp->remember(tuple->elts[n], argv[2]);
+                        if (vm->m_heap->m_child > 0) vm->m_interp->remember(tuple->elts[n], argv[2]);
                     }
 #endif
                     vm->m_heap->write_barrier(argv[2]);
@@ -1592,7 +1592,7 @@ subr_copy_environment_variables(VM* vm, int argc, scm_obj_t argv[])
                         scm_gloc_t to_gloc = make_gloc(vm->m_heap, to_symbol);
                         to_gloc->value = from_gloc->value;
 #if USE_PARALLEL_VM
-                        if (vm->m_interp->live_thread_count() > 1 && vm->m_child > 0) {
+                        if (vm->m_heap->m_child > 0) {
                             vm->m_interp->remember(get_hashtable(to->variable, to_symbol), to_gloc);
                         }
 #endif
@@ -1660,7 +1660,7 @@ subr_copy_environment_macros(VM* vm, int argc, scm_obj_t argv[])
                     }
                     if (obj != scm_undef) {
 #if USE_PARALLEL_VM
-                        if (vm->m_interp->live_thread_count() > 1 && vm->m_child > 0) {
+                        if (vm->m_heap->m_child > 0) {
                             vm->m_interp->remember(get_hashtable(to->macro, to_symbol), obj);
                         }
 #endif
@@ -1825,7 +1825,7 @@ subr_make_uuid(VM* vm, int argc, scm_obj_t argv[])
 #else
         uuid_v4(buf, sizeof(buf));
 #endif
-        return make_string(vm->m_heap, buf);
+        return make_string_literal(vm->m_heap, buf);
     }
     wrong_number_of_arguments_violation(vm, "make-uuid", 0, 0, argc, argv);
     return scm_undef;

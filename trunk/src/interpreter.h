@@ -69,6 +69,7 @@ public:
     int     spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[]);
     void    update(VM* vm, int state);
     void    snapshot(VM* vm, bool retry);
+    void    remember(scm_obj_t obj);
     void    remember(scm_obj_t lhs, scm_obj_t rhs);
     bool    primordial(int id);
     void    display_status(VM* vm);

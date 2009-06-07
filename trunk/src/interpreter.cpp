@@ -14,12 +14,13 @@
 #include "printer.h"
 #include "uuid.h"
 
-#define REPORT_REMEMBER_SET     0
+#define REPORT_REMEMBER_SET     1
 
 #if USE_PARALLEL_VM
 
-#define SPAWN_INITIAL_HEAP_SIZE (OBJECT_SLAB_SIZE * 16)
-#define SPAWN_TIMEOUT_USLEEP    10000
+#define SPAWN_INITIAL_HEAP_SIZE (OBJECT_SLAB_SIZE * 16) // ILP32 - init:64K limit:128K, LP64 - init:128K limit:256K
+#define SPAWN_TIMEOUT_USLEEP    10000   // 10 ms
+#define SPAWN_WARNING_MSEC      10000   // 10 s
 
 void
 Interpreter::init(VM* root, int n)
@@ -40,7 +41,6 @@ Interpreter::init(VM* root, int n)
     root->m_interp = this;
     root->m_parent = NULL;
     root->m_id = 0;
-    root->m_child = 0;
     root->m_spawn_timeout = scm_false;
     root->m_spawn_heap_limit = DEFAULT_HEAP_LIMIT * 1024 * 1024;
     m_table[0]->interp = this;
@@ -63,7 +63,9 @@ Interpreter::destroy()
 int
 Interpreter::spawn(VM* parent, scm_closure_t func, int argc, scm_obj_t argv[])
 {
-    double timeout = (FIXNUMP(parent->m_spawn_timeout)) ? msec() + FIXNUM(parent->m_spawn_timeout) : 0.0;
+    double start = msec();
+    double warning = start + SPAWN_WARNING_MSEC;
+    double timeout = (FIXNUMP(parent->m_spawn_timeout)) ? start + FIXNUM(parent->m_spawn_timeout) : 0.0;
 again:
     {
         scoped_lock lock(m_lock);
@@ -86,7 +88,6 @@ again:
                 vm->m_interp = parent->m_interp;
                 vm->m_parent = parent;
                 vm->m_id = i;
-                vm->m_child = 0;
                 vm->m_spawn_timeout = parent->m_spawn_timeout;
                 vm->m_spawn_heap_limit = parent->m_spawn_heap_limit;
                 vm->m_bootport = (scm_port_t)scm_unspecified;
@@ -139,7 +140,7 @@ again:
                     snprintf(m_table[i]->name, sizeof(m_table[i]->name), "%s", name);
                 }
                 m_live = m_live + 1;
-                parent->m_child++;
+                parent->m_heap->m_child++;
                 thread_start(mutator_thread, m_table[i]);
                 return i;
             }
@@ -147,6 +148,12 @@ again:
     }
     if (timeout == 0.0 || timeout > msec()) {
         usleep(SPAWN_TIMEOUT_USLEEP);
+        if (timeout == 0.0 && parent->flags.m_warning_level != scm_false) {
+            if (msec() > warning) {
+                printer_t(parent, parent->m_current_error).format("~&warning: spawn blocked in thread %d:0x%x [%d seconds elapsed]~%~!", parent->m_id, parent, (int)((msec() - start) / 1000));
+                warning = msec() + SPAWN_WARNING_MSEC;
+            }
+        }
         goto again;
     }
     return -1;
@@ -206,7 +213,7 @@ loop:
     }
     {
         scoped_lock lock(interp->m_lock);
-        interp->m_table[table_rec->parent]->vm->m_child--;
+        interp->m_table[table_rec->parent]->vm->m_heap->m_child--;
         interp->m_remember_set.clear(1 << vm->m_id);
 
     wait_again:
@@ -294,10 +301,14 @@ Interpreter::display_status(VM* vm)
                 break;
             default: break;
         }
-        port_format(port, "  %2d 0x%08lx %-6s %2d %s", i, rec->vm, stat, rec->vm->m_child, rec->name);
+        port_format(port, "  %2d 0x%08lx %-6s %2d %s", i, rec->vm, stat, rec->vm->m_heap->m_child, rec->name);
         int pad = name_pad - strlen(rec->name);
         for (int c = 0; c < pad; c++) port_puts(port, " ");
-        port_format(port, "  %d/%dM", rec->vm->m_heap->m_pool_watermark * OBJECT_SLAB_SIZE / 1024 / 1024, rec->vm->m_heap->m_pool_size / 1024 / 1024);
+        if (rec->vm->m_heap->m_pool_size < 1024 * 1024) {
+            port_format(port, "  %d/%dK", rec->vm->m_heap->m_pool_watermark * OBJECT_SLAB_SIZE / 1024, rec->vm->m_heap->m_pool_size / 1024);
+        } else {
+            port_format(port, "  %d/%dM", rec->vm->m_heap->m_pool_watermark * OBJECT_SLAB_SIZE / 1024 / 1024, rec->vm->m_heap->m_pool_size / 1024 / 1024);
+        }
         port_puts(port, "\n");
     }
 #if REPORT_REMEMBER_SET
@@ -372,6 +383,22 @@ subset_of_list(scm_obj_t lst, scm_obj_t elt)
 }
 
 void
+Interpreter::remember(scm_obj_t obj)
+{
+    scoped_lock lock(m_lock);
+    uint32_t bits = 0;
+    for (int i = 0; i < m_capacity; i++) {
+        switch (m_table[i]->state) {
+        case VM_STATE_ACTIVE:
+        case VM_STATE_BLOCK:
+            if (m_table[i]->parent != VM_PARENT_NONE) bits |= (1 << i);
+            break;
+        }
+    }
+    if (bits) m_remember_set.set(obj, bits);
+}
+
+void
 Interpreter::remember(scm_obj_t lhs, scm_obj_t rhs)
 {
     assert(lhs);
@@ -381,17 +408,7 @@ Interpreter::remember(scm_obj_t lhs, scm_obj_t rhs)
             if (CDR(rhs) == lhs) return; // eliminate if rhs == (x . lhs)
             if (PAIRP(lhs) && subset_of_list(rhs, lhs)) return;  // eliminate if rhs == (x ... lhs)
         }
-        scoped_lock lock(m_lock);
-        uint32_t bits = 0;
-        for (int i = 0; i < m_capacity; i++) {
-            switch (m_table[i]->state) {
-            case VM_STATE_ACTIVE:
-            case VM_STATE_BLOCK:
-                if (m_table[i]->parent != VM_PARENT_NONE) bits |= (1 << i);
-                break;
-            }
-        }
-        if (bits) m_remember_set.set(lhs, bits);
+        remember(rhs);
     }
 }
 

@@ -230,6 +230,22 @@ object_set_t::sweep()
     }
 }
 
+#if USE_PARALLEL_VM
+void
+object_set_t::protect()
+{
+    assert(m_heap);
+    scoped_lock lock(m_lock);
+    for (int i = 0; i < m_count; i++) {
+        scm_obj_t obj= m_elts[i];
+        if (obj == scm_hash_free) continue;
+        if (obj == scm_hash_deleted) continue;
+        assert(SYMBOLP(obj) || STRINGP(obj));
+        OBJECT_SLAB_TRAITS_OF(obj)->cache->mark(obj);
+    }
+}
+#endif
+
 void
 object_set_t::resolve()
 {

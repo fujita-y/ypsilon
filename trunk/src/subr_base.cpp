@@ -1372,7 +1372,7 @@ subr_vector_set(VM* vm, int argc, scm_obj_t argv[])
                             thread_object_access_violation(vm, "vector-set!" ,argc, argv);
                             return scm_undef;
                         }
-                        if (vm->m_child > 0) vm->m_interp->remember(vector->elts[n], argv[2]);
+                        if (vm->m_heap->m_child > 0) vm->m_interp->remember(vector->elts[n], argv[2]);
                     }
 #endif
 #if USE_CONST_LITERAL
@@ -1460,7 +1460,7 @@ subr_vector_fill(VM* vm, int argc, scm_obj_t argv[])
                     thread_object_access_violation(vm, "vector-fill!" ,argc, argv);
                     return scm_undef;
                 }
-                if (vm->m_child > 0) {
+                if (vm->m_heap->m_child > 0) {
                     for (int i = 0; i < n; i++) vm->m_interp->remember(vector->elts[i], argv[1]);
                 }
             }

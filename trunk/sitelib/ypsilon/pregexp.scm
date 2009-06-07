@@ -1,8 +1,6 @@
 #!nobacktrace
-;;; porting Portable regular expressions for Scheme to ypsilon
-;;; -- y.fujita.lwp
+;;; porting 'portable regular expressions for scheme' to ypsilon -- y.fujita.lwp
 ;;; (define *pregexp-space-sensitive?* #t) => (define-thread-variable *pregexp-space-sensitive?* #t)
-;;; for multi-thread support.
 
 (library (ypsilon pregexp)
   (export pregexp
