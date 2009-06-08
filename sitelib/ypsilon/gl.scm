@@ -1236,13 +1236,17 @@
           glMultiTexCoord4svARB)
   (import (core) (ypsilon ffi))
 
-  (define libGL (cond (on-darwin  (load-shared-object "OpenGL.framework/OpenGL"))
-                      (on-windows (load-shared-object "opengl32.dll"))
-                      (on-linux   (load-shared-object "libGL.so.1"))
-                      (on-freebsd (load-shared-object "libGL.so"))
-                      (on-openbsd (load-shared-object "libGL.so.7.3"))
-                      (else
-                       (assertion-violation #f "can not locate OpenGL library, unknown operating system"))))
+  (define lib-name
+    (cond (on-darwin  "OpenGL.framework/OpenGL")
+          (on-windows "opengl32.dll")
+          (on-linux   "libGL.so.1")
+          (on-freebsd "libGL.so")
+          (on-openbsd "libGL.so.7.3")
+          (on-sunos   "libGL.so.1")
+          (else
+           (assertion-violation #f "can not locate OpenGL library, unknown operating system"))))
+
+  (define lib (load-shared-object lib-name))
 
   ;;;; Boolean values
   (define GL_FALSE #x0)
@@ -2072,7 +2076,7 @@
   (define-syntax define-function
     (syntax-rules ()
       ((_ ret name args)
-       (define name (c-function libGL "OpenGL library" ret __stdcall name args)))))
+       (define name (c-function lib lib-name ret __stdcall name args)))))
 
   ;; void glClearIndex( GLfloat c )
   (define-function void glClearIndex (float))
