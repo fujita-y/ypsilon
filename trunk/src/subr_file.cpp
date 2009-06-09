@@ -335,6 +335,17 @@ subr_system_share_path(VM* vm, int argc, scm_obj_t argv[])
     return scm_undef;
 }
 
+// system-extension-path
+scm_obj_t
+subr_system_extension_path(VM* vm, int argc, scm_obj_t argv[])
+{
+    if (argc == 0) {
+        return make_string_literal(vm->m_heap, SYSTEM_EXTENSION_PATH);
+    }
+    wrong_number_of_arguments_violation(vm, "system-extension-path", 0, 0, argc, argv);
+    return scm_undef;
+}
+
 void
 init_subr_file(object_heap_t* heap)
 {
@@ -360,4 +371,5 @@ init_subr_file(object_heap_t* heap)
     DEFSUBR("create-hard-link", subr_create_hard_link);
     DEFSUBR("rename-file", subr_rename_file);
     DEFSUBR("system-share-path", subr_system_share_path);
+    DEFSUBR("system-extension-path", subr_system_extension_path);
 }

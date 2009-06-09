@@ -107,6 +107,14 @@
   #endif
 #endif
 
+#ifndef SYSTEM_EXTENSION_PATH
+  #if _MSC_VER
+    #define SYSTEM_EXTENSION_PATH   "C:/Program Files/Ypsilon"
+  #else
+    #define SYSTEM_EXTENSION_PATH   "/usr/local/lib/ypsilon"
+  #endif
+#endif
+
 #define MAX_VIRTUAL_MACHINE         32
 
 class VM;

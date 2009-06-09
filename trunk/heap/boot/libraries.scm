@@ -481,6 +481,7 @@
                         decode-flonum
                         load
                         system-share-path
+                        system-extension-path
                         lookup-process-environment
                         process-environment->alist
                         set-current-input-port! set-current-output-port! set-current-error-port!
