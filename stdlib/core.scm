@@ -891,6 +891,7 @@
     syntax-violation?
     system
     system-environment
+    system-extension-path
     system-share-path
     take
     tan

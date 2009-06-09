@@ -206,7 +206,9 @@
   ;; SDL_AddTimer -- incompatible thread callback
   ;; SDL_SetTimer -- incompatible thread callback
 
-  (import (rnrs) (ypsilon ffi))
+  (import (rnrs)
+          (ypsilon ffi)
+          (only (core) system-extension-path))
 
   (define lib-name
     (cond (on-linux   "libSDL.so")
@@ -224,6 +226,18 @@
     (syntax-rules ()
       ((_ ret name args)
        (define name (c-function lib lib-name ret name args)))))
+
+  ;; int SDL_Init(Uint32 flags)
+  ;;(define-function int SDL_Init (uint32_t))
+  (define SDL_Init
+    (lambda (arg)
+      (if on-darwin
+          (let ((libmain (load-shared-object (string-append (system-extension-path) "/SDLMain.dylib"))))
+            ((c-function libmain "SDLMain.dylib" int main ([int] [*(char*)]))
+             (vector (length (command-line)))
+             (apply vector (command-line)))
+            ((c-function lib lib-name int SDL_Init (uint32_t)) arg))
+          ((c-function lib lib-name int SDL_Init (uint32_t)) arg))))
 
   ;; SDL_TimerID SDL_AddTimer(Uint32 interval, SDL_NewTimerCallback callback, void* param)
   ;; Uint32 (*SDL_NewTimerCallback)(Uint32 interval, void* param)
@@ -483,9 +497,6 @@
 
   ;; SDL_bool SDL_HasSSE2(void)
   (define-function int SDL_HasSSE2 ())
-
-  ;; int SDL_Init(Uint32 flags)
-  (define-function int SDL_Init (uint32_t))
 
   ;; int SDL_InitSubSystem(Uint32 flags)
   (define-function int SDL_InitSubSystem (uint32_t))
