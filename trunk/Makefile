@@ -6,7 +6,7 @@ PROG 	 = ypsilon
 
 PREFIX 	 = /usr/local
 
-CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"'
+CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"' -DSYSTEM_EXTENSION_PATH='"$(DESTDIR)$(PREFIX)/lib/$(PROG)"'
 
 CXXFLAGS = -pipe -x c++ -O3 -fstrict-aliasing
 
@@ -233,27 +233,25 @@ ifneq (,$(findstring Darwin, $(UNAME)))
   CPPFLAGS += -DNO_TLS
   SRCS += ffi_stub_darwin.s
   ifneq (,$(USE_SDL))
-    CPPFLAGS += -DUSE_SDL
-    LDFLAGS = extension/SDL/darwin/i386/SDLmain.o -framework SDL -framework Cocoa 
+    EXTS += SDLMain.dylib
   endif
 endif
 
-OBJS =	$(patsubst %.cpp, %.o, $(filter %.cpp, $(SRCS))) $(patsubst %.s, %.o, $(filter %.s, $(SRCS)))
-DEPS = 	$(patsubst %.cpp, %.d, $(filter %.cpp, $(SRCS)))
+OBJS = $(patsubst %.cpp, %.o, $(filter %.cpp, $(SRCS))) $(patsubst %.s, %.o, $(filter %.s, $(SRCS)))
+DEPS = $(patsubst %.cpp, %.d, $(filter %.cpp, $(SRCS)))
 
-.PHONY: all install uninstall sitelib stdlib check bench clean distclean
+.PHONY: all install uninstall sitelib stdlib extension check bench clean distclean
 
-all: $(PROG)
+all: $(PROG) $(EXTS)
 	@mkdir -p -m755 $(HOME)/.ypsilon
 
 $(PROG): $(OBJS)
 	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
-subr_others.s: subr_others.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fverbose-asm -S src/subr_others.cpp
-
-vm3.s: vm3.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fverbose-asm -S src/vm3.cpp
+SDLMain.dylib: SDLMain.m
+	gcc -dynamiclib -Os -DYPSILON_PATCH \
+	-I/Library/Frameworks/SDL.framework/Headers -I/System/Library/Frameworks/SDL.framework/Headers \
+	-framework SDL -framework Cocoa -o SDLMain.dylib src/SDLMain.m
 
 vm1.s: vm1.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \
@@ -265,7 +263,7 @@ vm1.o: vm1.cpp
 	-fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps \
 	-c src/vm1.cpp
 
-install: all stdlib sitelib
+install: all stdlib sitelib extension
 	mkdir -p -m755 $(DESTDIR)$(PREFIX)/bin
 	mkdir -p -m755 $(DESTDIR)$(PREFIX)/share/man/man1
 	cp $(PROG) $(DESTDIR)$(PREFIX)/bin/$(PROG)
@@ -291,6 +289,12 @@ sitelib:
 	find sitelib -type f -name '*.scm' | cpio -pdu $(DESTDIR)$(PREFIX)/share/$(PROG)
 	find $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib -type d -exec chmod 755 {} \;
 	find $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib -type f -exec chmod 644 {} \;
+	
+extension:
+	mkdir -p -m755 $(DESTDIR)$(PREFIX)/lib/$(PROG)
+	find . -type f -name '*.dylib' | cpio -pdu $(DESTDIR)$(PREFIX)/lib/$(PROG)
+	find $(DESTDIR)$(PREFIX)/lib/$(PROG) -type d -exec chmod 755 {} \;
+	find $(DESTDIR)$(PREFIX)/lib/$(PROG) -type f -exec chmod 755 {} \;
 
 check: all
 	@echo '----------------------------------------'
@@ -325,7 +329,7 @@ bench: all
 	./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib:./stdlib -- bench/run-ypsilon.scm
 
 clean:
-	rm -f *.o *.d
+	rm -f *.o *.d *.dylib
 	rm -f $(HOME)/.ypsilon/*.cache 
 	rm -f $(HOME)/.ypsilon/*.time
 
