@@ -4,7 +4,7 @@
 ;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
-;;; Supports Linux, Mac OS X, and Windows.
+;;; Supports Linux, Mac OS X, and Windows XP.
 ;;; Requires Ypsilon(svn trunk), SDL, SDL_image, and SDL_mixer.
 
 (library (jello config)
@@ -623,7 +623,7 @@
                          (glColor4d 1.0 1.0 1.0 (* level 0.9)))
                      (if (> level 0.5)
                          (draw-opengl-sprite title-sprite 66 120)
-                         (draw-opengl-sprite-h-reverse-wipe title-sprite 26 120 (* level 2.0)))
+                         (draw-opengl-sprite-h-reverse-wipe title-sprite 65 120 (* level 2.0)))
                      (SDL_GL_SwapBuffers)
                      (loop (microsecond) (+ level 0.01)))
                     ((< (microsecond) until)
