@@ -232,7 +232,7 @@ ifneq (,$(findstring Darwin, $(UNAME)))
   endif
   CPPFLAGS += -DNO_TLS
   SRCS += ffi_stub_darwin.s
-  ifneq (,$(USE_SDL))
+  ifneq (,$(shell ls -1 /Library/Frameworks /System/Library/Frameworks | grep 'SDL.framework'))
     EXTS += SDLMain.dylib
   endif
 endif
@@ -248,15 +248,16 @@ all: $(PROG) $(EXTS)
 $(PROG): $(OBJS)
 	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
-SDLMain.dylib: SDLMain.m
-	gcc -dynamiclib -Os -DYPSILON_PATCH \
-	-I/Library/Frameworks/SDL.framework/Headers -I/System/Library/Frameworks/SDL.framework/Headers \
-	-framework SDL -framework Cocoa -o SDLMain.dylib src/SDLMain.m
-
 vm1.s: vm1.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \
 	-fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps \
 	-fverbose-asm -masm=att -S src/vm1.cpp
+
+SDLMain.dylib: SDLMain.m
+	gcc -dynamiclib -o SDLMain.dylib -Os -DYPSILON_PATCH src/SDLMain.m \
+	-I/Library/Frameworks/SDL.framework/Headers \
+	-I/System/Library/Frameworks/SDL.framework/Headers \
+	-framework SDL -framework Cocoa
 
 vm1.o: vm1.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \
@@ -274,6 +275,7 @@ install: all stdlib sitelib extension
 uninstall:
 	-rm -rf $(DESTDIR)$(PREFIX)/share/$(PROG)/stdlib
 	-rm -rf $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib
+	-rm -rf $(DESTDIR)$(PREFIX)/lib/$(PROG)
 	-rm -f $(DESTDIR)$(PREFIX)/share/man/man1/$(PROG).1
 	-rm -f $(DESTDIR)$(PREFIX)/bin/$(PROG)
 	-rmdir $(DESTDIR)$(PREFIX)/share/$(PROG)

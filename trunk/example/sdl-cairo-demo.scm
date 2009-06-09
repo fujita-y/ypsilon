@@ -42,11 +42,11 @@
 ;; define draw
 (define draw
   (lambda (delta)
-    (let ((zero-to-one (sqrt (/ (+ (abs delta) 1.0) 2.0))))
+    (let ((param (sqrt (/ (+ (abs delta) 1.0) 2.0))))
       (SDL_FillRect video-surface 0 #xffffffff)
       (cairo_move_to cairo-context 120.0 80.0)
       (cairo_rotate cairo-context delta)
-      (cairo_set_source_rgba cairo-context 0.7 zero-to-one 1.0 zero-to-one)
+      (cairo_set_source_rgba cairo-context 0.7 (* (- 1.0 param) 2.0) 1.0 param)
       (cairo_select_font_face cairo-context "Sans" CAIRO_FONT_SLANT_NORMAL CAIRO_FONT_WEIGHT_NORMAL)
       (cairo_set_font_size cairo-context 32.0)
       (cairo_show_text cairo-context "Hello World")

@@ -141,11 +141,7 @@ static int opt_heap_limit(int argc, char* const argv[])
         return NULL;
     }
 
-  #if defined(USE_SDL)
-    extern "C" int SDL_main(int argc, char* argv[])
-  #else
     int main(int argc, char* const argv[])
-  #endif
     {
         srandom((unsigned int)fmod(msec() * 1000.0, INT_MAX));
         main_command_line_argc = argc;
