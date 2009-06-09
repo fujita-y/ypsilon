@@ -182,9 +182,11 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
 
     inline double msec()
     {
-        FILETIME ft;
-        GetSystemTimeAsFileTime(&ft);
-        return ((double)ft.dwLowDateTime + (double)ft.dwHighDateTime * (double)UINT32_MAX) / 10000.0;
+        LARGE_INTEGER time;
+        LARGE_INTEGER freq;
+        QueryPerformanceCounter(&time);
+        QueryPerformanceFequency(&freq);
+        return (double)time.QuadPart / (double)freq.QuadPart * 1000.0;
     }
 
     inline int gettimeofday(struct timeval *tv, struct timezone *tz)
