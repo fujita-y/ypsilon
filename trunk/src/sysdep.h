@@ -185,7 +185,7 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
         LARGE_INTEGER time;
         LARGE_INTEGER freq;
         QueryPerformanceCounter(&time);
-        QueryPerformanceFequency(&freq);
+        QueryPerformanceFrequency(&freq);
         return (double)time.QuadPart / (double)freq.QuadPart * 1000.0;
     }
 
