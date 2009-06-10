@@ -4,7 +4,7 @@
 ;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
 ;;; See license.txt for terms and conditions of use.
 
-;;; Supports Linux, Mac OS X, and Windows XP.
+;;; Supports Linux, Mac OS X, Windows XP, and Windows Vista.
 ;;; Requires Ypsilon(svn trunk), SDL, SDL_image, and SDL_mixer.
 
 (library (jello config)
