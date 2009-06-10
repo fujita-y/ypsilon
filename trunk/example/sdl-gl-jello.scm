@@ -16,7 +16,7 @@
 
   (import (rnrs))
 
-  (define config-auto-on #f)         ; hit 'a' key to toggle - CPU autoplay
+  (define config-auto-on #f)         ; hit 'a' key to toggle - autoplay
   (define config-demo-on #t)         ; hit 'd' key to toggle - shows banner
   (define config-show-fps-on #f)     ; hit 'f' key to toggle - prints FPS
   (define config-show-collect-on #f) ; hit 'c' key to toggle - prints GC activity
@@ -79,11 +79,11 @@
           draw-opengl-sprite
           draw-opengl-sprite-h-wipe
           draw-opengl-sprite-h-reverse-wipe)
-  (import (core)
-          (rnrs)
+  (import (rnrs)
           (ypsilon gl)
           (ypsilon sdl)
-          (ypsilon ffi))
+          (ypsilon ffi)
+          (only (core) define-struct))
 
   (define-struct sprite (width height id x1y0 x0y1 x1y1))
 
@@ -157,9 +157,9 @@
               (SDL_BlitSurface surface area image area)
               (when (= (bitwise-and saved-flags SDL_SRCALPHA) SDL_SRCALPHA)
                 (SDL_SetAlpha surface saved-flags saved-alpha))
-              (let ((texture (make-bytevector (c-sizeof int))))
+              (let ((texture (make-c-int 0)))
                 (glGenTextures 1 texture)
-                (let ((texture (bytevector-c-unsigned-int-ref texture 0)))
+                (let ((texture (c-unsigned-int-ref texture)))
                   (glBindTexture GL_TEXTURE_2D texture)
                   (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER GL_NEAREST)
                   (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER GL_NEAREST)
@@ -242,7 +242,14 @@
                 list-head
                 microsecond
                 collect-notify
-                destructuring-bind))
+                destructuring-bind
+                make-cmwc-random-state
+                cmwc-random-u32))
+
+  (define random-u32
+    (let ((state (make-cmwc-random-state (microsecond))))
+      (lambda ()
+        (cmwc-random-u32 state))))
 
   (define-c-struct-methods SDL_Rect SDL_Surface SDL_MouseMotionEvent SDL_keysym SDL_KeyboardEvent)
 
@@ -317,7 +324,7 @@
 
   (define paddle-level 0)
   (define paddle-sprite)
-  (define paddle-x (+ (mod (microsecond) 500) 10))
+  (define paddle-x (+ (mod (random-u32) 500) 10))
   (define paddle-y 440)
   (define paddle-width 64)
   (define paddle-height 16)
@@ -489,7 +496,7 @@
 
   (define fragments-motion-list
     (begin
-      (for-each random-integer (iota (mod (microsecond) 1234) 1))
+      (for-each random-integer (iota (mod (random-u32) 1234) 1))
       (map (lambda (n)
              (list (- (exact (round (sqrt (* (random-integer 20) (random-integer 20))))) 10)
                    (- (exact (round (sqrt (* (random-integer 20) (random-integer 20))))) 10)
@@ -499,7 +506,7 @@
 
   (define add-fragments
     (lambda (sprite org-x org-y count)
-      (let ((n (mod (* (microsecond) count org-x org-y) 256)))
+      (let ((n (mod (* (random-u32) count org-x org-y) 256)))
         (let ((lst (list-head (list-tail fragments-motion-list n) count)))
           (let ((lst (map (lambda (dot)
                             (destructuring-bind (x y dx dy) dot
@@ -509,7 +516,7 @@
 
   (define add-mini-fragments
     (lambda (sprite org-x org-y count)
-      (let ((n (mod (microsecond) 256)))
+      (let ((n (mod (random-u32) 256)))
         (let ((lst (list-head (list-tail fragments-motion-list n) count)))
           (let ((lst (map (lambda (dot)
                             (destructuring-bind (x y dx dy) dot
@@ -595,27 +602,31 @@
 
   (define init-blocks
     (lambda ()
+
       (define last-update)
+
       (define update
         (lambda ()
-          (when (> (microsecond) (+ last-update 1000))
-            (set! last-update (microsecond))
-            (let loop ((i 0))
-              (cond ((>= i 21))
-                    (else
-                     (let ((state (bytevector-u8-ref blocks i)))
-                       (cond ((= state 0))
-                             ((= state 255))
-                             (else
-                              (bytevector-u8-set! blocks i (+ state 1)))))
-                     (loop (+ i 1))))))))
+          (let ((now (microsecond)))
+            (when (> now (+ last-update 2000))
+              (let ((delta (div (- now last-update) 2000)))
+                (set! last-update now)
+                (let loop ((i 0))
+                  (cond ((>= i 21))
+                        (else
+                         (let ((state (bytevector-u8-ref blocks i)))
+                           (unless (= state 0)
+                             (bytevector-u8-set! blocks i (min 255 (+ state delta)))))
+                         (loop (+ i 1))))))))))
+
       (set! last-update (microsecond))
-      (parameterize ((collect-notify #f))
-        (when demo-on
-          (let ((until (+ (microsecond) 5000000)))
-            (let loop ((last (microsecond)) (level 0.0))
-              (usleep 1000)
-              (cond ((> (microsecond) (+ last 2000))
+      (collect-notify #f)
+      (when demo-on
+        (let ((until (+ last-update 5000000)))
+          (let loop ((last last-update) (level 0.0))
+            (usleep 1000)
+            (let ((now (microsecond)))
+              (cond ((> now (+ last 2000))
                      (handle-event)
                      (glClear (bitwise-ior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
                      (if (> level 1.0)
@@ -625,13 +636,15 @@
                          (draw-opengl-sprite title-sprite 66 120)
                          (draw-opengl-sprite-h-reverse-wipe title-sprite 65 120 (* level 2.0)))
                      (SDL_GL_SwapBuffers)
-                     (loop (microsecond) (+ level 0.01)))
-                    ((< (microsecond) until)
-                     (loop last level)))))
-          (let ((until (+ (microsecond) 1200000)))
-            (let loop ((last (microsecond)) (level 1.0))
-              (usleep 1000)
-              (cond ((> (microsecond) (+ last 7000))
+                     (loop now (+ level (/ (- now last) 200000.0))))
+                    ((< now until)
+                     (loop last level))))))
+        (set! last-update (microsecond))
+        (let ((until (+ last-update 1200000)))
+          (let loop ((last last-update) (level 1.0))
+            (usleep 1000)
+            (let ((now (microsecond)))
+              (cond ((> now (+ last 7000))
                      (handle-event)
                      (glClear (bitwise-ior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
                      (glColor4d 1.0 1.0 1.0 1.0)
@@ -641,35 +654,37 @@
                          (glColor4d 1.0 1.0 1.0 level))
                      (draw-opengl-sprite title-sprite 66 120)
                      (SDL_GL_SwapBuffers)
-                     (loop (microsecond) (- level 0.01)))
-                    ((< (microsecond) until)
+                     (loop now (- level (/ (- now last) 700000.0))))
+                    ((< now until)
                      (loop last level))))))
-        (glColor4d 1.0 1.0 1.0 1.0)
         (set! last-update (microsecond))
+        (collect-notify collect-on)
+        (glColor4d 1.0 1.0 1.0 1.0)
         (set! block-alive 21)
         (bytevector-fill! blocks 0)
-        (let loop ((n 0) (last (microsecond)))
+        (let loop ((n 0) (last last-update))
           (usleep 1000)
-          (handle-event)
-          (update)
-          (glClear (bitwise-ior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-          (draw-blocks)
-          (draw-opengl-sprite logo-sprite 254 180)
-          (draw-paddle)
-          (SDL_GL_SwapBuffers)
-          (cond ((= n 7)
-                 (cond ((> (microsecond) (+ last 480000))
-                        (bytevector-fill! blocks 255))
-                       (else
-                        (loop n last))))
-                (else
-                 (cond ((> (microsecond) (+ last 200000))
-                        (for-each (lambda (i) (bytevector-u8-set! blocks i 1))
-                                  (map (lambda (i) (+ i n)) '(0 7 14)))
-                        (and SE-setup-block (Mix_PlayChannelTimed -1 SE-setup-block 0 -1))
-                        (loop (+ n 1) (microsecond)))
-                       (else
-                        (loop n last)))))))))
+          (let ((now (microsecond)))
+            (handle-event)
+            (update)
+            (glClear (bitwise-ior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+            (draw-blocks)
+            (draw-opengl-sprite logo-sprite 254 180)
+            (draw-paddle)
+            (SDL_GL_SwapBuffers)
+            (cond ((= n 7)
+                   (cond ((> now (+ last 480000))
+                          (bytevector-fill! blocks 255))
+                         (else
+                          (loop n last))))
+                  (else
+                   (cond ((> now (+ last 200000))
+                          (for-each (lambda (i) (bytevector-u8-set! blocks i 1))
+                                    (map (lambda (i) (+ i n)) '(0 7 14)))
+                          (and SE-setup-block (Mix_PlayChannelTimed -1 SE-setup-block 0 -1))
+                          (loop (+ n 1) (+ last 200000)))
+                         (else
+                          (loop n last))))))))))
 
   (define ball-hit-test
     (lambda ()
@@ -718,18 +733,19 @@
       (and fade-paddle (set! paddle-level 1))
       (let ((until (+ (microsecond) wait)))
         (let loop ()
-          (cond ((> (microsecond) until))
-                (else
-                 (when (> (microsecond) (+ ball-last-move 10000))
-                   (set! ball-last-move (microsecond))
-                   (update-paddle)
-                   (handle-event))
-                 (glClear (bitwise-ior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-                 (draw-blocks)
-                 (draw-opengl-sprite logo-sprite 254 180)
-                 (draw-paddle)
-                 (SDL_GL_SwapBuffers)
-                 (loop)))))
+          (let ((now (microsecond)))
+            (cond ((> now until))
+                  (else
+                   (when (> now (+ ball-last-move 10000))
+                     (set! ball-last-move now)
+                     (update-paddle)
+                     (handle-event))
+                   (glClear (bitwise-ior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+                   (draw-blocks)
+                   (draw-opengl-sprite logo-sprite 254 180)
+                   (draw-paddle)
+                   (SDL_GL_SwapBuffers)
+                   (loop))))))
 
       (and music
            (unless (= (Mix_PlayMusic music -1) 0)
@@ -751,27 +767,28 @@
       (add-mini-fragments mini-blue-frag-sprite (* (+ paddle-x 32) 128) (* paddle-y 128) 64)
       (let ((until (+ (microsecond) 2500000)))
         (let loop ()
-          (cond ((> (microsecond) until))
-                (else
-                 (when (> (microsecond) (+ ball-last-move 10000))
-                   (set! ball-last-move (microsecond))
-                   (handle-event)
-                   (update-fragments)
-                   (update-mini-fragments-slow))
-                 (glClear (bitwise-ior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-                 (draw-blocks)
-                 (draw-opengl-sprite logo-sprite 254 180)
-                 (draw-fragments)
-                 (draw-mini-fragments)
-                 (SDL_GL_SwapBuffers)
-                 (loop)))))))
+          (let ((now (microsecond)))
+            (cond ((> now until))
+                  (else
+                   (when (> now (+ ball-last-move 10000))
+                     (set! ball-last-move now)
+                     (handle-event)
+                     (update-fragments)
+                     (update-mini-fragments-slow))
+                   (glClear (bitwise-ior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+                   (draw-blocks)
+                   (draw-opengl-sprite logo-sprite 254 180)
+                   (draw-fragments)
+                   (draw-mini-fragments)
+                   (SDL_GL_SwapBuffers)
+                   (loop))))))))
 
   (define update-paddle
     (lambda ()
       (when (and auto-on (> ball-level 0))
         (let ((delta (- (+ (div (+ ball-x ball-dx) 128) 8) (+ paddle-x 32))))
           (cond ((or (< ball-dy 0) (< ball-y 26000))
-                 (when (and (< 12800 ball-x 69120) (not (= 0 (bitwise-and (microsecond) 15))))
+                 (when (and (< 12800 ball-x 69120) (not (= 0 (bitwise-and (random-u32) 15))))
                    (cond ((> delta 0)
                           (set! paddle-x (+ paddle-x 1)))
                          ((< delta 0)
@@ -813,10 +830,19 @@
                 ((= type SDL_KEYDOWN)
                  (let ((key (SDL_keysym-sym (SDL_KeyboardEvent-keysym event))))
                    (case key
-                     ((97) (set! auto-on (not auto-on)))            ; A
-                     ((99) (collect-notify (not (collect-notify)))) ; C
-                     ((100) (set! demo-on (not demo-on)))           ; D
-                     ((102) (set! fps-on (not fps-on))))))          ; F
+                     ((97)  ; a
+                      (set! auto-on (not auto-on))
+                      (format #t "autoplay: ~a\n" (if auto-on "on" "off")))
+                     ((99)  ; c
+                      (set! collect-on (not collect-on))
+                      (collect-notify collect-on)
+                      (format #t "prints gc activity: ~a\n" (if collect-on "on" "off")))
+                     ((100) ; d
+                      (set! demo-on (not demo-on))
+                      (format #t "shows banner: ~a\n" (if demo-on "on" "off")))
+                     ((102) ; f
+                      (set! fps-on (not fps-on))
+                      (format #t "prints fps: ~a\n" (if fps-on "on" "off"))))))
                 ((= type SDL_MOUSEMOTION)
                  (let ((x (- (SDL_MouseMotionEvent-x event) (div paddle-width 2))))
                    (cond ((< x 0)
@@ -834,8 +860,7 @@
       (Mix_AllocateChannels 16)
       (init-opengl-attribute)
       (let ((screen (SDL_SetVideoMode 640 480 32 (+ SDL_SWSURFACE SDL_OPENGL))))
-        (when (zero? screen)
-          (assertion-violation 'SDL_SetVideoMode (SDL_GetError)))
+        (when (zero? screen) (assertion-violation 'SDL_SetVideoMode (SDL_GetError)))
         (SDL_WM_SetCaption "JelloBench - Ypsilon/SDL/GL" 0)
         (opengl-enter-2d-mode)
         (init-sprites)
@@ -845,45 +870,47 @@
         (and SE-ball-start (Mix_PlayChannelTimed -1 SE-ball-start 0 -1))
         (new-ball 2500000 #t)
         (let loop ()
-          (handle-event)
-          (and fps-on (show-fps))
-          (when (> ball-y dead-y)
-            (set! ball-y dead-y)
-            (set! ball-x 0)
-            (unless (= 0 block-alive)
-              (ball-dead)
+          (let ((now (microsecond)))
+            (and fps-on (show-fps))
+            (when (> ball-y dead-y)
+              (set! ball-y dead-y)
+              (set! ball-x 0)
+              (unless (= 0 block-alive)
+                (ball-dead)
+                (and SE-ball-start (Mix_PlayChannelTimed -1 SE-ball-start 0 -1))
+                (new-ball 2500000 #t)))
+            (when (and (= 0 block-alive) (> now block-reset-time))
+              (init-blocks)
               (and SE-ball-start (Mix_PlayChannelTimed -1 SE-ball-start 0 -1))
-              (new-ball 2500000 #t)))
-          (when (and (= 0 block-alive) (> (microsecond) block-reset-time))
-            (init-blocks)
-            (and SE-ball-start (Mix_PlayChannelTimed -1 SE-ball-start 0 -1))
-            (new-ball 0 #f))
-          (when (> (microsecond) (+ ball-last-move 10000))
-            (set! ball-last-move (microsecond))
-            (update-paddle)
-            (update-ball-position)
-            (ball-hit-test)
-            (update-fragments)
-            (update-mini-fragments)
-            (update-blocks))
-          (glClear (bitwise-ior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-          (draw-blocks)
-          (draw-opengl-sprite logo-sprite 254 180)
-          (draw-paddle)
-          (draw-ball)
-          (draw-fragments)
-          (draw-mini-fragments)
-          (SDL_GL_SwapBuffers)
-          (loop)))))
+              (new-ball 0 #f))
+            (when (> now (+ ball-last-move 10000))
+              (set! ball-last-move now)
+              (handle-event)
+              (update-paddle)
+              (update-ball-position)
+              (ball-hit-test)
+              (update-fragments)
+              (update-mini-fragments)
+              (update-blocks))
+            (glClear (bitwise-ior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+            (draw-blocks)
+            (draw-opengl-sprite logo-sprite 254 180)
+            (draw-paddle)
+            (draw-ball)
+            (draw-fragments)
+            (draw-mini-fragments)
+            (SDL_GL_SwapBuffers)
+            (loop))))))
 
   (define program-main
     (lambda ()
-      (for-each (lambda (a) (format #t "~a: ~a~%" (car a) (cdr a)))
-                `((config-auto-on . ,config-auto-on)
-                  (config-demo-on . ,config-demo-on)
-                  (config-show-fps-on . ,config-show-fps-on)
-                  (config-show-collect-on . ,config-show-collect-on)))
-      (format #t "\nUse mouse to move paddle. Click window to exit program.\n\n")              
+      (format #t "\nUse mouse to move paddle. Click window to exit program.\n\n")
+      (for-each (lambda (a) (format #t "~a[~a]: ~a~%" (car a) (cadr a) (cddr a)))
+                `((config-auto-on "a" . ,config-auto-on)
+                  (config-demo-on "d" . ,config-demo-on)
+                  (config-show-fps-on "f" . ,config-show-fps-on)
+                  (config-show-collect-on "c" . ,config-show-collect-on)))
+      (newline)
       (collect-notify collect-on)
       (call/cc
        (lambda (cont)
