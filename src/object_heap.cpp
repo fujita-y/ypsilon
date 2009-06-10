@@ -33,8 +33,8 @@
 #else
   #define DEFALUT_COLLECT_TRIP_BYTES    (2 * 1024 * 1024)
 #endif
-#define ENSURE_REALTIME                 (1.0)       // in msec (1.0 == 0.001sec)
-#define TIMEOUT_CHECK_EACH              (100)
+#define ENSURE_REALTIME                 (5.0)       // in msec (1.0 == 0.001sec)
+#define TIMEOUT_CHECK_EACH              (500)
 
 #if ARCH_LP64
     inline int
