@@ -1759,7 +1759,7 @@ subr_string_uninterned_symbol(VM* vm, int argc, scm_obj_t argv[])
                     int offset = utf8_char_index_to_byte_offset((uint8_t*)string->name, FIXNUM(argv[1]), string->size + 1);
                     return make_symbol_uninterned(vm->m_heap, string->name, string->size, offset);
                 }
-                wrong_type_argument_violation(vm, "string->uninterned-symbol", 1, "string", argv[1], argc, argv);
+                wrong_type_argument_violation(vm, "string->uninterned-symbol", 1, "fixnum", argv[1], argc, argv);
                 return scm_undef;
             }
         }

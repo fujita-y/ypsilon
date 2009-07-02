@@ -309,7 +309,8 @@
         (assertion-violation 'bound-identifier=? (format "expected identifier, but got ~r" id1)))
     (or (identifier? id2)
         (assertion-violation 'bound-identifier=? (format "expected identifier, but got ~r" id2)))
-    (eq? (syntax-object-expr id1) (syntax-object-expr id2))))
+    (string=? (symbol->string (syntax-object-expr id1))
+              (symbol->string (syntax-object-expr id2)))))
 
 (define free-identifier=?
   (lambda (id1 id2)

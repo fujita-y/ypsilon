@@ -38,13 +38,17 @@
 
 (define assertion-violation
   (lambda (who message . irritants)
-    (raise
-     (apply condition
-            (filter values
-                    (list (make-assertion-violation)
-                          (and who (make-who-condition who))
-                          (make-message-condition message)
-                          (make-irritants-condition irritants)))))))
+    (if (or (not who) (string? who) (symbol? who) (identifier? who))
+        (if (string? message)
+            (raise
+             (apply condition
+                    (filter values
+                            (list (make-assertion-violation)
+                                  (and who (make-who-condition who))
+                                  (make-message-condition message)
+                                  (make-irritants-condition irritants)))))
+            (assertion-violation 'assertion-violation (wrong-type-argument-message "string" message 2)))
+        (assertion-violation 'assertion-violation (wrong-type-argument-message "string, symbol, or #f" who 1)))))
 
 (define undefined-violation
   (lambda (who . message)
@@ -66,29 +70,37 @@
 
 (define syntax-violation
   (lambda (who message form . subform)
-    (raise
-     (apply condition
-            (filter values
-                    (list (make-syntax-violation form (and (pair? subform) (car subform)))
-                          (if who
-                              (make-who-condition who)
-                              (cond ((let ((obj (if (wrapped-syntax-object? form) (unwrap-syntax form) form)))
-                                       (cond ((identifier? obj) (original-id (syntax-object-expr obj)))
-                                             ((and (pair? obj) (identifier? (car obj))) (original-id (syntax-object-expr (car obj))))
-                                             (else #f)))
-                                     => make-who-condition)
-                                    (else #f)))
-                          (make-message-condition message)))))))
+    (if (or (not who) (string? who) (symbol? who) (identifier? who))
+        (if (string? message)
+            (raise
+             (apply condition
+                    (filter values
+                            (list (make-syntax-violation form (and (pair? subform) (car subform)))
+                                  (if who
+                                      (make-who-condition who)
+                                      (cond ((let ((obj (if (wrapped-syntax-object? form) (unwrap-syntax form) form)))
+                                               (cond ((identifier? obj) (original-id (syntax-object-expr obj)))
+                                                     ((and (pair? obj) (identifier? (car obj))) (original-id (syntax-object-expr (car obj))))
+                                                     (else #f)))
+                                             => make-who-condition)
+                                            (else #f)))
+                                  (make-message-condition message)))))
+            (assertion-violation 'syntax-violation (wrong-type-argument-message "string" message 2)))
+        (assertion-violation 'syntax-violation (wrong-type-argument-message "string, symbol, or #f" who 1)))))
 
 (define error
   (lambda (who message . irritants)
-    (raise
-     (apply condition
-            (filter values
-                    (list (make-error)
-                          (and who (make-who-condition who))
-                          (make-message-condition message)
-                          (make-irritants-condition irritants)))))))
+    (if (or (not who) (string? who) (symbol? who) (identifier? who))
+        (if (string? message)
+            (raise
+             (apply condition
+                    (filter values
+                            (list (make-error)
+                                  (and who (make-who-condition who))
+                                  (make-message-condition message)
+                                  (make-irritants-condition irritants)))))
+            (assertion-violation 'error (wrong-type-argument-message "string" message 2)))
+        (assertion-violation 'error (wrong-type-argument-message "string, symbol, or #f" who 1)))))
 
 (define implementation-restriction-violation
   (lambda (who message . irritants)
