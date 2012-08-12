@@ -39,7 +39,10 @@
                      (else (cons na nd)))))
             ((renamed-id? lst)
              (let ((deno (env-lookup env lst)))
-               (cond ((special? deno) (original-id lst))
+               (cond ((special? deno)
+                      (cond ((eq? deno denote-_) '_)
+                            (else
+                             (core-primitive-name (original-id lst)))))
                      ((macro? deno)
                       (let ((id (original-id lst)))
                         (cond ((eq? deno (env-lookup env id)) id)
@@ -251,6 +254,7 @@
 (define denote-syntax-rules     (core-hashtable-ref core-env 'syntax-rules #f))
 (define denote-else             (core-hashtable-ref core-env 'else #f))
 (define denote-=>               (core-hashtable-ref core-env '=> #f))
+(define denote-_                (core-hashtable-ref core-env '_ #f))
 (define denote-import           (core-hashtable-ref core-env 'import #f))
 
 (define denote-macro?

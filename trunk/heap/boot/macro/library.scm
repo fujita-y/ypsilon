@@ -456,6 +456,7 @@
                                                (if (and (symbol? deno) (not (eq? deno (car b))))
                                                    (extend-libenv! (car b) (make-import deno))
                                                    (or (uninterned-symbol? (car b))
+                                                       (core-primitive-name? (car b))
                                                        (extend-libenv! (car b) (make-unbound)))))))
                                        (core-hashtable->alist ht-visibles))
                              (let ((shared-env (generate-temporary-symbol)))

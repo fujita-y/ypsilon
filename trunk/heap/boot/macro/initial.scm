@@ -38,9 +38,17 @@
                            (else
                             (scheme-error "internal error: .set-top-level-macro! ~s" (list type keyword spec)))))))
 
+(define core-primitive-name?
+  (lambda (e)
+    (cond ((eq? e '...) #f)
+          (else
+           (eq? (string-ref (symbol->string e) 0) (current-primitive-prefix))))))
+
 (define core-primitive-name
   (lambda (e)
-    (string->symbol (format "~a~a" (current-primitive-prefix) e))))
+    (cond ((core-primitive-name? e) e)
+          (else
+           (string->symbol (format "~a~a" (current-primitive-prefix) e))))))
 
 (define generate-global-id
   (lambda (library-id symbol)
