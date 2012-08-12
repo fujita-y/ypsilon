@@ -226,11 +226,14 @@ ifneq (,$(findstring SunOS, $(UNAME)))
 endif
 
 ifneq (,$(findstring Darwin, $(UNAME)))
+  CXX = g++
   CXXFLAGS += -arch i386 -msse2 -mfpmath=sse -fomit-frame-pointer -momit-leaf-frame-pointer
   ifneq (,$(shell sw_vers -productVersion | grep '10.4.'))
     CPPFLAGS += -DNO_POSIX_SPAWN
   endif
   CPPFLAGS += -DNO_TLS
+  ASFLAGS += -arch i386
+  LDFLAGS += -arch i386
   SRCS += ffi_stub_darwin.s
   ifneq (,$(shell ls -1 /Library/Frameworks /System/Library/Frameworks | grep 'SDL.framework'))
     EXTS += SDLMain.dylib
