@@ -1,6 +1,6 @@
 /*
     Ypsilon Scheme System
-    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
+    Copyright (c) 2004-2016 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
 
@@ -640,7 +640,7 @@ proc_name(scm_obj_t obj)
     }
     if (obj == scm_proc_apply) return "apply";
     if (obj == scm_proc_callcc) return "call-with-current-continuation";
-    if (obj == scm_proc_apply_values) "apply-values";
+    if (obj == scm_proc_apply_values) return "apply-values";
     assert(false);
     return NULL;
 }
@@ -652,11 +652,7 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
     if (HASHTABLEP(ht)) {
         scm_obj_t value = get_hashtable((scm_hashtable_t)ht, obj);
         if (FIXNUMP(value)) {
-#if ARCH_LP64
-            snprintf(buf, sizeof(buf), "#%ld#", FIXNUM(value));
-#else
-            snprintf(buf, sizeof(buf), "#%d#", FIXNUM(value));
-#endif
+            snprintf(buf, sizeof(buf), "#%ld#", (long)FIXNUM(value));
             port_puts(m_port, buf);
             return;
         }
@@ -710,20 +706,12 @@ printer_t::write(scm_obj_t ht, scm_obj_t obj)
     if (!CELLP(obj)) {
         if (FIXNUMP(obj)) {
             if (m_radix == 10) {
-#if ARCH_LP64
-                snprintf(buf, sizeof(buf), "%ld", FIXNUM(obj));
-#else
-                snprintf(buf, sizeof(buf), "%d", FIXNUM(obj));
-#endif
+                snprintf(buf, sizeof(buf), "%ld", (long)FIXNUM(obj));
                 port_puts(m_port, buf);
                 return;
             }
             if (m_radix == 16) {
-#if ARCH_LP64
-                snprintf(buf, sizeof(buf), "%lx", FIXNUM(obj));
-#else
-                snprintf(buf, sizeof(buf), "%x", FIXNUM(obj));
-#endif
+                snprintf(buf, sizeof(buf), "%lx", (long)FIXNUM(obj));
                 port_puts(m_port, buf);
                 return;
             }

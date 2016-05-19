@@ -1,6 +1,6 @@
 /*
     Ypsilon Scheme System
-    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
+    Copyright (c) 2004-2016 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
 
@@ -45,7 +45,7 @@ inline void
 bn_set_sign(scm_bignum_t bn, int sign)
 {
     assert(sign == 0 || sign == -1 || sign == 1);
-    bn->hdr = scm_hdr_bignum | (bn->hdr & MAKEBITS(-1, HDR_BIGNUM_COUNT_SHIFT)) | MAKEBITS((sign & 0x3), HDR_BIGNUM_SIGN_SHIFT);
+    bn->hdr = scm_hdr_bignum | (bn->hdr & MAKEBITS(UINTPTR_MAX, HDR_BIGNUM_COUNT_SHIFT)) | MAKEBITS((sign & 0x3), HDR_BIGNUM_SIGN_SHIFT);
 }
 
 inline int

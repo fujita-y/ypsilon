@@ -1,6 +1,6 @@
 /*
     Ypsilon Scheme System
-    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
+    Copyright (c) 2004-2016 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
 /*
@@ -1056,7 +1056,7 @@ port_buffered_byte_count(scm_port_t port)
         switch (port->type) {
 
             case SCM_PORT_TYPE_NAMED_FILE: {
-                if ((port->buf_state == SCM_PORT_BUF_STATE_READ)) return port->buf_tail - port->buf_head;
+                if (port->buf_state == SCM_PORT_BUF_STATE_READ) return port->buf_tail - port->buf_head;
                 return port->lookahead_size;
             } break;
 

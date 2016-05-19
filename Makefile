@@ -23,6 +23,7 @@ VPATH 	 = src
 UNAME 	 = $(shell uname -a)
 
 ifneq (,$(findstring Linux, $(UNAME)))
+  CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifneq (,$(findstring ppc, $(UNAME)))
     ifneq (,$(findstring ps3, $(UNAME)))
       ifneq (,$(shell which ppu-g++ 2>/dev/null))
@@ -43,7 +44,7 @@ ifneq (,$(findstring Linux, $(UNAME)))
     ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
       CXXFLAGS += -fno-stack-protector
     endif
-    ifeq ($(DATAMODEL), ILP32)  
+    ifeq ($(DATAMODEL), ILP32)
       CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
       CXXFLAGS += -m32
       LDFLAGS = -m32
@@ -81,7 +82,7 @@ ifneq (,$(findstring Linux, $(UNAME)))
     ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
       CXXFLAGS += -fno-stack-protector
     endif
-    ifeq ($(DATAMODEL), ILP32)  
+    ifeq ($(DATAMODEL), ILP32)
       CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
       CXXFLAGS += -m32
       LDFLAGS = -m32
@@ -99,6 +100,7 @@ ifneq (,$(findstring Linux, $(UNAME)))
 endif
 
 ifneq (,$(findstring FreeBSD, $(UNAME)))
+  CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifndef DATAMODEL
     ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
       DATAMODEL = ILP32
@@ -107,7 +109,7 @@ ifneq (,$(findstring FreeBSD, $(UNAME)))
     endif
   endif
   ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
-    ifeq ($(DATAMODEL), ILP32)  
+    ifeq ($(DATAMODEL), ILP32)
       CXXFLAGS += -march=i686
     endif
   else
@@ -123,7 +125,7 @@ ifneq (,$(findstring FreeBSD, $(UNAME)))
   ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
     CXXFLAGS += -fno-stack-protector
   endif
-  ifeq ($(DATAMODEL), ILP32)  
+  ifeq ($(DATAMODEL), ILP32)
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
     LDFLAGS = -m32
@@ -138,13 +140,14 @@ ifneq (,$(findstring FreeBSD, $(UNAME)))
   endif
   ifneq (,$(findstring kFreeBSD, $(UNAME)))
     LDLIBS = -pthread -ldl
-  else     
+  else
     CPPFLAGS += -DNO_POSIX_SPAWN
     LDLIBS = -pthread
   endif
 endif
 
 ifneq (,$(findstring OpenBSD, $(UNAME)))
+  CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifndef DATAMODEL
     ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
       DATAMODEL = ILP32
@@ -153,7 +156,7 @@ ifneq (,$(findstring OpenBSD, $(UNAME)))
     endif
   endif
   ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
-    ifeq ($(DATAMODEL), ILP32)  
+    ifeq ($(DATAMODEL), ILP32)
       CXXFLAGS += -march=i686
     endif
   else
@@ -169,7 +172,7 @@ ifneq (,$(findstring OpenBSD, $(UNAME)))
   ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
     CXXFLAGS += -fno-stack-protector
   endif
-  ifeq ($(DATAMODEL), ILP32)  
+  ifeq ($(DATAMODEL), ILP32)
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
     LDFLAGS = -m32
@@ -186,6 +189,7 @@ ifneq (,$(findstring OpenBSD, $(UNAME)))
 endif
 
 ifneq (,$(findstring SunOS, $(UNAME)))
+  CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifndef DATAMODEL
     ifeq (,$(shell isainfo -b | grep '64'))
       DATAMODEL = ILP32
@@ -194,7 +198,7 @@ ifneq (,$(findstring SunOS, $(UNAME)))
     endif
   endif
   ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
-    ifeq ($(DATAMODEL), ILP32)  
+    ifeq ($(DATAMODEL), ILP32)
       CXXFLAGS += -march=i686
     endif
   else
@@ -209,7 +213,7 @@ ifneq (,$(findstring SunOS, $(UNAME)))
   ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
     CXXFLAGS += -fno-stack-protector
   endif
-  ifeq ($(DATAMODEL), ILP32)  
+  ifeq ($(DATAMODEL), ILP32)
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
     CXXFLAGS += -m32
     LDFLAGS = -m32
@@ -233,7 +237,7 @@ ifneq (,$(findstring Darwin, $(UNAME)))
   endif
   CPPFLAGS += -DNO_TLS
   ASFLAGS += -arch i386
-  LDFLAGS += -arch i386
+  LDFLAGS += -arch i386 -Wl,-no_pie
   SRCS += ffi_stub_darwin.s
   ifneq (,$(shell ls -1 /Library/Frameworks /System/Library/Frameworks | grep 'SDL.framework'))
     EXTS += SDLMain.dylib
@@ -252,8 +256,7 @@ $(PROG): $(OBJS)
 	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
 vm1.s: vm1.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \
-	-fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps \
+	$(CXX) $(CXXFLAGS) $(CXXFLAGS_VM1) $(CPPFLAGS) \
 	-fverbose-asm -masm=att -S src/vm1.cpp
 
 SDLMain.dylib: SDLMain.m
@@ -263,8 +266,7 @@ SDLMain.dylib: SDLMain.m
 	-framework SDL -framework Cocoa
 
 vm1.o: vm1.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) \
-	-fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps \
+	$(CXX) $(CXXFLAGS) $(CXXFLAGS_VM1) $(CPPFLAGS) \
 	-c src/vm1.cpp
 
 install: all stdlib sitelib extension
@@ -294,7 +296,7 @@ sitelib:
 	find sitelib -type f -name '*.scm' | cpio -pdu $(DESTDIR)$(PREFIX)/share/$(PROG)
 	find $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib -type d -exec chmod 755 {} \;
 	find $(DESTDIR)$(PREFIX)/share/$(PROG)/sitelib -type f -exec chmod 644 {} \;
-	
+
 extension:
 	mkdir -p -m755 $(DESTDIR)$(PREFIX)/lib/$(PROG)
 	find . -type f -name '*.dylib' | cpio -pdu $(DESTDIR)$(PREFIX)/lib/$(PROG)
@@ -325,7 +327,7 @@ check: all
 	@./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib:./stdlib ./test/r6rs-lib.scm
 	@echo '----------------------------------------'
 	@echo 'Passed all tests'
-	@rm -f ./test/tmp* 
+	@rm -f ./test/tmp*
 
 eval: all
 	./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./sitelib:./stdlib
@@ -335,12 +337,12 @@ bench: all
 
 clean:
 	rm -f *.o *.d *.dylib
-	rm -f $(HOME)/.ypsilon/*.cache 
+	rm -f $(HOME)/.ypsilon/*.cache
 	rm -f $(HOME)/.ypsilon/*.time
 
 distclean: clean
 	rm -f tmp1 tmp2 tmp3 spheres.pgm
-	rm -f ./test/tmp* 
+	rm -f ./test/tmp*
 	rm -f ./bench/gambit-benchmarks/tmp*
 	rm -f ./bench/gambit-benchmarks/spheres.pgm
 	rm -f -r ./build/* ./build-win32/* ./setup-win32/Debug ./setup-win32/Release

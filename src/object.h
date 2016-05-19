@@ -1,6 +1,6 @@
 /*
     Ypsilon Scheme System
-    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
+    Copyright (c) 2004-2016 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
 
@@ -552,9 +552,9 @@ struct vm_env_rec_t {           // record size is variable
 #define CADAR(obj)                          (CAR(CDR(CAR(obj))))
 #define CDDDR(obj)                          (CDR(CDR(CDR(obj))))
 
-#define MAKEFIXNUM(n)                       ((scm_fixnum_t)(((intptr_t)(n) << 1) + 1))
+#define MAKEFIXNUM(n)                       ((scm_fixnum_t)(((uintptr_t)(n) << 1) + 1))
 #define MAKECHAR(n)                         ((scm_char_t)(((uintptr_t)(n) << 8) + 0x02))
-#define MAKEBITS(n, shift)                  (((intptr_t)(n)) << shift)
+#define MAKEBITS(n, shift)                  (((uintptr_t)(n)) << shift)
 
 #define HASH_BUSY_THRESHOLD(n)              ((n) - ((n) >> 3))              // 87.5%
 #define HASH_DENSE_THRESHOLD(n)             ((n) - ((n) >> 2))              // 75%
