@@ -20,10 +20,10 @@ Ypsilon is easy to use as well as good for applications of any kind that require
   * enumerations
 
 More libraries are included to support a wide variety of software development. Also it has built-in FFI which is easy to use. Please refer to the following files for FFI overview.
-  * [example/gtk-hello.scm](http://code.google.com/p/ypsilon/source/browse/trunk/example/gtk-hello.scm)
-  * [example/glut-demo.scm](http://code.google.com/p/ypsilon/source/browse/trunk/example/glut-demo.scm)
-  * [sitelib/ypsilon/glut.scm](http://code.google.com/p/ypsilon/source/browse/trunk/sitelib/ypsilon/glut.scm)
-  * [sitelib/ypsilon/gl.scm](http://code.google.com/p/ypsilon/source/browse/trunk/sitelib/ypsilon/gl.scm)
-  * [sitelib/ypsilon/ffi.scm](http://code.google.com/p/ypsilon/source/browse/trunk/sitelib/ypsilon/ffi.scm)
+  * [example/gtk-hello.scm](https://github.com/fujita-y/ypsilon/blob/master/example/gtk-hello.scm)
+  * [example/glut-demo.scm](https://github.com/fujita-y/ypsilon/blob/master/example/glut-demo.scm)
+  * [sitelib/ypsilon/glut.scm](https://github.com/fujita-y/ypsilon/blob/master/sitelib/ypsilon/glut.scm)
+  * [sitelib/ypsilon/gl.scm](https://github.com/fujita-y/ypsilon/blob/master/sitelib/ypsilon/gl.scm)
+  * [sitelib/ypsilon/ffi.scm](https://github.com/fujita-y/ypsilon/blob/master/sitelib/ypsilon/ffi.scm)
   
 This project is migrated from code.google.com/p/ypsilon
