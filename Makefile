@@ -8,7 +8,7 @@ PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"' -DSYSTEM_EXTENSION_PATH='"$(DESTDIR)$(PREFIX)/lib/$(PROG)"'
 
-CXXFLAGS = -pipe -fstrict-aliasing
+CXXFLAGS = -pipe -O3 -fstrict-aliasing
 
 SRCS 	 = file.cpp main.cpp vm0.cpp object_heap_compact.cpp subr_flonum.cpp vm1.cpp object_set.cpp \
 	   subr_hash.cpp vm2.cpp object_slab.cpp subr_list.cpp interpreter.cpp serialize.cpp nanoasm.cpp \
@@ -23,9 +23,8 @@ VPATH 	 = src
 UNAME 	 = $(shell uname -a)
 
 ifneq (,$(findstring Linux, $(UNAME)))
-  CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifneq (,$(findstring ppc, $(UNAME)))
-    CXXFLAGS += -O3
+    CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
     ifneq (,$(findstring ps3, $(UNAME)))
       ifneq (,$(shell which ppu-g++ 2>/dev/null))
         CXX = ppu-g++
@@ -61,7 +60,7 @@ ifneq (,$(findstring Linux, $(UNAME)))
     LDLIBS = -lpthread -ldl
   else
     ifneq (,$(findstring armv, $(UNAME)))
-      CXXFLAGS += -O2
+      CXX = clang++
       ifndef DATAMODEL
         ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
           DATAMODEL = ILP32
@@ -77,12 +76,9 @@ ifneq (,$(findstring Linux, $(UNAME)))
         CXXFLAGS += -march=armv8-a
       endif
       CXXFLAGS += -pthread -fomit-frame-pointer
-      ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
-        CXXFLAGS += -fno-stack-protector
-      endif
       LDLIBS = -pthread -Wl,--no-as-needed -ldl
     else
-      CXXFLAGS += -O3
+      CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
       ifndef DATAMODEL
         ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
           DATAMODEL = ILP32
@@ -125,7 +121,6 @@ ifneq (,$(findstring Linux, $(UNAME)))
 endif
 
 ifneq (,$(findstring FreeBSD, $(UNAME)))
-  CXXFLAGS += -O3
   CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifndef DATAMODEL
     ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
@@ -173,7 +168,6 @@ ifneq (,$(findstring FreeBSD, $(UNAME)))
 endif
 
 ifneq (,$(findstring OpenBSD, $(UNAME)))
-  CXXFLAGS += -O3
   CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifndef DATAMODEL
     ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
@@ -216,7 +210,6 @@ ifneq (,$(findstring OpenBSD, $(UNAME)))
 endif
 
 ifneq (,$(findstring SunOS, $(UNAME)))
-  CXXFLAGS += -O3
   CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifndef DATAMODEL
     ifeq (,$(shell isainfo -b | grep '64'))
@@ -259,7 +252,6 @@ endif
 
 ifneq (,$(findstring Darwin, $(UNAME)))
   CXX = g++
-  CXXFLAGS += -O3
   CXXFLAGS += -arch i386 -msse2 -mfpmath=sse -fomit-frame-pointer -momit-leaf-frame-pointer
   ifneq (,$(shell sw_vers -productVersion | grep '10.4.'))
     CPPFLAGS += -DNO_POSIX_SPAWN
