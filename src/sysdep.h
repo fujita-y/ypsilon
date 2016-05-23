@@ -1,6 +1,6 @@
 /*
     Ypsilon Scheme System
-    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
+    Copyright (c) 2004-2016 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
 
@@ -10,6 +10,10 @@
 #if defined(NO_TLS)
   #undef NO_TLS
   #define NO_TLS                    1
+#endif
+#if defined(NO_FFI)
+  #undef NO_FFI
+  #define NO_FFI                    1
 #endif
 #if defined(NO_POSIX_SPAWN)
   #undef NO_POSIX_SPAWN
@@ -23,6 +27,7 @@
   #define ARCH_LITTLE_ENDIAN        1
   #define ARCH_IA32                 1
   #define ARCH_X64                  0
+  #define ARCH_ARM                  0
   #define ARCH_ILP32                1
   #define ARCH_LP64                 0
   #define ARCH_LLP64                0
@@ -55,14 +60,22 @@
     #define ARCH_IA32               0
     #define ARCH_X64                1
     #define ARCH_PPC                0
+    #define ARCH_ARM                0
   #elif defined(__i386__)
     #define ARCH_IA32               1
     #define ARCH_X64                0
     #define ARCH_PPC                0
+    #define ARCH_ARM                0
   #elif defined(__powerpc__)
     #define ARCH_IA32               0
     #define ARCH_X64                0
     #define ARCH_PPC                1
+    #define ARCH_ARM                0
+  #elif defined(__arm__)
+    #define ARCH_IA32               0
+    #define ARCH_X64                0
+    #define ARCH_PPC                0
+    #define ARCH_ARM                1
   #else
     #error unknown processor
   #endif
@@ -307,6 +320,8 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
     #define VALUE_INF           __builtin_inf()     /* strtod("INF", NULL) */
   #if ARCH_PPC
     #define MEM_STORE_FENCE     __asm__ __volatile__ ("lwsync" ::: "memory")
+  #elif ARCH_ARM
+    #define MEM_STORE_FENCE     __asm__ __volatile__ ("dsb" ::: "memory")
   #else
     #define MEM_STORE_FENCE     __asm__ __volatile__ ("sfence" ::: "memory")
   #endif

@@ -1,6 +1,6 @@
 #   Makefile for Linux, FreeBSD, OpenBSD, and Darwin
 #   Requirements: GNU Make, GCC 4.0 or later
-#   Options: DESTDIR, PREFIX, DATAMODEL(ILP32/LP64), USE_SDL(ON)
+#   Options: DESTDIR, PREFIX, DATAMODEL(ILP32/LP64), NO_FFI
 
 PROG 	 = ypsilon
 
@@ -8,7 +8,7 @@ PREFIX 	 = /usr/local
 
 CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"' -DSYSTEM_EXTENSION_PATH='"$(DESTDIR)$(PREFIX)/lib/$(PROG)"'
 
-CXXFLAGS = -pipe -O3 -fstrict-aliasing
+CXXFLAGS = -pipe -fstrict-aliasing
 
 SRCS 	 = file.cpp main.cpp vm0.cpp object_heap_compact.cpp subr_flonum.cpp vm1.cpp object_set.cpp \
 	   subr_hash.cpp vm2.cpp object_slab.cpp subr_list.cpp interpreter.cpp serialize.cpp nanoasm.cpp \
@@ -25,6 +25,7 @@ UNAME 	 = $(shell uname -a)
 ifneq (,$(findstring Linux, $(UNAME)))
   CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifneq (,$(findstring ppc, $(UNAME)))
+    CXXFLAGS += -O3
     ifneq (,$(findstring ps3, $(UNAME)))
       ifneq (,$(shell which ppu-g++ 2>/dev/null))
         CXX = ppu-g++
@@ -59,47 +60,72 @@ ifneq (,$(findstring Linux, $(UNAME)))
     endif
     LDLIBS = -lpthread -ldl
   else
-    ifndef DATAMODEL
-      ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
-        DATAMODEL = ILP32
-      else
-        DATAMODEL = LP64
+    ifneq (,$(findstring armv, $(UNAME)))
+      CXXFLAGS += -O2
+      ifndef DATAMODEL
+        ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
+          DATAMODEL = ILP32
+        else
+          DATAMODEL = LP64
+        endif
       endif
-    endif
-    ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
       ifeq ($(DATAMODEL), ILP32)
-        CXXFLAGS += -march=i686
+        CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32 -DNO_FFI
+        CXXFLAGS += -march=armv7
+      else
+        CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64 -DNO_FFI
+        CXXFLAGS += -march=armv8-a
       endif
+      CXXFLAGS += -pthread -fomit-frame-pointer
+      ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
+        CXXFLAGS += -fno-stack-protector
+      endif
+      LDLIBS = -pthread -Wl,--no-as-needed -ldl
     else
-      CXXFLAGS += -march=native
+      CXXFLAGS += -O3
+      ifndef DATAMODEL
+        ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
+          DATAMODEL = ILP32
+        else
+          DATAMODEL = LP64
+        endif
+      endif
+      ifeq (,$(shell $(CXX) -dumpspecs | grep 'march=native'))
+        ifeq ($(DATAMODEL), ILP32)
+          CXXFLAGS += -march=i686
+        endif
+      else
+        CXXFLAGS += -march=native
+      endif
+      ifeq (,$(shell grep -i 'sse2' /proc/cpuinfo))
+        CXXFLAGS += -msse
+      else
+        CXXFLAGS += -msse2
+      endif
+      CXXFLAGS += -mfpmath=sse -pthread -fomit-frame-pointer -momit-leaf-frame-pointer
+      ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
+        CXXFLAGS += -fno-stack-protector
+      endif
+      ifeq ($(DATAMODEL), ILP32)
+        CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
+        CXXFLAGS += -m32
+        LDFLAGS = -m32
+        ASFLAGS = --32
+        SRCS += ffi_stub_linux.s
+      else
+        CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
+        CXXFLAGS += -m64
+        LDFLAGS = -m64
+        ASFLAGS = --64
+        SRCS += ffi_stub_linux64.s
+      endif
+      LDLIBS = -lpthread -ldl
     endif
-    ifeq (,$(shell grep -i 'sse2' /proc/cpuinfo))
-      CXXFLAGS += -msse
-    else
-      CXXFLAGS += -msse2
-    endif
-    CXXFLAGS += -mfpmath=sse -pthread -fomit-frame-pointer -momit-leaf-frame-pointer
-    ifneq (,$(shell $(CXX) -dumpspecs | grep 'stack-protector'))
-      CXXFLAGS += -fno-stack-protector
-    endif
-    ifeq ($(DATAMODEL), ILP32)
-      CPPFLAGS += -DDEFAULT_HEAP_LIMIT=32
-      CXXFLAGS += -m32
-      LDFLAGS = -m32
-      ASFLAGS = --32
-      SRCS += ffi_stub_linux.s
-    else
-      CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
-      CXXFLAGS += -m64
-      LDFLAGS = -m64
-      ASFLAGS = --64
-      SRCS += ffi_stub_linux64.s
-    endif
-    LDLIBS = -lpthread -ldl
   endif
 endif
 
 ifneq (,$(findstring FreeBSD, $(UNAME)))
+  CXXFLAGS += -O3
   CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifndef DATAMODEL
     ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
@@ -147,6 +173,7 @@ ifneq (,$(findstring FreeBSD, $(UNAME)))
 endif
 
 ifneq (,$(findstring OpenBSD, $(UNAME)))
+  CXXFLAGS += -O3
   CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifndef DATAMODEL
     ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
@@ -189,6 +216,7 @@ ifneq (,$(findstring OpenBSD, $(UNAME)))
 endif
 
 ifneq (,$(findstring SunOS, $(UNAME)))
+  CXXFLAGS += -O3
   CXXFLAGS_VM1 = -fno-reorder-blocks -fno-crossjumping -fno-align-labels -fno-align-loops -fno-align-jumps
   ifndef DATAMODEL
     ifeq (,$(shell isainfo -b | grep '64'))
@@ -231,6 +259,7 @@ endif
 
 ifneq (,$(findstring Darwin, $(UNAME)))
   CXX = g++
+  CXXFLAGS += -O3
   CXXFLAGS += -arch i386 -msse2 -mfpmath=sse -fomit-frame-pointer -momit-leaf-frame-pointer
   ifneq (,$(shell sw_vers -productVersion | grep '10.4.'))
     CPPFLAGS += -DNO_POSIX_SPAWN

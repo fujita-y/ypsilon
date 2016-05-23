@@ -1,6 +1,6 @@
 /*
     Ypsilon Scheme System
-    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
+    Copyright (c) 2004-2016 Y.FUJITA / LittleWing Company Limited.
     See license.txt for terms and conditions of use
 */
 
@@ -172,6 +172,10 @@ subr_win32_error_string(VM* vm, int argc, scm_obj_t argv[])
 scm_obj_t
 subr_make_callback_trampoline(VM* vm, int argc, scm_obj_t argv[])
 {
+#if NO_FFI
+    raise_error(vm, "make-callback-trampoline", "implementation does not support this feature", 0, argc, argv);
+    return scm_undef;
+#else
     if (argc == 3) {
         if (exact_non_negative_integer_pred(argv[0])) {
             if (STRINGP(argv[1])) {
@@ -190,6 +194,7 @@ subr_make_callback_trampoline(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "make-callback-trampoline", 3, 3, argc, argv);
     return scm_undef;
+#endif
 }
 
 class synchronize_errno {
@@ -283,6 +288,10 @@ call_c_double(VM* vm, void* func, c_stack_frame_t& stack)
 scm_obj_t
 subr_call_shared_object(VM* vm, int argc, scm_obj_t argv[])
 {
+#if NO_FFI
+    raise_error(vm, "call-shared-object", "implementation does not support this feature", 0, argc, argv);
+    return scm_undef;
+#else
     if (argc >= 1) {
         if (!FIXNUMP(argv[0])) {
             wrong_type_argument_violation(vm, "call-shared-object", 0, "fixnum", argv[0], argc, argv);
@@ -440,6 +449,7 @@ subr_call_shared_object(VM* vm, int argc, scm_obj_t argv[])
     }
     wrong_number_of_arguments_violation(vm, "call-shared-object", 2, -1, argc, argv);
     return scm_undef;
+#endif
 }
 
 void init_subr_ffi(object_heap_t* heap)
