@@ -162,15 +162,15 @@ sse_done:
     ret
 
 c_callback_stub_double_x64:
-    movq        $c_callback_double_x64, %r11
+    movq        c_callback_double_x64@GOTPCREL(%rip), %r11
     jmp         callback_stub_common
 
 c_callback_stub_float_x64:
-    movq        $c_callback_float_x64, %r11
+    movq        c_callback_float_x64@GOTPCREL(%rip), %r11
     jmp         callback_stub_common
 
 c_callback_stub_intptr_x64:
-    movq        $c_callback_intptr_x64, %r11
+    movq        c_callback_intptr_x64@GOTPCREL(%rip), %r11
     jmp         callback_stub_common
 
 callback_stub_common:
