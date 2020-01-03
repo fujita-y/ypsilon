@@ -12,6 +12,15 @@
 
 #define C_STACK_COERCE_ARGUMENTS    1
 
+#if NO_FFI
+
+    scm_obj_t make_callback(VM* vm, int type, const char* signatures, scm_closure_t closure)
+    {
+        fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
+    }
+
+#else
+
 #if ARCH_IA32
     const char*
     c_stack_frame_t::push(scm_obj_t obj, int signature)
@@ -1908,3 +1917,5 @@
         fatal("%s:%u ffi not supported on this build", __FILE__, __LINE__);
     }
 #endif
+
+#endif // NO_FFI

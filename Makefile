@@ -6,7 +6,7 @@ PROG 	 = ypsilon
 
 PREFIX 	 = /usr/local
 
-CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"' -DSYSTEM_EXTENSION_PATH='"$(DESTDIR)$(PREFIX)/lib/$(PROG)"'
+CPPFLAGS = -DNO_FFI -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"' -DSYSTEM_EXTENSION_PATH='"$(DESTDIR)$(PREFIX)/lib/$(PROG)"'
 
 CXXFLAGS = -pipe -O2 -fstrict-aliasing
 
@@ -49,13 +49,13 @@ ifneq (,$(findstring Linux, $(UNAME)))
       CXXFLAGS += -m32
       LDFLAGS = -m32
       ASFLAGS = -a32
-      SRCS += ffi_stub_linux_ppc.s
+      #SRCS += ffi_stub_linux_ppc.s
     else
       CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
       CXXFLAGS += -m64
       LDFLAGS = -m64
       ASFLAGS = -a64
-      SRCS += ffi_stub_linux64_ppc.s
+      #SRCS += ffi_stub_linux64_ppc.s
     endif
     LDLIBS = -lpthread -ldl
   else
@@ -107,13 +107,13 @@ ifneq (,$(findstring Linux, $(UNAME)))
         CXXFLAGS += -m32
         LDFLAGS = -m32
         ASFLAGS = --32
-        SRCS += ffi_stub_linux.s
+        #SRCS += ffi_stub_linux.s
       else
         CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
         CXXFLAGS += -m64
         LDFLAGS = -m64
         ASFLAGS = --64
-        SRCS += ffi_stub_linux64.s
+        #SRCS += ffi_stub_linux64.s
       endif
       LDLIBS = -pthread -Wl,--no-as-needed -ldl
     endif
@@ -151,13 +151,13 @@ ifneq (,$(findstring FreeBSD, $(UNAME)))
     CXXFLAGS += -m32
     LDFLAGS = -m32
     ASFLAGS = --32
-    SRCS += ffi_stub_freebsd.s
+    #SRCS += ffi_stub_freebsd.s
   else
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
     CXXFLAGS += -m64
     LDFLAGS = -m64
     ASFLAGS = --64
-    SRCS += ffi_stub_freebsd64.s
+    #SRCS += ffi_stub_freebsd64.s
   endif
   ifneq (,$(findstring kFreeBSD, $(UNAME)))
     LDLIBS = -pthread -ldl
@@ -198,13 +198,13 @@ ifneq (,$(findstring OpenBSD, $(UNAME)))
     CXXFLAGS += -m32
     LDFLAGS = -m32
     ASFLAGS = --32
-    SRCS += ffi_stub_openbsd.s
+    #SRCS += ffi_stub_openbsd.s
   else
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
     CXXFLAGS += -m64
     LDFLAGS = -m64
     ASFLAGS = --64
-    SRCS += ffi_stub_openbsd64.s
+    #SRCS += ffi_stub_openbsd64.s
   endif
   LDLIBS = -pthread
 endif
@@ -239,13 +239,13 @@ ifneq (,$(findstring SunOS, $(UNAME)))
     CXXFLAGS += -m32
     LDFLAGS = -m32
     ASFLAGS = --32
-    SRCS += ffi_stub_sunos.s
+    #SRCS += ffi_stub_sunos.s
   else
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
     CXXFLAGS += -m64
     LDFLAGS = -m64
     ASFLAGS = --64
-    SRCS += ffi_stub_sunos64.s
+    #SRCS += ffi_stub_sunos64.s
   endif
   LDLIBS = -lpthread -ldl -lxnet
 endif
@@ -259,7 +259,7 @@ ifneq (,$(findstring Darwin, $(UNAME)))
   CPPFLAGS += -DNO_TLS
   ASFLAGS += -arch i386
   LDFLAGS += -arch i386 -Wl,-no_pie
-  SRCS += ffi_stub_darwin.s
+  #SRCS += ffi_stub_darwin.s
   ifneq (,$(shell ls -1 /Library/Frameworks /System/Library/Frameworks | grep 'SDL.framework'))
     EXTS += SDLMain.dylib
   endif
