@@ -1,0 +1,43 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# CMake
+build/
+
+# Misc
+*.d
+*.sublime-project
+*.sublime-workspace
+spheres.pgm
+.vscode
+/ypsilon
+/heap/debug-*.vmi
+test/tmp1
+test/tmp2
+test/tmp3

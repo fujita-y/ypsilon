@@ -1,8 +1,5 @@
-/*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
-*/
+// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// See LICENSE file for terms and conditions of use.
 
 #ifndef UTF8_H_INCLUDED
 #define UTF8_H_INCLUDED
@@ -12,8 +9,8 @@
 
 class object_heap_t;
 
-#define BAD_UTF8_STRING_REF_DATUM       (-1)
-#define BAD_UTF8_STRING_REF_INDEX       (-2)
+#define BAD_UTF8_STRING_REF_DATUM (-1)
+#define BAD_UTF8_STRING_REF_INDEX (-2)
 
 int utf8_byte_count(const uint8_t datum);
 int cnvt_ucs4_to_utf8(uint32_t ucs4, uint8_t utf8[4]);

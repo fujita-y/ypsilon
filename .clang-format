@@ -1,0 +1,13 @@
+BasedOnStyle: Google
+UseTab: Never
+ColumnLimit: 145
+IndentPPDirectives: BeforeHash
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlwaysBreakTemplateDeclarations: MultiLine
+IndentExternBlock: Indent
+IncludeBlocks: Preserve
+IncludeCategories:
+  - Regex: '^"core\.h"$'
+    Priority: -2
+  - Regex: '^"object\.h"$'
+    Priority: -1

@@ -1,7 +1,6 @@
 #!core
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (library (core io assistants)
 
@@ -388,7 +387,6 @@
       (let-optionals options ((file-options (file-options))
                               (buffer-mode 'block)
                               (transcoder #f))
-        (track-file-open filename)
         (open-port 'open-file-input-port
                    (port-type file)
                    (port-direction input)
@@ -473,7 +471,6 @@
       (let-optionals options ((file-options (file-options))
                               (buffer-mode 'block)
                               (transcoder #f))
-        (track-file-open filename)
         (open-port 'open-file-output-port
                    (port-type file)
                    (port-direction output)
@@ -578,7 +575,6 @@
       (let-optionals options ((file-options (file-options))
                               (buffer-mode 'block)
                               (transcoder #f))
-        (track-file-open filename)
         (open-port 'open-file-input/output-port
                    (port-type file)
                    (port-direction input output)

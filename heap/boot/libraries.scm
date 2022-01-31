@@ -1,6 +1,5 @@
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (define immutable-primitives (make-core-hashtable))
 (define coreform-primitives '(begin quote define set! lambda let letrec* if or and))
@@ -69,7 +68,7 @@
                                            (core-hashtable-ref ht from '()))))))
 
   (setup-intrinsic-macros
-   '(core intrinsics) '( library define define-syntax
+   '(core intrinsics) '( library define-library define define-syntax
                          quote lambda if set!
                          cond case and or
                          let let* letrec letrec* let-values let*-values
@@ -127,8 +126,10 @@
 
   (setup-core-primitive-macros
    '(core primitives) '( do
-                           syntax-case
-                         syntax))
+                         syntax
+                         syntax-case
+                         include
+                         include-ci))
 
   (setup-core-primitive-procs
    '(core primitives) '(; eval
@@ -310,6 +311,7 @@
                         native-transcoder-descriptor
                         port-transcoder-descriptor
                         extract-accumulated-bytevector
+                        get-accumulated-bytevector
                         extract-accumulated-string
                         get-accumulated-string
                         open-port
@@ -388,6 +390,7 @@
                         utf8->string
                         ; extensions
                         put-byte
+                        put-fasl
                         make-string-output-port
                         make-string-input-port
                         make-transcoded-port
@@ -431,24 +434,6 @@
                         usleep
                         scheme-error
                         architecture-feature
-                        load-shared-object
-                        lookup-shared-object
-                        call-shared-object
-                        make-callback-trampoline
-                        shared-object-errno
-                        shared-object-win32-lasterror
-                        bytevector-c-short-ref bytevector-c-unsigned-short-ref bytevector-c-short-set!
-                        bytevector-c-int-ref bytevector-c-unsigned-int-ref bytevector-c-int-set!
-                        bytevector-c-long-ref bytevector-c-unsigned-long-ref bytevector-c-long-set!
-                        bytevector-c-long-long-ref bytevector-c-unsigned-long-long-ref bytevector-c-long-long-set!
-                        bytevector-c-void*-ref bytevector-c-void*-set!
-                        bytevector-c-int8-ref bytevector-c-int16-ref bytevector-c-int32-ref bytevector-c-int64-ref
-                        bytevector-c-uint8-ref bytevector-c-uint16-ref bytevector-c-uint32-ref bytevector-c-uint64-ref
-                        bytevector-c-float-ref bytevector-c-double-ref
-                        bytevector-c-int8-set! bytevector-c-int16-set! bytevector-c-int32-set! bytevector-c-int64-set!
-                        bytevector-c-float-set! bytevector-c-double-set!
-                        string->utf8/nul
-                        bytevector-c-strlen
                         collect collect-notify collect-stack-notify collect-trip-bytes display-heap-statistics display-object-statistics
                         backtrace expansion-backtrace backtrace-line-length display-backtrace
                         warning-level
@@ -465,6 +450,7 @@
                         current-after-expansion-hook
                         string-contains symbol-contains subr?
                         make-bytevector-mapping bytevector-mapping?
+                        bytevector->pinned-c-void*
                         scheme-library-exports
                         scheme-library-paths
                         scheme-load-paths
@@ -495,13 +481,53 @@
                         uninterned-symbol-prefix
                         uninterned-symbol-suffix
 
+                        ; socket
                         socket?
                         make-socket socket-shutdown socket-close socket->port socket-port
                         socket-send socket-recv socket-accept
                         shutdown-output-port
                         port-closed?
 
-                        track-file-open
+                        ; ffi
+                        c-main-argc
+                        c-main-argv
+                        load-shared-object
+                        lookup-shared-object
+                        bytevector-c-short-ref bytevector-c-unsigned-short-ref bytevector-c-short-set!
+                        bytevector-c-int-ref bytevector-c-unsigned-int-ref bytevector-c-int-set!
+                        bytevector-c-long-ref bytevector-c-unsigned-long-ref bytevector-c-long-set!
+                        bytevector-c-long-long-ref bytevector-c-unsigned-long-long-ref bytevector-c-long-long-set!
+                        bytevector-c-void*-ref bytevector-c-void*-set!
+                        bytevector-c-int8-ref bytevector-c-int16-ref bytevector-c-int32-ref bytevector-c-int64-ref
+                        bytevector-c-uint8-ref bytevector-c-uint16-ref bytevector-c-uint32-ref bytevector-c-uint64-ref
+                        bytevector-c-float-ref bytevector-c-double-ref
+                        bytevector-c-int8-set! bytevector-c-int16-set! bytevector-c-int32-set! bytevector-c-int64-set!
+                        bytevector-c-float-set! bytevector-c-double-set!
+                        string->utf8/nul
+                        bytevector-c-strlen
+
+                        codegen-cdecl-callout
+                        codegen-cdecl-callback
+                        codegen-queue-count
+                        codegen-queue-push!
+                        display-codegen-statistics
+                        closure-codegen
+
+                        mat4x4-identity
+                        mat4x4-dup
+                        mat4x4-transpose
+                        mat4x4-invert
+                        mat4x4-orthonormalize
+                        mat4x4-add
+                        mat4x4-sub
+                        mat4x4-mul
+                        mat4x4-scale
+                        mat4x4-translate
+                        mat4x4-frustum
+                        mat4x4-ortho
+                        mat4x4-perspective
+                        mat4x4-look-at
+                        mat4x4-rotate
 
                         getenv
                         gethostname
@@ -510,28 +536,9 @@
                         process-spawn
                         process-shell-command
                         process-wait
+                        errno/string
 
                         current-exception-printer
-
-                        make-shared-queue
-                        shared-queue?
-                        shared-queue-shutdown
-                        shared-queue-push!
-                        shared-queue-pop!
-                        make-shared-bag
-                        shared-bag?
-                        shared-bag-put!
-                        shared-bag-get!
-                        serializable?
-                        timeout-object?
-                        shutdown-object?
-
-                        spawn
-                        spawn-timeout
-                        spawn-heap-limit
-                        display-thread-status
-                        on-primordial-thread?
-                        local-heap-object?
 
                         make-uuid
                         time-usage
@@ -540,6 +547,9 @@
                         microsecond->string
                         decode-microsecond
                         encode-microsecond
+
+                        acquire-lockfile
+                        release-lockfile
 
                         file-size-in-bytes
                         file-regular?
@@ -555,11 +565,22 @@
                         create-hard-link
                         rename-file
                         change-file-mode
-                        win32-error->string
-                        
+                        ;; win32-error->string
                         make-cmwc-random-state
                         cmwc-random-u32
                         cmwc-random-real
+
+                        drop-last-cdr
+                        drop-last-pair
+                        last-pair
+                        last-cdr
+                        count-pair
+                        last-n-pair
+                        drop-last-n-pair
+
+                        feature-identifies
+                        fulfill-feature-requirements?
+                        continuation-to-exit
                         ))
 
   (compound-exports '(core primitives) '(core intrinsics)))

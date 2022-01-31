@@ -1,7 +1,6 @@
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
 #!core
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (begin
 
@@ -32,6 +31,8 @@
       "./boot/macro/synrule.scm"
       "./boot/macro/syncase.scm"
       "./boot/macro/library.scm"
+      "./boot/macro/program.scm"
+      "./boot/macro/r7rs.scm"
       "./boot/macro/synenv.scm"
       "./boot/compile.scm"
       "./boot/dynamic-wind.scm"

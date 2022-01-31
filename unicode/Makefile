@@ -1,8 +1,9 @@
 PROG 	= ../ypsilon
 
-all :
-	@$(PROG) build-ucd-1.scm
-	@$(PROG) build-ucd-2.scm
-	@$(PROG) build-ucd-code.scm
-	@$(PROG) build-lexeme-code.scm
+STDLIB  = ../sitelib
 
+all :
+	@$(PROG) --sitelib=$(STDLIB) build-ucd-1.scm
+	@$(PROG) --sitelib=$(STDLIB) build-ucd-2.scm
+	@$(PROG) --sitelib=$(STDLIB) build-ucd-code.scm
+	@$(PROG) --sitelib=$(STDLIB) build-lexeme-code.scm

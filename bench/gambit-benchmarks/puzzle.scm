@@ -110,17 +110,17 @@
   (definePiece 0 1 3 0)
   (definePiece 0 3 0 1)
   (definePiece 0 0 1 3)
-  
+
   (definePiece 1 2 0 0)
   (definePiece 1 0 2 0)
   (definePiece 1 0 0 2)
-  
+
   (definePiece 2 1 1 0)
   (definePiece 2 1 0 1)
   (definePiece 2 0 1 1)
-  
+
   (definePiece 3 1 1 1)
-  
+
   (vector-set! *piececount* 0 13)
   (vector-set! *piececount* 1 3)
   (vector-set! *piececount* 2 1)
@@ -135,6 +135,16 @@
 
 (for-each (lambda (i) (vector-set! *p* i (make-vector (+ size 1))))
           (my-iota (+ typemax 1)))
+
+(define (compile)
+  (closure-compile my-iota)
+  (closure-compile fit)
+  (closure-compile place)
+  (closure-compile puzzle-remove)
+  (closure-compile trial)
+  (closure-compile definePiece)
+  (closure-compile start)
+  (closure-compile main))
 
 (define (main . args)
   (run-benchmark

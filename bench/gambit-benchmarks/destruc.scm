@@ -41,6 +41,11 @@
                                          x))
                                     (set-car! a i))))))))))))
 
+(define (compile)
+  (closure-compile append-to-tail!)
+  (closure-compile destructive)
+  (closure-compile main))
+
 (define (main . args)
   (run-benchmark
     "destruc"

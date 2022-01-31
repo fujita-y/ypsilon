@@ -5,7 +5,11 @@
     (if (FLOAT< i 0.)
       sum
       (loop (FLOAT- i 1.) (FLOAT+ i sum)))))
- 
+
+(define (compile)
+  (closure-compile run)
+  (closure-compile main))
+
 (define (main . args)
   (run-benchmark
     "sumfp"

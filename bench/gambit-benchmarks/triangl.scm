@@ -1,5 +1,5 @@
 ;;; TRIANGL -- Board game benchmark.
- 
+
 (define *board*
   (list->vector '(1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1)))
 
@@ -24,7 +24,7 @@
                   3 6 2 5 4 11 12 13 7 8 4 4)))
 
 (define *answer* '())
- 
+
 (define (attempt i depth)
   (cond ((= depth 14)
          (set! *answer*
@@ -49,7 +49,12 @@
   (set! *answer* '())
   (attempt i depth)
   (car *answer*))
- 
+
+(define (compile)
+  (closure-compile attempt)
+  (closure-compile test)
+  (closure-compile main))
+
 (define (main . args)
   (run-benchmark
     "triangl"

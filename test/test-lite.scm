@@ -1,7 +1,8 @@
 (library (test-lite)
   (export test-begin test-end test-section-begin test-comment test-report
           test-lexical-exception test-syntax-violation test-assertion-violation test-violation test-i/o-error
-          test-eval! test-eq test-eqv test-equal test-equal-evaluated)
+          test-eval! test-eq test-eqv test-equal test-equal-evaluated
+          test test-values test-error test-assert)
   (import (core))
 
   (define-record-type section
@@ -16,8 +17,62 @@
      (mutable env)
      (mutable lib)))
 
+  (define-syntax test
+    (syntax-rules ()
+      ((_ expected expr)
+       (test expected expr 'expr))
+      ((_ expected expr arg)
+        (let ((res expr))
+          (cond
+           ((not (equal? expr expected))
+            (display "FAIL: ")
+            (write arg)
+            (newline)
+            (display "expected: ")
+            (write expected)
+            (newline)
+            (display "but got: ")
+            (write res)
+            (newline))
+           (else
+             (section-pass-count-inc! (section-current))
+             (put-byte (current-output-port) #x0d)
+             (format #t "Passed ~a~!" (section-pass-count (section-current)))))))))
+
+  (define-syntax test-assert
+    (syntax-rules ()
+      ((_ str expr) (test #t expr str))))
+
+  (define-syntax test-values
+    (syntax-rules ()
+      ((_ expected expr)
+       (let ((res-expr (call-with-values (lambda () expr) list))
+             (res-expected (call-with-values (lambda () expected) list)))
+          (cond
+           ((not (equal? res-expr res-expected))
+            (display "FAIL: ")
+            (write 'expr)
+            (newline)
+            (display "expected: ")
+            (write expected)
+            (newline)
+            (display "but got: ")
+            (write expr)
+            (newline))
+           (else
+             (section-pass-count-inc! (section-current))
+             (put-byte (current-output-port) #x0d)
+             (format #t "Passed ~a~!" (section-pass-count (section-current)))))))))
+
+  (define-syntax test-error
+    (syntax-rules ()
+      ((_ name expr)
+       (test-violation name expr))
+      ((_ expr)
+       (test-violation expr))))
+
   ;;
-  ;; test utility
+  ;; private test utility
   ;;
 
   (define test-result (string))
@@ -201,14 +256,14 @@
        (test-error-condition name 'expr assertion-violation? '&assertion))
       ((_ expr)
        (test-error-condition "" 'expr assertion-violation? '&assertion))))
-  
+
   (define-syntax test-i/o-error
     (syntax-rules ()
       ((_ name expr)
        (test-error-condition name 'expr i/o-error? '&i/o))
       ((_ expr)
        (test-error-condition "" 'expr i/o-error? '&i/o))))
-  
+
   (define-syntax test-section-begin
     (syntax-rules ()
       ((_ name testcases ...)

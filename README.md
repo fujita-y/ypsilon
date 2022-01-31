@@ -1,31 +1,59 @@
-# Ypsilon: The implementation of R6RS Scheme Programming Language for real-time applications #
+# Ypsilon: R7RS/R6RS Scheme Implementation
 
-Ypsilon is the implementation of Scheme Programming Language, which conforms to the standard R<sup>6</sup>RS. It achieves a remarkably short GC pause time and the best performance in parallel execution as it implements "mostly concurrent garbage collection", which is optimized for the multi-core CPU.
+* Conforms R7RS/R6RS
+* Mostly concurrent garbage collection for remarkably shorter GC pause time
+* Compilation thread incrementally generates native code in the background
+* On-the-fly FFI with native stub code generation
 
-Ypsilon is easy to use as well as good for applications of any kind that require quick, reliable, and interactive data processing. It implements full features of R<sup>6</sup>RS and R<sup>6</sup>RS standard libraries including:
-  * arbitrary precision integer arithmetic
-  * rational number
-  * exact and inexact complex number
-  * top-level program
-  * proper tail recursion
-  * call/cc and dynamic wind
-  * unicode
-  * bytevectors
-  * records
-  * exceptions and conditions
-  * i/o
-  * syntax-case
-  * hashtables
-  * enumerations
+See [LICENSE](https://github.com/fujita-y/ypsilon/blob/master/LICENSE) for terms and conditions of use.
 
-The implementation of the library system is adopted to be suitable for interactive development. Ypsilon always instantiate the library upon every import regardless of its phase, and identifiers which has been exported from it can be referred in every level. The "for" form for explicit-phased models will be syntax-checked but the contents will be ignored.
+### Versions
+
+Ypsilon have changed its design signigicantly in version 2. Checkout [version-0.9](https://github.com/fujita-y/ypsilon/tree/version-0.9) for original version.
+
+### Requirements
+
+LLVM 10
+
+### Build and Install
+
+```
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build .
+cmake --install .
+```
+
+### Run
+
+* To run R7RS sample script, try following from project root:
+```
+ypsilon --r7rs --top-level-program --disable-acc -- test/r7rs-sample.scm
+```
+
+* To run FFI demo program, try follwing from project root:
+```
+ypsilon --r6rs --top-level-program demo/glut-demo.scm # (OpenGL 1.x, GLUT)
+ypsilon --r6rs --top-level-program demo/glfw-demo.scm # (OpenGL 1.x, GLFW)
+ypsilon --r6rs --top-level-program demo/glcorearb-demo.scm # (OpenGL Core Profile, GLFW)
+ypsilon --r6rs --top-level-program demo/freetype-demo.scm # (OpenGL Core Profile, GLFW, freetype)
+ypsilon --r6rs --top-level-program demo/widget-demo.scm # (OpenGL Core Profile, GLFW, freetype)
+```
+
+### Notes
+
+* REPL start with '(import (core))' regardless what command line option is given.
+* Without '--top-level-program', the contents of the specified script file will be interpreted as if they had been entered into the REPL.
+
+### Rebuild Heap Files
+
+* Edit 'src/core.h' and set 'UNBOUND_GLOC_RETURN_UNSPEC' to '1'
+* ```make```
+* Edit .scm files in 'heap/boot' directory
+* ```cd heap; make; cd ..; make; cd heap; make; cd ..```
+* Edit 'src/core.h' and set 'UNBOUND_GLOC_RETURN_UNSPEC' to '0'
+* ```make```
 
 
-More libraries are included to support a wide variety of software development. Also it has built-in FFI which is easy to use. Please refer to the following files for FFI overview.
-  * [example/gtk-hello.scm](https://github.com/fujita-y/ypsilon/blob/master/example/gtk-hello.scm)
-  * [example/glut-demo.scm](https://github.com/fujita-y/ypsilon/blob/master/example/glut-demo.scm)
-  * [sitelib/ypsilon/glut.scm](https://github.com/fujita-y/ypsilon/blob/master/sitelib/ypsilon/glut.scm)
-  * [sitelib/ypsilon/gl.scm](https://github.com/fujita-y/ypsilon/blob/master/sitelib/ypsilon/gl.scm)
-  * [sitelib/ypsilon/ffi.scm](https://github.com/fujita-y/ypsilon/blob/master/sitelib/ypsilon/ffi.scm)
-  
-This project is migrated from code.google.com/p/ypsilon
+*This project is migrated from code.google.com/p/ypsilon*

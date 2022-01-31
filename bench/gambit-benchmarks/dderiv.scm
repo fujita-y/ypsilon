@@ -72,6 +72,17 @@
         (f a)
         (fatal-error "No derivation method available")))))
 
+(define (compile)
+  (closure-compile lookup)
+  (closure-compile get)
+  (closure-compile put)
+  (closure-compile +dderiv)
+  (closure-compile -dderiv)
+  (closure-compile *dderiv)
+  (closure-compile /dderiv)
+  (closure-compile dderiv)
+)
+
 (define (main . args)
   (run-benchmark
     "dderiv"

@@ -1,7 +1,6 @@
 #!core
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (library (core arithmetic)
 
@@ -179,7 +178,7 @@
              (s0 (mod0 s 2^fixnum-width))
              (s1 (div0 s 2^fixnum-width)))
         (values s0 s1))))
-  
+
   (define fxrotate-bit-field
     (lambda (ei1 ei2 ei3 ei4)
       (let* ((n ei1)

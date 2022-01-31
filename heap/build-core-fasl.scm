@@ -1,13 +1,11 @@
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
-;;
-;; if libraries have (define foo <subr-id>) form and foo is referenced within same library, prebind may screwed up
-;; to avoid problem, erase contents of core.vmi, restart, then build new core.vmi
-;; or replace foo with identifier <subr-id>
+;; If libraries have (define <id> <subr>) form and <id> is referenced within same
+;; library, prebind could be screwed up, to workaround this issue, replace <id> with <subr> in offending reference.
+;; ex. [(define first car) ... (first '(1 2))] => [(define first car) ... (car '(1 2))]
 
-;; to implement (compile-library)
+;; To implement (compile-library)
 ;; check that library imported or not, if imported, abort compile with warning
 ;; this should avoid problem
 
@@ -95,7 +93,7 @@
       "./core/bytevectors.scm"
       "./core/syntax-case.scm"
       "./core/r5rs.scm"
-      ;
+
       "./core/control.scm"
       "./core/optargs.scm"
 ;     "./core/chkarg.scm"
@@ -112,6 +110,8 @@
       "./core/hashtables.scm"
       "./core/struct.scm"
       "./core/optimize.scm"
+      "./core.scm"
+
       "./rnrs/base.scm"
       "./rnrs/unicode.scm"
       "./rnrs/bytevectors.scm"
@@ -133,14 +133,30 @@
       "./rnrs/syntax-case.scm"
       "./rnrs/hashtables.scm"
       "./rnrs/enums.scm"
-
       "./rnrs/r5rs.scm"
       "./rnrs/mutable-strings.scm"
       "./rnrs/mutable-pairs.scm"
       "./rnrs/eval.scm"
-
       "./rnrs.scm"
-      "./core.scm"
+
+      "./scheme/base.scm"
+      "./scheme/case-lambda.scm"
+      "./scheme/char.scm"
+      "./scheme/complex.scm"
+      "./scheme/cxr.scm"
+      "./scheme/eval.scm"
+      "./scheme/file.scm"
+      "./scheme/inexact.scm"
+      "./scheme/lazy.scm"
+      "./scheme/list.scm"
+      "./scheme/load.scm"
+      "./scheme/process-context.scm"
+      "./scheme/r5rs.scm"
+      "./scheme/read.scm"
+      "./scheme/repl.scm"
+      "./scheme/time.scm"
+      "./scheme/write.scm"
+
       ))
 
   (define compile-to

@@ -1,8 +1,5 @@
-/*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
-*/
+// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// See LICENSE file for terms and conditions of use.
 
 #ifndef VIOLATION_H_INCLUDED
 #define VIOLATION_H_INCLUDED
@@ -24,6 +21,7 @@ void lexical_violation(VM* vm, scm_obj_t who, scm_string_t message);
 void letrec_violation(VM* vm);
 void thread_global_access_violation(VM* vm, scm_obj_t name, scm_obj_t value);
 void thread_lexical_access_violation(VM* vm, scm_obj_t name, scm_obj_t value);
+void thread_unsupported_operation_violation(VM* vm, const char* subr, int argc, scm_obj_t argv[]);
 void thread_object_access_violation(VM* vm, const char* subr, int argc, scm_obj_t argv[]);
 void non_serializable_object_violation(VM* vm, const char* who, scm_obj_t obj, int argc, scm_obj_t argv[]);
 void serialize_cyclic_object_violation(VM* vm, const char* who, scm_obj_t obj, int argc, scm_obj_t argv[]);

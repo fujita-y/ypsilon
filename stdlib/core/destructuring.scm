@@ -1,7 +1,6 @@
 #!core
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (library (core destructuring)
 
@@ -65,59 +64,6 @@
       (cond ((or (symbol? pat) (boolean? pat) (null? pat) (char? pat) (fixnum? pat)) 'eq?)
             ((number? pat) 'eqv?)
             (else 'equal?))))
-
-  (define drop-last-pair
-    (lambda (lst)
-      (cond ((null? lst) '())
-            (else
-             (let loop ((lst lst))
-               (cond ((pair? (cdr lst)) (cons (car lst) (loop (cdr lst))))
-                     (else '())))))))
-
-  (define drop-last-cdr
-    (lambda (lst)
-      (cond ((null? lst) '())
-            (else
-             (let loop ((lst lst))
-               (cond ((pair? lst) (cons (car lst) (loop (cdr lst))))
-                     (else '())))))))
-;;
-  (define last-pair
-    (lambda (lst)
-      (cond ((null? lst) '())
-            (else
-             (let loop ((lst lst))
-               (cond ((pair? (cdr lst)) (loop (cdr lst)))
-                     (else lst)))))))
-;;
-  (define last-cdr
-    (lambda (lst)
-      (cond ((pair? lst)
-             (let loop ((lst lst))
-               (cond ((pair? (cdr lst)) (loop (cdr lst)))
-                     (else (cdr lst)))))
-            (else lst))))
-;;
-  (define count-pair
-    (lambda (lst)
-      (let loop ((lst lst) (n 0))
-        (cond ((pair? lst) (loop (cdr lst) (+ n 1)))
-              (else n)))))
-;;
-  (define last-n-pair
-    (lambda (n lst)
-      (let ((m (count-pair lst)))
-        (cond ((< m n) '())
-              (else (list-tail lst (- m n)))))))
-;;
-  (define drop-last-n-pair
-    (lambda (n lst)
-      (cond ((null? lst) '())
-            (else
-             (let loop ((lst lst) (m (- (count-pair lst) n)))
-               (cond ((<= m 0) '())
-                     ((pair? (cdr lst)) (cons (car lst) (loop (cdr lst) (- m 1))))
-                     (else '())))))))
 
   (define count-non-dotted-pattern
     (lambda (lst)
@@ -292,7 +238,6 @@
                   (cse
                    (reorder
                     (map (lambda (clause)
-
                            (syntax-case clause ()
                              ((?pat)
                               (let ((pat (syntax->datum #'?pat)))
@@ -315,7 +260,6 @@
                              (_
                               (syntax-violation 'destructuring-match "malformed clause" x clause))))
                          (syntax (?clauses ...)))))))
-
              (let-values (((shares others) (partition car code)))
                (let ((subexprs (map (lambda (e) `(,(car e) (and ,@(cadr e)))) shares))
                      (clauses (map cdr others)))

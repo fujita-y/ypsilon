@@ -1,8 +1,5 @@
-/*
-    Ypsilon Scheme System
-    Copyright (c) 2004-2016 Y.FUJITA / LittleWing Company Limited.
-    See license.txt for terms and conditions of use
-*/
+// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// See LICENSE file for terms and conditions of use.
 
 #ifndef ARITH_H_INCLUDED
 #define ARITH_H_INCLUDED
@@ -13,47 +10,33 @@
 class object_heap_t;
 
 struct exact_integer_sqrt_ans_t {
-    scm_obj_t   s;
-    scm_obj_t   r;
+  scm_obj_t s;
+  scm_obj_t r;
 };
 
 struct div_and_mod_ans_t {
-    scm_obj_t   div;
-    scm_obj_t   mod;
+  scm_obj_t div;
+  scm_obj_t mod;
 };
 
-inline void
-bn_set_zero(scm_bignum_t bn)
-{
-    bn->hdr = scm_hdr_bignum;
+inline void bn_set_zero(scm_bignum_t bn) { bn->hdr = scm_hdr_bignum; }
+
+inline void bn_set_count(scm_bignum_t bn, int count) {
+  assert(count >= 0);
+  bn->hdr = scm_hdr_bignum | MAKEBITS(count, HDR_BIGNUM_COUNT_SHIFT) | (bn->hdr & MAKEBITS(3, HDR_BIGNUM_SIGN_SHIFT));
 }
 
-inline void
-bn_set_count(scm_bignum_t bn, int count)
-{
-    assert(count >= 0);
-    bn->hdr = scm_hdr_bignum | MAKEBITS(count, HDR_BIGNUM_COUNT_SHIFT) | (bn->hdr & MAKEBITS(3, HDR_BIGNUM_SIGN_SHIFT));
+inline int bn_get_count(scm_bignum_t bn) { return HDR_BIGNUM_COUNT(bn->hdr); }
+
+inline void bn_set_sign(scm_bignum_t bn, int sign) {
+  assert(sign == 0 || sign == -1 || sign == 1);
+  bn->hdr = scm_hdr_bignum | (bn->hdr & MAKEBITS(UINTPTR_MAX, HDR_BIGNUM_COUNT_SHIFT)) | MAKEBITS((sign & 0x3), HDR_BIGNUM_SIGN_SHIFT);
 }
 
-inline int
-bn_get_count(scm_bignum_t bn)
-{
-    return HDR_BIGNUM_COUNT(bn->hdr);
-}
-
-inline void
-bn_set_sign(scm_bignum_t bn, int sign)
-{
-    assert(sign == 0 || sign == -1 || sign == 1);
-    bn->hdr = scm_hdr_bignum | (bn->hdr & MAKEBITS(UINTPTR_MAX, HDR_BIGNUM_COUNT_SHIFT)) | MAKEBITS((sign & 0x3), HDR_BIGNUM_SIGN_SHIFT);
-}
-
-inline int
-bn_get_sign(scm_bignum_t bn)
-{
-    int bits = HDR_BIGNUM_SIGN(bn->hdr);
-    if (bits == 0) return 0;
-    return (1 - bits) | 1;
+inline int bn_get_sign(scm_bignum_t bn) {
+  int bits = HDR_BIGNUM_SIGN(bn->hdr);
+  if (bits == 0) return 0;
+  return (1 - bits) | 1;
 }
 
 bool number_pred(scm_obj_t obj);
@@ -75,7 +58,7 @@ bool n_exact_pred(scm_obj_t obj);
 bool n_equal_pred(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 bool n_exact_equal_pred(scm_obj_t lhs, scm_obj_t rhs);
 bool n_inexact_equal_pred(scm_obj_t lhs, scm_obj_t rhs);
-int  n_compare(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
+int n_compare(object_heap_t* heap, scm_obj_t lhs, scm_obj_t rhs);
 
 scm_obj_t int32_to_bignum(object_heap_t* heap, int32_t value);
 scm_obj_t int64_to_bignum(object_heap_t* heap, int64_t value);
@@ -85,68 +68,52 @@ scm_obj_t uint64_to_bignum(object_heap_t* heap, uint64_t value);
 scm_obj_t int128_to_bignum(object_heap_t* heap, int128_t value);
 #endif
 
-inline scm_obj_t
-int64_to_integer(object_heap_t* heap, int64_t value)
-{
-    if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM(value);
-    return int64_to_bignum(heap, value);
+inline scm_obj_t int64_to_integer(object_heap_t* heap, int64_t value) {
+  if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM(value);
+  return int64_to_bignum(heap, value);
 }
 
-inline scm_obj_t
-int32_to_integer(object_heap_t* heap, int32_t value)
-{
+inline scm_obj_t int32_to_integer(object_heap_t* heap, int32_t value) {
 #if ARCH_LP64
-    return MAKEFIXNUM(value);
+  return MAKEFIXNUM(value);
 #else
-    if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM(value);
-    return int32_to_bignum(heap, value);
+  if ((value <= FIXNUM_MAX) & (value >= FIXNUM_MIN)) return MAKEFIXNUM(value);
+  return int32_to_bignum(heap, value);
 #endif
 }
 
-inline scm_obj_t
-uint32_to_integer(object_heap_t* heap, uint32_t value)
-{
+inline scm_obj_t uint32_to_integer(object_heap_t* heap, uint32_t value) {
 #if ARCH_LP64
-    return MAKEFIXNUM(value);
+  return MAKEFIXNUM(value);
 #else
-    if (value <= FIXNUM_MAX) return MAKEFIXNUM(value);
-    return uint32_to_bignum(heap, value);
+  if (value <= FIXNUM_MAX) return MAKEFIXNUM(value);
+  return uint32_to_bignum(heap, value);
 #endif
 }
 
-inline scm_obj_t
-uint64_to_integer(object_heap_t* heap, uint64_t value)
-{
-    if (value <= FIXNUM_MAX) return MAKEFIXNUM(value);
-    return uint64_to_bignum(heap, value);
+inline scm_obj_t uint64_to_integer(object_heap_t* heap, uint64_t value) {
+  if (value <= FIXNUM_MAX) return MAKEFIXNUM(value);
+  return uint64_to_bignum(heap, value);
 }
 
-inline scm_obj_t
-int_to_integer(object_heap_t* heap, int value)
-{
-    if (sizeof(int) == sizeof(int32_t)) return int32_to_integer(heap, value);
-    return int64_to_integer(heap, value);
+inline scm_obj_t int_to_integer(object_heap_t* heap, int value) {
+  if (sizeof(int) == sizeof(int32_t)) return int32_to_integer(heap, value);
+  return int64_to_integer(heap, value);
 }
 
-inline scm_obj_t
-uint_to_integer(object_heap_t* heap, unsigned int value)
-{
-    if (sizeof(unsigned int) == sizeof(uint32_t)) return uint32_to_integer(heap, value);
-    return uint64_to_integer(heap, value);
+inline scm_obj_t uint_to_integer(object_heap_t* heap, unsigned int value) {
+  if (sizeof(unsigned int) == sizeof(uint32_t)) return uint32_to_integer(heap, value);
+  return uint64_to_integer(heap, value);
 }
 
-inline scm_obj_t
-intptr_to_integer(object_heap_t* heap, intptr_t value)
-{
-    if (sizeof(intptr_t) == sizeof(int32_t)) return int32_to_integer(heap, value);
-    return int64_to_integer(heap, value);
+inline scm_obj_t intptr_to_integer(object_heap_t* heap, intptr_t value) {
+  if (sizeof(intptr_t) == sizeof(int32_t)) return int32_to_integer(heap, value);
+  return int64_to_integer(heap, value);
 }
 
-inline scm_obj_t
-uintptr_to_integer(object_heap_t* heap, intptr_t value)
-{
-    if (sizeof(uintptr_t) == sizeof(uint32_t)) return uint32_to_integer(heap, value);
-    return uint64_to_integer(heap, value);
+inline scm_obj_t uintptr_to_integer(object_heap_t* heap, intptr_t value) {
+  if (sizeof(uintptr_t) == sizeof(uint32_t)) return uint32_to_integer(heap, value);
+  return uint64_to_integer(heap, value);
 }
 
 bool exact_integer_to_int16(scm_obj_t obj, int16_t* ans);
@@ -156,43 +123,37 @@ bool exact_integer_to_uint32(scm_obj_t obj, uint32_t* ans);
 bool exact_integer_to_int64(scm_obj_t obj, int64_t* ans);
 bool exact_integer_to_uint64(scm_obj_t obj, uint64_t* ans);
 
-inline bool
-exact_integer_to_uintptr(scm_obj_t obj, uintptr_t* ans)
-{
-    if (sizeof(uintptr_t) == sizeof(uint32_t)) {
-        return exact_integer_to_uint32(obj, (uint32_t*)ans);
-    }
-    if (sizeof(uintptr_t) == sizeof(uint64_t)) {
-        return exact_integer_to_uint64(obj, (uint64_t*)ans);
-    }
-    assert(false);
-    return false;
+inline bool exact_integer_to_uintptr(scm_obj_t obj, uintptr_t* ans) {
+  if (sizeof(uintptr_t) == sizeof(uint32_t)) {
+    return exact_integer_to_uint32(obj, (uint32_t*)ans);
+  }
+  if (sizeof(uintptr_t) == sizeof(uint64_t)) {
+    return exact_integer_to_uint64(obj, (uint64_t*)ans);
+  }
+  assert(false);
+  return false;
 }
 
-inline bool
-exact_integer_to_intptr(scm_obj_t obj, intptr_t* ans)
-{
-    if (sizeof(intptr_t) == sizeof(int32_t)) {
-        return exact_integer_to_int32(obj, (int32_t*)ans);
-    }
-    if (sizeof(intptr_t) == sizeof(int64_t)) {
-        return exact_integer_to_int64(obj, (int64_t*)ans);
-    }
-    assert(false);
-    return false;
+inline bool exact_integer_to_intptr(scm_obj_t obj, intptr_t* ans) {
+  if (sizeof(intptr_t) == sizeof(int32_t)) {
+    return exact_integer_to_int32(obj, (int32_t*)ans);
+  }
+  if (sizeof(intptr_t) == sizeof(int64_t)) {
+    return exact_integer_to_int64(obj, (int64_t*)ans);
+  }
+  assert(false);
+  return false;
 }
 
-inline bool
-exact_integer_to_int(scm_obj_t obj, int* ans)
-{
-    if (sizeof(int) == sizeof(int32_t)) {
-        return exact_integer_to_int32(obj, (int32_t*)ans);
-    }
-    if (sizeof(int) == sizeof(int64_t)) {
-        return exact_integer_to_int64(obj, (int64_t*)ans);
-    }
-    assert(false);
-    return false;
+inline bool exact_integer_to_int(scm_obj_t obj, int* ans) {
+  if (sizeof(int) == sizeof(int32_t)) {
+    return exact_integer_to_int32(obj, (int32_t*)ans);
+  }
+  if (sizeof(int) == sizeof(int64_t)) {
+    return exact_integer_to_int64(obj, (int64_t*)ans);
+  }
+  assert(false);
+  return false;
 }
 intptr_t coerce_exact_integer_to_intptr(scm_obj_t obj);
 int64_t coerce_exact_integer_to_int64(scm_obj_t obj);

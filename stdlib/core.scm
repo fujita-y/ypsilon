@@ -43,6 +43,7 @@
     _
     abs
     acos
+    acquire-lockfile
     add-library-path
     add-load-path
     and
@@ -88,6 +89,7 @@
     break
     buffer-mode
     buffer-mode?
+    bytevector->pinned-c-void*
     bytevector->sint-list
     bytevector->string
     bytevector->u8-list
@@ -170,6 +172,8 @@
     bytevector-uint-set!
     bytevector=?
     bytevector?
+    c-main-argc
+    c-main-argv
     caaaar
     caaadr
     caaar
@@ -184,7 +188,6 @@
     cadddr
     caddr
     cadr
-    call-shared-object
     call-with-bytevector-output-port
     call-with-current-continuation
     call-with-input-file
@@ -241,8 +244,13 @@
     close-output-port
     close-port
     closure-code
+    closure-codegen
     cmwc-random-real
     cmwc-random-u32
+    codegen-cdecl-callback
+    codegen-cdecl-callout
+    codegen-queue-count
+    codegen-queue-push!
     collect
     collect-notify
     collect-stack-notify
@@ -262,6 +270,7 @@
     condition?
     cons
     cons*
+    continuation-to-exit
     copy-environment-macros!
     copy-environment-variables!
     core-eval
@@ -280,6 +289,7 @@
     core-read
     coreform-optimize
     cos
+    count-pair
     create-directory
     create-hard-link
     create-symbolic-link
@@ -306,6 +316,7 @@
     define
     define-condition-type
     define-enumeration
+    define-library
     define-macro
     define-record-type
     define-struct
@@ -318,15 +329,18 @@
     directory-list
     display
     display-backtrace
+    display-codegen-statistics
     display-heap-statistics
     display-object-statistics
-    display-thread-status
     div
     div-and-mod
     div0
     div0-and-mod0
     do
     drop
+    drop-last-cdr
+    drop-last-n-pair
+    drop-last-pair
     dynamic-wind
     else
     encode-microsecond
@@ -352,6 +366,7 @@
     equal-hash
     equal?
     eqv?
+    errno/string
     error
     error-handling-mode
     error?
@@ -368,6 +383,7 @@
     expt
     extract-accumulated-bytevector
     extract-accumulated-string
+    feature-identifies
     fields
     file-directory?
     file-executable?
@@ -440,6 +456,7 @@
     force
     format
     free-identifier=?
+    fulfill-feature-requirements?
     fx*
     fx*/carry
     fx+
@@ -485,6 +502,7 @@
     generate-temporaries
     generate-temporary-symbol
     gensym
+    get-accumulated-bytevector
     get-accumulated-string
     get-bytevector-all
     get-bytevector-n
@@ -539,6 +557,8 @@
     imag-part
     immutable
     implementation-restriction-violation?
+    include
+    include-ci
     inexact
     inexact->exact
     inexact?
@@ -551,6 +571,9 @@
     iota
     irritants-condition?
     lambda
+    last-cdr
+    last-n-pair
+    last-pair
     latin-1-codec
     lcm
     least-fixnum
@@ -582,7 +605,6 @@
     list?
     load
     load-shared-object
-    local-heap-object?
     log
     lookahead-char
     lookahead-u8
@@ -593,7 +615,6 @@
     make-assertion-violation
     make-bytevector
     make-bytevector-mapping
-    make-callback-trampoline
     make-cmwc-random-state
     make-core-hashtable
     make-custom-binary-input-port
@@ -635,9 +656,7 @@
     make-record-type-descriptor
     make-rectangular
     make-serious-condition
-    make-shared-bag
     make-shared-core-hashtable
-    make-shared-queue
     make-socket
     make-string
     make-string-hashtable
@@ -660,6 +679,21 @@
     make-weak-shared-core-hashtable
     make-who-condition
     map
+    mat4x4-add
+    mat4x4-dup
+    mat4x4-frustum
+    mat4x4-identity
+    mat4x4-invert
+    mat4x4-look-at
+    mat4x4-mul
+    mat4x4-ortho
+    mat4x4-orthonormalize
+    mat4x4-perspective
+    mat4x4-rotate
+    mat4x4-scale
+    mat4x4-sub
+    mat4x4-translate
+    mat4x4-transpose
     max
     member
     memp
@@ -692,7 +726,6 @@
     number?
     numerator
     odd?
-    on-primordial-thread?
     opaque
     open-builtin-data-input-port
     open-bytevector-input-port
@@ -741,6 +774,7 @@
     put-bytevector
     put-char
     put-datum
+    put-fasl
     put-string
     put-u8
     quasiquote
@@ -780,6 +814,7 @@
     record-type-uid
     record-type?
     record?
+    release-lockfile
     remainder
     remove
     remove-duplicate-symbols
@@ -796,7 +831,6 @@
     scheme-load-paths
     scheme-load-verbose
     sealed
-    serializable?
     serious-condition?
     set!
     set-car!
@@ -806,16 +840,6 @@
     set-current-output-port!
     set-port-position!
     set-top-level-value!
-    shared-bag-get!
-    shared-bag-put!
-    shared-bag?
-    shared-object-errno
-    shared-object-win32-lasterror
-    shared-queue-pop!
-    shared-queue-push!
-    shared-queue-shutdown
-    shared-queue?
-    shutdown-object?
     shutdown-output-port
     simple-conditions
     sin
@@ -828,9 +852,6 @@
     socket-send
     socket-shutdown
     socket?
-    spawn
-    spawn-heap-limit
-    spawn-timeout
     sqrt
     standard-error-port
     standard-input-port
@@ -897,10 +918,8 @@
     tan
     textual-port?
     time-usage
-    timeout-object?
     top-level-bound?
     top-level-value
-    track-file-open
     transcoded-port
     transcoder-codec
     transcoder-eol-style
@@ -955,7 +974,6 @@
     weak-mapping?
     when
     who-condition?
-    win32-error->string
     with-exception-handler
     with-input-from-file
     with-output-to-file

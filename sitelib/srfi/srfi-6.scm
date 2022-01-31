@@ -1,6 +1,2 @@
 #!nobacktrace
-(library (srfi srfi-6)
-  (export (rename (make-string-input-port open-input-string))
-          (rename (make-string-output-port open-output-string))
-          (rename (get-accumulated-string get-output-string)))
-  (import (core)))
+(define-library (srfi srfi-6) (import (srfi 6)) (export get-output-string open-input-string open-output-string))

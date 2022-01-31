@@ -1,5 +1,4 @@
 #!nobacktrace
-(library (srfi srfi-98)
-  (export (rename (lookup-process-environment get-environment-variable)
-                  (process-environment->alist get-environment-variables)))
-  (import (core)))
+(define-library (srfi srfi-98)
+  (import (srfi 98))
+  (export get-environment-variable get-environment-variables))

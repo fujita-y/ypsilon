@@ -1,10 +1,461 @@
 #!nobacktrace
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (library (ypsilon gl)
-  (export GL_FALSE
+  (export glClearIndex
+          glClearColor
+          glClear
+          glIndexMask
+          glColorMask
+          glAlphaFunc
+          glBlendFunc
+          glLogicOp
+          glCullFace
+          glFrontFace
+          glPointSize
+          glLineWidth
+          glLineStipple
+          glPolygonMode
+          glPolygonOffset
+          glPolygonStipple
+          glGetPolygonStipple
+          glEdgeFlag
+          glEdgeFlagv
+          glScissor
+          glClipPlane
+          glGetClipPlane
+          glDrawBuffer
+          glReadBuffer
+          glEnable
+          glDisable
+          glIsEnabled
+          glGetBooleanv
+          glGetDoublev
+          glGetFloatv
+          glGetIntegerv
+          glPushAttrib
+          glPopAttrib
+          glRenderMode
+          glGetError
+          glGetString
+          glFinish
+          glFlush
+          glHint
+          glClearDepth
+          glDepthFunc
+          glDepthMask
+          glDepthRange
+          glClearAccum
+          glAccum
+          glMatrixMode
+          glOrtho
+          glFrustum
+          glViewport
+          glPushMatrix
+          glPopMatrix
+          glLoadIdentity
+          glLoadMatrixd
+          glLoadMatrixf
+          glMultMatrixd
+          glMultMatrixf
+          glRotated
+          glRotatef
+          glScaled
+          glScalef
+          glTranslated
+          glTranslatef
+          glIsList
+          glDeleteLists
+          glGenLists
+          glNewList
+          glEndList
+          glCallList
+          glCallLists
+          glListBase
+          glBegin
+          glEnd
+          glVertex2d
+          glVertex2f
+          glVertex2i
+          glVertex2s
+          glVertex3d
+          glVertex3f
+          glVertex3i
+          glVertex3s
+          glVertex4d
+          glVertex4f
+          glVertex4i
+          glVertex4s
+          glVertex2dv
+          glVertex2fv
+          glVertex2iv
+          glVertex2sv
+          glVertex3dv
+          glVertex3fv
+          glVertex3iv
+          glVertex3sv
+          glVertex4dv
+          glVertex4fv
+          glVertex4iv
+          glVertex4sv
+          glNormal3b
+          glNormal3d
+          glNormal3f
+          glNormal3i
+          glNormal3s
+          glNormal3bv
+          glNormal3dv
+          glNormal3fv
+          glNormal3iv
+          glNormal3sv
+          glIndexd
+          glIndexf
+          glIndexi
+          glIndexs
+          glIndexdv
+          glIndexfv
+          glIndexiv
+          glIndexsv
+          glColor3b
+          glColor3d
+          glColor3f
+          glColor3i
+          glColor3s
+          glColor3ub
+          glColor3ui
+          glColor3us
+          glColor4b
+          glColor4d
+          glColor4f
+          glColor4i
+          glColor4s
+          glColor4ub
+          glColor4ui
+          glColor4us
+          glColor3bv
+          glColor3dv
+          glColor3fv
+          glColor3iv
+          glColor3sv
+          glColor3ubv
+          glColor3uiv
+          glColor3usv
+          glColor4bv
+          glColor4dv
+          glColor4fv
+          glColor4iv
+          glColor4sv
+          glColor4ubv
+          glColor4uiv
+          glColor4usv
+          glTexCoord1d
+          glTexCoord1f
+          glTexCoord1i
+          glTexCoord1s
+          glTexCoord2d
+          glTexCoord2f
+          glTexCoord2i
+          glTexCoord2s
+          glTexCoord3d
+          glTexCoord3f
+          glTexCoord3i
+          glTexCoord3s
+          glTexCoord4d
+          glTexCoord4f
+          glTexCoord4i
+          glTexCoord4s
+          glTexCoord1dv
+          glTexCoord1fv
+          glTexCoord1iv
+          glTexCoord1sv
+          glTexCoord2dv
+          glTexCoord2fv
+          glTexCoord2iv
+          glTexCoord2sv
+          glTexCoord3dv
+          glTexCoord3fv
+          glTexCoord3iv
+          glTexCoord3sv
+          glTexCoord4dv
+          glTexCoord4fv
+          glTexCoord4iv
+          glTexCoord4sv
+          glRasterPos2d
+          glRasterPos2f
+          glRasterPos2i
+          glRasterPos2s
+          glRasterPos3d
+          glRasterPos3f
+          glRasterPos3i
+          glRasterPos3s
+          glRasterPos4d
+          glRasterPos4f
+          glRasterPos4i
+          glRasterPos4s
+          glRasterPos2dv
+          glRasterPos2fv
+          glRasterPos2iv
+          glRasterPos2sv
+          glRasterPos3dv
+          glRasterPos3fv
+          glRasterPos3iv
+          glRasterPos3sv
+          glRasterPos4dv
+          glRasterPos4fv
+          glRasterPos4iv
+          glRasterPos4sv
+          glRectd
+          glRectf
+          glRecti
+          glRects
+          glRectdv
+          glRectfv
+          glRectiv
+          glRectsv
+          glVertexPointer
+          glNormalPointer
+          glColorPointer
+          glIndexPointer
+          glTexCoordPointer
+          glEdgeFlagPointer
+          glGetPointerv
+          glArrayElement
+          glDrawArrays
+          glDrawElements
+          glInterleavedArrays
+          glShadeModel
+          glLightf
+          glLighti
+          glLightfv
+          glLightiv
+          glGetLightfv
+          glGetLightiv
+          glLightModelf
+          glLightModeli
+          glLightModelfv
+          glLightModeliv
+          glMaterialf
+          glMateriali
+          glMaterialfv
+          glMaterialiv
+          glGetMaterialfv
+          glGetMaterialiv
+          glColorMaterial
+          glPixelZoom
+          glPixelStoref
+          glPixelStorei
+          glPixelTransferf
+          glPixelTransferi
+          glPixelMapfv
+          glPixelMapuiv
+          glPixelMapusv
+          glGetPixelMapfv
+          glGetPixelMapuiv
+          glGetPixelMapusv
+          glBitmap
+          glReadPixels
+          glDrawPixels
+          glCopyPixels
+          glStencilFunc
+          glStencilMask
+          glStencilOp
+          glClearStencil
+          glTexGend
+          glTexGenf
+          glTexGeni
+          glTexGendv
+          glTexGenfv
+          glTexGeniv
+          glGetTexGendv
+          glGetTexGenfv
+          glGetTexGeniv
+          glTexEnvf
+          glTexEnvi
+          glTexEnvfv
+          glTexEnviv
+          glGetTexEnvfv
+          glGetTexEnviv
+          glTexParameterf
+          glTexParameteri
+          glTexParameterfv
+          glTexParameteriv
+          glGetTexParameterfv
+          glGetTexParameteriv
+          glGetTexLevelParameterfv
+          glGetTexLevelParameteriv
+          glTexImage1D
+          glTexImage2D
+          glGetTexImage
+          glGenTextures
+          glDeleteTextures
+          glBindTexture
+          glPrioritizeTextures
+          glAreTexturesResident
+          glIsTexture
+          glTexSubImage1D
+          glTexSubImage2D
+          glCopyTexImage1D
+          glCopyTexImage2D
+          glCopyTexSubImage1D
+          glCopyTexSubImage2D
+          glMap1d
+          glMap1f
+          glMap2d
+          glMap2f
+          glGetMapdv
+          glGetMapfv
+          glGetMapiv
+          glEvalCoord1d
+          glEvalCoord1f
+          glEvalCoord1dv
+          glEvalCoord1fv
+          glEvalCoord2d
+          glEvalCoord2f
+          glEvalCoord2dv
+          glEvalCoord2fv
+          glMapGrid1d
+          glMapGrid1f
+          glMapGrid2d
+          glMapGrid2f
+          glEvalPoint1
+          glEvalPoint2
+          glEvalMesh1
+          glEvalMesh2
+          glFogf
+          glFogi
+          glFogfv
+          glFogiv
+          glFeedbackBuffer
+          glPassThrough
+          glSelectBuffer
+          glInitNames
+          glLoadName
+          glPushName
+          glPopName
+          glDrawRangeElements
+          glTexImage3D
+          glTexSubImage3D
+          glCopyTexSubImage3D
+          glColorTable
+          glColorSubTable
+          glColorTableParameteriv
+          glColorTableParameterfv
+          glCopyColorSubTable
+          glCopyColorTable
+          glGetColorTable
+          glGetColorTableParameterfv
+          glGetColorTableParameteriv
+          glBlendEquation
+          glBlendColor
+          glHistogram
+          glResetHistogram
+          glGetHistogram
+          glGetHistogramParameterfv
+          glGetHistogramParameteriv
+          glMinmax
+          glResetMinmax
+          glGetMinmax
+          glGetMinmaxParameterfv
+          glGetMinmaxParameteriv
+          glConvolutionFilter1D
+          glConvolutionFilter2D
+          glConvolutionParameterf
+          glConvolutionParameterfv
+          glConvolutionParameteri
+          glConvolutionParameteriv
+          glCopyConvolutionFilter1D
+          glCopyConvolutionFilter2D
+          glGetConvolutionFilter
+          glGetConvolutionParameterfv
+          glGetConvolutionParameteriv
+          glSeparableFilter2D
+          glGetSeparableFilter
+          glActiveTexture
+          glClientActiveTexture
+          glCompressedTexImage1D
+          glCompressedTexImage2D
+          glCompressedTexImage3D
+          glCompressedTexSubImage1D
+          glCompressedTexSubImage2D
+          glCompressedTexSubImage3D
+          glGetCompressedTexImage
+          glMultiTexCoord1d
+          glMultiTexCoord1dv
+          glMultiTexCoord1f
+          glMultiTexCoord1fv
+          glMultiTexCoord1i
+          glMultiTexCoord1iv
+          glMultiTexCoord1s
+          glMultiTexCoord1sv
+          glMultiTexCoord2d
+          glMultiTexCoord2dv
+          glMultiTexCoord2f
+          glMultiTexCoord2fv
+          glMultiTexCoord2i
+          glMultiTexCoord2iv
+          glMultiTexCoord2s
+          glMultiTexCoord2sv
+          glMultiTexCoord3d
+          glMultiTexCoord3dv
+          glMultiTexCoord3f
+          glMultiTexCoord3fv
+          glMultiTexCoord3i
+          glMultiTexCoord3iv
+          glMultiTexCoord3s
+          glMultiTexCoord3sv
+          glMultiTexCoord4d
+          glMultiTexCoord4dv
+          glMultiTexCoord4f
+          glMultiTexCoord4fv
+          glMultiTexCoord4i
+          glMultiTexCoord4iv
+          glMultiTexCoord4s
+          glMultiTexCoord4sv
+          glLoadTransposeMatrixd
+          glLoadTransposeMatrixf
+          glMultTransposeMatrixd
+          glMultTransposeMatrixf
+          glSampleCoverage
+          glActiveTextureARB
+          glClientActiveTextureARB
+          glMultiTexCoord1dARB
+          glMultiTexCoord1dvARB
+          glMultiTexCoord1fARB
+          glMultiTexCoord1fvARB
+          glMultiTexCoord1iARB
+          glMultiTexCoord1ivARB
+          glMultiTexCoord1sARB
+          glMultiTexCoord1svARB
+          glMultiTexCoord2dARB
+          glMultiTexCoord2dvARB
+          glMultiTexCoord2fARB
+          glMultiTexCoord2fvARB
+          glMultiTexCoord2iARB
+          glMultiTexCoord2ivARB
+          glMultiTexCoord2sARB
+          glMultiTexCoord2svARB
+          glMultiTexCoord3dARB
+          glMultiTexCoord3dvARB
+          glMultiTexCoord3fARB
+          glMultiTexCoord3fvARB
+          glMultiTexCoord3iARB
+          glMultiTexCoord3ivARB
+          glMultiTexCoord3sARB
+          glMultiTexCoord3svARB
+          glMultiTexCoord4dARB
+          glMultiTexCoord4dvARB
+          glMultiTexCoord4fARB
+          glMultiTexCoord4fvARB
+          glMultiTexCoord4iARB
+          glMultiTexCoord4ivARB
+          glMultiTexCoord4sARB
+          glMultiTexCoord4svARB
+          glBlendEquationSeparateATI
+          GL_VERSION_1_1
+          GL_VERSION_1_2
+          GL_VERSION_1_3
+          GL_FALSE
           GL_TRUE
           GL_BYTE
           GL_UNSIGNED_BYTE
@@ -425,6 +876,8 @@
           GL_TEXTURE_ENV_COLOR
           GL_TEXTURE_GEN_S
           GL_TEXTURE_GEN_T
+          GL_TEXTURE_GEN_R
+          GL_TEXTURE_GEN_Q
           GL_TEXTURE_GEN_MODE
           GL_TEXTURE_BORDER_COLOR
           GL_TEXTURE_WIDTH
@@ -455,8 +908,6 @@
           GL_T
           GL_R
           GL_Q
-          GL_TEXTURE_GEN_R
-          GL_TEXTURE_GEN_Q
           GL_VENDOR
           GL_RENDERER
           GL_VERSION
@@ -780,478 +1231,30 @@
           GL_ACTIVE_TEXTURE_ARB
           GL_CLIENT_ACTIVE_TEXTURE_ARB
           GL_MAX_TEXTURE_UNITS_ARB
-          glClearIndex
-          glClearColor
-          glClear
-          glIndexMask
-          glColorMask
-          glAlphaFunc
-          glBlendFunc
-          glLogicOp
-          glCullFace
-          glFrontFace
-          glPointSize
-          glLineWidth
-          glLineStipple
-          glPolygonMode
-          glPolygonOffset
-          glPolygonStipple
-          glGetPolygonStipple
-          glEdgeFlag
-          glEdgeFlagv
-          glScissor
-          glClipPlane
-          glGetClipPlane
-          glDrawBuffer
-          glReadBuffer
-          glEnable
-          glDisable
-          glIsEnabled
-          glEnableClientState
-          glDisableClientState
-          glGetBooleanv
-          glGetDoublev
-          glGetFloatv
-          glGetIntegerv
-          glPushAttrib
-          glPopAttrib
-          glPushClientAttrib
-          glPopClientAttrib
-          glRenderMode
-          glGetError
-          glGetString
-          glFinish
-          glFlush
-          glHint
-          glClearDepth
-          glDepthFunc
-          glDepthMask
-          glDepthRange
-          glClearAccum
-          glAccum
-          glMatrixMode
-          glOrtho
-          glFrustum
-          glViewport
-          glPushMatrix
-          glPopMatrix
-          glLoadIdentity
-          glLoadMatrixd
-          glLoadMatrixf
-          glMultMatrixd
-          glMultMatrixf
-          glRotated
-          glRotatef
-          glScaled
-          glScalef
-          glTranslated
-          glTranslatef
-          glIsList
-          glDeleteLists
-          glGenLists
-          glNewList
-          glEndList
-          glCallList
-          glCallLists
-          glListBase
-          glBegin
-          glEnd
-          glVertex2d
-          glVertex2f
-          glVertex2i
-          glVertex2s
-          glVertex3d
-          glVertex3f
-          glVertex3i
-          glVertex3s
-          glVertex4d
-          glVertex4f
-          glVertex4i
-          glVertex4s
-          glVertex2dv
-          glVertex2fv
-          glVertex2iv
-          glVertex2sv
-          glVertex3dv
-          glVertex3fv
-          glVertex3iv
-          glVertex3sv
-          glVertex4dv
-          glVertex4fv
-          glVertex4iv
-          glVertex4sv
-          glNormal3b
-          glNormal3d
-          glNormal3f
-          glNormal3i
-          glNormal3s
-          glNormal3bv
-          glNormal3dv
-          glNormal3fv
-          glNormal3iv
-          glNormal3sv
-          glIndexd
-          glIndexf
-          glIndexi
-          glIndexs
-          glIndexub
-          glIndexdv
-          glIndexfv
-          glIndexiv
-          glIndexsv
-          glIndexubv
-          glColor3b
-          glColor3d
-          glColor3f
-          glColor3i
-          glColor3s
-          glColor3ub
-          glColor3ui
-          glColor3us
-          glColor4b
-          glColor4d
-          glColor4f
-          glColor4i
-          glColor4s
-          glColor4ub
-          glColor4ui
-          glColor4us
-          glColor3bv
-          glColor3dv
-          glColor3fv
-          glColor3iv
-          glColor3sv
-          glColor3ubv
-          glColor3uiv
-          glColor3usv
-          glColor4bv
-          glColor4dv
-          glColor4fv
-          glColor4iv
-          glColor4sv
-          glColor4ubv
-          glColor4uiv
-          glColor4usv
-          glTexCoord1d
-          glTexCoord1f
-          glTexCoord1i
-          glTexCoord1s
-          glTexCoord2d
-          glTexCoord2f
-          glTexCoord2i
-          glTexCoord2s
-          glTexCoord3d
-          glTexCoord3f
-          glTexCoord3i
-          glTexCoord3s
-          glTexCoord4d
-          glTexCoord4f
-          glTexCoord4i
-          glTexCoord4s
-          glTexCoord1dv
-          glTexCoord1fv
-          glTexCoord1iv
-          glTexCoord1sv
-          glTexCoord2dv
-          glTexCoord2fv
-          glTexCoord2iv
-          glTexCoord2sv
-          glTexCoord3dv
-          glTexCoord3fv
-          glTexCoord3iv
-          glTexCoord3sv
-          glTexCoord4dv
-          glTexCoord4fv
-          glTexCoord4iv
-          glTexCoord4sv
-          glRasterPos2d
-          glRasterPos2f
-          glRasterPos2i
-          glRasterPos2s
-          glRasterPos3d
-          glRasterPos3f
-          glRasterPos3i
-          glRasterPos3s
-          glRasterPos4d
-          glRasterPos4f
-          glRasterPos4i
-          glRasterPos4s
-          glRasterPos2dv
-          glRasterPos2fv
-          glRasterPos2iv
-          glRasterPos2sv
-          glRasterPos3dv
-          glRasterPos3fv
-          glRasterPos3iv
-          glRasterPos3sv
-          glRasterPos4dv
-          glRasterPos4fv
-          glRasterPos4iv
-          glRasterPos4sv
-          glRectd
-          glRectf
-          glRecti
-          glRects
-          glRectdv
-          glRectfv
-          glRectiv
-          glRectsv
-          glVertexPointer
-          glNormalPointer
-          glColorPointer
-          glIndexPointer
-          glTexCoordPointer
-          glEdgeFlagPointer
-          glGetPointerv
-          glArrayElement
-          glDrawArrays
-          glDrawElements
-          glInterleavedArrays
-          glShadeModel
-          glLightf
-          glLighti
-          glLightfv
-          glLightiv
-          glGetLightfv
-          glGetLightiv
-          glLightModelf
-          glLightModeli
-          glLightModelfv
-          glLightModeliv
-          glMaterialf
-          glMateriali
-          glMaterialfv
-          glMaterialiv
-          glGetMaterialfv
-          glGetMaterialiv
-          glColorMaterial
-          glPixelZoom
-          glPixelStoref
-          glPixelStorei
-          glPixelTransferf
-          glPixelTransferi
-          glPixelMapfv
-          glPixelMapuiv
-          glPixelMapusv
-          glGetPixelMapfv
-          glGetPixelMapuiv
-          glGetPixelMapusv
-          glBitmap
-          glReadPixels
-          glDrawPixels
-          glCopyPixels
-          glStencilFunc
-          glStencilMask
-          glStencilOp
-          glClearStencil
-          glTexGend
-          glTexGenf
-          glTexGeni
-          glTexGendv
-          glTexGenfv
-          glTexGeniv
-          glGetTexGendv
-          glGetTexGenfv
-          glGetTexGeniv
-          glTexEnvf
-          glTexEnvi
-          glTexEnvfv
-          glTexEnviv
-          glGetTexEnvfv
-          glGetTexEnviv
-          glTexParameterf
-          glTexParameteri
-          glTexParameterfv
-          glTexParameteriv
-          glGetTexParameterfv
-          glGetTexParameteriv
-          glGetTexLevelParameterfv
-          glGetTexLevelParameteriv
-          glTexImage1D
-          glTexImage2D
-          glGetTexImage
-          glGenTextures
-          glDeleteTextures
-          glBindTexture
-          glPrioritizeTextures
-          glAreTexturesResident
-          glIsTexture
-          glTexSubImage1D
-          glTexSubImage2D
-          glCopyTexImage1D
-          glCopyTexImage2D
-          glCopyTexSubImage1D
-          glCopyTexSubImage2D
-          glMap1d
-          glMap1f
-          glMap2d
-          glMap2f
-          glGetMapdv
-          glGetMapfv
-          glGetMapiv
-          glEvalCoord1d
-          glEvalCoord1f
-          glEvalCoord1dv
-          glEvalCoord1fv
-          glEvalCoord2d
-          glEvalCoord2f
-          glEvalCoord2dv
-          glEvalCoord2fv
-          glMapGrid1d
-          glMapGrid1f
-          glMapGrid2d
-          glMapGrid2f
-          glEvalPoint1
-          glEvalPoint2
-          glEvalMesh1
-          glEvalMesh2
-          glFogf
-          glFogi
-          glFogfv
-          glFogiv
-          glFeedbackBuffer
-          glPassThrough
-          glSelectBuffer
-          glInitNames
-          glLoadName
-          glPushName
-          glPopName
-          glDrawRangeElements
-          glTexImage3D
-          glTexSubImage3D
-          glCopyTexSubImage3D
-          glColorTable
-          glColorSubTable
-          glColorTableParameteriv
-          glColorTableParameterfv
-          glCopyColorSubTable
-          glCopyColorTable
-          glGetColorTable
-          glGetColorTableParameterfv
-          glGetColorTableParameteriv
-          glBlendEquation
-          glBlendColor
-          glHistogram
-          glResetHistogram
-          glGetHistogram
-          glGetHistogramParameterfv
-          glGetHistogramParameteriv
-          glMinmax
-          glResetMinmax
-          glGetMinmax
-          glGetMinmaxParameterfv
-          glGetMinmaxParameteriv
-          glConvolutionFilter1D
-          glConvolutionFilter2D
-          glConvolutionParameterf
-          glConvolutionParameterfv
-          glConvolutionParameteri
-          glConvolutionParameteriv
-          glCopyConvolutionFilter1D
-          glCopyConvolutionFilter2D
-          glGetConvolutionFilter
-          glGetConvolutionParameterfv
-          glGetConvolutionParameteriv
-          glSeparableFilter2D
-          glGetSeparableFilter
-          glActiveTexture
-          glClientActiveTexture
-          glCompressedTexImage1D
-          glCompressedTexImage2D
-          glCompressedTexImage3D
-          glCompressedTexSubImage1D
-          glCompressedTexSubImage2D
-          glCompressedTexSubImage3D
-          glGetCompressedTexImage
-          glMultiTexCoord1d
-          glMultiTexCoord1dv
-          glMultiTexCoord1f
-          glMultiTexCoord1fv
-          glMultiTexCoord1i
-          glMultiTexCoord1iv
-          glMultiTexCoord1s
-          glMultiTexCoord1sv
-          glMultiTexCoord2d
-          glMultiTexCoord2dv
-          glMultiTexCoord2f
-          glMultiTexCoord2fv
-          glMultiTexCoord2i
-          glMultiTexCoord2iv
-          glMultiTexCoord2s
-          glMultiTexCoord2sv
-          glMultiTexCoord3d
-          glMultiTexCoord3dv
-          glMultiTexCoord3f
-          glMultiTexCoord3fv
-          glMultiTexCoord3i
-          glMultiTexCoord3iv
-          glMultiTexCoord3s
-          glMultiTexCoord3sv
-          glMultiTexCoord4d
-          glMultiTexCoord4dv
-          glMultiTexCoord4f
-          glMultiTexCoord4fv
-          glMultiTexCoord4i
-          glMultiTexCoord4iv
-          glMultiTexCoord4s
-          glMultiTexCoord4sv
-          glLoadTransposeMatrixd
-          glLoadTransposeMatrixf
-          glMultTransposeMatrixd
-          glMultTransposeMatrixf
-          glSampleCoverage
-          glActiveTextureARB
-          glClientActiveTextureARB
-          glMultiTexCoord1dARB
-          glMultiTexCoord1dvARB
-          glMultiTexCoord1fARB
-          glMultiTexCoord1fvARB
-          glMultiTexCoord1iARB
-          glMultiTexCoord1ivARB
-          glMultiTexCoord1sARB
-          glMultiTexCoord1svARB
-          glMultiTexCoord2dARB
-          glMultiTexCoord2dvARB
-          glMultiTexCoord2fARB
-          glMultiTexCoord2fvARB
-          glMultiTexCoord2iARB
-          glMultiTexCoord2ivARB
-          glMultiTexCoord2sARB
-          glMultiTexCoord2svARB
-          glMultiTexCoord3dARB
-          glMultiTexCoord3dvARB
-          glMultiTexCoord3fARB
-          glMultiTexCoord3fvARB
-          glMultiTexCoord3iARB
-          glMultiTexCoord3ivARB
-          glMultiTexCoord3sARB
-          glMultiTexCoord3svARB
-          glMultiTexCoord4dARB
-          glMultiTexCoord4dvARB
-          glMultiTexCoord4fARB
-          glMultiTexCoord4fvARB
-          glMultiTexCoord4iARB
-          glMultiTexCoord4ivARB
-          glMultiTexCoord4sARB
-          glMultiTexCoord4svARB)
-  (import (core) (ypsilon ffi))
-
-  (define lib-name
-    (cond (on-darwin  "OpenGL.framework/OpenGL")
-          (on-windows "opengl32.dll")
-          (on-linux   "libGL.so.1")
-          (on-freebsd "libGL.so")
-          (on-openbsd "libGL.so.7.3")
-          (on-sunos   "libGL.so.1")
-          (else
-           (assertion-violation #f "can not locate OpenGL library, unknown operating system"))))
-
-  (define lib (load-shared-object lib-name))
-
-  ;;;; Boolean values
-  (define GL_FALSE #x0)
-  (define GL_TRUE #x1)
-  ;;;; Data types
+          GL_DEPTH_STENCIL_MESA
+          GL_UNSIGNED_INT_24_8_MESA
+          GL_UNSIGNED_INT_8_24_REV_MESA
+          GL_UNSIGNED_SHORT_15_1_MESA
+          GL_UNSIGNED_SHORT_1_15_REV_MESA
+          GL_ALPHA_BLEND_EQUATION_ATI)
+  (import (core) (ypsilon c-ffi))
+  (define libGL
+    (let ((sysname (architecture-feature 'sysname)))
+      (cond ((string-contains sysname "darwin")
+             (load-shared-object "OpenGL.framework/OpenGL"))
+            ((string-contains sysname "linux")
+             (load-shared-object "libGL.so.1"))
+            (else
+              (assertion-violation 'load-shared-object "can not load GL library, unknown operating system")))))
+  (define-syntax define-cdecl
+    (syntax-rules ()
+      ((_ ret name args)
+       (define name (c-function/weak ret name args)))))
+  (define GL_VERSION_1_1 1)
+  (define GL_VERSION_1_2 1)
+  (define GL_VERSION_1_3 1)
+  (define GL_FALSE 0)
+  (define GL_TRUE 1)
   (define GL_BYTE #x1400)
   (define GL_UNSIGNED_BYTE #x1401)
   (define GL_SHORT #x1402)
@@ -1263,7 +1266,6 @@
   (define GL_3_BYTES #x1408)
   (define GL_4_BYTES #x1409)
   (define GL_DOUBLE #x140A)
-  ;;;; Primitives
   (define GL_POINTS #x0000)
   (define GL_LINES #x0001)
   (define GL_LINE_LOOP #x0002)
@@ -1274,7 +1276,6 @@
   (define GL_QUADS #x0007)
   (define GL_QUAD_STRIP #x0008)
   (define GL_POLYGON #x0009)
-  ;;;; Vertex Arrays
   (define GL_VERTEX_ARRAY #x8074)
   (define GL_NORMAL_ARRAY #x8075)
   (define GL_COLOR_ARRAY #x8076)
@@ -1315,17 +1316,14 @@
   (define GL_T2F_N3F_V3F #x2A2B)
   (define GL_T2F_C4F_N3F_V3F #x2A2C)
   (define GL_T4F_C4F_N3F_V4F #x2A2D)
-  ;;;; Matrix Mode
   (define GL_MATRIX_MODE #x0BA0)
   (define GL_MODELVIEW #x1700)
   (define GL_PROJECTION #x1701)
   (define GL_TEXTURE #x1702)
-  ;;;; Points
   (define GL_POINT_SMOOTH #x0B10)
   (define GL_POINT_SIZE #x0B11)
   (define GL_POINT_SIZE_GRANULARITY #x0B13)
   (define GL_POINT_SIZE_RANGE #x0B12)
-  ;;;; Lines
   (define GL_LINE_SMOOTH #x0B20)
   (define GL_LINE_STIPPLE #x0B24)
   (define GL_LINE_STIPPLE_PATTERN #x0B25)
@@ -1333,7 +1331,6 @@
   (define GL_LINE_WIDTH #x0B21)
   (define GL_LINE_WIDTH_GRANULARITY #x0B23)
   (define GL_LINE_WIDTH_RANGE #x0B22)
-  ;;;; Polygons
   (define GL_POINT #x1B00)
   (define GL_LINE #x1B01)
   (define GL_FILL #x1B02)
@@ -1353,13 +1350,11 @@
   (define GL_POLYGON_OFFSET_POINT #x2A01)
   (define GL_POLYGON_OFFSET_LINE #x2A02)
   (define GL_POLYGON_OFFSET_FILL #x8037)
-  ;;;; Display Lists
   (define GL_COMPILE #x1300)
   (define GL_COMPILE_AND_EXECUTE #x1301)
   (define GL_LIST_BASE #x0B32)
   (define GL_LIST_INDEX #x0B33)
   (define GL_LIST_MODE #x0B30)
-  ;;;; Depth buffer
   (define GL_NEVER #x0200)
   (define GL_LESS #x0201)
   (define GL_EQUAL #x0202)
@@ -1375,7 +1370,6 @@
   (define GL_DEPTH_RANGE #x0B70)
   (define GL_DEPTH_WRITEMASK #x0B72)
   (define GL_DEPTH_COMPONENT #x1902)
-  ;;;; Lighting
   (define GL_LIGHTING #x0B50)
   (define GL_LIGHT0 #x4000)
   (define GL_LIGHT1 #x4001)
@@ -1410,14 +1404,12 @@
   (define GL_COLOR_MATERIAL_FACE #x0B55)
   (define GL_COLOR_MATERIAL_PARAMETER #x0B56)
   (define GL_NORMALIZE #x0BA1)
-  ;;;; User clipping planes
   (define GL_CLIP_PLANE0 #x3000)
   (define GL_CLIP_PLANE1 #x3001)
   (define GL_CLIP_PLANE2 #x3002)
   (define GL_CLIP_PLANE3 #x3003)
   (define GL_CLIP_PLANE4 #x3004)
   (define GL_CLIP_PLANE5 #x3005)
-  ;;;; Accumulation buffer
   (define GL_ACCUM_RED_BITS #x0D58)
   (define GL_ACCUM_GREEN_BITS #x0D59)
   (define GL_ACCUM_BLUE_BITS #x0D5A)
@@ -1428,16 +1420,14 @@
   (define GL_LOAD #x0101)
   (define GL_MULT #x0103)
   (define GL_RETURN #x0102)
-  ;;;; Alpha testing
   (define GL_ALPHA_TEST #x0BC0)
   (define GL_ALPHA_TEST_REF #x0BC2)
   (define GL_ALPHA_TEST_FUNC #x0BC1)
-  ;;;; Blending
   (define GL_BLEND #x0BE2)
   (define GL_BLEND_SRC #x0BE1)
   (define GL_BLEND_DST #x0BE0)
-  (define GL_ZERO #x0)
-  (define GL_ONE #x1)
+  (define GL_ZERO 0)
+  (define GL_ONE 1)
   (define GL_SRC_COLOR #x0300)
   (define GL_ONE_MINUS_SRC_COLOR #x0301)
   (define GL_SRC_ALPHA #x0302)
@@ -1447,11 +1437,9 @@
   (define GL_DST_COLOR #x0306)
   (define GL_ONE_MINUS_DST_COLOR #x0307)
   (define GL_SRC_ALPHA_SATURATE #x0308)
-  ;;;; Render Mode
   (define GL_FEEDBACK #x1C01)
   (define GL_RENDER #x1C00)
   (define GL_SELECT #x1C02)
-  ;;;; Feedback
   (define GL_2D #x0600)
   (define GL_3D #x0601)
   (define GL_3D_COLOR #x0602)
@@ -1468,10 +1456,8 @@
   (define GL_FEEDBACK_BUFFER_POINTER #x0DF0)
   (define GL_FEEDBACK_BUFFER_SIZE #x0DF1)
   (define GL_FEEDBACK_BUFFER_TYPE #x0DF2)
-  ;;;; Selection
   (define GL_SELECTION_BUFFER_POINTER #x0DF3)
   (define GL_SELECTION_BUFFER_SIZE #x0DF4)
-  ;;;; Fog
   (define GL_FOG #x0B60)
   (define GL_FOG_MODE #x0B65)
   (define GL_FOG_DENSITY #x0B62)
@@ -1482,7 +1468,6 @@
   (define GL_LINEAR #x2601)
   (define GL_EXP #x0800)
   (define GL_EXP2 #x0801)
-  ;;;; Logic Ops
   (define GL_LOGIC_OP #x0BF1)
   (define GL_INDEX_LOGIC_OP #x0BF1)
   (define GL_COLOR_LOGIC_OP #x0BF2)
@@ -1503,7 +1488,6 @@
   (define GL_AND_INVERTED #x1504)
   (define GL_OR_REVERSE #x150B)
   (define GL_OR_INVERTED #x150D)
-  ;;;; Stencil
   (define GL_STENCIL_BITS #x0D57)
   (define GL_STENCIL_TEST #x0B90)
   (define GL_STENCIL_CLEAR_VALUE #x0B91)
@@ -1519,13 +1503,9 @@
   (define GL_REPLACE #x1E01)
   (define GL_INCR #x1E02)
   (define GL_DECR #x1E03)
-  ;;;; Buffers, Pixel Drawing/Reading
-  (define GL_NONE #x0)
+  (define GL_NONE 0)
   (define GL_LEFT #x0406)
   (define GL_RIGHT #x0407)
-  ;;;;GL_FRONT                  0x0404
-  ;;;;GL_BACK                   0x0405
-  ;;;;GL_FRONT_AND_BACK         0x0408
   (define GL_FRONT_LEFT #x0400)
   (define GL_FRONT_RIGHT #x0401)
   (define GL_BACK_LEFT #x0402)
@@ -1559,7 +1539,6 @@
   (define GL_DITHER #x0BD0)
   (define GL_RGB #x1907)
   (define GL_RGBA #x1908)
-  ;;;; Implementation limits
   (define GL_MAX_LIST_NESTING #x0B31)
   (define GL_MAX_EVAL_ORDER #x0D30)
   (define GL_MAX_LIGHTS #x0D31)
@@ -1573,7 +1552,6 @@
   (define GL_MAX_TEXTURE_STACK_DEPTH #x0D39)
   (define GL_MAX_VIEWPORT_DIMS #x0D3A)
   (define GL_MAX_CLIENT_ATTRIB_STACK_DEPTH #x0D3B)
-  ;;;; Gets
   (define GL_ATTRIB_STACK_DEPTH #x0BB0)
   (define GL_CLIENT_ATTRIB_STACK_DEPTH #x0BB1)
   (define GL_COLOR_CLEAR_VALUE #x0C22)
@@ -1601,7 +1579,6 @@
   (define GL_TEXTURE_MATRIX #x0BA8)
   (define GL_TEXTURE_STACK_DEPTH #x0BA5)
   (define GL_VIEWPORT #x0BA2)
-  ;;;; Evaluators
   (define GL_AUTO_NORMAL #x0D80)
   (define GL_MAP1_COLOR_4 #x0D90)
   (define GL_MAP1_INDEX #x0D91)
@@ -1628,7 +1605,6 @@
   (define GL_COEFF #x0A00)
   (define GL_ORDER #x0A01)
   (define GL_DOMAIN #x0A02)
-  ;;;; Hints
   (define GL_PERSPECTIVE_CORRECTION_HINT #x0C50)
   (define GL_POINT_SMOOTH_HINT #x0C51)
   (define GL_LINE_SMOOTH_HINT #x0C52)
@@ -1637,10 +1613,8 @@
   (define GL_DONT_CARE #x1100)
   (define GL_FASTEST #x1101)
   (define GL_NICEST #x1102)
-  ;;;; Scissor box
   (define GL_SCISSOR_BOX #x0C10)
   (define GL_SCISSOR_TEST #x0C11)
-  ;;;; Pixel Mode / Transfer
   (define GL_MAP_COLOR #x0D10)
   (define GL_MAP_STENCIL #x0D11)
   (define GL_INDEX_SHIFT #x0D12)
@@ -1689,7 +1663,6 @@
   (define GL_UNPACK_SWAP_BYTES #x0CF0)
   (define GL_ZOOM_X #x0D16)
   (define GL_ZOOM_Y #x0D17)
-  ;;;; Texture mapping
   (define GL_TEXTURE_ENV #x2300)
   (define GL_TEXTURE_ENV_MODE #x2200)
   (define GL_TEXTURE_1D #x0DE0)
@@ -1701,6 +1674,8 @@
   (define GL_TEXTURE_ENV_COLOR #x2201)
   (define GL_TEXTURE_GEN_S #x0C60)
   (define GL_TEXTURE_GEN_T #x0C61)
+  (define GL_TEXTURE_GEN_R #x0C62)
+  (define GL_TEXTURE_GEN_Q #x0C63)
   (define GL_TEXTURE_GEN_MODE #x2500)
   (define GL_TEXTURE_BORDER_COLOR #x1004)
   (define GL_TEXTURE_WIDTH #x1000)
@@ -1731,22 +1706,17 @@
   (define GL_T #x2001)
   (define GL_R #x2002)
   (define GL_Q #x2003)
-  (define GL_TEXTURE_GEN_R #x0C62)
-  (define GL_TEXTURE_GEN_Q #x0C63)
-  ;;;; Utility
   (define GL_VENDOR #x1F00)
   (define GL_RENDERER #x1F01)
   (define GL_VERSION #x1F02)
   (define GL_EXTENSIONS #x1F03)
-  ;;;; Errors
-  (define GL_NO_ERROR #x0)
+  (define GL_NO_ERROR 0)
   (define GL_INVALID_ENUM #x0500)
   (define GL_INVALID_VALUE #x0501)
   (define GL_INVALID_OPERATION #x0502)
   (define GL_STACK_OVERFLOW #x0503)
   (define GL_STACK_UNDERFLOW #x0504)
   (define GL_OUT_OF_MEMORY #x0505)
-  ;;;; glPush/PopAttrib bits
   (define GL_CURRENT_BIT #x00000001)
   (define GL_POINT_BIT #x00000002)
   (define GL_LINE_BIT #x00000004)
@@ -1767,8 +1737,7 @@
   (define GL_LIST_BIT #x00020000)
   (define GL_TEXTURE_BIT #x00040000)
   (define GL_SCISSOR_BIT #x00080000)
-  (define GL_ALL_ATTRIB_BITS #x000FFFFF)
-  ;;;; OpenGL 1.1
+  (define GL_ALL_ATTRIB_BITS #xFFFFFFFF)
   (define GL_PROXY_TEXTURE_1D #x8063)
   (define GL_PROXY_TEXTURE_2D #x8064)
   (define GL_TEXTURE_PRIORITY #x8066)
@@ -1813,7 +1782,6 @@
   (define GL_CLIENT_VERTEX_ARRAY_BIT #x00000002)
   (define GL_ALL_CLIENT_ATTRIB_BITS #xFFFFFFFF)
   (define GL_CLIENT_ALL_ATTRIB_BITS #xFFFFFFFF)
-  ;;;; OpenGL 1.2
   (define GL_RESCALE_NORMAL #x803A)
   (define GL_CLAMP_TO_EDGE #x812F)
   (define GL_MAX_ELEMENTS_VERTICES #x80E8)
@@ -1855,7 +1823,6 @@
   (define GL_TEXTURE_WRAP_R #x8072)
   (define GL_MAX_3D_TEXTURE_SIZE #x8073)
   (define GL_TEXTURE_BINDING_3D #x806A)
-  ;;;; GL_ARB_imaging
   (define GL_CONSTANT_COLOR #x8001)
   (define GL_ONE_MINUS_CONSTANT_COLOR #x8002)
   (define GL_CONSTANT_ALPHA #x8003)
@@ -1931,8 +1898,6 @@
   (define GL_FUNC_SUBTRACT #x800A)
   (define GL_FUNC_REVERSE_SUBTRACT #x800B)
   (define GL_BLEND_COLOR #x8005)
-  ;;;; OpenGL 1.3
-  ;;;; multitexture
   (define GL_TEXTURE0 #x84C0)
   (define GL_TEXTURE1 #x84C1)
   (define GL_TEXTURE2 #x84C2)
@@ -1968,7 +1933,6 @@
   (define GL_ACTIVE_TEXTURE #x84E0)
   (define GL_CLIENT_ACTIVE_TEXTURE #x84E1)
   (define GL_MAX_TEXTURE_UNITS #x84E2)
-  ;;;; texture_cube_map
   (define GL_NORMAL_MAP #x8511)
   (define GL_REFLECTION_MAP #x8512)
   (define GL_TEXTURE_CUBE_MAP #x8513)
@@ -1981,7 +1945,6 @@
   (define GL_TEXTURE_CUBE_MAP_NEGATIVE_Z #x851A)
   (define GL_PROXY_TEXTURE_CUBE_MAP #x851B)
   (define GL_MAX_CUBE_MAP_TEXTURE_SIZE #x851C)
-  ;;;; texture_compression
   (define GL_COMPRESSED_ALPHA #x84E9)
   (define GL_COMPRESSED_LUMINANCE #x84EA)
   (define GL_COMPRESSED_LUMINANCE_ALPHA #x84EB)
@@ -1993,7 +1956,6 @@
   (define GL_TEXTURE_COMPRESSED #x86A1)
   (define GL_NUM_COMPRESSED_TEXTURE_FORMATS #x86A2)
   (define GL_COMPRESSED_TEXTURE_FORMATS #x86A3)
-  ;;;; multisample
   (define GL_MULTISAMPLE #x809D)
   (define GL_SAMPLE_ALPHA_TO_COVERAGE #x809E)
   (define GL_SAMPLE_ALPHA_TO_ONE #x809F)
@@ -2003,12 +1965,10 @@
   (define GL_SAMPLE_COVERAGE_VALUE #x80AA)
   (define GL_SAMPLE_COVERAGE_INVERT #x80AB)
   (define GL_MULTISAMPLE_BIT #x20000000)
-  ;;;; transpose_matrix
   (define GL_TRANSPOSE_MODELVIEW_MATRIX #x84E3)
   (define GL_TRANSPOSE_PROJECTION_MATRIX #x84E4)
   (define GL_TRANSPOSE_TEXTURE_MATRIX #x84E5)
   (define GL_TRANSPOSE_COLOR_MATRIX #x84E6)
-  ;;;; texture_env_combine
   (define GL_COMBINE #x8570)
   (define GL_COMBINE_RGB #x8571)
   (define GL_COMBINE_ALPHA #x8572)
@@ -2031,12 +1991,9 @@
   (define GL_CONSTANT #x8576)
   (define GL_PRIMARY_COLOR #x8577)
   (define GL_PREVIOUS #x8578)
-  ;;;; texture_env_dot3
   (define GL_DOT3_RGB #x86AE)
   (define GL_DOT3_RGBA #x86AF)
-  ;;;; texture_border_clamp
   (define GL_CLAMP_TO_BORDER #x812D)
-  ;;;; GL_ARB_multitexture: ARB extension 1 and OpenGL 1.2.1
   (define GL_TEXTURE0_ARB #x84C0)
   (define GL_TEXTURE1_ARB #x84C1)
   (define GL_TEXTURE2_ARB #x84C2)
@@ -2072,1406 +2029,908 @@
   (define GL_ACTIVE_TEXTURE_ARB #x84E0)
   (define GL_CLIENT_ACTIVE_TEXTURE_ARB #x84E1)
   (define GL_MAX_TEXTURE_UNITS_ARB #x84E2)
-
-  (define-syntax define-function
-    (syntax-rules ()
-      ((_ ret name args)
-       (define name (c-function lib lib-name ret __stdcall name args)))))
-
-  ;; void glClearIndex( GLfloat c )
-  (define-function void glClearIndex (float))
-
-  ;; void glClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
-  (define-function void glClearColor (float float float float))
-
-  ;; void glClear( GLbitfield mask )
-  (define-function void glClear (int))
-
-  ;; void glIndexMask( GLuint mask )
-  (define-function void glIndexMask (int))
-
-  ;; void glColorMask( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha )
-  (define-function void glColorMask (int int int int))
-
-  ;; void glAlphaFunc( GLenum func, GLclampf ref )
-  (define-function void glAlphaFunc (int float))
-
-  ;; void glBlendFunc( GLenum sfactor, GLenum dfactor )
-  (define-function void glBlendFunc (int int))
-
-  ;; void glLogicOp( GLenum opcode )
-  (define-function void glLogicOp (int))
-
-  ;; void glCullFace( GLenum mode )
-  (define-function void glCullFace (int))
-
-  ;; void glFrontFace( GLenum mode )
-  (define-function void glFrontFace (int))
-
-  ;; void glPointSize( GLfloat size )
-  (define-function void glPointSize (float))
-
-  ;; void glLineWidth( GLfloat width )
-  (define-function void glLineWidth (float))
-
-  ;; void glLineStipple( GLint factor, GLushort pattern )
-  (define-function void glLineStipple (int int))
-
-  ;; void glPolygonMode( GLenum face, GLenum mode )
-  (define-function void glPolygonMode (int int))
-
-  ;; void glPolygonOffset( GLfloat factor, GLfloat units )
-  (define-function void glPolygonOffset (float float))
-
-  ;; void glPolygonStipple( const GLubyte *mask )
-  (define-function void glPolygonStipple (void*))
-
-  ;; void glGetPolygonStipple( GLubyte *mask )
-  (define-function void glGetPolygonStipple (void*))
-
-  ;; void glEdgeFlag( GLboolean flag )
-  (define-function void glEdgeFlag (int))
-
-  ;; void glEdgeFlagv( const GLboolean *flag )
-  (define-function void glEdgeFlagv (void*))
-
-  ;; void glScissor( GLint x, GLint y, GLsizei width, GLsizei height)
-  (define-function void glScissor (int int int int))
-
-  ;; void glClipPlane( GLenum plane, const GLdouble *equation )
-  (define-function void glClipPlane (int void*))
-
-  ;; void glGetClipPlane( GLenum plane, GLdouble *equation )
-  (define-function void glGetClipPlane (int void*))
-
-  ;; void glDrawBuffer( GLenum mode )
-  (define-function void glDrawBuffer (int))
-
-  ;; void glReadBuffer( GLenum mode )
-  (define-function void glReadBuffer (int))
-
-  ;; void glEnable( GLenum cap )
-  (define-function void glEnable (int))
-
-  ;; void glDisable( GLenum cap )
-  (define-function void glDisable (int))
-
-  ;; GLboolean glIsEnabled( GLenum cap )
-  (define-function int glIsEnabled (int))
-
-  ;; void glEnableClientState( GLenum cap )  /* 1.1 */
-  (define-function void glEnableClientState (int))
-
-  ;; void glDisableClientState( GLenum cap )  /* 1.1 */
-  (define-function void glDisableClientState (int))
-
-  ;; void glGetBooleanv( GLenum pname, GLboolean *params )
-  (define-function void glGetBooleanv (int void*))
-
-  ;; void glGetDoublev( GLenum pname, GLdouble *params )
-  (define-function void glGetDoublev (int void*))
-
-  ;; void glGetFloatv( GLenum pname, GLfloat *params )
-  (define-function void glGetFloatv (int void*))
-
-  ;; void glGetIntegerv( GLenum pname, GLint *params )
-  (define-function void glGetIntegerv (int void*))
-
-  ;; void glPushAttrib( GLbitfield mask )
-  (define-function void glPushAttrib (int))
-
-  ;; void glPopAttrib( void )
-  (define-function void glPopAttrib ())
-
-  ;; void glPushClientAttrib( GLbitfield mask )  /* 1.1 */
-  (define-function void glPushClientAttrib (int))
-
-  ;; void glPopClientAttrib( void )  /* 1.1 */
-  (define-function void glPopClientAttrib ())
-
-  ;; GLint glRenderMode( GLenum mode )
-  (define-function int glRenderMode (int))
-
-  ;; GLenum glGetError( void )
-  (define-function int glGetError ())
-
-  ;; const GLubyte * glGetString( GLenum name )
-  (define-function char* glGetString (int))
-
-  ;; void glFinish( void )
-  (define-function void glFinish ())
-
-  ;; void glFlush( void )
-  (define-function void glFlush ())
-
-  ;; void glHint( GLenum target, GLenum mode )
-  (define-function void glHint (int int))
-
-  ;;;; Depth Buffer
-
-  ;; void glClearDepth( GLclampd depth )
-  (define-function void glClearDepth (double))
-
-  ;; void glDepthFunc( GLenum func )
-  (define-function void glDepthFunc (int))
-
-  ;; void glDepthMask( GLboolean flag )
-  (define-function void glDepthMask (int))
-
-  ;; void glDepthRange( GLclampd near_val, GLclampd far_val )
-  (define-function void glDepthRange (double double))
-
-  ;;;; Accumulation Buffer
-
-  ;; void glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
-  (define-function void glClearAccum (float float float float))
-
-  ;; void glAccum( GLenum op, GLfloat value )
-  (define-function void glAccum (int float))
-
-  ;;;; Transformation
-
-  ;; void glMatrixMode( GLenum mode )
-  (define-function void glMatrixMode (int))
-
-  ;; void glOrtho( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val )
-  (define-function void glOrtho (double double double double double double))
-
-  ;; void glFrustum( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val )
-  (define-function void glFrustum (double double double double double double))
-
-  ;; void glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
-  (define-function void glViewport (int int int int))
-
-  ;; void glPushMatrix( void )
-  (define-function void glPushMatrix ())
-
-  ;; void glPopMatrix( void )
-  (define-function void glPopMatrix ())
-
-  ;; void glLoadIdentity( void )
-  (define-function void glLoadIdentity ())
-
-  ;; void glLoadMatrixd( const GLdouble *m )
-  (define-function void glLoadMatrixd (void*))
-
-  ;; void glLoadMatrixf( const GLfloat *m )
-  (define-function void glLoadMatrixf (void*))
-
-  ;; void glMultMatrixd( const GLdouble *m )
-  (define-function void glMultMatrixd (void*))
-
-  ;; void glMultMatrixf( const GLfloat *m )
-  (define-function void glMultMatrixf (void*))
-
-  ;; void glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
-  (define-function void glRotated (double double double double))
-
-  ;; void glRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
-  (define-function void glRotatef (float float float float))
-
-  ;; void glScaled( GLdouble x, GLdouble y, GLdouble z )
-  (define-function void glScaled (double double double))
-
-  ;; void glScalef( GLfloat x, GLfloat y, GLfloat z )
-  (define-function void glScalef (float float float))
-
-  ;; void glTranslated( GLdouble x, GLdouble y, GLdouble z )
-  (define-function void glTranslated (double double double))
-
-  ;; void glTranslatef( GLfloat x, GLfloat y, GLfloat z )
-  (define-function void glTranslatef (float float float))
-
-  ;;;; Display Lists
-
-  ;; GLboolean glIsList( GLuint list )
-  (define-function int glIsList (int))
-
-  ;; void glDeleteLists( GLuint list, GLsizei range )
-  (define-function void glDeleteLists (int int))
-
-  ;; GLuint glGenLists( GLsizei range )
-  (define-function int glGenLists (int))
-
-  ;; void glNewList( GLuint list, GLenum mode )
-  (define-function void glNewList (int int))
-
-  ;; void glEndList( void )
-  (define-function void glEndList ())
-
-  ;; void glCallList( GLuint list )
-  (define-function void glCallList (int))
-
-  ;; void glCallLists( GLsizei n, GLenum type, const GLvoid *lists )
-  (define-function void glCallLists (int int void*))
-
-  ;; void glListBase( GLuint base )
-  (define-function void glListBase (int))
-
-  ;;;; Drawing Functions
-
-  ;; void glBegin( GLenum mode )
-  (define-function void glBegin (int))
-
-  ;; void glEnd( void )
-  (define-function void glEnd ())
-
-  ;; void glVertex2d( GLdouble x, GLdouble y )
-  (define-function void glVertex2d (double double))
-
-  ;; void glVertex2f( GLfloat x, GLfloat y )
-  (define-function void glVertex2f (float float))
-
-  ;; void glVertex2i( GLint x, GLint y )
-  (define-function void glVertex2i (int int))
-
-  ;; void glVertex2s( GLshort x, GLshort y )
-  (define-function void glVertex2s (int int))
-
-  ;; void glVertex3d( GLdouble x, GLdouble y, GLdouble z )
-  (define-function void glVertex3d (double double double))
-
-  ;; void glVertex3f( GLfloat x, GLfloat y, GLfloat z )
-  (define-function void glVertex3f (float float float))
-
-  ;; void glVertex3i( GLint x, GLint y, GLint z )
-  (define-function void glVertex3i (int int int))
-
-  ;; void glVertex3s( GLshort x, GLshort y, GLshort z )
-  (define-function void glVertex3s (int int int))
-
-  ;; void glVertex4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w )
-  (define-function void glVertex4d (double double double double))
-
-  ;; void glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
-  (define-function void glVertex4f (float float float float))
-
-  ;; void glVertex4i( GLint x, GLint y, GLint z, GLint w )
-  (define-function void glVertex4i (int int int int))
-
-  ;; void glVertex4s( GLshort x, GLshort y, GLshort z, GLshort w )
-  (define-function void glVertex4s (int int int int))
-
-  ;; void glVertex2dv( const GLdouble *v )
-  (define-function void glVertex2dv (void*))
-
-  ;; void glVertex2fv( const GLfloat *v )
-  (define-function void glVertex2fv (void*))
-
-  ;; void glVertex2iv( const GLint *v )
-  (define-function void glVertex2iv (void*))
-
-  ;; void glVertex2sv( const GLshort *v )
-  (define-function void glVertex2sv (void*))
-
-  ;; void glVertex3dv( const GLdouble *v )
-  (define-function void glVertex3dv (void*))
-
-  ;; void glVertex3fv( const GLfloat *v )
-  (define-function void glVertex3fv (void*))
-
-  ;; void glVertex3iv( const GLint *v )
-  (define-function void glVertex3iv (void*))
-
-  ;; void glVertex3sv( const GLshort *v )
-  (define-function void glVertex3sv (void*))
-
-  ;; void glVertex4dv( const GLdouble *v )
-  (define-function void glVertex4dv (void*))
-
-  ;; void glVertex4fv( const GLfloat *v )
-  (define-function void glVertex4fv (void*))
-
-  ;; void glVertex4iv( const GLint *v )
-  (define-function void glVertex4iv (void*))
-
-  ;; void glVertex4sv( const GLshort *v )
-  (define-function void glVertex4sv (void*))
-
-  ;; void glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz )
-  (define-function void glNormal3b (int int int))
-
-  ;; void glNormal3d( GLdouble nx, GLdouble ny, GLdouble nz )
-  (define-function void glNormal3d (double double double))
-
-  ;; void glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz )
-  (define-function void glNormal3f (float float float))
-
-  ;; void glNormal3i( GLint nx, GLint ny, GLint nz )
-  (define-function void glNormal3i (int int int))
-
-  ;; void glNormal3s( GLshort nx, GLshort ny, GLshort nz )
-  (define-function void glNormal3s (int int int))
-
-  ;; void glNormal3bv( const GLbyte *v )
-  (define-function void glNormal3bv (void*))
-
-  ;; void glNormal3dv( const GLdouble *v )
-  (define-function void glNormal3dv (void*))
-
-  ;; void glNormal3fv( const GLfloat *v )
-  (define-function void glNormal3fv (void*))
-
-  ;; void glNormal3iv( const GLint *v )
-  (define-function void glNormal3iv (void*))
-
-  ;; void glNormal3sv( const GLshort *v )
-  (define-function void glNormal3sv (void*))
-
-  ;; void glIndexd( GLdouble c )
-  (define-function void glIndexd (double))
-
-  ;; void glIndexf( GLfloat c )
-  (define-function void glIndexf (float))
-
-  ;; void glIndexi( GLint c )
-  (define-function void glIndexi (int))
-
-  ;; void glIndexs( GLshort c )
-  (define-function void glIndexs (int))
-
-  ;; void glIndexub( GLubyte c )  /* 1.1 */
-  (define-function void glIndexub (int))
-
-  ;; void glIndexdv( const GLdouble *c )
-  (define-function void glIndexdv (void*))
-
-  ;; void glIndexfv( const GLfloat *c )
-  (define-function void glIndexfv (void*))
-
-  ;; void glIndexiv( const GLint *c )
-  (define-function void glIndexiv (void*))
-
-  ;; void glIndexsv( const GLshort *c )
-  (define-function void glIndexsv (void*))
-
-  ;; void glIndexubv( const GLubyte *c )  /* 1.1 */
-  (define-function void glIndexubv (void*))
-
-  ;; void glColor3b( GLbyte red, GLbyte green, GLbyte blue )
-  (define-function void glColor3b (int int int))
-
-  ;; void glColor3d( GLdouble red, GLdouble green, GLdouble blue )
-  (define-function void glColor3d (double double double))
-
-  ;; void glColor3f( GLfloat red, GLfloat green, GLfloat blue )
-  (define-function void glColor3f (float float float))
-
-  ;; void glColor3i( GLint red, GLint green, GLint blue )
-  (define-function void glColor3i (int int int))
-
-  ;; void glColor3s( GLshort red, GLshort green, GLshort blue )
-  (define-function void glColor3s (int int int))
-
-  ;; void glColor3ub( GLubyte red, GLubyte green, GLubyte blue )
-  (define-function void glColor3ub (int int int))
-
-  ;; void glColor3ui( GLuint red, GLuint green, GLuint blue )
-  (define-function void glColor3ui (int int int))
-
-  ;; void glColor3us( GLushort red, GLushort green, GLushort blue )
-  (define-function void glColor3us (int int int))
-
-  ;; void glColor4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha )
-  (define-function void glColor4b (int int int int))
-
-  ;; void glColor4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha )
-  (define-function void glColor4d (double double double double))
-
-  ;; void glColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
-  (define-function void glColor4f (float float float float))
-
-  ;; void glColor4i( GLint red, GLint green, GLint blue, GLint alpha )
-  (define-function void glColor4i (int int int int))
-
-  ;; void glColor4s( GLshort red, GLshort green, GLshort blue, GLshort alpha )
-  (define-function void glColor4s (int int int int))
-
-  ;; void glColor4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha )
-  (define-function void glColor4ub (int int int int))
-
-  ;; void glColor4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha )
-  (define-function void glColor4ui (int int int int))
-
-  ;; void glColor4us( GLushort red, GLushort green, GLushort blue, GLushort alpha )
-  (define-function void glColor4us (int int int int))
-
-  ;; void glColor3bv( const GLbyte *v )
-  (define-function void glColor3bv (void*))
-
-  ;; void glColor3dv( const GLdouble *v )
-  (define-function void glColor3dv (void*))
-
-  ;; void glColor3fv( const GLfloat *v )
-  (define-function void glColor3fv (void*))
-
-  ;; void glColor3iv( const GLint *v )
-  (define-function void glColor3iv (void*))
-
-  ;; void glColor3sv( const GLshort *v )
-  (define-function void glColor3sv (void*))
-
-  ;; void glColor3ubv( const GLubyte *v )
-  (define-function void glColor3ubv (void*))
-
-  ;; void glColor3uiv( const GLuint *v )
-  (define-function void glColor3uiv (void*))
-
-  ;; void glColor3usv( const GLushort *v )
-  (define-function void glColor3usv (void*))
-
-  ;; void glColor4bv( const GLbyte *v )
-  (define-function void glColor4bv (void*))
-
-  ;; void glColor4dv( const GLdouble *v )
-  (define-function void glColor4dv (void*))
-
-  ;; void glColor4fv( const GLfloat *v )
-  (define-function void glColor4fv (void*))
-
-  ;; void glColor4iv( const GLint *v )
-  (define-function void glColor4iv (void*))
-
-  ;; void glColor4sv( const GLshort *v )
-  (define-function void glColor4sv (void*))
-
-  ;; void glColor4ubv( const GLubyte *v )
-  (define-function void glColor4ubv (void*))
-
-  ;; void glColor4uiv( const GLuint *v )
-  (define-function void glColor4uiv (void*))
-
-  ;; void glColor4usv( const GLushort *v )
-  (define-function void glColor4usv (void*))
-
-  ;; void glTexCoord1d( GLdouble s )
-  (define-function void glTexCoord1d (double))
-
-  ;; void glTexCoord1f( GLfloat s )
-  (define-function void glTexCoord1f (float))
-
-  ;; void glTexCoord1i( GLint s )
-  (define-function void glTexCoord1i (int))
-
-  ;; void glTexCoord1s( GLshort s )
-  (define-function void glTexCoord1s (int))
-
-  ;; void glTexCoord2d( GLdouble s, GLdouble t )
-  (define-function void glTexCoord2d (double double))
-
-  ;; void glTexCoord2f( GLfloat s, GLfloat t )
-  (define-function void glTexCoord2f (float float))
-
-  ;; void glTexCoord2i( GLint s, GLint t )
-  (define-function void glTexCoord2i (int int))
-
-  ;; void glTexCoord2s( GLshort s, GLshort t )
-  (define-function void glTexCoord2s (int int))
-
-  ;; void glTexCoord3d( GLdouble s, GLdouble t, GLdouble r )
-  (define-function void glTexCoord3d (double double double))
-
-  ;; void glTexCoord3f( GLfloat s, GLfloat t, GLfloat r )
-  (define-function void glTexCoord3f (float float float))
-
-  ;; void glTexCoord3i( GLint s, GLint t, GLint r )
-  (define-function void glTexCoord3i (int int int))
-
-  ;; void glTexCoord3s( GLshort s, GLshort t, GLshort r )
-  (define-function void glTexCoord3s (int int int))
-
-  ;; void glTexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q )
-  (define-function void glTexCoord4d (double double double double))
-
-  ;; void glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q )
-  (define-function void glTexCoord4f (float float float float))
-
-  ;; void glTexCoord4i( GLint s, GLint t, GLint r, GLint q )
-  (define-function void glTexCoord4i (int int int int))
-
-  ;; void glTexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q )
-  (define-function void glTexCoord4s (int int int int))
-
-  ;; void glTexCoord1dv( const GLdouble *v )
-  (define-function void glTexCoord1dv (void*))
-
-  ;; void glTexCoord1fv( const GLfloat *v )
-  (define-function void glTexCoord1fv (void*))
-
-  ;; void glTexCoord1iv( const GLint *v )
-  (define-function void glTexCoord1iv (void*))
-
-  ;; void glTexCoord1sv( const GLshort *v )
-  (define-function void glTexCoord1sv (void*))
-
-  ;; void glTexCoord2dv( const GLdouble *v )
-  (define-function void glTexCoord2dv (void*))
-
-  ;; void glTexCoord2fv( const GLfloat *v )
-  (define-function void glTexCoord2fv (void*))
-
-  ;; void glTexCoord2iv( const GLint *v )
-  (define-function void glTexCoord2iv (void*))
-
-  ;; void glTexCoord2sv( const GLshort *v )
-  (define-function void glTexCoord2sv (void*))
-
-  ;; void glTexCoord3dv( const GLdouble *v )
-  (define-function void glTexCoord3dv (void*))
-
-  ;; void glTexCoord3fv( const GLfloat *v )
-  (define-function void glTexCoord3fv (void*))
-
-  ;; void glTexCoord3iv( const GLint *v )
-  (define-function void glTexCoord3iv (void*))
-
-  ;; void glTexCoord3sv( const GLshort *v )
-  (define-function void glTexCoord3sv (void*))
-
-  ;; void glTexCoord4dv( const GLdouble *v )
-  (define-function void glTexCoord4dv (void*))
-
-  ;; void glTexCoord4fv( const GLfloat *v )
-  (define-function void glTexCoord4fv (void*))
-
-  ;; void glTexCoord4iv( const GLint *v )
-  (define-function void glTexCoord4iv (void*))
-
-  ;; void glTexCoord4sv( const GLshort *v )
-  (define-function void glTexCoord4sv (void*))
-
-  ;; void glRasterPos2d( GLdouble x, GLdouble y )
-  (define-function void glRasterPos2d (double double))
-
-  ;; void glRasterPos2f( GLfloat x, GLfloat y )
-  (define-function void glRasterPos2f (float float))
-
-  ;; void glRasterPos2i( GLint x, GLint y )
-  (define-function void glRasterPos2i (int int))
-
-  ;; void glRasterPos2s( GLshort x, GLshort y )
-  (define-function void glRasterPos2s (int int))
-
-  ;; void glRasterPos3d( GLdouble x, GLdouble y, GLdouble z )
-  (define-function void glRasterPos3d (double double double))
-
-  ;; void glRasterPos3f( GLfloat x, GLfloat y, GLfloat z )
-  (define-function void glRasterPos3f (float float float))
-
-  ;; void glRasterPos3i( GLint x, GLint y, GLint z )
-  (define-function void glRasterPos3i (int int int))
-
-  ;; void glRasterPos3s( GLshort x, GLshort y, GLshort z )
-  (define-function void glRasterPos3s (int int int))
-
-  ;; void glRasterPos4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w )
-  (define-function void glRasterPos4d (double double double double))
-
-  ;; void glRasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
-  (define-function void glRasterPos4f (float float float float))
-
-  ;; void glRasterPos4i( GLint x, GLint y, GLint z, GLint w )
-  (define-function void glRasterPos4i (int int int int))
-
-  ;; void glRasterPos4s( GLshort x, GLshort y, GLshort z, GLshort w )
-  (define-function void glRasterPos4s (int int int int))
-
-  ;; void glRasterPos2dv( const GLdouble *v )
-  (define-function void glRasterPos2dv (void*))
-
-  ;; void glRasterPos2fv( const GLfloat *v )
-  (define-function void glRasterPos2fv (void*))
-
-  ;; void glRasterPos2iv( const GLint *v )
-  (define-function void glRasterPos2iv (void*))
-
-  ;; void glRasterPos2sv( const GLshort *v )
-  (define-function void glRasterPos2sv (void*))
-
-  ;; void glRasterPos3dv( const GLdouble *v )
-  (define-function void glRasterPos3dv (void*))
-
-  ;; void glRasterPos3fv( const GLfloat *v )
-  (define-function void glRasterPos3fv (void*))
-
-  ;; void glRasterPos3iv( const GLint *v )
-  (define-function void glRasterPos3iv (void*))
-
-  ;; void glRasterPos3sv( const GLshort *v )
-  (define-function void glRasterPos3sv (void*))
-
-  ;; void glRasterPos4dv( const GLdouble *v )
-  (define-function void glRasterPos4dv (void*))
-
-  ;; void glRasterPos4fv( const GLfloat *v )
-  (define-function void glRasterPos4fv (void*))
-
-  ;; void glRasterPos4iv( const GLint *v )
-  (define-function void glRasterPos4iv (void*))
-
-  ;; void glRasterPos4sv( const GLshort *v )
-  (define-function void glRasterPos4sv (void*))
-
-  ;; void glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 )
-  (define-function void glRectd (double double double double))
-
-  ;; void glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
-  (define-function void glRectf (float float float float))
-
-  ;; void glRecti( GLint x1, GLint y1, GLint x2, GLint y2 )
-  (define-function void glRecti (int int int int))
-
-  ;; void glRects( GLshort x1, GLshort y1, GLshort x2, GLshort y2 )
-  (define-function void glRects (int int int int))
-
-  ;; void glRectdv( const GLdouble *v1, const GLdouble *v2 )
-  (define-function void glRectdv (void* void*))
-
-  ;; void glRectfv( const GLfloat *v1, const GLfloat *v2 )
-  (define-function void glRectfv (void* void*))
-
-  ;; void glRectiv( const GLint *v1, const GLint *v2 )
-  (define-function void glRectiv (void* void*))
-
-  ;; void glRectsv( const GLshort *v1, const GLshort *v2 )
-  (define-function void glRectsv (void* void*))
-
-  ;;;; Vertex Arrays 1.1
-
-  ;; void glVertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *ptr )
-  (define-function void glVertexPointer (int int int void*))
-
-  ;; void glNormalPointer( GLenum type, GLsizei stride, const GLvoid *ptr )
-  (define-function void glNormalPointer (int int void*))
-
-  ;; void glColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *ptr )
-  (define-function void glColorPointer (int int int void*))
-
-  ;; void glIndexPointer( GLenum type, GLsizei stride, const GLvoid *ptr )
-  (define-function void glIndexPointer (int int void*))
-
-  ;; void glTexCoordPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *ptr )
-  (define-function void glTexCoordPointer (int int int void*))
-
-  ;; void glEdgeFlagPointer( GLsizei stride, const GLvoid *ptr )
-  (define-function void glEdgeFlagPointer (int void*))
-
-  ;; void glGetPointerv( GLenum pname, GLvoid **params )
-  (define-function void glGetPointerv (int void*))
-
-  ;; void glArrayElement( GLint i )
-  (define-function void glArrayElement (int))
-
-  ;; void glDrawArrays( GLenum mode, GLint first, GLsizei count )
-  (define-function void glDrawArrays (int int int))
-
-  ;; void glDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices )
-  (define-function void glDrawElements (int int int void*))
-
-  ;; void glInterleavedArrays( GLenum format, GLsizei stride, const GLvoid *pointer )
-  (define-function void glInterleavedArrays (int int void*))
-
-  ;;;; Lighting
-
-  ;; void glShadeModel( GLenum mode )
-  (define-function void glShadeModel (int))
-
-  ;; void glLightf( GLenum light, GLenum pname, GLfloat param )
-  (define-function void glLightf (int int float))
-
-  ;; void glLighti( GLenum light, GLenum pname, GLint param )
-  (define-function void glLighti (int int int))
-
-  ;; void glLightfv( GLenum light, GLenum pname, const GLfloat *params )
-  (define-function void glLightfv (int int void*))
-
-  ;; void glLightiv( GLenum light, GLenum pname, const GLint *params )
-  (define-function void glLightiv (int int void*))
-
-  ;; void glGetLightfv( GLenum light, GLenum pname, GLfloat *params )
-  (define-function void glGetLightfv (int int void*))
-
-  ;; void glGetLightiv( GLenum light, GLenum pname, GLint *params )
-  (define-function void glGetLightiv (int int void*))
-
-  ;; void glLightModelf( GLenum pname, GLfloat param )
-  (define-function void glLightModelf (int float))
-
-  ;; void glLightModeli( GLenum pname, GLint param )
-  (define-function void glLightModeli (int int))
-
-  ;; void glLightModelfv( GLenum pname, const GLfloat *params )
-  (define-function void glLightModelfv (int void*))
-
-  ;; void glLightModeliv( GLenum pname, const GLint *params )
-  (define-function void glLightModeliv (int void*))
-
-  ;; void glMaterialf( GLenum face, GLenum pname, GLfloat param )
-  (define-function void glMaterialf (int int float))
-
-  ;; void glMateriali( GLenum face, GLenum pname, GLint param )
-  (define-function void glMateriali (int int int))
-
-  ;; void glMaterialfv( GLenum face, GLenum pname, const GLfloat *params )
-  (define-function void glMaterialfv (int int void*))
-
-  ;; void glMaterialiv( GLenum face, GLenum pname, const GLint *params )
-  (define-function void glMaterialiv (int int void*))
-
-  ;; void glGetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
-  (define-function void glGetMaterialfv (int int void*))
-
-  ;; void glGetMaterialiv( GLenum face, GLenum pname, GLint *params )
-  (define-function void glGetMaterialiv (int int void*))
-
-  ;; void glColorMaterial( GLenum face, GLenum mode )
-  (define-function void glColorMaterial (int int))
-
-  ;;;; Raster functions
-
-  ;; void glPixelZoom( GLfloat xfactor, GLfloat yfactor )
-  (define-function void glPixelZoom (float float))
-
-  ;; void glPixelStoref( GLenum pname, GLfloat param )
-  (define-function void glPixelStoref (int float))
-
-  ;; void glPixelStorei( GLenum pname, GLint param )
-  (define-function void glPixelStorei (int int))
-
-  ;; void glPixelTransferf( GLenum pname, GLfloat param )
-  (define-function void glPixelTransferf (int float))
-
-  ;; void glPixelTransferi( GLenum pname, GLint param )
-  (define-function void glPixelTransferi (int int))
-
-  ;; void glPixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
-  (define-function void glPixelMapfv (int int void*))
-
-  ;; void glPixelMapuiv( GLenum map, GLsizei mapsize, const GLuint *values )
-  (define-function void glPixelMapuiv (int int void*))
-
-  ;; void glPixelMapusv( GLenum map, GLsizei mapsize, const GLushort *values )
-  (define-function void glPixelMapusv (int int void*))
-
-  ;; void glGetPixelMapfv( GLenum map, GLfloat *values )
-  (define-function void glGetPixelMapfv (int void*))
-
-  ;; void glGetPixelMapuiv( GLenum map, GLuint *values )
-  (define-function void glGetPixelMapuiv (int void*))
-
-  ;; void glGetPixelMapusv( GLenum map, GLushort *values )
-  (define-function void glGetPixelMapusv (int void*))
-
-  ;; void glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap )
-  (define-function void glBitmap (int int float float float float void*))
-
-  ;; void glReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
-  (define-function void glReadPixels (int int int int int int void*))
-
-  ;; void glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glDrawPixels (int int int int void*))
-
-  ;; void glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
-  (define-function void glCopyPixels (int int int int int))
-
-  ;;;; Stenciling
-
-  ;; void glStencilFunc( GLenum func, GLint ref, GLuint mask )
-  (define-function void glStencilFunc (int int int))
-
-  ;; void glStencilMask( GLuint mask )
-  (define-function void glStencilMask (int))
-
-  ;; void glStencilOp( GLenum fail, GLenum zfail, GLenum zpass )
-  (define-function void glStencilOp (int int int))
-
-  ;; void glClearStencil( GLint s )
-  (define-function void glClearStencil (int))
-
-  ;;;; Texture mapping
-
-  ;; void glTexGend( GLenum coord, GLenum pname, GLdouble param )
-  (define-function void glTexGend (int int double))
-
-  ;; void glTexGenf( GLenum coord, GLenum pname, GLfloat param )
-  (define-function void glTexGenf (int int float))
-
-  ;; void glTexGeni( GLenum coord, GLenum pname, GLint param )
-  (define-function void glTexGeni (int int int))
-
-  ;; void glTexGendv( GLenum coord, GLenum pname, const GLdouble *params )
-  (define-function void glTexGendv (int int void*))
-
-  ;; void glTexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
-  (define-function void glTexGenfv (int int void*))
-
-  ;; void glTexGeniv( GLenum coord, GLenum pname, const GLint *params )
-  (define-function void glTexGeniv (int int void*))
-
-  ;; void glGetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
-  (define-function void glGetTexGendv (int int void*))
-
-  ;; void glGetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
-  (define-function void glGetTexGenfv (int int void*))
-
-  ;; void glGetTexGeniv( GLenum coord, GLenum pname, GLint *params )
-  (define-function void glGetTexGeniv (int int void*))
-
-  ;; void glTexEnvf( GLenum target, GLenum pname, GLfloat param )
-  (define-function void glTexEnvf (int int float))
-
-  ;; void glTexEnvi( GLenum target, GLenum pname, GLint param )
-  (define-function void glTexEnvi (int int int))
-
-  ;; void glTexEnvfv( GLenum target, GLenum pname, const GLfloat *params )
-  (define-function void glTexEnvfv (int int void*))
-
-  ;; void glTexEnviv( GLenum target, GLenum pname, const GLint *params )
-  (define-function void glTexEnviv (int int void*))
-
-  ;; void glGetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
-  (define-function void glGetTexEnvfv (int int void*))
-
-  ;; void glGetTexEnviv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetTexEnviv (int int void*))
-
-  ;; void glTexParameterf( GLenum target, GLenum pname, GLfloat param )
-  (define-function void glTexParameterf (int int float))
-
-  ;; void glTexParameteri( GLenum target, GLenum pname, GLint param )
-  (define-function void glTexParameteri (int int int))
-
-  ;; void glTexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
-  (define-function void glTexParameterfv (int int void*))
-
-  ;; void glTexParameteriv( GLenum target, GLenum pname, const GLint *params )
-  (define-function void glTexParameteriv (int int void*))
-
-  ;; void glGetTexParameterfv( GLenum target, GLenum pname, GLfloat *params)
-  (define-function void glGetTexParameterfv (int int void*))
-
-  ;; void glGetTexParameteriv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetTexParameteriv (int int void*))
-
-  ;; void glGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, GLfloat *params )
-  (define-function void glGetTexLevelParameterfv (int int int void*))
-
-  ;; void glGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint *params )
-  (define-function void glGetTexLevelParameteriv (int int int void*))
-
-  ;; void glTexImage1D( GLenum target, GLint level, GLint internalFormat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glTexImage1D (int int int int int int int void*))
-
-  ;; void glTexImage2D( GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glTexImage2D (int int int int int int int int void*))
-
-  ;; void glGetTexImage( GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels )
-  (define-function void glGetTexImage (int int int int void*))
-
-  ;;;; 1.1 functions
-
-  ;; void glGenTextures( GLsizei n, GLuint *textures )
-  (define-function void glGenTextures (int void*))
-
-  ;; void glDeleteTextures( GLsizei n, const GLuint *textures)
-  (define-function void glDeleteTextures (int void*))
-
-  ;; void glBindTexture( GLenum target, GLuint texture )
-  (define-function void glBindTexture (int int))
-
-  ;; void glPrioritizeTextures( GLsizei n, const GLuint *textures, const GLclampf *priorities )
-  (define-function void glPrioritizeTextures (int void* void*))
-
-  ;; GLboolean glAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences )
-  (define-function int glAreTexturesResident (int void* void*))
-
-  ;; GLboolean glIsTexture( GLuint texture )
-  (define-function int glIsTexture (int))
-
-  ;; void glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glTexSubImage1D (int int int int int int void*))
-
-  ;; void glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glTexSubImage2D (int int int int int int int int void*))
-
-  ;; void glCopyTexImage1D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border )
-  (define-function void glCopyTexImage1D (int int int int int int int))
-
-  ;; void glCopyTexImage2D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border )
-  (define-function void glCopyTexImage2D (int int int int int int int int))
-
-  ;; void glCopyTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width )
-  (define-function void glCopyTexSubImage1D (int int int int int int))
-
-  ;; void glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height )
-  (define-function void glCopyTexSubImage2D (int int int int int int int int))
-
-  ;;;; Evaluators
-
-  ;; void glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points )
-  (define-function void glMap1d (int double double int int void*))
-
-  ;; void glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points )
-  (define-function void glMap1f (int float float int int void*))
-
-  ;; void glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points )
-  (define-function void glMap2d (int double double int int double double int int void*))
-
-  ;; void glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points )
-  (define-function void glMap2f (int float float int int float float int int void*))
-
-  ;; void glGetMapdv( GLenum target, GLenum query, GLdouble *v )
-  (define-function void glGetMapdv (int int void*))
-
-  ;; void glGetMapfv( GLenum target, GLenum query, GLfloat *v )
-  (define-function void glGetMapfv (int int void*))
-
-  ;; void glGetMapiv( GLenum target, GLenum query, GLint *v )
-  (define-function void glGetMapiv (int int void*))
-
-  ;; void glEvalCoord1d( GLdouble u )
-  (define-function void glEvalCoord1d (double))
-
-  ;; void glEvalCoord1f( GLfloat u )
-  (define-function void glEvalCoord1f (float))
-
-  ;; void glEvalCoord1dv( const GLdouble *u )
-  (define-function void glEvalCoord1dv (void*))
-
-  ;; void glEvalCoord1fv( const GLfloat *u )
-  (define-function void glEvalCoord1fv (void*))
-
-  ;; void glEvalCoord2d( GLdouble u, GLdouble v )
-  (define-function void glEvalCoord2d (double double))
-
-  ;; void glEvalCoord2f( GLfloat u, GLfloat v )
-  (define-function void glEvalCoord2f (float float))
-
-  ;; void glEvalCoord2dv( const GLdouble *u )
-  (define-function void glEvalCoord2dv (void*))
-
-  ;; void glEvalCoord2fv( const GLfloat *u )
-  (define-function void glEvalCoord2fv (void*))
-
-  ;; void glMapGrid1d( GLint un, GLdouble u1, GLdouble u2 )
-  (define-function void glMapGrid1d (int double double))
-
-  ;; void glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
-  (define-function void glMapGrid1f (int float float))
-
-  ;; void glMapGrid2d( GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2 )
-  (define-function void glMapGrid2d (int double double int double double))
-
-  ;; void glMapGrid2f( GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2 )
-  (define-function void glMapGrid2f (int float float int float float))
-
-  ;; void glEvalPoint1( GLint i )
-  (define-function void glEvalPoint1 (int))
-
-  ;; void glEvalPoint2( GLint i, GLint j )
-  (define-function void glEvalPoint2 (int int))
-
-  ;; void glEvalMesh1( GLenum mode, GLint i1, GLint i2 )
-  (define-function void glEvalMesh1 (int int int))
-
-  ;; void glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
-  (define-function void glEvalMesh2 (int int int int int))
-
-  ;;;; Fog
-
-  ;; void glFogf( GLenum pname, GLfloat param )
-  (define-function void glFogf (int float))
-
-  ;; void glFogi( GLenum pname, GLint param )
-  (define-function void glFogi (int int))
-
-  ;; void glFogfv( GLenum pname, const GLfloat *params )
-  (define-function void glFogfv (int void*))
-
-  ;; void glFogiv( GLenum pname, const GLint *params )
-  (define-function void glFogiv (int void*))
-
-  ;;;; Selection and Feedback
-
-  ;; void glFeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
-  (define-function void glFeedbackBuffer (int int void*))
-
-  ;; void glPassThrough( GLfloat token )
-  (define-function void glPassThrough (float))
-
-  ;; void glSelectBuffer( GLsizei size, GLuint *buffer )
-  (define-function void glSelectBuffer (int void*))
-
-  ;; void glInitNames( void )
-  (define-function void glInitNames ())
-
-  ;; void glLoadName( GLuint name )
-  (define-function void glLoadName (int))
-
-  ;; void glPushName( GLuint name )
-  (define-function void glPushName (int))
-
-  ;; void glPopName( void )
-  (define-function void glPopName ())
-
-  ;;;; OpenGL 1.2
-
-  ;; void glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices )
-  (define-function void glDrawRangeElements (int int int int int void*))
-
-  ;; void glTexImage3D( GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
-  (define-function void glTexImage3D (int int int int int int int int int void*))
-
-  ;; void glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels)
-  (define-function void glTexSubImage3D (int int int int int int int int int int void*))
-
-  ;; void glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
-  (define-function void glCopyTexSubImage3D (int int int int int int int int int))
-
-  ;;;; GL_ARB_imaging
-
-  ;; void glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table )
-  (define-function void glColorTable (int int int int int void*))
-
-  ;; void glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data )
-  (define-function void glColorSubTable (int int int int int void*))
-
+  (define GL_DEPTH_STENCIL_MESA #x8750)
+  (define GL_UNSIGNED_INT_24_8_MESA #x8751)
+  (define GL_UNSIGNED_INT_8_24_REV_MESA #x8752)
+  (define GL_UNSIGNED_SHORT_15_1_MESA #x8753)
+  (define GL_UNSIGNED_SHORT_1_15_REV_MESA #x8754)
+  (define GL_ALPHA_BLEND_EQUATION_ATI #x883D)
+  ;; void glClearIndex(GLfloat c)
+  (define-cdecl void glClearIndex (float))
+  ;; void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+  (define-cdecl void glClearColor (float float float float))
+  ;; void glClear(GLbitfield mask)
+  (define-cdecl void glClear (unsigned-int))
+  ;; void glIndexMask(GLuint mask)
+  (define-cdecl void glIndexMask (unsigned-int))
+  ;; void glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)
+  (define-cdecl void glColorMask (uint8_t uint8_t uint8_t uint8_t))
+  ;; void glAlphaFunc(GLenum func, GLclampf ref)
+  (define-cdecl void glAlphaFunc (unsigned-int float))
+  ;; void glBlendFunc(GLenum sfactor, GLenum dfactor)
+  (define-cdecl void glBlendFunc (unsigned-int unsigned-int))
+  ;; void glLogicOp(GLenum opcode)
+  (define-cdecl void glLogicOp (unsigned-int))
+  ;; void glCullFace(GLenum mode)
+  (define-cdecl void glCullFace (unsigned-int))
+  ;; void glFrontFace(GLenum mode)
+  (define-cdecl void glFrontFace (unsigned-int))
+  ;; void glPointSize(GLfloat size)
+  (define-cdecl void glPointSize (float))
+  ;; void glLineWidth(GLfloat width)
+  (define-cdecl void glLineWidth (float))
+  ;; void glLineStipple(GLint factor, GLushort pattern)
+  (define-cdecl void glLineStipple (int unsigned-short))
+  ;; void glPolygonMode(GLenum face, GLenum mode)
+  (define-cdecl void glPolygonMode (unsigned-int unsigned-int))
+  ;; void glPolygonOffset(GLfloat factor, GLfloat units)
+  (define-cdecl void glPolygonOffset (float float))
+  ;; void glPolygonStipple(const GLubyte *mask)
+  (define-cdecl void glPolygonStipple (void*))
+  ;; void glGetPolygonStipple(GLubyte *mask)
+  (define-cdecl void glGetPolygonStipple (void*))
+  ;; void glEdgeFlag(GLboolean flag)
+  (define-cdecl void glEdgeFlag (uint8_t))
+  ;; void glEdgeFlagv(const GLboolean *flag)
+  (define-cdecl void glEdgeFlagv (void*))
+  ;; void glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
+  (define-cdecl void glScissor (int int int int))
+  ;; void glClipPlane(GLenum plane, const GLdouble *equation)
+  (define-cdecl void glClipPlane (unsigned-int void*))
+  ;; void glGetClipPlane(GLenum plane, GLdouble *equation)
+  (define-cdecl void glGetClipPlane (unsigned-int void*))
+  ;; void glDrawBuffer(GLenum mode)
+  (define-cdecl void glDrawBuffer (unsigned-int))
+  ;; void glReadBuffer(GLenum mode)
+  (define-cdecl void glReadBuffer (unsigned-int))
+  ;; void glEnable(GLenum cap)
+  (define-cdecl void glEnable (unsigned-int))
+  ;; void glDisable(GLenum cap)
+  (define-cdecl void glDisable (unsigned-int))
+  ;; GLboolean glIsEnabled(GLenum cap)
+  (define-cdecl uint8_t glIsEnabled (unsigned-int))
+  ;; void glGetBooleanv(GLenum pname, GLboolean *params)
+  (define-cdecl void glGetBooleanv (unsigned-int void*))
+  ;; void glGetDoublev(GLenum pname, GLdouble *params)
+  (define-cdecl void glGetDoublev (unsigned-int void*))
+  ;; void glGetFloatv(GLenum pname, GLfloat *params)
+  (define-cdecl void glGetFloatv (unsigned-int void*))
+  ;; void glGetIntegerv(GLenum pname, GLint *params)
+  (define-cdecl void glGetIntegerv (unsigned-int void*))
+  ;; void glPushAttrib(GLbitfield mask)
+  (define-cdecl void glPushAttrib (unsigned-int))
+  ;; void glPopAttrib(void)
+  (define-cdecl void glPopAttrib ())
+  ;; GLint glRenderMode(GLenum mode)
+  (define-cdecl int glRenderMode (unsigned-int))
+  ;; GLenum glGetError(void)
+  (define-cdecl unsigned-int glGetError ())
+  ;; const GLubyte * glGetString(GLenum name)
+  (define-cdecl void* glGetString (unsigned-int))
+  ;; void glFinish(void)
+  (define-cdecl void glFinish ())
+  ;; void glFlush(void)
+  (define-cdecl void glFlush ())
+  ;; void glHint(GLenum target, GLenum mode)
+  (define-cdecl void glHint (unsigned-int unsigned-int))
+  ;; void glClearDepth(GLclampd depth)
+  (define-cdecl void glClearDepth (double))
+  ;; void glDepthFunc(GLenum func)
+  (define-cdecl void glDepthFunc (unsigned-int))
+  ;; void glDepthMask(GLboolean flag)
+  (define-cdecl void glDepthMask (uint8_t))
+  ;; void glDepthRange(GLclampd near_val, GLclampd far_val)
+  (define-cdecl void glDepthRange (double double))
+  ;; void glClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
+  (define-cdecl void glClearAccum (float float float float))
+  ;; void glAccum(GLenum op, GLfloat value)
+  (define-cdecl void glAccum (unsigned-int float))
+  ;; void glMatrixMode(GLenum mode)
+  (define-cdecl void glMatrixMode (unsigned-int))
+  ;; void glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val)
+  (define-cdecl void glOrtho (double double double double double double))
+  ;; void glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val)
+  (define-cdecl void glFrustum (double double double double double double))
+  ;; void glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
+  (define-cdecl void glViewport (int int int int))
+  ;; void glPushMatrix(void)
+  (define-cdecl void glPushMatrix ())
+  ;; void glPopMatrix(void)
+  (define-cdecl void glPopMatrix ())
+  ;; void glLoadIdentity(void)
+  (define-cdecl void glLoadIdentity ())
+  ;; void glLoadMatrixd(const GLdouble *m)
+  (define-cdecl void glLoadMatrixd (void*))
+  ;; void glLoadMatrixf(const GLfloat *m)
+  (define-cdecl void glLoadMatrixf (void*))
+  ;; void glMultMatrixd(const GLdouble *m)
+  (define-cdecl void glMultMatrixd (void*))
+  ;; void glMultMatrixf(const GLfloat *m)
+  (define-cdecl void glMultMatrixf (void*))
+  ;; void glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
+  (define-cdecl void glRotated (double double double double))
+  ;; void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
+  (define-cdecl void glRotatef (float float float float))
+  ;; void glScaled(GLdouble x, GLdouble y, GLdouble z)
+  (define-cdecl void glScaled (double double double))
+  ;; void glScalef(GLfloat x, GLfloat y, GLfloat z)
+  (define-cdecl void glScalef (float float float))
+  ;; void glTranslated(GLdouble x, GLdouble y, GLdouble z)
+  (define-cdecl void glTranslated (double double double))
+  ;; void glTranslatef(GLfloat x, GLfloat y, GLfloat z)
+  (define-cdecl void glTranslatef (float float float))
+  ;; GLboolean glIsList(GLuint list)
+  (define-cdecl uint8_t glIsList (unsigned-int))
+  ;; void glDeleteLists(GLuint list, GLsizei range)
+  (define-cdecl void glDeleteLists (unsigned-int int))
+  ;; GLuint glGenLists(GLsizei range)
+  (define-cdecl unsigned-int glGenLists (int))
+  ;; void glNewList(GLuint list, GLenum mode)
+  (define-cdecl void glNewList (unsigned-int unsigned-int))
+  ;; void glEndList(void)
+  (define-cdecl void glEndList ())
+  ;; void glCallList(GLuint list)
+  (define-cdecl void glCallList (unsigned-int))
+  ;; void glCallLists(GLsizei n, GLenum type, const GLvoid *lists)
+  (define-cdecl void glCallLists (int unsigned-int void*))
+  ;; void glListBase(GLuint base)
+  (define-cdecl void glListBase (unsigned-int))
+  ;; void glBegin(GLenum mode)
+  (define-cdecl void glBegin (unsigned-int))
+  ;; void glEnd(void)
+  (define-cdecl void glEnd ())
+  ;; void glVertex2d(GLdouble x, GLdouble y)
+  (define-cdecl void glVertex2d (double double))
+  ;; void glVertex2f(GLfloat x, GLfloat y)
+  (define-cdecl void glVertex2f (float float))
+  ;; void glVertex2i(GLint x, GLint y)
+  (define-cdecl void glVertex2i (int int))
+  ;; void glVertex2s(GLshort x, GLshort y)
+  (define-cdecl void glVertex2s (short short))
+  ;; void glVertex3d(GLdouble x, GLdouble y, GLdouble z)
+  (define-cdecl void glVertex3d (double double double))
+  ;; void glVertex3f(GLfloat x, GLfloat y, GLfloat z)
+  (define-cdecl void glVertex3f (float float float))
+  ;; void glVertex3i(GLint x, GLint y, GLint z)
+  (define-cdecl void glVertex3i (int int int))
+  ;; void glVertex3s(GLshort x, GLshort y, GLshort z)
+  (define-cdecl void glVertex3s (short short short))
+  ;; void glVertex4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+  (define-cdecl void glVertex4d (double double double double))
+  ;; void glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+  (define-cdecl void glVertex4f (float float float float))
+  ;; void glVertex4i(GLint x, GLint y, GLint z, GLint w)
+  (define-cdecl void glVertex4i (int int int int))
+  ;; void glVertex4s(GLshort x, GLshort y, GLshort z, GLshort w)
+  (define-cdecl void glVertex4s (short short short short))
+  ;; void glVertex2dv(const GLdouble *v)
+  (define-cdecl void glVertex2dv (void*))
+  ;; void glVertex2fv(const GLfloat *v)
+  (define-cdecl void glVertex2fv (void*))
+  ;; void glVertex2iv(const GLint *v)
+  (define-cdecl void glVertex2iv (void*))
+  ;; void glVertex2sv(const GLshort *v)
+  (define-cdecl void glVertex2sv (void*))
+  ;; void glVertex3dv(const GLdouble *v)
+  (define-cdecl void glVertex3dv (void*))
+  ;; void glVertex3fv(const GLfloat *v)
+  (define-cdecl void glVertex3fv (void*))
+  ;; void glVertex3iv(const GLint *v)
+  (define-cdecl void glVertex3iv (void*))
+  ;; void glVertex3sv(const GLshort *v)
+  (define-cdecl void glVertex3sv (void*))
+  ;; void glVertex4dv(const GLdouble *v)
+  (define-cdecl void glVertex4dv (void*))
+  ;; void glVertex4fv(const GLfloat *v)
+  (define-cdecl void glVertex4fv (void*))
+  ;; void glVertex4iv(const GLint *v)
+  (define-cdecl void glVertex4iv (void*))
+  ;; void glVertex4sv(const GLshort *v)
+  (define-cdecl void glVertex4sv (void*))
+  ;; void glNormal3b(GLbyte nx, GLbyte ny, GLbyte nz)
+  (define-cdecl void glNormal3b (int8_t int8_t int8_t))
+  ;; void glNormal3d(GLdouble nx, GLdouble ny, GLdouble nz)
+  (define-cdecl void glNormal3d (double double double))
+  ;; void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
+  (define-cdecl void glNormal3f (float float float))
+  ;; void glNormal3i(GLint nx, GLint ny, GLint nz)
+  (define-cdecl void glNormal3i (int int int))
+  ;; void glNormal3s(GLshort nx, GLshort ny, GLshort nz)
+  (define-cdecl void glNormal3s (short short short))
+  ;; void glNormal3bv(const GLbyte *v)
+  (define-cdecl void glNormal3bv (void*))
+  ;; void glNormal3dv(const GLdouble *v)
+  (define-cdecl void glNormal3dv (void*))
+  ;; void glNormal3fv(const GLfloat *v)
+  (define-cdecl void glNormal3fv (void*))
+  ;; void glNormal3iv(const GLint *v)
+  (define-cdecl void glNormal3iv (void*))
+  ;; void glNormal3sv(const GLshort *v)
+  (define-cdecl void glNormal3sv (void*))
+  ;; void glIndexd(GLdouble c)
+  (define-cdecl void glIndexd (double))
+  ;; void glIndexf(GLfloat c)
+  (define-cdecl void glIndexf (float))
+  ;; void glIndexi(GLint c)
+  (define-cdecl void glIndexi (int))
+  ;; void glIndexs(GLshort c)
+  (define-cdecl void glIndexs (short))
+  ;; void glIndexdv(const GLdouble *c)
+  (define-cdecl void glIndexdv (void*))
+  ;; void glIndexfv(const GLfloat *c)
+  (define-cdecl void glIndexfv (void*))
+  ;; void glIndexiv(const GLint *c)
+  (define-cdecl void glIndexiv (void*))
+  ;; void glIndexsv(const GLshort *c)
+  (define-cdecl void glIndexsv (void*))
+  ;; void glColor3b(GLbyte red, GLbyte green, GLbyte blue)
+  (define-cdecl void glColor3b (int8_t int8_t int8_t))
+  ;; void glColor3d(GLdouble red, GLdouble green, GLdouble blue)
+  (define-cdecl void glColor3d (double double double))
+  ;; void glColor3f(GLfloat red, GLfloat green, GLfloat blue)
+  (define-cdecl void glColor3f (float float float))
+  ;; void glColor3i(GLint red, GLint green, GLint blue)
+  (define-cdecl void glColor3i (int int int))
+  ;; void glColor3s(GLshort red, GLshort green, GLshort blue)
+  (define-cdecl void glColor3s (short short short))
+  ;; void glColor3ub(GLubyte red, GLubyte green, GLubyte blue)
+  (define-cdecl void glColor3ub (uint8_t uint8_t uint8_t))
+  ;; void glColor3ui(GLuint red, GLuint green, GLuint blue)
+  (define-cdecl void glColor3ui (unsigned-int unsigned-int unsigned-int))
+  ;; void glColor3us(GLushort red, GLushort green, GLushort blue)
+  (define-cdecl void glColor3us (unsigned-short unsigned-short unsigned-short))
+  ;; void glColor4b(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha)
+  (define-cdecl void glColor4b (int8_t int8_t int8_t int8_t))
+  ;; void glColor4d(GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha)
+  (define-cdecl void glColor4d (double double double double))
+  ;; void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
+  (define-cdecl void glColor4f (float float float float))
+  ;; void glColor4i(GLint red, GLint green, GLint blue, GLint alpha)
+  (define-cdecl void glColor4i (int int int int))
+  ;; void glColor4s(GLshort red, GLshort green, GLshort blue, GLshort alpha)
+  (define-cdecl void glColor4s (short short short short))
+  ;; void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
+  (define-cdecl void glColor4ub (uint8_t uint8_t uint8_t uint8_t))
+  ;; void glColor4ui(GLuint red, GLuint green, GLuint blue, GLuint alpha)
+  (define-cdecl void glColor4ui (unsigned-int unsigned-int unsigned-int unsigned-int))
+  ;; void glColor4us(GLushort red, GLushort green, GLushort blue, GLushort alpha)
+  (define-cdecl void glColor4us (unsigned-short unsigned-short unsigned-short unsigned-short))
+  ;; void glColor3bv(const GLbyte *v)
+  (define-cdecl void glColor3bv (void*))
+  ;; void glColor3dv(const GLdouble *v)
+  (define-cdecl void glColor3dv (void*))
+  ;; void glColor3fv(const GLfloat *v)
+  (define-cdecl void glColor3fv (void*))
+  ;; void glColor3iv(const GLint *v)
+  (define-cdecl void glColor3iv (void*))
+  ;; void glColor3sv(const GLshort *v)
+  (define-cdecl void glColor3sv (void*))
+  ;; void glColor3ubv(const GLubyte *v)
+  (define-cdecl void glColor3ubv (void*))
+  ;; void glColor3uiv(const GLuint *v)
+  (define-cdecl void glColor3uiv (void*))
+  ;; void glColor3usv(const GLushort *v)
+  (define-cdecl void glColor3usv (void*))
+  ;; void glColor4bv(const GLbyte *v)
+  (define-cdecl void glColor4bv (void*))
+  ;; void glColor4dv(const GLdouble *v)
+  (define-cdecl void glColor4dv (void*))
+  ;; void glColor4fv(const GLfloat *v)
+  (define-cdecl void glColor4fv (void*))
+  ;; void glColor4iv(const GLint *v)
+  (define-cdecl void glColor4iv (void*))
+  ;; void glColor4sv(const GLshort *v)
+  (define-cdecl void glColor4sv (void*))
+  ;; void glColor4ubv(const GLubyte *v)
+  (define-cdecl void glColor4ubv (void*))
+  ;; void glColor4uiv(const GLuint *v)
+  (define-cdecl void glColor4uiv (void*))
+  ;; void glColor4usv(const GLushort *v)
+  (define-cdecl void glColor4usv (void*))
+  ;; void glTexCoord1d(GLdouble s)
+  (define-cdecl void glTexCoord1d (double))
+  ;; void glTexCoord1f(GLfloat s)
+  (define-cdecl void glTexCoord1f (float))
+  ;; void glTexCoord1i(GLint s)
+  (define-cdecl void glTexCoord1i (int))
+  ;; void glTexCoord1s(GLshort s)
+  (define-cdecl void glTexCoord1s (short))
+  ;; void glTexCoord2d(GLdouble s, GLdouble t)
+  (define-cdecl void glTexCoord2d (double double))
+  ;; void glTexCoord2f(GLfloat s, GLfloat t)
+  (define-cdecl void glTexCoord2f (float float))
+  ;; void glTexCoord2i(GLint s, GLint t)
+  (define-cdecl void glTexCoord2i (int int))
+  ;; void glTexCoord2s(GLshort s, GLshort t)
+  (define-cdecl void glTexCoord2s (short short))
+  ;; void glTexCoord3d(GLdouble s, GLdouble t, GLdouble r)
+  (define-cdecl void glTexCoord3d (double double double))
+  ;; void glTexCoord3f(GLfloat s, GLfloat t, GLfloat r)
+  (define-cdecl void glTexCoord3f (float float float))
+  ;; void glTexCoord3i(GLint s, GLint t, GLint r)
+  (define-cdecl void glTexCoord3i (int int int))
+  ;; void glTexCoord3s(GLshort s, GLshort t, GLshort r)
+  (define-cdecl void glTexCoord3s (short short short))
+  ;; void glTexCoord4d(GLdouble s, GLdouble t, GLdouble r, GLdouble q)
+  (define-cdecl void glTexCoord4d (double double double double))
+  ;; void glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
+  (define-cdecl void glTexCoord4f (float float float float))
+  ;; void glTexCoord4i(GLint s, GLint t, GLint r, GLint q)
+  (define-cdecl void glTexCoord4i (int int int int))
+  ;; void glTexCoord4s(GLshort s, GLshort t, GLshort r, GLshort q)
+  (define-cdecl void glTexCoord4s (short short short short))
+  ;; void glTexCoord1dv(const GLdouble *v)
+  (define-cdecl void glTexCoord1dv (void*))
+  ;; void glTexCoord1fv(const GLfloat *v)
+  (define-cdecl void glTexCoord1fv (void*))
+  ;; void glTexCoord1iv(const GLint *v)
+  (define-cdecl void glTexCoord1iv (void*))
+  ;; void glTexCoord1sv(const GLshort *v)
+  (define-cdecl void glTexCoord1sv (void*))
+  ;; void glTexCoord2dv(const GLdouble *v)
+  (define-cdecl void glTexCoord2dv (void*))
+  ;; void glTexCoord2fv(const GLfloat *v)
+  (define-cdecl void glTexCoord2fv (void*))
+  ;; void glTexCoord2iv(const GLint *v)
+  (define-cdecl void glTexCoord2iv (void*))
+  ;; void glTexCoord2sv(const GLshort *v)
+  (define-cdecl void glTexCoord2sv (void*))
+  ;; void glTexCoord3dv(const GLdouble *v)
+  (define-cdecl void glTexCoord3dv (void*))
+  ;; void glTexCoord3fv(const GLfloat *v)
+  (define-cdecl void glTexCoord3fv (void*))
+  ;; void glTexCoord3iv(const GLint *v)
+  (define-cdecl void glTexCoord3iv (void*))
+  ;; void glTexCoord3sv(const GLshort *v)
+  (define-cdecl void glTexCoord3sv (void*))
+  ;; void glTexCoord4dv(const GLdouble *v)
+  (define-cdecl void glTexCoord4dv (void*))
+  ;; void glTexCoord4fv(const GLfloat *v)
+  (define-cdecl void glTexCoord4fv (void*))
+  ;; void glTexCoord4iv(const GLint *v)
+  (define-cdecl void glTexCoord4iv (void*))
+  ;; void glTexCoord4sv(const GLshort *v)
+  (define-cdecl void glTexCoord4sv (void*))
+  ;; void glRasterPos2d(GLdouble x, GLdouble y)
+  (define-cdecl void glRasterPos2d (double double))
+  ;; void glRasterPos2f(GLfloat x, GLfloat y)
+  (define-cdecl void glRasterPos2f (float float))
+  ;; void glRasterPos2i(GLint x, GLint y)
+  (define-cdecl void glRasterPos2i (int int))
+  ;; void glRasterPos2s(GLshort x, GLshort y)
+  (define-cdecl void glRasterPos2s (short short))
+  ;; void glRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
+  (define-cdecl void glRasterPos3d (double double double))
+  ;; void glRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
+  (define-cdecl void glRasterPos3f (float float float))
+  ;; void glRasterPos3i(GLint x, GLint y, GLint z)
+  (define-cdecl void glRasterPos3i (int int int))
+  ;; void glRasterPos3s(GLshort x, GLshort y, GLshort z)
+  (define-cdecl void glRasterPos3s (short short short))
+  ;; void glRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+  (define-cdecl void glRasterPos4d (double double double double))
+  ;; void glRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+  (define-cdecl void glRasterPos4f (float float float float))
+  ;; void glRasterPos4i(GLint x, GLint y, GLint z, GLint w)
+  (define-cdecl void glRasterPos4i (int int int int))
+  ;; void glRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
+  (define-cdecl void glRasterPos4s (short short short short))
+  ;; void glRasterPos2dv(const GLdouble *v)
+  (define-cdecl void glRasterPos2dv (void*))
+  ;; void glRasterPos2fv(const GLfloat *v)
+  (define-cdecl void glRasterPos2fv (void*))
+  ;; void glRasterPos2iv(const GLint *v)
+  (define-cdecl void glRasterPos2iv (void*))
+  ;; void glRasterPos2sv(const GLshort *v)
+  (define-cdecl void glRasterPos2sv (void*))
+  ;; void glRasterPos3dv(const GLdouble *v)
+  (define-cdecl void glRasterPos3dv (void*))
+  ;; void glRasterPos3fv(const GLfloat *v)
+  (define-cdecl void glRasterPos3fv (void*))
+  ;; void glRasterPos3iv(const GLint *v)
+  (define-cdecl void glRasterPos3iv (void*))
+  ;; void glRasterPos3sv(const GLshort *v)
+  (define-cdecl void glRasterPos3sv (void*))
+  ;; void glRasterPos4dv(const GLdouble *v)
+  (define-cdecl void glRasterPos4dv (void*))
+  ;; void glRasterPos4fv(const GLfloat *v)
+  (define-cdecl void glRasterPos4fv (void*))
+  ;; void glRasterPos4iv(const GLint *v)
+  (define-cdecl void glRasterPos4iv (void*))
+  ;; void glRasterPos4sv(const GLshort *v)
+  (define-cdecl void glRasterPos4sv (void*))
+  ;; void glRectd(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2)
+  (define-cdecl void glRectd (double double double double))
+  ;; void glRectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
+  (define-cdecl void glRectf (float float float float))
+  ;; void glRecti(GLint x1, GLint y1, GLint x2, GLint y2)
+  (define-cdecl void glRecti (int int int int))
+  ;; void glRects(GLshort x1, GLshort y1, GLshort x2, GLshort y2)
+  (define-cdecl void glRects (short short short short))
+  ;; void glRectdv(const GLdouble *v1, const GLdouble *v2)
+  (define-cdecl void glRectdv (void* void*))
+  ;; void glRectfv(const GLfloat *v1, const GLfloat *v2)
+  (define-cdecl void glRectfv (void* void*))
+  ;; void glRectiv(const GLint *v1, const GLint *v2)
+  (define-cdecl void glRectiv (void* void*))
+  ;; void glRectsv(const GLshort *v1, const GLshort *v2)
+  (define-cdecl void glRectsv (void* void*))
+  ;; void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
+  (define-cdecl void glVertexPointer (int unsigned-int int void*))
+  ;; void glNormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
+  (define-cdecl void glNormalPointer (unsigned-int int void*))
+  ;; void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
+  (define-cdecl void glColorPointer (int unsigned-int int void*))
+  ;; void glIndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
+  (define-cdecl void glIndexPointer (unsigned-int int void*))
+  ;; void glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
+  (define-cdecl void glTexCoordPointer (int unsigned-int int void*))
+  ;; void glEdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
+  (define-cdecl void glEdgeFlagPointer (int void*))
+  ;; void glGetPointerv(GLenum pname, GLvoid **params)
+  (define-cdecl void glGetPointerv (unsigned-int void*))
+  ;; void glArrayElement(GLint i)
+  (define-cdecl void glArrayElement (int))
+  ;; void glDrawArrays(GLenum mode, GLint first, GLsizei count)
+  (define-cdecl void glDrawArrays (unsigned-int int int))
+  ;; void glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
+  (define-cdecl void glDrawElements (unsigned-int int unsigned-int void*))
+  ;; void glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
+  (define-cdecl void glInterleavedArrays (unsigned-int int void*))
+  ;; void glShadeModel(GLenum mode)
+  (define-cdecl void glShadeModel (unsigned-int))
+  ;; void glLightf(GLenum light, GLenum pname, GLfloat param)
+  (define-cdecl void glLightf (unsigned-int unsigned-int float))
+  ;; void glLighti(GLenum light, GLenum pname, GLint param)
+  (define-cdecl void glLighti (unsigned-int unsigned-int int))
+  ;; void glLightfv(GLenum light, GLenum pname, const GLfloat *params)
+  (define-cdecl void glLightfv (unsigned-int unsigned-int void*))
+  ;; void glLightiv(GLenum light, GLenum pname, const GLint *params)
+  (define-cdecl void glLightiv (unsigned-int unsigned-int void*))
+  ;; void glGetLightfv(GLenum light, GLenum pname, GLfloat *params)
+  (define-cdecl void glGetLightfv (unsigned-int unsigned-int void*))
+  ;; void glGetLightiv(GLenum light, GLenum pname, GLint *params)
+  (define-cdecl void glGetLightiv (unsigned-int unsigned-int void*))
+  ;; void glLightModelf(GLenum pname, GLfloat param)
+  (define-cdecl void glLightModelf (unsigned-int float))
+  ;; void glLightModeli(GLenum pname, GLint param)
+  (define-cdecl void glLightModeli (unsigned-int int))
+  ;; void glLightModelfv(GLenum pname, const GLfloat *params)
+  (define-cdecl void glLightModelfv (unsigned-int void*))
+  ;; void glLightModeliv(GLenum pname, const GLint *params)
+  (define-cdecl void glLightModeliv (unsigned-int void*))
+  ;; void glMaterialf(GLenum face, GLenum pname, GLfloat param)
+  (define-cdecl void glMaterialf (unsigned-int unsigned-int float))
+  ;; void glMateriali(GLenum face, GLenum pname, GLint param)
+  (define-cdecl void glMateriali (unsigned-int unsigned-int int))
+  ;; void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params)
+  (define-cdecl void glMaterialfv (unsigned-int unsigned-int void*))
+  ;; void glMaterialiv(GLenum face, GLenum pname, const GLint *params)
+  (define-cdecl void glMaterialiv (unsigned-int unsigned-int void*))
+  ;; void glGetMaterialfv(GLenum face, GLenum pname, GLfloat *params)
+  (define-cdecl void glGetMaterialfv (unsigned-int unsigned-int void*))
+  ;; void glGetMaterialiv(GLenum face, GLenum pname, GLint *params)
+  (define-cdecl void glGetMaterialiv (unsigned-int unsigned-int void*))
+  ;; void glColorMaterial(GLenum face, GLenum mode)
+  (define-cdecl void glColorMaterial (unsigned-int unsigned-int))
+  ;; void glPixelZoom(GLfloat xfactor, GLfloat yfactor)
+  (define-cdecl void glPixelZoom (float float))
+  ;; void glPixelStoref(GLenum pname, GLfloat param)
+  (define-cdecl void glPixelStoref (unsigned-int float))
+  ;; void glPixelStorei(GLenum pname, GLint param)
+  (define-cdecl void glPixelStorei (unsigned-int int))
+  ;; void glPixelTransferf(GLenum pname, GLfloat param)
+  (define-cdecl void glPixelTransferf (unsigned-int float))
+  ;; void glPixelTransferi(GLenum pname, GLint param)
+  (define-cdecl void glPixelTransferi (unsigned-int int))
+  ;; void glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat *values)
+  (define-cdecl void glPixelMapfv (unsigned-int int void*))
+  ;; void glPixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values)
+  (define-cdecl void glPixelMapuiv (unsigned-int int void*))
+  ;; void glPixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values)
+  (define-cdecl void glPixelMapusv (unsigned-int int void*))
+  ;; void glGetPixelMapfv(GLenum map, GLfloat *values)
+  (define-cdecl void glGetPixelMapfv (unsigned-int void*))
+  ;; void glGetPixelMapuiv(GLenum map, GLuint *values)
+  (define-cdecl void glGetPixelMapuiv (unsigned-int void*))
+  ;; void glGetPixelMapusv(GLenum map, GLushort *values)
+  (define-cdecl void glGetPixelMapusv (unsigned-int void*))
+  ;; void glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap)
+  (define-cdecl void glBitmap (int int float float float float void*))
+  ;; void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels)
+  (define-cdecl void glReadPixels (int int int int unsigned-int unsigned-int void*))
+  ;; void glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
+  (define-cdecl void glDrawPixels (int int unsigned-int unsigned-int void*))
+  ;; void glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type)
+  (define-cdecl void glCopyPixels (int int int int unsigned-int))
+  ;; void glStencilFunc(GLenum func, GLint ref, GLuint mask)
+  (define-cdecl void glStencilFunc (unsigned-int int unsigned-int))
+  ;; void glStencilMask(GLuint mask)
+  (define-cdecl void glStencilMask (unsigned-int))
+  ;; void glStencilOp(GLenum fail, GLenum zfail, GLenum zpass)
+  (define-cdecl void glStencilOp (unsigned-int unsigned-int unsigned-int))
+  ;; void glClearStencil(GLint s)
+  (define-cdecl void glClearStencil (int))
+  ;; void glTexGend(GLenum coord, GLenum pname, GLdouble param)
+  (define-cdecl void glTexGend (unsigned-int unsigned-int double))
+  ;; void glTexGenf(GLenum coord, GLenum pname, GLfloat param)
+  (define-cdecl void glTexGenf (unsigned-int unsigned-int float))
+  ;; void glTexGeni(GLenum coord, GLenum pname, GLint param)
+  (define-cdecl void glTexGeni (unsigned-int unsigned-int int))
+  ;; void glTexGendv(GLenum coord, GLenum pname, const GLdouble *params)
+  (define-cdecl void glTexGendv (unsigned-int unsigned-int void*))
+  ;; void glTexGenfv(GLenum coord, GLenum pname, const GLfloat *params)
+  (define-cdecl void glTexGenfv (unsigned-int unsigned-int void*))
+  ;; void glTexGeniv(GLenum coord, GLenum pname, const GLint *params)
+  (define-cdecl void glTexGeniv (unsigned-int unsigned-int void*))
+  ;; void glGetTexGendv(GLenum coord, GLenum pname, GLdouble *params)
+  (define-cdecl void glGetTexGendv (unsigned-int unsigned-int void*))
+  ;; void glGetTexGenfv(GLenum coord, GLenum pname, GLfloat *params)
+  (define-cdecl void glGetTexGenfv (unsigned-int unsigned-int void*))
+  ;; void glGetTexGeniv(GLenum coord, GLenum pname, GLint *params)
+  (define-cdecl void glGetTexGeniv (unsigned-int unsigned-int void*))
+  ;; void glTexEnvf(GLenum target, GLenum pname, GLfloat param)
+  (define-cdecl void glTexEnvf (unsigned-int unsigned-int float))
+  ;; void glTexEnvi(GLenum target, GLenum pname, GLint param)
+  (define-cdecl void glTexEnvi (unsigned-int unsigned-int int))
+  ;; void glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params)
+  (define-cdecl void glTexEnvfv (unsigned-int unsigned-int void*))
+  ;; void glTexEnviv(GLenum target, GLenum pname, const GLint *params)
+  (define-cdecl void glTexEnviv (unsigned-int unsigned-int void*))
+  ;; void glGetTexEnvfv(GLenum target, GLenum pname, GLfloat *params)
+  (define-cdecl void glGetTexEnvfv (unsigned-int unsigned-int void*))
+  ;; void glGetTexEnviv(GLenum target, GLenum pname, GLint *params)
+  (define-cdecl void glGetTexEnviv (unsigned-int unsigned-int void*))
+  ;; void glTexParameterf(GLenum target, GLenum pname, GLfloat param)
+  (define-cdecl void glTexParameterf (unsigned-int unsigned-int float))
+  ;; void glTexParameteri(GLenum target, GLenum pname, GLint param)
+  (define-cdecl void glTexParameteri (unsigned-int unsigned-int int))
+  ;; void glTexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
+  (define-cdecl void glTexParameterfv (unsigned-int unsigned-int void*))
+  ;; void glTexParameteriv(GLenum target, GLenum pname, const GLint *params)
+  (define-cdecl void glTexParameteriv (unsigned-int unsigned-int void*))
+  ;; void glGetTexParameterfv(GLenum target, GLenum pname, GLfloat *params)
+  (define-cdecl void glGetTexParameterfv (unsigned-int unsigned-int void*))
+  ;; void glGetTexParameteriv(GLenum target, GLenum pname, GLint *params)
+  (define-cdecl void glGetTexParameteriv (unsigned-int unsigned-int void*))
+  ;; void glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, GLfloat *params)
+  (define-cdecl void glGetTexLevelParameterfv (unsigned-int int unsigned-int void*))
+  ;; void glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params)
+  (define-cdecl void glGetTexLevelParameteriv (unsigned-int int unsigned-int void*))
+  ;; void glTexImage1D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
+  (define-cdecl void glTexImage1D (unsigned-int int int int int unsigned-int unsigned-int void*))
+  ;; void glTexImage2D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
+  (define-cdecl void glTexImage2D (unsigned-int int int int int int unsigned-int unsigned-int void*))
+  ;; void glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels)
+  (define-cdecl void glGetTexImage (unsigned-int int unsigned-int unsigned-int void*))
+  ;; void glGenTextures(GLsizei n, GLuint *textures)
+  (define-cdecl void glGenTextures (int void*))
+  ;; void glDeleteTextures(GLsizei n, const GLuint *textures)
+  (define-cdecl void glDeleteTextures (int void*))
+  ;; void glBindTexture(GLenum target, GLuint texture)
+  (define-cdecl void glBindTexture (unsigned-int unsigned-int))
+  ;; void glPrioritizeTextures(GLsizei n, const GLuint *textures, const GLclampf *priorities)
+  (define-cdecl void glPrioritizeTextures (int void* void*))
+  ;; GLboolean glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences)
+  (define-cdecl uint8_t glAreTexturesResident (int void* void*))
+  ;; GLboolean glIsTexture(GLuint texture)
+  (define-cdecl uint8_t glIsTexture (unsigned-int))
+  ;; void glTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels)
+  (define-cdecl void glTexSubImage1D (unsigned-int int int int unsigned-int unsigned-int void*))
+  ;; void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
+  (define-cdecl void glTexSubImage2D (unsigned-int int int int int int unsigned-int unsigned-int void*))
+  ;; void glCopyTexImage1D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border)
+  (define-cdecl void glCopyTexImage1D (unsigned-int int unsigned-int int int int int))
+  ;; void glCopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border)
+  (define-cdecl void glCopyTexImage2D (unsigned-int int unsigned-int int int int int int))
+  ;; void glCopyTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width)
+  (define-cdecl void glCopyTexSubImage1D (unsigned-int int int int int int))
+  ;; void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height)
+  (define-cdecl void glCopyTexSubImage2D (unsigned-int int int int int int int int))
+  ;; void glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points)
+  (define-cdecl void glMap1d (unsigned-int double double int int void*))
+  ;; void glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points)
+  (define-cdecl void glMap1f (unsigned-int float float int int void*))
+  ;; void glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points)
+  (define-cdecl void glMap2d (unsigned-int double double int int double double int int void*))
+  ;; void glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points)
+  (define-cdecl void glMap2f (unsigned-int float float int int float float int int void*))
+  ;; void glGetMapdv(GLenum target, GLenum query, GLdouble *v)
+  (define-cdecl void glGetMapdv (unsigned-int unsigned-int void*))
+  ;; void glGetMapfv(GLenum target, GLenum query, GLfloat *v)
+  (define-cdecl void glGetMapfv (unsigned-int unsigned-int void*))
+  ;; void glGetMapiv(GLenum target, GLenum query, GLint *v)
+  (define-cdecl void glGetMapiv (unsigned-int unsigned-int void*))
+  ;; void glEvalCoord1d(GLdouble u)
+  (define-cdecl void glEvalCoord1d (double))
+  ;; void glEvalCoord1f(GLfloat u)
+  (define-cdecl void glEvalCoord1f (float))
+  ;; void glEvalCoord1dv(const GLdouble *u)
+  (define-cdecl void glEvalCoord1dv (void*))
+  ;; void glEvalCoord1fv(const GLfloat *u)
+  (define-cdecl void glEvalCoord1fv (void*))
+  ;; void glEvalCoord2d(GLdouble u, GLdouble v)
+  (define-cdecl void glEvalCoord2d (double double))
+  ;; void glEvalCoord2f(GLfloat u, GLfloat v)
+  (define-cdecl void glEvalCoord2f (float float))
+  ;; void glEvalCoord2dv(const GLdouble *u)
+  (define-cdecl void glEvalCoord2dv (void*))
+  ;; void glEvalCoord2fv(const GLfloat *u)
+  (define-cdecl void glEvalCoord2fv (void*))
+  ;; void glMapGrid1d(GLint un, GLdouble u1, GLdouble u2)
+  (define-cdecl void glMapGrid1d (int double double))
+  ;; void glMapGrid1f(GLint un, GLfloat u1, GLfloat u2)
+  (define-cdecl void glMapGrid1f (int float float))
+  ;; void glMapGrid2d(GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2)
+  (define-cdecl void glMapGrid2d (int double double int double double))
+  ;; void glMapGrid2f(GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2)
+  (define-cdecl void glMapGrid2f (int float float int float float))
+  ;; void glEvalPoint1(GLint i)
+  (define-cdecl void glEvalPoint1 (int))
+  ;; void glEvalPoint2(GLint i, GLint j)
+  (define-cdecl void glEvalPoint2 (int int))
+  ;; void glEvalMesh1(GLenum mode, GLint i1, GLint i2)
+  (define-cdecl void glEvalMesh1 (unsigned-int int int))
+  ;; void glEvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
+  (define-cdecl void glEvalMesh2 (unsigned-int int int int int))
+  ;; void glFogf(GLenum pname, GLfloat param)
+  (define-cdecl void glFogf (unsigned-int float))
+  ;; void glFogi(GLenum pname, GLint param)
+  (define-cdecl void glFogi (unsigned-int int))
+  ;; void glFogfv(GLenum pname, const GLfloat *params)
+  (define-cdecl void glFogfv (unsigned-int void*))
+  ;; void glFogiv(GLenum pname, const GLint *params)
+  (define-cdecl void glFogiv (unsigned-int void*))
+  ;; void glFeedbackBuffer(GLsizei size, GLenum type, GLfloat *buffer)
+  (define-cdecl void glFeedbackBuffer (int unsigned-int void*))
+  ;; void glPassThrough(GLfloat token)
+  (define-cdecl void glPassThrough (float))
+  ;; void glSelectBuffer(GLsizei size, GLuint *buffer)
+  (define-cdecl void glSelectBuffer (int void*))
+  ;; void glInitNames(void)
+  (define-cdecl void glInitNames ())
+  ;; void glLoadName(GLuint name)
+  (define-cdecl void glLoadName (unsigned-int))
+  ;; void glPushName(GLuint name)
+  (define-cdecl void glPushName (unsigned-int))
+  ;; void glPopName(void)
+  (define-cdecl void glPopName ())
+  ;; void glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
+  (define-cdecl void glDrawRangeElements (unsigned-int unsigned-int unsigned-int int unsigned-int void*))
+  ;; void glTexImage3D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
+  (define-cdecl void glTexImage3D (unsigned-int int int int int int int unsigned-int unsigned-int void*))
+  ;; void glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels)
+  (define-cdecl void glTexSubImage3D (unsigned-int int int int int int int int unsigned-int unsigned-int void*))
+  ;; void glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height)
+  (define-cdecl void glCopyTexSubImage3D (unsigned-int int int int int int int int int))
+  ;; void glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table)
+  (define-cdecl void glColorTable (unsigned-int unsigned-int int unsigned-int unsigned-int void*))
+  ;; void glColorSubTable(GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data)
+  (define-cdecl void glColorSubTable (unsigned-int int int unsigned-int unsigned-int void*))
   ;; void glColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
-  (define-function void glColorTableParameteriv (int int void*))
-
+  (define-cdecl void glColorTableParameteriv (unsigned-int unsigned-int void*))
   ;; void glColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
-  (define-function void glColorTableParameterfv (int int void*))
-
-  ;; void glCopyColorSubTable( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width )
-  (define-function void glCopyColorSubTable (int int int int int))
-
-  ;; void glCopyColorTable( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width )
-  (define-function void glCopyColorTable (int int int int int))
-
-  ;; void glGetColorTable( GLenum target, GLenum format, GLenum type, GLvoid *table )
-  (define-function void glGetColorTable (int int int void*))
-
-  ;; void glGetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
-  (define-function void glGetColorTableParameterfv (int int void*))
-
-  ;; void glGetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetColorTableParameteriv (int int void*))
-
-  ;; void glBlendEquation( GLenum mode )
-  (define-function void glBlendEquation (int))
-
-  ;; void glBlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
-  (define-function void glBlendColor (float float float float))
-
-  ;; void glHistogram( GLenum target, GLsizei width, GLenum internalformat, GLboolean sink )
-  (define-function void glHistogram (int int int int))
-
-  ;; void glResetHistogram( GLenum target )
-  (define-function void glResetHistogram (int))
-
-  ;; void glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values )
-  (define-function void glGetHistogram (int int int int void*))
-
-  ;; void glGetHistogramParameterfv( GLenum target, GLenum pname, GLfloat *params )
-  (define-function void glGetHistogramParameterfv (int int void*))
-
-  ;; void glGetHistogramParameteriv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetHistogramParameteriv (int int void*))
-
-  ;; void glMinmax( GLenum target, GLenum internalformat, GLboolean sink )
-  (define-function void glMinmax (int int int))
-
-  ;; void glResetMinmax( GLenum target )
-  (define-function void glResetMinmax (int))
-
-  ;; void glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum types, GLvoid *values )
-  (define-function void glGetMinmax (int int int int void*))
-
-  ;; void glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat *params )
-  (define-function void glGetMinmaxParameterfv (int int void*))
-
-  ;; void glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetMinmaxParameteriv (int int void*))
-
-  ;; void glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image )
-  (define-function void glConvolutionFilter1D (int int int int int void*))
-
-  ;; void glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image )
-  (define-function void glConvolutionFilter2D (int int int int int int void*))
-
-  ;; void glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params )
-  (define-function void glConvolutionParameterf (int int float))
-
-  ;; void glConvolutionParameterfv( GLenum target, GLenum pname, const GLfloat *params )
-  (define-function void glConvolutionParameterfv (int int void*))
-
-  ;; void glConvolutionParameteri( GLenum target, GLenum pname, GLint params )
-  (define-function void glConvolutionParameteri (int int int))
-
-  ;; void glConvolutionParameteriv( GLenum target, GLenum pname, const GLint *params )
-  (define-function void glConvolutionParameteriv (int int void*))
-
-  ;; void glCopyConvolutionFilter1D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width )
-  (define-function void glCopyConvolutionFilter1D (int int int int int))
-
-  ;; void glCopyConvolutionFilter2D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height)
-  (define-function void glCopyConvolutionFilter2D (int int int int int int))
-
-  ;; void glGetConvolutionFilter( GLenum target, GLenum format, GLenum type, GLvoid *image )
-  (define-function void glGetConvolutionFilter (int int int void*))
-
-  ;; void glGetConvolutionParameterfv( GLenum target, GLenum pname, GLfloat *params )
-  (define-function void glGetConvolutionParameterfv (int int void*))
-
-  ;; void glGetConvolutionParameteriv( GLenum target, GLenum pname, GLint *params )
-  (define-function void glGetConvolutionParameteriv (int int void*))
-
-  ;; void glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *row, const GLvoid *column )
-  (define-function void glSeparableFilter2D (int int int int int int void* void*))
-
-  ;; void glGetSeparableFilter( GLenum target, GLenum format, GLenum type, GLvoid *row, GLvoid *column, GLvoid *span )
-  (define-function void glGetSeparableFilter (int int int void* void* void*))
-
-  ;; void glActiveTexture( GLenum texture )
-  (define-function void glActiveTexture (int))
-
-  ;; void glClientActiveTexture( GLenum texture )
-  (define-function void glClientActiveTexture (int))
-
-  ;; void glCompressedTexImage1D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexImage1D (int int int int int int void*))
-
-  ;; void glCompressedTexImage2D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexImage2D (int int int int int int int void*))
-
-  ;; void glCompressedTexImage3D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexImage3D (int int int int int int int int void*))
-
-  ;; void glCompressedTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexSubImage1D (int int int int int int void*))
-
-  ;; void glCompressedTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexSubImage2D (int int int int int int int int void*))
-
-  ;; void glCompressedTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data )
-  (define-function void glCompressedTexSubImage3D (int int int int int int int int int int void*))
-
-  ;; void glGetCompressedTexImage( GLenum target, GLint lod, GLvoid *img )
-  (define-function void glGetCompressedTexImage (int int void*))
-
-  ;; void glMultiTexCoord1d( GLenum target, GLdouble s )
-  (define-function void glMultiTexCoord1d (int double))
-
-  ;; void glMultiTexCoord1dv( GLenum target, const GLdouble *v )
-  (define-function void glMultiTexCoord1dv (int void*))
-
-  ;; void glMultiTexCoord1f( GLenum target, GLfloat s )
-  (define-function void glMultiTexCoord1f (int float))
-
-  ;; void glMultiTexCoord1fv( GLenum target, const GLfloat *v )
-  (define-function void glMultiTexCoord1fv (int void*))
-
-  ;; void glMultiTexCoord1i( GLenum target, GLint s )
-  (define-function void glMultiTexCoord1i (int int))
-
-  ;; void glMultiTexCoord1iv( GLenum target, const GLint *v )
-  (define-function void glMultiTexCoord1iv (int void*))
-
-  ;; void glMultiTexCoord1s( GLenum target, GLshort s )
-  (define-function void glMultiTexCoord1s (int int))
-
-  ;; void glMultiTexCoord1sv( GLenum target, const GLshort *v )
-  (define-function void glMultiTexCoord1sv (int void*))
-
-  ;; void glMultiTexCoord2d( GLenum target, GLdouble s, GLdouble t )
-  (define-function void glMultiTexCoord2d (int double double))
-
-  ;; void glMultiTexCoord2dv( GLenum target, const GLdouble *v )
-  (define-function void glMultiTexCoord2dv (int void*))
-
-  ;; void glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t )
-  (define-function void glMultiTexCoord2f (int float float))
-
-  ;; void glMultiTexCoord2fv( GLenum target, const GLfloat *v )
-  (define-function void glMultiTexCoord2fv (int void*))
-
-  ;; void glMultiTexCoord2i( GLenum target, GLint s, GLint t )
-  (define-function void glMultiTexCoord2i (int int int))
-
-  ;; void glMultiTexCoord2iv( GLenum target, const GLint *v )
-  (define-function void glMultiTexCoord2iv (int void*))
-
-  ;; void glMultiTexCoord2s( GLenum target, GLshort s, GLshort t )
-  (define-function void glMultiTexCoord2s (int int int))
-
-  ;; void glMultiTexCoord2sv( GLenum target, const GLshort *v )
-  (define-function void glMultiTexCoord2sv (int void*))
-
-  ;; void glMultiTexCoord3d( GLenum target, GLdouble s, GLdouble t, GLdouble r )
-  (define-function void glMultiTexCoord3d (int double double double))
-
-  ;; void glMultiTexCoord3dv( GLenum target, const GLdouble *v )
-  (define-function void glMultiTexCoord3dv (int void*))
-
-  ;; void glMultiTexCoord3f( GLenum target, GLfloat s, GLfloat t, GLfloat r )
-  (define-function void glMultiTexCoord3f (int float float float))
-
-  ;; void glMultiTexCoord3fv( GLenum target, const GLfloat *v )
-  (define-function void glMultiTexCoord3fv (int void*))
-
-  ;; void glMultiTexCoord3i( GLenum target, GLint s, GLint t, GLint r )
-  (define-function void glMultiTexCoord3i (int int int int))
-
-  ;; void glMultiTexCoord3iv( GLenum target, const GLint *v )
-  (define-function void glMultiTexCoord3iv (int void*))
-
-  ;; void glMultiTexCoord3s( GLenum target, GLshort s, GLshort t, GLshort r )
-  (define-function void glMultiTexCoord3s (int int int int))
-
-  ;; void glMultiTexCoord3sv( GLenum target, const GLshort *v )
-  (define-function void glMultiTexCoord3sv (int void*))
-
-  ;; void glMultiTexCoord4d( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q )
-  (define-function void glMultiTexCoord4d (int double double double double))
-
-  ;; void glMultiTexCoord4dv( GLenum target, const GLdouble *v )
-  (define-function void glMultiTexCoord4dv (int void*))
-
-  ;; void glMultiTexCoord4f( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q )
-  (define-function void glMultiTexCoord4f (int float float float float))
-
-  ;; void glMultiTexCoord4fv( GLenum target, const GLfloat *v )
-  (define-function void glMultiTexCoord4fv (int void*))
-
-  ;; void glMultiTexCoord4i( GLenum target, GLint s, GLint t, GLint r, GLint q )
-  (define-function void glMultiTexCoord4i (int int int int int))
-
-  ;; void glMultiTexCoord4iv( GLenum target, const GLint *v )
-  (define-function void glMultiTexCoord4iv (int void*))
-
-  ;; void glMultiTexCoord4s( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q )
-  (define-function void glMultiTexCoord4s (int int int int int))
-
-  ;; void glMultiTexCoord4sv( GLenum target, const GLshort *v )
-  (define-function void glMultiTexCoord4sv (int void*))
-
-  ;; void glLoadTransposeMatrixd( const GLdouble *m ) /* void glLoadTransposeMatrixd( const GLdouble m[16] ) */
-  (define-function void glLoadTransposeMatrixd (void*))
-
-  ;; void glLoadTransposeMatrixf( const GLfloat *m ) /* void glLoadTransposeMatrixf( const GLfloat m[16] ) */
-  (define-function void glLoadTransposeMatrixf (void*))
-
-  ;; void glMultTransposeMatrixd( const GLdouble *m ) /* void glMultTransposeMatrixd( const GLdouble m[16] ) */
-  (define-function void glMultTransposeMatrixd (void*))
-
-  ;; void glMultTransposeMatrixf( const GLfloat *m ) /* void glMultTransposeMatrixf( const GLfloat m[16] ) */
-  (define-function void glMultTransposeMatrixf (void*))
-
-  ;; void glSampleCoverage( GLclampf value, GLboolean invert )
-  (define-function void glSampleCoverage (float int))
-
-  ;;;; OpenGL 1.3
-
+  (define-cdecl void glColorTableParameterfv (unsigned-int unsigned-int void*))
+  ;; void glCopyColorSubTable(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width)
+  (define-cdecl void glCopyColorSubTable (unsigned-int int int int int))
+  ;; void glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
+  (define-cdecl void glCopyColorTable (unsigned-int unsigned-int int int int))
+  ;; void glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid *table)
+  (define-cdecl void glGetColorTable (unsigned-int unsigned-int unsigned-int void*))
+  ;; void glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat *params)
+  (define-cdecl void glGetColorTableParameterfv (unsigned-int unsigned-int void*))
+  ;; void glGetColorTableParameteriv(GLenum target, GLenum pname, GLint *params)
+  (define-cdecl void glGetColorTableParameteriv (unsigned-int unsigned-int void*))
+  ;; void glBlendEquation(GLenum mode)
+  (define-cdecl void glBlendEquation (unsigned-int))
+  ;; void glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+  (define-cdecl void glBlendColor (float float float float))
+  ;; void glHistogram(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink)
+  (define-cdecl void glHistogram (unsigned-int int unsigned-int uint8_t))
+  ;; void glResetHistogram(GLenum target)
+  (define-cdecl void glResetHistogram (unsigned-int))
+  ;; void glGetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values)
+  (define-cdecl void glGetHistogram (unsigned-int uint8_t unsigned-int unsigned-int void*))
+  ;; void glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
+  (define-cdecl void glGetHistogramParameterfv (unsigned-int unsigned-int void*))
+  ;; void glGetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
+  (define-cdecl void glGetHistogramParameteriv (unsigned-int unsigned-int void*))
+  ;; void glMinmax(GLenum target, GLenum internalformat, GLboolean sink)
+  (define-cdecl void glMinmax (unsigned-int unsigned-int uint8_t))
+  ;; void glResetMinmax(GLenum target)
+  (define-cdecl void glResetMinmax (unsigned-int))
+  ;; void glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum types, GLvoid *values)
+  (define-cdecl void glGetMinmax (unsigned-int uint8_t unsigned-int unsigned-int void*))
+  ;; void glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
+  (define-cdecl void glGetMinmaxParameterfv (unsigned-int unsigned-int void*))
+  ;; void glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
+  (define-cdecl void glGetMinmaxParameteriv (unsigned-int unsigned-int void*))
+  ;; void glConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image)
+  (define-cdecl void glConvolutionFilter1D (unsigned-int unsigned-int int unsigned-int unsigned-int void*))
+  ;; void glConvolutionFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image)
+  (define-cdecl void glConvolutionFilter2D (unsigned-int unsigned-int int int unsigned-int unsigned-int void*))
+  ;; void glConvolutionParameterf(GLenum target, GLenum pname, GLfloat params)
+  (define-cdecl void glConvolutionParameterf (unsigned-int unsigned-int float))
+  ;; void glConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
+  (define-cdecl void glConvolutionParameterfv (unsigned-int unsigned-int void*))
+  ;; void glConvolutionParameteri(GLenum target, GLenum pname, GLint params)
+  (define-cdecl void glConvolutionParameteri (unsigned-int unsigned-int int))
+  ;; void glConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
+  (define-cdecl void glConvolutionParameteriv (unsigned-int unsigned-int void*))
+  ;; void glCopyConvolutionFilter1D(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
+  (define-cdecl void glCopyConvolutionFilter1D (unsigned-int unsigned-int int int int))
+  ;; void glCopyConvolutionFilter2D(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height)
+  (define-cdecl void glCopyConvolutionFilter2D (unsigned-int unsigned-int int int int int))
+  ;; void glGetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *image)
+  (define-cdecl void glGetConvolutionFilter (unsigned-int unsigned-int unsigned-int void*))
+  ;; void glGetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
+  (define-cdecl void glGetConvolutionParameterfv (unsigned-int unsigned-int void*))
+  ;; void glGetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
+  (define-cdecl void glGetConvolutionParameteriv (unsigned-int unsigned-int void*))
+  ;; void glSeparableFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *row, const GLvoid *column)
+  (define-cdecl void glSeparableFilter2D (unsigned-int unsigned-int int int unsigned-int unsigned-int void* void*))
+  ;; void glGetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row, GLvoid *column, GLvoid *span)
+  (define-cdecl void glGetSeparableFilter (unsigned-int unsigned-int unsigned-int void* void* void*))
+  ;; void glActiveTexture(GLenum texture)
+  (define-cdecl void glActiveTexture (unsigned-int))
+  ;; void glClientActiveTexture(GLenum texture)
+  (define-cdecl void glClientActiveTexture (unsigned-int))
+  ;; void glCompressedTexImage1D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid *data)
+  (define-cdecl void glCompressedTexImage1D (unsigned-int int unsigned-int int int int void*))
+  ;; void glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data)
+  (define-cdecl void glCompressedTexImage2D (unsigned-int int unsigned-int int int int int void*))
+  ;; void glCompressedTexImage3D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data)
+  (define-cdecl void glCompressedTexImage3D (unsigned-int int unsigned-int int int int int int void*))
+  ;; void glCompressedTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid *data)
+  (define-cdecl void glCompressedTexSubImage1D (unsigned-int int int int unsigned-int int void*))
+  ;; void glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data)
+  (define-cdecl void glCompressedTexSubImage2D (unsigned-int int int int int int unsigned-int int void*))
+  ;; void glCompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data)
+  (define-cdecl void glCompressedTexSubImage3D (unsigned-int int int int int int int int unsigned-int int void*))
+  ;; void glGetCompressedTexImage(GLenum target, GLint lod, GLvoid *img)
+  (define-cdecl void glGetCompressedTexImage (unsigned-int int void*))
+  ;; void glMultiTexCoord1d(GLenum target, GLdouble s)
+  (define-cdecl void glMultiTexCoord1d (unsigned-int double))
+  ;; void glMultiTexCoord1dv(GLenum target, const GLdouble *v)
+  (define-cdecl void glMultiTexCoord1dv (unsigned-int void*))
+  ;; void glMultiTexCoord1f(GLenum target, GLfloat s)
+  (define-cdecl void glMultiTexCoord1f (unsigned-int float))
+  ;; void glMultiTexCoord1fv(GLenum target, const GLfloat *v)
+  (define-cdecl void glMultiTexCoord1fv (unsigned-int void*))
+  ;; void glMultiTexCoord1i(GLenum target, GLint s)
+  (define-cdecl void glMultiTexCoord1i (unsigned-int int))
+  ;; void glMultiTexCoord1iv(GLenum target, const GLint *v)
+  (define-cdecl void glMultiTexCoord1iv (unsigned-int void*))
+  ;; void glMultiTexCoord1s(GLenum target, GLshort s)
+  (define-cdecl void glMultiTexCoord1s (unsigned-int short))
+  ;; void glMultiTexCoord1sv(GLenum target, const GLshort *v)
+  (define-cdecl void glMultiTexCoord1sv (unsigned-int void*))
+  ;; void glMultiTexCoord2d(GLenum target, GLdouble s, GLdouble t)
+  (define-cdecl void glMultiTexCoord2d (unsigned-int double double))
+  ;; void glMultiTexCoord2dv(GLenum target, const GLdouble *v)
+  (define-cdecl void glMultiTexCoord2dv (unsigned-int void*))
+  ;; void glMultiTexCoord2f(GLenum target, GLfloat s, GLfloat t)
+  (define-cdecl void glMultiTexCoord2f (unsigned-int float float))
+  ;; void glMultiTexCoord2fv(GLenum target, const GLfloat *v)
+  (define-cdecl void glMultiTexCoord2fv (unsigned-int void*))
+  ;; void glMultiTexCoord2i(GLenum target, GLint s, GLint t)
+  (define-cdecl void glMultiTexCoord2i (unsigned-int int int))
+  ;; void glMultiTexCoord2iv(GLenum target, const GLint *v)
+  (define-cdecl void glMultiTexCoord2iv (unsigned-int void*))
+  ;; void glMultiTexCoord2s(GLenum target, GLshort s, GLshort t)
+  (define-cdecl void glMultiTexCoord2s (unsigned-int short short))
+  ;; void glMultiTexCoord2sv(GLenum target, const GLshort *v)
+  (define-cdecl void glMultiTexCoord2sv (unsigned-int void*))
+  ;; void glMultiTexCoord3d(GLenum target, GLdouble s, GLdouble t, GLdouble r)
+  (define-cdecl void glMultiTexCoord3d (unsigned-int double double double))
+  ;; void glMultiTexCoord3dv(GLenum target, const GLdouble *v)
+  (define-cdecl void glMultiTexCoord3dv (unsigned-int void*))
+  ;; void glMultiTexCoord3f(GLenum target, GLfloat s, GLfloat t, GLfloat r)
+  (define-cdecl void glMultiTexCoord3f (unsigned-int float float float))
+  ;; void glMultiTexCoord3fv(GLenum target, const GLfloat *v)
+  (define-cdecl void glMultiTexCoord3fv (unsigned-int void*))
+  ;; void glMultiTexCoord3i(GLenum target, GLint s, GLint t, GLint r)
+  (define-cdecl void glMultiTexCoord3i (unsigned-int int int int))
+  ;; void glMultiTexCoord3iv(GLenum target, const GLint *v)
+  (define-cdecl void glMultiTexCoord3iv (unsigned-int void*))
+  ;; void glMultiTexCoord3s(GLenum target, GLshort s, GLshort t, GLshort r)
+  (define-cdecl void glMultiTexCoord3s (unsigned-int short short short))
+  ;; void glMultiTexCoord3sv(GLenum target, const GLshort *v)
+  (define-cdecl void glMultiTexCoord3sv (unsigned-int void*))
+  ;; void glMultiTexCoord4d(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q)
+  (define-cdecl void glMultiTexCoord4d (unsigned-int double double double double))
+  ;; void glMultiTexCoord4dv(GLenum target, const GLdouble *v)
+  (define-cdecl void glMultiTexCoord4dv (unsigned-int void*))
+  ;; void glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
+  (define-cdecl void glMultiTexCoord4f (unsigned-int float float float float))
+  ;; void glMultiTexCoord4fv(GLenum target, const GLfloat *v)
+  (define-cdecl void glMultiTexCoord4fv (unsigned-int void*))
+  ;; void glMultiTexCoord4i(GLenum target, GLint s, GLint t, GLint r, GLint q)
+  (define-cdecl void glMultiTexCoord4i (unsigned-int int int int int))
+  ;; void glMultiTexCoord4iv(GLenum target, const GLint *v)
+  (define-cdecl void glMultiTexCoord4iv (unsigned-int void*))
+  ;; void glMultiTexCoord4s(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q)
+  (define-cdecl void glMultiTexCoord4s (unsigned-int short short short short))
+  ;; void glMultiTexCoord4sv(GLenum target, const GLshort *v)
+  (define-cdecl void glMultiTexCoord4sv (unsigned-int void*))
+  ;; void glLoadTransposeMatrixd(const GLdouble m[16])
+  (define-cdecl void glLoadTransposeMatrixd (double))
+  ;; void glLoadTransposeMatrixf(const GLfloat m[16])
+  (define-cdecl void glLoadTransposeMatrixf (float))
+  ;; void glMultTransposeMatrixd(const GLdouble m[16])
+  (define-cdecl void glMultTransposeMatrixd (double))
+  ;; void glMultTransposeMatrixf(const GLfloat m[16])
+  (define-cdecl void glMultTransposeMatrixf (float))
+  ;; void glSampleCoverage(GLclampf value, GLboolean invert)
+  (define-cdecl void glSampleCoverage (float uint8_t))
   ;; void glActiveTextureARB(GLenum texture)
-  (define-function void glActiveTextureARB (int))
-
+  (define-cdecl void glActiveTextureARB (unsigned-int))
   ;; void glClientActiveTextureARB(GLenum texture)
-  (define-function void glClientActiveTextureARB (int))
-
+  (define-cdecl void glClientActiveTextureARB (unsigned-int))
   ;; void glMultiTexCoord1dARB(GLenum target, GLdouble s)
-  (define-function void glMultiTexCoord1dARB (int double))
-
+  (define-cdecl void glMultiTexCoord1dARB (unsigned-int double))
   ;; void glMultiTexCoord1dvARB(GLenum target, const GLdouble *v)
-  (define-function void glMultiTexCoord1dvARB (int void*))
-
+  (define-cdecl void glMultiTexCoord1dvARB (unsigned-int void*))
   ;; void glMultiTexCoord1fARB(GLenum target, GLfloat s)
-  (define-function void glMultiTexCoord1fARB (int float))
-
+  (define-cdecl void glMultiTexCoord1fARB (unsigned-int float))
   ;; void glMultiTexCoord1fvARB(GLenum target, const GLfloat *v)
-  (define-function void glMultiTexCoord1fvARB (int void*))
-
+  (define-cdecl void glMultiTexCoord1fvARB (unsigned-int void*))
   ;; void glMultiTexCoord1iARB(GLenum target, GLint s)
-  (define-function void glMultiTexCoord1iARB (int int))
-
+  (define-cdecl void glMultiTexCoord1iARB (unsigned-int int))
   ;; void glMultiTexCoord1ivARB(GLenum target, const GLint *v)
-  (define-function void glMultiTexCoord1ivARB (int void*))
-
+  (define-cdecl void glMultiTexCoord1ivARB (unsigned-int void*))
   ;; void glMultiTexCoord1sARB(GLenum target, GLshort s)
-  (define-function void glMultiTexCoord1sARB (int int))
-
+  (define-cdecl void glMultiTexCoord1sARB (unsigned-int short))
   ;; void glMultiTexCoord1svARB(GLenum target, const GLshort *v)
-  (define-function void glMultiTexCoord1svARB (int void*))
-
+  (define-cdecl void glMultiTexCoord1svARB (unsigned-int void*))
   ;; void glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t)
-  (define-function void glMultiTexCoord2dARB (int double double))
-
+  (define-cdecl void glMultiTexCoord2dARB (unsigned-int double double))
   ;; void glMultiTexCoord2dvARB(GLenum target, const GLdouble *v)
-  (define-function void glMultiTexCoord2dvARB (int void*))
-
+  (define-cdecl void glMultiTexCoord2dvARB (unsigned-int void*))
   ;; void glMultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t)
-  (define-function void glMultiTexCoord2fARB (int float float))
-
+  (define-cdecl void glMultiTexCoord2fARB (unsigned-int float float))
   ;; void glMultiTexCoord2fvARB(GLenum target, const GLfloat *v)
-  (define-function void glMultiTexCoord2fvARB (int void*))
-
+  (define-cdecl void glMultiTexCoord2fvARB (unsigned-int void*))
   ;; void glMultiTexCoord2iARB(GLenum target, GLint s, GLint t)
-  (define-function void glMultiTexCoord2iARB (int int int))
-
+  (define-cdecl void glMultiTexCoord2iARB (unsigned-int int int))
   ;; void glMultiTexCoord2ivARB(GLenum target, const GLint *v)
-  (define-function void glMultiTexCoord2ivARB (int void*))
-
+  (define-cdecl void glMultiTexCoord2ivARB (unsigned-int void*))
   ;; void glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t)
-  (define-function void glMultiTexCoord2sARB (int int int))
-
+  (define-cdecl void glMultiTexCoord2sARB (unsigned-int short short))
   ;; void glMultiTexCoord2svARB(GLenum target, const GLshort *v)
-  (define-function void glMultiTexCoord2svARB (int void*))
-
+  (define-cdecl void glMultiTexCoord2svARB (unsigned-int void*))
   ;; void glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r)
-  (define-function void glMultiTexCoord3dARB (int double double double))
-
+  (define-cdecl void glMultiTexCoord3dARB (unsigned-int double double double))
   ;; void glMultiTexCoord3dvARB(GLenum target, const GLdouble *v)
-  (define-function void glMultiTexCoord3dvARB (int void*))
-
+  (define-cdecl void glMultiTexCoord3dvARB (unsigned-int void*))
   ;; void glMultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r)
-  (define-function void glMultiTexCoord3fARB (int float float float))
-
+  (define-cdecl void glMultiTexCoord3fARB (unsigned-int float float float))
   ;; void glMultiTexCoord3fvARB(GLenum target, const GLfloat *v)
-  (define-function void glMultiTexCoord3fvARB (int void*))
-
+  (define-cdecl void glMultiTexCoord3fvARB (unsigned-int void*))
   ;; void glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r)
-  (define-function void glMultiTexCoord3iARB (int int int int))
-
+  (define-cdecl void glMultiTexCoord3iARB (unsigned-int int int int))
   ;; void glMultiTexCoord3ivARB(GLenum target, const GLint *v)
-  (define-function void glMultiTexCoord3ivARB (int void*))
-
+  (define-cdecl void glMultiTexCoord3ivARB (unsigned-int void*))
   ;; void glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t, GLshort r)
-  (define-function void glMultiTexCoord3sARB (int int int int))
-
+  (define-cdecl void glMultiTexCoord3sARB (unsigned-int short short short))
   ;; void glMultiTexCoord3svARB(GLenum target, const GLshort *v)
-  (define-function void glMultiTexCoord3svARB (int void*))
-
+  (define-cdecl void glMultiTexCoord3svARB (unsigned-int void*))
   ;; void glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q)
-  (define-function void glMultiTexCoord4dARB (int double double double double))
-
+  (define-cdecl void glMultiTexCoord4dARB (unsigned-int double double double double))
   ;; void glMultiTexCoord4dvARB(GLenum target, const GLdouble *v)
-  (define-function void glMultiTexCoord4dvARB (int void*))
-
+  (define-cdecl void glMultiTexCoord4dvARB (unsigned-int void*))
   ;; void glMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
-  (define-function void glMultiTexCoord4fARB (int float float float float))
-
+  (define-cdecl void glMultiTexCoord4fARB (unsigned-int float float float float))
   ;; void glMultiTexCoord4fvARB(GLenum target, const GLfloat *v)
-  (define-function void glMultiTexCoord4fvARB (int void*))
-
+  (define-cdecl void glMultiTexCoord4fvARB (unsigned-int void*))
   ;; void glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r, GLint q)
-  (define-function void glMultiTexCoord4iARB (int int int int int))
-
+  (define-cdecl void glMultiTexCoord4iARB (unsigned-int int int int int))
   ;; void glMultiTexCoord4ivARB(GLenum target, const GLint *v)
-  (define-function void glMultiTexCoord4ivARB (int void*))
-
+  (define-cdecl void glMultiTexCoord4ivARB (unsigned-int void*))
   ;; void glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q)
-  (define-function void glMultiTexCoord4sARB (int int int int int))
-
+  (define-cdecl void glMultiTexCoord4sARB (unsigned-int short short short short))
   ;; void glMultiTexCoord4svARB(GLenum target, const GLshort *v)
-  (define-function void glMultiTexCoord4svARB (int void*))
-
-  ) ;[end]
+  (define-cdecl void glMultiTexCoord4svARB (unsigned-int void*))
+  ;; void glBlendEquationSeparateATI(GLenum modeRGB, GLenum modeA)
+  (define-cdecl void glBlendEquationSeparateATI (unsigned-int unsigned-int))
+) ;[end]

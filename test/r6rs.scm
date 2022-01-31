@@ -170,19 +170,19 @@
 (test-end)
 
 (test-begin "4.2.7 Strings")
-(test-equal "esc" (string->list "\a\b\t\n\v\f\r\"\\\      
+(test-equal "esc" (string->list "\a\b\t\n\v\f\r\"\\\
      \x41;Z")
             => (#\alarm #\backspace #\tab #\linefeed #\vtab #\page #\return #\" #\\ #\A #\Z))
-(test-equal "str 1" 
+(test-equal "str 1"
             (string->list "abc")
             => (#\a #\b #\c))
-(test-equal "str 2" 
+(test-equal "str 2"
             (string->list "\x41;bc")
             => (#\A #\b #\c))
-(test-equal "str 3" 
+(test-equal "str 3"
             (string->list "\x41; bc")
             => (#\A #\space #\b #\c))
-(test-equal "str 4" 
+(test-equal "str 4"
             (char->integer (car (string->list "\x41bc;")))
             => #x41BC)
 (test-equal "str 5" (get-datum (open-string-input-port (string #\" #\\ #\x #\4 #\1 #\; #\"))) => "A") ; "\x41;"
@@ -393,7 +393,7 @@ bc"
               (let ([z 3])
                 (define def0 list)
                 (def0 z)
-                (list z))) 
+                (list z)))
             => (3))
 (test-equal "expr 3"
             (let ()
@@ -401,7 +401,7 @@ bc"
                 (lambda (e)
                   (let ([+ -]) (+ 1 2))))
               (define + 2)
-              (foo)) 
+              (foo))
             => -1)
 (test-equal "expr 4"
             ((lambda (x)
@@ -411,7 +411,7 @@ bc"
                (defun even? (n) (or (= n 0) (odd? (- n 1))))
                (define-syntax odd?
                  (syntax-rules () [(_ n) (not (even? n))]))
-               (odd? (if (odd? x) (* x x) x))) 
+               (odd? (if (odd? x) (* x x) x)))
              4)
             => #f)
 (test-end)
@@ -488,7 +488,7 @@ bc"
 (test-eval! (define add4 (let ((x 4)) (lambda (y) (+ x y)))))
 (test-equal "proc 5" (add4 6) => 10)
 (test-equal "proc 6" ((lambda x x) 3 4 5 6) => (3 4 5 6))
-(test-equal "proc 7" ((lambda (x y . z) z) 3 4 5 6) => (5 6)) 
+(test-equal "proc 7" ((lambda (x y . z) z) 3 4 5 6) => (5 6))
 (test-end)
 
 (test-begin "11.4.3 Conditionals")
@@ -571,7 +571,7 @@ bc"
 (test-end)
 
 (test-begin "11.4.6 Binding constructs")
-(test-equal "let 1" 
+(test-equal "let 1"
             (let ((x 2) (y 3))
               (* x y))
             => 6)
@@ -665,7 +665,7 @@ bc"
             (let ((g (gen-counter)))
               (eqv? (gen-counter) (gen-counter)))
             => #f)
-(test-equal "eqv 10" 
+(test-equal "eqv 10"
             (letrec ((f (lambda () (if (eqv? f g) 'f 'both)))
                      (g (lambda () (if (eqv? f g) 'g 'both))))
               (eqv? f g))
@@ -801,7 +801,7 @@ bc"
 (test-equal "opr 21" (max 3 4) => 4)
 (test-equal "opr 22" (max 3.9 4) => 4.0)
 (test-equal "opr 23" (max +inf.0 1.01) => +inf.0)
-(test-equal "opr 24" (min -inf.0 1.01) => -inf.0)                                                 
+(test-equal "opr 24" (min -inf.0 1.01) => -inf.0)
 (test-equal "opr 25" (+ 3 4) => 7)
 (test-equal "opr 26" (+ 3) => 3)
 (test-equal "opr 27" (+) => 0)
@@ -821,7 +821,7 @@ bc"
 (test-equal "opr 41" (+ +inf.0 1.01) => +inf.0)
 (test-equal "opr 42" (+ -inf.0 1.01) => -inf.0)
 (test-equal "opr 43" (+ +inf.0 1.01) => +inf.0)
-(test-equal "opr 44" (+ -inf.0 1.01) => -inf.0)                               
+(test-equal "opr 44" (+ -inf.0 1.01) => -inf.0)
 (test-equal "opr 45" (nan? (+ +nan.0 1.01)) => #t)
 (test-equal "opr 46" (nan? (* +nan.0 1.01)) => #t)
 (test-equal "opr 47" (+ 0.0 -0.0) => 0.0)
@@ -874,7 +874,7 @@ bc"
 (test-equal "opr 92" (ceiling -inf.0) => -inf.0)
 (test-equal "opr 93" (nan? (round +nan.0)) => #t)
 (test-equal "opr 94" (rationalize (exact .3) 1/10) => 1/3)
-(test-equal "opr 95" (rationalize .3 1/10) => #i1/3)  
+(test-equal "opr 95" (rationalize .3 1/10) => #i1/3)
 (test-equal "opr 96" (rationalize +inf.0 3) => +inf.0)
 (test-equal "opr 97" (nan? (rationalize +inf.0 +inf.0)) => #t)
 (test-equal "opr 98" (rationalize 3 +inf.0) => 0.0)
@@ -884,11 +884,11 @@ bc"
 (test-equal "opr 102" (log 0.0) => -inf.0)
 (test-assertion-violation "log exn" (log 0))
 (test-equal "opr 103" (log -inf.0) => +inf.0+3.141592653589793i)
-(test-equal "opr 104" (atan -inf.0) => -1.5707963267948965) 
-(test-equal "opr 105" (atan +inf.0) => 1.5707963267948965) 
-(test-equal "opr 106" (log -1.0+0.0i) => 0.0+3.141592653589793i) 
-(test-equal "opr 107" (log -1.0-0.0i) => 0.0-3.141592653589793i) 
-(test-equal "opr 108" (sqrt -5) => 0.0+2.23606797749979i) 
+(test-equal "opr 104" (atan -inf.0) => -1.5707963267948965)
+(test-equal "opr 105" (atan +inf.0) => 1.5707963267948965)
+(test-equal "opr 106" (log -1.0+0.0i) => 0.0+3.141592653589793i)
+(test-equal "opr 107" (log -1.0-0.0i) => 0.0-3.141592653589793i)
+(test-equal "opr 108" (sqrt -5) => 0.0+2.23606797749979i)
 (test-equal "opr 109" (sqrt +inf.0) => +inf.0)
 (test-equal "opr 110" (sqrt -inf.0) => +inf.0i)
 (test-equal "opr 111" (call-with-values (lambda () (exact-integer-sqrt 4)) list) => (2 0))
@@ -902,22 +902,22 @@ bc"
 (test-equal "opr unspec 2" (number->string (expt 0 -5+.0000312i)) => "+nan.0+nan.0i")
 (test-equal "opr 118" (expt 0 0) => 1)
 (test-equal "opr 119" (expt 0.0 0.0) => 1.0)
-(test-equal "opr 120" (make-rectangular 1.1 2.2) => 1.1+2.2i) 
-(test-equal "opr 121" (make-polar 1.1 2.2)  => 1.1@2.2)  
-(test-equal "opr 122" (real-part 1.1+2.2i) => 1.1) 
-(test-equal "opr 123" (imag-part 1.1+2.2i) => 2.2) 
-(test-equal "opr 124" (magnitude 1.1@2.2) => 1.1) 
-(test-equal "opr 125" (angle 1.1@2.2) => 2.2) 
-(test-equal "opr 126" (angle -1.0) => 3.141592653589793) 
-(test-equal "opr 127" (angle -1.0+0.0i) => 3.141592653589793) 
-(test-equal "opr 128" (angle -1.0-0.0i) => -3.141592653589793) 
+(test-equal "opr 120" (make-rectangular 1.1 2.2) => 1.1+2.2i)
+(test-equal "opr 121" (make-polar 1.1 2.2)  => 1.1@2.2)
+(test-equal "opr 122" (real-part 1.1+2.2i) => 1.1)
+(test-equal "opr 123" (imag-part 1.1+2.2i) => 2.2)
+(test-equal "opr 124" (magnitude 1.1@2.2) => 1.1)
+(test-equal "opr 125" (angle 1.1@2.2) => 2.2)
+(test-equal "opr 126" (angle -1.0) => 3.141592653589793)
+(test-equal "opr 127" (angle -1.0+0.0i) => 3.141592653589793)
+(test-equal "opr 128" (angle -1.0-0.0i) => -3.141592653589793)
 (test-equal "opr 129" (angle +inf.0) => 0.0)
-(test-equal "opr 130" (angle -inf.0) => 3.141592653589793) 
+(test-equal "opr 130" (angle -inf.0) => 3.141592653589793)
 (test-equal "opr 131" (magnitude (make-rectangular 1.0 +inf.0)) => +inf.0)
 (test-equal "opr 132" (magnitude (make-rectangular +inf.0 1.0)) => +inf.0)
 (test-equal "opr 133" (magnitude (make-rectangular 1.0 -inf.0)) => +inf.0)
 (test-equal "opr 134" (magnitude (make-rectangular -inf.0 1.0)) => +inf.0)
-(test-equal "opr 135" (angle -1) => 3.141592653589793)                   
+(test-equal "opr 135" (angle -1) => 3.141592653589793)
 (test-end)
 
 (test-begin "11.7.4.4 Numerical Input and Output")
@@ -963,7 +963,7 @@ bc"
 (test-assertion-violation "pair exn 1 " (car '()))               ;  &assertion exception
 (test-equal "pair 13" (cdr '((a) b c d)) => (b c d))
 (test-equal "pair 14" (cdr '(1 . 2)) => 2)
-(test-assertion-violation "pair exn 1" (cdr '()))               ;  &assertion exception                                    
+(test-assertion-violation "pair exn 1" (cdr '()))               ;  &assertion exception
 (test-equal "list 1" (null? '()) => #t)
 (test-equal "list 2" (null? '(1 . 2)) => #f)
 (test-equal "list 3" (list? '(a b c)) => #t)
@@ -986,7 +986,7 @@ bc"
 (test-equal "map 1" (map cadr '((a b) (d e) (g h))) => (b e h))
 (test-equal "map 2" (map (lambda (n) (expt n n)) '(1 2 3 4 5)) => (1 4 27 256 3125))
 (test-equal "map 3" (map + '(1 2 3) '(4 5 6)) => (5 7 9))
-(test-equal "map 4" 
+(test-equal "map 4"
             (let ((count 0))
               (map (lambda (ignored)
                      (set! count (+ count 1))
@@ -1030,7 +1030,7 @@ bc"
 (test-equal "char 3" (char<? #\z #\ß) => #t)
 (test-equal "char 4" (char<? #\z #\Z) => #f)
 (test-end)
-                           
+
 (test-begin "11.12 Strings")
 (test-equal "str 1" (string<? "z" "ß") => #t)
 (test-equal "str 2" (string<? "z" "zz") => #t)
@@ -1041,7 +1041,7 @@ bc"
 (test-equal "vect 1" '#(0 (2 2 2 2) "Anna") => #(0 (2 2 2 2) "Anna"))
 (test-equal "vect 2" (vector 'a 'b 'c) => #(a b c))
 (test-equal "vect 3" (vector-ref '#(1 1 2 3 5 8 13 21) 5) => 8)
-(test-equal "vect 4" 
+(test-equal "vect 4"
             (let ((vec (vector 0 '(2 2 2 2) "Anna")))
               (vector-set! vec 1 '("Sue" "Sue"))
               vec)
@@ -1077,7 +1077,7 @@ bc"
                 (lambda args
                   (f (apply g args))))))
 (test-equal "ctrl 2" ((compose sqrt *) 12 75) => 30)
-(test-equal "ctrl 3" 
+(test-equal "ctrl 3"
             (call-with-current-continuation
              (lambda (exit)
                (for-each (lambda (x)
@@ -1135,7 +1135,7 @@ bc"
               n)
             => 1)
 
-(test-equal "ctrl 11" 
+(test-equal "ctrl 11"
             (let ((n 0))
               (call-with-current-continuation
                (lambda (k)
@@ -1168,7 +1168,7 @@ bc"
         ((< (car numbers) 0)
          (loop (cdr numbers)
                nonneg
-               (cons (car numbers) neg))))) 
+               (cons (car numbers) neg)))))
  => ((6 1 3) (-5 -2)))
 (test-end)
 
@@ -1203,8 +1203,8 @@ bc"
                   (name2 'y))
               `(a `(b ,,name1 ,',name2 d) e))
             => (a `(b ,x ,'y d) e))
-                   
-(test-eval! (begin 
+
+(test-eval! (begin
              (define make (lambda () (let ((a 3)) `((1 2) ,a ,4 ,'five 6))))
              (define e1 (make))
              (define e2 (make))))
@@ -1309,4 +1309,3 @@ bc"
 (test-equal "mac 5" p.car => 15)
 (test-equal "mac 6" p => (15 . 5))
 (test-end)
-                             

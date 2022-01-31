@@ -1,39 +1,46 @@
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (define parent-exception-handler (make-parameter #f))
 
 (define raise
   (lambda (c)
-    (cond ((current-exception-handler)
-           => (lambda (proc)
-                (proc c)
-                (cond ((parent-exception-handler)
-                       => (lambda (proc)
-                            (proc (condition (make-non-continuable-violation)
-                                             (make-who-condition 'raise)
-                                             (make-message-condition "returned from non-continuable exception")
-                                             (make-irritants-condition (list c)))))))
-                (scheme-error "error in raise: returned from non-continuable exception~%~%irritants:~%~a" (describe-condition #f c)))))
+    (cond
+      ((current-exception-handler)
+       =>
+       (lambda (proc)
+         (proc c)
+         (cond
+           ((parent-exception-handler)
+            =>
+            (lambda (proc)
+              (proc
+                (condition
+                  (make-non-continuable-violation)
+                  (make-who-condition 'raise)
+                  (make-message-condition "returned from non-continuable exception")
+                  (make-irritants-condition (list c)))))))
+         (scheme-error
+           "error in raise: returned from non-continuable exception~%~%irritants:~%~a"
+           (describe-condition #f c)))))
     (scheme-error "error in raise: unhandled exception has occurred~%~%irritants:~%~a" (describe-condition #f c))))
 
 (define raise-continuable
   (lambda (c)
-    (cond ((current-exception-handler)
-           => (lambda (proc) (proc c)))
+    (cond ((current-exception-handler) => (lambda (proc) (proc c)))
           (else
-           (scheme-error "error in raise-continuable: unhandled exception has occurred~%~%irritants:~%~a" (describe-condition #f c))))))
+            (scheme-error
+              "error in raise-continuable: unhandled exception has occurred~%~%irritants:~%~a"
+              (describe-condition #f c))))))
 
 (define with-exception-handler
   (lambda (new thunk)
     (let ((parent (current-exception-handler)))
-      (parameterize
-          ((parent-exception-handler parent)
-           (current-exception-handler
-            (lambda (condition)
-              (parameterize ((current-exception-handler parent))
-                (new condition)))))
+      (parameterize ((parent-exception-handler parent)
+                     (current-exception-handler
+                       (lambda (condition)
+                         (parameterize ((current-exception-handler parent))
+                           (new condition)))))
         (thunk)))))
 
 (define assertion-violation
@@ -41,50 +48,64 @@
     (if (or (not who) (string? who) (symbol? who) (identifier? who))
         (if (string? message)
             (raise
-             (apply condition
-                    (filter values
-                            (list (make-assertion-violation)
-                                  (and who (make-who-condition who))
-                                  (make-message-condition message)
-                                  (make-irritants-condition irritants)))))
+              (apply
+                condition
+                (filter
+                  values
+                  (list
+                    (make-assertion-violation)
+                    (and who (make-who-condition who))
+                    (make-message-condition message)
+                    (make-irritants-condition irritants)))))
             (assertion-violation 'assertion-violation (wrong-type-argument-message "string" message 2)))
         (assertion-violation 'assertion-violation (wrong-type-argument-message "string, symbol, or #f" who 1)))))
 
 (define undefined-violation
   (lambda (who . message)
     (raise
-     (apply condition
-            (filter values
-                    (list (make-undefined-violation)
-                          (and who (make-who-condition who))
-                          (and (pair? message) (make-message-condition (car message)))))))))
+      (apply
+        condition
+        (filter
+          values
+          (list
+            (make-undefined-violation)
+            (and who (make-who-condition who))
+            (and (pair? message) (make-message-condition (car message)))))))))
 
 (define lexical-violation
   (lambda (who . message)
     (raise
-     (apply condition
-            (filter values
-                    (list (make-lexical-violation)
-                          (and who (make-who-condition who))
-                          (and (pair? message) (make-message-condition (car message)))))))))
+      (apply
+        condition
+        (filter
+          values
+          (list
+            (make-lexical-violation)
+            (and who (make-who-condition who))
+            (and (pair? message) (make-message-condition (car message)))))))))
 
 (define syntax-violation
   (lambda (who message form . subform)
     (if (or (not who) (string? who) (symbol? who) (identifier? who))
         (if (string? message)
             (raise
-             (apply condition
-                    (filter values
-                            (list (make-syntax-violation form (and (pair? subform) (car subform)))
-                                  (if who
-                                      (make-who-condition who)
-                                      (cond ((let ((obj (if (wrapped-syntax-object? form) (unwrap-syntax form) form)))
-                                               (cond ((identifier? obj) (original-id (syntax-object-expr obj)))
-                                                     ((and (pair? obj) (identifier? (car obj))) (original-id (syntax-object-expr (car obj))))
-                                                     (else #f)))
-                                             => make-who-condition)
-                                            (else #f)))
-                                  (make-message-condition message)))))
+              (apply
+                condition
+                (filter
+                  values
+                  (list
+                    (make-syntax-violation form (and (pair? subform) (car subform)))
+                    (if who
+                        (make-who-condition who)
+                        (cond ((let ((obj (if (wrapped-syntax-object? form) (unwrap-syntax form) form)))
+                                 (cond ((identifier? obj) (original-id (syntax-object-expr obj)))
+                                       ((and (pair? obj) (identifier? (car obj)))
+                                        (original-id (syntax-object-expr (car obj))))
+                                       (else #f)))
+                               =>
+                               make-who-condition)
+                              (else #f)))
+                    (make-message-condition message)))))
             (assertion-violation 'syntax-violation (wrong-type-argument-message "string" message 2)))
         (assertion-violation 'syntax-violation (wrong-type-argument-message "string, symbol, or #f" who 1)))))
 
@@ -93,57 +114,69 @@
     (if (or (not who) (string? who) (symbol? who) (identifier? who))
         (if (string? message)
             (raise
-             (apply condition
-                    (filter values
-                            (list (make-error)
-                                  (and who (make-who-condition who))
-                                  (make-message-condition message)
-                                  (make-irritants-condition irritants)))))
+              (apply
+                condition
+                (filter
+                  values
+                  (list
+                    (make-error)
+                    (and who (make-who-condition who))
+                    (make-message-condition message)
+                    (make-irritants-condition irritants)))))
             (assertion-violation 'error (wrong-type-argument-message "string" message 2)))
         (assertion-violation 'error (wrong-type-argument-message "string, symbol, or #f" who 1)))))
 
 (define implementation-restriction-violation
   (lambda (who message . irritants)
     (raise
-     (apply condition
-            (filter values
-                    (list (make-implementation-restriction-violation)
-                          (and who (make-who-condition who))
-                          (make-message-condition message)
-                          (and (pair? irritants) (make-irritants-condition irritants))))))))
+      (apply
+        condition
+        (filter
+          values
+          (list
+            (make-implementation-restriction-violation)
+            (and who (make-who-condition who))
+            (make-message-condition message)
+            (and (pair? irritants) (make-irritants-condition irritants))))))))
 
 (define undefined/syntax-violation
   (lambda (who message form . subform)
     (raise
-     (apply condition
-            (filter values
-                    (list (make-syntax-violation form (and (pair? subform) (car subform)))
-                          (make-undefined-violation)
-                          (and who (make-who-condition who))
-                          (make-message-condition message)))))))
+      (apply
+        condition
+        (filter
+          values
+          (list
+            (make-syntax-violation form (and (pair? subform) (car subform)))
+            (make-undefined-violation)
+            (and who (make-who-condition who))
+            (make-message-condition message)))))))
 
 (define assertion/syntax-violation
   (lambda (who message form . subform)
     (raise
-     (apply condition
-            (filter values
-                    (list (make-syntax-violation form (and (pair? subform) (car subform)))
-                          (make-assertion-violation)
-                          (and who (make-who-condition who))
-                          (make-message-condition message)))))))
+      (apply
+        condition
+        (filter
+          values
+          (list
+            (make-syntax-violation form (and (pair? subform) (car subform)))
+            (make-assertion-violation)
+            (and who (make-who-condition who))
+            (make-message-condition message)))))))
 
 #;(define scheme-error
-  (lambda args
-    (format #t "~!")
-    (let ((port (current-error-port)) (proc (current-exception-handler)))
-      (cond (proc (raise (apply format args)))
-            (else
-             (format port "~&~%")
-             (apply format port args)
-             (format port "~%")
-             (display-backtrace)
-             (format port "~%[exit]~%")
-             (exit #f))))))
+    (lambda args
+      (format #t "~!")
+      (let ((port (current-error-port)) (proc (current-exception-handler)))
+        (cond (proc (raise (apply format args)))
+              (else
+               (format port "~&~%")
+               (apply format port args)
+               (format port "~%")
+               (display-backtrace)
+               (format port "~%[exit]~%")
+               (exit #f))))))
 
 (define scheme-error
   (lambda args
@@ -159,45 +192,55 @@
 (define raise-i/o-filename-error
   (lambda (who message filename . irritants)
     (raise
-     (apply condition
-            (filter values
-                    (list (make-i/o-filename-error filename)
-                          (and who (make-who-condition who))
-                          (make-message-condition message)
-                          (and (pair? irritants) (make-irritants-condition irritants))))))))
+      (apply
+        condition
+        (filter
+          values
+          (list
+            (make-i/o-filename-error filename)
+            (and who (make-who-condition who))
+            (make-message-condition message)
+            (and (pair? irritants) (make-irritants-condition irritants))))))))
 
 (define raise-i/o-error
   (lambda (who message . irritants)
     (raise
-     (apply condition
-            (filter values
-                    (list (make-i/o-error)
-                          (and who (make-who-condition who))
-                          (make-message-condition message)
-                          (and (pair? irritants) (make-irritants-condition irritants))))))))
-
+      (apply
+        condition
+        (filter
+          values
+          (list
+            (make-i/o-error)
+            (and who (make-who-condition who))
+            (make-message-condition message)
+            (and (pair? irritants) (make-irritants-condition irritants))))))))
 
 (define raise-misc-i/o-error-with-port
   (lambda (constructor who message port . options)
     (raise
-     (apply condition
-            (filter values
-                    (list (apply constructor options)
-                          (and who (make-who-condition who))
-                          (make-message-condition message)
-                          (and port (make-i/o-port-error port))
-                          (make-irritants-condition (cons* port options))))))))
+      (apply
+        condition
+        (filter
+          values
+          (list
+            (apply constructor options)
+            (and who (make-who-condition who))
+            (make-message-condition message)
+            (and port (make-i/o-port-error port))
+            (make-irritants-condition (cons* port options))))))))
 
 (define raise-misc-i/o-error
   (lambda (constructor who message . options)
     (raise
-     (apply condition
-            (filter values
-                    (list (apply constructor options)
-                          (and who (make-who-condition who))
-                          (make-message-condition message)
-                          (and (pair? options)
-                               (make-irritants-condition options))))))))
+      (apply
+        condition
+        (filter
+          values
+          (list
+            (apply constructor options)
+            (and who (make-who-condition who))
+            (make-message-condition message)
+            (and (pair? options) (make-irritants-condition options))))))))
 
 (define raise-i/o-read-error
   (lambda (who message port)
