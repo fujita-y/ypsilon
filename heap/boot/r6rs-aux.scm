@@ -1,6 +1,5 @@
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (define max
   (lambda args
@@ -8,16 +7,11 @@
            (assertion-violation 'max "required at least 1, but 0 argument given"))
           ((real-valued? (car args))
            (let loop ((value (car args)) (x? (inexact? (car args))) (lst (cdr args)))
-             (cond ((null? lst)
-                    (if x? (inexact value) value))
+             (cond ((null? lst) (if x? (inexact value) value))
                    ((real-valued? (car lst))
-                    (loop (if (> (car lst) value) (car lst) value)
-                          (or x? (inexact? (car lst)))
-                          (cdr lst)))
-                   (else
-                    (assertion-violation 'max (format "expected real, but got ~s" (car lst)) args)))))
-          (else
-           (assertion-violation 'max (format "expected real, but got ~s" (car args)) args)))))
+                    (loop (if (> (car lst) value) (car lst) value) (or x? (inexact? (car lst))) (cdr lst)))
+                   (else (assertion-violation 'max (format "expected real, but got ~s" (car lst)) args)))))
+          (else (assertion-violation 'max (format "expected real, but got ~s" (car args)) args)))))
 
 (define min
   (lambda args
@@ -25,16 +19,11 @@
            (assertion-violation 'min "required at least 1, but 0 argument given"))
           ((real-valued? (car args))
            (let loop ((value (car args)) (x? (inexact? (car args))) (lst (cdr args)))
-             (cond ((null? lst)
-                    (if x? (inexact value) value))
+             (cond ((null? lst) (if x? (inexact value) value))
                    ((real-valued? (car lst))
-                    (loop (if (< (car lst) value) (car lst) value)
-                          (or x? (inexact? (car lst)))
-                          (cdr lst)))
-                   (else
-                    (assertion-violation 'min (format "expected real, but got ~s" (car lst)) args)))))
-          (else
-           (assertion-violation 'min (format "expected real, but got ~s" (car args)) args)))))
+                    (loop (if (< (car lst) value) (car lst) value) (or x? (inexact? (car lst))) (cdr lst)))
+                   (else (assertion-violation 'min (format "expected real, but got ~s" (car lst)) args)))))
+          (else (assertion-violation 'min (format "expected real, but got ~s" (car args)) args)))))
 
 (define gcd2
   (lambda (a b)
@@ -44,57 +33,52 @@
 
 (define gcd
   (lambda args
-    (for-each (lambda (a)
-                (or (integer-valued? a)
-                    (assertion-violation 'gcd (format "expected integer, but got ~s" a) args)))
-              args)
+    (for-each
+      (lambda (a)
+        (or (integer-valued? a) (assertion-violation 'gcd (format "expected integer, but got ~s" a) args)))
+      args)
     (let loop ((lst args))
       (case (length lst)
-        ((2) (gcd2 (car lst) (cadr lst)))
-        ((1) (abs (car lst)))
-        ((0) 0)
-        (else (loop (cons (gcd2 (car lst) (cadr lst)) (cddr lst))))))))
+            ((2) (gcd2 (car lst) (cadr lst)))
+            ((1) (abs (car lst)))
+            ((0) 0)
+            (else (loop (cons (gcd2 (car lst) (cadr lst)) (cddr lst))))))))
 
 (define lcm
   (lambda args
-
     (define lcm2
       (lambda (a b)
         (if (or (= a 0) (= b 0))
             (if (and (exact? a) (exact? b)) 0 0.0)
             (abs (* (quotient a (gcd2 a b)) b)))))
-
-    (for-each (lambda (a)
-                (or (integer-valued? a)
-                    (assertion-violation 'lcm (format "expected integer, but got ~s" a) args)))
-              args)
+    (for-each
+      (lambda (a) (or (integer-valued? a) (assertion-violation 'lcm (format "expected integer, but got ~s" a) args)))
+      args)
     (let loop ((lst args))
       (case (length lst)
-        ((2) (lcm2 (car lst) (cadr lst)))
-        ((1) (abs (car lst)))
-        ((0) 1)
-        (else (loop (cons (lcm2 (car lst) (cadr lst)) (cddr lst))))))))
+            ((2) (lcm2 (car lst) (cadr lst)))
+            ((1) (abs (car lst)))
+            ((0) 1)
+            (else (loop (cons (lcm2 (car lst) (cadr lst)) (cddr lst))))))))
 
 (define rationalize
   (lambda (x e)
     (or (real? x) (assertion-violation 'rationalize (format "expected real, but got ~s as argument 1" x) (list x e)))
     (or (real? e) (assertion-violation 'rationalize (format "expected real, but got ~s as argument 2" e) (list x e)))
-    (cond ((infinite? e)
-           (if (infinite? x) +nan.0 0.0))
+    (cond ((infinite? e) (if (infinite? x) +nan.0 0.0))
           ((= x 0) x)
           ((= x e) (- x e))
-          ((negative? x)
-           (- (rationalize (- x) e)))
+          ((negative? x) (- (rationalize (- x) e)))
           (else
-           (let ((e (abs e)))
-             (let loop ((bottom (- x e)) (top (+ x e)))
-               (cond ((= bottom top) bottom)
-                     (else
-                      (let ((x (ceiling bottom)))
-                        (cond ((< x top) x)
-                              (else
-                               (let ((a (- x 1)))
-                                 (+ a (/ 1 (loop (/ 1 (- top a)) (/ 1 (- bottom a)))))))))))))))))
+            (let ((e (abs e)))
+              (let loop ((bottom (- x e)) (top (+ x e)))
+                (cond ((= bottom top) bottom)
+                      (else
+                        (let ((x (ceiling bottom)))
+                          (cond ((< x top) x)
+                                (else
+                                  (let ((a (- x 1)))
+                                    (+ a (/ 1 (loop (/ 1 (- top a)) (/ 1 (- bottom a)))))))))))))))))
 
 (define string->list
   (lambda (s)
@@ -107,21 +91,18 @@
 
 (define map
   (lambda (proc lst1 . lst2)
-
     (define map-1
       (lambda (proc lst)
         (cond ((null? lst) '())
               (else
                (cons (proc (car lst))
                      (map-1 proc (cdr lst)))))))
-
     (define map-n
       (lambda (proc lst)
         (cond ((null? lst) '())
               (else
                (cons (apply proc (car lst))
                      (map-n proc (cdr lst)))))))
-
     (if (null? lst2)
         (if (list? lst1)
             (map-1 proc lst1)
@@ -133,25 +114,21 @@
 
 (define for-each
   (lambda (proc lst1 . lst2)
-    (define for-each-1 (lambda (proc lst)
-                         (if (null? lst)
-                             (unspecified)
-                             (begin
-                               (proc (car lst))
-                               (for-each-1 proc (cdr lst))))))
-    (define for-each-n (lambda (proc lst)
-                         (cond ((null? lst) (unspecified))
-                               (else
-                                (apply proc (car lst))
-                                (for-each-n proc (cdr lst))))))
+    (define for-each-1
+      (lambda (proc lst)
+        (if (null? lst)
+            (unspecified)
+            (begin (proc (car lst)) (for-each-1 proc (cdr lst))))))
+    (define for-each-n
+      (lambda (proc lst)
+        (cond ((null? lst) (unspecified))
+              (else (apply proc (car lst)) (for-each-n proc (cdr lst))))))
     (if (null? lst2)
         (if (list? lst1)
             (for-each-1 proc lst1)
             (assertion-violation 'for-each (wrong-type-argument-message "proper list" lst1 2) (cons* proc lst1 lst2)))
-        (cond ((apply list-transpose+ lst1 lst2)
-               => (lambda (lst) (for-each-n proc lst)))
-              (else
-               (assertion-violation 'for-each "expected same length proper lists" (cons* proc lst1 lst2)))))))
+        (cond ((apply list-transpose+ lst1 lst2) => (lambda (lst) (for-each-n proc lst)))
+              (else (assertion-violation 'for-each "expected same length proper lists" (cons* proc lst1 lst2)))))))
 
 (define vector-map
   (lambda (proc vec1 . vec2)

@@ -31,7 +31,7 @@
 (test-equal "char 22" (char-whitespace? #\x00A0) => #t)
 (test-equal "char 23" (char-upper-case? #\Σ) => #t)
 (test-equal "char 24" (char-lower-case? #\σ) => #t)
-(test-equal "char 25" (char-lower-case? #\x00AA) => #t)
+(test-equal "char 25" (char-lower-case? #\x00AA) => #f)  ;; Ll (5.0.0) -> Lo (12.1.0)
 (test-equal "char 26" (char-title-case? #\I) => #f)
 (test-equal "char 27" (char-title-case? #\x01C5) => #t)
 (test-equal "char 28" (char-general-category #\a) => Ll)
@@ -57,8 +57,8 @@
 (test-equal "str 15" (string-upcase "χαοσ") => "ΧΑΟΣ")
 (test-equal "str 16" (string-titlecase "kNock KNoCK") => "Knock Knock")
 (test-equal "str 17" (string-titlecase "who's there?") => "Who's There?")
-(test-equal "str 18" (string-titlecase "r6rs") => "R6rs") ; fix errarum in R6RS (fujita)
-(test-equal "str 19" (string-titlecase "R6RS") => "R6rs") ; fix errarum in R6RS (fujita)
+(test-equal "str 18" (string-titlecase "r6rs") => "R6rs") ; fix errarum in R6RS
+(test-equal "str 19" (string-titlecase "R6RS") => "R6rs") ; fix errarum in R6RS
 (test-equal "str 20" (string-ci<? "z" "Z") => #f)
 (test-equal "str 21" (string-ci=? "z" "Z") => #t)
 (test-equal "str 22" (string-ci=? "Straße" "Strasse") => #t)

@@ -279,7 +279,7 @@
    #;(rnrs programs (6))
    command-line
    exit
-   
+
    #;(rnrs arithmetic fixnums (6))
    fixnum?
    fixnum-width
@@ -376,7 +376,7 @@
    fixnum->flonum
    &no-infinities make-no-infinities-violation no-infinities-violation?
    &no-nans make-no-nans-violation no-nans-violation?
-   
+
    #;(rnrs arithmetic bitwise (6))
    bitwise-not
    bitwise-and
@@ -448,6 +448,4 @@
           (rnrs arithmetic bitwise (6))
           (rnrs syntax-case (6))
           (rnrs hashtables (6))
-          (rnrs enums (6)))
-
-  ) ;[end]
+          (rnrs enums (6))))

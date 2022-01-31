@@ -1,0 +1,55 @@
+;; ./ypsilon --r6rs --top-level-program demo/widget-demo.scm
+
+(import (core)
+        (ypsilon glcorearb)
+        (ypsilon glfw)
+        (ypsilon view)
+        (ypsilon widget)
+        (ypsilon c-ffi)
+        (ypsilon c-types))
+
+(define error-callback
+  (lambda (error description)
+    (format #t "error: ~a~%~!" (utf8->string (make-bytevector-mapping description 1024)))))
+
+(define key-callback
+  (lambda (window key scancode action mods)
+    (and (= key GLFW_KEY_ESCAPE)
+          (= action GLFW_PRESS)
+          (glfwSetWindowShouldClose window GLFW_TRUE))))
+
+(define main
+  (lambda ()
+    (glfwSetErrorCallback (c-callback void (int void*) error-callback))
+    (let ((window (init-window 512 192 "Ypsilon")))
+      (glfwSetKeyCallback window (c-callback void (void* int int int int) key-callback))
+      (glfwMakeContextCurrent window)
+      (glfwSwapInterval 1)
+      (glEnable GL_BLEND)
+      (glBlendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
+      (let ()
+        (define widget0 (make-text-widget "demo/Roboto-Regular.ttf" 300))
+        (define m (make-bytevector 64))
+        (define p (make-bytevector 64))
+        (define mvp (make-bytevector 64))
+        (define width (make-c-int 0))
+        (define height (make-c-int 0))
+        (let loop ()
+          (cond ((> (glfwWindowShouldClose window) 0)
+                 (glfwDestroyWindow window) (glfwTerminate) (exit 0))
+                (else
+                 (glfwGetFramebufferSize window width height)
+                 (glViewport 0 0 (c-int-ref width) (c-int-ref height))
+                 (let ((ratio (/ (inexact (c-int-ref width)) (inexact (c-int-ref height)))))
+                   (mat4x4-ortho p (- ratio) ratio -1 1 1 -1))
+                 (mat4x4-identity m)
+                 (mat4x4-rotate m m 0 0 -1 (glfwGetTime))
+                 (mat4x4-mul mvp p m)
+                 (glClear GL_COLOR_BUFFER_BIT)
+                 (widget0 mvp 0.2 1.0 0.4 1.0 -1.80  0.2 0.3 "The quick brown fox jumps")
+                 (widget0 mvp 0.2 1.0 0.4 1.0 -1.15 -0.2 0.3 "over the lazy dog.")
+                 (glfwSwapBuffers window)
+                 (glfwPollEvents)
+                 (loop))))))))
+
+(main)

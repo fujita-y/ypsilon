@@ -19,6 +19,13 @@
             (call-with-current-continuation (lambda (c) (fibc (1- (1- x)) c)))
             c))))
 
+(define (compile)
+  (closure-compile 1+)
+  (closure-compile 1-)
+  (closure-compile addc)
+  (closure-compile fibc)
+  (closure-compile main))
+
 (define (main)
   (run-benchmark
     "fibc"

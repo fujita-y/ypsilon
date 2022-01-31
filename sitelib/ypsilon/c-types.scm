@@ -1,12 +1,10 @@
 #!nobacktrace
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (library (ypsilon c-types)
   (export define-c-enum
           define-c-typedef
-          define-c-struct-type
           define-c-struct-methods
           c-sizeof
           c-coerce-void*
@@ -146,52 +144,53 @@
 
   (define bytevector-c-bool-ref
     (case sizeof:bool
-      ((1) (lambda (bv offset) (if (> (bytevector-c-uint8-ref bv offset) 0) 1 0)))
+      ((1) (lambda (bv offset) (if (> (bytevector-c-uint8-ref  bv offset) 0) 1 0)))
       ((4) (lambda (bv offset) (if (> (bytevector-c-uint32-ref bv offset) 0) 1 0)))
       ((8) (lambda (bv offset) (if (> (bytevector-c-uint64-ref bv offset) 0) 1 0)))
       (else (assertion-violation 'bytevector-c-bool-ref "internal inconsistency"))))
 
   (define bytevector-c-bool-set!
     (case sizeof:bool
-      ((1) (lambda (bv offset value) (bytevector-c-int8-set! bv offset (coerce-bool value))))
+      ((1) (lambda (bv offset value) (bytevector-c-int8-set!  bv offset (coerce-bool value))))
       ((4) (lambda (bv offset value) (bytevector-c-int32-set! bv offset (coerce-bool value))))
       ((8) (lambda (bv offset value) (bytevector-c-int64-set! bv offset (coerce-bool value))))
       (else (assertion-violation 'bytevector-c-bool-set! "internal inconsistency"))))
 
   (define primitive-syntax
     (let ((ht (make-eq-hashtable)))
-      (for-each (lambda (b) (hashtable-set! ht (car b) (cdr b)))
-                `((bytevector-c-int-ref . ,#'bytevector-c-int-ref)
-                  (bytevector-c-bool-ref . ,#'bytevector-c-bool-ref)
-                  (bytevector-c-long-ref . ,#'bytevector-c-long-ref)
-                  (bytevector-c-short-ref . ,#'bytevector-c-short-ref)
-                  (bytevector-c-void*-ref . ,#'bytevector-c-void*-ref)
-                  (bytevector-c-unsigned-int-ref . ,#'bytevector-c-unsigned-int-ref)
-                  (bytevector-c-unsigned-long-ref . ,#'bytevector-c-unsigned-long-ref)
-                  (bytevector-c-unsigned-short-ref . ,#'bytevector-c-unsigned-short-ref)
-                  (bytevector-c-float-ref . ,#'bytevector-c-float-ref)
-                  (bytevector-c-double-ref . ,#'bytevector-c-double-ref)
-                  (bytevector-c-int8-ref . ,#'bytevector-c-int8-ref)
-                  (bytevector-c-int16-ref . ,#'bytevector-c-int16-ref)
-                  (bytevector-c-int32-ref . ,#'bytevector-c-int32-ref)
-                  (bytevector-c-int64-ref . ,#'bytevector-c-int64-ref)
-                  (bytevector-c-uint8-ref . ,#'bytevector-c-uint8-ref)
-                  (bytevector-c-uint16-ref . ,#'bytevector-c-uint16-ref)
-                  (bytevector-c-uint32-ref . ,#'bytevector-c-uint32-ref)
-                  (bytevector-c-uint64-ref . ,#'bytevector-c-uint64-ref)
-                  (bytevector-c-bool-set! . ,#'bytevector-c-bool-set!)
-                  (bytevector-c-int-set! . ,#'bytevector-c-int-set!)
-                  (bytevector-c-long-set! . ,#'bytevector-c-long-set!)
-                  (bytevector-c-short-set! . ,#'bytevector-c-short-set!)
-                  (bytevector-c-void*-set! . ,#'bytevector-c-void*-set!)
-                  (bytevector-c-int8-set! . ,#'bytevector-c-int8-set!)
-                  (bytevector-c-int16-set! . ,#'bytevector-c-int16-set!)
-                  (bytevector-c-int32-set! . ,#'bytevector-c-int32-set!)
-                  (bytevector-c-int64-set! . ,#'bytevector-c-int64-set!)
-                  (bytevector-c-float-set! . ,#'bytevector-c-float-set!)
-                  (bytevector-c-double-set! . ,#'bytevector-c-double-set!)
-                  (make-bytevector . ,#'make-bytevector)
-                  (bytevector-copy! . ,#'bytevector-copy!)))
+      (for-each
+        (lambda (b) (hashtable-set! ht (car b) (cdr b)))
+        `((bytevector-c-int-ref            . ,#'bytevector-c-int-ref)
+          (bytevector-c-bool-ref           . ,#'bytevector-c-bool-ref)
+          (bytevector-c-long-ref           . ,#'bytevector-c-long-ref)
+          (bytevector-c-short-ref          . ,#'bytevector-c-short-ref)
+          (bytevector-c-void*-ref          . ,#'bytevector-c-void*-ref)
+          (bytevector-c-unsigned-int-ref   . ,#'bytevector-c-unsigned-int-ref)
+          (bytevector-c-unsigned-long-ref  . ,#'bytevector-c-unsigned-long-ref)
+          (bytevector-c-unsigned-short-ref . ,#'bytevector-c-unsigned-short-ref)
+          (bytevector-c-float-ref          . ,#'bytevector-c-float-ref)
+          (bytevector-c-double-ref         . ,#'bytevector-c-double-ref)
+          (bytevector-c-int8-ref           . ,#'bytevector-c-int8-ref)
+          (bytevector-c-int16-ref          . ,#'bytevector-c-int16-ref)
+          (bytevector-c-int32-ref          . ,#'bytevector-c-int32-ref)
+          (bytevector-c-int64-ref          . ,#'bytevector-c-int64-ref)
+          (bytevector-c-uint8-ref          . ,#'bytevector-c-uint8-ref)
+          (bytevector-c-uint16-ref         . ,#'bytevector-c-uint16-ref)
+          (bytevector-c-uint32-ref         . ,#'bytevector-c-uint32-ref)
+          (bytevector-c-uint64-ref         . ,#'bytevector-c-uint64-ref)
+          (bytevector-c-bool-set!          . ,#'bytevector-c-bool-set!)
+          (bytevector-c-int-set!           . ,#'bytevector-c-int-set!)
+          (bytevector-c-long-set!          . ,#'bytevector-c-long-set!)
+          (bytevector-c-short-set!         . ,#'bytevector-c-short-set!)
+          (bytevector-c-void*-set!         . ,#'bytevector-c-void*-set!)
+          (bytevector-c-int8-set!          . ,#'bytevector-c-int8-set!)
+          (bytevector-c-int16-set!         . ,#'bytevector-c-int16-set!)
+          (bytevector-c-int32-set!         . ,#'bytevector-c-int32-set!)
+          (bytevector-c-int64-set!         . ,#'bytevector-c-int64-set!)
+          (bytevector-c-float-set!         . ,#'bytevector-c-float-set!)
+          (bytevector-c-double-set!        . ,#'bytevector-c-double-set!)
+          (make-bytevector                 . ,#'make-bytevector)
+          (bytevector-copy!                . ,#'bytevector-copy!)))
       (lambda (id)
         (or (hashtable-ref ht id #f)
             (assertion-violation 'primitive-syntax "internal inconsistency")))))
@@ -201,42 +200,37 @@
       (for-each
        (lambda (desc)
          (destructuring-bind (type sizeof alignof accessor mutator) desc
-           (hashtable-set! ht
-                           type
-                           (list type
-                                 sizeof
-                                 alignof
-                                 (list 'primitive
-                                       accessor
-                                       mutator)))))
-       `((char 1 1 bytevector-c-uint8-ref bytevector-c-int8-set!)
-         (bool ,sizeof:bool ,alignof:bool bytevector-c-bool-ref bytevector-c-bool-set!)
-         (short ,sizeof:short ,alignof:short bytevector-c-short-ref bytevector-c-short-set!)
-         (int ,sizeof:int ,alignof:int bytevector-c-int-ref bytevector-c-int-set!)
-         (long ,sizeof:long ,alignof:long bytevector-c-long-ref bytevector-c-long-set!)
-         (long-long ,sizeof:long-long ,alignof:long-long bytevector-c-long-long-ref bytevector-c-long-long-set!)
-         (char* ,sizeof:void* ,alignof:void* bytevector-c-void*-ref bytevector-c-void*-set!)
-         (void* ,sizeof:void* ,alignof:void* bytevector-c-void*-ref bytevector-c-void*-set!)
-         (unsigned-short ,sizeof:short ,alignof:short bytevector-c-unsigned-short-ref bytevector-c-short-set!)
-         (unsigned-int ,sizeof:int ,alignof:int bytevector-c-unsigned-int-ref bytevector-c-int-set!)
-         (unsigned-long ,sizeof:long ,alignof:long bytevector-c-unsigned-long-ref bytevector-c-long-set!)
+           (hashtable-set! ht type (list type sizeof alignof (list 'primitive accessor mutator)))))
+       `((char               1                 1                  bytevector-c-uint8-ref              bytevector-c-int8-set!)
+         (bool               ,sizeof:bool      ,alignof:bool      bytevector-c-bool-ref               bytevector-c-bool-set!)
+         (short              ,sizeof:short     ,alignof:short     bytevector-c-short-ref              bytevector-c-short-set!)
+         (int                ,sizeof:int       ,alignof:int       bytevector-c-int-ref                bytevector-c-int-set!)
+         (long               ,sizeof:long      ,alignof:long      bytevector-c-long-ref               bytevector-c-long-set!)
+         (long-long          ,sizeof:long-long ,alignof:long-long bytevector-c-long-long-ref          bytevector-c-long-long-set!)
+         (char*              ,sizeof:void*     ,alignof:void*     bytevector-c-void*-ref              bytevector-c-void*-set!)
+         (void*              ,sizeof:void*     ,alignof:void*     bytevector-c-void*-ref              bytevector-c-void*-set!)
+         (unsigned-short     ,sizeof:short     ,alignof:short     bytevector-c-unsigned-short-ref     bytevector-c-short-set!)
+         (unsigned-int       ,sizeof:int       ,alignof:int       bytevector-c-unsigned-int-ref       bytevector-c-int-set!)
+         (unsigned-long      ,sizeof:long      ,alignof:long      bytevector-c-unsigned-long-ref      bytevector-c-long-set!)
          (unsigned-long-long ,sizeof:long-long ,alignof:long-long bytevector-c-unsigned-long-long-ref bytevector-c-long-long-set!)
-         (float 4 ,alignof:float bytevector-c-float-ref bytevector-c-float-set!)
-         (double 8 ,alignof:double bytevector-c-double-ref bytevector-c-double-set!)
-         (int8_t 1 ,alignof:int8_t bytevector-c-int8-ref bytevector-c-int8-set!)
-         (int16_t 2 ,alignof:int16_t bytevector-c-int16-ref bytevector-c-int16-set!)
-         (int32_t 4 ,alignof:int32_t bytevector-c-int32-ref bytevector-c-int32-set!)
-         (int64_t 8 ,alignof:int64_t bytevector-c-int64-ref bytevector-c-int64-set!)
-         (uint8_t 1 ,alignof:int8_t bytevector-c-uint8-ref bytevector-c-int8-set!)
-         (uint16_t 2 ,alignof:int16_t bytevector-c-uint16-ref bytevector-c-int16-set!)
-         (uint32_t 4 ,alignof:int32_t bytevector-c-uint32-ref bytevector-c-int32-set!)
-         (uint64_t 8 ,alignof:int64_t bytevector-c-uint64-ref bytevector-c-int64-set!)
-         (size_t ,sizeof:size_t ,alignof:size_t ,@(cond ((= sizeof:size_t sizeof:int)
-                                                         '(bytevector-c-unsigned-int-ref bytevector-c-int-set!))
-                                                        ((= sizeof:size_t sizeof:long)
-                                                         '(bytevector-c-unsigned-long-ref bytevector-c-long-set!))
-                                                        (else
-                                                         (assertion-violation 'primitive-types "internal inconsistency"))))))
+         (float              4                 ,alignof:float     bytevector-c-float-ref              bytevector-c-float-set!)
+         (double             8                 ,alignof:double    bytevector-c-double-ref             bytevector-c-double-set!)
+         (int8_t             1                 ,alignof:int8_t    bytevector-c-int8-ref               bytevector-c-int8-set!)
+         (int16_t            2                 ,alignof:int16_t   bytevector-c-int16-ref              bytevector-c-int16-set!)
+         (int32_t            4                 ,alignof:int32_t   bytevector-c-int32-ref              bytevector-c-int32-set!)
+         (int64_t            8                 ,alignof:int64_t   bytevector-c-int64-ref              bytevector-c-int64-set!)
+         (uint8_t            1                 ,alignof:int8_t    bytevector-c-uint8-ref              bytevector-c-int8-set!)
+         (uint16_t           2                 ,alignof:int16_t   bytevector-c-uint16-ref             bytevector-c-int16-set!)
+         (uint32_t           4                 ,alignof:int32_t   bytevector-c-uint32-ref             bytevector-c-int32-set!)
+         (uint64_t           8                 ,alignof:int64_t   bytevector-c-uint64-ref             bytevector-c-int64-set!)
+         (size_t             ,sizeof:size_t
+                             ,alignof:size_t
+                             ,@(cond ((= sizeof:size_t sizeof:int)
+                                      '(bytevector-c-unsigned-int-ref bytevector-c-int-set!))
+                                     ((= sizeof:size_t sizeof:long)
+                                      '(bytevector-c-unsigned-long-ref bytevector-c-long-set!))
+                                     (else
+                                      (assertion-violation 'primitive-types "internal inconsistency"))))))
       (hashtable-copy ht)))
 
   (define constructor-name
@@ -257,12 +251,6 @@
           (define #,(constructor-name stx struct-name)
             (lambda ()
               (make-bytevector #,struct-size))))))
-
-  #;(define make-constructor
-    (lambda (stx struct-name struct-size)
-      #`(define-syntax #,(constructor-name stx struct-name)
-          (syntax-rules ()
-            ((_) (make-bytevector #,struct-size))))))
 
   (define make-accessor/mutator
     (lambda (stx struct-name field-name index accessor mutator)
@@ -493,13 +481,6 @@
        (begin
          (c-struct-methods-1 type) ...))))
 
-  (define-syntax define-c-struct-type
-    (syntax-rules ()
-      ((_ type field-specs ...)
-       (begin
-         (define-c-typedef type (struct field-specs ...))
-         (define-c-struct-methods type)))))
-
   (define-syntax c-sizeof
     (lambda (x)
       (syntax-case x ()
@@ -518,7 +499,7 @@
     (syntax-rules ()
       ((_ var type)
        (make-bytevector-mapping var (c-sizeof type)))))
-  
+
   (define-syntax define-c-enum
     (lambda (x)
       (syntax-case x ()

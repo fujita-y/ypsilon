@@ -1,6 +1,5 @@
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (define extend-env
   (lambda (bindings env)
@@ -10,17 +9,14 @@
 
 (define env-lookup
   (lambda (env id)
-    (or (symbol? id)
-        (scheme-error "internal error: env-lookup: expect symbol but got ~s" id))
+    (or (symbol? id) (scheme-error "internal error: env-lookup: expect symbol but got ~s" id))
     (cond ((assq id env)
-           => (lambda (binding)
-                (cond ((import? (cdr binding))
-                       (let ((extern (cddr binding)))
-                         (core-hashtable-ref (current-macro-environment) extern extern)))
-                      (else
-                       (cdr binding)))))
-          (else
-           (core-hashtable-ref (current-macro-environment) id id)))))
+           =>
+           (lambda (binding)
+             (cond ((import? (cdr binding))
+                    (let ((extern (cddr binding))) (core-hashtable-ref (current-macro-environment) extern extern)))
+                   (else (cdr binding)))))
+          (else (core-hashtable-ref (current-macro-environment) id id)))))
 
 (define env-delete!
   (lambda (env id)
@@ -39,18 +35,14 @@
                      (else (cons na nd)))))
             ((renamed-id? lst)
              (let ((deno (env-lookup env lst)))
-               (cond ((special? deno)
-                      (cond ((eq? deno denote-_) '_)
-                            (else
-                             (core-primitive-name (original-id lst)))))
+               (cond ((special? deno) (cond ((eq? deno denote-_) '_) (else (core-primitive-name (original-id lst)))))
                      ((macro? deno)
                       (let ((id (original-id lst)))
                         (cond ((eq? deno (env-lookup env id)) id)
                               ((eq? deno (core-hashtable-ref (current-macro-environment) id #f)) id)
                               (else lst))))
                      (else lst))))
-            ((vector? lst)
-             (list->vector (map loop (vector->list lst))))
+            ((vector? lst) (list->vector (map loop (vector->list lst))))
             (else lst)))))
 
 (define lookup-lexical-name
@@ -62,35 +54,26 @@
 
 (define lookup-topmost-subst
   (lambda (id env)
-
     (define unrename-primitive-id
       (lambda (id)
         (if (and (eq? (symbol-contains id (current-primitive-prefix)) 0)
                  (core-hashtable-contains? (current-variable-environment) id))
-            (let ((name (symbol->string id)))
-              (string->symbol (substring name 1 (string-length name))))
+            (let ((name (symbol->string id))) (string->symbol (substring name 1 (string-length name))))
             id)))
-
     (if (symbol? id)
         (let ((deno (env-lookup env id)))
           (cond ((uninterned-symbol? deno)
                  (cond ((local-macro-symbol? deno) deno)
                        ((renamed-variable-id? deno) deno)
-                       ((eq? id deno)
-                        (unrename-primitive-id (original-id id)))
-                       (else
-                        (lookup-topmost-subst deno env))))
-                ((symbol? deno)
-                 (unrename-primitive-id (core-hashtable-ref (current-top-level-renames) deno deno)))
-                ((unbound? deno)
-                 (unrename-primitive-id (original-id id)))
+                       ((eq? id deno) (unrename-primitive-id (original-id id)))
+                       (else (lookup-topmost-subst deno env))))
+                ((symbol? deno) (unrename-primitive-id (core-hashtable-ref (current-top-level-renames) deno deno)))
+                ((unbound? deno) (unrename-primitive-id (original-id id)))
                 ((and (macro? deno) (assq deno env)) => cdr)
                 (else deno)))
         (let ((ren (syntax-object-renames id)))
           (if (pair? ren)
-              (if (symbol? (cdr ren))
-                  (lookup-topmost-subst (cdr ren) env)
-                  (cdr ren))
+              (if (symbol? (cdr ren)) (lookup-topmost-subst (cdr ren) env) (cdr ren))
               (lookup-topmost-subst (syntax-object-expr id) env))))))
 
 (define free-id=?
@@ -183,12 +166,10 @@
 (define core-env (make-core-hashtable))
 
 (let ()
-
   (define init-core-macro
     (lambda (id deno)
       (core-hashtable-set! core-env id deno)
       (core-hashtable-set! core-env (core-primitive-name id) deno)))
-
   (init-core-macro 'lambda            (make-special expand-lambda))
   (init-core-macro 'quote             (make-special expand-quote))
   (init-core-macro 'if                (make-special expand-if))
@@ -209,6 +190,7 @@
   (init-core-macro 'or                (make-special expand-or))
   (init-core-macro 'letrec*           (make-special expand-letrec*))
   (init-core-macro 'library           (make-special expand-library))
+  (init-core-macro 'define-library    (make-special expand-define-library))
   (init-core-macro 'let*-values       (make-special expand-let*-values))
   (init-core-macro 'let-values        (make-special expand-let-values))
   (init-core-macro 'syntax            (make-special expand-syntax))
@@ -222,7 +204,9 @@
   (init-core-macro '=>                (make-special unexpected-auxiliary-syntax))
   (init-core-macro '...               (make-special unexpected-auxiliary-syntax))
   (init-core-macro '_                 (make-special unexpected-auxiliary-syntax))
-  (init-core-macro 'import            (make-special expand-import)))
+  (init-core-macro 'import            (make-special expand-import))
+  (init-core-macro 'include           (make-special expand-include))
+  (init-core-macro 'include-ci        (make-special expand-include-ci)))
 
 (define denote-lambda           (core-hashtable-ref core-env 'lambda #f))
 (define denote-begin            (core-hashtable-ref core-env 'begin #f))
@@ -230,7 +214,6 @@
 (define denote-define-syntax    (core-hashtable-ref core-env 'define-syntax #f))
 (define denote-let-syntax       (core-hashtable-ref core-env 'let-syntax #f))
 (define denote-letrec-syntax    (core-hashtable-ref core-env 'letrec-syntax #f))
-(define denote-library          (core-hashtable-ref core-env 'library #f))
 (define denote-quasiquote       (core-hashtable-ref core-env 'quasiquote #f))
 (define denote-quote            (core-hashtable-ref core-env 'quote #f))
 (define denote-if               (core-hashtable-ref core-env 'if #f))
@@ -238,16 +221,10 @@
 (define denote-unquote          (core-hashtable-ref core-env 'unquote #f))
 (define denote-unquote-splicing (core-hashtable-ref core-env 'unquote-splicing #f))
 (define denote-let              (core-hashtable-ref core-env 'let #f))
-(define denote-letrec           (core-hashtable-ref core-env 'letrec #f))
 (define denote-let*             (core-hashtable-ref core-env 'let* #f))
 (define denote-cond             (core-hashtable-ref core-env 'cond #f))
-(define denote-case             (core-hashtable-ref core-env 'case #f))
-(define denote-do               (core-hashtable-ref core-env 'do #f))
-(define denote-and              (core-hashtable-ref core-env 'and #f))
 (define denote-or               (core-hashtable-ref core-env 'or #f))
 (define denote-letrec*          (core-hashtable-ref core-env 'letrec* #f))
-(define denote-let*-values      (core-hashtable-ref core-env 'let*-values #f))
-(define denote-let-values       (core-hashtable-ref core-env 'let-values #f))
 (define denote-syntax-quote     (core-hashtable-ref core-env 'syntax-quote #f))
 (define denote-syntax           (core-hashtable-ref core-env 'syntax #f))
 (define denote-syntax-case      (core-hashtable-ref core-env 'syntax-case #f))
@@ -256,16 +233,6 @@
 (define denote-=>               (core-hashtable-ref core-env '=> #f))
 (define denote-_                (core-hashtable-ref core-env '_ #f))
 (define denote-import           (core-hashtable-ref core-env 'import #f))
-
-(define denote-macro?
-  (lambda (env obj)
-    (and (symbol? obj)
-         (macro? (env-lookup env obj)))))
-
-(define denote-special?
-  (lambda (env obj)
-    (and (symbol? obj)
-         (special? (env-lookup env obj)))))
 
 (define denote-lambda?
   (lambda (env obj)
@@ -281,26 +248,6 @@
   (lambda (env obj)
     (and (symbol? obj)
          (eq? (env-lookup env obj) denote-let))))
-
-(define denote-define-syntax?
-  (lambda (env obj)
-    (and (symbol? obj)
-         (eq? (env-lookup env obj) denote-define-syntax))))
-
-(define denote-let-syntax?
-  (lambda (env obj)
-    (and (symbol? obj)
-         (eq? (env-lookup env obj) denote-let-syntax))))
-
-(define denote-letrec-syntax?
-  (lambda (env obj)
-    (and (symbol? obj)
-         (eq? (env-lookup env obj) denote-letrec-syntax))))
-
-(define denote-define?
-  (lambda (env obj)
-    (and (symbol? obj)
-         (eq? (env-lookup env obj) denote-define))))
 
 (define denote-quote?
   (lambda (env obj)
@@ -344,30 +291,18 @@
 
 (define private-primitives-environment
   (list
-   (cons '.LIST '.list)
-   (cons '.CONS '.cons)
-   (cons '.CONS* '.cons*)
-   (cons '.APPEND '.append)
-   (cons '.VECTOR '.vector)
-   (cons '.LIST->VECTOR '.list->vector)
-   (cons '.EQ? '.eq?)
-   (cons '.EQV? '.eqv?)
-   (cons '.MEMQ '.memq)
-   (cons '.MEMV '.memv)
-   (cons '.CALL-WITH-VALUES '.call-with-values)
-   (cons '.IDENTIFIER? '.identifier?)
-   (cons '.MAKE-VARIABLE-TRANSFORMER '.make-variable-transformer)
-   (cons '.UNSPECIFIED '.unspecified)
-   (cons '.QUOTE denote-quote)
-   (cons '.LET denote-let)
-   (cons '.LETREC* denote-letrec*)
-   (cons '.BEGIN denote-begin)
-   (cons '.LAMBDA denote-lambda)
-   (cons '.IF denote-if)
-   (cons '.OR denote-or)
-   (cons '.COND denote-cond)
-   (cons '.ELSE denote-else)
-   (cons '.SYNTAX denote-syntax)
-   (cons '.SYNTAX-CASE denote-syntax-case)))
-
+    (cons '|.list| '|.list|)
+    (cons '|.cons| '|.cons|)
+    (cons '|.cons*| '|.cons*|)
+    (cons '|.append| '|.append|)
+    (cons '|.vector| '|.vector|)
+    (cons '|.list->vector| '|.list->vector|)
+    (cons '|.eq?| '|.eq?|)
+    (cons '|.eqv?| '|.eqv?|)
+    (cons '|.memq| '|.memq|)
+    (cons '|.memv| '|.memv|)
+    (cons '|.call-with-values| '|.call-with-values|)
+    (cons '|.identifier?| '|.identifier?|)
+    (cons '|.make-variable-transformer| '|.make-variable-transformer|)
+    (cons '|.unspecified| '|.unspecified|)))
 (current-macro-environment core-env)

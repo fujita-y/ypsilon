@@ -6,6 +6,10 @@
     (FLOAT+ (fibfp (FLOAT- n 1.))
             (fibfp (FLOAT- n 2.)))))
 
+(define (compile)
+  (closure-compile fibfp)
+  (closure-compile main))
+
 (define (main . args)
   (run-benchmark
     "fibfp"

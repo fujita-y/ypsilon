@@ -5,7 +5,11 @@
     (if (< i 0)
       sum
       (loop (- i 1) (+ i sum)))))
- 
+
+(define (compile)
+  (closure-compile run)
+  (closure-compile main))
+
 (define (main . args)
   (run-benchmark
     "sum"

@@ -39,6 +39,11 @@
     (if (pt-in-poly2 xp yp -.5 -2.5) (set! count (+ count 1)))
     count))
 
+(define (compile)
+  (closure-compile pt-in-poly2)
+  (closure-compile run)
+  (closure-compile main))
+
 (define (main . args)
   (run-benchmark
     "pnpoly"

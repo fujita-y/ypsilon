@@ -1,6 +1,5 @@
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 #|
 
@@ -67,23 +66,19 @@
   (lambda (expr . port)
     (let ((port (if (pair? port) (car port) (current-output-port)))
           (n-more-lines (and (pretty-print-maximum-lines) (- (pretty-print-maximum-lines) 1))))
-
       (define indent-type1?
         (lambda (id)
-          (memq id '(library define define-syntax define-macro define-inline define-constant
-                      syntax-rules syntax-case
-                      with-syntax lambda let-syntax letrec-syntax
-                      let letrec let* letrec letrec* let-values let*-values
-                      destructuring-match parameterize))))
-
+          (memq id '(library define-library define define-syntax define-macro define-inline define-constant
+                     syntax-rules syntax-case
+                     with-syntax lambda let-syntax letrec-syntax
+                     let letrec let* letrec letrec* let-values let*-values
+                     destructuring-match parameterize))))
       (define indent-type2?
         (lambda (id)
-          (memq id '(if cond case and or set! import export cons map for-each exists for-all))))
-
+          (memq id '(if cond case and or set! import export cons map exists for-all)))) ; for-each
       (define indent-type3?
         (lambda (id)
           (memq id '(do let-optionals))))
-
       (define fits?
         (lambda (w lst)
           (and (>= w 0)
@@ -96,7 +91,6 @@
                      (((i _ ('.&GROUP . x)) . z) (fits? w `((,i .&FLAT ,x) ,@z)))
                      (((i m ('.&NEST j . x)) . z) (fits? w `((,(+ i j) ,m ,x) ,@z)))
                      (((i m (x . y)) . z) (fits? w `((,i ,m ,x) (,i ,m ,y) ,@z))))))))
-
       (define print
         (lambda (w k lst)
           (or (null? lst)
@@ -125,21 +119,20 @@
                  (print w k `((,(+ i j) ,m ,x) ,@z)))
                 (((i m (x . y)) . z)
                  (print w k `((,i ,m ,x) (,i ,m ,y) ,@z)))))))
-
       (define symbol->length
         (lambda (obj)
           (string-length (symbol->string obj))))
-
       (define parse-list
         (lambda (lst)
           (cond ((null? lst) '())
                 ((null? (cdr lst))
                  (list (parse (car lst))))
+                ((and (eq? (car lst) 'unquote) (pair? (cdr lst)) (null? (cddr lst)))
+                 (list "." #\; "," (parse (cadr lst))))
                 ((pair? (cdr lst))
                  (cons* (parse (car lst)) #\; (parse-list (cdr lst))))
                 (else
                  (list (parse (car lst)) #\; "." #\; (parse (cdr lst)))))))
-
       (define parse
         (lambda (obj)
           (cond ((pair? obj)
@@ -187,7 +180,6 @@
                  (format "~u" obj))
                 (else
                  (format "~s" obj)))))
-
       (if (cyclic-object? expr)
           (format port "~w" expr)
           (let ((width (pretty-print-line-length)))

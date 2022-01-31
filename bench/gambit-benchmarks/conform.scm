@@ -164,7 +164,7 @@
 (define (canonicalize-graph graph classes)
   (define (fix node)
     (define (fix-set object selector mutator)
-      (mutator object 
+      (mutator object
                (map (lambda (node)
                       (find-canonical-representative node classes))
                     (selector object))))
@@ -172,7 +172,7 @@
         (begin
           (fix-set node green-edges set-green-edges!)
           (fix-set node red-edges set-red-edges!)
-          (for-each 
+          (for-each
            (lambda (blue-edge)
              (set-arg-node! blue-edge
                             (find-canonical-representative (arg-node blue-edge) classes))
@@ -316,11 +316,11 @@
 
 (define (find-canonical-representative element classification)
   (let loop ((classes classification))
-    (cond ((null? classes) (fatal-error "Can't classify" element)) 
+    (cond ((null? classes) (fatal-error "Can't classify" element))
           ((memq element (car classes)) (car (car classes)))
           (else (loop (cdr classes))))))
 
-; Reduce a graph by taking only one member of each equivalence 
+; Reduce a graph by taking only one member of each equivalence
 ; class and canonicalizing all outbound pointers
 
 (define (reduce graph)
@@ -345,7 +345,7 @@
         (set-cdr! table (cons (cons x (make-singleton-table y value))
                               (cdr table))))))
 
-;; MEET/JOIN 
+;; MEET/JOIN
 ; These update the graph when computing the node for node1*node2
 
 (define (blue-edge-operate arg-fn res-fn graph op sig1 sig2)
@@ -449,6 +449,56 @@
   (setup)
   (map name
        (graph-nodes (make-lattice (make-graph a b c d any-node none-node) #f))))
+
+(define (compile)
+  (closure-compile sort-list)
+  (closure-compile adjoin)
+  (closure-compile eliminate)
+  (closure-compile intersect)
+  (closure-compile union)
+  (closure-compile internal-node-name)
+  (closure-compile internal-node-green-edges)
+  (closure-compile internal-node-red-edges )
+  (closure-compile internal-node-blue-edges)
+  (closure-compile set-internal-node-name!)
+  (closure-compile set-internal-node-green-edges!)
+  (closure-compile set-internal-node-red-edges!)
+  (closure-compile set-internal-node-blue-edges!)
+  (closure-compile make-node)
+  (closure-compile copy-node)
+  (closure-compile make-edge-getter)
+  (closure-compile make-edge-setter)
+  (closure-compile lookup-op)
+  (closure-compile has-op?)
+  (closure-compile internal-graph-nodes)
+  (closure-compile internal-graph-already-met)
+  (closure-compile internal-graph-already-joined)
+  (closure-compile set-internal-graph-nodes!)
+  (closure-compile make-graph)
+  (closure-compile add-graph-nodes!)
+  (closure-compile copy-graph)
+  (closure-compile clean-graph)
+  (closure-compile canonicalize-graph)
+  (closure-compile green-edge?)
+  (closure-compile red-edge?)
+  (closure-compile sig)
+  (closure-compile arg)
+  (closure-compile res)
+  (closure-compile conforms?)
+  (closure-compile equivalent?)
+  (closure-compile classify)
+  (closure-compile find-canonical-representative)
+  (closure-compile reduce)
+  (closure-compile make-empty-table)
+  (closure-compile lookup)
+  (closure-compile insert!)
+  (closure-compile blue-edge-operate)
+  (closure-compile meet)
+  (closure-compile join)
+  (closure-compile make-lattice)
+  (closure-compile setup)
+  (closure-compile test)
+  (closure-compile main))
 
 (define (main . args)
   (run-benchmark

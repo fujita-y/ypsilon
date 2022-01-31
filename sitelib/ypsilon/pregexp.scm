@@ -1,6 +1,6 @@
 #!nobacktrace
-;;; porting 'portable regular expressions for scheme' to ypsilon -- y.fujita.lwp
-;;; (define *pregexp-space-sensitive?* #t) => (define-thread-variable *pregexp-space-sensitive?* #t)
+;;; porting 'portable regular expressions for scheme'
+;;; (define *pregexp-space-sensitive?* #t) => (define-mutable-variable *pregexp-space-sensitive?* #t)
 
 (library (ypsilon pregexp)
   (export pregexp
@@ -10,14 +10,22 @@
           pregexp-replace
           pregexp-replace*
           pregexp-quote)
-  (import (core) (ypsilon concurrent))
+  (import (core))
 
-;pregexp.scm
-;Portable regular expressions for Scheme
-;Dorai Sitaram
-;http://www.ccs.neu.edu/~dorai
-;dorai AT ccs DOT neu DOT edu
-;Oct 2, 1999
+  (define-syntax define-mutable-variable
+    (syntax-rules ()
+      ((_ var init)
+      (begin
+        (define param (make-parameter init))
+        (define-syntax var
+          (identifier-syntax (_ (param)) ((set! _ x) (param x))))))))
+
+  ;pregexp.scm
+  ;Portable regular expressions for Scheme
+  ;Dorai Sitaram
+  ;http://www.ccs.neu.edu/~dorai
+  ;dorai AT ccs DOT neu DOT edu
+  ;Oct 2, 1999
 
   (define *pregexp-version* 20050502) ;last change
 
@@ -38,7 +46,7 @@
      (+ 9 *pregexp-nul-char-int*)))
 
   ;(define *pregexp-space-sensitive?* #t)
-  (define-thread-variable *pregexp-space-sensitive?* #t)
+  (define-mutable-variable *pregexp-space-sensitive?* #t)
 
   (define pregexp-reverse!
     ;the useful reverse! isn't R5RS
@@ -767,9 +775,5 @@
                     (if (memv c '(#\\ #\. #\? #\* #\+ #\| #\^ #\$ #\[ #\] #\{ #\} #\( #\)))
                         (cons #\\ (cons c r))
                         (cons c r))))))))
-
-
-;(trace pregexp-read-pattern pregexp-read-char-list pregexp-read-piece)
-;eof
 
   ) ;[end]

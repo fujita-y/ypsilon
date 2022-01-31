@@ -545,6 +545,29 @@
 
 (setup)
 
+(define (compile)
+  (closure-compile lookup)
+  (closure-compile get)
+  (closure-compile put)
+  (closure-compile add-lemma)
+  (closure-compile add-lemma-lst)
+  (closure-compile apply-subst)
+  (closure-compile apply-subst-lst)
+  (closure-compile falsep)
+  (closure-compile one-way-unify1)
+  (closure-compile one-way-unify1-lst)
+  (closure-compile rewrite)
+  (closure-compile rewrite-args)
+  (closure-compile rewrite-with-lemmas)
+  (closure-compile setup)
+  (closure-compile tautologyp)
+  (closure-compile tautp)
+  (closure-compile test)
+  (closure-compile trans-of-implies)
+  (closure-compile trans-of-implies1)
+  (closure-compile truep)
+  (closure-compile main))
+
 (define (main . args)
   (run-benchmark
     "boyer"

@@ -1,6 +1,5 @@
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2008 Y.FUJITA, LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (import (core primitives))
 
@@ -11,7 +10,7 @@
         (core parameters)
         (core io)
         (core files)
-        (pregexp))
+        (ypsilon pregexp))
 
 (assert (string-contains (current-directory) (home-directory)))
 
@@ -66,6 +65,3 @@
 (convert "decompose")
 (convert "compose")
 (convert "compatibility")
-
-
-

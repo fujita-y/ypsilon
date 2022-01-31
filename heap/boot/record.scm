@@ -1,6 +1,5 @@
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (define nongenerative-record-types (make-core-hashtable))
 
@@ -90,50 +89,47 @@
 (define make-record-type-descriptor
   (lambda (name parent uid sealed? opaque? fields)
     (or (symbol? name)
-        (assertion-violation 'make-record-type-descriptor
-                             (wrong-type-argument-message "symbol" name 1)
-                             (list name parent uid sealed? opaque? fields)))
+        (assertion-violation
+          'make-record-type-descriptor
+          (wrong-type-argument-message "symbol" name 1)
+          (list name parent uid sealed? opaque? fields)))
     (or (vector? fields)
-        (assertion-violation 'make-record-type-descriptor
-                             (wrong-type-argument-message "vector" fields 6)
-                             (list name parent uid sealed? opaque? fields)))
+        (assertion-violation
+          'make-record-type-descriptor
+          (wrong-type-argument-message "vector" fields 6)
+          (list name parent uid sealed? opaque? fields)))
     (and parent
          (or (record-type-descriptor? parent)
-             (assertion-violation 'make-record-type-descriptor
-                                  (wrong-type-argument-message "record-type descriptor or #f" parent 2)
-                                  (list name parent uid sealed? opaque? fields)))
+             (assertion-violation
+               'make-record-type-descriptor
+               (wrong-type-argument-message "record-type descriptor or #f" parent 2)
+               (list name parent uid sealed? opaque? fields)))
          (and (rtd-sealed? parent)
               (assertion-violation 'make-record-type-descriptor "attempt to extend a sealed record-type" parent)))
-    (let ((opaque? (or opaque?
-                       (and parent
-                            (rtd-opaque? parent))))
-          (fields (map (lambda (field)
-                         (destructuring-match field
-                           (('mutable ?name)
-                            (cons #t ?name))
-                           (('immutable ?name)
-                            (cons #f ?name))
-                           (_
-                            (assertion-violation 'make-record-type-descriptor "malformed field specifiers" fields))))
-                       (vector->list fields))))
-      (cond ((not uid)
-             (make-rtd name parent #f sealed? opaque? fields))
+    (let ((opaque? (or opaque? (and parent (rtd-opaque? parent))))
+          (fields
+            (map (lambda (field)
+                   (destructuring-match field
+                     (('mutable ?name) (cons #t ?name))
+                     (('immutable ?name) (cons #f ?name))
+                     (_ (assertion-violation 'make-record-type-descriptor "malformed field specifiers" fields))))
+                 (vector->list fields))))
+      (cond ((not uid) (make-rtd name parent #f sealed? opaque? fields))
             ((core-hashtable-ref nongenerative-record-types uid #f)
-             => (lambda (current)
-                  (if (and (eqv? uid (rtd-uid current))
-                           (eqv? parent (rtd-parent current))
-                           (equal? fields (rtd-fields current)))
-                      current
-                      (assertion-violation 'make-record-type-descriptor
-                                           "mismatched subsequent call for nongenerative record-type"
-                                           (list name parent uid sealed? opaque? fields)))))
+             =>
+             (lambda (current)
+               (if (and (eqv? uid (rtd-uid current))
+                        (eqv? parent (rtd-parent current))
+                        (equal? fields (rtd-fields current)))
+                   current
+                   (assertion-violation
+                     'make-record-type-descriptor
+                     "mismatched subsequent call for nongenerative record-type"
+                     (list name parent uid sealed? opaque? fields)))))
             (else
-             (or (on-primordial-thread?)
-                 (assertion-violation 'thread
-                                      "child thread attempt to create nongenerative record-type"
-                                      (list name parent uid sealed? opaque? fields)))
-             (let ((new (make-rtd name parent uid sealed? opaque? fields)))
-               (core-hashtable-set! nongenerative-record-types uid new) new))))))
+              (let ((new (make-rtd name parent uid sealed? opaque? fields)))
+                (core-hashtable-set! nongenerative-record-types uid new)
+                new))))))
 
 (define make-rcd
   (lambda (rtd protocol custom-protocol? parent)
@@ -164,54 +160,62 @@
 (define make-record-constructor-descriptor
   (lambda (rtd parent protocol)
     (or (record-type-descriptor? rtd)
-        (assertion-violation 'make-record-constructor-descriptor
-                             (wrong-type-argument-message "record-type-descriptor" rtd 1)
-                             (list rtd parent protocol)))
+        (assertion-violation
+          'make-record-constructor-descriptor
+          (wrong-type-argument-message "record-type-descriptor" rtd 1)
+          (list rtd parent protocol)))
     (and parent
          (or (record-constructor-descriptor? parent)
-             (assertion-violation 'make-record-constructor-descriptor
-                                  (wrong-type-argument-message "record-constructor-descriptor or #f" parent 2)
-                                  (list rtd parent protocol))))
+             (assertion-violation
+               'make-record-constructor-descriptor
+               (wrong-type-argument-message "record-constructor-descriptor or #f" parent 2)
+               (list rtd parent protocol))))
     (and protocol
          (or (procedure? protocol)
-             (assertion-violation 'make-record-constructor-descriptor
-                                  (wrong-type-argument-message "procedure or #f" protocol 3)
-                                  (list rtd parent protocol))))
+             (assertion-violation
+               'make-record-constructor-descriptor
+               (wrong-type-argument-message "procedure or #f" protocol 3)
+               (list rtd parent protocol))))
     (and parent
          (or (rtd-parent rtd)
              (assertion-violation
-              'make-record-constructor-descriptor
-              "mismatch between rtd and parent constructor descriptor"
-              rtd parent protocol)))
+               'make-record-constructor-descriptor
+               "mismatch between rtd and parent constructor descriptor"
+               rtd
+               parent
+               protocol)))
     (and parent
          (rtd-parent rtd)
          (or (eq? (rcd-rtd parent) (rtd-parent rtd))
              (assertion-violation
-              'make-record-constructor-descriptor
-              "mismatch between rtd and parent constructor descriptor"
-              rtd parent protocol)))
+               'make-record-constructor-descriptor
+               "mismatch between rtd and parent constructor descriptor"
+               rtd
+               parent
+               protocol)))
     (and protocol
          (rtd-parent rtd)
          (or parent
              (assertion-violation
-              'make-record-constructor-descriptor
-              "expected #f for protocol since no parent constructor descriptor is provided"
-              rtd parent protocol)))
+               'make-record-constructor-descriptor
+               "expected #f for protocol since no parent constructor descriptor is provided"
+               rtd
+               parent
+               protocol)))
     (and parent
          (rcd-custom-protocol? parent)
          (or protocol
              (assertion-violation
-              'make-record-constructor-descriptor
-              "expected procedure for protocol since parent constructor descriptor have custom one"
-              rtd parent protocol)))
-
+               'make-record-constructor-descriptor
+               "expected procedure for protocol since parent constructor descriptor have custom one"
+               rtd
+               parent
+               protocol)))
     (let ((custom-protocol? (and protocol #t))
           (protocol (or protocol (default-protocol rtd)))
-          (parent (or parent
-                      (cond ((rtd-parent rtd)
-                             => (lambda (rtd)
-                                  (make-record-constructor-descriptor rtd #f #f)))
-                            (else #f)))))
+          (parent
+            (or parent
+                (cond ((rtd-parent rtd) => (lambda (rtd) (make-record-constructor-descriptor rtd #f #f))) (else #f)))))
       (make-rcd rtd protocol custom-protocol? parent))))
 
 (define record?
@@ -230,21 +234,21 @@
     ((rcd-protocol desc)
      ((let loop ((desc desc))
         (cond ((rcd-parent desc)
-               => (lambda (parent)
-                    (lambda extra-field-values
-                      (lambda protocol-args
-                        (lambda this-field-values
-                          (apply ((rcd-protocol parent)
-                                  (apply (loop parent)
-                                         (append this-field-values extra-field-values)))
-                                 protocol-args))))))
+               =>
+               (lambda (parent)
+                 (lambda extra-field-values
+                   (lambda protocol-args
+                     (lambda this-field-values
+                       (apply
+                         ((rcd-protocol parent) (apply (loop parent) (append this-field-values extra-field-values)))
+                         protocol-args))))))
               (else
-               (lambda extra-field-values
-                 (lambda this-field-values
-                   (let ((field-values (append this-field-values extra-field-values)))
-                     (if (= (length field-values) argc)
-                         (apply tuple rtd field-values)
-                         (assertion-violation "record constructor" "wrong number of arguments" field-values))))))))))))
+                (lambda extra-field-values
+                  (lambda this-field-values
+                    (let ((field-values (append this-field-values extra-field-values)))
+                      (if (= (length field-values) argc)
+                          (apply tuple rtd field-values)
+                          (assertion-violation "record constructor" "wrong number of arguments" field-values))))))))))))
 
 (define make-simple-conser
   (lambda (desc rtd argc)

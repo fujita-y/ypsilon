@@ -1,7 +1,6 @@
 #!core
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (library (core unicode-assistants)
 
@@ -21,7 +20,8 @@
           recursive-decomposition
           decompose
           sort-combining-marks!
-          compose)
+          compose
+          digit-value)
 
   (import (core primitives)
           (core io)
@@ -53,16 +53,9 @@
   (define-syntax autoload
     (syntax-rules ()
       ((_ var init)
-       (begin
-         (define temp (make-parameter #f))
-         (define var
-           (lambda ()
-             (if (on-primordial-thread?)
-                 (let ((value init))
-                   (set! var (lambda () value)) value)
-                 (or (temp)
-                     (let ((value init))
-                       (temp value) value)))))))))
+       (define var
+         (let ((cache #f))
+           (lambda () (or cache (begin (set! cache init) cache))))))))
 
   (autoload
    general-category-table-1
@@ -156,7 +149,11 @@
 
   (define numeric-property?
     (lambda (c)
-      (and (core-hashtable-ref (numeric-property-table) (char->integer c) #f) #t)))
+      (and (digit-value c) #t)))
+
+  (define digit-value
+    (lambda (c)
+      (core-hashtable-ref (numeric-property-table) (char->integer c) #f)))
 
   (define simple-uppercase
     (lambda (c)

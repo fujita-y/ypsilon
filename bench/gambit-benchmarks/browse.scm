@@ -180,6 +180,20 @@
               ((null? p))
               (match (car pats) (car p) '())))))
 
+(define (compile)
+  (closure-compile lookup)
+  (closure-compile get)
+  (closure-compile generate-symbol)
+  (closure-compile append-to-tail!)
+  (closure-compile tree-copy)
+  (closure-compile init)
+  (closure-compile browse-random)
+  (closure-compile randomize)
+  (closure-compile match)
+  (closure-compile browse)
+  (closure-compile investigate)
+  (closure-compile main))
+
 (define (main . args)
   (run-benchmark
     "browse"

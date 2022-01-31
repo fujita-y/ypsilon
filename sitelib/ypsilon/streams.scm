@@ -1,6 +1,5 @@
 #!nobacktrace
-;;; porting srfi-41 reference implementation to ypsilon
-;;; -- y.fujita.lwp
+;;; porting srfi-41 reference implementation
 
 #|
 Copyright (C) Philip L. Bewig (2007). All Rights Reserved.
@@ -86,7 +85,9 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEAL
   (define-syntax stream-lambda
     (syntax-rules ()
       ((stream-lambda formals body0 body1 ...)
-        (lambda formals (stream-lazy (let () body0 body1 ...)))))))
+        (lambda formals (stream-lazy (let () body0 body1 ...))))))
+
+  ) ;[end]
 
 #|
 Copyright (C) Philip L. Bewig (2007). All Rights Reserved.
@@ -463,7 +464,9 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEAL
     (cond ((null? strms) (error 'stream-zip "no stream arguments"))
           ((exists (lambda (x) (not (stream? x))) strms)
             (error 'stream-zip "non-stream argument"))
-          (else (stream-zip strms)))))
+          (else (stream-zip strms))))
+
+  ) ;[end]
 
 #|
 Copyright (C) Philip L. Bewig (2007). All Rights Reserved.
@@ -491,6 +494,4 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEAL
           stream-iterate stream-length stream-let stream-map stream-match _
           stream-of stream-range stream-ref stream-reverse stream-scan stream-take
           stream-take-while stream-unfold stream-unfolds stream-zip)
-  (import (ypsilon streams primitive) (ypsilon streams derived))
-
-) ;[end]
+  (import (ypsilon streams primitive) (ypsilon streams derived)))

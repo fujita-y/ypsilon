@@ -1,12 +1,16 @@
 ;;; TAK -- A vanilla version of the TAKeuchi function.
- 
+
 (define (tak x y z)
   (if (not (< y x))
       z
       (tak (tak (- x 1) y z)
            (tak (- y 1) z x)
            (tak (- z 1) x y))))
- 
+
+(define (compile)
+  (closure-compile tak)
+  (closure-compile main))
+
 (define (main . args)
   (run-benchmark
     "tak"

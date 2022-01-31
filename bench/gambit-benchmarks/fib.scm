@@ -6,6 +6,10 @@
     (+ (fib (- n 1))
        (fib (- n 2)))))
 
+(define (compile)
+  (closure-compile fib)
+  (closure-compile main))
+
 (define (main . args)
   (run-benchmark
     "fib"

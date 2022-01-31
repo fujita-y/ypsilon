@@ -1,4 +1,2 @@
 #!nobacktrace
-(library (srfi srfi-28)
-  (export format)
-  (import (core)))
+(define-library (srfi srfi-28) (import (srfi 28)) (export format))

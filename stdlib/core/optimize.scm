@@ -1,7 +1,6 @@
 #!core
-;;; Ypsilon Scheme System
-;;; Copyright (c) 2004-2009 Y.FUJITA / LittleWing Company Limited.
-;;; See license.txt for terms and conditions of use.
+;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; See LICENSE file for terms and conditions of use.
 
 (library (core optimize)
 
@@ -11,23 +10,6 @@
           (core lists)
           (core destructuring)
           (core parameters))
-
-  (define-syntax define-inline-assistant
-    (syntax-rules ()
-      ((_ func () (args ...) (vars ...) . body)
-       (define-syntax func
-         (syntax-rules ()
-           ((_ args ...)
-            (let ((vars args) ...) . body)))))
-      ((_ func (e1 e2 ...) (args ...) . more)
-       (define-inline-assistant func (e2 ...) (temp args ...) . more))))
-
-  (define-syntax define-inline
-    (syntax-rules (lambda)
-      ((_ func (lambda (vars ...) body1 body2 ...))
-       (define-inline-assistant func (vars ...) () (vars ...) body1 body2 ...))
-      ((_ (func vars ...) body1 body2 ...)
-       (define-inline-assistant func (vars ...) () (vars ...) body1 body2 ...))))
 
   ;;; (define-syntax diagnostics (syntax-rules () ((_ form) form)))
   (define-syntax diagnostics (syntax-rules () ((_ _) #f)))
@@ -772,7 +754,7 @@
   (define transcribe-binding-construct
     (lambda (form lift subst)
 
-      (define-inline emit
+      (define emit
         (lambda (new)
           (cond ((eq? new form) new)
                 (else ((annotate-hook) new form) new))))
@@ -832,12 +814,12 @@
   (define transcribe
     (lambda (form lift subst)
 
-      (define-inline emit
+      (define emit
         (lambda (new)
           (cond ((eq? new form) new)
                 (else ((annotate-hook) new form) new))))
 
-      (define-inline annotate-closure
+      (define annotate-closure
         (lambda (new soruce)
           (cond ((eq? new soruce) new)
                 (else ((annotate-closure-hook) new soruce) new))))
@@ -887,12 +869,12 @@
   (define pretty
     (lambda (form)
 
-      (define-inline emit
+      (define emit
         (lambda (new)
           (cond ((eq? new form) new)
                 (else ((annotate-hook) new form) new))))
 
-      (define-inline annotate-closure
+      (define annotate-closure
         (lambda (new soruce)
           (cond ((eq? new soruce) new)
                 (else ((annotate-closure-hook) new soruce) new))))
