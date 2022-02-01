@@ -26,10 +26,10 @@ UNAME = $(shell uname -a)
 ifndef DATAMODEL
   ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
     DATAMODEL = ILP32
-    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=64
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=512
   else
     DATAMODEL = LP64
-    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=128
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=2048
   endif
 endif
 

@@ -36,7 +36,12 @@ set(YPSILON_SHARE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/share/ypsilon)
 set(YPSILON_EXTENSION_DIRECTORY ${CMAKE_INSTALL_PREFIX}/lib/ypsilon)
 add_compile_definitions(SYSTEM_SHARE_PATH="${YPSILON_SHARE_DIRECTORY}")
 add_compile_definitions(SYSTEM_EXTENSION_PATH="${YPSILON_EXTENSION_DIRECTORY}")
-add_compile_definitions(DEFAULT_HEAP_LIMIT=128)
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  add_compile_definitions(DEFAULT_HEAP_LIMIT=512)
+else()
+  add_compile_definitions(DEFAULT_HEAP_LIMIT=2048)
+endif()
 
 add_executable(
   ypsilon
