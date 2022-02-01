@@ -9,7 +9,7 @@ See [LICENSE](https://github.com/fujita-y/ypsilon/blob/master/LICENSE) for terms
 
 ### Versions
 
-Ypsilon have changed its design signigicantly in version 2. Checkout [version-0.9](https://github.com/fujita-y/ypsilon/tree/version-0.9) for original version.
+Ypsilon version 2 have major design changes. Former version is available at [version-0.9](https://github.com/fujita-y/ypsilon/tree/version-0.9).
 
 ### Requirements
 
