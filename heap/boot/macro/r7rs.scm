@@ -1,26 +1,26 @@
 ;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
 ;;; See LICENSE file for terms and conditions of use.
 
-(define feature-identifies
+(define feature-identifiers
   (make-parameter
     (cons*
       (if (= (architecture-feature 'sizeof:void*) 64) 'lp64 'ilp32)
       (string->symbol (string-append (symbol->string (native-endianness)) "-endian"))
-      '(r7rs exact-closed exact-complex ieee-float full-unicode ratios posix ypsilon ypsilon-1))))
+      '(r7rs exact-closed exact-complex ieee-float full-unicode ratios posix ypsilon))))
 
 (define fulfill-feature-requirements?
   (lambda (form spec)
     (let loop ((spec spec))
       (destructuring-match spec
-        ((? symbol? id) (memq id (feature-identifies)))
+        ((? symbol? id) (memq id (feature-identifiers)))
         (('and) #t)
         (('and clause . more)
-         (and (if (symbol? clause) (memq clause (feature-identifies)) (loop clause))
+         (and (if (symbol? clause) (memq clause (feature-identifiers)) (loop clause))
               (loop `(and ,@more))))
         (('or) #f)
         (('or clause . more)
          (or (if (symbol? clause)
-                 (memq clause (feature-identifies))
+                 (memq clause (feature-identifiers))
                  (loop clause))
              (loop `(or ,@more))))
         (('not) (syntax-violation 'cond-expand "malformed clause" (abbreviated-take-form form 4 8) spec))

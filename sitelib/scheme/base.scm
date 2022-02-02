@@ -425,7 +425,7 @@
 
     (define features
       (lambda ()
-        (feature-identifies)))
+        (feature-identifiers)))
 
     (define file-error?
       (lambda (obj)

@@ -578,7 +578,7 @@
                         last-n-pair
                         drop-last-n-pair
 
-                        feature-identifies
+                        feature-identifiers
                         fulfill-feature-requirements?
                         continuation-to-exit
                         ))

@@ -382,7 +382,7 @@
     expt
     extract-accumulated-bytevector
     extract-accumulated-string
-    feature-identifies
+    feature-identifiers
     fields
     file-directory?
     file-executable?
