@@ -657,10 +657,10 @@ loop:
 #if ENABLE_COMPILE_GLOC
       if (m_codegen && CLOSUREP(gloc->value)) {
         scm_closure_t closure = (scm_closure_t)gloc->value;
-        if (closure->code == NULL && !HDR_CLOSURE_INSPECTED(closure->hdr)) {
+        if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
           // printer_t prt(this, m_current_output);
           // prt.format("codegen: ~s~&", symbol);
-          closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_INSPECTED_SHIFT);
+          closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
           if (self_modifying(gloc, closure->pc)) {
             m_codegen->m_usage.skipped++;
           } else {

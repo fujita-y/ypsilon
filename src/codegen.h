@@ -14,16 +14,17 @@
 #include <llvm/IR/MDBuilder.h>
 #include <llvm/IR/Module.h>
 
-#define USE_LLVM_ATTRIBUTES     1
-#define USE_LLVM_OPTIMIZE       1
-#define USE_ADDRESS_TO_FUNCTION 1
-#define USE_ILOC_OPTIMIZE       1
-#define USE_ILOC_CACHE          1
-#define USE_REG_CACHE           1
+#define USE_LLVM_ATTRIBUTES      1
+#define USE_LLVM_OPTIMIZE        1
+#define USE_ADDRESS_TO_FUNCTION  1
+#define USE_ILOC_OPTIMIZE        1
+#define USE_ILOC_CACHE           1
+#define USE_REG_CACHE            1
+#define USE_PRECOMPILE_REFERENCE 1
 
-#define PRINT_IR                0
-#define DEBUG_CODEGEN           0
-#define VERBOSE_CODEGEN         0
+#define PRINT_IR                 0
+#define DEBUG_CODEGEN            0
+#define VERBOSE_CODEGEN          0
 
 class codegen_t {
   struct context_t;
@@ -147,6 +148,7 @@ class codegen_t {
   int calc_stack_size(scm_obj_t inst);
   int calc_iloc_index(context_t& ctx, scm_obj_t operand);
   int calc_iloc_index(context_t& ctx, intptr_t depth, intptr_t index);
+  void precompile_reference(scm_obj_t code);
   bool maybe_compile(scm_closure_t closure);
   void compile_each(scm_closure_t closure);
   llvm::AllocaInst* emit_alloca(context_t& ctx, llvm::Type* type);

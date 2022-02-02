@@ -538,18 +538,30 @@ thread_main_t codegen_t::compile_thread(void* param) {
           scoped_lock lock(codegen.m_compile_queue_lock);
           if (codegen.m_compile_queue.size()) {
             closure = codegen.m_compile_queue.back();
+          } else {
+            codegen.m_compile_thread_ready = true;
+            break;
           }
         }
-        if (closure) codegen.compile_each(closure);
+        if (closure->code != NULL) continue;
+#if USE_PRECOMPILE_REFERENCE
+        codegen.precompile_reference(closure->pc);
+        {
+          scoped_lock lock(codegen.m_compile_queue_lock);
+          if (codegen.m_compile_queue.size()) {
+            closure = codegen.m_compile_queue.back();
+          } else {
+            codegen.m_compile_thread_ready = true;
+            break;
+          }
+        }
+#endif
+        codegen.compile_each(closure);
         {
           scoped_lock lock(codegen.m_compile_queue_lock);
           codegen.m_compile_queue.erase(std::remove(codegen.m_compile_queue.begin(), codegen.m_compile_queue.end(), closure),
                                         codegen.m_compile_queue.end());
-          if (codegen.m_compile_queue.size() == 0) {
-            codegen.m_compile_thread_ready = true;
-          }
         }
-        if (codegen.m_compile_thread_ready) break;
       }
     }
 #if LLVM_VERSION_MAJOR >= 12
@@ -599,10 +611,53 @@ void codegen_t::compile(scm_closure_t closure) {
   }
 }
 
+void codegen_t::precompile_reference(scm_obj_t code) {
+  while (PAIRP(code)) {
+    scm_symbol_t symbol = (scm_symbol_t)CAAR(code);
+    assert(INHERENTSYMBOLP(symbol));
+    int opcode = HDR_SYMBOL_CODE(symbol->hdr);
+    assert(opcode < VMOP_MNEMNIC_COUNT);
+    scm_obj_t operands = (scm_obj_t)CDAR(code);
+    switch (opcode) {
+      case VMOP_APPLY_GLOC: {
+        scm_gloc_t gloc = (scm_gloc_t)CAR(operands);
+        if (CLOSUREP(gloc->value)) {
+          scm_closure_t closure = (scm_closure_t)gloc->value;
+          if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
+            scoped_lock lock(m_compile_queue_lock);
+            closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
+            m_compile_queue.push_back(closure);
+            m_usage.refs++;
+          }
+        }
+      } break;
+      case VMOP_PUSH_CLOSE_LOCAL:
+      case VMOP_EXTEND_ENCLOSE_LOCAL:
+      case VMOP_CLOSE:
+      case VMOP_RET_CLOSE:
+      case VMOP_PUSH_CLOSE:
+      case VMOP_EXTEND_ENCLOSE: {
+        precompile_reference(CDR(operands));
+      } break;
+      case VMOP_IF_TRUE:
+      case VMOP_IF_FALSE_CALL:
+      case VMOP_IF_NULLP:
+      case VMOP_IF_PAIRP:
+      case VMOP_IF_SYMBOLP:
+      case VMOP_IF_EQP:
+      case VMOP_CALL: {
+        precompile_reference(operands);
+        break;
+      }
+    }
+    code = CDR(code);
+  }
+}
+
 bool codegen_t::maybe_compile(scm_closure_t closure) {
-  if (closure->code == NULL && !HDR_CLOSURE_INSPECTED(closure->hdr)) {
+  if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
     scoped_lock lock(m_compile_queue_lock);
-    closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_INSPECTED_SHIFT);
+    closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
     m_compile_queue.push_back(closure);
     return true;
   }

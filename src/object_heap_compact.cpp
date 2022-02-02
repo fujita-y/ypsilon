@@ -238,7 +238,7 @@ static void resolve_collectible(void* obj, int size, void* desc) {
       closure->doc = heap->forward(closure->doc);
       closure->env = heap->interior_forward(closure->env);
 #if ENABLE_LLVM_JIT
-      closure->hdr = closure->hdr & ~MAKEBITS(1, HDR_CLOSURE_INSPECTED_SHIFT);
+      closure->hdr = closure->hdr & ~MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
       closure->code = NULL;
 #endif
     } break;

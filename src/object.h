@@ -497,11 +497,11 @@ struct vm_env_rec_t {
 #define HDR_BVECTOR_LITERAL_SHIFT         11
 #define HDR_BVECTOR_PINNED_SHIFT          12
 #define HDR_GLOC_UNINTERNED_SHIFT         11
-#define HDR_CLOSURE_INSPECTED_SHIFT       11
+#define HDR_CLOSURE_CODEGEN_SHIFT         11
 
 #define HDR_TC(hdr)                       (((hdr) >> 4) & TC_MASKBITS)
 #define HDR_CLOSURE_ARGS(hdr)             (((intptr_t)(hdr)) >> HDR_CLOSURE_ARGS_SHIFT)
-#define HDR_CLOSURE_INSPECTED(hdr)        (((hdr) >> HDR_CLOSURE_INSPECTED_SHIFT) & 1)
+#define HDR_CLOSURE_CODEGEN(hdr)          (((hdr) >> HDR_CLOSURE_CODEGEN_SHIFT) & 1)
 #define HDR_STRING_LITERAL(hdr)           (((hdr) >> HDR_STRING_LITERAL_SHIFT) & 1)
 #define HDR_STRING_TYPE(hdr)              (((hdr) >> HDR_STRING_TYPE_SHIFT) & 1)
 #define HDR_VALUES_COUNT(hdr)             (((uintptr_t)(hdr)) >> HDR_VALUES_COUNT_SHIFT)
