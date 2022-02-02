@@ -21,12 +21,12 @@ bool VM::self_modifying(scm_gloc_t gloc, scm_obj_t code) {
         if (gloc == (scm_gloc_t)CAR(operands)) return true;
       } break;
       case VMOP_PUSH_CLOSE_LOCAL:
-      case VMOP_EXTEND_ENCLOSE_LOCAL: {
-        case VMOP_CLOSE:
-        case VMOP_RET_CLOSE:
-        case VMOP_PUSH_CLOSE:
-        case VMOP_EXTEND_ENCLOSE:
-          if (self_modifying(gloc, CDR(operands))) return true;
+      case VMOP_EXTEND_ENCLOSE_LOCAL:
+      case VMOP_CLOSE:
+      case VMOP_RET_CLOSE:
+      case VMOP_PUSH_CLOSE:
+      case VMOP_EXTEND_ENCLOSE: {
+        if (self_modifying(gloc, CDR(operands))) return true;
       } break;
       case VMOP_IF_TRUE:
       case VMOP_IF_FALSE_CALL:
@@ -39,7 +39,6 @@ bool VM::self_modifying(scm_gloc_t gloc, scm_obj_t code) {
         break;
       }
     }
-    CAAR(code) = symbol_to_instruction(CAAR(code));
     code = CDR(code);
   }
   return false;
@@ -340,7 +339,6 @@ void VM::prebind_list(scm_obj_t code) {
         CDAR(code) = scm_undef;
         break;
     }
-    CAAR(code) = symbol_to_instruction(CAAR(code));
     code = CDR(code);
   }
 }
