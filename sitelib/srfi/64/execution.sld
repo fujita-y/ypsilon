@@ -1,3 +1,4 @@
+#!nobacktrace
 (define-library (srfi 64 execution)
   (import
    (scheme base)

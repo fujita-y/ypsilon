@@ -1,5 +1,6 @@
 #!nobacktrace
-(library (srfi :1)
+(define-library (scheme list)
+  (import (srfi 1))
   (export xcons
           cons*
           make-list
@@ -100,5 +101,4 @@
           lset-xor
           lset-xor!
           lset-diff+intersection
-          lset-diff+intersection!)
-  (import (srfi srfi-1)))
+          lset-diff+intersection!))

@@ -1,3 +1,4 @@
+#!nobacktrace
 (define-library (srfi 64 source-info)
   (import
    (scheme base)

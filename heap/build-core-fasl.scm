@@ -71,12 +71,7 @@
           (core unicode)
           (core hashtables)
           (core struct)
-          (core enums)
-          (rnrs r5rs)
-          (rnrs mutable-strings)
-          (rnrs mutable-pairs)
-          (rnrs eval)
-          (rnrs))
+          (core enums))
 
   (define put-fasl (parameterize ((current-environment (system-environment))) (top-level-value 'put-fasl)))
 
@@ -111,7 +106,7 @@
       "./core/struct.scm"
       "./core/optimize.scm"
       "./core.scm"
-
+#|
       "./rnrs/base.scm"
       "./rnrs/unicode.scm"
       "./rnrs/bytevectors.scm"
@@ -138,7 +133,6 @@
       "./rnrs/mutable-pairs.scm"
       "./rnrs/eval.scm"
       "./rnrs.scm"
-
       "./scheme/base.scm"
       "./scheme/case-lambda.scm"
       "./scheme/char.scm"
@@ -156,7 +150,7 @@
       "./scheme/repl.scm"
       "./scheme/time.scm"
       "./scheme/write.scm"
-
+|#
       ))
 
   (define compile-to

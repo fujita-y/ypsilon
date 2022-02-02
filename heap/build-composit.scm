@@ -28,8 +28,7 @@
           (core unicode)
           (core hashtables)
           (core struct)
-          (core enums)
-          (rnrs))
+          (core enums))
 
   (define target-file-name (format "~a/../stdlib/core.scm" (current-directory)))
 
@@ -57,8 +56,7 @@
       (core unicode)
       (core hashtables)
       (core struct)
-      (core enums)
-      (rnrs)))
+      (core enums)))
 
   (define exported (make-core-hashtable))
 
@@ -117,13 +115,13 @@
       (call-with-port
        (open-file-output-port target-file-name (file-options no-fail) (buffer-mode block) (native-transcoder))
        (lambda (out)
-         (format out "(library (core)~%~%")
+         (format out "(library (core)~%")
          (format out "  (export")
          (for-each (lambda (i) (format out "~%    ~a" i)) lst)
-         (format out ")~%~%")
+         (format out ")~%")
          (format out "  (import")
          (for-each (lambda (e) (format out "~%    ~a" e)) libraries)
-         (format out ")~%~%  ) ;[end]~%~!")
+         (format out "))~%~!")
          (format #t "~%~%~!")))))
 
   ) ;[end]

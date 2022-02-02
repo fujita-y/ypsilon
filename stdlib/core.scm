@@ -1,5 +1,4 @@
 (library (core)
-
   (export
     &assertion
     &condition
@@ -982,7 +981,6 @@
     write-char
     write-with-shared-structure
     zero?)
-
   (import
     (core primitives)
     (core optimize)
@@ -1005,7 +1003,4 @@
     (core unicode)
     (core hashtables)
     (core struct)
-    (core enums)
-    (rnrs))
-
-  ) ;[end]
+    (core enums)))
