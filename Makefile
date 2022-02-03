@@ -69,7 +69,7 @@ all: $(PROG) $(EXTS)
 $(PROG): $(OBJS)
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-install: all stdlib sitelib extension
+install: all sitelib
 	mkdir -p -m755 $(DESTDIR)$(PREFIX)/bin
 	cp $(PROG) $(DESTDIR)$(PREFIX)/bin/$(PROG)
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROG)
