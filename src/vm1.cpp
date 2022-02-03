@@ -3,7 +3,7 @@
 
 #include "core.h"
 #include "arith.h"
-#include "codegen.h"
+#include "digamma.h"
 #include "printer.h"
 #include "violation.h"
 #include "vm.h"
@@ -654,18 +654,16 @@ loop:
       m_value = gloc->value;
       if (m_value == scm_undef) goto ERROR_APPLY_GLOC;
 
-#if ENABLE_COMPILE_GLOC
-      if (m_codegen && CLOSUREP(gloc->value)) {
+#if ENABLE_CODEGEN_GLOC
+      if (m_digamma && CLOSUREP(gloc->value)) {
         scm_closure_t closure = (scm_closure_t)gloc->value;
         if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
-          // printer_t prt(this, m_current_output);
-          // prt.format("codegen: ~s~&", symbol);
           closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
           if (self_modifying(gloc, closure->pc)) {
-            m_codegen->m_usage.skipped++;
+            m_digamma->m_usage.skipped++;
           } else {
-            m_codegen->m_usage.globals++;
-            m_codegen->compile(closure);
+            m_digamma->m_usage.globals++;
+            m_digamma->codegen_closure(closure);
           }
         }
       }

@@ -1,8 +1,8 @@
 // Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
-#ifndef CODEGEN_H_INCLUDED
-#define CODEGEN_H_INCLUDED
+#ifndef DIGAMMA_H_INCLUDED
+#define DIGAMMA_H_INCLUDED
 
 #include "core.h"
 #include "object.h"
@@ -14,19 +14,19 @@
 #include <llvm/IR/MDBuilder.h>
 #include <llvm/IR/Module.h>
 
-#define USE_LLVM_ATTRIBUTES      1
-#define USE_LLVM_OPTIMIZE        1
-#define USE_ADDRESS_TO_FUNCTION  1
-#define USE_ILOC_OPTIMIZE        1
-#define USE_ILOC_CACHE           1
-#define USE_REG_CACHE            1
-#define USE_PRECOMPILE_REFERENCE 1
+#define USE_LLVM_ATTRIBUTES       1
+#define USE_LLVM_OPTIMIZE         1
+#define USE_ADDRESS_TO_FUNCTION   1
+#define USE_ILOC_OPTIMIZE         1
+#define USE_ILOC_CACHE            1
+#define USE_REG_CACHE             1
+#define USE_AOT_CODEGEN_REFERENCE 1
 
-#define PRINT_IR                 0
-#define DEBUG_CODEGEN            0
-#define VERBOSE_CODEGEN          0
+#define PRINT_IR                  0
+#define DEBUG_CODEGEN             0
+#define VERBOSE_CODEGEN           0
 
-class codegen_t {
+class digamma_t {
   struct context_t;
 
   template <int byte_offset> struct reg_cache_t {
@@ -40,7 +40,7 @@ class codegen_t {
     void writeback(llvm::Value* vm);
     void copy(llvm::Value* vm);
     void clear();
-    reg_cache_t(codegen_t::context_t* context);
+    reg_cache_t(digamma_t::context_t* context);
   };
 
   struct context_t {
@@ -112,24 +112,24 @@ class codegen_t {
 
   std::unique_ptr<llvm::orc::LLJIT> m_jit;
   std::map<scm_closure_t, llvm::Function*> m_lifted_functions;
-  mutex_t m_compile_thread_lock;
-  cond_t m_compile_thread_wake;
-  bool m_compile_thread_ready;
-  bool m_compile_thread_terminating;
-  static thread_main_t compile_thread(void* param);
+  mutex_t m_codegen_thread_lock;
+  cond_t m_codegen_thread_wake;
+  bool m_codegen_thread_ready;
+  bool m_codegen_thread_terminating;
+  static thread_main_t codegen_thread(void* param);
   void optimizeModule(llvm::Module& M);
   void transform(context_t ctx, scm_obj_t inst, bool insert_stack_check);
   llvm::Value* get_function_address(context_t& ctx, scm_closure_t closure);
 
  public:
-  codegen_t();
+  digamma_t();
   void init();
   void destroy();
-  void compile(scm_closure_t closure);
+  void codegen_closure(scm_closure_t closure);
   void display_codegen_statistics(scm_port_t port);
   bool m_debug;
-  std::vector<scm_closure_t> m_compile_queue;
-  mutex_t m_compile_queue_lock;
+  std::vector<scm_closure_t> m_codegen_queue;
+  mutex_t m_codegen_queue_lock;
 
   struct usage_t {
     int globals;
@@ -148,9 +148,9 @@ class codegen_t {
   int calc_stack_size(scm_obj_t inst);
   int calc_iloc_index(context_t& ctx, scm_obj_t operand);
   int calc_iloc_index(context_t& ctx, intptr_t depth, intptr_t index);
-  void precompile_reference(scm_obj_t code);
-  bool maybe_compile(scm_closure_t closure);
-  void compile_each(scm_closure_t closure);
+  void precodegen_reference(scm_obj_t code);
+  bool maybe_codegen(scm_closure_t closure);
+  void codegen(scm_closure_t closure);
   llvm::AllocaInst* emit_alloca(context_t& ctx, llvm::Type* type);
   void emit_stack_overflow_check(context_t& ctx, int nbytes);
   void emit_push_vm_stack(context_t& ctx, llvm::Value* val);

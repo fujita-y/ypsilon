@@ -47,7 +47,7 @@ add_executable(
   ypsilon
   src/arith.cpp
   src/bit.cpp
-  src/codegen.cpp
+  src/digamma.cpp
   src/equiv.cpp
   src/fasl.cpp
   src/file.cpp

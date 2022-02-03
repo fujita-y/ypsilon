@@ -2,7 +2,7 @@
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
-#include "codegen.h"
+#include "digamma.h"
 #include "hash.h"
 #include "port.h"
 #include "printer.h"
@@ -79,8 +79,8 @@ bool VM::init(object_heap_t* heap) {
     m_flags.record_print_nesting_limit = MAKEFIXNUM(2);
     m_flags.warning_level = scm_false;
 #if ENABLE_LLVM_JIT
-    m_codegen = new codegen_t();
-    m_codegen->init();
+    m_digamma = new digamma_t();
+    m_digamma->init();
 #endif
     return true;
   } catch (io_exception_t& e) {
@@ -646,9 +646,9 @@ void VM::stop() {
     }
   }
 #if ENABLE_LLVM_JIT
-  if (m_codegen) {
-    scoped_lock lock(m_codegen->m_compile_queue_lock);
-    for (scm_closure_t closure : m_codegen->m_compile_queue) {
+  if (m_digamma) {
+    scoped_lock lock(m_digamma->m_codegen_queue_lock);
+    for (scm_closure_t closure : m_digamma->m_codegen_queue) {
       m_heap->enqueue_root(closure);
     }
   }

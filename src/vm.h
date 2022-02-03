@@ -8,7 +8,7 @@
 #include "heap.h"
 
 class printer_t;
-class codegen_t;
+class digamma_t;
 
 class VM {
  public:
@@ -76,7 +76,7 @@ class VM {
   scm_obj_t m_current_source_comments;
   int m_recursion_level;
 #if ENABLE_LLVM_JIT
-  codegen_t* m_codegen;
+  digamma_t* m_digamma;
 #endif
   scm_closure_t lookup_system_closure(const char* name);
   scm_obj_t lookup_current_environment(scm_symbol_t symbol);

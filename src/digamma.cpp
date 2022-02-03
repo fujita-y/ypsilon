@@ -2,7 +2,7 @@
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
-#include "codegen.h"
+#include "digamma.h"
 #include "arith.h"
 #include "port.h"
 #include "printer.h"
@@ -336,7 +336,7 @@ extern "C" {
 
 static ExitOnError ExitOnErr;
 
-template <int byte_offset> llvm::Value* codegen_t::reg_cache_t<byte_offset>::load(llvm::Value* vm) {
+template <int byte_offset> llvm::Value* digamma_t::reg_cache_t<byte_offset>::load(llvm::Value* vm) {
 #if USE_REG_CACHE
   if (val) return val;
   val = IRB.CreateLoad(IntptrTy, IRB.CreateGEP(IntptrTy, vm, IRB.getInt32(byte_offset / sizeof(intptr_t))));
@@ -347,7 +347,7 @@ template <int byte_offset> llvm::Value* codegen_t::reg_cache_t<byte_offset>::loa
 #endif
 }
 
-template <int byte_offset> void codegen_t::reg_cache_t<byte_offset>::store(llvm::Value* vm, llvm::Value* rhs) {
+template <int byte_offset> void digamma_t::reg_cache_t<byte_offset>::store(llvm::Value* vm, llvm::Value* rhs) {
 #if USE_REG_CACHE
   need_write_back = true;
   val = rhs;
@@ -356,14 +356,14 @@ template <int byte_offset> void codegen_t::reg_cache_t<byte_offset>::store(llvm:
 #endif
 }
 
-template <int byte_offset> void codegen_t::reg_cache_t<byte_offset>::clear() {
+template <int byte_offset> void digamma_t::reg_cache_t<byte_offset>::clear() {
 #if USE_REG_CACHE
   val = NULL;
   need_write_back = false;
 #endif
 }
 
-template <int byte_offset> void codegen_t::reg_cache_t<byte_offset>::copy(llvm::Value* vm) {
+template <int byte_offset> void digamma_t::reg_cache_t<byte_offset>::copy(llvm::Value* vm) {
 #if USE_REG_CACHE
   if (val && need_write_back) {
     IRB.CreateStore(val, IRB.CreateGEP(IntptrTy, vm, IRB.getInt32(byte_offset / sizeof(intptr_t))));
@@ -371,7 +371,7 @@ template <int byte_offset> void codegen_t::reg_cache_t<byte_offset>::copy(llvm::
 #endif
 }
 
-template <int byte_offset> void codegen_t::reg_cache_t<byte_offset>::writeback(llvm::Value* vm) {
+template <int byte_offset> void digamma_t::reg_cache_t<byte_offset>::writeback(llvm::Value* vm) {
 #if USE_REG_CACHE
   if (val && need_write_back) {
     IRB.CreateStore(val, IRB.CreateGEP(IntptrTy, vm, IRB.getInt32(byte_offset / sizeof(intptr_t))));
@@ -381,12 +381,12 @@ template <int byte_offset> void codegen_t::reg_cache_t<byte_offset>::writeback(l
 }
 
 template <int byte_offset>
-codegen_t::reg_cache_t<byte_offset>::reg_cache_t(codegen_t::context_t* context)
+digamma_t::reg_cache_t<byte_offset>::reg_cache_t(digamma_t::context_t* context)
     : val(NULL), need_write_back(false), C(context->m_llvm_context), IRB(context->m_irb) {
   IntptrTy = (sizeof(intptr_t) == 4 ? llvm::Type::getInt32Ty(C) : llvm::Type::getInt64Ty(C));
 }
 
-void codegen_t::context_t::reg_cache_clear() {
+void digamma_t::context_t::reg_cache_clear() {
   reg_fp.clear();
   reg_env.clear();
   reg_cont.clear();
@@ -394,27 +394,27 @@ void codegen_t::context_t::reg_cache_clear() {
   reg_value.clear();
 }
 
-void codegen_t::context_t::reg_cache_clear_only_value() { reg_value.clear(); }
+void digamma_t::context_t::reg_cache_clear_only_value() { reg_value.clear(); }
 
-void codegen_t::context_t::reg_cache_clear_only_sp() { reg_sp.clear(); }
+void digamma_t::context_t::reg_cache_clear_only_sp() { reg_sp.clear(); }
 
-void codegen_t::context_t::reg_cache_clear_only_env_and_value() {
+void digamma_t::context_t::reg_cache_clear_only_env_and_value() {
   reg_env.clear();
   reg_value.clear();
 }
 
-void codegen_t::context_t::reg_cache_clear_only_env_and_sp() {
+void digamma_t::context_t::reg_cache_clear_only_env_and_sp() {
   reg_env.clear();
   reg_sp.clear();
 }
 
-void codegen_t::context_t::reg_cache_clear_except_value_and_cont() {
+void digamma_t::context_t::reg_cache_clear_except_value_and_cont() {
   reg_sp.clear();
   reg_fp.clear();
   reg_env.clear();
 }
 
-void codegen_t::context_t::reg_cache_copy(llvm::Value* vm) {
+void digamma_t::context_t::reg_cache_copy(llvm::Value* vm) {
   reg_fp.copy(vm);
   reg_env.copy(vm);
   reg_cont.copy(vm);
@@ -422,158 +422,158 @@ void codegen_t::context_t::reg_cache_copy(llvm::Value* vm) {
   reg_value.copy(vm);
 }
 
-void codegen_t::context_t::reg_cache_copy_except_sp(llvm::Value* vm) {
+void digamma_t::context_t::reg_cache_copy_except_sp(llvm::Value* vm) {
   reg_fp.copy(vm);
   reg_env.copy(vm);
   reg_cont.copy(vm);
   reg_value.copy(vm);
 }
 
-void codegen_t::context_t::reg_cache_copy_except_value(llvm::Value* vm) {
+void digamma_t::context_t::reg_cache_copy_except_value(llvm::Value* vm) {
   reg_fp.copy(vm);
   reg_env.copy(vm);
   reg_cont.copy(vm);
   reg_sp.copy(vm);
 }
 
-void codegen_t::context_t::reg_cache_copy_except_value_and_sp(llvm::Value* vm) {
+void digamma_t::context_t::reg_cache_copy_except_value_and_sp(llvm::Value* vm) {
   reg_fp.copy(vm);
   reg_env.copy(vm);
   reg_cont.copy(vm);
 }
 
-void codegen_t::context_t::reg_cache_copy_except_value_and_fp(llvm::Value* vm) {
+void digamma_t::context_t::reg_cache_copy_except_value_and_fp(llvm::Value* vm) {
   reg_sp.copy(vm);
   reg_env.copy(vm);
   reg_cont.copy(vm);
 }
 
-void codegen_t::context_t::reg_cache_copy_only_value(llvm::Value* vm) { reg_value.copy(vm); }
+void digamma_t::context_t::reg_cache_copy_only_value(llvm::Value* vm) { reg_value.copy(vm); }
 
-void codegen_t::context_t::reg_cache_copy_only_value_and_env(llvm::Value* vm) {
+void digamma_t::context_t::reg_cache_copy_only_value_and_env(llvm::Value* vm) {
   reg_env.copy(vm);
   reg_value.copy(vm);
 }
 
-void codegen_t::context_t::reg_cache_copy_only_value_and_cont(llvm::Value* vm) {
+void digamma_t::context_t::reg_cache_copy_only_value_and_cont(llvm::Value* vm) {
   reg_cont.copy(vm);
   reg_value.copy(vm);
 }
 
-void codegen_t::context_t::reg_cache_copy_only_env_and_cont(llvm::Value* vm) {
+void digamma_t::context_t::reg_cache_copy_only_env_and_cont(llvm::Value* vm) {
   reg_cont.copy(vm);
   reg_env.copy(vm);
 }
 
-void codegen_t::context_t::reg_cache_copy_only_env_and_fp(llvm::Value* vm) {
+void digamma_t::context_t::reg_cache_copy_only_env_and_fp(llvm::Value* vm) {
   reg_fp.copy(vm);
   reg_env.copy(vm);
 }
 
-int codegen_t::calc_iloc_index(context_t& ctx, intptr_t depth, intptr_t index) { return ((depth - (ctx.m_depth - 1)) << 16) | (index & 0xffff); }
+int digamma_t::calc_iloc_index(context_t& ctx, intptr_t depth, intptr_t index) { return ((depth - (ctx.m_depth - 1)) << 16) | (index & 0xffff); }
 
-int codegen_t::calc_iloc_index(context_t& ctx, scm_obj_t operands) {
+int digamma_t::calc_iloc_index(context_t& ctx, scm_obj_t operands) {
   return calc_iloc_index(ctx, FIXNUM(CAAR(operands)), (FIXNUM(CDAR(operands))));
 }
 
-void codegen_t::context_t::set_local_var_count(int depth, int count) {
+void digamma_t::context_t::set_local_var_count(int depth, int count) {
   m_local_var_count.resize(depth + 1);
   m_local_var_count[depth] = count;
 }
 
-void codegen_t::context_t::set_local_var_count(int depth, scm_closure_t closure) {
+void digamma_t::context_t::set_local_var_count(int depth, scm_closure_t closure) {
   int argc = HDR_CLOSURE_ARGS(closure->hdr);
   if (argc < 0) argc = -argc;
   set_local_var_count(depth, argc);
 }
 
-int codegen_t::context_t::get_local_var_count(int depth) {
+int digamma_t::context_t::get_local_var_count(int depth) {
   if (m_depth - depth - 1 >= 0) return m_local_var_count[m_depth - depth - 1];
   return 0;
 }
 
-llvm::MDNode* codegen_t::context_t::get_branch_weight(int n, int m) {
+llvm::MDNode* digamma_t::context_t::get_branch_weight(int n, int m) {
   llvm::MDBuilder MDB(m_llvm_context);
   return MDB.createBranchWeights(n, m);
 }
 
-codegen_t::codegen_t() : m_debug(false) {}
+digamma_t::digamma_t() : m_debug(false) {}
 
-void codegen_t::init() {
-  m_compile_thread_terminating = false;
-  m_compile_thread_lock.init();
-  m_compile_thread_wake.init();
-  m_compile_queue_lock.init();
-  thread_start(compile_thread, this);
+void digamma_t::init() {
+  m_codegen_thread_terminating = false;
+  m_codegen_thread_lock.init();
+  m_codegen_thread_wake.init();
+  m_codegen_queue_lock.init();
+  thread_start(codegen_thread, this);
 }
 
-void codegen_t::destroy() {
-  m_compile_thread_terminating = true;
+void digamma_t::destroy() {
+  m_codegen_thread_terminating = true;
   {
-    scoped_lock lock(m_compile_thread_lock);
-    m_compile_thread_wake.signal();
+    scoped_lock lock(m_codegen_thread_lock);
+    m_codegen_thread_wake.signal();
   }
-  while (m_compile_thread_terminating) usleep(100);
-  m_compile_thread_lock.destroy();
-  m_compile_thread_wake.destroy();
-  m_compile_queue_lock.destroy();
+  while (m_codegen_thread_terminating) usleep(100);
+  m_codegen_thread_lock.destroy();
+  m_codegen_thread_wake.destroy();
+  m_codegen_queue_lock.destroy();
 }
 
-thread_main_t codegen_t::compile_thread(void* param) {
-  codegen_t& codegen = *(codegen_t*)param;
-  codegen.m_compile_thread_lock.lock();
+thread_main_t digamma_t::codegen_thread(void* param) {
+  digamma_t& digamma = *(digamma_t*)param;
+  digamma.m_codegen_thread_lock.lock();
   {
     auto J = ExitOnErr(LLJITBuilder().create());
     auto D = J->getDataLayout();
     auto G = ExitOnErr(orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(D.getGlobalPrefix()));
     J->getMainJITDylib().addGenerator(std::move(G));
-    codegen.m_jit = std::move(J);
-    codegen.m_compile_thread_ready = true;
-    while (!codegen.m_compile_thread_terminating) {
-      codegen.m_compile_thread_wake.wait(codegen.m_compile_thread_lock);
-      codegen.m_compile_thread_ready = false;
-      while (!codegen.m_compile_thread_terminating) {
+    digamma.m_jit = std::move(J);
+    digamma.m_codegen_thread_ready = true;
+    while (!digamma.m_codegen_thread_terminating) {
+      digamma.m_codegen_thread_wake.wait(digamma.m_codegen_thread_lock);
+      digamma.m_codegen_thread_ready = false;
+      while (!digamma.m_codegen_thread_terminating) {
         scm_closure_t closure = NULL;
         {
-          scoped_lock lock(codegen.m_compile_queue_lock);
-          if (codegen.m_compile_queue.size()) {
-            closure = codegen.m_compile_queue.back();
+          scoped_lock lock(digamma.m_codegen_queue_lock);
+          if (digamma.m_codegen_queue.size()) {
+            closure = digamma.m_codegen_queue.back();
           } else {
-            codegen.m_compile_thread_ready = true;
+            digamma.m_codegen_thread_ready = true;
             break;
           }
         }
         if (closure->code != NULL) continue;
-#if USE_PRECOMPILE_REFERENCE
-        codegen.precompile_reference(closure->pc);
+#if ENABLE_CODEGEN_REFERENCE && USE_AOT_CODEGEN_REFERENCE
+        digamma.precodegen_reference(closure->pc);
         {
-          scoped_lock lock(codegen.m_compile_queue_lock);
-          if (codegen.m_compile_queue.size()) {
-            closure = codegen.m_compile_queue.back();
+          scoped_lock lock(digamma.m_codegen_queue_lock);
+          if (digamma.m_codegen_queue.size()) {
+            closure = digamma.m_codegen_queue.back();
           } else {
-            codegen.m_compile_thread_ready = true;
+            digamma.m_codegen_thread_ready = true;
             break;
           }
         }
 #endif
-        codegen.compile_each(closure);
+        digamma.codegen(closure);
         {
-          scoped_lock lock(codegen.m_compile_queue_lock);
-          codegen.m_compile_queue.erase(std::remove(codegen.m_compile_queue.begin(), codegen.m_compile_queue.end(), closure),
-                                        codegen.m_compile_queue.end());
+          scoped_lock lock(digamma.m_codegen_queue_lock);
+          digamma.m_codegen_queue.erase(std::remove(digamma.m_codegen_queue.begin(), digamma.m_codegen_queue.end(), closure),
+                                        digamma.m_codegen_queue.end());
         }
       }
     }
 #if LLVM_VERSION_MAJOR >= 12
-    ExitOnErr(codegen.m_jit->getExecutionSession().endSession());
+    ExitOnErr(digamma.m_jit->getExecutionSession().endSession());
 #endif
   }
-  codegen.m_compile_thread_terminating = false;
-  codegen.m_compile_thread_lock.unlock();
+  digamma.m_codegen_thread_terminating = false;
+  digamma.m_codegen_thread_lock.unlock();
   return NULL;
 }
 
-void codegen_t::optimizeModule(Module& M) {
+void digamma_t::optimizeModule(Module& M) {
   LoopAnalysisManager LAM;
   FunctionAnalysisManager FAM;
   CGSCCAnalysisManager CGAM;
@@ -598,20 +598,20 @@ void codegen_t::optimizeModule(Module& M) {
 #endif
 }
 
-void codegen_t::compile(scm_closure_t closure) {
-  if (m_compile_thread_terminating) return;
+void digamma_t::codegen_closure(scm_closure_t closure) {
+  if (m_codegen_thread_terminating) return;
   {
-    scoped_lock lock(m_compile_queue_lock);
-    if (std::find(m_compile_queue.begin(), m_compile_queue.end(), closure) != m_compile_queue.end()) return;
-    m_compile_queue.push_back(closure);
+    scoped_lock lock(m_codegen_queue_lock);
+    if (std::find(m_codegen_queue.begin(), m_codegen_queue.end(), closure) != m_codegen_queue.end()) return;
+    m_codegen_queue.push_back(closure);
   }
-  if (m_compile_thread_ready) {
-    scoped_lock lock(m_compile_thread_lock);
-    m_compile_thread_wake.signal();
+  if (m_codegen_thread_ready) {
+    scoped_lock lock(m_codegen_thread_lock);
+    m_codegen_thread_wake.signal();
   }
 }
 
-void codegen_t::precompile_reference(scm_obj_t code) {
+void digamma_t::precodegen_reference(scm_obj_t code) {
   while (PAIRP(code)) {
     scm_symbol_t symbol = (scm_symbol_t)CAAR(code);
     assert(INHERENTSYMBOLP(symbol));
@@ -624,9 +624,9 @@ void codegen_t::precompile_reference(scm_obj_t code) {
         if (CLOSUREP(gloc->value)) {
           scm_closure_t closure = (scm_closure_t)gloc->value;
           if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
-            scoped_lock lock(m_compile_queue_lock);
+            scoped_lock lock(m_codegen_queue_lock);
             closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
-            m_compile_queue.push_back(closure);
+            m_codegen_queue.push_back(closure);
             m_usage.refs++;
           }
         }
@@ -637,7 +637,7 @@ void codegen_t::precompile_reference(scm_obj_t code) {
       case VMOP_RET_CLOSE:
       case VMOP_PUSH_CLOSE:
       case VMOP_EXTEND_ENCLOSE: {
-        precompile_reference(CDR(operands));
+        precodegen_reference(CDR(operands));
       } break;
       case VMOP_IF_TRUE:
       case VMOP_IF_FALSE_CALL:
@@ -646,7 +646,7 @@ void codegen_t::precompile_reference(scm_obj_t code) {
       case VMOP_IF_SYMBOLP:
       case VMOP_IF_EQP:
       case VMOP_CALL: {
-        precompile_reference(operands);
+        precodegen_reference(operands);
         break;
       }
     }
@@ -654,17 +654,17 @@ void codegen_t::precompile_reference(scm_obj_t code) {
   }
 }
 
-bool codegen_t::maybe_compile(scm_closure_t closure) {
+bool digamma_t::maybe_codegen(scm_closure_t closure) {
   if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
-    scoped_lock lock(m_compile_queue_lock);
+    scoped_lock lock(m_codegen_queue_lock);
     closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
-    m_compile_queue.push_back(closure);
+    m_codegen_queue.push_back(closure);
     return true;
   }
   return false;
 }
 
-void codegen_t::compile_each(scm_closure_t closure) {
+void digamma_t::codegen(scm_closure_t closure) {
   if (closure->code != NULL) return;
 #if VERBOSE_CODEGEN
   printer_t prt(vm, vm->m_current_output);
@@ -722,17 +722,17 @@ void codegen_t::compile_each(scm_closure_t closure) {
   m_lifted_functions.clear();
 }
 
-Value* codegen_t::get_function_address(context_t& ctx, scm_closure_t closure) {
+Value* digamma_t::get_function_address(context_t& ctx, scm_closure_t closure) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
 
-  if (closure->code == NULL) fatal("%s:%u closure is not compiled", __FILE__, __LINE__);
+  if (closure->code == NULL) fatal("%s:%u closure is not codegend", __FILE__, __LINE__);
   intptr_t (*adrs)(intptr_t) = (intptr_t(*)(intptr_t))(closure->code);
   auto subrType = FunctionType::get(IntptrTy, {IntptrPtrTy}, false);
   return ConstantExpr::getIntToPtr(VALUE_INTPTR(adrs), subrType->getPointerTo());
 }
 
-int codegen_t::calc_stack_size(scm_obj_t inst) {
+int digamma_t::calc_stack_size(scm_obj_t inst) {
   int require = 0;
   int n = 0;
   while (inst != scm_nil) {
@@ -818,7 +818,7 @@ int codegen_t::calc_stack_size(scm_obj_t inst) {
   return require;
 }
 
-void codegen_t::transform(context_t ctx, scm_obj_t inst, bool insert_stack_check) {
+void digamma_t::transform(context_t ctx, scm_obj_t inst, bool insert_stack_check) {
   if (insert_stack_check) emit_stack_overflow_check(ctx, calc_stack_size(inst));
   while (inst != scm_nil) {
     switch (VM::instruction_to_opcode(CAAR(inst))) {
@@ -1105,7 +1105,7 @@ void codegen_t::transform(context_t ctx, scm_obj_t inst, bool insert_stack_check
   }
 }
 
-void codegen_t::display_codegen_statistics(scm_port_t port) {
+void digamma_t::display_codegen_statistics(scm_port_t port) {
   scoped_lock lock(port->lock);
   port_put_byte(port, '\n');
   port_format(port, "top-level apply interned : %d\n", m_usage.globals);
@@ -1119,13 +1119,13 @@ void codegen_t::display_codegen_statistics(scm_port_t port) {
   port_flush_output(port);
 }
 
-llvm::AllocaInst* codegen_t::emit_alloca(context_t& ctx, llvm::Type* type) {
+llvm::AllocaInst* digamma_t::emit_alloca(context_t& ctx, llvm::Type* type) {
   DECLEAR_CONTEXT_VARS;
   IRBuilder<> TB(&F->getEntryBlock(), F->getEntryBlock().begin());
   return TB.CreateAlloca(type);
 }
 
-Function* codegen_t::emit_inner_function(context_t& ctx, scm_closure_t closure) {
+Function* digamma_t::emit_inner_function(context_t& ctx, scm_closure_t closure) {
   char function_id[40];
   uuid_v4(function_id, sizeof(function_id));
 
@@ -1163,7 +1163,7 @@ Function* codegen_t::emit_inner_function(context_t& ctx, scm_closure_t closure) 
   return F;
 }
 
-void codegen_t::emit_stack_overflow_check(context_t& ctx, int nbytes) {
+void digamma_t::emit_stack_overflow_check(context_t& ctx, int nbytes) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -1190,7 +1190,7 @@ void codegen_t::emit_stack_overflow_check(context_t& ctx, int nbytes) {
   ctx.m_iloc_cache.clear();
 }
 
-Value* codegen_t::emit_lookup_env(context_t& ctx, intptr_t depth) {
+Value* digamma_t::emit_lookup_env(context_t& ctx, intptr_t depth) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -1216,7 +1216,7 @@ Value* codegen_t::emit_lookup_env(context_t& ctx, intptr_t depth) {
   return IRB.CreateBitOrPointerCast(env1, IntptrPtrTy);
 }
 
-Value* codegen_t::emit_lookup_iloc(context_t& ctx, intptr_t depth, intptr_t index) {
+Value* digamma_t::emit_lookup_iloc(context_t& ctx, intptr_t depth, intptr_t index) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -1244,9 +1244,9 @@ Value* codegen_t::emit_lookup_iloc(context_t& ctx, intptr_t depth, intptr_t inde
   return IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(depth), VALUE_INTPTR(index)});
 }
 
-Value* codegen_t::emit_lookup_iloc(context_t& ctx, scm_obj_t loc) { return emit_lookup_iloc(ctx, FIXNUM(CAR(loc)), FIXNUM(CDR(loc))); }
+Value* digamma_t::emit_lookup_iloc(context_t& ctx, scm_obj_t loc) { return emit_lookup_iloc(ctx, FIXNUM(CAR(loc)), FIXNUM(CDR(loc))); }
 
-void codegen_t::emit_push_vm_stack(context_t& ctx, Value* val) {
+void digamma_t::emit_push_vm_stack(context_t& ctx, Value* val) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -1258,7 +1258,7 @@ void codegen_t::emit_push_vm_stack(context_t& ctx, Value* val) {
   ctx.reg_sp.store(vm, ea1);
 }
 
-void codegen_t::emit_prepair_apply(context_t& ctx, scm_closure_t closure) {
+void digamma_t::emit_prepair_apply(context_t& ctx, scm_closure_t closure) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -1275,7 +1275,7 @@ void codegen_t::emit_prepair_apply(context_t& ctx, scm_closure_t closure) {
   ctx.reg_sp.store(vm, ea1);
 }
 
-void codegen_t::emit_push(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -1283,7 +1283,7 @@ void codegen_t::emit_push(context_t& ctx, scm_obj_t inst) {
   emit_push_vm_stack(ctx, ctx.reg_value.load(vm));
 }
 
-void codegen_t::emit_push_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1291,7 +1291,7 @@ void codegen_t::emit_push_const(context_t& ctx, scm_obj_t inst) {
   emit_push_vm_stack(ctx, VALUE_INTPTR(operands));
 }
 
-void codegen_t::emit_push_iloc0(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_iloc0(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1299,7 +1299,7 @@ void codegen_t::emit_push_iloc0(context_t& ctx, scm_obj_t inst) {
   emit_push_vm_stack(ctx, IRB.CreateLoad(IntptrTy, emit_lookup_iloc(ctx, 0, FIXNUM(operands))));
 }
 
-void codegen_t::emit_push_iloc1(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_iloc1(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1307,16 +1307,16 @@ void codegen_t::emit_push_iloc1(context_t& ctx, scm_obj_t inst) {
   emit_push_vm_stack(ctx, IRB.CreateLoad(IntptrTy, emit_lookup_iloc(ctx, 1, FIXNUM(operands))));
 }
 
-void codegen_t::emit_push_gloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
 
-#if ENABLE_COMPILE_REFERENCE
+#if ENABLE_CODEGEN_REFERENCE
   scm_obj_t obj = ((scm_gloc_t)operands)->value;
   if (CLOSUREP(obj)) {
-    if (maybe_compile((scm_closure_t)obj)) m_usage.refs++;
+    if (maybe_codegen((scm_closure_t)obj)) m_usage.refs++;
   }
 #endif
 
@@ -1339,7 +1339,7 @@ void codegen_t::emit_push_gloc(context_t& ctx, scm_obj_t inst) {
   emit_push_vm_stack(ctx, val);
 }
 
-void codegen_t::emit_push_car_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_car_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1366,7 +1366,7 @@ void codegen_t::emit_push_car_iloc(context_t& ctx, scm_obj_t inst) {
   emit_push_vm_stack(ctx, CREATE_LOAD_PAIR_REC(IRB.CreateBitOrPointerCast(pair, IntptrPtrTy), car));
 }
 
-void codegen_t::emit_push_cdr_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_cdr_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1393,7 +1393,7 @@ void codegen_t::emit_push_cdr_iloc(context_t& ctx, scm_obj_t inst) {
   emit_push_vm_stack(ctx, CREATE_LOAD_PAIR_REC(IRB.CreateBitOrPointerCast(pair, IntptrPtrTy), cdr));
 }
 
-void codegen_t::emit_push_cddr_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_cddr_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1426,7 +1426,7 @@ void codegen_t::emit_push_cddr_iloc(context_t& ctx, scm_obj_t inst) {
   emit_push_vm_stack(ctx, CREATE_LOAD_PAIR_REC(IRB.CreateBitOrPointerCast(pair2, IntptrPtrTy), cdr));
 }
 
-void codegen_t::emit_push_cadr_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_cadr_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1459,12 +1459,12 @@ void codegen_t::emit_push_cadr_iloc(context_t& ctx, scm_obj_t inst) {
   emit_push_vm_stack(ctx, CREATE_LOAD_PAIR_REC(IRB.CreateBitOrPointerCast(pair2, IntptrPtrTy), car));
 }
 
-void codegen_t::emit_push_nadd_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_nadd_iloc(context_t& ctx, scm_obj_t inst) {
   emit_nadd_iloc(ctx, inst);
   emit_push(ctx, inst);
 }
 
-void codegen_t::emit_apply_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_apply_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1476,7 +1476,7 @@ void codegen_t::emit_apply_iloc(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_apply));
 }
 
-void codegen_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1522,7 +1522,7 @@ void codegen_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
 #if USE_ADDRESS_TO_FUNCTION
         if (closure->code != NULL) {
   #if VERBOSE_CODEGEN
-          puts("emit_apply_gloc: closure already compiled, reuse native code");
+          puts("emit_apply_gloc: closure already codegend, reuse native code");
   #endif
           Value* F2 = get_function_address(ctx, closure);
           if (F2 == NULL) fatal("%s:%u inconsistent state", __FILE__, __LINE__);
@@ -1571,7 +1571,7 @@ void codegen_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
           return;
         } else {
 #if VERBOSE_CODEGEN
-          printf("emit_apply_gloc: library top level not compiled: %s\n", symbol->name);
+          printf("emit_apply_gloc: library top level not codegend: %s\n", symbol->name);
 #endif
         }
       } else {
@@ -1582,9 +1582,9 @@ void codegen_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
     }
   }
 
-#if ENABLE_COMPILE_REFERENCE
+#if ENABLE_CODEGEN_REFERENCE
   if (CLOSUREP(obj)) {
-    if (maybe_compile((scm_closure_t)obj)) m_usage.refs++;
+    if (maybe_codegen((scm_closure_t)obj)) m_usage.refs++;
   }
 #endif
 
@@ -1608,7 +1608,7 @@ void codegen_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_apply));
 }
 
-void codegen_t::emit_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1619,7 +1619,7 @@ void codegen_t::emit_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
-void codegen_t::emit_ret_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_ret_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1631,7 +1631,7 @@ void codegen_t::emit_ret_iloc(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
-void codegen_t::emit_ret_cons(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_ret_cons(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -1647,7 +1647,7 @@ void codegen_t::emit_ret_cons(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
-void codegen_t::emit_if_true(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_true(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1668,7 +1668,7 @@ void codegen_t::emit_if_true(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(f9h_true);
 }
 
-void codegen_t::emit_if_nullp(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_nullp(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1689,7 +1689,7 @@ void codegen_t::emit_if_nullp(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_false);
 }
 
-void codegen_t::emit_if_eqp(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_eqp(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1714,7 +1714,7 @@ void codegen_t::emit_if_eqp(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_false);
 }
 
-void codegen_t::emit_if_nullp_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_nullp_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1737,11 +1737,11 @@ void codegen_t::emit_if_nullp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_false);
 }
 
-Value* codegen_t::emit_load_iloc(context_t& ctx, scm_obj_t operands) {
+Value* digamma_t::emit_load_iloc(context_t& ctx, scm_obj_t operands) {
   return emit_load_iloc(ctx, FIXNUM(CAR(operands)), (FIXNUM(CDR(operands))));
 }
 
-Value* codegen_t::emit_load_iloc(context_t& ctx, intptr_t depth, intptr_t index) {
+Value* digamma_t::emit_load_iloc(context_t& ctx, intptr_t depth, intptr_t index) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
 
@@ -1753,7 +1753,7 @@ Value* codegen_t::emit_load_iloc(context_t& ctx, intptr_t depth, intptr_t index)
   return val;
 }
 
-void codegen_t::emit_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1768,7 +1768,7 @@ void codegen_t::emit_iloc(context_t& ctx, scm_obj_t inst) {
   ctx.reg_value.store(vm, val);
 }
 
-void codegen_t::emit_iloc0(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_iloc0(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1782,7 +1782,7 @@ void codegen_t::emit_iloc0(context_t& ctx, scm_obj_t inst) {
   ctx.reg_value.store(vm, val);
 }
 
-void codegen_t::emit_iloc1(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_iloc1(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1796,7 +1796,7 @@ void codegen_t::emit_iloc1(context_t& ctx, scm_obj_t inst) {
   ctx.reg_value.store(vm, val);
 }
 
-void codegen_t::emit_push_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1807,7 +1807,7 @@ void codegen_t::emit_push_iloc(context_t& ctx, scm_obj_t inst) {
 #endif
 }
 
-void codegen_t::emit_if_true_ret(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_true_ret(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -1828,7 +1828,7 @@ void codegen_t::emit_if_true_ret(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(value_false);
 }
 
-void codegen_t::emit_if_false_ret(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_false_ret(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -1849,7 +1849,7 @@ void codegen_t::emit_if_false_ret(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(value_nonfalse);
 }
 
-void codegen_t::emit_if_true_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_true_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1872,7 +1872,7 @@ void codegen_t::emit_if_true_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(value_false);
 }
 
-Value* codegen_t::emit_cmp_inst(context_t& ctx, cc_t cc, Value* lhs, Value* rhs) {
+Value* digamma_t::emit_cmp_inst(context_t& ctx, cc_t cc, Value* lhs, Value* rhs) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   switch (cc) {
@@ -1889,7 +1889,7 @@ Value* codegen_t::emit_cmp_inst(context_t& ctx, cc_t cc, Value* lhs, Value* rhs)
   }
 }
 
-void codegen_t::emit_cc_n_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_func) {
+void digamma_t::emit_cc_n_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_func) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -1951,17 +1951,17 @@ void codegen_t::emit_cc_n_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_
   ctx.reg_value.store(vm, IRB.CreateLoad(IntptrTy, retval));
 }
 
-void codegen_t::emit_lt_n_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_n_iloc(ctx, inst, LT, (void*)c_lt_n_iloc); }
+void digamma_t::emit_lt_n_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_n_iloc(ctx, inst, LT, (void*)c_lt_n_iloc); }
 
-void codegen_t::emit_gt_n_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_n_iloc(ctx, inst, GT, (void*)c_gt_n_iloc); }
+void digamma_t::emit_gt_n_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_n_iloc(ctx, inst, GT, (void*)c_gt_n_iloc); }
 
-void codegen_t::emit_ge_n_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_n_iloc(ctx, inst, GE, (void*)c_ge_n_iloc); }
+void digamma_t::emit_ge_n_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_n_iloc(ctx, inst, GE, (void*)c_ge_n_iloc); }
 
-void codegen_t::emit_le_n_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_n_iloc(ctx, inst, LE, (void*)c_le_n_iloc); }
+void digamma_t::emit_le_n_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_n_iloc(ctx, inst, LE, (void*)c_le_n_iloc); }
 
-void codegen_t::emit_eq_n_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_n_iloc(ctx, inst, EQ, (void*)c_eq_n_iloc); }
+void digamma_t::emit_eq_n_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_n_iloc(ctx, inst, EQ, (void*)c_eq_n_iloc); }
 
-void codegen_t::emit_cc_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_func) {
+void digamma_t::emit_cc_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_func) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2022,17 +2022,17 @@ void codegen_t::emit_cc_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_fu
   ctx.reg_value.store(vm, IRB.CreateLoad(IntptrTy, retval));
 }
 
-void codegen_t::emit_gt_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_iloc(ctx, inst, GT, (void*)c_gt_iloc); }
+void digamma_t::emit_gt_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_iloc(ctx, inst, GT, (void*)c_gt_iloc); }
 
-void codegen_t::emit_lt_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_iloc(ctx, inst, LT, (void*)c_lt_iloc); }
+void digamma_t::emit_lt_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_iloc(ctx, inst, LT, (void*)c_lt_iloc); }
 
-void codegen_t::emit_ge_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_iloc(ctx, inst, GE, (void*)c_ge_iloc); }
+void digamma_t::emit_ge_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_iloc(ctx, inst, GE, (void*)c_ge_iloc); }
 
-void codegen_t::emit_le_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_iloc(ctx, inst, LE, (void*)c_le_iloc); }
+void digamma_t::emit_le_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_iloc(ctx, inst, LE, (void*)c_le_iloc); }
 
-void codegen_t::emit_eq_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_iloc(ctx, inst, EQ, (void*)c_eq_iloc); }
+void digamma_t::emit_eq_iloc(context_t& ctx, scm_obj_t inst) { emit_cc_iloc(ctx, inst, EQ, (void*)c_eq_iloc); }
 
-Function* codegen_t::emit_call(context_t& ctx, scm_obj_t inst) {
+Function* digamma_t::emit_call(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2088,7 +2088,7 @@ Function* codegen_t::emit_call(context_t& ctx, scm_obj_t inst) {
   return K;
 }
 
-void codegen_t::emit_if_false_call(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_false_call(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2111,7 +2111,7 @@ void codegen_t::emit_if_false_call(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(value_nonfalse);
 }
 
-void codegen_t::emit_extend(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_extend(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2129,7 +2129,7 @@ void codegen_t::emit_extend(context_t& ctx, scm_obj_t inst) {
   ctx.set_local_var_count(ctx.m_depth, FIXNUM(operands));
 }
 
-void codegen_t::emit_extend_enclose_local(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_extend_enclose_local(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2186,7 +2186,7 @@ void codegen_t::emit_extend_enclose_local(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(CONTINUE);
 }
 
-void codegen_t::emit_apply_iloc_local(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_apply_iloc_local(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2252,7 +2252,7 @@ void codegen_t::emit_apply_iloc_local(context_t& ctx, scm_obj_t inst) {
   }
 }
 
-void codegen_t::emit_push_cons(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_cons(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -2267,7 +2267,7 @@ void codegen_t::emit_push_cons(context_t& ctx, scm_obj_t inst) {
   IRB.CreateStore(IRB.CreateCall(thunkType, thunk, {vm, sp_minus_1, val}), ea);
 }
 
-void codegen_t::emit_car_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_car_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2298,7 +2298,7 @@ void codegen_t::emit_car_iloc(context_t& ctx, scm_obj_t inst) {
   ctx.reg_value.store(vm, CREATE_LOAD_PAIR_REC(IRB.CreateBitOrPointerCast(pair, IntptrPtrTy), car));
 }
 
-void codegen_t::emit_cdr_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_cdr_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2329,7 +2329,7 @@ void codegen_t::emit_cdr_iloc(context_t& ctx, scm_obj_t inst) {
   ctx.reg_value.store(vm, CREATE_LOAD_PAIR_REC(IRB.CreateBitOrPointerCast(pair, IntptrPtrTy), cdr));
 }
 
-void codegen_t::emit_set_gloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_set_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2341,7 +2341,7 @@ void codegen_t::emit_set_gloc(context_t& ctx, scm_obj_t inst) {
   IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 }
 
-void codegen_t::emit_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2350,7 +2350,7 @@ void codegen_t::emit_const(context_t& ctx, scm_obj_t inst) {
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
 }
 
-void codegen_t::emit_if_pairp(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_pairp(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2369,7 +2369,7 @@ void codegen_t::emit_if_pairp(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_false);
 }
 
-void codegen_t::emit_if_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2397,7 +2397,7 @@ void codegen_t::emit_if_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_false);
 }
 
-void codegen_t::emit_cadr_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_cadr_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2434,7 +2434,7 @@ void codegen_t::emit_cadr_iloc(context_t& ctx, scm_obj_t inst) {
   ctx.reg_value.store(vm, CREATE_LOAD_PAIR_REC(IRB.CreateBitOrPointerCast(pair2, IntptrPtrTy), car));
 }
 
-void codegen_t::emit_cddr_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_cddr_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2471,7 +2471,7 @@ void codegen_t::emit_cddr_iloc(context_t& ctx, scm_obj_t inst) {
   ctx.reg_value.store(vm, CREATE_LOAD_PAIR_REC(IRB.CreateBitOrPointerCast(pair2, IntptrPtrTy), cdr));
 }
 
-void codegen_t::emit_if_not_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_not_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2500,7 +2500,7 @@ void codegen_t::emit_if_not_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_false);
 }
 
-void codegen_t::emit_if_not_pairp_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_not_pairp_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2522,7 +2522,7 @@ void codegen_t::emit_if_not_pairp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(pair_true);
 }
 
-void codegen_t::emit_if_false_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_false_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2545,7 +2545,7 @@ void codegen_t::emit_if_false_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(value_nonfalse);
 }
 
-void codegen_t::emit_ret_nullp(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_ret_nullp(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -2570,7 +2570,7 @@ void codegen_t::emit_ret_nullp(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
-void codegen_t::emit_ret_pairp(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_ret_pairp(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -2594,7 +2594,7 @@ void codegen_t::emit_ret_pairp(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
-void codegen_t::emit_ret_gloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_ret_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2606,7 +2606,7 @@ void codegen_t::emit_ret_gloc(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
-void codegen_t::emit_ret_eqp(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_ret_eqp(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -2636,7 +2636,7 @@ void codegen_t::emit_ret_eqp(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
-void codegen_t::emit_set_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_set_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2650,7 +2650,7 @@ void codegen_t::emit_set_iloc(context_t& ctx, scm_obj_t inst) {
   IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 }
 
-void codegen_t::emit_extend_unbound(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_extend_unbound(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2672,7 +2672,7 @@ void codegen_t::emit_extend_unbound(context_t& ctx, scm_obj_t inst) {
   ctx.set_local_var_count(ctx.m_depth, argc);
 }
 
-void codegen_t::emit_enclose(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_enclose(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2687,13 +2687,13 @@ void codegen_t::emit_enclose(context_t& ctx, scm_obj_t inst) {
   ctx.reg_cache_clear_only_sp();
 }
 
-void codegen_t::emit_push_close(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_close(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
 
-  if (maybe_compile((scm_closure_t)operands)) m_usage.templates++;
+  if (maybe_codegen((scm_closure_t)operands)) m_usage.templates++;
 
   ctx.reg_cache_copy_except_value_and_fp(vm);
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
@@ -2702,13 +2702,13 @@ void codegen_t::emit_push_close(context_t& ctx, scm_obj_t inst) {
   ctx.reg_cache_clear_only_env_and_sp();
 }
 
-void codegen_t::emit_ret_close(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_ret_close(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
 
-  if (maybe_compile((scm_closure_t)operands)) m_usage.templates++;
+  if (maybe_codegen((scm_closure_t)operands)) m_usage.templates++;
 
   ctx.reg_cache_copy(vm);
   auto thunkType = FunctionType::get(IntptrTy, {IntptrPtrTy, IntptrTy}, false);
@@ -2717,13 +2717,13 @@ void codegen_t::emit_ret_close(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
-void codegen_t::emit_close(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_close(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
 
-  if (maybe_compile((scm_closure_t)operands)) m_usage.templates++;
+  if (maybe_codegen((scm_closure_t)operands)) m_usage.templates++;
 
   ctx.reg_cache_copy_only_env_and_cont(vm);
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
@@ -2732,7 +2732,7 @@ void codegen_t::emit_close(context_t& ctx, scm_obj_t inst) {
   ctx.reg_cache_clear_only_env_and_value();
 }
 
-void codegen_t::emit_push_close_local(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_close_local(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2781,16 +2781,16 @@ void codegen_t::emit_push_close_local(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(CONTINUE);
 }
 
-void codegen_t::emit_gloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
 
-#if ENABLE_COMPILE_REFERENCE
+#if ENABLE_CODEGEN_REFERENCE
   scm_obj_t obj = ((scm_gloc_t)operands)->value;
   if (CLOSUREP(obj)) {
-    if (maybe_compile((scm_closure_t)obj)) m_usage.refs++;
+    if (maybe_codegen((scm_closure_t)obj)) m_usage.refs++;
   }
 #endif
 
@@ -2813,7 +2813,7 @@ void codegen_t::emit_gloc(context_t& ctx, scm_obj_t inst) {
   ctx.reg_value.store(vm, val);
 }
 
-void codegen_t::emit_if_symbolp_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_symbolp_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2835,7 +2835,7 @@ void codegen_t::emit_if_symbolp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(symbol_false);
 }
 
-void codegen_t::emit_if_pairp_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_pairp_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2857,7 +2857,7 @@ void codegen_t::emit_if_pairp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(pair_false);
 }
 
-void codegen_t::emit_if_not_nullp_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_not_nullp_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2880,7 +2880,7 @@ void codegen_t::emit_if_not_nullp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_false);
 }
 
-void codegen_t::emit_if_not_symbolp_ret_const(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_not_symbolp_ret_const(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2902,7 +2902,7 @@ void codegen_t::emit_if_not_symbolp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(symbol_true);
 }
 
-void codegen_t::emit_nadd_iloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_nadd_iloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2958,7 +2958,7 @@ void codegen_t::emit_nadd_iloc(context_t& ctx, scm_obj_t inst) {
   ctx.reg_value.store(vm, IRB.CreateLoad(IntptrTy, retval));
 }
 
-void codegen_t::emit_extend_enclose(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_extend_enclose(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2972,7 +2972,7 @@ void codegen_t::emit_extend_enclose(context_t& ctx, scm_obj_t inst) {
   ctx.reg_cache_clear_except_value_and_cont();
 }
 
-void codegen_t::emit_if_symbolp(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_if_symbolp(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -2991,7 +2991,7 @@ void codegen_t::emit_if_symbolp(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_false);
 }
 
-void codegen_t::emit_apply(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_apply(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -3000,7 +3000,7 @@ void codegen_t::emit_apply(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_apply));
 }
 
-void codegen_t::emit_escape(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_escape(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -3010,7 +3010,7 @@ void codegen_t::emit_escape(context_t& ctx, scm_obj_t inst) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_escape));
 }
 
-void codegen_t::emit_push_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
+void digamma_t::emit_push_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -3042,7 +3042,7 @@ void codegen_t::emit_push_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) 
   IRB.SetInsertPoint(CONTINUE);
 }
 
-void codegen_t::emit_push_subr(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_subr(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -3050,7 +3050,7 @@ void codegen_t::emit_push_subr(context_t& ctx, scm_obj_t inst) {
   emit_push_subr(ctx, inst, (scm_subr_t)CAR(operands));
 }
 
-void codegen_t::emit_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
+void digamma_t::emit_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -3082,7 +3082,7 @@ void codegen_t::emit_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   IRB.SetInsertPoint(CONTINUE);
 }
 
-void codegen_t::emit_subr(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_subr(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -3090,7 +3090,7 @@ void codegen_t::emit_subr(context_t& ctx, scm_obj_t inst) {
   emit_subr(ctx, inst, (scm_subr_t)CAR(operands));
 }
 
-void codegen_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
+void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   auto vm = F->arg_begin();
@@ -3121,7 +3121,7 @@ void codegen_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_resume_loop));
 }
 
-void codegen_t::emit_ret_subr(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -3129,7 +3129,7 @@ void codegen_t::emit_ret_subr(context_t& ctx, scm_obj_t inst) {
   emit_ret_subr(ctx, inst, (scm_subr_t)CAR(operands));
 }
 
-void codegen_t::emit_cond_pairp(context_t& ctx, Value* obj, BasicBlock* pair_true, BasicBlock* pair_false) {
+void digamma_t::emit_cond_pairp(context_t& ctx, Value* obj, BasicBlock* pair_true, BasicBlock* pair_false) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
 
@@ -3142,7 +3142,7 @@ void codegen_t::emit_cond_pairp(context_t& ctx, Value* obj, BasicBlock* pair_tru
   IRB.CreateCondBr(cond2, pair_true, pair_false, ctx.likely_true);
 }
 
-void codegen_t::emit_cond_symbolp(context_t& ctx, Value* obj, BasicBlock* symbol_true, BasicBlock* symbol_false) {
+void digamma_t::emit_cond_symbolp(context_t& ctx, Value* obj, BasicBlock* symbol_true, BasicBlock* symbol_false) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
 
@@ -3155,7 +3155,7 @@ void codegen_t::emit_cond_symbolp(context_t& ctx, Value* obj, BasicBlock* symbol
   IRB.CreateCondBr(cond2, symbol_true, symbol_false, ctx.likely_true);
 }
 
-void codegen_t::emit_subr_gloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_subr_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -3163,7 +3163,7 @@ void codegen_t::emit_subr_gloc(context_t& ctx, scm_obj_t inst) {
   emit_subr(ctx, inst, (scm_subr_t)(((scm_gloc_t)CAR(operands))->value));
 }
 
-void codegen_t::emit_push_subr_gloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_push_subr_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
@@ -3171,7 +3171,7 @@ void codegen_t::emit_push_subr_gloc(context_t& ctx, scm_obj_t inst) {
   emit_push_subr(ctx, inst, (scm_subr_t)(((scm_gloc_t)CAR(operands))->value));
 }
 
-void codegen_t::emit_ret_subr_gloc(context_t& ctx, scm_obj_t inst) {
+void digamma_t::emit_ret_subr_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);

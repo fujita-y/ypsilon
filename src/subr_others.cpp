@@ -3,7 +3,7 @@
 
 #include "core.h"
 #include "arith.h"
-#include "codegen.h"
+#include "digamma.h"
 #include "hash.h"
 #include "ioerror.h"
 #include "list.h"
@@ -725,9 +725,9 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
         usleep(100);
       } while (vm->m_heap->m_collector_kicked);
 #if ENABLE_LLVM_JIT
-      vm->m_codegen->destroy();
-      delete vm->m_codegen;
-      vm->m_codegen = NULL;
+      vm->m_digamma->destroy();
+      delete vm->m_digamma;
+      vm->m_digamma = NULL;
 #endif
       relocate_info_t* info = vm->m_heap->relocate(false);
       vm->resolve();
@@ -738,8 +738,8 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
       vm->m_heap->resolve(info);
       vm->m_heap->compact_pool();
 #if ENABLE_LLVM_JIT
-      vm->m_codegen = new codegen_t();
-      vm->m_codegen->init();
+      vm->m_digamma = new digamma_t();
+      vm->m_digamma->init();
 #endif
       return scm_unspecified;
     } else {
@@ -991,10 +991,10 @@ scm_obj_t subr_exit(VM* vm, int argc, scm_obj_t argv[]) {
       port_discard_buffer(vm->m_current_error);
     }
 #if ENABLE_LLVM_JIT
-    if (vm->m_codegen) {
-      vm->m_codegen->destroy();
-      delete vm->m_codegen;
-      vm->m_codegen = NULL;
+    if (vm->m_digamma) {
+      vm->m_digamma->destroy();
+      delete vm->m_digamma;
+      vm->m_digamma = NULL;
     }
 #endif
     if (argc == 0) {

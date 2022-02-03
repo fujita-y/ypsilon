@@ -2,7 +2,7 @@
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
-#include "codegen.h"
+#include "digamma.h"
 #include "printer.h"
 #include "violation.h"
 #include "vm.h"
@@ -30,11 +30,11 @@ scm_obj_t subr_closure_codegen(VM* vm, int argc, scm_obj_t argv[]) {
   if (argc == 1) {
     if (CLOSUREP(argv[0])) {
       scm_closure_t closure = (scm_closure_t)argv[0];
-      if (vm->m_codegen) {
-        vm->m_codegen->m_debug = true;
-        vm->m_codegen->compile(closure);
+      if (vm->m_digamma) {
+        vm->m_digamma->m_debug = true;
+        vm->m_digamma->codegen_closure(closure);
         while (closure->code == NULL) usleep(1000);
-        vm->m_codegen->m_debug = false;
+        vm->m_digamma->m_debug = false;
         return scm_unspecified;
       } else {
         implementation_restriction_violation(vm, "closure-codegen", "not available on this vm", scm_undef, argc, argv);
@@ -56,8 +56,8 @@ scm_obj_t subr_closure_codegen(VM* vm, int argc, scm_obj_t argv[]) {
 scm_obj_t subr_display_codegen_statistics(VM* vm, int argc, scm_obj_t argv[]) {
 #if ENABLE_LLVM_JIT
   if (argc == 0) {
-    if (vm->m_codegen) {
-      vm->m_codegen->display_codegen_statistics(vm->m_current_output);
+    if (vm->m_digamma) {
+      vm->m_digamma->display_codegen_statistics(vm->m_current_output);
       return scm_unspecified;
     } else {
       implementation_restriction_violation(vm, "display-codegen-statistics", "codegen not available on this vm", scm_undef, argc, argv);
@@ -76,8 +76,8 @@ scm_obj_t subr_display_codegen_statistics(VM* vm, int argc, scm_obj_t argv[]) {
 scm_obj_t subr_codegen_queue_count(VM* vm, int argc, scm_obj_t argv[]) {
 #if ENABLE_LLVM_JIT
   if (argc == 0) {
-    if (vm->m_codegen) {
-      return MAKEFIXNUM(vm->m_codegen->m_compile_queue.size());
+    if (vm->m_digamma) {
+      return MAKEFIXNUM(vm->m_digamma->m_codegen_queue.size());
     } else {
       implementation_restriction_violation(vm, "codegen-queue-count", "not available on this vm", scm_undef, argc, argv);
       return scm_undef;
@@ -97,11 +97,11 @@ scm_obj_t subr_codegen_queue_push(VM* vm, int argc, scm_obj_t argv[]) {
   if (argc == 1) {
     if (CLOSUREP(argv[0])) {
       scm_closure_t closure = (scm_closure_t)argv[0];
-      if (vm->m_codegen) {
+      if (vm->m_digamma) {
         if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
           closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
-          vm->m_codegen->m_usage.on_demand++;
-          vm->m_codegen->compile(closure);
+          vm->m_digamma->m_usage.on_demand++;
+          vm->m_digamma->codegen_closure(closure);
         }
         return scm_unspecified;
       }
