@@ -6,6 +6,7 @@
 (define self-evaluating-vector-constants (make-parameter #t))
 (define ellipsis/underscore-in-literal (make-parameter #t))
 (define right-arrow-in-case (make-parameter #t))
+(define repl-startup-version (make-parameter #f))
 
 (define default-exception-printer
   (lambda (c . out)
@@ -373,10 +374,13 @@
       (lambda ()
         (format
           #t
-          "ypsilon-~a.~a.~a (digamma)~%"
+          "ypsilon-~a.~a.~a (~a)~%"
           (architecture-feature 'program-version-major)
           (architecture-feature 'program-version-minor)
-          (architecture-feature 'program-revision))))
+          (architecture-feature 'program-revision)
+          (cond ((and (repl-startup-version) (= (repl-startup-version) 7)) 'r7rs)
+                ((and (repl-startup-version) (= (repl-startup-version) 6)) 'r6rs)
+                (else 'core)))))
     (define show-info
       (lambda ()
         (show-banner)
@@ -414,14 +418,31 @@
                       (auto-compile-cache-update)
                       (cond ((or top-level-program (load-file-has-r6rs-comment? path))
                              (load-top-level-program path))
-                            (else (interpret '(import (core))) (load path)))
+                            (else
+                             (cond ((and (repl-startup-version) (= (repl-startup-version) 7))
+                                    (interpret '(import (core)))
+                                    (interpret '(import (scheme base))))
+                                   ((and (repl-startup-version) (= (repl-startup-version) 6))
+                                    (interpret '(import (core)))
+                                    (interpret '(import (rnrs base (6)))))
+                                   (else
+                                    (interpret '(import (core)))))
+                             (load path)))
                       (flush-output-port (current-error-port))
                       (flush-output-port (current-output-port))
                       (exit))))))))
     (define exec-repl
       (lambda ()
         (cond (mute) (verbose (show-info)) (else (show-banner)))
-        (or script (interpret '(import (core))))
+        (or script
+            (cond ((and (repl-startup-version) (= (repl-startup-version) 7))
+                   (interpret '(import (core)))
+                   (interpret '(import (scheme base))))
+                  ((and (repl-startup-version) (= (repl-startup-version) 6))
+                   (interpret '(import (core)))
+                   (interpret '(import (rnrs base (6)))))
+                  (else
+                   (interpret '(import (core))))))
         (if quiet (quiet-read-eval-print-loop) (read-eval-print-loop))))
     (define verbose #f)
     (define quiet #f)
@@ -462,15 +483,17 @@
                               (right-arrow-in-case #t)
                               (ellipsis/underscore-in-literal #t)
                               (self-evaluating-vector-constants #t)
-                              (lexical-syntax-version 7)
                               (mutable-literals #f)
+                              (lexical-syntax-version 7)
+                              (repl-startup-version 7)
                               (loop (cdr lst)))
                              ((or (opt? "--r6rs" #f) (opt? "-6" #f))
                               (right-arrow-in-case #f)
                               (self-evaluating-vector-constants #f)
                               (ellipsis/underscore-in-literal #f)
-                              (lexical-syntax-version 6)
                               (mutable-literals #f)
+                              (lexical-syntax-version 6)
+                              (repl-startup-version 6)
                               (loop (cdr lst)))
                              ((opt? "--top-level-program" #f) (set! top-level-program #t) (loop (cdr lst)))
                              ((or (opt? "--verbose" #f) (opt? "-v" #f))
