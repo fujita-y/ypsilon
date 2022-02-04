@@ -13,7 +13,7 @@ Ypsilon version 2 have major design changes. Former version is available at [ver
 
 ### Requirements
 
-LLVM 10
+LLVM 10, 11, 12, or 13
 
 ### Build and Install
 
@@ -43,8 +43,8 @@ ypsilon --r6rs --top-level-program demo/widget-demo.scm # (OpenGL Core Profile, 
 
 ### Notes
 
-* REPL start with '(import (core))' regardless what command line option is given.
-* Without '--top-level-program', the contents of the specified script file will be interpreted as if they had been entered into the REPL.
+* REPL start with ```(import (scheme base))``` or ```(import (rnrs base (6)))``` depending on the command line options specified.
+* Without ```--top-level-program``` option, the contents of the specified script file will be interpreted as if they had been entered into the REPL.
 
 ### Rebuild Heap Files
 
