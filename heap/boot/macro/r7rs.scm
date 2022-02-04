@@ -25,7 +25,10 @@
              (loop `(or ,@more))))
         (('not) (syntax-violation 'cond-expand "malformed clause" (abbreviated-take-form form 4 8) spec))
         (('not clause) (not (loop clause)))
-        (('library name) (or (member name '((core primitives) '(core intrinsics))) (locate-library-file name)))
+        (('library name)
+         (or (member name '((core primitives) '(core intrinsics)))
+             (core-hashtable-ref (scheme-library-exports) (generate-library-id name) #f)
+             (locate-library-file name)))
         (_ (syntax-violation 'cond-expand "malformed clause" (abbreviated-take-form form 4 8) spec))))))
 
 (define expand-include

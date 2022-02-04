@@ -205,7 +205,10 @@
 (define locate-include-file
   (lambda (library-name path who)
     (if library-name
-        (let ((subdir (destructuring-match library-name ((_) "") ((base ... _) (id-list->string base "/")))))
+        (let ((subdir
+                (destructuring-match library-name
+                  ((_) "")
+                  ((base ... _) (id-list->string base "/")))))
           (or (any1
                 (lambda (base)
                   (let ((maybe-include-path (format "~a/~a/~a" base subdir path)))
