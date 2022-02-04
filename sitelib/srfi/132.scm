@@ -1,3 +1,4 @@
+#!nobacktrace
 (define-library (srfi 132)
   (import (srfi 132 sorting))
   (export list-sorted?
