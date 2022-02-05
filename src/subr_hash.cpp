@@ -18,24 +18,6 @@
 #include "violation.h"
 #include "vm.h"
 
-// make-weak-shared-core-hashtable
-scm_obj_t subr_make_weak_shared_core_hashtable(VM* vm, int argc, scm_obj_t argv[]) {
-  if (argc == 0) {
-    int nsize = lookup_mutable_hashtable_size(0);
-    return make_shared_weakhashtable(vm->m_heap, nsize);
-  }
-  if (argc == 1) {
-    if (FIXNUMP(argv[0]) && FIXNUM(argv[0]) >= 0) {
-      int nsize = lookup_mutable_hashtable_size(FIXNUM(argv[0]));
-      return make_shared_weakhashtable(vm->m_heap, nsize);
-    }
-    wrong_type_argument_violation(vm, "make-weak-shared-core-hashtable", 0, "non-negative fixnum", argv[0], argc, argv);
-    return scm_undef;
-  }
-  wrong_number_of_arguments_violation(vm, "make-weak-shared-core-hashtable", 0, 1, argc, argv);
-  return scm_undef;
-}
-
 // make-weak-core-hashtable
 scm_obj_t subr_make_weak_core_hashtable(VM* vm, int argc, scm_obj_t argv[]) {
   if (argc == 0) {
@@ -60,56 +42,6 @@ scm_obj_t subr_weak_core_hashtable_pred(VM* vm, int argc, scm_obj_t argv[]) {
     return WEAKHASHTABLEP(argv[0]) ? scm_true : scm_false;
   }
   wrong_number_of_arguments_violation(vm, "weak-core-hashtable?", 1, 1, argc, argv);
-  return scm_undef;
-}
-
-// make-shared-core-hashtable
-scm_obj_t subr_make_shared_core_hashtable(VM* vm, int argc, scm_obj_t argv[]) {
-  int nsize = lookup_mutable_hashtable_size(0);
-  if (argc == 0) {
-    return make_shared_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQ, nsize);
-  }
-  if (argc == 1 || argc == 2) {
-    if (SYMBOLP(argv[0])) {
-      if (argv[0] == make_symbol(vm->m_heap, "generic")) {
-        if (argc == 2) {
-          if (VECTORP(argv[1])) {
-            scm_vector_t vector = (scm_vector_t)argv[1];
-            if (vector->count == 14) {
-              return make_generic_hashtable(vm->m_heap, (scm_vector_t)vector);
-            }
-          }
-          wrong_type_argument_violation(vm, "make-shared-core-hashtable", 1, "14 elements vector", argv[1], argc, argv);
-          return scm_undef;
-        }
-        wrong_type_argument_violation(vm, "make-shared-core-hashtable", 1, "vector", NULL, argc, argv);
-        return scm_undef;
-      }
-      if (argc == 2) {
-        if (FIXNUMP(argv[1])) {
-          nsize = lookup_mutable_hashtable_size(FIXNUM(argv[1]));
-        } else {
-          wrong_type_argument_violation(vm, "make-shared-core-hashtable", 1, "fixnum", argv[1], argc, argv);
-          return scm_undef;
-        }
-      }
-      if (argv[0] == make_symbol(vm->m_heap, "eq?")) {
-        return make_shared_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQ, nsize);
-      }
-      if (argv[0] == make_symbol(vm->m_heap, "eqv?")) {
-        return make_shared_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQV, nsize);
-      }
-      if (argv[0] == make_symbol(vm->m_heap, "equal?")) {
-        return make_shared_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_EQUAL, nsize);
-      }
-      if (argv[0] == make_symbol(vm->m_heap, "string=?")) {
-        return make_shared_hashtable(vm->m_heap, SCM_HASHTABLE_TYPE_STRING, nsize);
-      }
-    }
-    wrong_type_argument_violation(vm, "make-shared-core-hashtable", 0, "eq?, eqv?, equal?, string=?, or generic", argv[0], argc, argv);
-    return scm_undef;
-  }
-  wrong_number_of_arguments_violation(vm, "make-shared-core-hashtable", 0, 1, argc, argv);
   return scm_undef;
 }
 
@@ -592,7 +524,6 @@ void init_subr_hash(object_heap_t* heap) {
 #define DEFSUBR(SYM, FUNC) heap->intern_system_subr(SYM, FUNC)
 
   DEFSUBR("make-core-hashtable", subr_make_core_hashtable);
-  DEFSUBR("make-shared-core-hashtable", subr_make_shared_core_hashtable);
   DEFSUBR("core-hashtable?", subr_core_hashtable_pred);
   DEFSUBR("core-hashtable-ref", subr_core_hashtable_ref);
   DEFSUBR("core-hashtable-set!", subr_core_hashtable_set);
@@ -609,6 +540,5 @@ void init_subr_hash(object_heap_t* heap) {
   DEFSUBR("symbol-hash", subr_symbol_hash);
   DEFSUBR("equal-hash", subr_equal_hash);
   DEFSUBR("make-weak-core-hashtable", subr_make_weak_core_hashtable);
-  DEFSUBR("make-weak-shared-core-hashtable", subr_make_weak_shared_core_hashtable);
   DEFSUBR("weak-core-hashtable?", subr_weak_core_hashtable_pred);
 }

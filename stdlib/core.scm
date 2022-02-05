@@ -655,7 +655,6 @@
     make-record-type-descriptor
     make-rectangular
     make-serious-condition
-    make-shared-core-hashtable
     make-socket
     make-string
     make-string-hashtable
@@ -675,7 +674,6 @@
     make-weak-core-hashtable
     make-weak-hashtable
     make-weak-mapping
-    make-weak-shared-core-hashtable
     make-who-condition
     map
     mat4x4-add

@@ -346,12 +346,6 @@ scm_hashtable_t make_hashtable(object_heap_t* heap, int type, int n) {
   return obj;
 }
 
-scm_hashtable_t make_shared_hashtable(object_heap_t* heap, int type, int n) {
-  scm_hashtable_t ht = make_hashtable(heap, type, n);
-  ht->hdr |= MAKEBITS(1, HDR_HASHTABLE_SHARED_SHIFT);
-  return ht;
-}
-
 scm_hashtable_t make_generic_hashtable(object_heap_t* heap, scm_vector_t handlers) {
   assert(VECTORP(handlers));
   scm_hashtable_t obj = (scm_hashtable_t)heap->allocate_collectible(sizeof(scm_hashtable_rec_t));
@@ -579,12 +573,6 @@ scm_weakhashtable_t make_weakhashtable(object_heap_t* heap, int n) {
   return obj;
 }
 
-scm_weakhashtable_t make_shared_weakhashtable(object_heap_t* heap, int n) {
-  scm_weakhashtable_t ht = make_weakhashtable(heap, n);
-  ht->hdr |= MAKEBITS(1, HDR_WEAKHASHTABLE_SHARED_SHIFT);
-  return ht;
-}
-
 scm_socket_t make_socket(object_heap_t* heap, const char* node, const char* service, int family, int type, int protocol, int m_flags) {
   scm_socket_t obj = (scm_socket_t)heap->allocate_collectible(sizeof(scm_socket_rec_t));
   memset(obj, 0, sizeof(scm_socket_rec_t));
@@ -717,7 +705,6 @@ scm_hashtable_t copy_hashtable(object_heap_t* heap, scm_hashtable_t ht, bool imm
     if (ht_datum->elts[i] == scm_hash_deleted) continue;
     put_hashtable(ht2, ht_datum->elts[i], ht_datum->elts[i + nelts]);
   }
-  if (HDR_HASHTABLE_SHARED(ht->hdr)) ht2->hdr |= MAKEBITS(1, HDR_HASHTABLE_SHARED_SHIFT);
   if (immutable) ht2->hdr |= MAKEBITS(1, HDR_HASHTABLE_IMMUTABLE_SHIFT);
   return ht2;
 }
@@ -737,7 +724,6 @@ scm_weakhashtable_t copy_weakhashtable(object_heap_t* heap, scm_weakhashtable_t 
     if (((scm_weakmapping_t)obj)->key == scm_false) continue;
     put_weakhashtable(ht2, (scm_weakmapping_t)obj);
   }
-  if (HDR_WEAKHASHTABLE_SHARED(ht->hdr)) ht2->hdr |= MAKEBITS(1, HDR_WEAKHASHTABLE_SHARED_SHIFT);
   if (immutable) ht2->hdr |= MAKEBITS(1, HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT);
   return ht2;
 }
@@ -758,7 +744,6 @@ scm_weakhashtable_t clone_weakhashtable(object_heap_t* heap, scm_weakhashtable_t
     if (wmap->key == scm_false) continue;
     put_weakhashtable(ht2, make_weakmapping(heap, wmap->key, wmap->value));
   }
-  if (HDR_WEAKHASHTABLE_SHARED(ht->hdr)) ht2->hdr |= MAKEBITS(1, HDR_WEAKHASHTABLE_SHARED_SHIFT);
   if (immutable) ht2->hdr |= MAKEBITS(1, HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT);
   return ht2;
 }

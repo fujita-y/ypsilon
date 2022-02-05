@@ -43,10 +43,10 @@
     .... .... .... .... .... L.-- ---- 1010 : scm_hdr_vector        L: literal
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_port
     nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_values
-    .... .... .... .... .... IU-- ---- 1010 : scm_hdr_hashtable     I: immutable U: unsafe
+    .... .... .... .... .... I--- ---- 1010 : scm_hdr_hashtable     I: immutable
     .... .... .... .... .... U.-- ---- 1010 : scm_hdr_gloc          U: uninterned
     nnnn nnnn nnnn nnnn .... ..-- ---- 1010 : scm_hdr_tuple
-    .... .... .... .... .... IU-- ---- 1010 : scm_hdr_weakhashtable I: immutable U: unsafe
+    .... .... .... .... .... I--- ---- 1010 : scm_hdr_weakhashtable I: immutable
     .... .... .... .... .... LM-- ---- 1010 : scm_hdr_bvector       L: literal M: mapped
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_complex
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_rational
@@ -484,9 +484,7 @@ struct vm_env_rec_t {
 #define HDR_TUPLE_COUNT_SHIFT             16
 #define HDR_HEAPENV_SIZE_SHIFT            16
 #define HDR_HEAPCONT_SIZE_SHIFT           16
-#define HDR_HASHTABLE_SHARED_SHIFT        10
 #define HDR_HASHTABLE_IMMUTABLE_SHIFT     11
-#define HDR_WEAKHASHTABLE_SHARED_SHIFT    10
 #define HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT 11
 #define HDR_BIGNUM_SIGN_SHIFT             10
 #define HDR_BIGNUM_COUNT_SHIFT            16
@@ -511,9 +509,7 @@ struct vm_env_rec_t {
 #define HDR_BIGNUM_COUNT(hdr)             (((uintptr_t)(hdr)) >> HDR_BIGNUM_COUNT_SHIFT)
 #define HDR_SYMBOL_SIZE(hdr)              (((uintptr_t)(hdr)) >> HDR_SYMBOL_SIZE_SHIFT)
 #define HDR_SYMBOL_CODE(hdr)              (((hdr) >> HDR_SYMBOL_CODE_SHIFT) & 0xff)
-#define HDR_HASHTABLE_SHARED(hdr)         (((hdr) >> HDR_HASHTABLE_SHARED_SHIFT) & 1)
 #define HDR_HASHTABLE_IMMUTABLE(hdr)      (((hdr) >> HDR_HASHTABLE_IMMUTABLE_SHIFT) & 1)
-#define HDR_WEAKHASHTABLE_SHARED(hdr)     (((hdr) >> HDR_WEAKHASHTABLE_SHARED_SHIFT) & 1)
 #define HDR_WEAKHASHTABLE_IMMUTABLE(hdr)  (((hdr) >> HDR_WEAKHASHTABLE_IMMUTABLE_SHIFT) & 1)
 #define HDR_BIGNUM_SIGN(hdr)              (((hdr) >> HDR_BIGNUM_SIGN_SHIFT) & 0x03)
 #define HDR_FLONUM_32BIT(hdr)             (((hdr) >> HDR_FLONUM_32BIT_SHIFT) & 1)
