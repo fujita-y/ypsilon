@@ -197,6 +197,10 @@ scm_obj_t subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[]) {
         vm->m_heap->write_barrier(argv[2]);
         scoped_lock lock(ht->lock);
         if (ht->handlers == scm_false) {
+          if (ht->type == SCM_HASHTABLE_TYPE_STRING && !STRINGP(argv[1])) {
+            wrong_type_argument_violation(vm, "core-hashtable-set!", 1, "string", argv[1], argc, argv);
+            return scm_undef;
+          }
           int nsize = put_hashtable(ht, argv[1], argv[2]);
           if (nsize) rehash_hashtable(vm->m_heap, ht, nsize);
           return scm_unspecified;
@@ -243,6 +247,10 @@ scm_obj_t subr_core_hashtable_ref(VM* vm, int argc, scm_obj_t argv[]) {
       scm_hashtable_t ht = (scm_hashtable_t)argv[0];
       scoped_lock lock(ht->lock);
       if (ht->handlers == scm_false) {
+        if (ht->type == SCM_HASHTABLE_TYPE_STRING && !STRINGP(argv[1])) {
+          wrong_type_argument_violation(vm, "core-hashtable-ref", 1, "string", argv[1], argc, argv);
+          return scm_undef;
+        }
         scm_obj_t value = get_hashtable(ht, argv[1]);
         if (value != scm_undef) return value;
         return argv[2];
@@ -275,6 +283,10 @@ scm_obj_t subr_core_hashtable_delete(VM* vm, int argc, scm_obj_t argv[]) {
       if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
         scoped_lock lock(ht->lock);
         if (ht->handlers == scm_false) {
+          if (ht->type == SCM_HASHTABLE_TYPE_STRING && !STRINGP(argv[1])) {
+            wrong_type_argument_violation(vm, "core-hashtable-ref", 1, "string", argv[1], argc, argv);
+            return scm_undef;
+          }
           int nsize = remove_hashtable(ht, argv[1]);
           if (nsize) rehash_hashtable(vm->m_heap, ht, nsize);
           return scm_unspecified;
@@ -390,6 +402,10 @@ scm_obj_t subr_core_hashtable_contains_pred(VM* vm, int argc, scm_obj_t argv[]) 
       scm_hashtable_t ht = (scm_hashtable_t)argv[0];
       scoped_lock lock(ht->lock);
       if (ht->handlers == scm_false) {
+        if (ht->type == SCM_HASHTABLE_TYPE_STRING && !STRINGP(argv[1])) {
+          wrong_type_argument_violation(vm, "core-hashtable-contains?", 1, "string", argv[1], argc, argv);
+          return scm_undef;
+        }
         scm_obj_t value = get_hashtable(ht, argv[1]);
         return (value != scm_undef) ? scm_true : scm_false;
       }
