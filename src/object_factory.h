@@ -33,7 +33,7 @@ scm_values_t make_values(object_heap_t* heap, int n);
 scm_cont_t make_cont(object_heap_t* heap, scm_obj_t rec, void* cont);
 scm_hashtable_t make_hashtable(object_heap_t* heap, int type, int n);
 scm_weakhashtable_t make_weakhashtable(object_heap_t* heap, int n);
-scm_hashtable_t make_generic_hashtable(object_heap_t* heap, scm_vector_t handlers);
+scm_hashtable_t make_generic_hashtable(object_heap_t* heap, scm_vector_t handlers, int n);
 scm_environment_t make_environment(object_heap_t* heap, const char* name);
 scm_subr_t make_subr(object_heap_t* heap, subr_proc_t adrs, scm_obj_t doc);
 scm_closure_t make_closure(object_heap_t* heap, scm_closure_t tmpl, void* env);

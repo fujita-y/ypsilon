@@ -346,15 +346,21 @@ scm_hashtable_t make_hashtable(object_heap_t* heap, int type, int n) {
   return obj;
 }
 
-scm_hashtable_t make_generic_hashtable(object_heap_t* heap, scm_vector_t handlers) {
+scm_hashtable_t make_generic_hashtable(object_heap_t* heap, scm_vector_t handlers, int n) {
   assert(VECTORP(handlers));
   scm_hashtable_t obj = (scm_hashtable_t)heap->allocate_collectible(sizeof(scm_hashtable_rec_t));
+  int datum_size = sizeof(hashtable_rec_t) + sizeof(scm_obj_t) * ((n + n) - 1);
+  hashtable_rec_t* ht_datum = (hashtable_rec_t*)heap->allocate_private(datum_size);
+  ht_datum->capacity = n;
+  ht_datum->live = 0;
+  ht_datum->used = 0;
+  for (int i = 0; i < (n + n); i++) ht_datum->elts[i] = scm_hash_free;
   obj->hdr = scm_hdr_hashtable;
   obj->type = SCM_HASHTABLE_TYPE_GENERIC;
   obj->handlers = handlers;
   obj->hash = NULL;
   obj->equiv = NULL;
-  obj->datum = NULL;
+  obj->datum = ht_datum;
   obj->lock.init();
   return obj;
 }

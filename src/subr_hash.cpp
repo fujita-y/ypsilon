@@ -58,7 +58,7 @@ scm_obj_t subr_make_core_hashtable(VM* vm, int argc, scm_obj_t argv[]) {
           if (VECTORP(argv[1])) {
             scm_vector_t vector = (scm_vector_t)argv[1];
             if (vector->count == 14) {
-              return make_generic_hashtable(vm->m_heap, (scm_vector_t)vector);
+              return make_generic_hashtable(vm->m_heap, (scm_vector_t)vector, nsize);
             }
           }
           wrong_type_argument_violation(vm, "make-core-hashtable", 1, "14 elements vector", argv[1], argc, argv);
