@@ -11,11 +11,11 @@
           list-copy
           circular-list
           iota
-          (rename (list? proper-list?))
+          (rename list? proper-list?)
           circular-list?
           dotted-list?
           not-pair?
-          (rename (null? null-list?))
+          (rename null? null-list?)
           list=
           first
           second
@@ -32,19 +32,19 @@
           drop
           take-right
           drop-right
-          (rename (take take!))
-          (rename (drop-right drop-right!))
+          (rename take take!)
+          (rename drop-right drop-right!)
           split-at
-          (rename (split-at split-at!))
+          (rename split-at split-at!)
           last
           last-pair
           length+
           concatenate
-          (rename (append append!))
-          (rename (concatenate concatenate!))
-          (rename (reverse reverse!))
+          (rename append append!)
+          (rename concatenate concatenate!)
+          (rename reverse reverse!)
           append-reverse
-          (rename (append-reverse append-reverse!))
+          (rename append-reverse append-reverse!)
           zip
           unzip1
           unzip2
@@ -55,23 +55,23 @@
           fold
           unfold
           pair-fold
-          (rename (fold reduce))
-          (rename (fold-right/srfi-1 fold-right))
+          (rename fold reduce)
+          (rename fold-right/srfi-1 fold-right)
           unfold-right
           pair-fold-right
-          (rename (fold-right/srfi-1 reduce-right))
+          (rename fold-right/srfi-1 reduce-right)
           append-map
-          (rename (append-map append-map!))
-          (rename (map/srfi-1 map!))
+          (rename append-map append-map!)
+          (rename map/srfi-1 map!)
           pair-for-each
           filter-map
-          (rename (map/srfi-1 map-in-order))
+          (rename map/srfi-1 map-in-order)
           filter
           partition
-          (rename (remp remove))
-          (rename (filter filter!))
-          (rename (partition partition!))
-          (rename (remp remove!))
+          (rename remp remove)
+          (rename filter filter!)
+          (rename partition partition!)
+          (rename remp remove!)
           find
           find-tail
           any
@@ -79,32 +79,32 @@
           list-index
           take-while
           drop-while
-          (rename (take-while take-while!))
+          (rename take-while take-while!)
           span
           break
-          (rename (span span!))
-          (rename (break break!))
+          (rename span span!)
+          (rename break break!)
           delete
           delete-duplicates
-          (rename (delete delete!))
-          (rename (delete-duplicates delete-duplicates!))
+          (rename delete delete!)
+          (rename delete-duplicates delete-duplicates!)
           alist-cons
           alist-copy
           alist-delete
-          (rename (alist-delete alist-delete!))
+          (rename alist-delete alist-delete!)
           lset<=
           lset=
           lset-adjoin
           lset-union
-          (rename (lset-union lset-union!))
+          (rename lset-union lset-union!)
           lset-intersection
-          (rename (lset-intersection lset-intersection!))
+          (rename lset-intersection lset-intersection!)
           lset-difference
-          (rename (lset-difference lset-difference!))
+          (rename lset-difference lset-difference!)
           lset-xor
-          (rename (lset-xor lset-xor!))
+          (rename lset-xor lset-xor!)
           lset-diff+intersection
-          (rename (lset-diff+intersection lset-diff+intersection!)))
+          (rename lset-diff+intersection lset-diff+intersection!))
   (begin
     (define for-each-1/srfi-1
       (lambda (proc lst)

@@ -10,7 +10,7 @@
           current-modified-julian-day
           current-time
           time-resolution
-          (rename (make-time/srfi-19 make-time))
+          (rename make-time/srfi-19 make-time)
           time?
           time-type
           time-nanosecond
@@ -30,7 +30,7 @@
           add-duration!
           subtract-duration
           subtract-duration!
-          (rename (make-date/srfi-19 make-date))
+          (rename make-date/srfi-19 make-date)
           date?
           date-nanosecond
           date-second

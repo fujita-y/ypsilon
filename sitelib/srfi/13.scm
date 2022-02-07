@@ -8,13 +8,13 @@
     ;; constructors
     make-string string string-tabulate
     ;; list & string conversion
-    (rename (string->list/srfi-13 string->list))
+    (rename string->list/srfi-13 string->list)
     list->string
     reverse-list->string string-join
     ;; selection
     string-length
     string-ref
-    (rename (string-copy/srfi-13 string-copy))
+    (rename string-copy/srfi-13 string-copy)
     substring/shared
     string-copy!
     string-take string-take-right
@@ -23,12 +23,12 @@
     string-trim string-trim-right string-trim-both
     ;; modification
     string-set!
-    (rename (string-fill!/srfi-13 string-fill!))
+    (rename string-fill!/srfi-13 string-fill!)
     ;; comparison
     string-compare string-compare-ci
     string<> string= string< string> string<= string>=
     string-ci<> string-ci= string-ci< string-ci> string-ci<= string-ci>=
-    (rename (string-hash/srfi-13 string-hash))
+    (rename string-hash/srfi-13 string-hash)
     string-hash-ci
     ;; prefixes & suffixes
     string-prefix-length string-suffix-length
@@ -41,9 +41,9 @@
     string-count
     string-contains string-contains-ci
     ;; alphabetic case mapping
-    (rename (string-titlecase/srfi-13 string-titlecase)
-            (string-upcase/srfi-13 string-upcase)
-            (string-downcase/srfi-13 string-downcase))
+    (rename string-titlecase/srfi-13 string-titlecase)
+    (rename string-upcase/srfi-13 string-upcase)
+    (rename string-downcase/srfi-13 string-downcase)
     string-titlecase! string-upcase! string-downcase!
     ;; reverse & append
     string-reverse string-reverse!
@@ -55,7 +55,7 @@
     string-map string-map!
     string-fold string-fold-right
     string-unfold string-unfold-right
-    (rename (string-for-each/srfi-13 string-for-each))
+    (rename string-for-each/srfi-13 string-for-each)
     string-for-each-index
     ;; replicate & rotate
     xsubstring string-xcopy!

@@ -147,7 +147,7 @@
                    (begin (core-hashtable-set! visited lst #t) (loop (vector->list lst)))))))
       ids)))
 
-(define parse-exports
+(define parse-exports/r6rs
   (lambda (form specs)
     (let loop ((spec specs) (exports '()))
       (destructuring-match spec
@@ -158,6 +158,15 @@
            (or (every1 (lambda (e) (= (safe-length e) 2)) alist)
                (syntax-violation 'export "malformed export spec" (abbreviated-take-form form 4 8) (car spec)))
            (loop more (append (map (lambda (e) (cons (car e) (cadr e))) alist) exports))))
+        (_ (syntax-violation 'export "malformed export spec" (abbreviated-take-form form 4 8) (car spec)))))))
+
+(define parse-exports/r7rs
+  (lambda (form specs)
+    (let loop ((spec specs) (exports '()))
+      (destructuring-match spec
+        (() (reverse exports))
+        (((? symbol? id) . more) (loop more (acons id id exports)))
+        ((('rename from to) . more) (loop more (cons (cons from to) exports)))
         (_ (syntax-violation 'export "malformed export spec" (abbreviated-take-form form 4 8) (car spec)))))))
 
 (define parse-imports
@@ -310,7 +319,7 @@
            (and library-version (core-hashtable-set! (scheme-library-versions) library-id library-version))
            (parameterize ((current-include-files (make-core-hashtable)))
              (let ((coreform
-                     (let ((exports (parse-exports form export-spec))
+                     (let ((exports (parse-exports/r6rs form export-spec))
                            (imports (parse-imports form import-spec))
                            (depends (parse-depends form import-spec))
                            (ht-immutables (make-core-hashtable))

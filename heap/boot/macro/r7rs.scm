@@ -112,7 +112,7 @@
                                    (permute-env ht-libenv)))))
                            (destructuring-match clauses
                              ((('export export-spec ...) more ...)
-                              (loop more (append exports (parse-exports form export-spec)) imports depends commands))
+                              (loop more (append exports (parse-exports/r7rs form export-spec)) imports depends commands))
                              ((('import import-spec ...) more ...)
                               (loop
                                 more
