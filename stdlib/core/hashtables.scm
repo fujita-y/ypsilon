@@ -90,6 +90,7 @@
                    => (lambda (alist)
                         (cond ((assp equiv? alist)
                                => (lambda (p)
+                                    (set! size (- size 1))
                                     (core-hashtable-set! ht-root slot (remq p alist)))))))))
           (unspecified)))
 
