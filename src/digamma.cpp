@@ -3160,7 +3160,12 @@ void digamma_t::emit_subr_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
 
-  emit_subr(ctx, inst, (scm_subr_t)(((scm_gloc_t)CAR(operands))->value));
+  scm_subr_t subr = (scm_subr_t)((scm_gloc_t)CAR(operands))->value;
+  if (SUBRP(subr)) {
+    emit_subr(ctx, inst, subr);
+  } else {
+    fatal("internal error: inconsistent instruction usage (subr.gloc)");
+  }
 }
 
 void digamma_t::emit_push_subr_gloc(context_t& ctx, scm_obj_t inst) {
@@ -3168,7 +3173,12 @@ void digamma_t::emit_push_subr_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
 
-  emit_push_subr(ctx, inst, (scm_subr_t)(((scm_gloc_t)CAR(operands))->value));
+  scm_subr_t subr = (scm_subr_t)((scm_gloc_t)CAR(operands))->value;
+  if (SUBRP(subr)) {
+    emit_push_subr(ctx, inst, subr);
+  } else {
+    fatal("internal error: inconsistent instruction usage (push.subr.gloc)");
+  }
 }
 
 void digamma_t::emit_ret_subr_gloc(context_t& ctx, scm_obj_t inst) {
@@ -3176,5 +3186,10 @@ void digamma_t::emit_ret_subr_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
 
-  emit_ret_subr(ctx, inst, (scm_subr_t)(((scm_gloc_t)CAR(operands))->value));
+  scm_subr_t subr = (scm_subr_t)((scm_gloc_t)CAR(operands))->value;
+  if (SUBRP(subr)) {
+    emit_ret_subr(ctx, inst, subr);
+  } else {
+    fatal("internal error: inconsistent instruction usage (ret.subr.gloc)");
+  }
 }

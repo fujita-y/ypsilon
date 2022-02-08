@@ -418,7 +418,7 @@
   (lambda ()
     (define inconsistent-cache-state
       (lambda (cache-lst)
-        (and (auto-compile-verbose) (format (current-error-port) "~&;; reset ~s~%" (auto-compile-cache)))
+        (and (auto-compile-verbose) (format #t "~&;; reset ~s~%" (auto-compile-cache)))
         (cache-delete-files cache-lst)))
     (cond ((auto-compile-cache)
            =>

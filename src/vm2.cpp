@@ -115,11 +115,6 @@ scm_gloc_t VM::prebind_gloc(scm_obj_t variable) {
   }
 }
 
-static scm_obj_t subr_inconsistent_definition(VM* vm, int argc, scm_obj_t argv[]) {
-  raise_error(vm, NULL, "internal error: inconsistent definition", 0);
-  return scm_undef;
-}
-
 void VM::prebind_list(scm_obj_t code) {
   while (PAIRP(code)) {
     scm_symbol_t symbol = (scm_symbol_t)CAAR(code);
@@ -226,9 +221,6 @@ void VM::prebind_list(scm_obj_t code) {
           CAR(operands) = gloc->value;
         } else {
           CAAR(code) = m_heap->inherent_symbol(VMOP_PUSH_SUBR_GLOC);
-          scm_subr_t subr = make_subr(m_heap, subr_inconsistent_definition, scm_unspecified);
-          m_heap->write_barrier(subr);
-          gloc->value = subr;
           m_heap->write_barrier(gloc);
           CAR(operands) = gloc;
         }
@@ -251,9 +243,6 @@ void VM::prebind_list(scm_obj_t code) {
           CAR(operands) = gloc->value;
         } else {
           CAAR(code) = m_heap->inherent_symbol(VMOP_SUBR_GLOC);
-          scm_subr_t subr = make_subr(m_heap, subr_inconsistent_definition, scm_unspecified);
-          m_heap->write_barrier(subr);
-          gloc->value = subr;
           m_heap->write_barrier(gloc);
           CAR(operands) = gloc;
         }
@@ -276,9 +265,6 @@ void VM::prebind_list(scm_obj_t code) {
           CAR(operands) = gloc->value;
         } else {
           CAAR(code) = m_heap->inherent_symbol(VMOP_RET_SUBR_GLOC);
-          scm_subr_t subr = make_subr(m_heap, subr_inconsistent_definition, scm_unspecified);
-          m_heap->write_barrier(subr);
-          gloc->value = subr;
           m_heap->write_barrier(gloc);
           CAR(operands) = gloc;
         }
