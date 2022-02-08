@@ -4880,7 +4880,7 @@ static scm_obj_t parse_negate(object_heap_t* heap, scm_obj_t obj) {
     scm_bignum_t bn = (scm_bignum_t)obj;
     bn_set_sign(bn, -bn_get_sign(bn));
     if (bn_get_count(bn) == 1) {
-      int64_t n = bn->elts[0];
+      signed_digit2x_t n = bn->elts[0];
       if (bn_get_sign(bn) < 0) n = -n;
       if ((n >= FIXNUM_MIN) & (n <= FIXNUM_MAX)) return MAKEFIXNUM(n);
     }
