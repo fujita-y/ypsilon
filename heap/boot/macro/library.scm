@@ -182,17 +182,32 @@
                   (abbreviated-take-form form 4 8)
                   subform)))
           ids)))
-    (define check-bound-identifier
+    (define check-renamed-identifier
       (lambda (bindings ids subform)
         (for-each
           (lambda (id)
             (and (assq id bindings)
                  (syntax-violation
                    'import
-                   (format "duplicate import identifiers ~a" id)
+                   (format "duplicate import identifier ~a" id)
                    (abbreviated-take-form form 4 8)
                    subform)))
           ids)))
+    (define check-duplicate-identifier
+      (lambda (lst1 lst2 subform)
+        (for-each
+          (lambda (e1)
+            (cond
+              ((assq (car e1) lst2)
+               =>
+               (lambda (e2)
+                 (or (eq? (cddr e1) (cddr e2))
+                     (syntax-violation
+                       'import
+                       (format "duplicate import identifier ~a" (car e1))
+                       (abbreviated-take-form form 4 8)
+                       subform))))))
+          lst1)))
     (let loop ((spec specs) (imports '()))
       (destructuring-match spec
         (() imports)
@@ -200,11 +215,15 @@
         ((('only set . ids) . more)
          (let ((bindings (loop (list set) '())))
            (check-unbound-identifier bindings ids (car spec))
-           (loop more (append (filter (lambda (e) (memq (car e) ids)) bindings) imports))))
+           (let ((new (filter (lambda (e) (memq (car e) ids)) bindings)))
+             (check-duplicate-identifier imports new (car spec))
+             (loop more (append new imports)))))
         ((('except set . ids) . more)
          (let ((bindings (loop (list set) '())))
            (check-unbound-identifier bindings ids (car spec))
-           (loop more (append (filter (lambda (e) (not (memq (car e) ids))) bindings) imports))))
+           (let ((new (filter (lambda (e) (not (memq (car e) ids))) bindings)))
+             (check-duplicate-identifier imports new (car spec))
+             (loop more (append new imports)))))
         ((('rename set . alist) . more)
          (let ((bindings (loop (list set) '())))
            (or (every1 (lambda (e) (= (safe-length e) 2)) alist)
@@ -215,7 +234,7 @@
                  "duplicate identifers in rename specs"
                  (abbreviated-take-form form 4 8)
                  (car spec)))
-           (check-bound-identifier bindings (map cadr alist) (car spec))
+           (check-renamed-identifier bindings (map cadr alist) (car spec))
            (check-unbound-identifier bindings (map car alist) (car spec))
            (loop
              more
@@ -241,7 +260,7 @@
                (loop
                  more
                  (cond ((core-hashtable-ref (scheme-library-exports) library-id #f)
-                        => (lambda (lst) (append lst imports)))
+                        => (lambda (lst) (check-duplicate-identifier imports lst (car spec)) (append lst imports)))
                        (else
                          (syntax-violation
                            'import
@@ -328,7 +347,7 @@
                        (for-each
                          (lambda (a)
                            (and (core-hashtable-ref ht-publics (cdr a) #f)
-                                (syntax-violation 'library "duplicate export identifiers" (abbreviated-take-form form 4 8) (cdr a)))
+                                (syntax-violation 'library "duplicate export identifier" (abbreviated-take-form form 4 8) (cdr a)))
                            (core-hashtable-set! ht-publics (cdr a) #t)
                            (core-hashtable-set! ht-immutables (car a) #t))
                          exports)
@@ -341,7 +360,7 @@
                                     (or (eq? deno (cdr a))
                                         (syntax-violation
                                           'library
-                                          "duplicate import identifiers"
+                                          "duplicate import identifier"
                                           (abbreviated-take-form form 4 8)
                                           (car a)))))
                                  (else (core-hashtable-set! ht-imports (car a) (cdr a)))))
@@ -617,7 +636,7 @@
                    (or (eq? deno (cdr a))
                        (syntax-violation
                          'import
-                         "duplicate import identifiers"
+                         "duplicate import identifier"
                          (abbreviated-take-form form 4 8)
                          (car a)))))
                 (else (core-hashtable-set! ht-bindings (car a) (cdr a)))))

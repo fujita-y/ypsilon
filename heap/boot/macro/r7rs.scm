@@ -75,7 +75,7 @@
                                  (and (core-hashtable-ref ht-publics (cdr a) #f)
                                       (syntax-violation
                                         'define-library
-                                        "duplicate export identifiers"
+                                        "duplicate export identifier"
                                         (abbreviated-take-form form 4 8)
                                         (cdr a)))
                                  (core-hashtable-set! ht-publics (cdr a) #t)
@@ -90,7 +90,7 @@
                                           (or (eq? deno (cdr a))
                                               (syntax-violation
                                                 'define-library
-                                                "duplicate import identifiers"
+                                                "duplicate import identifier"
                                                 (abbreviated-take-form form 4 8)
                                                 (car a)))))
                                        (else (core-hashtable-set! ht-imports (car a) (cdr a)))))
