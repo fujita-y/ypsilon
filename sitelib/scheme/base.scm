@@ -7,6 +7,9 @@
                           for-each map member assoc string->list string-copy string-fill!
                           vector->list vector-fill! bytevector-copy vector-map)
                   (define-record-type r6rs:define-record-type)
+                  (current-input-port r6rs:current-input-port)
+                  (current-output-port r6rs:current-output-port)
+                  (current-error-port r6rs:current-error-port)
                   (flush-output-port r6rs:flush-output-port)
                   (expt r6rs:expt)
                   (error r6rs:error)
@@ -397,6 +400,21 @@
                   (r6rs:bytevector-copy! (car args) 0 ans p n)
                   (loop (cdr args) (+ p n)))))
           ans)))
+
+    (define current-input-port
+      (make-parameter
+        (r6rs:current-input-port)
+        (lambda (x) (set-current-input-port! x) x)))
+
+    (define current-output-port
+      (make-parameter
+        (r6rs:current-output-port)
+        (lambda (x) (set-current-output-port! x) x)))
+
+    (define current-error-port
+      (make-parameter
+        (r6rs:current-error-port)
+        (lambda (x) (set-current-error-port! x) x)))
 
     (define char-ready?
       (lambda options
