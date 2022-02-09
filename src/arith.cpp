@@ -2372,6 +2372,7 @@ scm_obj_t arith_negate(object_heap_t* heap, scm_obj_t obj) {
 scm_obj_t arith_bit_count(object_heap_t* heap, scm_obj_t obj) {
   if (FIXNUMP(obj)) {
     intptr_t n = FIXNUM(obj);
+    if (n == 0) return MAKEFIXNUM(0);
     if (n > 0) {
       return MAKEFIXNUM(nbits(n));
     } else {
