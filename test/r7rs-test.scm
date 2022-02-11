@@ -7,7 +7,8 @@
         (scheme file) (scheme read) (scheme write)
         (scheme eval) (scheme process-context) (scheme case-lambda)
         (scheme r5rs)
-        (test-lite)  ; or (chibi test) or (srfi 64)
+        (test-lite) ; or (chibi test) or (srfi 64)
+        (only (core) collect) ; for leak detector friendly
         )
 
 ;; R7RS test suite.  Covers all procedures and syntax in the small

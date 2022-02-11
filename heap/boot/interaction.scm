@@ -420,11 +420,9 @@
                              (load-top-level-program path))
                             (else
                              (cond ((and (repl-startup-version) (= (repl-startup-version) 7))
-                                    (interpret '(import (core)))
-                                    (interpret '(import (scheme base))))
+                                    (interpret '(import (scheme base) (scheme process-context))))
                                    ((and (repl-startup-version) (= (repl-startup-version) 6))
-                                    (interpret '(import (core)))
-                                    (interpret '(import (rnrs base (6)))))
+                                    (interpret '(import (rnrs base) (rnrs programs))))
                                    (else
                                     (interpret '(import (core)))))
                              (load path)))
@@ -436,11 +434,9 @@
         (cond (mute) (verbose (show-info)) (else (show-banner)))
         (or script
             (cond ((and (repl-startup-version) (= (repl-startup-version) 7))
-                   (interpret '(import (core)))
-                   (interpret '(import (scheme base))))
+                   (interpret '(import (scheme base) (scheme process-context))))
                   ((and (repl-startup-version) (= (repl-startup-version) 6))
-                   (interpret '(import (core)))
-                   (interpret '(import (rnrs base (6)))))
+                   (interpret '(import (rnrs base) (rnrs programs))))
                   (else
                    (interpret '(import (core))))))
         (if quiet (quiet-read-eval-print-loop) (read-eval-print-loop))))

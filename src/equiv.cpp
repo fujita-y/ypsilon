@@ -99,15 +99,22 @@ static int terminal_listp(scm_obj_t maybe_list) {
   scm_obj_t fast = maybe_list;
   scm_obj_t slow = fast;
   while (PAIRP(fast)) {
-    count++;
-    fast = CDR(fast);
-    if (!PAIRP(fast)) return count;
     scm_obj_t elt = CAR(fast);
-    if (PAIRP(elt) || VECTORP(elt) || TUPLEP(elt)) return 0;
+    if (PAIRP(elt) || VECTORP(elt)) return 0;
     fast = CDR(fast);
+    count++;
+    if (PAIRP(fast)) {
+      scm_obj_t elt = CAR(fast);
+      if (PAIRP(elt) || VECTORP(elt)) return 0;
+    } else {
+      return count;
+    }
+    fast = CDR(fast);
+    count++;
     slow = CDR(slow);
     if (slow == fast) return 0;
   }
+  if (VECTORP(fast)) return 0;
   return count;
 }
 
