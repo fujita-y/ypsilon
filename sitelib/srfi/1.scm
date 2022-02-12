@@ -32,10 +32,10 @@
           drop
           take-right
           drop-right
-          (rename take take!)
-          (rename drop-right drop-right!)
+          take!
+          drop-right!
           split-at
-          (rename split-at split-at!)
+          split-at!
           last
           last-pair
           length+
@@ -55,11 +55,11 @@
           fold
           unfold
           pair-fold
-          (rename fold reduce)
+          reduce
           (rename fold-right/srfi-1 fold-right)
           unfold-right
           pair-fold-right
-          (rename fold-right/srfi-1 reduce-right)
+          reduce-right
           append-map
           (rename append-map append-map!)
           (rename map/srfi-1 map!)
@@ -189,15 +189,21 @@
     (define list=
       (lambda (proc . lists)
         (define list-equal-1
-          (lambda (lst)
-            (let loop ((lst1 (car lists)) (lst2 lst))
+          (lambda (lst1 lst2)
+            (let loop ((lst1 lst1) (lst2 lst2))
               (if (null? lst1)
                   (null? lst2)
-                  (and (pair? lst1) (pair? lst2) (proc (car lst1) (car lst2)) (loop (cdr lst1) (cdr lst2)))))))
+                  (and (pair? lst1)
+                       (pair? lst2)
+                       (proc (car lst1) (car lst2))
+                       (loop (cdr lst1) (cdr lst2)))))))
         (or (null? lists)
             (null? (cdr lists))
-            (let loop ((head (cadr lists)) (rest (cddr lists)))
-              (if (null? rest) (list-equal-1 head) (and (list-equal-1 head) (loop (car rest) (cdr rest))))))))
+            (let loop ((lst1 (car lists)) (lst2 (cadr lists)) (rest (cddr lists)))
+              (if (null? rest)
+                  (list-equal-1 lst1 lst2)
+                  (and (list-equal-1 lst1 lst2)
+                       (loop lst2 (car rest) (cdr rest))))))))
 
     (define first car)
 
@@ -237,15 +243,30 @@
 
     (define take-right
       (lambda (lst n)
-        (let loop ((head (list-tail lst n)) (tail lst)) (if (pair? head) (loop (cdr head) (cdr tail)) tail))))
+        (let loop ((head (list-tail lst n)) (tail lst))
+          (if (pair? head) (loop (cdr head) (cdr tail)) tail))))
 
     (define drop-right
       (lambda (lst n)
         (list-head lst (- (count-pair lst) n))))
 
+    (define take!
+      (lambda (lst n)
+        (cond ((= n 0) '())
+              (else (set-cdr! (list-tail lst (- n 1)) '()) lst))))
+
+    (define drop-right!
+      (lambda (lst n)
+        (take! lst (- (count-pair lst) n))))
+
     (define split-at
       (lambda (lst n)
         (values (take lst n) (drop lst n))))
+
+    (define split-at!
+      (lambda (lst n)
+        (let ((rest (drop lst n)))
+          (values (take! lst n) rest))))
 
     (define last
       (lambda (lst)
@@ -295,8 +316,14 @@
     (define count
       (lambda (proc lst1 . lst2)
         (if (null? lst2)
-            (fold-1 (lambda (arg acc) (if (proc arg) (+ acc 1) acc)) 0 lst1)
-            (fold-n (lambda (args acc) (if (apply proc args) (+ acc 1) acc)) 0 (apply list-transpose* lst1 lst2)))))
+            (let loop ((lst lst1) (acc 0))
+              (cond ((null? lst) acc)
+                    (else
+                      (loop (cdr lst) (if (proc (car lst)) (+ acc 1) acc )))))
+            (let loop ((lst (apply list-transpose* lst1 lst2)) (acc 0))
+              (cond ((null? lst) acc)
+                    (else
+                      (loop (cdr lst) (if (apply proc (car lst)) (+ acc 1) acc ))))))))
 
     (define fold
       (lambda (proc seed lst1 . lst2)
@@ -320,6 +347,12 @@
             (pair-fold-1 proc seed lst1)
             (pair-fold-n proc seed (apply list-transpose* (list-of-subset lst1) (map-1/srfi-1 list-of-subset lst2))))))
 
+    (define reduce
+      (lambda (proc seed lst)
+        (if (null? lst)
+            seed
+            (fold proc (car lst) (cdr lst)))))
+
     (define unfold-right
       (lambda (pred func gen seed . opt)
         (let-optionals opt
@@ -340,6 +373,14 @@
               proc
               seed
               (apply list-transpose* (list-of-subset lst1) (map-1/srfi-1 list-of-subset lst2))))))
+
+    (define reduce-right
+      (lambda (proc seed lst)
+        (if (null? lst)
+            seed
+            (let loop ((head (car lst)) (rest (cdr lst)))
+              (cond ((pair? rest) (proc head (loop (car rest) (cdr rest))))
+                    (else head))))))
 
     (define append-map
       (lambda (proc lst1 . lst2)
