@@ -641,14 +641,14 @@
       (lambda (x)
         (syntax-case x (else)
           ((_)
-           #'(begin))
+           #'(begin #f))
           ((_ (else body ...))
-           #'(begin body ...))
+           #'(begin #f body ...))
           ((_ (else body ...) more ...)
            (syntax-violation 'cond-expand "misplaced else" x))
           ((_ (conditions body ...) more ...)
            (if (fulfill-feature-requirements? x (syntax->datum #'conditions))
-               #'(begin body ...)
+               #'(begin #f body ...)
                #'(cond-expand more ...))))))
 
     (define-syntax define-values
