@@ -7,7 +7,7 @@
   (export make-parameter parameterize)
 
   (import (core intrinsics)
-          (only (core primitives) make-parameter))
+          (only (core primitives) make-parameter subr?))
 
   (define-syntax parameterize-aux
     (syntax-rules ()
@@ -16,7 +16,7 @@
          (dynamic-wind
           (lambda () (set! save (param)) ... (param new) ...)
           (lambda () body ...)
-          (lambda () (param save) ...))))
+          (lambda () (begin (if (subr? param) (param save) (param save #f))) ...))))
       ((_ ((e1 e2) . more) (stash ...) body ...)
        (parameterize-aux more (stash ... (tmp1 tmp2 e1 e2)) body ...))))
 

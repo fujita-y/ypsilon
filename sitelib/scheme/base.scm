@@ -404,16 +404,19 @@
     (define current-input-port
       (make-parameter
         (r6rs:current-input-port)
+        #f
         (lambda (x) (set-current-input-port! x) x)))
 
     (define current-output-port
       (make-parameter
         (r6rs:current-output-port)
+        #f
         (lambda (x) (set-current-output-port! x) x)))
 
     (define current-error-port
       (make-parameter
         (r6rs:current-error-port)
+        #f
         (lambda (x) (set-current-error-port! x) x)))
 
     (define char-ready?
