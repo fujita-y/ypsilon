@@ -33,11 +33,11 @@
 
 (define expand-include
   (lambda (form env)
-    `(begin ,@(apply append (map (lambda (e) (read-include-file #f e 'include)) (cdr form))))))
+    `(begin ,@(apply append (map (lambda (e) (read-include-file (current-library-name) e 'include)) (cdr form))))))
 
 (define expand-include-ci
   (lambda (form env)
-    `(begin ,@(apply append (map (lambda (e) (read-include-file #f e 'include-ci)) (cdr form))))))
+    `(begin ,@(apply append (map (lambda (e) (read-include-file (current-library-name) e 'include-ci)) (cdr form))))))
 
 (define parse-cond-expand
   (lambda (form specs)
@@ -63,7 +63,7 @@
         ((_ library-name clauses ...)
          (let ((library-id (library-name->id form library-name)) (library-version (library-name->version form library-name)))
            (and library-version (core-hashtable-set! (scheme-library-versions) library-id library-version))
-           (parameterize ((current-include-files (make-core-hashtable)))
+           (parameterize ((current-include-files (make-core-hashtable)) (current-library-name library-name))
              (let ((coreform
                      (let loop ((clauses clauses) (exports '()) (imports '()) (depends '()) (commands '()))
                        (if (null? clauses)
@@ -102,6 +102,7 @@
                                (parameterize ((current-immutable-identifiers ht-immutables))
                                  (expand-define-library-body
                                    form
+                                   library-name
                                    library-id
                                    library-version
                                    commands
@@ -156,7 +157,7 @@
         (_ (syntax-violation 'define-library "expected library name and declarations" (abbreviated-take-form form 4 8)))))))
 
 (define expand-define-library-body
-  (lambda (form library-id library-version body exports imports depends env libenv)
+  (lambda (form library-name library-id library-version body exports imports depends env libenv)
     (define initial-libenv #f)
     (define macro-defs '())
     (define extend-env!
@@ -223,6 +224,12 @@
                                          (cons (list org 'template code) macros)
                                          (acons org new renames))))))))
                         (_ (syntax-violation 'define-syntax "expected symbol and single expression" (car body)))))
+                     ((eq? denote-include deno)
+                      (let ((expr `(begin ,@(apply append (map (lambda (e) (read-include-file library-name e 'include)) (cdar body))))))
+                        (loop (append (flatten-begin (list expr) env) (cdr body)) defs macros renames)))
+                     ((eq? denote-include-ci deno)
+                      (let ((expr `(begin ,@(apply append (map (lambda (e) (read-include-file library-name e 'include-ci)) (cdar body))))))
+                        (loop (append (flatten-begin (list expr) env) (cdr body)) defs macros renames)))
                      ((eq? denote-define deno)
                       (let ((def (annotate (cdr (desugar-define (car body))) (car body))))
                         (and (core-hashtable-contains? ht-imported-immutables (car def))

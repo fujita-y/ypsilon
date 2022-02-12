@@ -16,8 +16,9 @@
 (define scheme-load-verbose (make-parameter #f))
 (define scheme-load-paths (make-parameter '()))
 (define library-contains-implicit-main (make-parameter #t))
-(define current-include-files (make-parameter #f))
 (define library-include-dependencies (make-core-hashtable))
+(define current-include-files (make-parameter #f))
+(define current-library-name (make-parameter #f))
 
 (define track-file-open-operation
   (lambda (path)
@@ -238,9 +239,11 @@
         (with-exception-handler
           (lambda (c) (cond ((serious-condition? c) (close-port port) (raise c)) (else (raise-continuable c))))
           (lambda ()
-            (let loop ((acc '()))
-              (let ((form (core-read port (current-source-comments) who)))
-                (cond ((eof-object? form) (close-port port) (reverse acc)) (else (loop (cons form acc))))))))))))
+            (parameterize ((current-source-comments (current-source-comments)))
+              (current-source-comments (and (backtrace) (make-core-hashtable)))
+              (let loop ((acc '()))
+                (let ((form (core-read port (current-source-comments) who)))
+                  (cond ((eof-object? form) (close-port port) (reverse acc)) (else (loop (cons form acc)))))))))))))
 
 (define load-scheme-library
   (lambda (ref . vital)

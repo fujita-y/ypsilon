@@ -336,7 +336,7 @@
         ((_ library-name ('export export-spec ...) ('import import-spec ...) body ...)
          (let ((library-id (library-name->id form library-name)) (library-version (library-name->version form library-name)))
            (and library-version (core-hashtable-set! (scheme-library-versions) library-id library-version))
-           (parameterize ((current-include-files (make-core-hashtable)))
+           (parameterize ((current-include-files (make-core-hashtable)) (current-library-name library-name))
              (let ((coreform
                      (let ((exports (parse-exports/r6rs form export-spec))
                            (imports (parse-imports form import-spec))

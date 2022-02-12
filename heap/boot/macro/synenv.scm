@@ -233,6 +233,8 @@
 (define denote-=>               (core-hashtable-ref core-env '=> #f))
 (define denote-_                (core-hashtable-ref core-env '_ #f))
 (define denote-import           (core-hashtable-ref core-env 'import #f))
+(define denote-include          (core-hashtable-ref core-env 'include #f))
+(define denote-include-ci       (core-hashtable-ref core-env 'include-ci #f))
 
 (define denote-lambda?
   (lambda (env obj)
