@@ -60,7 +60,8 @@
                (lambda (comment) (cons (core-hashtable-ref (current-source-comments) '|.&SOURCE-PATH| #f) comment)))
               (else #f))))
     (parameterize ((ellipsis-id ellipsis))
-      (let ((lites (unrename-syntax lites env)) (clauses (unrename-syntax clauses env)))
+      (let ((lites (unrename-syntax lites env))
+            (clauses (unrename-syntax clauses (extend-env (list (cons ellipsis ellipsis)) env))))
         (cons*
           (ellipsis-id)
           lites

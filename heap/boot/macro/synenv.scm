@@ -232,6 +232,7 @@
 (define denote-else             (core-hashtable-ref core-env 'else #f))
 (define denote-=>               (core-hashtable-ref core-env '=> #f))
 (define denote-_                (core-hashtable-ref core-env '_ #f))
+(define denote-...              (core-hashtable-ref core-env '... #f))
 (define denote-import           (core-hashtable-ref core-env 'import #f))
 (define denote-include          (core-hashtable-ref core-env 'include #f))
 (define denote-include-ci       (core-hashtable-ref core-env 'include-ci #f))
