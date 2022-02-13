@@ -40,7 +40,7 @@
           last-pair
           length+
           concatenate
-          (rename append append!)
+          append!
           (rename concatenate concatenate!)
           (rename reverse reverse!)
           append-reverse
@@ -62,16 +62,16 @@
           reduce-right
           append-map
           (rename append-map append-map!)
-          (rename map/srfi-1 map!)
+          map!
           pair-for-each
           filter-map
           (rename map/srfi-1 map-in-order)
           filter
           partition
           (rename remp remove)
-          (rename filter filter!)
-          (rename partition partition!)
-          (rename remp remove!)
+          filter!
+          partition!
+          remove!
           find
           find-tail
           any
@@ -79,19 +79,19 @@
           list-index
           take-while
           drop-while
-          (rename take-while take-while!)
+          take-while!
           span
           break
-          (rename span span!)
-          (rename break break!)
+          span!
+          break!
           delete
           delete-duplicates
-          (rename delete delete!)
-          (rename delete-duplicates delete-duplicates!)
+          delete!
+          delete-duplicates!
           alist-cons
           alist-copy
           alist-delete
-          (rename alist-delete alist-delete!)
+          alist-delete!
           lset<=
           lset=
           lset-adjoin
@@ -280,6 +280,25 @@
       (lambda (lst)
         (apply append lst)))
 
+    (define append!
+      (lambda lsts
+        (let loop ((head lsts))
+          (cond ((not (pair? head)) head)
+                ((null? (car head)) (loop (cdr head)))
+                ((pair? (car head))
+                 (let loop ((tail (last-pair (car head))) (rest (cdr head)))
+                   (cond ((not (pair? rest)) (car head))
+                         ((null? (car rest)) (loop tail (cdr rest)))
+                         ((not (pair? (car rest)))
+                          (cond ((null? (cdr rest)) (set-cdr! tail (car rest)) (car head))
+                                (else
+                                  (assertion-violation
+                                    'append!
+                                    (format "expected proper list, but got ~s" (car rest))
+                                    lsts))))
+                         (else (set-cdr! tail (car rest)) (loop (last-pair (car rest)) (cdr rest))))))
+                (else (loop (cdr lsts)))))))
+
     (define append-reverse
       (lambda (head tail)
         (if (pair? head) (append-reverse (cdr head) (cons (car head) tail)) tail)))
@@ -330,10 +349,10 @@
         (if (null? lst2) (fold-1 proc seed lst1) (fold-n proc seed (apply list-transpose* lst1 lst2)))))
 
     (define unfold
-      (lambda (pred func gen seed . opt)
+      (lambda (proc func gen seed . opt)
         (let-optionals opt
             ((tail-gen (lambda (x) '())))
-          (let loop ((seed seed)) (if (pred seed) (tail-gen seed) (cons (func seed) (loop (gen seed))))))))
+          (let loop ((seed seed)) (if (proc seed) (tail-gen seed) (cons (func seed) (loop (gen seed))))))))
 
     (define pair-fold
       (lambda (proc seed lst1 . lst2)
@@ -354,10 +373,10 @@
             (fold proc (car lst) (cdr lst)))))
 
     (define unfold-right
-      (lambda (pred func gen seed . opt)
+      (lambda (proc func gen seed . opt)
         (let-optionals opt
             ((tail '()))
-          (let loop ((seed seed) (lst tail)) (if (pred seed) lst (loop (gen seed) (cons (func seed) lst)))))))
+          (let loop ((seed seed) (lst tail)) (if (proc seed) lst (loop (gen seed) (cons (func seed) lst)))))))
 
     (define pair-fold-right
       (lambda (proc seed lst1 . lst2)
@@ -388,6 +407,25 @@
             (apply append (map-1/srfi-1 proc lst1))
             (apply append (map-n/srfi-1 proc (apply list-transpose* lst1 lst2))))))
 
+    (define map!-1
+      (lambda (proc lst)
+        (cond ((null? lst) '())
+              (else
+                (set-car! lst (proc (car lst)))
+                (map!-1 proc (cdr lst))))))
+
+    (define map!-n
+      (lambda (proc lst1 lst2)
+        (cond ((null? lst2) '())
+              (else
+                (set-car! lst1 (apply proc (car lst2)))
+                (map!-n proc (cdr lst1) (cdr lst2))))))
+
+    (define map!
+      (lambda (proc lst1 . lst2)
+        (cond ((null? lst2) (map!-1 proc lst1) lst1)
+              (else (map!-n proc lst1 (apply list-transpose* lst1 lst2)) lst1))))
+
     (define pair-for-each
       (lambda (proc lst1 . lst2)
         (if (null? lst2)
@@ -399,6 +437,45 @@
         (if (null? lst2)
             (filter values (map-1/srfi-1 proc lst1))
             (filter values (map-n/srfi-1 proc (apply list-transpose* lst1 lst2))))))
+
+    (define filter!
+      (lambda (proc lst)
+        (let loop ((last #f) (head lst) (rest lst))
+          (cond ((null? rest)
+                 (cond ((eq? head lst) '())
+                       (else (set-cdr! last '()) lst)))
+                ((proc (car rest))
+                 (or (eq? head rest) (set-car! head (car rest)))
+                 (loop head (cdr head) (cdr rest)))
+                (else (loop last head (cdr rest)))))))
+
+    (define partition!
+      (lambda (proc lst)
+        (define ans-left #f)
+        (define ans-right #f)
+        (let loop ((left #f) (right #f) (rest lst))
+          (cond ((null? rest)
+                 (and left (set-cdr! left '()))
+                 (and right (set-cdr! right '()))
+                 (values (or ans-left '()) (or ans-right '())))
+                (else
+                  (if (proc (car rest))
+                      (cond ((pair? left)
+                             (set-cdr! left rest)
+                             (loop rest right (cdr rest)))
+                            (else
+                              (set! ans-left rest)
+                              (loop rest right (cdr rest))))
+                      (cond ((pair? right)
+                             (set-cdr! right rest)
+                             (loop left rest (cdr rest)))
+                            (else
+                              (set! ans-right rest)
+                              (loop left rest (cdr rest))))))))))
+
+    (define remove!
+      (lambda (proc lst)
+        (filter! (lambda (e) (not (proc e))) lst)))
 
     (define find-tail
       (lambda (proc lst) (let loop ((lst lst)) (cond ((null? lst) #f) ((proc (car lst)) lst) (else (loop (cdr lst)))))))
@@ -456,9 +533,29 @@
       (lambda (proc lst)
         (let loop ((lst lst)) (cond ((null? lst) '()) ((proc (car lst)) (loop (cdr lst))) (else lst)))))
 
+    (define take-while!
+      (lambda (proc lst)
+        (let loop ((last #f) (head lst) (rest lst))
+          (cond ((and (pair? rest) (proc (car rest)))
+                 (loop head (cdr head) (cdr rest)))
+                ((eq? head lst) '())
+                (else (set-cdr! last '()) lst)))))
+
     (define span
       (lambda (proc lst)
         (values (take-while proc lst) (drop-while proc lst))))
+
+    (define span!
+      (lambda (proc lst)
+        (let loop ((last #f) (head lst) (rest lst))
+          (cond ((and (pair? rest) (proc (car rest)))
+                 (loop head (cdr head) (cdr rest)))
+                ((eq? head lst) (values '() lst))
+                (else (set-cdr! last '()) (values lst rest))))))
+
+    (define break!
+      (lambda (proc lst)
+        (span! (lambda (e) (not (proc e))) lst)))
 
     (define delete
       (lambda (x lst . opt)
@@ -466,16 +563,35 @@
 
     (define delete-duplicates
       (lambda (lst . opt)
-        (let-optionals opt
-            ((proc equal?))
+        (let-optionals opt ((proc equal?))
           (cond ((null? lst) '())
                 (else
                   (let loop ((head (car lst)) (rest (cdr lst)))
                     (cond ((null? rest) (list head))
                           ((memp (lambda (e) (proc head e)) rest)
                            (let ((rest (delete head rest proc)))
-                             (cond ((null? rest) (list head)) (else (cons head (loop (car rest) (cdr rest)))))))
-                          (else (cons head (loop (car rest) (cdr rest)))))))))))
+                             (cond ((null? rest) (list head))
+                                   (else (cons head (loop (car rest) (cdr rest)))))))
+                          (else
+                            (cons head (loop (car rest) (cdr rest)))))))))))
+
+    (define (delete! x lst . opt)
+      (let-optionals opt ((proc equal?))
+        (filter! (lambda (e) (not (proc x e))) lst)))
+
+    (define delete-duplicates!
+      (lambda (lst . opt)
+        (let-optionals opt ((proc equal?))
+          (cond ((null? lst) '())
+                (else
+                  (let loop ((head (car lst)) (rest (cdr lst)))
+                    (cond ((null? rest) lst)
+                          ((memp (lambda (e) (proc head e)) rest)
+                           (let ((rest (delete! head rest proc)))
+                             (cond ((null? rest) lst)
+                                   (else (loop (car rest) (cdr rest))))))
+                          (else
+                            (loop (car rest) (cdr rest))))))))))
 
     (define alist-cons
       (lambda (key val lst)
@@ -488,6 +604,11 @@
     (define alist-delete
       (lambda (key lst . opt)
         (let-optionals opt ((proc equal?)) (remp (lambda (e) (proc key (car e))) lst))))
+
+    (define alist-delete!
+      (lambda (key lst . opt)
+        (let-optionals opt ((proc equal?))
+          (filter! (lambda (e) (not (proc key (car e)))) lst))))
 
     (define lset<=
       (lambda (proc . lst)
