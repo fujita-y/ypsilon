@@ -21,16 +21,17 @@
           (scheme cxr)
           (only (srfi 27) random-integer))
 
-  (import (rename (rnrs sorting)
-                  (list-sort    r6rs-list-sort)
-                  (vector-sort  r6rs-vector-sort)
-                  (vector-sort! r6rs-vector-sort!)))
-
   (import (only (rnrs base) assert))
 
-  (include "merge.scm")
   (include "delndups.scm")     ; list-delete-neighbor-dups etc
+  (include "lmsort.scm")       ; list-merge, list-merge!
   (include "sortp.scm")        ; list-sorted?, vector-sorted?
   (include "vector-util.scm")
-  (include "sortfaster.scm")
+  (include "vhsort.scm")
+  (include "visort.scm")
+  (include "vmsort.scm")       ; vector-merge, vector-merge!
+  (include "vqsort2.scm")
+  (include "vqsort3.scm")
+  (include "sort.scm")
+
   (include "select.scm"))
