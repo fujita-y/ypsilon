@@ -55,5 +55,4 @@
                      (promise-value promise))
                     (else
                      (promise-datum-set! promise (promise-datum promise*))
-                     (force promise)))))))
-    ))
+                     (force promise*)))))))))
