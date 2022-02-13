@@ -530,7 +530,16 @@
     (define read-line
       (lambda options
         (let-optionals options ((port (current-input-port)))
-          (get-line port))))
+          (let ((buf (open-output-string)))
+            (let loop ((ch (get-char port)))
+              (cond ((or (eof-object? ch) (char=? ch #\linefeed))
+                     (get-output-string buf))
+                    ((char=? ch #\return)
+                     (and (char=? (peek-char port) #\linefeed) (get-char port))
+                     (get-output-string buf))
+                    (else
+                      (write-char ch buf)
+                      (loop (get-char port)))))))))
 
     (define read-string
       (lambda (k . options)

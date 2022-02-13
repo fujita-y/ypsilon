@@ -369,11 +369,11 @@
 
   (define textual-port?
     (lambda (port)
-      (and (port-transcoder-descriptor port) #t)))
+      (and (port? port) (port-transcoder-descriptor port) #t)))
 
   (define binary-port?
     (lambda (port)
-      (not (port-transcoder-descriptor port))))
+      (and (port? port) (not (port-transcoder-descriptor port)))))
 
   (define transcoded-port
     (lambda (port transcoder)
