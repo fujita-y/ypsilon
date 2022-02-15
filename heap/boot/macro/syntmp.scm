@@ -157,8 +157,7 @@
       (define expand-var
         (lambda (tmpl vars)
           (cond ((assq tmpl vars)
-                 =>
-                 (lambda (slot) (cond ((null? (cdr slot)) '()) (emit (emit (cadr slot))) (else (cadr slot)))))
+                 => (lambda (slot) (cond ((null? (cdr slot)) '()) (emit (emit (cadr slot))) (else (cadr slot)))))
                 ((and (assq tmpl in-ranks) (not (assq tmpl in-vars)))
                  (syntax-violation "syntax template" (format "pattern variable ~u out of context" tmpl) in-form))
                 (else
@@ -170,8 +169,7 @@
       (define expand-ellipsis-var
         (lambda (tmpl vars)
           (cond ((assq tmpl vars)
-                 =>
-                 (lambda (slot) (cond ((null? (cdr slot)) '()) (emit (map emit (cadr slot))) (else (cadr slot)))))
+                 => (lambda (slot) (cond ((null? (cdr slot)) '()) (emit (map emit (cadr slot))) (else (cadr slot)))))
                 ((and (assq tmpl in-ranks) (not (assq tmpl in-vars)))
                  (syntax-violation "syntax template" (format "pattern variable ~u out of context" tmpl) in-form))
                 (else

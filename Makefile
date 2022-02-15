@@ -26,26 +26,23 @@ UNAME = $(shell uname -a)
 ifndef DATAMODEL
   ifeq (,$(shell echo | $(CXX) -E -dM - | grep '__LP64__'))
     DATAMODEL = ILP32
-    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=512
   else
     DATAMODEL = LP64
-    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=2048
   endif
 endif
 
 ifneq (,$(findstring Linux, $(UNAME)))
   ifneq (,$(findstring aarch64, $(UNAME)))
-    ifeq ($(DATAMODEL), ILP32)
-      CXXFLAGS += -march=armv7-a
-    else
-      CXXFLAGS += -march=armv8-a
-    endif
+    CXXFLAGS += -march=armv8-a
+    CPPFLAGS += -DDEFAULT_HEAP_LIMIT=2048
   endif
   ifneq (,$(findstring x86, $(UNAME)))
     ifeq ($(DATAMODEL), ILP32)
       CXXFLAGS += -march=x86
+      CPPFLAGS += -DDEFAULT_HEAP_LIMIT=512
     else
       CXXFLAGS += -march=x86-64
+      CPPFLAGS += -DDEFAULT_HEAP_LIMIT=2048
     endif
   endif
   CXXFLAGS += -O3 -pthread -fomit-frame-pointer -momit-leaf-frame-pointer
@@ -55,6 +52,7 @@ endif
 
 ifneq (,$(findstring Darwin, $(UNAME)))
   CXXFLAGS += -O3 -momit-leaf-frame-pointer
+  CPPFLAGS += -DDEFAULT_HEAP_LIMIT=2048
   LDLIBS = $(shell llvm-config --ldflags --system-libs --libs all)
 endif
 
