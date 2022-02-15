@@ -162,13 +162,15 @@
       (lambda (id) (denote-syntax-rules? env id)))
     (define lookup-ellipsis-id
       (lambda ()
-        (or (any1
-              (lambda (e)
-                (and (eq? denote-... (cdr e))
-                     (eq? (original-id (car e)) '...)
-                     (car e)))
-              env)
-            (and (not (renamed-variable-id? (env-lookup env '...))) '...))))
+        (if (eq? (ellipsis-id) '...)
+            (or (any1
+                  (lambda (e)
+                    (and (eq? denote-... (cdr e))
+                        (eq? (original-id (car e)) '...)
+                        (car e)))
+                  env)
+                (and (not (renamed-variable-id? (env-lookup env '...))) '...))
+            (ellipsis-id))))
     (destructuring-match transformer
       (((? syntax-rules? _))
        (syntax-violation 'syntax-rules "expected literals and rules" transformer))

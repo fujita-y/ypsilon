@@ -71,6 +71,12 @@
                                    "misplace ellipsis following literal"
                                    tmpl
                                    (car lst)))
+                                ((= rank 0)
+                                 (syntax-violation
+                                   "syntax template"
+                                   "too many ellipsis following subtemplate"
+                                   tmpl
+                                   (car lst)))
                                 ((> rank (+ depth 1))
                                  (syntax-violation
                                    "syntax template"

@@ -540,3 +540,112 @@
 (test-syntax-violation (foo2 L M O))
 (test-syntax-violation (foo2 L N O))
 (test-end)
+
+(test-begin "be-like-begin-alt") ; from https://github.com/larcenists/larceny
+(test-eval! (define-syntax be-like-begin-alt1
+              (syntax-rules &etc ()
+                ((be-like-begin-alt1 name)
+                (define-syntax name
+                  (syntax-rules ()
+                    ((name expr (&etc ...))
+                      (begin expr (&etc ...)))))))))
+(test-eval! (define-syntax be-like-begin-alt3
+              (syntax-rules &etc ()
+                ((be-like-begin-alt2 name)
+                (define-syntax name
+                  (syntax-rules ... ()
+                    ((name expr (&etc ...))
+                      (begin expr (&etc ...)))))))))
+(test-eval! (define-syntax be-like-begin-alt2
+              (syntax-rules &etc ()
+                ((be-like-begin-alt3 name)
+                (define-syntax name
+                  (syntax-rules ::: ()
+                    ((name expr (&etc :::))
+                      (begin expr (&etc :::)))))))))
+(test-eval! (define-syntax be-like-begin-alt4
+              (syntax-rules &etc ()
+                ((be-like-begin-alt4 name)
+                (define-syntax name
+                  (syntax-rules else ()
+                    ((name expr (&etc else))
+                      (begin expr (&etc else)))))))))
+(test-equal (let () (be-like-begin-alt1 sequence) (sequence 1 2 3 4)) 4)
+(test-equal (let () (be-like-begin-alt2 sequence) (sequence 1 2 3 4)) 4)
+(test-equal (let () (be-like-begin-alt3 sequence) (sequence 1 2 3 4)) 4)
+(test-equal (let () (be-like-begin-alt4 sequence) (sequence 1 2 3 4)) 4)
+(test-end)
+
+(test-begin "renamed ellipsis and literal") ; from https://github.com/larcenists/larceny
+(test-equal (let-syntax
+              ((m (syntax-rules ::: ()
+                    ((m dots)
+                     (let-syntax ((n (syntax-rules ... (dots)
+                                       ((n dots ...) 1))))
+                       (n dots))))))
+                (m ...)) => 1)
+(test-equal (let-syntax
+              ((m (syntax-rules ::: ()
+                    ((m dots)
+                     (let-syntax ((n (syntax-rules ... (dots)
+                                       ((n dots ...) 1))))
+                       (n dots dots))))))
+                (m ...)) => 1)
+(test-syntax-violation (let-syntax
+                         ((m (syntax-rules ::: ()
+                               ((m dots)
+                                (let-syntax ((n (syntax-rules ... (dots)
+                                                  ((n dots ...) 1))))
+                                  (n dots thing))))))
+                          (m ...)))
+(test-equal (let-syntax
+              ((m (syntax-rules ::: ()
+                    ((m dots)
+                     (let-syntax ((n (syntax-rules (dots)
+                                        ((n dots ...) 1))))
+                       (n dots))))))
+                (m ...)) => 1)
+(test-equal (let-syntax
+              ((m (syntax-rules ::: ()
+                    ((m dots)
+                     (let-syntax ((n (syntax-rules (dots)
+                                       ((n dots ...) 1))))
+                       (n dots dots))))))
+                (m ...)) => 1)
+(test-syntax-violation (let-syntax
+                         ((m (syntax-rules ::: ()
+                               ((m dots)
+                                (let-syntax ((n (syntax-rules (dots)
+                                                  ((n dots ...) 1))))
+                                  (n dots thing))))))
+                          (m ...)))
+(test-end)
+
+(test-begin "variable bound ellipsis") ; from https://github.com/larcenists/larceny
+(test-equal (let ((... 19))
+              (define-syntax bar
+                (syntax-rules ()
+                 ((bar x y ...)
+                  (list y x ...))))
+              (bar 1 2 3))
+            => (2 1 3))
+(test-equal (let ((... 19))
+              (define-syntax bar
+                (syntax-rules ()
+                 ((bar x y)
+                  (list y x ...))))
+              (bar 1 2))
+            => (2 1 19))
+(test-syntax-violation (let ((... 19))
+                         (define-syntax bar
+                           (syntax-rules ... ()
+                             ((bar x y)
+                              (list y x ...))))
+                         (bar 1 2)) )
+(test-syntax-violation (let ((... 19))
+                         (define-syntax bar
+                           (syntax-rules ... ()
+                             ((bar x y ...)
+                              (list y x ...))))
+                         (bar 1 2 3)) )
+(test-end)
