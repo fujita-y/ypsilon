@@ -140,74 +140,9 @@
                       ((null? (cddar lst))
                        (set! exhausted #t) (loop (cdr lst)))
                       (else
-                        (or (circular-list? (cdar lst)) (set! consumed #t))
+                        (set! consumed #t)
                         (acons (caar lst) (cddar lst) (loop (cdr lst))))))))
         (if consumed (and (not exhausted) remains) (or exhausted '()))))))
-
-(define contain-rank-moved-var?
-  (lambda (tmpl ranks vars)
-    (define traverse-escaped
-      (lambda (lst depth)
-        (let loop ((lst lst) (depth depth))
-          (cond ((symbol? lst) (< 0 (rank-of lst ranks) depth))
-                ((pair? lst) (or (loop (car lst) depth) (loop (cdr lst) depth)))
-                ((vector? lst) (loop (vector->list lst) depth))
-                (else #f)))))
-    (let loop ((lst tmpl) (depth 0))
-      (cond ((symbol? lst) (< 0 (rank-of lst ranks) depth))
-            ((ellipsis-quote? lst) (traverse-escaped (cadr lst) depth))
-            ((ellipsis-splicing-pair? lst)
-             (let-values (((body tail len) (parse-ellipsis-splicing lst)))
-               (or (loop body (+ depth 1)) (loop tail depth))))
-            ((ellipsis-pair? lst) (or (loop (car lst) (+ depth 1)) (loop (cddr lst) depth)))
-            ((pair? lst) (or (loop (car lst) depth) (loop (cdr lst) depth)))
-            ((vector? lst) (loop (vector->list lst) depth))
-            (else #f)))))
-
-(define adapt-to-rank-moved-vars
-  (lambda (form ranks vars)
-    (define rewrite-template-ranks-vars
-      (lambda (tmpl ranks vars)
-        (let ((moved-ranks (make-core-hashtable)) (moved-vars (make-core-hashtable)))
-          (define make-infinite-list (lambda (e) (let ((lst (list e))) (begin (set-cdr! lst lst) lst))))
-          (define revealed
-            (lambda (name depth)
-              (if (< 0 (rank-of name ranks) depth)
-                  (let ((renamed (string->symbol (format "~a:~a" (generate-temporary-symbol) name))))
-                    (or (core-hashtable-ref moved-ranks renamed #f)
-                        (let loop ((i (- depth (rank-of name ranks))) (var (subform-of name vars)))
-                          (cond ((> i 0) (loop (- i 1) (list (make-infinite-list (car var)))))
-                                (else
-                                  (core-hashtable-set! moved-ranks renamed depth)
-                                  (core-hashtable-set! moved-vars renamed var)))))
-                    renamed)
-                  name)))
-          (define traverse-escaped
-            (lambda (lst depth)
-              (let loop ((lst lst) (depth depth))
-                (cond ((symbol? lst) (revealed lst depth))
-                      ((pair? lst) (cons (loop (car lst) depth) (loop (cdr lst) depth)))
-                      ((vector? lst) (list->vector (loop (vector->list lst) depth)))
-                      (else lst)))))
-          (let ((rewrited
-                  (let loop ((lst tmpl) (depth 0))
-                    (cond ((symbol? lst) (revealed lst depth))
-                          ((ellipsis-quote? lst) (cons (car lst) (traverse-escaped (cdr lst) depth)))
-                          ((ellipsis-splicing-pair? lst)
-                           (let-values (((body tail len) (parse-ellipsis-splicing lst)))
-                             (append (loop body (+ depth 1)) (cons (or (ellipsis-id) '...) (loop tail depth)))))
-                          ((ellipsis-pair? lst)
-                           (cons (loop (car lst) (+ depth 1)) (cons (or (ellipsis-id) '...) (loop (cddr lst) depth))))
-                          ((pair? lst) (cons (loop (car lst) depth) (loop (cdr lst) depth)))
-                          ((vector? lst) (list->vector (loop (vector->list lst) depth)))
-                          (else lst)))))
-            (values
-              rewrited
-              (append ranks (core-hashtable->alist moved-ranks))
-              (append vars (core-hashtable->alist moved-vars)))))))
-    (if (contain-rank-moved-var? form ranks vars)
-        (rewrite-template-ranks-vars form ranks vars)
-        (values form ranks vars))))
 
 (define transcribe-template
   (lambda (in-form in-ranks in-vars aliases emit)
@@ -218,7 +153,7 @@
               (cond ((null? lst) acc)
                     ((assq (caar lst) acc) (loop (cdr lst) acc))
                     (else (loop (cdr lst) (cons (car lst) acc))))))))
-    (let-values (((tmpl ranks vars) (adapt-to-rank-moved-vars in-form in-ranks (remove-duplicates in-vars))))
+    (let ((tmpl in-form) (ranks in-ranks) (vars (remove-duplicates in-vars)))
       (define expand-var
         (lambda (tmpl vars)
           (cond ((assq tmpl vars)
