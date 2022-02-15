@@ -115,7 +115,7 @@
           ((ellipsis-pair? pat)
            (if (and (null? (cddr pat)) (list? expr))
                (if (symbol? (car pat))
-                   (or (null? expr) (not (memq (car pat) lites)) (eq? (car pat) (car expr)))
+                   (or (null? expr) (not (memq (car pat) lites)) (every1 (lambda (e) (eq? (car pat) e)) expr))
                    (match-ellipsis? expr pat lites))
                (let ((n (- (count-pair expr) (count-pair (cddr pat)))))
                  (if (= n 0)
