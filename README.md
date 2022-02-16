@@ -29,7 +29,7 @@ cmake --install .
 
 * To run R7RS sample script, try following from project root:
 ```
-ypsilon --r7rs --top-level-program --disable-acc -- test/r7rs-sample.scm
+ypsilon --r7rs test/r7rs-sample.scm
 ```
 
 * To run FFI demo program, try follwing from project root:
