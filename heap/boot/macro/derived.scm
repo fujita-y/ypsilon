@@ -175,7 +175,7 @@
                   ,bindings
                   (|.if|
                     ,test
-                    ,(if (null? expr) '(|.unspecified|) `(|.begin| ,@expr))
+                    ,(if (null? expr) `(,_unspecified) `(|.begin| ,@expr))
                     (|.begin| ,@body (,temp ,@updates))))
                form)
              env))))
@@ -195,7 +195,7 @@
                      (else
                        (destructuring-match (car lst)
                          ((formals init)
-                          `(|.call-with-values| (|.lambda| () ,init) (|.lambda| ,formals ,(loop (cdr lst)))))
+                          `(,_call-with-values (|.lambda| () ,init) (|.lambda| ,formals ,(loop (cdr lst)))))
                          (_
                            (syntax-violation
                              (car form)
@@ -216,7 +216,7 @@
              (annotate
                (let loop ((lst (cdr form)))
                  (if (null? lst)
-                     '(|.unspecified|)
+                     `(,_unspecified)
                      (let ((clause (car lst)))
                        (destructuring-match clause
                          (((? else? _) . (? pair? expr))
@@ -264,27 +264,27 @@
                           ((((datum) (? =>? _) expr) _ ...)
                            (right-arrow-in-case)
                            (if (or (symbol? datum) (fixnum? datum) (char? datum) (boolean? datum) (null? datum))
-                               `((|.eq?| ,temp ',datum) (,expr ,temp))
-                               `((|.eqv?| ,temp ',datum) (,expr ,temp))))
+                               `((,_eq? ,temp ',datum) (,expr ,temp))
+                               `((,_eqv? ,temp ',datum) (,expr ,temp))))
                           ((((datum) . (? pair? expr)) _ ...)
                            (if (or (symbol? datum) (fixnum? datum) (char? datum) (boolean? datum) (null? datum))
-                               `((|.eq?| ,temp ',datum) ,@expr)
-                               `((|.eqv?| ,temp ',datum) ,@expr)))
+                               `((,_eq? ,temp ',datum) ,@expr)
+                               `((,_eqv? ,temp ',datum) ,@expr)))
                           ((((? list? datum) (? =>? _) expr) _ ...)
                            (right-arrow-in-case)
                            (cond ((null? datum) '(#f))
                                  ((every1
                                     (lambda (e) (or (symbol? e) (fixnum? e) (char? e) (boolean? e) (null? datum)))
                                     datum)
-                                  `((|.memq| ,temp ',datum) (,expr ,temp)))
-                                 (else `((|.memv| ,temp ',datum) (,expr ,temp)))))
+                                  `((,_memq ,temp ',datum) (,expr ,temp)))
+                                 (else `((,_memv ,temp ',datum) (,expr ,temp)))))
                           ((((? list? datum) . (? pair? expr)) _ ...)
                            (cond ((null? datum) '(#f))
                                  ((every1
                                     (lambda (e) (or (symbol? e) (fixnum? e) (char? e) (boolean? e) (null? datum)))
                                     datum)
-                                  `((|.memq| ,temp ',datum) ,@expr))
-                                 (else `((|.memv| ,temp ',datum) ,@expr))))
+                                  `((,_memq ,temp ',datum) ,@expr))
+                                 (else `((,_memv ,temp ',datum) ,@expr))))
                           (_ (syntax-violation (car form) "malformed case clause" form (car lst)))))
                       clauses)))
              form)
@@ -303,11 +303,11 @@
   (lambda (form)
     (destructuring-match form
       ((_ (? symbol? _) _) form)
-      ((_ (? symbol? name)) (annotate `(define ,name (|.unspecified|)) form))
+      ((_ (? symbol? name)) (annotate `(define ,name (,_unspecified)) form))
       ((_ ((? symbol? name) . formals))
        (begin
          (collect-lambda-formals (annotate formals form) form)
-         (annotate `(define ,name (|.lambda| ,formals (|.unspecified|))) form)))
+         (annotate `(define ,name (|.lambda| ,formals (,_unspecified))) form)))
       ((_ ((? symbol? name) . formals) . (? pair? body))
        (begin
          (collect-lambda-formals (annotate formals form) form)
@@ -332,7 +332,7 @@
               (|.syntax-case|
                 x
                 ()
-                (id (|.identifier?| (|.syntax| id)) (|.syntax| ,e))
+                (id (,_identifier? (|.syntax| id)) (|.syntax| ,e))
                 ((_ x ...) (|.syntax| (,e x ...)))))
            form)
          env))
@@ -347,7 +347,7 @@
                   (set!)
                   ((set! ,var ,val) (|.syntax| ,exp2))
                   ((,id x ...) (|.syntax| (,exp1 x ...)))
-                  (,id (|.identifier?| (|.syntax| id)) (|.syntax| ,exp1)))))
+                  (,id (,_identifier? (|.syntax| id)) (|.syntax| ,exp1)))))
            form)
          env)))))
 

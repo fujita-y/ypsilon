@@ -829,16 +829,6 @@ void printer_t::write(scm_obj_t ht, scm_obj_t obj) {
         }
         const char* p = strchr(s, IDENTIFIER_LIBRARY_SUFFIX);
         if (p) s = p + 1;
-        if (s[0] == IDENTIFIER_PRIMITIVE_PREFIX) {
-          if (s[1] && (s[1] != IDENTIFIER_PRIMITIVE_PREFIX) && (s[1] != IDENTIFIER_CSTUB_MARK)) {
-            if (e - s < MAX_READ_SYMBOL_LENGTH) {
-              char name[MAX_READ_SYMBOL_LENGTH + 1];
-              memcpy(name, s, e - s);
-              name[e - s] = 0;
-              if (m_vm->m_heap->lookup_system_environment(make_symbol(m_vm->m_heap, name)) != scm_undef) s = s + 1;
-            }
-          }
-        }
         if (m_escape) {
           write_pretty_symbol((const uint8_t*)s, e - s);
         } else {
