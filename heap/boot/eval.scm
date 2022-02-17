@@ -80,6 +80,11 @@
     (parse-imports `(environment ,@ref) ref)
     (tuple 'type:eval-environment `,ref)))
 
+(define eval-enclosure-library `(,(string->symbol (format "library-~a" (make-uuid)))))
+(define eval-enclosure-result (string->symbol (format "result-~a" (make-uuid))))
+(define eval-enclosure-quote (string->symbol (format "quote-~a" (make-uuid))))
+(define eval-enclosure-set-top-level-value! (string->symbol (format "set-top-level-value!-~a" (make-uuid))))
+
 (define eval
   (lambda (expr env)
     (cond ((environment? env) (parameterize ((current-environment env)) (interpret expr)))
@@ -88,18 +93,19 @@
                 (assertion-violation 'eval (format "expected environment, but got ~r, as argument 2" env)))
             (interpret
               `(begin
-                 (library (|.&EVAL|)
-                   (export)
-                   (import (rename
-                             (only (core primitives) set-top-level-value! string->symbol)
-                             (set-top-level-value! |.&SET-TOP-LEVEL-VALUE!|)
-                             (string->symbol |.&STRING->SYMBOL|))
-                           ,@(tuple-ref env 1))
-                   (|.&SET-TOP-LEVEL-VALUE!| (|.&STRING->SYMBOL| ".&EVAL-RESULT") ,expr))
-                 (let ((result |.&EVAL-RESULT|))
-                   (|.set-top-level-value!| '|.&EVAL-RESULT| |.&UNDEF|)
-                   (|.unintern-scheme-library| ',(generate-library-id '(|.&EVAL|)))
-                   result)))))))
+                (library ,eval-enclosure-library
+                  (export)
+                  (import (rename
+                            (only (core primitives) set-top-level-value! quote)
+                            (quote ,eval-enclosure-quote)
+                            (set-top-level-value! ,eval-enclosure-set-top-level-value!)
+                          )
+                          ,@(tuple-ref env 1))
+                  (,eval-enclosure-set-top-level-value! (,eval-enclosure-quote ,eval-enclosure-result) ,expr))
+                (let ((result ,eval-enclosure-result))
+                  (|.set-top-level-value!| ',eval-enclosure-result |.&UNDEF|)
+                  (|.unintern-scheme-library| ',(generate-library-id eval-enclosure-library))
+                  result)))))))
 
 (define expand-path
   (lambda (path)

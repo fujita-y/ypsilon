@@ -9,7 +9,7 @@
           (cond ((null? lst) (append bounds unbounds))
                 ((unbound? (cdar lst)) (loop (cdr lst) bounds (cons (car lst) unbounds)))
                 (else (loop (cdr lst) (cons (car lst) bounds) unbounds))))))
-    (define library-name '(|.TOP-LEVEL-PROGRAM|))
+    (define library-name `(,(string->symbol (format "program-~a" (make-uuid)))))
     (destructuring-match form
       ((('import import-spec ...) body ...)
        (let ((library-id (library-name->id form library-name))
