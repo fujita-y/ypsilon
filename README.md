@@ -4,6 +4,26 @@
 * Mostly concurrent garbage collection for remarkably shorter GC pause time
 * Compilation thread incrementally generates native code in the background
 * On-the-fly FFI with native stub code generation
+* Full features of R6RS and R6RS standard libraries including:
+  * arbitrary precision integer arithmetic
+  * rational number
+  * exact and inexact complex number
+  * top-level program
+  * proper tail recursion
+  * call/cc and dynamic wind
+  * unicode
+  * bytevectors
+  * records
+  * exceptions and conditions
+  * i/o
+  * syntax-case
+  * hashtables
+  * enumerations
+* Full features of R7RS-small and following R7RS-large libraries:
+  *  (scheme comparator)
+  *  (scheme hash-table)
+  *  (scheme list)
+  *  (scheme sort)
 
 See [LICENSE](https://github.com/fujita-y/ypsilon/blob/master/LICENSE) for terms and conditions of use.
 
