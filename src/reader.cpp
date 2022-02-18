@@ -78,6 +78,7 @@ reader_t::reader_t(VM* vm, scm_port_t input, bool foldcase) {
   m_ungetbuf_valid = false;
   m_graph_ref = false;
   m_foldcase = foldcase;
+  make_char_map();
 }
 
 reader_t::~reader_t() {
@@ -835,12 +836,14 @@ top:
             unget_ucs4();
             return scm_false;
           }
-          unget_ucs4();
-          scm_obj_t obj = read_symbol();
-          if (SYMBOLP(obj)) {
-            const char* tag = ((scm_symbol_t)obj)->name;
-            if (strcmp(tag, "alse") == 0) return scm_false;
-            lexical_error("invalid lexical syntax #f~a", obj);
+          if (FIXNUM(m_vm->m_flags.lexical_syntax_version) > 6) {
+            unget_ucs4();
+            scm_obj_t obj = read_symbol();
+            if (SYMBOLP(obj)) {
+              const char* tag = ((scm_symbol_t)obj)->name;
+              if (strcmp(tag, "alse") == 0) return scm_false;
+              lexical_error("invalid lexical syntax #f~a", obj);
+            }
           }
           lexical_error("invalid lexical syntax #~a~a", MAKECHAR(c), MAKECHAR(c2));
         }
@@ -854,12 +857,14 @@ top:
             unget_ucs4();
             return scm_true;
           }
-          unget_ucs4();
-          scm_obj_t obj = read_symbol();
-          if (SYMBOLP(obj)) {
-            const char* tag = ((scm_symbol_t)obj)->name;
-            if (strcmp(tag, "rue") == 0) return scm_true;
-            lexical_error("invalid lexical syntax #t~a", obj);
+          if (FIXNUM(m_vm->m_flags.lexical_syntax_version) > 6) {
+            unget_ucs4();
+            scm_obj_t obj = read_symbol();
+            if (SYMBOLP(obj)) {
+              const char* tag = ((scm_symbol_t)obj)->name;
+              if (strcmp(tag, "rue") == 0) return scm_true;
+              lexical_error("invalid lexical syntax #t~a", obj);
+            }
           }
           lexical_error("invalid lexical syntax #~a~a", MAKECHAR(c), MAKECHAR(c2));
         }
@@ -1024,7 +1029,6 @@ scm_obj_t reader_t::read_graph(scm_hashtable_t note) {
 }
 
 scm_obj_t reader_t::read(scm_hashtable_t note) {
-  make_char_map();
   m_note = note;
   if (m_note) put_note(".&SOURCE-PATH", m_in->name);
   m_first_line = m_in->line;
