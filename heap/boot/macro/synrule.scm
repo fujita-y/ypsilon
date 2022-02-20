@@ -46,7 +46,7 @@
 (define parse-syntax-rule
   (lambda (lites clause env)
     (let ((pattern (car clause)) (template (cadr clause)))
-      (check-pattern pattern lites)
+      (check-pattern (cdr pattern) lites)
       (let ((ranks (collect-vars-ranks pattern lites 0 '())))
         (check-template template ranks)
         (values pattern template ranks (collect-rename-ids template ranks))))))
@@ -59,14 +59,23 @@
                =>
                (lambda (comment) (cons (core-hashtable-ref (current-source-comments) '|.&SOURCE-PATH| #f) comment)))
               (else #f))))
-    (parameterize ((ellipsis-id ellipsis))
-      (let ((lites (unrename-syntax lites env))
-            (clauses (unrename-syntax clauses (extend-env (list (cons ellipsis ellipsis)) env))))
-        (cons*
-          (ellipsis-id)
-          lites
-          (make-remark form)
-          (map (lambda (clause)
-                 (let-values (((pattern template ranks renames) (parse-syntax-rule lites clause env)))
-                   (list pattern template ranks renames)))
-               clauses))))))
+    (define lookup-default-ellipsis
+      (lambda ()
+        (let ((ellipsis
+              (cond ((renamed-variable-id? (env-lookup env '...)) #f)
+                    (else
+                      (let ((maybe-ellipsis (rename-id '... (current-rename-count))))
+                        (if (and (eq? (env-lookup env maybe-ellipsis) denote-...)) maybe-ellipsis '...))))))
+          (if (memq ellipsis lites) #f ellipsis))))
+    (let ((ellipsis (if (eq? ellipsis #t) (lookup-default-ellipsis) ellipsis)))
+      (parameterize ((ellipsis-id ellipsis))
+        (let ((lites (unrename-syntax lites env))
+              (clauses (unrename-syntax clauses (extend-env (list (cons ellipsis ellipsis)) env))))
+          (cons*
+            (ellipsis-id)
+            lites
+            (make-remark form)
+            (map (lambda (clause)
+                  (let-values (((pattern template ranks renames) (parse-syntax-rule lites clause env)))
+                    (list pattern template ranks renames)))
+                clauses)))))))

@@ -570,10 +570,10 @@
                   (syntax-rules else ()
                     ((name expr (&etc else))
                       (begin expr (&etc else)))))))))
-(test-equal (let () (be-like-begin-alt1 sequence) (sequence 1 2 3 4)) 4)
-(test-equal (let () (be-like-begin-alt2 sequence) (sequence 1 2 3 4)) 4)
-(test-equal (let () (be-like-begin-alt3 sequence) (sequence 1 2 3 4)) 4)
-(test-equal (let () (be-like-begin-alt4 sequence) (sequence 1 2 3 4)) 4)
+(test-equal (let () (be-like-begin-alt1 sequence) (sequence 1 2 3 4)) => 4)
+(test-equal (let () (be-like-begin-alt2 sequence) (sequence 1 2 3 4)) => 4)
+(test-equal (let () (be-like-begin-alt3 sequence) (sequence 1 2 3 4)) => 4)
+(test-equal (let () (be-like-begin-alt4 sequence) (sequence 1 2 3 4)) => 4)
 (test-end)
 
 (test-begin "renamed ellipsis and literal") ; from https://github.com/larcenists/larceny
@@ -584,13 +584,30 @@
                                         ((n dots ...) 1))))
                         (n dots))))))
               (m ...)) => 1)
+(test-end)
+
+(test-begin "renamed ellipsis and literal, more variations")
 (test-equal (let-syntax
                 ((m (syntax-rules ::: ()
                       ((m dots)
-                      (let-syntax ((n (syntax-rules ... (dots)
-                                        ((n dots ...) 1))))
-                        (n dots dots))))))
-              (m ...)) => 1)
+                      (let-syntax ((n (syntax-rules ... ()
+                                        ((n dots ...) '(n dots ...)))))
+                        (n dots))))))
+              (m ...)) => (n ...))
+(test-syntax-violation (let-syntax
+                ((m (syntax-rules ::: ()
+                      ((m dots)
+                      (let-syntax ((n (syntax-rules (dots)
+                                          ((n dots ...) 1))))
+                        (n dots))))))
+              (m ...)))
+(test-syntax-violation (let-syntax
+                          ((m (syntax-rules ::: ()
+                                ((m dots)
+                                (let-syntax ((n (syntax-rules dots ()
+                                                  ((n dots ...) 1))))
+                                  (n dots))))))
+                        (m ...)))
 (test-syntax-violation (let-syntax
                           ((m (syntax-rules ::: ()
                                 ((m dots)
@@ -598,27 +615,39 @@
                                                     ((n dots ...) 1))))
                                     (n dots thing))))))
                         (m ...)))
-(test-equal (let-syntax
-                ((m (syntax-rules ::: ()
-                      ((m dots)
-                      (let-syntax ((n (syntax-rules (dots)
-                                          ((n dots ...) 1))))
-                        (n dots))))))
-              (m ...)) => 1)
-(test-equal (let-syntax
-                ((m (syntax-rules ::: ()
-                      ((m dots)
-                      (let-syntax ((n (syntax-rules (dots)
-                                        ((n dots ...) 1))))
-                        (n dots dots))))))
-              (m ...)) => 1)
 (test-syntax-violation (let-syntax
                           ((m (syntax-rules ::: ()
                                 ((m dots)
-                                  (let-syntax ((n (syntax-rules (dots)
-                                                    ((n dots ...) 1))))
-                                    (n dots thing))))))
+                                (let-syntax ((n (syntax-rules (...)
+                                                  ((n dots ...) 1))))
+                                  (n dots))))))
                         (m ...)))
+(test-syntax-violation (let-syntax
+                          ((m (syntax-rules ::: ()
+                                ((m dots)
+                                (let-syntax ((n (syntax-rules ()
+                                                  ((n dots ...) 1))))
+                                  (n dots))))))
+                        (m ...)))
+(test-end)
+
+(test-begin "renamed ellipsis and literal, default <ellipsis>")
+;; Current expander insert an identifier generated with (datum->syntax #'syntax-rules '...) if <ellipsis> is missing.
+;; Therefore, expanding the following two forms will produce the same result.
+(test-equal (let-syntax
+                ((m (syntax-rules ::: ()
+                      ((m dots)
+                      (let-syntax ((n (syntax-rules ... ()
+                                        ((n m dots ...) '(n m dots ...)))))
+                        (n 3 dots))))))
+              (m ...)) => (n 3 ...))
+(test-equal (let-syntax
+                ((m (syntax-rules ::: ()
+                      ((m dots)
+                      (let-syntax ((n (syntax-rules ()
+                                        ((n m dots ...) '(n m dots ...)))))
+                        (n 3 dots))))))
+              (m ...)) => (n 3 ...))
 (test-end)
 
 (test-begin "variable bound ellipsis") ; from https://github.com/larcenists/larceny
@@ -641,13 +670,13 @@
                            (syntax-rules ... ()
                              ((bar x y)
                               (list y x ...))))
-                         (bar 1 2)) )
+                         (bar 1 2)))
 (test-syntax-violation (let ((... 19))
                          (define-syntax bar
                            (syntax-rules ... ()
                              ((bar x y ...)
                               (list y x ...))))
-                         (bar 1 2 3)) )
+                         (bar 1 2 3)))
 (test-end)
 
 (test-begin "srfi-149 extensions")

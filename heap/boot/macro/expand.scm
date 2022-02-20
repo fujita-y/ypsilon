@@ -160,17 +160,6 @@
                     (else (syntax-violation (car form) "invalid transformer expression" form transformer))))))))
     (define syntax-rules?
       (lambda (id) (denote-syntax-rules? env id)))
-    (define lookup-ellipsis-id
-      (lambda ()
-        (if (eq? (ellipsis-id) '...)
-            (or (any1
-                  (lambda (e)
-                    (and (eq? denote-... (cdr e))
-                        (eq? (original-id (car e)) '...)
-                        (car e)))
-                  env)
-                (and (not (renamed-variable-id? (env-lookup env '...))) '...))
-            (ellipsis-id))))
     (destructuring-match transformer
       (((? syntax-rules? _))
        (syntax-violation 'syntax-rules "expected literals and rules" transformer))
@@ -184,7 +173,7 @@
            (or (unique-id-list? lites) (syntax-violation 'syntax-rules "duplicate literals" transformer lites))
            (or (ellipsis/underscore-in-literal)
                (and (memq '_ lites) (syntax-violation 'syntax-rules "_ in literals" transformer lites)))
-           (let ((ellipsis (or ellipsis (lookup-ellipsis-id))))
+           (let ((ellipsis (or ellipsis #t)))
              (and (memq ellipsis lites)
                   (if (ellipsis/underscore-in-literal)
                       (set! ellipsis #f)
