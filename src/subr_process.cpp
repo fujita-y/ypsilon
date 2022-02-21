@@ -51,106 +51,10 @@ static scm_bvector_t make_posix_env(VM* vm, scm_obj_t env) {
 }
 
 // process-spawn
+scm_obj_t subr_process_spawn(VM* vm, int argc, scm_obj_t argv[]) {
 #if NO_POSIX_SPAWN
-scm_obj_t subr_process_spawn(VM* vm, int argc, scm_obj_t argv[]) {
-  int pipe0[2] = {-1, -1};
-  int pipe1[2] = {-1, -1};
-  int pipe2[2] = {-1, -1};
-  const char* sysfunc = NULL;
-  if (argc >= 6) {
-    if (argv[0] != scm_true) {  // search
-      invalid_argument_violation(vm, "process-spawn", "should be #t on this platform, but got", argv[0], 0, argc, argv);
-      return scm_undef;
-    }
-    if (argv[1] != scm_false) {  // environment
-      invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[1], 1, argc, argv);
-      return scm_undef;
-    }
-    if (argv[2] != scm_false) {  // stdin
-      invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[2], 2, argc, argv);
-      return scm_undef;
-    }
-    if (argv[3] != scm_false) {  // stdout
-      invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[3], 3, argc, argv);
-      return scm_undef;
-    }
-    if (argv[4] != scm_false) {  // stderr
-      invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[4], 4, argc, argv);
-      return scm_undef;
-    }
-    for (int i = 5; i < argc; i++) {
-      if (!STRINGP(argv[i])) {
-        wrong_type_argument_violation(vm, "process-spawn", i, "string", argv[i], argc, argv);
-        return scm_undef;
-      }
-    }
-    sysfunc = "sysconf";
-    int open_max;
-    if ((open_max = sysconf(_SC_OPEN_MAX)) < 0) goto sysconf_fail;
-    sysfunc = "pipe";
-    if (pipe(pipe0)) goto pipe_fail;
-    if (pipe(pipe1)) goto pipe_fail;
-    if (pipe(pipe2)) goto pipe_fail;
-    sysfunc = "fork";
-    pid_t cpid = fork();
-    if (cpid == -1) goto fork_fail;
-    if (cpid == 0) {
-      if (close(pipe0[1])) goto close_fail;
-      if (close(pipe1[0])) goto close_fail;
-      if (close(pipe2[0])) goto close_fail;
-      if (close(0)) goto close_fail;
-      if (dup(pipe0[0]) == -1) goto dup_fail;
-      if (close(1)) goto close_fail;
-      if (dup(pipe1[1]) == -1) goto dup_fail;
-      if (close(2)) goto close_fail;
-      if (dup(pipe2[1]) == -1) goto dup_fail;
-      for (int i = 3; i < open_max; i++) close(i);
-      const char* command_name = ((scm_string_t)argv[5])->name;
-      char** command_argv = (char**)alloca(sizeof(char*) * (argc - 5 + 1));
-      for (int i = 5; i < argc; i++) command_argv[i - 5] = ((scm_string_t)argv[i])->name;
-      command_argv[argc - 5] = (char*)NULL;
-      execvp(command_name, command_argv);
-      goto exec_fail;
-    } else {
-      close(pipe0[0]);
-      close(pipe1[1]);
-      close(pipe2[1]);
-      assert(sizeof(pid_t) == sizeof(int));
-      return make_list(vm->m_heap, 4, int_to_integer(vm->m_heap, cpid),
-                       make_std_port(vm->m_heap, pipe0[1], make_string_literal(vm->m_heap, "process-stdin"), SCM_PORT_DIRECTION_OUT,
-                                     SCM_PORT_FILE_OPTION_NONE, SCM_PORT_BUFFER_MODE_BLOCK, scm_false),
-                       make_std_port(vm->m_heap, pipe1[0], make_string_literal(vm->m_heap, "process-stdout"), SCM_PORT_DIRECTION_IN,
-                                     SCM_PORT_FILE_OPTION_NONE, SCM_PORT_BUFFER_MODE_BLOCK, scm_false),
-                       make_std_port(vm->m_heap, pipe2[0], make_string_literal(vm->m_heap, "process-stderr"), SCM_PORT_DIRECTION_IN,
-                                     SCM_PORT_FILE_OPTION_NONE, SCM_PORT_BUFFER_MODE_BLOCK, scm_false));
-    }
-  }
-  wrong_number_of_arguments_violation(vm, "process-spawn", 1, -1, argc, argv);
-  return scm_undef;
-
-sysconf_fail:
-pipe_fail:
-fork_fail : {
-  int err = errno;
-  char message[256];
-  snprintf(message, sizeof(message), "%s() failed. %s", sysfunc, strerror(err));
-  if (pipe0[0] != -1) close(pipe0[0]);
-  if (pipe0[1] != -1) close(pipe0[1]);
-  if (pipe1[0] != -1) close(pipe1[0]);
-  if (pipe1[1] != -1) close(pipe1[1]);
-  if (pipe2[0] != -1) close(pipe2[0]);
-  if (pipe2[1] != -1) close(pipe2[1]);
-  raise_error(vm, "process-spawn", message, err, argc, argv);
-  return scm_undef;
-}
-
-close_fail:
-dup_fail:
-exec_fail:
-  exit(127);
-}
+  return process_spawn_fallback_to_execvp(vm, argc, argv);
 #else
-scm_obj_t subr_process_spawn(VM* vm, int argc, scm_obj_t argv[]) {
   fd_t fd0 = INVALID_FD;
   fd_t fd1 = INVALID_FD;
   fd_t fd2 = INVALID_FD;
@@ -318,7 +222,7 @@ dup_fail:
   res = errno;
 spawn_fail:
 addclose_fail:
-adddup2_fail : {
+adddup2_fail:
   char message[256];
   snprintf(message, sizeof(message), "%s() failed. %s", sysfunc, strerror(res));
   if (pipe0[0] != INVALID_FD) close(pipe0[0]);
@@ -329,7 +233,104 @@ adddup2_fail : {
   if (pipe2[1] != INVALID_FD) close(pipe2[1]);
   raise_error(vm, "process-spawn", message, res, argc, argv);
   return scm_undef;
+#endif
 }
+
+#if NO_POSIX_SPAWN
+static process_spawn_fallback_to_execvp(VM* vm, int argc, scm_obj_t argv[]) {
+  int pipe0[2] = {-1, -1};
+  int pipe1[2] = {-1, -1};
+  int pipe2[2] = {-1, -1};
+  const char* sysfunc = NULL;
+  if (argc >= 6) {
+    if (argv[0] != scm_true) {  // search
+      invalid_argument_violation(vm, "process-spawn", "should be #t on this platform, but got", argv[0], 0, argc, argv);
+      return scm_undef;
+    }
+    if (argv[1] != scm_false) {  // environment
+      invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[1], 1, argc, argv);
+      return scm_undef;
+    }
+    if (argv[2] != scm_false) {  // stdin
+      invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[2], 2, argc, argv);
+      return scm_undef;
+    }
+    if (argv[3] != scm_false) {  // stdout
+      invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[3], 3, argc, argv);
+      return scm_undef;
+    }
+    if (argv[4] != scm_false) {  // stderr
+      invalid_argument_violation(vm, "process-spawn", "should be #f on this platform, but got", argv[4], 4, argc, argv);
+      return scm_undef;
+    }
+    for (int i = 5; i < argc; i++) {
+      if (!STRINGP(argv[i])) {
+        wrong_type_argument_violation(vm, "process-spawn", i, "string", argv[i], argc, argv);
+        return scm_undef;
+      }
+    }
+    sysfunc = "sysconf";
+    int open_max;
+    if ((open_max = sysconf(_SC_OPEN_MAX)) < 0) goto sysconf_fail;
+    sysfunc = "pipe";
+    if (pipe(pipe0)) goto pipe_fail;
+    if (pipe(pipe1)) goto pipe_fail;
+    if (pipe(pipe2)) goto pipe_fail;
+    sysfunc = "fork";
+    pid_t cpid = fork();
+    if (cpid == -1) goto fork_fail;
+    if (cpid == 0) {
+      if (close(pipe0[1])) goto close_fail;
+      if (close(pipe1[0])) goto close_fail;
+      if (close(pipe2[0])) goto close_fail;
+      if (close(0)) goto close_fail;
+      if (dup(pipe0[0]) == -1) goto dup_fail;
+      if (close(1)) goto close_fail;
+      if (dup(pipe1[1]) == -1) goto dup_fail;
+      if (close(2)) goto close_fail;
+      if (dup(pipe2[1]) == -1) goto dup_fail;
+      for (int i = 3; i < open_max; i++) close(i);
+      const char* command_name = ((scm_string_t)argv[5])->name;
+      char** command_argv = (char**)alloca(sizeof(char*) * (argc - 5 + 1));
+      for (int i = 5; i < argc; i++) command_argv[i - 5] = ((scm_string_t)argv[i])->name;
+      command_argv[argc - 5] = (char*)NULL;
+      execvp(command_name, command_argv);
+      goto exec_fail;
+    } else {
+      close(pipe0[0]);
+      close(pipe1[1]);
+      close(pipe2[1]);
+      assert(sizeof(pid_t) == sizeof(int));
+      return make_list(vm->m_heap, 4, int_to_integer(vm->m_heap, cpid),
+                       make_std_port(vm->m_heap, pipe0[1], make_string_literal(vm->m_heap, "process-stdin"), SCM_PORT_DIRECTION_OUT,
+                                     SCM_PORT_FILE_OPTION_NONE, SCM_PORT_BUFFER_MODE_BLOCK, scm_false),
+                       make_std_port(vm->m_heap, pipe1[0], make_string_literal(vm->m_heap, "process-stdout"), SCM_PORT_DIRECTION_IN,
+                                     SCM_PORT_FILE_OPTION_NONE, SCM_PORT_BUFFER_MODE_BLOCK, scm_false),
+                       make_std_port(vm->m_heap, pipe2[0], make_string_literal(vm->m_heap, "process-stderr"), SCM_PORT_DIRECTION_IN,
+                                     SCM_PORT_FILE_OPTION_NONE, SCM_PORT_BUFFER_MODE_BLOCK, scm_false));
+    }
+  }
+  wrong_number_of_arguments_violation(vm, "process-spawn", 1, -1, argc, argv);
+  return scm_undef;
+
+sysconf_fail:
+pipe_fail:
+fork_fail:
+  int err = errno;
+  char message[256];
+  snprintf(message, sizeof(message), "%s() failed. %s", sysfunc, strerror(err));
+  if (pipe0[0] != -1) close(pipe0[0]);
+  if (pipe0[1] != -1) close(pipe0[1]);
+  if (pipe1[0] != -1) close(pipe1[0]);
+  if (pipe1[1] != -1) close(pipe1[1]);
+  if (pipe2[0] != -1) close(pipe2[0]);
+  if (pipe2[1] != -1) close(pipe2[1]);
+  raise_error(vm, "process-spawn", message, err, argc, argv);
+  return scm_undef;
+close_fail:
+dup_fail:
+exec_fail:
+  exit(127);
 }
 #endif
 

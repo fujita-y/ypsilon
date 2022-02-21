@@ -147,12 +147,6 @@
     (let ((path (or (lookup-process-environment "HOME") "")))
       (and (file-exists? path) path))))
 
-(define process (lambda args (apply process-spawn #t #f #f #f #f args)))
-
-(define process-shell-command
-  (lambda (command)
-    (process (or (getenv "SHELL") "/bin/sh") "-c" command)))
-
 (define apply-scheme-proc-assistant
   (lambda (proc . args)
     (let ((throw #f) (level (recursion-level)))

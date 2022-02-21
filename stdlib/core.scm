@@ -761,9 +761,7 @@
     pretty-print-maximum-lines
     pretty-print-unwrap-syntax
     procedure?
-    process
     process-environment->alist
-    process-shell-command
     process-spawn
     process-wait
     protocol

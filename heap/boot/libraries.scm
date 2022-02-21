@@ -532,9 +532,7 @@
                         getenv
                         gethostname
                         system
-                        process
                         process-spawn
-                        process-shell-command
                         process-wait
                         errno/string
 

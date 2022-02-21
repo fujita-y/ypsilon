@@ -49,7 +49,7 @@
   wrong_number_of_arguments_violation(vm, __NAME__, __NARGS__, __NARGS__, argc, argv);                          \
   return scm_undef;
 
-#define TWO_MAP_OP(__FUNC__, __NAME__)          \
+#define TWO_MAT4X4_OP(__FUNC__, __NAME__)       \
   TWO_MAT4X4_OP_BEGIN(2);                       \
   __FUNC__((vec4*)dst->elts, (vec4*)src->elts); \
   return scm_unspecified;                       \
@@ -99,16 +99,16 @@ scm_obj_t subr_mat4x4_identity(VM* vm, int argc, scm_obj_t argv[]) {
 }
 
 // mat4x4-dup
-scm_obj_t subr_mat4x4_dup(VM* vm, int argc, scm_obj_t argv[]) { TWO_MAP_OP(mat4x4_dup, "mat4x4-dup"); }
+scm_obj_t subr_mat4x4_dup(VM* vm, int argc, scm_obj_t argv[]) { TWO_MAT4X4_OP(mat4x4_dup, "mat4x4-dup"); }
 
 // mat4x4-transpose
-scm_obj_t subr_mat4x4_transpose(VM* vm, int argc, scm_obj_t argv[]) { TWO_MAP_OP(mat4x4_transpose, "mat4x4-transpose"); }
+scm_obj_t subr_mat4x4_transpose(VM* vm, int argc, scm_obj_t argv[]) { TWO_MAT4X4_OP(mat4x4_transpose, "mat4x4-transpose"); }
 
 // mat4x4-invert
-scm_obj_t subr_mat4x4_invert(VM* vm, int argc, scm_obj_t argv[]) { TWO_MAP_OP(mat4x4_invert, "mat4x4-invert"); }
+scm_obj_t subr_mat4x4_invert(VM* vm, int argc, scm_obj_t argv[]) { TWO_MAT4X4_OP(mat4x4_invert, "mat4x4-invert"); }
 
 // mat4x4-orthonormalize
-scm_obj_t subr_mat4x4_orthonormalize(VM* vm, int argc, scm_obj_t argv[]) { TWO_MAP_OP(mat4x4_invert, "mat4x4-orthonormalize"); }
+scm_obj_t subr_mat4x4_orthonormalize(VM* vm, int argc, scm_obj_t argv[]) { TWO_MAT4X4_OP(mat4x4_invert, "mat4x4-orthonormalize"); }
 
 // mat4x4-add
 scm_obj_t subr_mat4x4_add(VM* vm, int argc, scm_obj_t argv[]) { THREE_MAT4X4_OP(mat4x4_add, "mat4x4-add"); }
