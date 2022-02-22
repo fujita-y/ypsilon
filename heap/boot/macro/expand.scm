@@ -158,37 +158,9 @@
               (cond ((procedure? proc) (values proc code))
                     ((variable-transformer-token? proc) (values (make-macro-variable (tuple-ref proc 1) env) code))
                     (else (syntax-violation (car form) "invalid transformer expression" form transformer))))))))
-    (define syntax-rules?
-      (lambda (id) (denote-syntax-rules? env id)))
-    (destructuring-match transformer
-      (((? syntax-rules? _))
-       (syntax-violation 'syntax-rules "expected literals and rules" transformer))
-      (((? syntax-rules? _) clauses ...)
-       (begin
-         (let* ((ellipsis (and (pair? clauses) (symbol? (car clauses)) (car clauses)))
-                (lites (if ellipsis (cadr clauses) (car clauses)))
-                (rules (if ellipsis (cddr clauses) (cdr clauses))))
-           (or (and (list? lites) (every1 symbol? lites))
-               (syntax-violation 'syntax-rules "invalid literals" transformer lites))
-           (or (unique-id-list? lites) (syntax-violation 'syntax-rules "duplicate literals" transformer lites))
-           (or (ellipsis/underscore-in-literal)
-               (and (memq '_ lites) (syntax-violation 'syntax-rules "_ in literals" transformer lites)))
-           (let ((ellipsis (or ellipsis #t)))
-             (and (memq ellipsis lites)
-                  (if (ellipsis/underscore-in-literal)
-                      (set! ellipsis #f)
-                      (syntax-violation 'syntax-rules "ellipsis in literals" transformer lites)))
-             (for-each
-               (lambda (rule)
-                 (destructuring-match rule
-                   ((((? symbol? _) . _) _) #t)
-                   (((_ . _) _)
-                    (syntax-violation 'syntax-rules "expected identifer for first subform of pattern" transformer rule))
-                   ((_ _) (syntax-violation 'syntax-rules "expected list for pattern" transformer rule))
-                   (_ (syntax-violation 'syntax-rules "expected (pattern template) for each rule" transformer rule))))
-               rules)
-             (compile-syntax-rules transformer ellipsis lites rules env)))))
-      (_ (compile-transformer transformer env)))))
+    (if (denote-syntax-rules? env (car transformer))
+        (compile-syntax-rules transformer env)
+        (compile-transformer transformer env))))
 
 (define expand-let-syntax-bindings
   (lambda (form bindings env)
