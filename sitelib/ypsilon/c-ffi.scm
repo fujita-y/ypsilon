@@ -61,15 +61,14 @@
             #`(codegen-cdecl-callout (lookup-shared-object 'name) #,signature1 #,signature2))))))
 
   (define-syntax c-function/weak
-    (lambda (x)
-      (syntax-case x ()
-        ((_ . args)
-         #'(let ((thunk0 (make-parameter #f)))
-             (lambda e
-               (let ((thunk (thunk0)))
-                 (cond (thunk (apply thunk e))
-                       (else
-                         (let ((thunk (c-function . args))) (thunk0 thunk) (apply thunk e)))))))))))
+    (syntax-rules ()
+      ((_ . args)
+       (let ((thunk #f))
+         (lambda e
+           (cond (thunk (apply thunk e))
+                 (else
+                   (set! thunk (c-function . args))
+                   (apply thunk e))))))))
 
   (define-syntax c-callback
     (lambda (x)
