@@ -8,14 +8,9 @@
           c-function/weak
           c-callback
           c-main-argc
-          c-main-argv
-          string->utf8/nul
-          bytevector-mapping?
-          make-bytevector-mapping
-          bytevector->pinned-c-void*)
+          c-main-argv)
 
-  (import (core)
-          (only (ypsilon c-types) sizeof:int sizeof:long sizeof:size_t sizeof:void*))
+  (import (core) (only (ypsilon c-types) sizeof:int sizeof:long sizeof:size_t sizeof:void*))
 
   (define c-type-class
     `((void               . #\i)

@@ -8,7 +8,9 @@
           define-c-struct-methods
           c-sizeof
           make-bytevector-mapping
-
+          bytevector-mapping?
+          bytevector->pinned-c-void*
+          bytevector-c-strlen
           bytevector-c-bool-ref
           bytevector-c-short-ref
           bytevector-c-int-ref
@@ -41,8 +43,6 @@
           bytevector-c-int16-set!
           bytevector-c-int32-set!
           bytevector-c-int64-set!
-          bytevector-c-strlen
-
           make-c-bool
           make-c-short
           make-c-int
@@ -56,7 +56,6 @@
           make-c-int32
           make-c-int64
           make-c-string
-
           c-bool-ref
           c-short-ref
           c-int-ref
@@ -78,7 +77,6 @@
           c-uint32-ref
           c-uint64-ref
           c-string-ref
-
           c-bool-set!
           c-short-set!
           c-int-set!
@@ -92,7 +90,6 @@
           c-int32-set!
           c-int64-set!
           c-string-set!
-
           sizeof:bool
           sizeof:short
           sizeof:int
@@ -100,7 +97,6 @@
           sizeof:long-long
           sizeof:void*
           sizeof:size_t
-
           alignof:bool
           alignof:short
           alignof:int
@@ -118,17 +114,17 @@
   (import (core))
 
   (define sizeof:bool       (architecture-feature 'sizeof:bool))
+  (define sizeof:short      (architecture-feature 'sizeof:short))
   (define sizeof:int        (architecture-feature 'sizeof:int))
   (define sizeof:long       (architecture-feature 'sizeof:long))
   (define sizeof:long-long  (architecture-feature 'sizeof:long-long))
-  (define sizeof:short      (architecture-feature 'sizeof:short))
   (define sizeof:void*      (architecture-feature 'sizeof:void*))
   (define sizeof:size_t     (architecture-feature 'sizeof:size_t))
   (define alignof:bool      (architecture-feature 'alignof:bool))
+  (define alignof:short     (architecture-feature 'alignof:short))
   (define alignof:int       (architecture-feature 'alignof:int))
   (define alignof:long      (architecture-feature 'alignof:long))
   (define alignof:long-long (architecture-feature 'alignof:long-long))
-  (define alignof:short     (architecture-feature 'alignof:short))
   (define alignof:void*     (architecture-feature 'alignof:void*))
   (define alignof:size_t    (architecture-feature 'alignof:size_t))
   (define alignof:float     (architecture-feature 'alignof:float))
@@ -165,8 +161,8 @@
     (let ((ht (make-eq-hashtable)))
       (for-each
         (lambda (b) (hashtable-set! ht (car b) (cdr b)))
-        `((bytevector-c-int-ref            . ,#'bytevector-c-int-ref)
-          (bytevector-c-bool-ref           . ,#'bytevector-c-bool-ref)
+        `((bytevector-c-bool-ref           . ,#'bytevector-c-bool-ref)
+          (bytevector-c-int-ref            . ,#'bytevector-c-int-ref)
           (bytevector-c-long-ref           . ,#'bytevector-c-long-ref)
           (bytevector-c-short-ref          . ,#'bytevector-c-short-ref)
           (bytevector-c-void*-ref          . ,#'bytevector-c-void*-ref)
@@ -185,8 +181,8 @@
           (bytevector-c-uint64-ref         . ,#'bytevector-c-uint64-ref)
           (bytevector-c-bool-set!          . ,#'bytevector-c-bool-set!)
           (bytevector-c-int-set!           . ,#'bytevector-c-int-set!)
-          (bytevector-c-long-set!          . ,#'bytevector-c-long-set!)
           (bytevector-c-short-set!         . ,#'bytevector-c-short-set!)
+          (bytevector-c-long-set!          . ,#'bytevector-c-long-set!)
           (bytevector-c-void*-set!         . ,#'bytevector-c-void*-set!)
           (bytevector-c-int8-set!          . ,#'bytevector-c-int8-set!)
           (bytevector-c-int16-set!         . ,#'bytevector-c-int16-set!)
