@@ -171,7 +171,7 @@
 (define ft (make-c-void* 0))
 (FT_Init_FreeType ft)
 (define face (make-c-void* 0))
-(FT_New_Face (c-void*-ref ft) (string->utf8/nul "demo/VeraMono.ttf") 0 face)
+(FT_New_Face (c-void*-ref ft) (make-c-string "demo/VeraMono.ttf") 0 face)
 (FT_Set_Pixel_Sizes (c-void*-ref face) 0 24)
 
 |#
