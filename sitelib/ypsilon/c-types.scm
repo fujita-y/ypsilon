@@ -7,8 +7,8 @@
           define-c-typedef
           define-c-struct-methods
           c-sizeof
-          c-coerce-void*
           make-bytevector-mapping
+
           bytevector-c-bool-ref
           bytevector-c-short-ref
           bytevector-c-int-ref
@@ -42,6 +42,7 @@
           bytevector-c-int32-set!
           bytevector-c-int64-set!
           bytevector-c-strlen
+
           make-c-bool
           make-c-short
           make-c-int
@@ -55,6 +56,7 @@
           make-c-int32
           make-c-int64
           make-c-string
+
           c-bool-ref
           c-short-ref
           c-int-ref
@@ -76,6 +78,7 @@
           c-uint32-ref
           c-uint64-ref
           c-string-ref
+
           c-bool-set!
           c-short-set!
           c-int-set!
@@ -89,6 +92,7 @@
           c-int32-set!
           c-int64-set!
           c-string-set!
+
           sizeof:bool
           sizeof:short
           sizeof:int
@@ -96,6 +100,7 @@
           sizeof:long-long
           sizeof:void*
           sizeof:size_t
+
           alignof:bool
           alignof:short
           alignof:int
@@ -494,11 +499,6 @@
                             (tuple-ref type 2)
                             (syntax-violation 'c-sizeof (format "expected primitive type or c-typedef object, but got ~s" type) x)))))
                     (c-sizeof type))))))))
-
-  (define-syntax c-coerce-void*
-    (syntax-rules ()
-      ((_ var type)
-       (make-bytevector-mapping var (c-sizeof type)))))
 
   (define-syntax define-c-enum
     (lambda (x)
