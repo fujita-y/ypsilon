@@ -31,7 +31,7 @@
     (glfwWindowHint GLFW_CONTEXT_VERSION_MAJOR 2)
     (glfwWindowHint GLFW_CONTEXT_VERSION_MINOR 0)
 
-    (let ((window (glfwCreateWindow 640 480 (string->utf8/nul "Simple example") 0 0)))
+    (let ((window (glfwCreateWindow 640 480 (make-c-string "Simple example") 0 0)))
       (if (= window 0) (begin (glfwTerminate) (exit 1)))
 
       (glfwMakeContextCurrent window)

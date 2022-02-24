@@ -31,7 +31,7 @@
               (bytevector-ieee-single-native-set! bv i (car vals))
               (loop (+ i 4) (cdr vals)))))))
 
-(define vertex_shader_text (string->utf8/nul "
+(define vertex_shader_text (make-c-string "
   #version 110
   uniform mat4 MVP;
   attribute vec3 vCol;
@@ -44,7 +44,7 @@
   }
 "))
 
-(define fragment_shader_text (string->utf8/nul "
+(define fragment_shader_text (make-c-string "
   #version 110
   varying vec3 color;
   void main()
@@ -59,7 +59,7 @@
     (if (= (glfwInit) 0) (exit 1))
     (glfwWindowHint GLFW_CONTEXT_VERSION_MAJOR 2)
     (glfwWindowHint GLFW_CONTEXT_VERSION_MINOR 0)
-    (let ((window (glfwCreateWindow 640 480 (string->utf8/nul "Simple example") 0 0)))
+    (let ((window (glfwCreateWindow 640 480 (make-c-string "Simple example") 0 0)))
       (if (= window 0) (begin (glfwTerminate) (exit 1)))
       (glfwMakeContextCurrent window)
       (glfwSetKeyCallback window (c-callback void (void* int int int int) key-callback))
@@ -78,9 +78,9 @@
             (glAttachShader program vertex_shader)
             (glAttachShader program fragment_shader)
             (glLinkProgram program)
-            (let ((mvp_location (glGetUniformLocation program (string->utf8/nul "MVP")))
-                  (vpos_location (glGetAttribLocation program (string->utf8/nul "vPos")))
-                  (vcol_location (glGetAttribLocation program (string->utf8/nul "vCol"))))
+            (let ((mvp_location (glGetUniformLocation program (make-c-string "MVP")))
+                  (vpos_location (glGetAttribLocation program (make-c-string "vPos")))
+                  (vcol_location (glGetAttribLocation program (make-c-string "vCol"))))
               (glEnableVertexAttribArray vpos_location)
               (glVertexAttribPointer vpos_location 2 GL_FLOAT GL_FALSE 20 0)
               (glEnableVertexAttribArray vcol_location)
