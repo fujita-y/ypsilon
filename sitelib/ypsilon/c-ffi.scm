@@ -50,9 +50,9 @@
         ((_ ret name (args ...))
          (let ((signature (make-signature (syntax->datum #'(ret args ...)))))
             #`(codegen-cdecl-callout (lookup-shared-object 'name) #,signature)))
-        ((_ ret name (args ...) (proto ...))
-         (let ((signature1 (make-signature (syntax->datum #'(ret args ...))))
-               (signature2 (make-signature (syntax->datum #'(proto ...)))))
+        ((_ ret name (args ...) (varargs ...))
+         (let ((signature1 (make-signature (syntax->datum #'(ret args ... varargs ...))))
+               (signature2 (make-signature (syntax->datum #'(ret args ...)))))
             #`(codegen-cdecl-callout (lookup-shared-object 'name) #,signature1 #,signature2))))))
 
   (define-syntax c-function/weak

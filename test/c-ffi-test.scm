@@ -34,7 +34,7 @@
 
 (test-begin "c-function variadic")
 (test-eval! (import (core) (ypsilon c-ffi) (ypsilon c-types)))
-(test-eval! (define snprintf (c-function int snprintf (void* size_t void* long double) (void* size_t void*))))
+(test-eval! (define snprintf (c-function int snprintf (void* size_t void*) (long double))))
 (test-eval! (define output (make-bytevector 128 0)))
 (test-eval! (define n (snprintf output 128 (make-c-string "%lu %.3lf") 246 123.4)))
 (test-eval! (define s (c-string-ref output)))
