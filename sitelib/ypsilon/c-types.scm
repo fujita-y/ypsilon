@@ -539,7 +539,7 @@
                      (lambda (obj val)
                        (bv-mutator
                         (if (bytevector? obj) obj (make-bytevector-mapping obj size))
-                        val 0))))))))))
+                        0 val))))))))))
      (define-accessor
       (lambda (x)
         (syntax-case x ()
