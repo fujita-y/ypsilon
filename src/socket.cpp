@@ -28,6 +28,7 @@ void socket_open(scm_socket_t s, const char* node, const char* service, int fami
     retval = getaddrinfo(node, service, &hints, &list);
   } while (retval == EAI_AGAIN);
   if (retval) {
+    freeaddrinfo(list);
     if (retval == EAI_SYSTEM) throw_socket_error(SCM_SOCKET_OPERATION_OPEN, errno);
     throw_socket_error(SCM_SOCKET_OPERATION_OPEN, gai_strerror(retval));
   }
@@ -39,23 +40,26 @@ void socket_open(scm_socket_t s, const char* node, const char* service, int fami
         if (first_error == 0) first_error = errno;
         continue;
       }
+      s->mode = SCM_SOCKET_MODE_SERVER;
+      s->fd = fd;
+      s->family = p->ai_family;
+      s->socktype = p->ai_socktype;
+      s->protocol = p->ai_protocol;
+      s->addrlen = p->ai_addrlen;
+      memcpy(&s->addr, p->ai_addr, p->ai_addrlen);
 #if USE_CLOEXEC
       fcntl(fd, F_SETFD, FD_CLOEXEC);
 #endif
       int one = 1;
       if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&one, sizeof(one)) == 0) {
-        if (bind(fd, p->ai_addr, p->ai_addrlen) == 0) {
-          s->mode = SCM_SOCKET_MODE_SERVER;
-          s->fd = fd;
-          s->family = p->ai_family;
-          s->socktype = p->ai_socktype;
-          s->protocol = p->ai_protocol;
-          s->addrlen = p->ai_addrlen;
-          memcpy(&s->addr, p->ai_addr, p->ai_addrlen);
-          freeaddrinfo(list);
-          if (p->ai_socktype == SOCK_STREAM) {
-            if (listen(fd, 5) == 0) return;
+        if (bind(fd, (sockaddr *)(&s->addr), s->addrlen) == 0) {
+          if (s->socktype == SOCK_STREAM) {
+            if (listen(fd, 5) == 0) {
+              freeaddrinfo(list);
+              return;
+            }
           } else {
+            freeaddrinfo(list);
             return;
           }
         }
@@ -63,6 +67,7 @@ void socket_open(scm_socket_t s, const char* node, const char* service, int fami
       if (first_error == 0) first_error = errno;
       CLOSE_SOCKET(fd);
     }
+    freeaddrinfo(list);
   } else {
     for (struct addrinfo* p = list; p != NULL; p = p->ai_next) {
       int fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
@@ -70,17 +75,17 @@ void socket_open(scm_socket_t s, const char* node, const char* service, int fami
         if (first_error == 0) first_error = errno;
         continue;
       }
+      s->mode = SCM_SOCKET_MODE_CLIENT;
+      s->fd = fd;
+      s->family = p->ai_family;
+      s->socktype = p->ai_socktype;
+      s->protocol = p->ai_protocol;
+      s->addrlen = p->ai_addrlen;
+      memcpy(&s->addr, p->ai_addr, p->ai_addrlen);
 #if USE_CLOEXEC
       fcntl(fd, F_SETFD, FD_CLOEXEC);
 #endif
-      if (connect(fd, p->ai_addr, p->ai_addrlen) == 0) {
-        s->mode = SCM_SOCKET_MODE_CLIENT;
-        s->fd = fd;
-        s->family = p->ai_family;
-        s->socktype = p->ai_socktype;
-        s->protocol = p->ai_protocol;
-        s->addrlen = p->ai_addrlen;
-        memcpy(&s->addr, p->ai_addr, p->ai_addrlen);
+      if (connect(fd, (sockaddr *)(&s->addr), s->addrlen) == 0) {
         freeaddrinfo(list);
         return;
       }
