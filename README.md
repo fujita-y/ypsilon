@@ -27,6 +27,10 @@
 
 See [LICENSE](https://github.com/fujita-y/ypsilon/blob/master/LICENSE) for terms and conditions of use.
 
+### Documents
+
+[API Reference](https://fujita-y.github.io/ypsilon-api/)
+
 ### Versions
 
 Ypsilon version 2 have major design changes. Former version is available at [version-0.9](https://github.com/fujita-y/ypsilon/tree/version-0.9).
