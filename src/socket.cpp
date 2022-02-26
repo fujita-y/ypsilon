@@ -67,7 +67,6 @@ void socket_open(scm_socket_t s, const char* node, const char* service, int fami
       if (first_error == 0) first_error = errno;
       CLOSE_SOCKET(fd);
     }
-    freeaddrinfo(list);
   } else {
     for (struct addrinfo* p = list; p != NULL; p = p->ai_next) {
       int fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
