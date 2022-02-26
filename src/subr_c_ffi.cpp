@@ -41,21 +41,39 @@ static std::atomic<uintptr_t> s_trampoline_uid;
 
 static ExitOnError ExitOnErr;
 
+void init_c_ffi() {
+  s_compile_lock.init();
+  auto J = ExitOnErr(LLJITBuilder().create());
+  auto D = J->getDataLayout();
+  auto G = ExitOnErr(DynamicLibrarySearchGenerator::GetForCurrentProcess(D.getGlobalPrefix()));
+  J->getMainJITDylib().addGenerator(std::move(G));
+  s_c_ffi = std::move(J);
+}
+
+void destroy_c_ffi() {
+  if (s_c_ffi) {
+    delete s_c_ffi.release();
+    s_c_ffi = NULL;
+  }
+  s_callout_cache.clear();
+  s_compile_lock.destroy();
+}
+
 extern "C" {
-  bool c_ffi_to_llvm_Int1Ty(VM* vm, int i, scm_obj_t obj[]) { return obj[i] == scm_true; }
-  int8_t c_ffi_to_llvm_Int8Ty(VM* vm, int i, scm_obj_t obj[]) {
+  static bool c_ffi_to_llvm_Int1Ty(VM* vm, int i, scm_obj_t obj[]) { return obj[i] == scm_true; }
+  static int8_t c_ffi_to_llvm_Int8Ty(VM* vm, int i, scm_obj_t obj[]) {
     if (FIXNUMP(obj[i])) return FIXNUM(obj[i]);
     if (exact_integer_pred(obj[i])) return coerce_exact_integer_to_intptr(obj[i]);
     if (real_pred(obj[i])) return real_to_double(obj[i]);
     return 0;
   }
-  int16_t c_ffi_to_llvm_Int16Ty(VM* vm, int i, scm_obj_t obj[]) {
+  static int16_t c_ffi_to_llvm_Int16Ty(VM* vm, int i, scm_obj_t obj[]) {
     if (FIXNUMP(obj[i])) return FIXNUM(obj[i]);
     if (exact_integer_pred(obj[i])) return coerce_exact_integer_to_intptr(obj[i]);
     if (real_pred(obj[i])) return real_to_double(obj[i]);
     return 0;
   }
-  int32_t c_ffi_to_llvm_Int32Ty(VM* vm, int i, scm_obj_t obj[]) {
+  static int32_t c_ffi_to_llvm_Int32Ty(VM* vm, int i, scm_obj_t obj[]) {
     if (FIXNUMP(obj[i])) return FIXNUM(obj[i]);
     if (exact_integer_pred(obj[i])) return coerce_exact_integer_to_intptr(obj[i]);
     if (real_pred(obj[i])) return real_to_double(obj[i]);
@@ -67,7 +85,7 @@ extern "C" {
 #endif
     return 0;
   }
-  int64_t c_ffi_to_llvm_Int64Ty(VM* vm, int i, scm_obj_t obj[]) {
+  static int64_t c_ffi_to_llvm_Int64Ty(VM* vm, int i, scm_obj_t obj[]) {
     if (FIXNUMP(obj[i])) return FIXNUM(obj[i]);
     if (exact_integer_pred(obj[i])) return coerce_exact_integer_to_int64(obj[i]);
     if (real_pred(obj[i])) return real_to_double(obj[i]);
@@ -79,62 +97,62 @@ extern "C" {
 #endif
     return 0;
   }
-  float c_ffi_to_llvm_FloatTy(VM* vm, int i, scm_obj_t obj[]) {
+  static float c_ffi_to_llvm_FloatTy(VM* vm, int i, scm_obj_t obj[]) {
     if (FLONUMP(obj[i])) return FLONUM(obj[i]);
     if (FIXNUMP(obj[i])) return FIXNUM(obj[i]);
     if (real_pred(obj[i])) return real_to_double(obj[i]);
     return 0;
   }
-  double c_ffi_to_llvm_DoubleTy(VM* vm, int i, scm_obj_t obj[]) {
+  static double c_ffi_to_llvm_DoubleTy(VM* vm, int i, scm_obj_t obj[]) {
     if (FLONUMP(obj[i])) return FLONUM(obj[i]);
     if (FIXNUMP(obj[i])) return FIXNUM(obj[i]);
     if (real_pred(obj[i])) return real_to_double(obj[i]);
     return 0;
   }
 
-  bool c_ffi_ret_llvm_Int1Ty(VM* vm, scm_obj_t obj) { return obj == scm_true; }
-  int8_t c_ffi_ret_llvm_Int8Ty(VM* vm, scm_obj_t obj) {
+  static bool c_ffi_ret_llvm_Int1Ty(VM* vm, scm_obj_t obj) { return obj == scm_true; }
+  static int8_t c_ffi_ret_llvm_Int8Ty(VM* vm, scm_obj_t obj) {
     if (FIXNUMP(obj)) return FIXNUM(obj);
     scm_obj_t argv[] = {obj};
     return c_ffi_to_llvm_Int8Ty(vm, 0, argv);
   }
-  int16_t c_ffi_ret_llvm_Int16Ty(VM* vm, scm_obj_t obj) {
+  static int16_t c_ffi_ret_llvm_Int16Ty(VM* vm, scm_obj_t obj) {
     if (FIXNUMP(obj)) return FIXNUM(obj);
     scm_obj_t argv[] = {obj};
     return c_ffi_to_llvm_Int16Ty(vm, 0, argv);
   }
-  int32_t c_ffi_ret_llvm_Int32Ty(VM* vm, scm_obj_t obj) {
+  static int32_t c_ffi_ret_llvm_Int32Ty(VM* vm, scm_obj_t obj) {
     if (FIXNUMP(obj)) return FIXNUM(obj);
     scm_obj_t argv[] = {obj};
     return c_ffi_to_llvm_Int32Ty(vm, 0, argv);
   }
-  int64_t c_ffi_ret_llvm_Int64Ty(VM* vm, scm_obj_t obj) {
+  static int64_t c_ffi_ret_llvm_Int64Ty(VM* vm, scm_obj_t obj) {
     if (FIXNUMP(obj)) return FIXNUM(obj);
     scm_obj_t argv[] = {obj};
     return c_ffi_to_llvm_Int64Ty(vm, 0, argv);
   }
-  float c_ffi_ret_llvm_FloatTy(VM* vm, scm_obj_t obj) {
+  static float c_ffi_ret_llvm_FloatTy(VM* vm, scm_obj_t obj) {
     if (FLONUMP(obj)) return FLONUM(obj);
     if (FIXNUMP(obj)) return FIXNUM(obj);
     scm_obj_t argv[] = {obj};
     return c_ffi_to_llvm_FloatTy(vm, 0, argv);
   }
-  double c_ffi_ret_llvm_DoubleTy(VM* vm, scm_obj_t obj) {
+  static double c_ffi_ret_llvm_DoubleTy(VM* vm, scm_obj_t obj) {
     if (FLONUMP(obj)) return FLONUM(obj);
     if (FIXNUMP(obj)) return FIXNUM(obj);
     scm_obj_t argv[] = {obj};
     return c_ffi_to_llvm_DoubleTy(vm, 0, argv);
   }
 
-  scm_obj_t c_ffi_from_llvm_Int1Ty(VM* vm, bool val) { return val ? scm_true : scm_false; }
-  scm_obj_t c_ffi_from_llvm_Int8Ty(VM* vm, int8_t val) { return MAKEFIXNUM(val); }
-  scm_obj_t c_ffi_from_llvm_Int16Ty(VM* vm, int16_t val) { return MAKEFIXNUM(val); }
-  scm_obj_t c_ffi_from_llvm_Int32Ty(VM* vm, int32_t val) { return int32_to_integer(vm->m_heap, val); }
-  scm_obj_t c_ffi_from_llvm_Int64Ty(VM* vm, int64_t val) { return int64_to_integer(vm->m_heap, val); }
-  scm_obj_t c_ffi_from_llvm_FloatTy(VM* vm, float val) { return double_to_inexact(vm->m_heap, val); }
-  scm_obj_t c_ffi_from_llvm_DoubleTy(VM* vm, double val) { return double_to_inexact(vm->m_heap, val); }
+  static scm_obj_t c_ffi_from_llvm_Int1Ty(VM* vm, bool val) { return val ? scm_true : scm_false; }
+  static scm_obj_t c_ffi_from_llvm_Int8Ty(VM* vm, int8_t val) { return MAKEFIXNUM(val); }
+  static scm_obj_t c_ffi_from_llvm_Int16Ty(VM* vm, int16_t val) { return MAKEFIXNUM(val); }
+  static scm_obj_t c_ffi_from_llvm_Int32Ty(VM* vm, int32_t val) { return int32_to_integer(vm->m_heap, val); }
+  static scm_obj_t c_ffi_from_llvm_Int64Ty(VM* vm, int64_t val) { return int64_to_integer(vm->m_heap, val); }
+  static scm_obj_t c_ffi_from_llvm_FloatTy(VM* vm, float val) { return double_to_inexact(vm->m_heap, val); }
+  static scm_obj_t c_ffi_from_llvm_DoubleTy(VM* vm, double val) { return double_to_inexact(vm->m_heap, val); }
 
-  scm_obj_t c_call_scheme(VM* vm, intptr_t trampoline_uid, intptr_t argc, ...) {
+  static scm_obj_t c_call_scheme(VM* vm, intptr_t trampoline_uid, intptr_t argc, ...) {
     try {
       scm_obj_t* param = (scm_obj_t*)alloca(sizeof(scm_obj_t) * argc);
       va_list ap;
@@ -152,24 +170,6 @@ extern "C" {
       fatal("fatal: unhandled exception in callback\n[exit]\n");
     }
   }
-}
-
-void init_c_ffi() {
-  s_compile_lock.init();
-  auto J = ExitOnErr(LLJITBuilder().create());
-  auto D = J->getDataLayout();
-  auto G = ExitOnErr(DynamicLibrarySearchGenerator::GetForCurrentProcess(D.getGlobalPrefix()));
-  J->getMainJITDylib().addGenerator(std::move(G));
-  s_c_ffi = std::move(J);
-}
-
-void destroy_c_ffi() {
-  if (s_c_ffi) {
-    delete s_c_ffi.release();
-    s_c_ffi = NULL;
-  }
-  s_callout_cache.clear();
-  s_compile_lock.destroy();
 }
 
 static Type* builtin_type(LLVMContext& C, char code) {
@@ -209,10 +209,23 @@ static llvm::FunctionCallee make_callee(IRBuilder<>& IRB, FunctionType* funcType
   return FunctionCallee(funcType, ConstantExpr::getIntToPtr(VALUE_INTPTR(adrs), funcType->getPointerTo()));
 }
 
+#define THUNK_FROM_LLVM(_NAME_, _TYPE_) make_callee(IRB, FunctionType::get(IntptrTy, {IntptrTy, Type::get##_TYPE_(C)}, false), (void*)_NAME_)
+
+static std::map<char, FunctionCallee> create_thunk_from_map(Module* M, IRBuilder<>& IRB, LLVMContext& C) {
+  std::map<char, FunctionCallee> from;
+  auto IntptrTy = (sizeof(intptr_t) == 4 ? Type::getInt32Ty(C) : Type::getInt64Ty(C));
+  from['b'] = THUNK_FROM_LLVM(c_ffi_from_llvm_Int1Ty, Int1Ty);
+  from['u'] = THUNK_FROM_LLVM(c_ffi_from_llvm_Int8Ty, Int8Ty);
+  from['d'] = THUNK_FROM_LLVM(c_ffi_from_llvm_Int16Ty, Int16Ty);
+  from['q'] = THUNK_FROM_LLVM(c_ffi_from_llvm_Int32Ty, Int32Ty);
+  from['o'] = THUNK_FROM_LLVM(c_ffi_from_llvm_Int64Ty, Int64Ty);
+  from['s'] = THUNK_FROM_LLVM(c_ffi_from_llvm_FloatTy, FloatTy);
+  from['x'] = THUNK_FROM_LLVM(c_ffi_from_llvm_DoubleTy, DoubleTy);
+  return from;
+}
+
 #define THUNK_TO_LLVM(_NAME_, _TYPE_) \
   make_callee(IRB, FunctionType::get(Type::get##_TYPE_(C), {IntptrTy, IntptrTy, IntptrTy}, false), (void*)_NAME_)
-#define THUNK_RET_LLVM(_NAME_, _TYPE_)  make_callee(IRB, FunctionType::get(Type::get##_TYPE_(C), {IntptrTy, IntptrTy}, false), (void*)_NAME_)
-#define THUNK_FROM_LLVM(_NAME_, _TYPE_) make_callee(IRB, FunctionType::get(IntptrTy, {IntptrTy, Type::get##_TYPE_(C)}, false), (void*)_NAME_)
 
 static std::map<char, FunctionCallee> create_thunk_to_map(Module* M, IRBuilder<>& IRB, LLVMContext& C) {
   std::map<char, FunctionCallee> to;
@@ -227,6 +240,8 @@ static std::map<char, FunctionCallee> create_thunk_to_map(Module* M, IRBuilder<>
   return to;
 }
 
+#define THUNK_RET_LLVM(_NAME_, _TYPE_) make_callee(IRB, FunctionType::get(Type::get##_TYPE_(C), {IntptrTy, IntptrTy}, false), (void*)_NAME_)
+
 static std::map<char, FunctionCallee> create_thunk_ret_map(Module* M, IRBuilder<>& IRB, LLVMContext& C) {
   std::map<char, FunctionCallee> ret;
   auto IntptrTy = (sizeof(intptr_t) == 4 ? Type::getInt32Ty(C) : Type::getInt64Ty(C));
@@ -238,19 +253,6 @@ static std::map<char, FunctionCallee> create_thunk_ret_map(Module* M, IRBuilder<
   ret['s'] = THUNK_RET_LLVM(c_ffi_ret_llvm_FloatTy, FloatTy);
   ret['x'] = THUNK_RET_LLVM(c_ffi_ret_llvm_DoubleTy, DoubleTy);
   return ret;
-}
-
-static std::map<char, FunctionCallee> create_thunk_from_map(Module* M, IRBuilder<>& IRB, LLVMContext& C) {
-  std::map<char, FunctionCallee> from;
-  auto IntptrTy = (sizeof(intptr_t) == 4 ? Type::getInt32Ty(C) : Type::getInt64Ty(C));
-  from['b'] = THUNK_FROM_LLVM(c_ffi_from_llvm_Int1Ty, Int1Ty);
-  from['u'] = THUNK_FROM_LLVM(c_ffi_from_llvm_Int8Ty, Int8Ty);
-  from['d'] = THUNK_FROM_LLVM(c_ffi_from_llvm_Int16Ty, Int16Ty);
-  from['q'] = THUNK_FROM_LLVM(c_ffi_from_llvm_Int32Ty, Int32Ty);
-  from['o'] = THUNK_FROM_LLVM(c_ffi_from_llvm_Int64Ty, Int64Ty);
-  from['s'] = THUNK_FROM_LLVM(c_ffi_from_llvm_FloatTy, FloatTy);
-  from['x'] = THUNK_FROM_LLVM(c_ffi_from_llvm_DoubleTy, DoubleTy);
-  return from;
 }
 
 static void* compile_callout_thunk(uintptr_t adrs, const char* caller_signature, const char* callee_signature) {
