@@ -58,7 +58,7 @@
         ((_ name)
          (cond ((architecture-feature (syntax->datum #'name))
                 => (lambda (value) #`(define name #,value)))
-               (else #'(define-syntax name unsupported-option)))))))
+               (else #'(define name 'unsupported-option)))))))
 
   (define-const AF_UNSPEC)
   (define-const AF_INET)
