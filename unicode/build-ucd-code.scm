@@ -10,7 +10,7 @@
         (core parameters)
         (core io)
         (core files)
-        (ypsilon pregexp))
+        (common pregexp))
 
 (assert (string-contains (current-directory) (home-directory)))
 

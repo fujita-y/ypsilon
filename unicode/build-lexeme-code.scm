@@ -19,7 +19,7 @@
           (core hashtables)
           (core sorting)
           (core destructuring)
-          (ypsilon pregexp))
+          (common pregexp))
 
   (define pregexp-substring
     (lambda (s match index)

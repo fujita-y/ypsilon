@@ -4,7 +4,7 @@
 
 (library (ypsilon apropos)
   (export apropos)
-  (import (core) (ypsilon pregexp))
+  (import (core) (common pregexp))
 
   (define parse-library-name
     (lambda (name)

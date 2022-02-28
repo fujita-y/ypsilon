@@ -2,7 +2,7 @@
 ;;; See LICENSE file for terms and conditions of use.
 
 (import (core)
-        (ypsilon pregexp)
+        (common pregexp)
         (only (srfi srfi-13) string-join))
 
 (define re-api-entry (pregexp "^GLFWAPI\\s+([a-zA-Z0-9* ]+)\\s+((?:GLFW|glfw)[a-zA-Z0-9]+)[(](.*)[)];\\s*$"))

@@ -21,7 +21,7 @@
           (core files)
           (core hashtables)
           (core sorting)
-          (ypsilon pregexp))
+          (common pregexp))
 
 
   (define pregexp-substring

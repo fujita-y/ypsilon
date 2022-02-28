@@ -1,5 +1,18 @@
 #!nobacktrace
-(library (ypsilon pregexp)
+#|
+  Portable regular expressions for Scheme
+
+  Copyright (c) 1999-2015, Dorai Sitaram.
+  All rights reserved.
+
+  Permission to copy, modify, distribute, and use this work or
+  a modified copy of this work, for any purpose, is hereby
+  granted, provided that the copy includes this copyright
+  notice, and in the case of a modified copy, also includes a
+  notice of modification.  This work is provided as is, with
+  no warranty of any kind.
+|#
+(library (common pregexp)
   (export pregexp
           pregexp-match-positions
           pregexp-match
@@ -7,21 +20,7 @@
           pregexp-replace
           pregexp-replace*
           pregexp-quote)
-  (import (core))
-
-  #|
-      Portable regular expressions for Scheme
-
-      Copyright (c) 1999-2015, Dorai Sitaram.
-      All rights reserved.
-
-      Permission to copy, modify, distribute, and use this work or
-      a modified copy of this work, for any purpose, is hereby
-      granted, provided that the copy includes this copyright
-      notice, and in the case of a modified copy, also includes a
-      notice of modification.  This work is provided as is, with
-      no warranty of any kind.
-  |#
+  (import (rnrs base) (rnrs lists) (rnrs unicode) (rnrs mutable-pairs))
 
   ;pregexp.scm
   ;Portable regular expressions for Scheme
@@ -59,7 +58,7 @@
               (set-cdr! s r)
               (loop d s))))))
 
-  (define pregexp-error
+  #;(define pregexp-error
     ;R5RS won't give me a portable error procedure.
     ;modify this as needed
     (lambda whatever
@@ -68,6 +67,14 @@
                 whatever)
       (newline)
       (error 'pregexp-error "")))
+
+  (define pregexp-error
+    (lambda whatever
+      (let loop ((lst whatever) (acc ""))
+        (cond ((pair? lst)
+               (loop (cdr lst)
+                     (string-append acc " " (symbol->string (car lst)))))
+              (else (assertion-violation 'pregexp acc))))))
 
   (define pregexp-read-pattern
     (lambda (s i n)
