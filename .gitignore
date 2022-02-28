@@ -31,11 +31,12 @@
 build/
 
 # Misc
+.DS_Store
+.vscode
 *.d
 *.sublime-project
 *.sublime-workspace
 spheres.pgm
-.vscode
 /ypsilon
 /heap/debug-*.vmi
 test/tmp1
