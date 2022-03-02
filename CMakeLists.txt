@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.13.4)
+
+if(APPLE)
+  set(CMAKE_OSX_SYSROOT "")
+endif(APPLE)
+
 project(Ypsilon)
 
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
@@ -24,7 +29,11 @@ add_definitions(${LLVM_DEFINITIONS_LIST})
 
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang++")
-add_link_options("-fuse-ld=lld")
+
+if(NOT APPLE)
+  add_link_options("-fuse-ld=lld")
+endif(NOT APPLE)
+
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
 set(CMAKE_LINKER_FLAGS_RELEASE "${CMAKE_LINKER_FLAGS_RELEASE} -flto")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address")
