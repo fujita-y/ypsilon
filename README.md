@@ -49,6 +49,13 @@ cmake --build .
 cmake --install .
 ```
 
+- On MacOS, you may want using [Homebrew](https://brew.sh/) to install llvm@13.
+```
+brew update
+brew install llvm@13
+echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> ~/.zshrc
+```
+
 ### Run
 
 * To run R7RS sample script, try following from project root:
