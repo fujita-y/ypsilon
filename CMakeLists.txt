@@ -96,12 +96,13 @@ execute_process(
   OUTPUT_VARIABLE llvm_libs
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 target_link_libraries(ypsilon ${llvm_libs} -pthread -ldl)
-install(TARGETS ypsilon DESTINATION bin)
-
-set(YPSILON_SITELIB_DIRECTORY ${YPSILON_SHARE_DIRECTORY}/sitelib)
-install(DIRECTORY sitelib/ DESTINATION ${YPSILON_SITELIB_DIRECTORY})
 
 file(MAKE_DIRECTORY $ENV{HOME}/.ypsilon)
+
+set(YPSILON_SITELIB_DIRECTORY ${YPSILON_SHARE_DIRECTORY}/sitelib)
+install(CODE "execute_process(COMMAND rm -rf ${YPSILON_SITELIB_DIRECTORY})")
+install(DIRECTORY sitelib/ DESTINATION ${YPSILON_SITELIB_DIRECTORY})
+install(TARGETS ypsilon DESTINATION bin)
 
 enable_testing()
 set(YPSILON_COMMON_TEST_OPTIONS --heap-limit=128 --clean-acc --sitelib=./test:./sitelib)
