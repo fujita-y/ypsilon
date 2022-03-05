@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.13.4)
 
-if(APPLE)
-  set(CMAKE_OSX_SYSROOT "")
-endif(APPLE)
-
 project(Ypsilon)
 
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
@@ -100,11 +96,20 @@ add_executable(
   src/vm1.cpp
   src/vm2.cpp
   src/vm3.cpp)
+
 execute_process(
   COMMAND llvm-config --libs all
   OUTPUT_VARIABLE llvm_libs
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 target_link_libraries(ypsilon ${llvm_libs} -pthread -ldl)
+
+if(APPLE)
+  execute_process(
+    COMMAND llvm-config --ldflags
+    OUTPUT_VARIABLE llvm_ldflags
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  target_link_libraries(ypsilon ${llvm_ldflags})
+endif(APPLE)
 
 file(MAKE_DIRECTORY $ENV{HOME}/.ypsilon)
 
