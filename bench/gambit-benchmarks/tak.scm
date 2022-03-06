@@ -7,10 +7,6 @@
            (tak (- y 1) z x)
            (tak (- z 1) x y))))
 
-(define (compile)
-  (closure-compile tak)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "tak"

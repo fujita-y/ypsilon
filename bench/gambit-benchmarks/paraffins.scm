@@ -167,13 +167,6 @@
     (+ (length (vector-ref x 0))
        (length (vector-ref x 1)))))
 
-(define (compile)
-  (closure-compile gen)
-  (closure-compile three-partitions)
-  (closure-compile four-partitions)
-  (closure-compile nb)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
    "paraffins"

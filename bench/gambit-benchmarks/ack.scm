@@ -5,10 +5,6 @@
         ((= n 0) (ack (- m 1) 1))
         (else (ack (- m 1) (ack m (- n 1))))))
 
-(define (compile)
-  (closure-compile ack)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "ack"

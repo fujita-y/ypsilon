@@ -31,10 +31,6 @@
         (else
          (fatal-error "No derivation method available"))))
 
-(define (compile)
-  (closure-compile deriv)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "deriv"

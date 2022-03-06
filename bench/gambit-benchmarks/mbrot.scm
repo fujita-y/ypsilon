@@ -41,12 +41,6 @@
     (mbrot matrix -1.0 -0.5 0.005 n)
     (vector-ref (vector-ref matrix 0) 0)))
 
-(define (compile)
-  (closure-compile count)
-  (closure-compile mbrot)
-  (closure-compile test)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "mbrot"

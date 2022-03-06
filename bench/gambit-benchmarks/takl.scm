@@ -22,12 +22,6 @@
            (shorterp (cdr x)
                      (cdr y)))))
 
- (define (compile)
-  (closure-compile listn)
-  (closure-compile mas)
-  (closure-compile shorterp)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "takl"

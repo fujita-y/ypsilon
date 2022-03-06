@@ -18,11 +18,6 @@
           (call-with-current-continuation
            (lambda (k) (ctak-aux k (- z 1) x y))))))))
 
-(define (compile)
-  (closure-compile ctak)
-  (closure-compile ctak-aux)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "ctak"

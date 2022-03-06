@@ -136,16 +136,6 @@
 (for-each (lambda (i) (vector-set! *p* i (make-vector (+ size 1))))
           (my-iota (+ typemax 1)))
 
-(define (compile)
-  (closure-compile my-iota)
-  (closure-compile fit)
-  (closure-compile place)
-  (closure-compile puzzle-remove)
-  (closure-compile trial)
-  (closure-compile definePiece)
-  (closure-compile start)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "puzzle"

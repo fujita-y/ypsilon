@@ -11,11 +11,6 @@
   (cond ((null? l) '())
         (else (cons (car l) (recursive-div2 (cddr l))))))
 
-(define (compile)
-  (closure-compile create-n)
-  (closure-compile recursive-div2)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "divrec"

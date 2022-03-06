@@ -12,11 +12,6 @@
        (a '() (cons (car l) a)))
       ((null? l) a)))
 
- (define (compile)
-  (closure-compile create-n)
-  (closure-compile iterative-div2)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "diviter"

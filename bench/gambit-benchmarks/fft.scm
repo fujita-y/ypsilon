@@ -70,11 +70,6 @@
   (four1 data)
   (FLOATvector-ref data 0))
 
-(define (compile)
-  (closure-compile four1)
-  (closure-compile run)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "fft"

@@ -50,11 +50,6 @@
   (attempt i depth)
   (car *answer*))
 
-(define (compile)
-  (closure-compile attempt)
-  (closure-compile test)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "triangl"

@@ -22,10 +22,6 @@
 
   (tak x y z (lambda (a) a)))
 
-(define (compile)
-  (closure-compile cpstak)
-  (closure-compile main))
-
 (define (main . args)
   (run-benchmark
     "cpstak"

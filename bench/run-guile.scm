@@ -1,51 +1,40 @@
-;; ypsilon bench/run-ypsilon.scm
+;; GUILE_JIT_THRESHOLD=0 guile --no-debug bench/run-guile.scm
+
+;; https://www.gnu.org/software/guile/manual/guile.html
+;; "Set GUILE_JIT_THRESHOLD to -1 to disable JIT compilation, or 0 to eagerly JIT-compile each function as it’s first seen."
 
 (define warmup #t)
 
-(import (core))
-(add-load-path "./gambit-benchmarks")
-(add-load-path "./bench/gambit-benchmarks")
+(use-modules (ice-9 time))
+(add-to-load-path "./gambit-benchmarks")
+(add-to-load-path "./bench/gambit-benchmarks")
+(define bitwise-and logand)
+(define bitwise-not lognot)
 
 (define-syntax time
   (syntax-rules ()
     ((_ expr)
-     (destructuring-bind (real-start user-start sys-start) (time-usage)
+     (let ((start (times)))
        (let ((result (apply (lambda () expr) '())))
-         (destructuring-bind (real-end user-end sys-end) (time-usage)
-           (format #t
-                   "~%;;~10,6f real ~11,6f user ~11,6f sys~%~!"
-                   (- real-end real-start)
-                   (- user-end user-start)
-                   (- sys-end sys-start)))
-         result)))))
-
-(define wait-codegen-idle
-  (lambda ()
-    (let loop ()
-      (usleep 100000)
-      (cond ((= (codegen-queue-count) 0))
-            (else (loop))))))
+         (let ((end (times)))
+           (format
+             #t
+             "~%;;~10,6f real ~11,6f user ~11,6f sys~%~!"
+             (* (- (vector-ref end 0) (vector-ref start 0)) 0.000000001)
+             (* (- (vector-ref end 1) (vector-ref start 1)) 0.000000001)
+             (* (- (vector-ref end 2) (vector-ref start 2)) 0.000000001))
+           result))))))
 
 (define (run-benchmark name count ok? run-maker . args)
   (format #t "~%;;  ~a (x~a)~!" (pad-space name 7) count)
   (let ((run (apply run-maker args)))
-      (if warmup
-          (begin
-            (run-bench name 1 ok? run)
-            (wait-codegen-idle)))
-      (let ((result (time (run-bench name count ok? run))))
-        (and (not (ok? result)) (format #t "~%;; wrong result: ~s~%~!" result)))
+    (if warmup (run-bench name 1 ok? run))
+    (let ((result (time (run-bench name count ok? run))))
+      (and (not (ok? result)) (format #t "~%;; wrong result: ~s~%" result))))
       (format #t ";;  ----------------------------------------------------------------~!")
-      (unspecified)))
+  (if #f #f))
 
-(define call-with-output-file/truncate
-  (lambda (file-name proc)
-    (let ((p (open-file-output-port
-              file-name
-              (file-options no-fail)
-              (buffer-mode block)
-              (native-transcoder))))
-      (call-with-port p proc))))
+(define call-with-output-file/truncate call-with-output-file)
 
 (define fatal-error
   (lambda x
@@ -67,20 +56,16 @@
 
 (define load-bench-n-run
   (lambda (name)
-    (load (string-append name ".scm"))
+    (load-from-path (string-append name ".scm"))
     (main)))
 
-(define-syntax time-bench
-  (lambda (x)
-    (syntax-case x ()
-      ((?_ name count)
-       (let ((symbolic-name (syntax->datum (syntax name))))
-         (with-syntax ((symbol-iters (datum->syntax #'?_ (string->symbol (format "~a-iters" symbolic-name))))
-                       (string-name (datum->syntax #'?_ (symbol->string symbolic-name))))
-           (syntax
-            (begin
-              (define symbol-iters count)
-              (load-bench-n-run string-name)))))))))
+(define-macro time-bench
+  (lambda (name count)
+    `(begin
+       (define ,(string->symbol (format #f "~a-iters" name)) ,count)
+       (load-bench-n-run ,(symbol->string name)))))
+
+(define (main . x) #f)
 
 (define-syntax FLOATvector-const (syntax-rules () ((_ . lst) (list->vector 'lst))))
 (define-syntax FLOATvector? (syntax-rules () ((_ x) (vector? x))))
@@ -125,11 +110,6 @@
 (define-syntax GENERIC>= (syntax-rules () ((_ . lst) (>= . lst))))
 (define-syntax GENERICexpt (syntax-rules () ((_ x y) (expt x y))))
 
-#!compatible
-
-(format #t "\n\n;;  Waiting for codegen queue empty ...~%~!")
-(wait-codegen-idle)
-
 (format #t "\n\n;;  GABRIEL\n")
 (time-bench ack 3)
 (time-bench boyer 3)
@@ -170,8 +150,3 @@
 
 (newline)
 (newline)
-
-(format #t "JIT code generation statistics~%")
-(display-codegen-statistics)
-(format #t "Heap memory statistics~%")
-(display-heap-statistics)
