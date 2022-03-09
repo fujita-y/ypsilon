@@ -25,6 +25,7 @@
         (let ((res expr))
           (cond
            ((not (equal? expr expected))
+            (newline)
             (display "FAIL: ")
             (write arg)
             (newline)
@@ -33,7 +34,8 @@
             (newline)
             (display "but got: ")
             (write res)
-            (newline))
+            (newline)
+            (exit 1))
            (else
              (section-pass-count-inc! (section-current))
              (put-byte (current-output-port) #x0d)

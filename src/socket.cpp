@@ -52,7 +52,7 @@ void socket_open(scm_socket_t s, const char* node, const char* service, int fami
 #endif
       int one = 1;
       if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&one, sizeof(one)) == 0) {
-        if (bind(fd, (sockaddr *)(&s->addr), s->addrlen) == 0) {
+        if (bind(fd, (sockaddr*)(&s->addr), s->addrlen) == 0) {
           if (s->socktype == SOCK_STREAM) {
             if (listen(fd, 5) == 0) {
               freeaddrinfo(list);
@@ -84,7 +84,7 @@ void socket_open(scm_socket_t s, const char* node, const char* service, int fami
 #if USE_CLOEXEC
       fcntl(fd, F_SETFD, FD_CLOEXEC);
 #endif
-      if (connect(fd, (sockaddr *)(&s->addr), s->addrlen) == 0) {
+      if (connect(fd, (sockaddr*)(&s->addr), s->addrlen) == 0) {
         freeaddrinfo(list);
         return;
       }

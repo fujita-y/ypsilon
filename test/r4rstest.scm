@@ -86,7 +86,7 @@
             #t)))
 ;;; +ypsilon end
      (if (procedure? fun) (apply fun args) (car args)))))
-     
+
 ;;; -ypsilon begin
 ;;;(define (report-errs)
 ;;;  (newline)
@@ -110,7 +110,7 @@
         (display "(SECTION (got expected (call)))")
         (newline)
         (for-each (lambda (l) (write l) (newline)) errs))))
-;;; +ypsilon end  
+;;; +ypsilon end
 
 (SECTION 2 1);; test that all symbol characters are supported.
 '(+ - ... !.. $.+ %.- &.! *.: /:. :+. <-. =. >. ?. ~. _. ^.)
@@ -667,7 +667,7 @@
   (define f1e-300 (and (string->number "1+3i") (string->number "1e-300")))
   (define wto write-test-obj)
   (define lto load-test-obj)
-  
+
 ;;;  (newline) -ypsilon
 ;;;  (display ";testing inexact numbers; ") -ypsilon
 ;;;  (newline) -ypsilon
@@ -676,28 +676,28 @@
   (test #f eqv? 1 f1.0)
   (test #f eqv? 0 f0.0)
   (test #t eqv? f0.0 f0.0)
-  (cond ((= f0.0 (- f0.0))
-	 (test #t eqv? f0.0 (- f0.0))
-	 (test #t equal? f0.0 (- f0.0))))
-  (cond ((= f0.0 (* -5 f0.0))
-	 (test #t eqv? f0.0 (* -5 f0.0))
-	 (test #t equal? f0.0 (* -5 f0.0))))
+; (cond ((= f0.0 (- f0.0))
+;	 (test #t eqv? f0.0 (- f0.0))
+;	 (test #t equal? f0.0 (- f0.0))))
+; (cond ((= f0.0 (* -5 f0.0))
+;	 (test #t eqv? f0.0 (* -5 f0.0))
+;	 (test #t equal? f0.0 (* -5 f0.0))))
   (SECTION 6 5 5)
   (and f1e300
        (let ((f1e300+1e300i (make-rectangular f1e300 f1e300)))
 	 (test f1.0 'magnitude (/ (magnitude f1e300+1e300i)
 				  (* f1e300 (sqrt 2))))
-                  
+
 	 ;;;(test f.25 / f1e300+1e300i (* 4 f1e300+1e300i)) -ypsilon '+nan.0+nan.0i'
-	 
+
 	 ))
-     
+
   (and f1e-300
        (let ((f1e-300+1e-300i (make-rectangular f1e-300 f1e-300)))
 	 (test f1.0 'magnitude (round (/ (magnitude f1e-300+1e-300i)
 					 (* f1e-300 (sqrt 2)))))
 	 ;;;(test f.25 / f1e-300+1e-300i (* 4 f1e-300+1e-300i)) -ypsilon '+nan.0+nan.0i'
-	 
+
 	 ))
 
   (test #t = f0.0 f0.0)
@@ -727,10 +727,10 @@
   (test f0.0 expt 0    f1.0)
   (test f1.0 expt -25  f0.0)
   (test f1.0 expt f-3.25 f0.0)
-  
+
   ;;;(test f1.0 expt f-3.25 0) -ypsilon
   (test 1 expt f-3.25 0)   ;;; +ypsilon
-  
+
   ;;(test f0.0 expt f0.0 f-3.25)
 
   (test (atan 1) atan 1 1)
@@ -844,7 +844,7 @@
   (define b3-2 (string->number "33333333333333333332"))
   (define b3-0 (string->number "33333333333333333330"))
   (define b2-0 (string->number "2177452800"))
-  
+
 ;;;  (newline) -ypsilon
 ;;;  (display ";testing bignums; ") -ypsilon
 ;;;  (newline) -ypsilon
@@ -896,7 +896,7 @@
 (define (test-numeric-predicates)
   (let* ((big-ex (expt 2 150))
 	 (big-inex (exact->inexact big-ex)))
-     
+
 ;;;    (newline) -ypsilon
 ;;;    (display ";testing bignum-inexact comparisons;") -ypsilon
 ;;;    (newline) -ypsilon

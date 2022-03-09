@@ -2118,7 +2118,15 @@ bool n_inexact_equal_pred(scm_obj_t lhs, scm_obj_t rhs) {
   if (FLONUMP(lhs)) {
   flonum_again:
     if (FLONUMP(rhs)) {  // flonum | flonum
-      return ((scm_flonum_t)lhs)->value == ((scm_flonum_t)rhs)->value;
+      union {
+        double f64;
+        uint64_t u64;
+      } datum1 = {((scm_flonum_t)lhs)->value};
+      union {
+        double f64;
+        uint64_t u64;
+      } datum2 = {((scm_flonum_t)rhs)->value};
+      return datum1.u64 == datum2.u64;
     }
     if (COMPLEXP(rhs)) {  // flonum | complex
       assert(!n_exact_pred(rhs));

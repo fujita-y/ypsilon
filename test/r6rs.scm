@@ -704,6 +704,9 @@ bc"
 (test-equal "inf equal 6" (equal? a2 a1) => #t)
 (test-equal "inf equal 7" (equal? a1 a2) => #t)
 (test-equal "inf equal 8" (equal? (cons a2 a1) (cons a1 a2)) => #t)
+(test-equal "negative zero 1" (eq? 0.0 -0.0) => #f)
+(test-equal "negative zero 2" (eqv? 0.0 -0.0) => #f)
+(test-equal "negative zero 3" (equal? 0.0 -0.0) => #f)
 (test-end)
 
 (test-begin "11.6 Procedure predicate")
@@ -918,6 +921,7 @@ bc"
 (test-equal "opr 133" (magnitude (make-rectangular 1.0 -inf.0)) => +inf.0)
 (test-equal "opr 134" (magnitude (make-rectangular -inf.0 1.0)) => +inf.0)
 (test-equal "opr 135" (angle -1) => 3.141592653589793)
+(test-equal "opr 136" (= 0.0 -0.0) => #t)
 (test-end)
 
 (test-begin "11.7.4.4 Numerical Input and Output")
