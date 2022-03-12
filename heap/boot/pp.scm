@@ -69,16 +69,17 @@
       (define indent-type1?
         (lambda (id)
           (memq id '(library define-library define define-syntax define-macro define-inline define-constant
-                     syntax-rules syntax-case
-                     with-syntax lambda let-syntax letrec-syntax
-                     let letrec let* letrec letrec* let-values let*-values
-                     destructuring-match parameterize))))
+                     syntax-rules lambda let letrec let* letrec letrec* let-values let*-values
+                     destructuring-match parameterize with-syntax))))
       (define indent-type2?
         (lambda (id)
-          (memq id '(if cond case and or set! import export cons map exists for-all)))) ; for-each
+          (memq id '(if cond case and or set! import export cons map))))
       (define indent-type3?
         (lambda (id)
           (memq id '(do let-optionals))))
+      (define indent-type4?
+        (lambda (id)
+          (memq id '(let-syntax letrec-syntax))))
       (define fits?
         (lambda (w lst)
           (and (>= w 0)
@@ -141,6 +142,11 @@
                    (('unquote e) `("," (.&NEST 1 ,(parse e))))
                    (('quasiquote e) `("`" (.&NEST 1 ,(parse e))))
                    (('unquote-splicing e) `(",@" (.&NEST 2 ,(parse e))))
+                   (('syntax e) `("#'" (.&NEST 2 ,(parse e))))
+                   (('quasisyntax e) `("#`" (.&NEST 2 ,(parse e))))
+                   (('unsyntax e) `("#," (.&NEST 2 ,(parse e))))
+                   (('unsyntax-splicing e) `("#,@" (.&NEST 3 ,(parse e))))
+                   ;; named let
                    (('let (? symbol? e1) e2 . (? pair? e3))
                     `(.&GROUP ,(format "(let ~a " e1)
                               (.&NEST 2
@@ -148,6 +154,16 @@
                                               ,(parse e2))
                                       #\;
                                       ,@(parse-list e3) ")")))
+                   ;; syntax-rules with <ellipsis>
+                   (('syntax-rules (? symbol? e1) (? list? e2) . (? pair? e3))
+                    `(.&GROUP (.&NEST 2 (.&GROUP "(syntax-rules" #\; ,(parse e1) #\; ,(parse e2))
+                                        #\;
+                                        ,@(parse-list e3)) ")"))
+                   ;; syntax-case
+                   (('syntax-case e1 (? list? e2) . (? pair? e3))
+                    `(.&GROUP (.&NEST 2 (.&GROUP "(syntax-case" #\; ,(parse e1) #\; ,(parse e2))
+                                        #\;
+                                        ,@(parse-list e3)) ")"))
                    (((? indent-type1? e1) e2 . (? pair? e3))
                     `(.&GROUP ,(format "(~a " e1)
                               (.&NEST 2
@@ -158,7 +174,9 @@
                    (((? indent-type2? e1) e2 . (? pair? e3))
                     `(.&GROUP ,(format "(~a " e1)
                               (.&NEST ,(+ (symbol->length e1) 2)
-                                      ,(parse e2) #\; ,@(parse-list e3)) ")"))
+                                      ,(parse e2)
+                                      #\;
+                                      ,@(parse-list e3)) ")"))
                    (((? indent-type3? e1) e2 e3 . (? pair? e4))
                     `(.&GROUP ,(format "(~a " e1)
                               (.&NEST 2
@@ -166,6 +184,18 @@
                                               ,(parse e2) #\; ,(parse e3))
                                       #\;
                                       ,@(parse-list e4) ")")))
+                   (((? indent-type4? e1) e2 . (? pair? e3))
+                    `(.&GROUP ,(format "(~a" e1)
+                              (.&NEST 2
+                                      (.&NEST 2
+                                              #\;
+                                              ,(parse e2))
+                                      #\;
+                                      ,@(parse-list e3)) ")"))
+                   (('else . _)
+                    `(.&GROUP "(" (.&NEST 1 ,@(parse-list obj)) ")"))
+                   (('_ . _)
+                    `(.&GROUP "(" (.&NEST 1 ,@(parse-list obj)) ")"))
                    (((? symbol? _) . _)
                     `(.&GROUP "(" (.&NEST 2 ,@(parse-list obj)) ")"))
                    (_
