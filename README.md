@@ -74,7 +74,7 @@ ypsilon --r6rs --top-level-program demo/widget-demo.scm # (OpenGL Core Profile, 
 
 ### Notes
 
-* REPL start with ```(import (scheme base) (scheme process-context))``` or ```(import (rnrs base (6)) (rnrs programs))``` depending on the command line options specified.
+* REPL start with ```(import (scheme base) (scheme process-context))``` or ```(import (rnrs base) (rnrs programs))``` depending on the command line options specified.
 * Without ```--top-level-program``` option, the contents of the specified script file will be interpreted as if they had been entered into the REPL.
 
 ### Rebuild Heap Files
