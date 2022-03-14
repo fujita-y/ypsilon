@@ -70,7 +70,7 @@
         (lambda (id)
           (memq id '(library define-library define define-syntax define-macro define-inline define-constant
                      syntax-rules lambda let letrec let* letrec letrec* let-values let*-values
-                     destructuring-match parameterize with-syntax))))
+                     destructuring-match parameterize))))
       (define indent-type2?
         (lambda (id)
           (memq id '(if cond case and or set! import export cons map))))
@@ -79,7 +79,7 @@
           (memq id '(do let-optionals))))
       (define indent-type4?
         (lambda (id)
-          (memq id '(let-syntax letrec-syntax))))
+          (memq id '(let-syntax letrec-syntax with-syntax))))
       (define fits?
         (lambda (w lst)
           (and (>= w 0)
