@@ -56,6 +56,18 @@ brew install llvm@13
 echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> ~/.zshrc
 ```
 
+### Optional
+
+* You may want using [rlwrap](https://github.com/hanslub42/rlwrap) to make the REPL easier to use.
+```bash
+# Ubuntu 21.04
+apt install rlwrap
+```
+```bash
+# Homebrew on MacOS
+brew install rlwrap
+```
+
 ### Run
 
 * To run R7RS sample script, try following from project root:
@@ -77,7 +89,7 @@ ypsilon --r6rs --top-level-program demo/widget-demo.scm # (OpenGL Core Profile, 
 * REPL start with ```(import (scheme base) (scheme process-context))``` or ```(import (rnrs base) (rnrs programs))``` depending on the command line options specified.
 * Without ```--top-level-program``` option, the contents of the specified script file will be interpreted as if they had been entered into the REPL.
 
-### Rebuild Heap Files
+### Rebuild heap files
 
 * Edit 'src/core.h' and set 'UNBOUND_GLOC_RETURN_UNSPEC' to '1'
 * ```make```
