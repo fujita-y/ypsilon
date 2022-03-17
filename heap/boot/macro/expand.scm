@@ -254,9 +254,8 @@
                    ((macro? deno)
                     (let-values (((expr renames)
                                   (if (< (expansion-trace-level) (expansion-backtrace))
-                                      (begin
-                                        (expansion-trace-stack (cons form (expansion-trace-stack)))
-                                        (expansion-trace-level (+ 1 (expansion-trace-level)))
+                                      (parameterize ((expansion-trace-stack (cons form (expansion-trace-stack)))
+                                                     (expansion-trace-level (+ 1 (expansion-trace-level))))
                                         (expand-macro-use form env deno))
                                       (expand-macro-use form env deno))))
                       (annotate-macro! expr form)
