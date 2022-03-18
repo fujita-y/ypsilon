@@ -453,7 +453,7 @@
                   (else
                     (if (and (null? (cdr true-code)) (memq (caar true-code) '(const ret.const)))
                         (cond (tail `(,@arg-code (,inst-ret-const . ,(cdar true-code)) ,@false-code))
-                              (else `((call ,@arg-code (,inst ,@true-code) ,@false-code))))
+                              (else `((call ,@arg-code (,inst-ret-const . ,(cdar true-code)) ,@false-code))))
                         (cond (tail `(,@arg-code (,inst ,@true-code) ,@false-code))
                               (else `((call ,@arg-code (,inst ,@true-code) ,@false-code)))))))))))
     (define compile-binary-special
@@ -464,7 +464,7 @@
                 (false-code (compile-expression (cadddr form) cte #f #t)))
             (if (and (null? (cdr true-code)) (memq (caar true-code) '(const ret.const)))
                 (cond (tail `(,@arg-code (,inst-ret-const . ,(cdar true-code)) ,@false-code))
-                      (else `((call ,@arg-code (,inst ,@true-code) ,@false-code))))
+                      (else `((call ,@arg-code (,inst-ret-const . ,(cdar true-code)) ,@false-code))))
                 (cond (tail `(,@arg-code (,inst ,@true-code) ,@false-code))
                       (else `((call ,@arg-code (,inst ,@true-code) ,@false-code)))))))))
     (cond ((null? (cdddr form))
