@@ -1,13 +1,10 @@
-;; GUILE_JIT_THRESHOLD=0 guile --no-debug run-guile.scm
-
-;; https://www.gnu.org/software/guile/manual/guile.html
-;; "Set GUILE_JIT_THRESHOLD to -1 to disable JIT compilation, or 0 to eagerly JIT-compile each function as it’s first seen."
+;; gosh run-gosh.scm
 
 (define warmup #t)
-(define filename "bench.guile.out")
+(define filename "bench.gosh.out")
 
-(use-modules (ice-9 time))
-(add-to-load-path "./gambit-benchmarks")
+(use gauche.time)
+(add-load-path "./gambit-benchmarks")
 (define bitwise-and logand)
 (define bitwise-not lognot)
 
@@ -16,25 +13,23 @@
 (define-syntax time
   (syntax-rules ()
     ((_ expr)
-     (let ((start (times)))
-       (let ((result (apply (lambda () expr) '())))
-         (let ((end (times)))
-           (let ((real (* (- (vector-ref end 0) (vector-ref start 0)) 0.000000001))
-                 (user (* (- (vector-ref end 1) (vector-ref start 1)) 0.000000001))
-                 (sys (* (- (vector-ref end 2) (vector-ref start 2)) 0.000000001)))
-             (format #t "~%;;~10,6f real ~11,6f user ~11,6f sys~%~!" real user sys)
-             (format output-port "\t~s~%" real)))
-         result)))))
+     (let ((result expr) (time-result (time-this 1 (lambda () expr))))
+       (let ((real (time-result-real time-result))
+             (user (time-result-user time-result))
+             (sys (time-result-sys time-result)))
+         (format #t "~%;;~10,6f real ~11,6f user ~11,6f sys~%" real user sys)
+         (format output-port "\t~s~%" real))
+       result))))
 
 (define (run-benchmark name count ok? run-maker . args)
-  (format #t "~%;;  ~a (x~a)~!" (pad-space name 7) count)
+  (format #t "~%;;  ~a (x~a)" (pad-space name 7) count)
   (format output-port "~s" name)
   (let ((run (apply run-maker args)))
-    (if warmup (run-bench name 1 ok? run))
-    (let ((result (time (run-bench name count ok? run))))
-      (and (not (ok? result)) (format #t "~%;; wrong result: ~s~%" result))))
-      (format #t ";;  ----------------------------------------------------------------~!")
-  (if #f #f))
+      (if warmup (run-bench name 1 ok? run))
+      (let ((result (time (run-bench name count ok? run))))
+        (and (not (ok? result)) (format #t "~%;; wrong result: ~s~%~%" result)))
+      (format #t ";;  ----------------------------------------------------------------")
+      (if #f #f)))
 
 (define call-with-output-file/truncate call-with-output-file)
 
@@ -58,7 +53,7 @@
 
 (define load-bench-n-run
   (lambda (name)
-    (load-from-path (string-append name ".scm"))
+    (load (string-append name ".scm"))
     (main)))
 
 (define-macro time-bench

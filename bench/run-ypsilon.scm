@@ -1,10 +1,12 @@
-;; ypsilon bench/run-ypsilon.scm
+;; ypsilon run-ypsilon.scm
 
 (define warmup #t)
+(define filename "bench.ypsilon.out")
 
-(import (core))
+(import (core) (srfi :6))
 (add-load-path "./gambit-benchmarks")
-(add-load-path "./bench/gambit-benchmarks")
+
+(define output-port (open-output-string))
 
 (define-syntax time
   (syntax-rules ()
@@ -12,11 +14,9 @@
      (destructuring-bind (real-start user-start sys-start) (time-usage)
        (let ((result (apply (lambda () expr) '())))
          (destructuring-bind (real-end user-end sys-end) (time-usage)
-           (format #t
-                   "~%;;~10,6f real ~11,6f user ~11,6f sys~%~!"
-                   (- real-end real-start)
-                   (- user-end user-start)
-                   (- sys-end sys-start)))
+           (let ((real (- real-end real-start)) (user (- user-end user-start)) (sys (- sys-end sys-start)))
+             (format #t "~%;;~10,6f real ~11,6f user ~11,6f sys~%~!" real user sys)
+             (format output-port "\t~s~%" real)))
          result)))))
 
 (define wait-codegen-idle
@@ -28,6 +28,7 @@
 
 (define (run-benchmark name count ok? run-maker . args)
   (format #t "~%;;  ~a (x~a)~!" (pad-space name 7) count)
+  (format output-port "~s" name)
   (let ((run (apply run-maker args)))
       (if warmup
           (begin
@@ -175,3 +176,11 @@
 (display-codegen-statistics)
 (format #t "Heap memory statistics~%")
 (display-heap-statistics)
+
+(if filename
+    (call-with-output-file/truncate
+      filename
+      (lambda (port)
+        (format port "~a" (get-output-string output-port)))))
+
+(exit)

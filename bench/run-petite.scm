@@ -1,42 +1,41 @@
-;; GUILE_JIT_THRESHOLD=0 guile --no-debug run-guile.scm
-
-;; https://www.gnu.org/software/guile/manual/guile.html
-;; "Set GUILE_JIT_THRESHOLD to -1 to disable JIT compilation, or 0 to eagerly JIT-compile each function as it’s first seen."
+;; petite run-petite.scm
 
 (define warmup #t)
-(define filename "bench.guile.out")
+(define filename "bench.petite.out")
 
-(use-modules (ice-9 time))
-(add-to-load-path "./gambit-benchmarks")
-(define bitwise-and logand)
-(define bitwise-not lognot)
+(source-directories '("./gambit-benchmarks"))
 
 (define output-port (open-output-string))
 
 (define-syntax time
   (syntax-rules ()
     ((_ expr)
-     (let ((start (times)))
+     (let ((real-start (real-time)) (cpu-start (cpu-time)))
        (let ((result (apply (lambda () expr) '())))
-         (let ((end (times)))
-           (let ((real (* (- (vector-ref end 0) (vector-ref start 0)) 0.000000001))
-                 (user (* (- (vector-ref end 1) (vector-ref start 1)) 0.000000001))
-                 (sys (* (- (vector-ref end 2) (vector-ref start 2)) 0.000000001)))
-             (format #t "~%;;~10,6f real ~11,6f user ~11,6f sys~%~!" real user sys)
+         (let ((real-end (real-time)) (cpu-end (cpu-time)))
+           (let ((real (* (- real-end real-start) 0.001)) (user (* (- cpu-end cpu-start) 0.001)))
+             (format #t ";;~10,6f real ~11,6f user ~%" real user)
              (format output-port "\t~s~%" real)))
          result)))))
 
 (define (run-benchmark name count ok? run-maker . args)
-  (format #t "~%;;  ~a (x~a)~!" (pad-space name 7) count)
+  (format #t "~%;;  ~a (x~a)~%" (pad-space name 7) count)
   (format output-port "~s" name)
   (let ((run (apply run-maker args)))
-    (if warmup (run-bench name 1 ok? run))
-    (let ((result (time (run-bench name count ok? run))))
-      (and (not (ok? result)) (format #t "~%;; wrong result: ~s~%" result))))
-      (format #t ";;  ----------------------------------------------------------------~!")
-  (if #f #f))
+      (if warmup (run-bench name 1 ok? run))
+      (let ((result (time (run-bench name count ok? run))))
+        (and (not (ok? result)) (format #t "~%;; wrong result: ~s~%~%" result)))
+      (format #t ";;  ----------------------------------------------------------------")
+      (if #f #f)))
 
-(define call-with-output-file/truncate call-with-output-file)
+(define call-with-output-file/truncate
+  (lambda (file-name proc)
+    (let ((p (open-file-output-port
+              file-name
+              (file-options no-fail)
+              (buffer-mode block)
+              (native-transcoder))))
+      (call-with-port p proc))))
 
 (define fatal-error
   (lambda x
@@ -58,16 +57,20 @@
 
 (define load-bench-n-run
   (lambda (name)
-    (load-from-path (string-append name ".scm"))
+    (load (string-append name ".scm"))
     (main)))
 
-(define-macro time-bench
-  (lambda (name count)
-    `(begin
-       (define ,(string->symbol (format #f "~a-iters" name)) ,count)
-       (load-bench-n-run ,(symbol->string name)))))
-
-(define (main . x) #f)
+(define-syntax time-bench
+  (lambda (x)
+    (syntax-case x ()
+      ((?_ name count)
+       (let ((symbolic-name (syntax->datum (syntax name))))
+         (with-syntax ((symbol-iters (datum->syntax #'?_ (string->symbol (format "~a-iters" symbolic-name))))
+                       (string-name (datum->syntax #'?_ (symbol->string symbolic-name))))
+           (syntax
+            (begin
+              (define symbol-iters count)
+              (load-bench-n-run string-name)))))))))
 
 (define-syntax FLOATvector-const (syntax-rules () ((_ . lst) (list->vector 'lst))))
 (define-syntax FLOATvector? (syntax-rules () ((_ x) (vector? x))))

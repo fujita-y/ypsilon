@@ -1,42 +1,56 @@
-;; GUILE_JIT_THRESHOLD=0 guile --no-debug run-guile.scm
-
-;; https://www.gnu.org/software/guile/manual/guile.html
-;; "Set GUILE_JIT_THRESHOLD to -1 to disable JIT compilation, or 0 to eagerly JIT-compile each function as it’s first seen."
+;; sash run-sash.scm
 
 (define warmup #t)
-(define filename "bench.guile.out")
+(define filename "bench.sagittarius.out")
 
-(use-modules (ice-9 time))
-(add-to-load-path "./gambit-benchmarks")
-(define bitwise-and logand)
-(define bitwise-not lognot)
+(import (rnrs) (sagittarius))
+
+(add-load-path "./gambit-benchmarks")
+(define exact->inexact inexact)
+(define inexact->exact exact)
 
 (define output-port (open-output-string))
+
+(define format.6f
+  (lambda (x)
+    (let* ((str (number->string (/ (round (* x 1000000.0)) 1000000.0)))
+           (pad (- 8 (string-length str))))
+      (if (<= pad 0)
+          str
+          (string-append str (make-string pad #\0))))))
 
 (define-syntax time
   (syntax-rules ()
     ((_ expr)
-     (let ((start (times)))
+     (let-values (((real-start user-start sys-start) (time-usage)))
        (let ((result (apply (lambda () expr) '())))
-         (let ((end (times)))
-           (let ((real (* (- (vector-ref end 0) (vector-ref start 0)) 0.000000001))
-                 (user (* (- (vector-ref end 1) (vector-ref start 1)) 0.000000001))
-                 (sys (* (- (vector-ref end 2) (vector-ref start 2)) 0.000000001)))
-             (format #t "~%;;~10,6f real ~11,6f user ~11,6f sys~%~!" real user sys)
-             (format output-port "\t~s~%" real)))
+         (let-values (((real-end user-end sys-end) (time-usage)))
+           (let ((real (format.6f (- real-end real-start)))
+                 (user (format.6f (- user-end user-start)))
+                 (sys  (format.6f (- sys-end sys-start))))
+             (format #t "~%;;  ~a real    ~a user    ~a sys~%" real user sys)
+             (format output-port "\t~s~%" (- real-end real-start))
+	       (flush-output-port (current-output-port))))
          result)))))
 
 (define (run-benchmark name count ok? run-maker . args)
   (format #t "~%;;  ~a (x~a)~!" (pad-space name 7) count)
   (format output-port "~s" name)
   (let ((run (apply run-maker args)))
-    (if warmup (run-bench name 1 ok? run))
-    (let ((result (time (run-bench name count ok? run))))
-      (and (not (ok? result)) (format #t "~%;; wrong result: ~s~%" result))))
+      (if warmup (run-bench name 1 ok? run))
+      (let ((result (time (run-bench name count ok? run))))
+        (and (not (ok? result)) (format #t "~%;; wrong result: ~s~%~!" result)))
       (format #t ";;  ----------------------------------------------------------------~!")
-  (if #f #f))
+      (if #f #f)))
 
-(define call-with-output-file/truncate call-with-output-file)
+(define call-with-output-file/truncate
+  (lambda (file-name proc)
+    (let ((p (open-file-output-port
+              file-name
+              (file-options no-fail)
+              (buffer-mode block)
+              (native-transcoder))))
+      (call-with-port p proc))))
 
 (define fatal-error
   (lambda x
@@ -58,16 +72,20 @@
 
 (define load-bench-n-run
   (lambda (name)
-    (load-from-path (string-append name ".scm"))
+    (load (string-append name ".scm"))
     (main)))
 
-(define-macro time-bench
-  (lambda (name count)
-    `(begin
-       (define ,(string->symbol (format #f "~a-iters" name)) ,count)
-       (load-bench-n-run ,(symbol->string name)))))
-
-(define (main . x) #f)
+(define-syntax time-bench
+  (lambda (x)
+    (syntax-case x ()
+      ((?_ name count)
+       (let ((symbolic-name (syntax->datum (syntax name))))
+         (with-syntax ((symbol-iters (datum->syntax #'?_ (string->symbol (format "~a-iters" symbolic-name))))
+                       (string-name (datum->syntax #'?_ (symbol->string symbolic-name))))
+           (syntax
+            (begin
+              (define symbol-iters count)
+              (load-bench-n-run string-name)))))))))
 
 (define-syntax FLOATvector-const (syntax-rules () ((_ . lst) (list->vector 'lst))))
 (define-syntax FLOATvector? (syntax-rules () ((_ x) (vector? x))))
