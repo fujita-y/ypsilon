@@ -146,7 +146,7 @@ class digamma_t {
     int call_elimination;
     uintptr_t min_sym;
     uintptr_t max_sym;
-    usage_t() : globals(0), locals(0), inners(0), templates(0), refs(0), on_demand(0), skipped(0), min_sym(0), max_sym(0) {}
+    usage_t() : globals(0), locals(0), inners(0), templates(0), refs(0), on_demand(0), skipped(0), call_elimination(0), min_sym(0), max_sym(0) {}
   } m_usage;
 
  private:
