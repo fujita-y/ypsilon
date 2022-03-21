@@ -136,7 +136,7 @@ eval: all
 	./$(PROG) --verbose --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./sitelib
 
 bench: all
-	./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib -- bench/run-ypsilon.scm
+	./$(PROG) --heap-limit=128 --acc=/tmp --clean-acc --sitelib=./test:./sitelib --loadpath=bench/gambit-benchmarks -- bench/run-ypsilon.scm
 
 clean:
 	rm -f *.o *.d *.dylib
