@@ -21,6 +21,7 @@
 #define USE_ILOC_CACHE            1
 #define USE_REG_CACHE             1
 #define USE_AOT_CODEGEN_REFERENCE 1
+#define USE_CALL_INLINING         1
 
 #define PRINT_IR                  0
 #define DEBUG_CODEGEN             0
@@ -47,6 +48,7 @@ class digamma_t {
     llvm::LLVMContext& m_llvm_context;
     llvm::Module* m_module;
     llvm::Function* m_function;
+    llvm::BasicBlock* m_continuation;
     llvm::IRBuilder<>& m_irb;
     llvm::Function* m_top_level_function;
     scm_closure_t m_top_level_closure;
@@ -87,6 +89,7 @@ class digamma_t {
           m_irb(irb),
           m_argc(0),
           m_depth(0),
+          m_continuation(nullptr),
           reg_sp(this),
           reg_fp(this),
           reg_env(this),
@@ -118,7 +121,8 @@ class digamma_t {
   bool m_codegen_thread_terminating;
   static thread_main_t codegen_thread(void* param);
   void optimizeModule(llvm::Module& M);
-  void transform(context_t ctx, scm_obj_t inst, bool insert_stack_check);
+  bool inlinable_call(scm_obj_t code);
+  void transform(context_t& ctx, scm_obj_t inst, bool insert_stack_check);
   llvm::Value* get_function_address(context_t& ctx, scm_closure_t closure);
 
  public:
@@ -139,6 +143,7 @@ class digamma_t {
     int refs;
     int on_demand;
     int skipped;
+    int call_elimination;
     uintptr_t min_sym;
     uintptr_t max_sym;
     usage_t() : globals(0), locals(0), inners(0), templates(0), refs(0), on_demand(0), skipped(0), min_sym(0), max_sym(0) {}
@@ -170,6 +175,7 @@ class digamma_t {
   void emit_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr);
   void emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr);
   llvm::Function* emit_call(context_t& ctx, scm_obj_t inst);
+  void emit_call_inline(context_t& ctx, scm_obj_t inst);
   void emit_if_false_call(context_t& ctx, scm_obj_t inst);
   void emit_subr(context_t& ctx, scm_obj_t inst);
   void emit_push(context_t& ctx, scm_obj_t inst);

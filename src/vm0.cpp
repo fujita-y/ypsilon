@@ -692,8 +692,8 @@ void VM::stop() {
         if (last_usage.m_synchronized) {
           snprintf(usage, sizeof(usage), ";; [collect synchronize:%.2fms]", last_usage.m_duration);
         } else {
-          snprintf(usage, sizeof(usage), ";; [collect concurrent:%.2fms pause:%.2fms/%.2fms/%.2fms]", last_usage.m_duration,
-                   last_usage.m_pause1, last_usage.m_pause2, last_usage.m_pause3);
+          snprintf(usage, sizeof(usage), ";; [collect concurrent:%.2fms pause:%.2fms/%.2fms/%.2fms]", last_usage.m_duration, last_usage.m_pause1,
+                   last_usage.m_pause2, last_usage.m_pause3);
         }
       }
       scoped_lock lock(m_current_output->lock);

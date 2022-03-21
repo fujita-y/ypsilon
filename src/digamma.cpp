@@ -818,7 +818,93 @@ int digamma_t::calc_stack_size(scm_obj_t inst) {
   return require;
 }
 
-void digamma_t::transform(context_t ctx, scm_obj_t inst, bool insert_stack_check) {
+bool digamma_t::inlinable_call(scm_obj_t code) {
+  while (PAIRP(code)) {
+    scm_symbol_t symbol = (scm_symbol_t)CAAR(code);
+    assert(INHERENTSYMBOLP(symbol));
+    int opcode = HDR_SYMBOL_CODE(symbol->hdr);
+    assert(opcode < VMOP_MNEMNIC_COUNT);
+    scm_obj_t operands = (scm_obj_t)CDAR(code);
+    switch (opcode) {
+      case VMOP_CALL:
+      case VMOP_IF_TRUE:
+      case VMOP_IF_EQP:
+      case VMOP_IF_NULLP:
+      case VMOP_IF_PAIRP:
+      case VMOP_IF_SYMBOLP:
+      case VMOP_IF_FALSE_CALL: {
+        if (inlinable_call(operands)) break;
+        return false;
+      }
+      case VMOP_SUBR:
+      case VMOP_CLOSE:
+      case VMOP_GLOC:
+      case VMOP_SET_GLOC:
+      case VMOP_SET_ILOC:
+      case VMOP_EQ_N_ILOC:
+      case VMOP_LT_N_ILOC:
+      case VMOP_GE_N_ILOC:
+      case VMOP_LE_N_ILOC:
+      case VMOP_GT_N_ILOC:
+      case VMOP_EQ_ILOC:
+      case VMOP_LT_ILOC:
+      case VMOP_LE_ILOC:
+      case VMOP_GT_ILOC:
+      case VMOP_GE_ILOC:
+      case VMOP_NADD_ILOC:
+      case VMOP_PUSH:
+      case VMOP_PUSH_CONST:
+      case VMOP_PUSH_ILOC:
+      case VMOP_PUSH_ILOC0:
+      case VMOP_PUSH_ILOC1:
+      case VMOP_PUSH_CAR_ILOC:
+      case VMOP_PUSH_CDR_ILOC:
+      case VMOP_PUSH_CADR_ILOC:
+      case VMOP_PUSH_CDDR_ILOC:
+      case VMOP_PUSH_CONS:
+      case VMOP_PUSH_GLOC:
+      case VMOP_PUSH_NADD_ILOC:
+      case VMOP_PUSH_CLOSE:
+      case VMOP_PUSH_CLOSE_LOCAL:
+      case VMOP_PUSH_SUBR:
+      case VMOP_CONST:
+      case VMOP_ILOC:
+      case VMOP_ILOC0:
+      case VMOP_ILOC1:
+      case VMOP_CAR_ILOC:
+      case VMOP_CDR_ILOC:
+      case VMOP_CADR_ILOC:
+      case VMOP_CDDR_ILOC:
+      case VMOP_RET_SUBR:
+      case VMOP_RET_CLOSE:
+      case VMOP_RET_CONST:
+      case VMOP_RET_ILOC:
+      case VMOP_RET_CONS:
+      case VMOP_RET_PAIRP:
+      case VMOP_RET_NULLP:
+      case VMOP_RET_EQP:
+      case VMOP_IF_NOT_PAIRP_RET_CONST:
+      case VMOP_IF_NOT_NULLP_RET_CONST:
+      case VMOP_IF_NOT_SYMBOLP_RET_CONST:
+      case VMOP_IF_NOT_EQP_RET_CONST:
+      case VMOP_IF_NULLP_RET_CONST:
+      case VMOP_IF_TRUE_RET_CONST:
+      case VMOP_IF_FALSE_RET_CONST:
+      case VMOP_IF_PAIRP_RET_CONST:
+      case VMOP_IF_SYMBOLP_RET_CONST:
+      case VMOP_IF_EQP_RET_CONST:
+      case VMOP_IF_TRUE_RET:
+      case VMOP_IF_FALSE_RET:
+        break;
+      default:
+        return false;
+    }
+    code = CDR(code);
+  }
+  return true;
+}
+
+void digamma_t::transform(context_t& ctx, scm_obj_t inst, bool insert_stack_check) {
   if (insert_stack_check) emit_stack_overflow_check(ctx, calc_stack_size(inst));
   while (inst != scm_nil) {
     switch (VM::instruction_to_opcode(CAAR(inst))) {
@@ -826,7 +912,17 @@ void digamma_t::transform(context_t ctx, scm_obj_t inst, bool insert_stack_check
         emit_if_false_call(ctx, inst);
       } break;
       case VMOP_CALL: {
+#if USE_CALL_INLINING
+        scm_obj_t operands = CDAR(inst);
+        if (inlinable_call(operands) && ctx.m_argc == 0) {
+          emit_call_inline(ctx, inst);
+          m_usage.call_elimination++;
+        } else {
+          ctx.m_function = emit_call(ctx, inst);
+        }
+#else
         ctx.m_function = emit_call(ctx, inst);
+#endif
       } break;
       case VMOP_RET_GLOC: {
         emit_ret_gloc(ctx, inst);
@@ -1115,6 +1211,7 @@ void digamma_t::display_codegen_statistics(scm_port_t port) {
   port_format(port, "local loop               : %d\n", m_usage.locals);
   port_format(port, "explicit                 : %d\n", m_usage.on_demand);
   port_format(port, "skipped                  : %d\n", m_usage.skipped);
+  port_format(port, "continuation elimination : %d\n", m_usage.call_elimination);
   port_format(port, "native code location     : %lx - %lx\n\n", m_usage.min_sym, m_usage.max_sym);
   port_flush_output(port);
 }
@@ -1615,8 +1712,13 @@ void digamma_t::emit_ret_const(context_t& ctx, scm_obj_t inst) {
   auto vm = F->arg_begin();
 
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 }
 
 void digamma_t::emit_ret_iloc(context_t& ctx, scm_obj_t inst) {
@@ -1625,10 +1727,14 @@ void digamma_t::emit_ret_iloc(context_t& ctx, scm_obj_t inst) {
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
 
-  auto val = IRB.CreateLoad(IntptrTy, emit_lookup_iloc(ctx, operands));
-  ctx.reg_value.store(vm, val);
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.store(vm, IRB.CreateLoad(IntptrTy, emit_lookup_iloc(ctx, operands)));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 }
 
 void digamma_t::emit_ret_cons(context_t& ctx, scm_obj_t inst) {
@@ -1642,9 +1748,15 @@ void digamma_t::emit_ret_cons(context_t& ctx, scm_obj_t inst) {
   auto sp_minus_1 = IRB.CreateLoad(IntptrTy, IRB.CreateGEP(IntptrTy, IRB.CreateBitOrPointerCast(sp, IntptrPtrTy), VALUE_INTPTR(-1)));
   auto thunkType = FunctionType::get(IntptrTy, {IntptrPtrTy, IntptrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_make_pair), thunkType->getPointerTo());
+
   ctx.reg_value.store(vm, IRB.CreateCall(thunkType, thunk, {vm, sp_minus_1, val}));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 }
 
 void digamma_t::emit_if_true(context_t& ctx, scm_obj_t inst) {
@@ -1662,7 +1774,8 @@ void digamma_t::emit_if_true(context_t& ctx, scm_obj_t inst) {
 
   // taken
   IRB.SetInsertPoint(f9h_false);
-  transform(ctx, operands, false);
+  context_t ctx2 = ctx;
+  transform(ctx2, operands, false);
 
   // not taken
   IRB.SetInsertPoint(f9h_true);
@@ -1683,7 +1796,8 @@ void digamma_t::emit_if_nullp(context_t& ctx, scm_obj_t inst) {
 
   // taken
   IRB.SetInsertPoint(taken_true);
-  transform(ctx, operands, false);
+  context_t ctx2 = ctx;
+  transform(ctx2, operands, false);
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -1708,7 +1822,8 @@ void digamma_t::emit_if_eqp(context_t& ctx, scm_obj_t inst) {
 
   // taken
   IRB.SetInsertPoint(taken_true);
-  transform(ctx, operands, false);
+  context_t ctx2 = ctx;
+  transform(ctx2, operands, false);
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -1730,8 +1845,13 @@ void digamma_t::emit_if_nullp_ret_const(context_t& ctx, scm_obj_t inst) {
   // taken
   IRB.SetInsertPoint(taken_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -1821,8 +1941,13 @@ void digamma_t::emit_if_true_ret(context_t& ctx, scm_obj_t inst) {
 
   // pop
   IRB.SetInsertPoint(value_nonfalse);
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // continue
   IRB.SetInsertPoint(value_false);
@@ -1842,8 +1967,13 @@ void digamma_t::emit_if_false_ret(context_t& ctx, scm_obj_t inst) {
 
   // pop
   IRB.SetInsertPoint(value_false);
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // continue
   IRB.SetInsertPoint(value_nonfalse);
@@ -1865,8 +1995,13 @@ void digamma_t::emit_if_true_ret_const(context_t& ctx, scm_obj_t inst) {
   // pop
   IRB.SetInsertPoint(value_nonfalse);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // continue
   IRB.SetInsertPoint(value_false);
@@ -2086,6 +2221,25 @@ Function* digamma_t::emit_call(context_t& ctx, scm_obj_t inst) {
   ctx.reg_cache_clear();
   ctx.m_iloc_cache.clear();
   return K;
+}
+
+void digamma_t::emit_call_inline(context_t& ctx, scm_obj_t inst) {
+  DECLEAR_CONTEXT_VARS;
+  DECLEAR_COMMON_TYPES;
+  scm_obj_t operands = CDAR(inst);
+  auto vm = F->arg_begin();
+
+  ctx.reg_cache_copy(vm);
+
+  BasicBlock* CONTINUE = BasicBlock::Create(C, "continue", F);
+  context_t ctx2 = ctx;
+  ctx2.m_continuation = CONTINUE;
+  ctx2.m_argc = 0;
+  transform(ctx2, operands, false);
+  IRB.SetInsertPoint(CONTINUE);
+
+  ctx.m_iloc_cache.clear();
+  ctx.reg_cache_clear();
 }
 
 void digamma_t::emit_if_false_call(context_t& ctx, scm_obj_t inst) {
@@ -2363,7 +2517,8 @@ void digamma_t::emit_if_pairp(context_t& ctx, scm_obj_t inst) {
 
   // taken
   IRB.SetInsertPoint(taken_true);
-  transform(ctx, operands, false);
+  context_t ctx2 = ctx;
+  transform(ctx2, operands, false);
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -2377,7 +2532,9 @@ void digamma_t::emit_if_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
 
   auto sp = ctx.reg_sp.load(vm);
   auto ea = IRB.CreateGEP(IntptrTy, IRB.CreateBitOrPointerCast(sp, IntptrPtrTy), VALUE_INTPTR(-1));
-  ctx.reg_sp.store(vm, IRB.CreateBitOrPointerCast(ea, IntptrTy));
+
+  CREATE_STORE_VM_REG(vm, m_sp, IRB.CreateBitOrPointerCast(ea, IntptrTy));
+  ctx.reg_sp.clear();
 
   auto val1 = IRB.CreateLoad(IntptrTy, ea);
   auto val2 = ctx.reg_value.load(vm);
@@ -2390,8 +2547,13 @@ void digamma_t::emit_if_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
   // taken
   IRB.SetInsertPoint(taken_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -2480,7 +2642,9 @@ void digamma_t::emit_if_not_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
   auto sp = ctx.reg_sp.load(vm);
 
   auto ea = IRB.CreateGEP(IntptrTy, IRB.CreateBitOrPointerCast(sp, IntptrPtrTy), VALUE_INTPTR(-1));
-  ctx.reg_sp.store(vm, IRB.CreateBitOrPointerCast(ea, IntptrTy));
+
+  CREATE_STORE_VM_REG(vm, m_sp, IRB.CreateBitOrPointerCast(ea, IntptrTy));
+  ctx.reg_sp.clear();
 
   auto val1 = IRB.CreateLoad(IntptrTy, ea);
   auto val2 = ctx.reg_value.load(vm);
@@ -2493,8 +2657,13 @@ void digamma_t::emit_if_not_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
   // taken
   IRB.SetInsertPoint(taken_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -2515,8 +2684,13 @@ void digamma_t::emit_if_not_pairp_ret_const(context_t& ctx, scm_obj_t inst) {
   // not pair
   IRB.SetInsertPoint(pair_false);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // pair
   IRB.SetInsertPoint(pair_true);
@@ -2538,8 +2712,13 @@ void digamma_t::emit_if_false_ret_const(context_t& ctx, scm_obj_t inst) {
   // pop
   IRB.SetInsertPoint(value_false);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // continue
   IRB.SetInsertPoint(value_nonfalse);
@@ -2554,20 +2733,28 @@ void digamma_t::emit_ret_nullp(context_t& ctx, scm_obj_t inst) {
 
   BasicBlock* taken_true = BasicBlock::Create(C, "taken_true", F);
   BasicBlock* taken_false = BasicBlock::Create(C, "taken_false", F);
+  BasicBlock* CONTINUE = BasicBlock::Create(C, "continue", F);
   auto taken_cond = IRB.CreateICmpEQ(value, VALUE_INTPTR(scm_nil));
   IRB.CreateCondBr(taken_cond, taken_true, taken_false, ctx.likely_false);
 
   // taken
   IRB.SetInsertPoint(taken_true);
-  ctx.reg_value.store(vm, VALUE_INTPTR(scm_true));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  CREATE_STORE_VM_REG(vm, m_value, VALUE_INTPTR(scm_true));
+  IRB.CreateBr(CONTINUE);
 
   // not taken
   IRB.SetInsertPoint(taken_false);
-  ctx.reg_value.store(vm, VALUE_INTPTR(scm_false));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  CREATE_STORE_VM_REG(vm, m_value, VALUE_INTPTR(scm_false));
+  IRB.CreateBr(CONTINUE);
+
+  IRB.SetInsertPoint(CONTINUE);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
+  ctx.reg_value.clear();
 }
 
 void digamma_t::emit_ret_pairp(context_t& ctx, scm_obj_t inst) {
@@ -2579,19 +2766,27 @@ void digamma_t::emit_ret_pairp(context_t& ctx, scm_obj_t inst) {
 
   BasicBlock* taken_true = BasicBlock::Create(C, "taken_true", F);
   BasicBlock* taken_false = BasicBlock::Create(C, "taken_false", F);
+  BasicBlock* CONTINUE = BasicBlock::Create(C, "continue", F);
   emit_cond_pairp(ctx, value, taken_true, taken_false);
 
   // taken
   IRB.SetInsertPoint(taken_true);
-  ctx.reg_value.store(vm, VALUE_INTPTR(scm_true));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  CREATE_STORE_VM_REG(vm, m_value, VALUE_INTPTR(scm_true));
+  IRB.CreateBr(CONTINUE);
 
   // not taken
   IRB.SetInsertPoint(taken_false);
-  ctx.reg_value.store(vm, VALUE_INTPTR(scm_false));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  CREATE_STORE_VM_REG(vm, m_value, VALUE_INTPTR(scm_false));
+  IRB.CreateBr(CONTINUE);
+
+  IRB.SetInsertPoint(CONTINUE);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
+  ctx.reg_value.clear();
 }
 
 void digamma_t::emit_ret_gloc(context_t& ctx, scm_obj_t inst) {
@@ -2613,27 +2808,37 @@ void digamma_t::emit_ret_eqp(context_t& ctx, scm_obj_t inst) {
 
   auto sp = ctx.reg_sp.load(vm);
   auto ea = IRB.CreateGEP(IntptrTy, IRB.CreateBitOrPointerCast(sp, IntptrPtrTy), VALUE_INTPTR(-1));
-  ctx.reg_sp.store(vm, IRB.CreateBitOrPointerCast(ea, IntptrTy));
+
+  CREATE_STORE_VM_REG(vm, m_sp, IRB.CreateBitOrPointerCast(ea, IntptrTy));
+  ctx.reg_sp.clear();
 
   auto val1 = IRB.CreateLoad(IntptrTy, ea);
   auto val2 = ctx.reg_value.load(vm);
 
   BasicBlock* taken_true = BasicBlock::Create(C, "taken_true", F);
   BasicBlock* taken_false = BasicBlock::Create(C, "taken_false", F);
+  BasicBlock* CONTINUE = BasicBlock::Create(C, "continue", F);
   auto taken_cond = IRB.CreateICmpEQ(val1, val2);
   IRB.CreateCondBr(taken_cond, taken_true, taken_false, ctx.likely_false);
 
   // taken
   IRB.SetInsertPoint(taken_true);
-  ctx.reg_value.store(vm, VALUE_INTPTR(scm_true));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  CREATE_STORE_VM_REG(vm, m_value, VALUE_INTPTR(scm_true));
+  IRB.CreateBr(CONTINUE);
 
   // not taken
   IRB.SetInsertPoint(taken_false);
-  ctx.reg_value.store(vm, VALUE_INTPTR(scm_false));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  CREATE_STORE_VM_REG(vm, m_value, VALUE_INTPTR(scm_false));
+  IRB.CreateBr(CONTINUE);
+
+  IRB.SetInsertPoint(CONTINUE);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
+  ctx.reg_value.clear();
 }
 
 void digamma_t::emit_set_iloc(context_t& ctx, scm_obj_t inst) {
@@ -2711,10 +2916,17 @@ void digamma_t::emit_ret_close(context_t& ctx, scm_obj_t inst) {
   if (maybe_codegen((scm_closure_t)operands)) m_usage.templates++;
 
   ctx.reg_cache_copy(vm);
+  ctx.reg_cache_clear();
+
   auto thunkType = FunctionType::get(IntptrTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_ret_close), thunkType->getPointerTo());
   IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 }
 
 void digamma_t::emit_close(context_t& ctx, scm_obj_t inst) {
@@ -2828,8 +3040,13 @@ void digamma_t::emit_if_symbolp_ret_const(context_t& ctx, scm_obj_t inst) {
   // taken
   IRB.SetInsertPoint(symbol_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // not taken
   IRB.SetInsertPoint(symbol_false);
@@ -2850,8 +3067,13 @@ void digamma_t::emit_if_pairp_ret_const(context_t& ctx, scm_obj_t inst) {
   // taken
   IRB.SetInsertPoint(pair_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // not taken
   IRB.SetInsertPoint(pair_false);
@@ -2873,8 +3095,13 @@ void digamma_t::emit_if_not_nullp_ret_const(context_t& ctx, scm_obj_t inst) {
   // taken
   IRB.SetInsertPoint(taken_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -2895,8 +3122,13 @@ void digamma_t::emit_if_not_symbolp_ret_const(context_t& ctx, scm_obj_t inst) {
   // taken
   IRB.SetInsertPoint(symbol_false);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  ctx.reg_value.copy(vm);
+  if (ctx.m_continuation) {
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // not taken
   IRB.SetInsertPoint(symbol_true);
@@ -2985,7 +3217,8 @@ void digamma_t::emit_if_symbolp(context_t& ctx, scm_obj_t inst) {
 
   // taken
   IRB.SetInsertPoint(taken_true);
-  transform(ctx, operands, false);
+  context_t ctx2 = ctx;
+  transform(ctx2, operands, false);
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -3104,6 +3337,7 @@ void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   auto val = IRB.CreateCall(procType, proc, {vm, argc, fp});
 
   ctx.reg_value.store(vm, val);
+  ctx.reg_value.copy(vm);
 
   BasicBlock* undef_true = BasicBlock::Create(C, "undef_true", F);
   BasicBlock* undef_false = BasicBlock::Create(C, "undef_false", F);
@@ -3112,12 +3346,18 @@ void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
 
   // valid
   IRB.SetInsertPoint(undef_false);
-  ctx.reg_cache_copy_only_value_and_cont(vm);
-  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  if (ctx.m_continuation) {
+    ctx.reg_sp.store(vm, fp);
+    ctx.reg_sp.copy(vm);
+    IRB.CreateBr(ctx.m_continuation);
+  } else {
+    ctx.reg_cont.copy(vm);
+    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+  }
 
   // invalid
   IRB.SetInsertPoint(undef_true);
-  ctx.reg_cache_copy_except_sp(vm);
+  ctx.reg_cache_copy(vm);
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_resume_loop));
 }
 
