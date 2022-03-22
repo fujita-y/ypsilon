@@ -1,7 +1,7 @@
 all:
 	chezscheme run-chez.scm
 	gosh run-gosh.scm
-	guile run-guile.scm
+	GUILE_JIT_THRESHOLD=0 guile --no-debug run-guile.scm
 	petite run-petite.scm
 	sash run-sash.scm
 	ypsilon run-ypsilon.scm
