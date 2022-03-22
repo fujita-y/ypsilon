@@ -7,5 +7,5 @@ all:
 	ypsilon run-ypsilon.scm
 
 clean:
-	rm *.out
-	rm spheres.pgm
+	rm -f *.out
+	rm -f spheres.pgm

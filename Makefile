@@ -144,6 +144,7 @@ clean:
 	rm -f $(HOME)/.ypsilon/*.time
 
 distclean: clean
+	rm -f *.out
 	rm -f tmp1 tmp2 tmp3 spheres.pgm
 	rm -f ./test/tmp*
 	rm -f ./bench/gambit-benchmarks/tmp*
