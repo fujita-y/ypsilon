@@ -3412,7 +3412,6 @@ void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   IRB.SetInsertPoint(undef_true);
   ctx.reg_cache_copy(vm);
 #if USE_TRACE_CODE
-  CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
   emit_trace(ctx, CDR(operands));
 #endif
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_resume_loop));
