@@ -22,6 +22,7 @@
 #define USE_REG_CACHE             1
 #define USE_AOT_CODEGEN_REFERENCE 1
 #define USE_CALL_INLINING         1
+#define USE_TRACE_CODE            1
 
 #define PRINT_IR                  0
 #define DEBUG_CODEGEN             0
@@ -156,6 +157,7 @@ class digamma_t {
   void precodegen_reference(scm_obj_t code);
   bool maybe_codegen(scm_closure_t closure);
   void codegen(scm_closure_t closure);
+  void emit_trace(context_t& ctx, scm_obj_t obj);
   llvm::AllocaInst* emit_alloca(context_t& ctx, llvm::Type* type);
   void emit_stack_overflow_check(context_t& ctx, int nbytes);
   void emit_push_vm_stack(context_t& ctx, llvm::Value* val);

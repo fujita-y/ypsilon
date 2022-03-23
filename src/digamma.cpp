@@ -1216,6 +1216,30 @@ void digamma_t::display_codegen_statistics(scm_port_t port) {
   port_flush_output(port);
 }
 
+void digamma_t::emit_trace(context_t& ctx, scm_obj_t obj) {
+  DECLEAR_CONTEXT_VARS;
+  DECLEAR_COMMON_TYPES;
+  auto vm = F->arg_begin();
+
+  if (obj == scm_nil) return;
+  BasicBlock* set_trace = BasicBlock::Create(C, "set_trace", F);
+  BasicBlock* set_trace_tail = BasicBlock::Create(C, "set_trace_tail", F);
+  BasicBlock* CONTINUE = BasicBlock::Create(C, "continue", F);
+  auto trace = CREATE_LOAD_VM_REG(vm, m_trace);
+  auto cond = IRB.CreateICmpEQ(trace, VALUE_INTPTR(scm_unspecified));
+  IRB.CreateCondBr(cond, set_trace, set_trace_tail, ctx.likely_true);
+
+  IRB.SetInsertPoint(set_trace);
+  CREATE_STORE_VM_REG(vm, m_trace, VALUE_INTPTR(obj));
+  IRB.CreateBr(CONTINUE);
+
+  IRB.SetInsertPoint(set_trace_tail);
+  CREATE_STORE_VM_REG(vm, m_trace_tail, VALUE_INTPTR(obj));
+  IRB.CreateBr(CONTINUE);
+
+  IRB.SetInsertPoint(CONTINUE);
+}
+
 llvm::AllocaInst* digamma_t::emit_alloca(context_t& ctx, llvm::Type* type) {
   DECLEAR_CONTEXT_VARS;
   IRBuilder<> TB(&F->getEntryBlock(), F->getEntryBlock().begin());
@@ -1567,6 +1591,11 @@ void digamma_t::emit_apply_iloc(context_t& ctx, scm_obj_t inst) {
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
 
+#if USE_TRACE_CODE
+  CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+  emit_trace(ctx, CDR(operands));
+#endif
+
   auto val = IRB.CreateLoad(IntptrTy, emit_lookup_iloc(ctx, CAR(operands)));
   ctx.reg_value.store(vm, val);
   ctx.reg_cache_copy(vm);
@@ -1578,6 +1607,10 @@ void digamma_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
+
+#if USE_TRACE_CODE
+  emit_trace(ctx, CDR(operands));
+#endif
 
   scm_gloc_t gloc = (scm_gloc_t)CAR(operands);
   scm_symbol_t symbol = (scm_symbol_t)gloc->variable;
@@ -2195,7 +2228,11 @@ Function* digamma_t::emit_call(context_t& ctx, scm_obj_t inst) {
   // cont->pc
   CREATE_STORE_CONT_REC(cont, pc, VALUE_INTPTR(CDR(inst)));
   // cont->trace
+#if USE_TRACE_CODE
+  CREATE_STORE_CONT_REC(cont, trace, CREATE_LOAD_VM_REG(vm, m_trace));
+#else
   CREATE_STORE_CONT_REC(cont, trace, VALUE_INTPTR(scm_unspecified));
+#endif
   // cont->fp
   CREATE_STORE_CONT_REC(cont, fp, ctx.reg_fp.load(vm));
   // cont->env
@@ -2212,6 +2249,11 @@ Function* digamma_t::emit_call(context_t& ctx, scm_obj_t inst) {
   // m_cont
   auto ea2 = IRB.CreateBitOrPointerCast(IRB.CreateGEP(IntptrTy, cont, VALUE_INTPTR(offsetof(vm_cont_rec_t, up) / sizeof(intptr_t))), IntptrTy);
   ctx.reg_cont.store(vm, ea2);
+
+#if USE_TRACE_CODE
+  CREATE_STORE_VM_REG(vm, m_trace, VALUE_INTPTR(scm_unspecified));
+  CREATE_STORE_VM_REG(vm, m_trace_tail, VALUE_INTPTR(scm_unspecified));
+#endif
 
   context_t ctx2 = ctx;
   ctx2.m_argc = 0;
@@ -2345,6 +2387,10 @@ void digamma_t::emit_apply_iloc_local(context_t& ctx, scm_obj_t inst) {
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
+
+#if USE_TRACE_CODE
+  emit_trace(ctx, CDR(operands));
+#endif
 
   int level = FIXNUM(CAAR(operands));
   int index = FIXNUM(CDAR(operands));
@@ -3227,7 +3273,13 @@ void digamma_t::emit_if_symbolp(context_t& ctx, scm_obj_t inst) {
 void digamma_t::emit_apply(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
+  scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
+
+#if USE_TRACE_CODE
+  CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+  emit_trace(ctx, operands);
+#endif
 
   ctx.reg_cache_copy(vm);
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_apply));
@@ -3326,6 +3378,7 @@ void digamma_t::emit_subr(context_t& ctx, scm_obj_t inst) {
 void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
+  scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
 
   auto fp = ctx.reg_fp.load(vm);
@@ -3358,6 +3411,10 @@ void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   // invalid
   IRB.SetInsertPoint(undef_true);
   ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
+  CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+  emit_trace(ctx, CDR(operands));
+#endif
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_resume_loop));
 }
 

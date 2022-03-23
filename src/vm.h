@@ -12,18 +12,17 @@ class digamma_t;
 
 class VM {
  public:
+  scm_obj_t* m_sp;
+  scm_obj_t* m_fp;
+  void* m_cont;
+  void* m_env;
+  scm_obj_t m_value;
   scm_obj_t m_pc;
   scm_obj_t m_trace;
-  scm_obj_t* m_fp;
-  void* m_env;
-  void* m_cont;
-  scm_obj_t m_value;
-  scm_obj_t* m_sp;
+  scm_obj_t m_trace_tail;
   scm_obj_t* m_stack_limit;
 
   object_heap_t* m_heap;
-
-  scm_obj_t m_trace_tail;
   scm_obj_t* m_stack_top;
   scm_obj_t* m_to_stack_top;
   scm_obj_t* m_to_stack_limit;

@@ -17,6 +17,19 @@
 #include "subr.h"
 #include "version.h"
 
+#define PREFERRED_MMAP_ADDRESS ((void*)0x10000000)
+
+#if ARCH_LP64
+  #define DEFALUT_COLLECT_TRIP_BYTES (4 * 1024 * 1024)
+#else
+  #define DEFALUT_COLLECT_TRIP_BYTES (2 * 1024 * 1024)
+#endif
+
+#define DEBUG_CONCURRENT_COLLECT 0
+#define SYNCHRONIZE_THRESHOLD(x) ((x) - (x) / 4)
+#define ENSURE_REALTIME          (5.0)  // in msec (1.0 == 0.001sec)
+#define TIMEOUT_CHECK_EACH       (500)
+
 #if GCDEBUG
   #define GC_TRACE(fmt) \
     do {                \
@@ -26,16 +39,6 @@
 #else
   #define GC_TRACE(fmt) ((void)0)
 #endif
-
-#define DEBUG_CONCURRENT_COLLECT 0
-#define SYNCHRONIZE_THRESHOLD(x) ((x) - (x) / 4)
-#if ARCH_LP64
-  #define DEFALUT_COLLECT_TRIP_BYTES (4 * 1024 * 1024)
-#else
-  #define DEFALUT_COLLECT_TRIP_BYTES (2 * 1024 * 1024)
-#endif
-#define ENSURE_REALTIME    (5.0)  // in msec (1.0 == 0.001sec)
-#define TIMEOUT_CHECK_EACH (500)
 
 #if ARCH_LP64
 inline int bytes_to_bucket(uint32_t x)  // see bit.cpp
@@ -211,11 +214,14 @@ void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
   assert(m_pool == NULL);
   m_pool_size = (pool_size + OBJECT_SLAB_SIZE - 1) & ~(OBJECT_SLAB_SIZE - 1);
   m_map_size = m_pool_size + OBJECT_SLAB_SIZE;
-  m_map = (uint8_t*)heap_map(NULL, m_map_size);
+  m_map = (uint8_t*)heap_map(PREFERRED_MMAP_ADDRESS, m_map_size);
   if (m_map == HEAP_MAP_FAILED) {
     m_map = NULL;
     fatal("%s:%u mmap() failed: %s", __FILE__, __LINE__, strerror(errno));
   }
+#ifndef NDEBUG
+  printf("mmap address:0x%lx\n", (uintptr_t)m_map);
+#endif
   m_pool = (uint8_t*)(((uintptr_t)m_map + OBJECT_SLAB_SIZE - 1) & ~(OBJECT_SLAB_SIZE - 1));
   assert(((uintptr_t)m_pool & (OBJECT_SLAB_SIZE - 1)) == 0);
   // ptag

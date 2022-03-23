@@ -26,7 +26,9 @@
       case native_thunk_loop:                      \
         goto loop;                                 \
       case native_thunk_resume_loop:               \
-        goto RESUME_LOOP;                          \
+        m_sp = m_fp;                               \
+        m_pc = CDR(m_pc);                          \
+        goto loop;                                 \
       case native_thunk_escape:                    \
         return;                                    \
       default:                                     \
@@ -384,6 +386,14 @@ apply : {
       m_pc = closure->pc;
       m_env = &env->up;
       if (closure->code) {
+        if (operand_trace != scm_nil) {
+          if (m_trace == scm_unspecified) {
+            m_trace = operand_trace;
+          } else {
+            m_trace_tail = operand_trace;
+          }
+          operand_trace = scm_unspecified;
+        }
         intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))closure->code;
         intptr_t n = (*thunk)((intptr_t)this);
         NATIVE_THUNK_POST_DISPATCH(n);
@@ -432,10 +442,11 @@ pop_cont : {
 
 trace_n_loop:
   if (operand_trace != scm_nil) {
-    if (m_trace == scm_unspecified)
+    if (m_trace == scm_unspecified) {
       m_trace = operand_trace;
-    else
+    } else {
       m_trace_tail = operand_trace;
+    }
 
 #ifndef NDEBUG
   #if 0
@@ -1475,6 +1486,14 @@ APPLY_APPLY:
       if (x == apply_apply_trace_n_loop) {
         scm_closure_t closure = (scm_closure_t)m_value;
         if (closure->code) {
+          if (operand_trace != scm_nil) {
+            if (m_trace == scm_unspecified) {
+              m_trace = operand_trace;
+            } else {
+              m_trace_tail = operand_trace;
+            }
+            operand_trace = scm_unspecified;
+          }
           intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))closure->code;
           intptr_t n = (*thunk)((intptr_t)this);
           NATIVE_THUNK_POST_DISPATCH(n);
@@ -1613,6 +1632,14 @@ APPLY_VARIADIC : {
     m_pc = closure->pc;
     m_env = &env->up;
     if (closure->code) {
+      if (operand_trace != scm_nil) {
+        if (m_trace == scm_unspecified) {
+          m_trace = operand_trace;
+        } else {
+          m_trace_tail = operand_trace;
+        }
+        operand_trace = scm_unspecified;
+      }
       intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))closure->code;
       intptr_t n = (*thunk)((intptr_t)this);
       NATIVE_THUNK_POST_DISPATCH(n);

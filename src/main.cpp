@@ -181,7 +181,7 @@ int main(int argc, const char** argv) {
   size_t heap_limit = (size_t)opt_heap_limit(argc, argv) * 1024 * 1024;
   size_t heap_init = 4 * 1024 * 1024;
 #ifndef NDEBUG
-  printf("heap_limit %zu heap_init %zu\n", heap_limit, heap_init);
+  printf("heap_limit:%zuM heap_init:%zuM\n", heap_limit / (1024 * 1024), heap_init / (1024 * 1024));
 #endif
   object_heap_t* heap = new object_heap_t;
   heap->init(heap_limit, heap_init);
