@@ -73,7 +73,7 @@ bool VM::init(object_heap_t* heap) {
     m_flags.mutable_literals = scm_false;
     m_flags.collect_notify = scm_false;
     m_flags.collect_stack_notify = scm_false;
-    m_flags.backtrace = scm_true;
+    m_flags.backtrace = MAKEFIXNUM(20);
     m_flags.backtrace_line_length = MAKEFIXNUM(80);
     m_flags.restricted_print_line_length = MAKEFIXNUM(40);
     m_flags.record_print_nesting_limit = MAKEFIXNUM(2);
@@ -326,6 +326,7 @@ scm_obj_t VM::backtrace_fetch(const char* name, int line, int column) {
 void VM::backtrace_each(printer_t* prt, int n, scm_obj_t note) {
   assert(PAIRP(note));
   if (n < 10) prt->byte(' ');
+  if (n < 100) prt->byte(' ');
   if (CDR(note) == scm_nil) {
     // (expr) : dynamic
     prt->format(" %d  ~u", n, CAR(note));
@@ -338,9 +339,9 @@ void VM::backtrace_each(printer_t* prt, int n, scm_obj_t note) {
     int column = comment % MAX_SOURCE_COLUMN;
     scm_obj_t expr = backtrace_fetch(string->name, line, column);
     if (expr == scm_unspecified) {
-      prt->format(" %d  --- unknown ---", n);
+      prt->format("%d  --- unknown ---", n);
     } else {
-      prt->format(" %d  ~u", n, expr);
+      prt->format("%d  ~u", n, expr);
     }
     prt->format("~%  ... ~a:%d", string, line);
   } else {
@@ -348,7 +349,7 @@ void VM::backtrace_each(printer_t* prt, int n, scm_obj_t note) {
     scm_string_t string = (scm_string_t)CADR(note);
     int comment = FIXNUM(CDDR(note));
     int line = comment / MAX_SOURCE_COLUMN;
-    prt->format(" %d  ~u", n, CAR(note));
+    prt->format("%d  ~u", n, CAR(note));
     prt->format("~%  ... ~a:%d", string, line);
   }
   prt->format("~%");
@@ -391,13 +392,22 @@ bool VM::backtrace(scm_port_t port) {
     if (n == bt_level) return true;
   }
   void* lnk = m_cont;
+  vm_cont_t last_cont = NULL;
   while (lnk) {
     vm_cont_t cont = (vm_cont_t)((intptr_t)lnk - offsetof(vm_cont_rec_t, up));
     if (cont->trace != scm_unspecified) {
-      backtrace_each(&prt, n++, cont->trace);
-      if (n == bt_level) return true;
+      if (n < bt_level) {
+        backtrace_each(&prt, n, cont->trace);
+      } else {
+        last_cont = cont;
+      }
+      n++;
     }
     lnk = (*(void**)lnk);
+  }
+  if (last_cont) {
+      if (n - 1 > bt_level) prt.format("~%  <truncated>~%~%");
+      backtrace_each(&prt, n - 1, last_cont->trace);
   }
   return true;
 }
