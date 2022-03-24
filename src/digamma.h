@@ -21,7 +21,7 @@
 #define USE_ILOC_CACHE            1
 #define USE_REG_CACHE             1
 #define USE_AOT_CODEGEN_REFERENCE 1
-#define USE_CALL_INLINING         1
+#define USE_CALL_INLINING         0
 #define USE_TRACE_CODE            1
 
 #define PRINT_IR                  0
@@ -80,6 +80,7 @@ class digamma_t {
     void reg_cache_clear_only_env_and_value();
     void reg_cache_clear_only_sp();
     void reg_cache_clear_only_env_and_sp();
+    void reg_cache_clear_except_value();
     void reg_cache_clear_except_value_and_cont();
     void set_local_var_count(int depth, int count);
     void set_local_var_count(int depth, scm_closure_t closure);
