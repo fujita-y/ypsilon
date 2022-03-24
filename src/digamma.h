@@ -59,6 +59,9 @@ class digamma_t {
     std::vector<int> m_local_var_count;
     int m_argc;
     int m_depth;
+#if USE_CALL_INLINING
+    bool m_local_extended;
+#endif
     std::map<int, llvm::Value*> m_iloc_cache;
     reg_cache_t<offsetof(VM, m_sp)> reg_sp;
     reg_cache_t<offsetof(VM, m_fp)> reg_fp;
@@ -93,6 +96,9 @@ class digamma_t {
           m_irb(irb),
           m_argc(0),
           m_depth(0),
+#if USE_CALL_INLINING
+          m_local_extended(false),
+#endif
           m_continuation(nullptr),
           reg_sp(this),
           reg_fp(this),

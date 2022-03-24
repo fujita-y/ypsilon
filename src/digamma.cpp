@@ -921,7 +921,7 @@ void digamma_t::transform(context_t& ctx, scm_obj_t inst, bool insert_stack_chec
       case VMOP_CALL: {
 #if USE_CALL_INLINING
         scm_obj_t operands = CDAR(inst);
-        if (inlinable_call(operands) && ctx.m_argc == 0) {
+        if (!ctx.m_local_extended && ctx.m_argc == 0 && inlinable_call(operands)) {
           emit_call_inline(ctx, inst);
           m_usage.call_elimination++;
         } else {
@@ -996,21 +996,33 @@ void digamma_t::transform(context_t& ctx, scm_obj_t inst, bool insert_stack_chec
         emit_extend(ctx, inst);
         ctx.m_argc = 0;
         ctx.m_depth++;
+#if USE_CALL_INLINING
+        ctx.m_local_extended = true;
+#endif
       } break;
       case VMOP_EXTEND_ENCLOSE: {
         emit_extend_enclose(ctx, inst);
         ctx.m_argc = 0;
         ctx.m_depth++;
+#if USE_CALL_INLINING
+        ctx.m_local_extended = true;
+#endif
       } break;
       case VMOP_EXTEND_ENCLOSE_LOCAL: {
         emit_extend_enclose_local(ctx, inst);
         ctx.m_argc = 0;
         ctx.m_depth++;
+#if USE_CALL_INLINING
+        ctx.m_local_extended = true;
+#endif
       } break;
       case VMOP_EXTEND_UNBOUND: {
         emit_extend_unbound(ctx, inst);
         ctx.m_argc = 0;
         ctx.m_depth++;
+#if USE_CALL_INLINING
+        ctx.m_local_extended = true;
+#endif
       } break;
       case VMOP_PUSH_CLOSE: {
         emit_push_close(ctx, inst);
@@ -2286,6 +2298,11 @@ Function* digamma_t::emit_call(context_t& ctx, scm_obj_t inst) {
 
   context_t ctx2 = ctx;
   ctx2.m_argc = 0;
+
+#if USE_CALL_INLINING
+  ctx2.m_local_extended = false;
+#endif
+
   transform(ctx2, operands, false);
 
   IRB.SetInsertPoint(RETURN);
