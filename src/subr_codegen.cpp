@@ -31,6 +31,7 @@ scm_obj_t subr_closure_codegen(VM* vm, int argc, scm_obj_t argv[]) {
     if (CLOSUREP(argv[0])) {
       scm_closure_t closure = (scm_closure_t)argv[0];
       if (vm->m_digamma) {
+        closure->code = NULL;
         vm->m_digamma->m_debug = true;
         vm->m_digamma->codegen_closure(closure);
         while (closure->code == NULL) usleep(1000);
