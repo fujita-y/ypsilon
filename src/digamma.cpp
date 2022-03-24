@@ -1229,6 +1229,7 @@ void digamma_t::emit_trace(context_t& ctx, scm_obj_t obj) {
   auto vm = F->arg_begin();
 
   if (obj == scm_nil) return;
+#if USE_TAIL_CALL_TRACE
   BasicBlock* set_trace = BasicBlock::Create(C, "set_trace", F);
   BasicBlock* set_trace_tail = BasicBlock::Create(C, "set_trace_tail", F);
   BasicBlock* CONTINUE = BasicBlock::Create(C, "continue", F);
@@ -1245,6 +1246,9 @@ void digamma_t::emit_trace(context_t& ctx, scm_obj_t obj) {
   IRB.CreateBr(CONTINUE);
 
   IRB.SetInsertPoint(CONTINUE);
+#else
+  CREATE_STORE_VM_REG(vm, m_trace, VALUE_INTPTR(obj));
+#endif
 }
 
 llvm::AllocaInst* digamma_t::emit_alloca(context_t& ctx, llvm::Type* type) {
@@ -1397,7 +1401,9 @@ void digamma_t::emit_prepair_apply(context_t& ctx, scm_closure_t closure) {
   CREATE_STORE_ENV_REC(env, up, VALUE_INTPTR(closure->env));
   auto ea0 = IRB.CreateGEP(IntptrTy, IRB.CreateBitOrPointerCast(env, IntptrPtrTy), VALUE_INTPTR(sizeof(vm_env_rec_t) / sizeof(intptr_t)));
   auto ea1 = IRB.CreateBitOrPointerCast(ea0, IntptrTy);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(closure->pc));
+#endif
   ctx.reg_env.store(vm, CREATE_LEA_ENV_REC(env, up));
   ctx.reg_fp.store(vm, ea1);
   ctx.reg_sp.store(vm, ea1);
@@ -1457,7 +1463,9 @@ void digamma_t::emit_push_gloc(context_t& ctx, scm_obj_t inst) {
     IRB.CreateCondBr(undef_cond, undef_true, CONTINUE, ctx.likely_false);
     IRB.SetInsertPoint(undef_true);
     ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
     CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
     auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
     auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_push_gloc), thunkType->getPointerTo());
     IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
@@ -1483,7 +1491,9 @@ void digamma_t::emit_push_car_iloc(context_t& ctx, scm_obj_t inst) {
   // nonpair
   IRB.SetInsertPoint(pair_false);
   ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_push_car_iloc), thunkType->getPointerTo());
   IRB.CreateCall(thunkType, thunk, {vm, pair});
@@ -1510,7 +1520,9 @@ void digamma_t::emit_push_cdr_iloc(context_t& ctx, scm_obj_t inst) {
   // nonpair
   IRB.SetInsertPoint(pair_false);
   ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_push_cdr_iloc), thunkType->getPointerTo());
   IRB.CreateCall(thunkType, thunk, {vm, pair});
@@ -1537,7 +1549,9 @@ void digamma_t::emit_push_cddr_iloc(context_t& ctx, scm_obj_t inst) {
   // nonpair
   IRB.SetInsertPoint(pair_false);
   ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_push_cddr_iloc), thunkType->getPointerTo());
   IRB.CreateCall(thunkType, thunk, {vm, pair});
@@ -1570,7 +1584,9 @@ void digamma_t::emit_push_cadr_iloc(context_t& ctx, scm_obj_t inst) {
   // nonpair
   IRB.SetInsertPoint(pair_false);
   ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_push_cadr_iloc), thunkType->getPointerTo());
   IRB.CreateCall(thunkType, thunk, {vm, pair});
@@ -1733,7 +1749,9 @@ void digamma_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
     IRB.CreateCondBr(undef_cond, undef_true, CONTINUE, ctx.likely_false);
     IRB.SetInsertPoint(undef_true);
     ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
     CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
     auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
     auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_apply_gloc), thunkType->getPointerTo());
     IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(gloc)});
@@ -2105,7 +2123,9 @@ void digamma_t::emit_cc_n_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_
   // others
   IRB.SetInsertPoint(nonfixnum_true);
   ctx.reg_cache_copy_except_value(vm);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto thunkType = FunctionType::get(IntptrTy, {IntptrPtrTy, IntptrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_func), thunkType->getPointerTo());
   auto ans = IRB.CreateCall(thunkType, thunk, {vm, lhs, rhs});
@@ -2176,7 +2196,9 @@ void digamma_t::emit_cc_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_fu
   // others
   IRB.SetInsertPoint(nonfixnum_true);
   ctx.reg_cache_copy_except_value(vm);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto thunkType = FunctionType::get(IntptrTy, {IntptrPtrTy, IntptrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_func), thunkType->getPointerTo());
   auto ans = IRB.CreateCall(thunkType, thunk, {vm, lhs, rhs});
@@ -2494,7 +2516,9 @@ void digamma_t::emit_car_iloc(context_t& ctx, scm_obj_t inst) {
   // nonpair
   IRB.SetInsertPoint(pair_false);
   ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_car_iloc), thunkType->getPointerTo());
   IRB.CreateCall(thunkType, thunk, {vm, pair});
@@ -2525,7 +2549,9 @@ void digamma_t::emit_cdr_iloc(context_t& ctx, scm_obj_t inst) {
   // nonpair
   IRB.SetInsertPoint(pair_false);
   ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_cdr_iloc), thunkType->getPointerTo());
   IRB.CreateCall(thunkType, thunk, {vm, pair});
@@ -2632,7 +2658,9 @@ void digamma_t::emit_cadr_iloc(context_t& ctx, scm_obj_t inst) {
   // nonpair
   IRB.SetInsertPoint(pair_false);
   ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_cadr_iloc), thunkType->getPointerTo());
   IRB.CreateCall(thunkType, thunk, {vm, pair});
@@ -2669,7 +2697,9 @@ void digamma_t::emit_cddr_iloc(context_t& ctx, scm_obj_t inst) {
   // nonpair
   IRB.SetInsertPoint(pair_false);
   ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_cadr_iloc), thunkType->getPointerTo());
   IRB.CreateCall(thunkType, thunk, {vm, pair});
@@ -3068,7 +3098,9 @@ void digamma_t::emit_gloc(context_t& ctx, scm_obj_t inst) {
     IRB.CreateCondBr(undef_cond, undef_true, CONTINUE, ctx.likely_false);
     IRB.SetInsertPoint(undef_true);
     ctx.reg_cache_copy(vm);
+#if USE_TRACE_CODE
     CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
     auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
     auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_gloc), thunkType->getPointerTo());
     IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
@@ -3314,9 +3346,10 @@ void digamma_t::emit_push_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) 
   auto sp = ctx.reg_sp.load(vm);
   auto argv = IRB.CreateGEP(IntptrTy, IRB.CreateBitOrPointerCast(sp, IntptrPtrTy), VALUE_INTPTR(-argc));
 
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   ctx.reg_cache_copy_except_value(vm);
-  ctx.reg_cache_clear_except_value();
 
   auto procType = FunctionType::get(IntptrTy, {IntptrPtrTy, IntptrTy, IntptrPtrTy}, false);
   auto proc = ConstantExpr::getIntToPtr(VALUE_INTPTR(subr->adrs), procType->getPointerTo());
@@ -3331,8 +3364,12 @@ void digamma_t::emit_push_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) 
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_resume_loop));
 
   IRB.SetInsertPoint(CONTINUE);
-  ctx.reg_sp.store(vm, IRB.CreateBitOrPointerCast(argv, IntptrTy));
-  emit_push_vm_stack(ctx, val);
+  if (argc == 1) {
+    IRB.CreateStore(val, IRB.CreateBitOrPointerCast(argv, IntptrPtrTy));
+  } else {
+    ctx.reg_sp.store(vm, IRB.CreateBitOrPointerCast(argv, IntptrTy));
+    emit_push_vm_stack(ctx, val);
+  }
 }
 
 void digamma_t::emit_push_subr(context_t& ctx, scm_obj_t inst) {
@@ -3355,7 +3392,9 @@ void digamma_t::emit_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   auto sp = ctx.reg_sp.load(vm);
   auto argv = IRB.CreateGEP(IntptrTy, IRB.CreateBitOrPointerCast(sp, IntptrPtrTy), VALUE_INTPTR(-argc));
 
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto procType = FunctionType::get(IntptrTy, {IntptrPtrTy, IntptrTy, IntptrPtrTy}, false);
   auto proc = ConstantExpr::getIntToPtr(VALUE_INTPTR(subr->adrs), procType->getPointerTo());
   auto val = IRB.CreateCall(procType, proc, {vm, VALUE_INTPTR(argc), argv});
@@ -3392,7 +3431,9 @@ void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   auto fp = ctx.reg_fp.load(vm);
   auto argc = VALUE_INTPTR(ctx.m_argc);
 
+#if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+#endif
   auto procType = FunctionType::get(IntptrTy, {IntptrPtrTy, IntptrTy, IntptrTy}, false);
   auto proc = ConstantExpr::getIntToPtr(VALUE_INTPTR(subr->adrs), procType->getPointerTo());
   auto val = IRB.CreateCall(procType, proc, {vm, argc, fp});

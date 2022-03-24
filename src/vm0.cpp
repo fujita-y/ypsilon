@@ -406,8 +406,8 @@ bool VM::backtrace(scm_port_t port) {
     lnk = (*(void**)lnk);
   }
   if (last_cont) {
-      if (n - 1 > bt_level) prt.format("~%  <truncated>~%~%");
-      backtrace_each(&prt, n - 1, last_cont->trace);
+    if (n - 1 > bt_level) prt.format("~%  <truncated>~%~%");
+    backtrace_each(&prt, n - 1, last_cont->trace);
   }
   return true;
 }

@@ -21,8 +21,10 @@
 #define USE_ILOC_CACHE            1
 #define USE_REG_CACHE             1
 #define USE_AOT_CODEGEN_REFERENCE 1
-#define USE_CALL_INLINING         0
 #define USE_TRACE_CODE            1
+#define USE_TAIL_CALL_TRACE       1
+
+#define USE_CALL_INLINING         0
 
 #define PRINT_IR                  0
 #define DEBUG_CODEGEN             0
