@@ -185,84 +185,24 @@ void VM::backtrace_seek_make_cont(scm_obj_t note) {
   }
 }
 
-void VM::backtrace_seek() {
-  if (m_flags.backtrace != scm_false) {
-    backtrace_seek_make_cont(m_trace);
-    backtrace_seek_make_cont(m_trace_tail);
-    m_trace = m_trace_tail = scm_unspecified;
-    scm_obj_t lst = CDR(m_pc);
-    while (lst != scm_nil) {
-      scm_obj_t operands = (scm_obj_t)CDAR(lst);
-      int opcode = instruction_to_opcode(CAAR(lst));
-      switch (opcode) {
-        case VMOP_RET_SUBR_GLOC_OF:
-        case VMOP_APPLY_GLOC_OF:
-          fatal("%s:%u internal error: backtrace_seek()", __FILE__, __LINE__);
-        case VMOP_RET_SUBR:
-          if (PAIRP(CDR(operands))) {
-            backtrace_seek_make_cont(CDR(operands));
-            goto more_seek;
-          }
-          break;
-        case VMOP_APPLY_GLOC:
-          if (PAIRP(CDR(operands))) {
-            backtrace_seek_make_cont(CDR(operands));
-            goto more_seek;
-          }
-          break;
-        case VMOP_APPLY_ILOC:
-          if (PAIRP(CDR(operands))) {
-            backtrace_seek_make_cont(CDR(operands));
-            goto more_seek;
-          }
-          break;
-        case VMOP_APPLY_ILOC_LOCAL:
-          if (PAIRP(CDR(operands))) {
-            backtrace_seek_make_cont(CDR(operands));
-            goto more_seek;
-          }
-          break;
-        case VMOP_APPLY:
-          if (PAIRP(operands)) {
-            backtrace_seek_make_cont(operands);
-            goto more_seek;
-          }
-          break;
-        case VMOP_RET_CONS:
-        case VMOP_RET_EQP:
-        case VMOP_RET_NULLP:
-        case VMOP_RET_PAIRP:
-          if (PAIRP(operands)) {
-            backtrace_seek_make_cont(operands);
-            goto more_seek;
-          }
-          break;
-        case VMOP_EXTEND:
-        case VMOP_EXTEND_UNBOUND:
-          goto more_seek;
-      }
-      lst = CDR(lst);
-    }
-  more_seek:
-    scm_obj_t lst2 = m_pc;
-  more_more_seek:
-    if (lst2 == scm_nil) return;
-    if (!PAIRP(CAR(lst2))) return;
-    scm_obj_t operands = (scm_obj_t)CDAR(lst2);
-    int opcode = instruction_to_opcode(CAAR(lst2));
+scm_obj_t VM::backtrace_seek_body(scm_obj_t code) {
+  scm_obj_t lst = code;
+  while (lst != scm_nil && PAIRP(CAR(lst))) {
+    scm_obj_t operands = (scm_obj_t)CDAR(lst);
+    int opcode = instruction_to_opcode(CAAR(lst));
     switch (opcode) {
       case VMOP_SUBR_GLOC_OF:
         fatal("%s:%u intern error backtrace_seek()", __FILE__, __LINE__);
       case VMOP_SUBR:
-        if (PAIRP(CDDR(operands))) backtrace_seek_make_cont(CDDR(operands));
-        return;
+        if (PAIRP(CDDR(operands))) return CDDR(operands);
+        return scm_unspecified;
       case VMOP_EQ_ILOC:
       case VMOP_LT_ILOC:
       case VMOP_LE_ILOC:
       case VMOP_GT_ILOC:
       case VMOP_GE_ILOC:
-        if (PAIRP(CDR(operands))) backtrace_seek_make_cont(CDR(operands));
-        return;
+        if (PAIRP(CDR(operands))) return CDR(operands);
+        return scm_unspecified;
       case VMOP_EQ_N_ILOC:
       case VMOP_LT_N_ILOC:
       case VMOP_LE_N_ILOC:
@@ -271,18 +211,16 @@ void VM::backtrace_seek() {
       case VMOP_NADD_ILOC:
       case VMOP_PUSH_NADD_ILOC:
       case VMOP_PUSH_SUBR:
-        if (PAIRP(CDDR(operands))) backtrace_seek_make_cont(CDDR(operands));
-        return;
+        if (PAIRP(CDDR(operands))) return CDDR(operands);
+        return scm_unspecified;
       case VMOP_CAR_ILOC:
       case VMOP_CDR_ILOC:
-      // case VMOP_VECTREF_ILOC:
       case VMOP_PUSH_CAR_ILOC:
       case VMOP_PUSH_CDR_ILOC:
       case VMOP_PUSH_CADR_ILOC:
       case VMOP_PUSH_CDDR_ILOC:
-        // case VMOP_PUSH_VECTREF_ILOC:
-        if (PAIRP(CDR(operands))) backtrace_seek_make_cont(CDR(operands));
-        return;
+        if (PAIRP(CDR(operands))) return CDR(operands);
+        return scm_unspecified;
       case VMOP_CONST:
       case VMOP_GLOC:
       case VMOP_ILOC:
@@ -298,8 +236,66 @@ void VM::backtrace_seek() {
       case VMOP_PUSH_CLOSE:
       case VMOP_PUSH:
       case VMOP_CALL:
-        lst2 = CDR(lst2);
-        goto more_more_seek;
+        break;
+    }
+    lst = CDR(lst);
+  }
+  return scm_unspecified;
+}
+
+scm_obj_t VM::backtrace_seek_tail(scm_obj_t code) {
+  scm_obj_t lst = code;
+  while (lst != scm_nil) {
+    scm_obj_t operands = (scm_obj_t)CDAR(lst);
+    int opcode = instruction_to_opcode(CAAR(lst));
+    switch (opcode) {
+      case VMOP_RET_SUBR_GLOC_OF:
+      case VMOP_APPLY_GLOC_OF:
+        fatal("%s:%u internal error: backtrace_seek()", __FILE__, __LINE__);
+      case VMOP_RET_SUBR:
+        if (PAIRP(CDR(operands))) return CDR(operands);
+        return scm_unspecified;
+      case VMOP_APPLY_GLOC:
+        if (PAIRP(CDR(operands))) return CDR(operands);
+        return scm_unspecified;
+      case VMOP_APPLY_ILOC:
+        if (PAIRP(CDR(operands))) return CDR(operands);
+        return scm_unspecified;
+      case VMOP_APPLY_ILOC_LOCAL:
+        if (PAIRP(CDR(operands))) return CDR(operands);
+        return scm_unspecified;
+      case VMOP_APPLY:
+        if (PAIRP(operands)) return operands;
+        return scm_unspecified;
+      case VMOP_RET_CONS:
+      case VMOP_RET_EQP:
+      case VMOP_RET_NULLP:
+      case VMOP_RET_PAIRP:
+        if (PAIRP(operands)) return operands;
+        return scm_unspecified;
+      case VMOP_EXTEND:
+      case VMOP_EXTEND_UNBOUND:
+      case VMOP_EXTEND_ENCLOSE:
+      case VMOP_EXTEND_ENCLOSE_LOCAL:
+        return scm_unspecified;
+    }
+    lst = CDR(lst);
+  }
+  return scm_unspecified;
+}
+
+void VM::backtrace_seek() {
+  if (m_flags.backtrace != scm_false) {
+    backtrace_seek_make_cont(m_trace);
+    backtrace_seek_make_cont(m_trace_tail);
+    m_trace = m_trace_tail = scm_unspecified;
+
+    scm_obj_t body = backtrace_seek_body(m_pc);
+    if (body == scm_unspecified) {
+      scm_obj_t tail = backtrace_seek_tail(CDR(m_pc));
+      if (tail != scm_unspecified) backtrace_seek_make_cont(tail);
+    } else {
+      backtrace_seek_make_cont(body);
     }
   }
 }

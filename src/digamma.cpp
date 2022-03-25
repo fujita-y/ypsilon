@@ -3425,7 +3425,7 @@ void digamma_t::emit_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
 
   // invalid
   IRB.SetInsertPoint(undef_true);
-  ctx.reg_cache_copy_except_sp(vm);
+  ctx.reg_cache_copy(vm);
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_resume_loop));
 
   IRB.SetInsertPoint(CONTINUE);

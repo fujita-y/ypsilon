@@ -81,6 +81,8 @@ class VM {
   scm_obj_t lookup_current_environment(scm_symbol_t symbol);
   void intern_current_environment(scm_symbol_t symbol, scm_obj_t value);
   void prebind(scm_obj_t code);
+  scm_obj_t backtrace_seek_body(scm_obj_t code);
+  scm_obj_t backtrace_seek_tail(scm_obj_t code);
   void backtrace_seek();
   bool backtrace(scm_port_t port);
   void stop();

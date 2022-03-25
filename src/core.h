@@ -68,7 +68,6 @@
 #define LOCKFREE_ALLOC              1
 #define CONCURRENT_COLLECT          1
 #define BOOT_R6RS_COMPLIANT_SYNTAX  0
-#define UNSPECIFIED_GLOC_IS_SPECIAL 0
 
 #define USE_DEBUG_BOOT              0
 #define USE_DEBUG_CORE              0
