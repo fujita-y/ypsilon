@@ -639,12 +639,19 @@ void digamma_t::precodegen_reference(scm_obj_t code) {
         }
       } break;
       case VMOP_PUSH_CLOSE_LOCAL:
-      case VMOP_EXTEND_ENCLOSE_LOCAL:
+      case VMOP_EXTEND_ENCLOSE_LOCAL: {
+        precodegen_reference(CDR(operands));
+        break;
+      }
       case VMOP_CLOSE:
       case VMOP_RET_CLOSE:
       case VMOP_PUSH_CLOSE:
       case VMOP_EXTEND_ENCLOSE: {
-        precodegen_reference(CDR(operands));
+        if (CLOSUREP(operands)) {
+          precodegen_reference(((scm_closure_t)operands)->pc);
+        } else {
+          precodegen_reference(CDR(operands));
+        }
       } break;
       case VMOP_IF_TRUE:
       case VMOP_IF_FALSE_CALL:
@@ -654,8 +661,7 @@ void digamma_t::precodegen_reference(scm_obj_t code) {
       case VMOP_IF_EQP:
       case VMOP_CALL: {
         precodegen_reference(operands);
-        break;
-      }
+      } break;
     }
     code = CDR(code);
   }
