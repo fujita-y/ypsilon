@@ -594,15 +594,11 @@ void digamma_t::optimizeModule(Module& M) {
   PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
   ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O2);
   MPM.run(M, MAM);
-#if PRINT_IR
-  puts(";*** IR after optimize ***");
-  M.print(outs(), nullptr);
-#else
-  if (m_debug) {
+
+  if (m_debug || PRINT_IR) {
     puts(";*** IR after optimize ***");
     M.print(outs(), nullptr);
   }
-#endif
 }
 
 void digamma_t::codegen_closure(scm_closure_t closure) {
@@ -908,7 +904,7 @@ bool digamma_t::inlinable_call(scm_obj_t code) {
       case VMOP_IF_EQP_RET_CONST:
       case VMOP_IF_TRUE_RET:
       case VMOP_IF_FALSE_RET:
-        break;
+      case VMOP_ENCLOSE:
       default:
         return false;
     }
