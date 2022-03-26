@@ -967,43 +967,49 @@ scm_obj_t subr_tuple_list(VM* vm, int argc, scm_obj_t argv[]) {
   return scm_undef;
 }
 
+static void prepair_exit(VM* vm) {
+#if PROFILE_OPCODE
+  vm->display_opcode_profile();
+#endif
+#if PROFILE_SUBR
+  vm->display_subr_profile();
+#endif
+  if (PORTP(vm->m_current_input)) {
+    scoped_lock lock(vm->m_current_input->lock);
+    port_discard_buffer(vm->m_current_input);
+  }
+  if (PORTP(vm->m_current_output)) {
+    scoped_lock lock(vm->m_current_output->lock);
+    port_flush_output(vm->m_current_output);
+    port_discard_buffer(vm->m_current_output);
+  }
+  if (PORTP(vm->m_current_error)) {
+    scoped_lock lock(vm->m_current_error->lock);
+    port_flush_output(vm->m_current_error);
+    port_discard_buffer(vm->m_current_error);
+  }
+#if ENABLE_LLVM_JIT
+  if (vm->m_digamma) {
+    vm->m_digamma->destroy();
+    delete vm->m_digamma;
+    vm->m_digamma = NULL;
+  }
+#endif
+}
+
 // exit
 scm_obj_t subr_exit(VM* vm, int argc, scm_obj_t argv[]) {
   if (argc == 0 || argc == 1) {
-#if PROFILE_OPCODE
-    vm->display_opcode_profile();
-#endif
-#if PROFILE_SUBR
-    vm->display_subr_profile();
-#endif
-    if (PORTP(vm->m_current_input)) {
-      scoped_lock lock(vm->m_current_input->lock);
-      port_discard_buffer(vm->m_current_input);
-    }
-    if (PORTP(vm->m_current_output)) {
-      scoped_lock lock(vm->m_current_output->lock);
-      port_flush_output(vm->m_current_output);
-      port_discard_buffer(vm->m_current_output);
-    }
-    if (PORTP(vm->m_current_error)) {
-      scoped_lock lock(vm->m_current_error->lock);
-      port_flush_output(vm->m_current_error);
-      port_discard_buffer(vm->m_current_error);
-    }
-#if ENABLE_LLVM_JIT
-    if (vm->m_digamma) {
-      vm->m_digamma->destroy();
-      delete vm->m_digamma;
-      vm->m_digamma = NULL;
-    }
-#endif
     if (argc == 0) {
+      prepair_exit(vm);
       exit(EXIT_SUCCESS);
     }
     if (argv[0] == scm_false) {
+      prepair_exit(vm);
       exit(EXIT_FAILURE);
     }
     if (FIXNUMP(argv[0])) {
+      prepair_exit(vm);
       exit(FIXNUM(argv[0]));
     }
     wrong_type_argument_violation(vm, "exit", 0, "fixnum", argv[0], argc, argv);
