@@ -3,9 +3,6 @@
 
 ;; subr forward references
 (begin
-  (set-top-level-value! '.list? list?)
-  (set-top-level-value! '.null? null?)
-  (set-top-level-value! '.pair? pair?)
   (set-top-level-value! '.car car)
   (set-top-level-value! '.cdr cdr)
   (set-top-level-value! '.caar caar)
@@ -30,6 +27,10 @@
   (set-top-level-value! '.cdaadr cdaadr)
   (set-top-level-value! '.cdaddr cdaddr)
   (set-top-level-value! '.caaddr caaddr)
+  (set-top-level-value! '.list? list?)
+  (set-top-level-value! '.null? null?)
+  (set-top-level-value! '.pair? pair?)
+  (set-top-level-value! '.subr? subr?)
   (set-top-level-value! '.list list)
   (set-top-level-value! '.cons* cons*)
   (set-top-level-value! '.memq memq)

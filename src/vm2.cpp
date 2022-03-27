@@ -215,10 +215,10 @@ void VM::prebind_list(scm_obj_t code) {
 #ifndef NDEBUG
         if (!SUBRP(gloc->value)) {
           if (SYMBOLP(gloc->variable))
-            printf("** warning: expect gloc of %s contain SUBR but got %p, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name,
+            printf("** warning: VMOP_PUSH_SUBR_GLOC_OF expect gloc(%s) contain SUBR but got %p, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name,
                    gloc->value);
           else
-            printf("** warning: expect gloc %p contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
+            printf("** warning: VMOP_PUSH_SUBR_GLOC_OF expect gloc(%p) contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
         }
 #endif
         if (SUBRP(gloc->value)) {
@@ -237,10 +237,10 @@ void VM::prebind_list(scm_obj_t code) {
 #ifndef NDEBUG
         if (!SUBRP(gloc->value)) {
           if (SYMBOLP(gloc->variable))
-            printf("** warning: expect gloc of %s contain SUBR but got %p, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name,
+            printf("** warning: VMOP_SUBR_GLOC_OF expect gloc(%s) contain SUBR but got %p, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name,
                    gloc->value);
           else
-            printf("** warning: expect gloc %p contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
+            printf("** warning: VMOP_SUBR_GLOC_OF expect gloc(%p) contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
         }
 #endif
         if (SUBRP(gloc->value)) {
@@ -259,10 +259,10 @@ void VM::prebind_list(scm_obj_t code) {
 #ifndef NDEBUG
         if (!SUBRP(gloc->value)) {
           if (SYMBOLP(gloc->variable))
-            printf("** warning: expect gloc of %s contain SUBR but got %p, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name,
+            printf("** warning: VMOP_RET_SUBR_GLOC_OF expect gloc(%s) contain SUBR but got %p, maybe forward reference\n", ((scm_symbol_t)gloc->variable)->name,
                    gloc->value);
           else
-            printf("** warning: expect gloc %p contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
+            printf("** warning: VMOP_RET_SUBR_GLOC_OF expect gloc(%p) contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
         }
 #endif
         if (SUBRP(gloc->value)) {
