@@ -136,10 +136,12 @@ class VM {
   };
   opcode_profile_t m_opcode_profile[VMOP_INSTRUCTION_COUNT];
   static int comp_profile_rec(const void* a1, const void* a2);
+  void clear_opcode_profile();
   void display_opcode_profile();
 #endif
 
 #if PROFILE_SUBR
+  void clear_subr_profile();
   void display_subr_profile();
 #endif
 

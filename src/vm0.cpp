@@ -421,6 +421,25 @@ void VM::reset() {
 }
 
 #if PROFILE_SUBR
+
+void VM::clear_subr_profile() {
+  scm_hashtable_t ht = m_heap->m_system_environment->variable;
+  hashtable_rec_t* ht_datum = ht->datum;
+  int n = ht_datum->capacity;
+  for (int i = 0; i < n; i++) {
+    if (SYMBOLP(ht_datum->elts[i])) {
+      scm_symbol_t symbol = (scm_symbol_t)ht_datum->elts[i];
+      scm_gloc_t gloc = (scm_gloc_t)ht_datum->elts[n + i];
+      if (GLOCP(gloc)) {
+        scm_subr_t subr = (scm_subr_t)gloc->value;
+        if (SUBRP(subr)) {
+          subr->c_push = subr->c_load = subr->c_apply = 0;
+        }
+      }
+    }
+  }
+}
+
 void VM::display_subr_profile() {
   scm_hashtable_t ht = m_heap->m_system_environment->variable;
   hashtable_rec_t* ht_datum = ht->datum;
@@ -434,7 +453,7 @@ void VM::display_subr_profile() {
         scm_subr_t subr = (scm_subr_t)gloc->value;
         if (SUBRP(subr)) {
           if (subr->c_push + subr->c_load + subr->c_apply != 0) {
-            printf("%36s: %12llu %12llu %12llu %14llu\n", symbol->name, subr->c_push, subr->c_load, subr->c_apply,
+            printf("%36s: %12lu %12lu %12lu %14lu\n", symbol->name, subr->c_push, subr->c_load, subr->c_apply,
                    subr->c_push + subr->c_load + subr->c_apply);
           }
         }
@@ -453,6 +472,15 @@ int VM::comp_profile_rec(const void* a1, const void* a2) {
   return 0;
 }
 
+void VM::clear_opcode_profile() {
+  for (int i = 0; i < VMOP_INSTRUCTION_COUNT; i++) {
+    m_opcode_profile[i].count = 0;
+    for (int n = 0; n < VMOP_INSTRUCTION_COUNT; n++) {
+      m_opcode_profile[i].prev[n] = 0;
+    }
+  }
+}
+
 void VM::display_opcode_profile() {
   for (int i = 0; i < VMOP_INSTRUCTION_COUNT; i++) m_opcode_profile[i].opcode = i;
 
@@ -467,10 +495,10 @@ void VM::display_opcode_profile() {
       }
     }
     if (m) {
-      printf("%24s: %10llu    |%24s: %10llu (%.2f%%) \n", m_heap->inherent_symbol(m_opcode_profile[i].opcode)->name, m_opcode_profile[i].count,
+      printf("%24s: %10lu    |%24s: %10lu (%.2f%%) \n", m_heap->inherent_symbol(m_opcode_profile[i].opcode)->name, m_opcode_profile[i].count,
              m_heap->inherent_symbol(prevcode)->name, m, m * 100.0 / m_opcode_profile[i].count);
     } else {
-      printf("%24s: %10llu  \n", m_heap->inherent_symbol(m_opcode_profile[i].opcode)->name, m_opcode_profile[i].count);
+      printf("%24s: %10lu  \n", m_heap->inherent_symbol(m_opcode_profile[i].opcode)->name, m_opcode_profile[i].count);
     }
   }
 }

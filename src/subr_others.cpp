@@ -1035,6 +1035,12 @@ scm_obj_t subr_recursion_level(VM* vm, int argc, scm_obj_t argv[]) {
 
 // command-line
 scm_obj_t subr_command_line(VM* vm, int argc, scm_obj_t argv[]) {
+#if PROFILE_OPCODE
+  vm->clear_opcode_profile();
+#endif
+#if PROFILE_SUBR
+  vm->clear_subr_profile();
+#endif
   if (argc == 0) {
     scm_obj_t lst = scm_nil;
     for (int i = main_command_line_argc - 1; i >= 0; i--) {
