@@ -325,7 +325,7 @@ void VM::backtrace_each(printer_t* prt, int n, scm_obj_t note) {
   if (n < 100) prt->byte(' ');
   if (CDR(note) == scm_nil) {
     // (expr) : dynamic
-    prt->format(" %d  ~u", n, CAR(note));
+    prt->format("%d  ~u", n, CAR(note));
   } else if (FIXNUMP(CDR(note))) {
     // (path . fixnum) : load
     assert(STRINGP(CAR(note)));
