@@ -10,6 +10,8 @@
 #include "violation.h"
 
 #include <llvm/Analysis/AliasAnalysis.h>
+#include <llvm/IR/IRPrintingPasses.h>
+#include <llvm/IR/PassManager.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/Error.h>
@@ -593,12 +595,8 @@ void digamma_t::optimizeModule(Module& M) {
   PB.registerLoopAnalyses(LAM);
   PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
   ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O2);
+  if (m_debug) MPM.addPass(PrintModulePass(outs(), "; *** IR after optimize ***", false));
   MPM.run(M, MAM);
-
-  if (m_debug || PRINT_IR) {
-    puts(";*** IR after optimize ***");
-    M.print(outs(), nullptr);
-  }
 }
 
 void digamma_t::codegen_closure(scm_closure_t closure) {
@@ -716,6 +714,8 @@ void digamma_t::codegen(scm_closure_t closure) {
   }
   if (verifyModule(*M, &outs())) fatal("%s:%u verify module failed", __FILE__, __LINE__);
 #if USE_LLVM_OPTIMIZE
+  // puts(";*** IR before optimize ***");
+  // M->print(outs(), nullptr);
   optimizeModule(*M);
 #endif
   ExitOnErr(m_jit->addIRModule(std::move(ThreadSafeModule(std::move(M), std::move(Context)))));
