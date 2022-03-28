@@ -3386,7 +3386,7 @@ void digamma_t::emit_push_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) 
   if (argc == 1) {
     IRB.CreateStore(val, IRB.CreateBitOrPointerCast(argv, IntptrPtrTy));
   } else {
-    ctx.reg_sp.store(vm, IRB.CreateBitOrPointerCast(argv, IntptrTy));
+    if (argc) ctx.reg_sp.store(vm, IRB.CreateBitOrPointerCast(argv, IntptrTy));
     emit_push_vm_stack(ctx, val);
   }
 }
@@ -3414,11 +3414,12 @@ void digamma_t::emit_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
 #if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
 #endif
+  ctx.reg_cache_copy_except_value(vm);
+
   auto procType = FunctionType::get(IntptrTy, {IntptrPtrTy, IntptrTy, IntptrPtrTy}, false);
   auto proc = ConstantExpr::getIntToPtr(VALUE_INTPTR(subr->adrs), procType->getPointerTo());
   auto val = IRB.CreateCall(procType, proc, {vm, VALUE_INTPTR(argc), argv});
 
-  ctx.reg_sp.store(vm, IRB.CreateBitOrPointerCast(argv, IntptrTy));
   ctx.reg_value.store(vm, val);
 
   BasicBlock* undef_true = BasicBlock::Create(C, "undef_true", F);
@@ -3427,10 +3428,9 @@ void digamma_t::emit_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
 
   // invalid
   IRB.SetInsertPoint(undef_true);
-  ctx.reg_cache_copy(vm);
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_resume_loop));
-
   IRB.SetInsertPoint(CONTINUE);
+  if (argc) ctx.reg_sp.store(vm, IRB.CreateBitOrPointerCast(argv, IntptrTy));
 }
 
 void digamma_t::emit_subr(context_t& ctx, scm_obj_t inst) {
@@ -3453,6 +3453,8 @@ void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
 #if USE_TRACE_CODE
   CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
 #endif
+  ctx.reg_cache_copy_except_value(vm);
+
   auto procType = FunctionType::get(IntptrTy, {IntptrPtrTy, IntptrTy, IntptrTy}, false);
   auto proc = ConstantExpr::getIntToPtr(VALUE_INTPTR(subr->adrs), procType->getPointerTo());
   auto val = IRB.CreateCall(procType, proc, {vm, argc, fp});
@@ -3478,7 +3480,6 @@ void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
 
   // invalid
   IRB.SetInsertPoint(undef_true);
-  ctx.reg_cache_copy(vm);
 #if USE_TRACE_CODE
   emit_trace(ctx, CDR(operands));
 #endif
