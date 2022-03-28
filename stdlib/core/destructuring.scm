@@ -219,7 +219,8 @@
                     (with-syntax
                         ((?datum (datum->syntax #'k datum))
                          ((?vars ...) (map (lambda (e) (datum->syntax #'?_ e)) vars))
-                         ((?inits ...) (map (lambda (e) (datum->syntax #'k e)) inits)))
+                         ((?inits ...) (map (lambda (e) (datum->syntax #'k e)) inits))
+                         ((?body ...) (datum->syntax #'?_ (syntax->datum (syntax (?body ...))))))
                       (syntax
                        (let ((?datum ?expr))
                          (let ((?vars ?inits) ...)
@@ -281,8 +282,8 @@
                                     (((?vars ...) (map (lambda (e) (datum->syntax #'?_ e)) vars))
                                      ((?inits ...) (map (lambda (e) (datum->syntax #'k e)) inits))
                                      ((?tests ...) (map (lambda (e) (datum->syntax #'k e)) tests))
-                                     (?fender fender)
-                                     (?body body))
+                                     (?fender (datum->syntax #'?_ (syntax->datum fender)))
+                                     (?body (datum->syntax #'?_ (syntax->datum body))))
                                   (if (eq? (syntax->datum (syntax ?fender)) #t)
                                       (syntax ((and ?tests ...)
                                                (let ((?vars ?inits) ...) ?body)))
