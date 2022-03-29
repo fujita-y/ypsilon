@@ -407,7 +407,7 @@
                       (lambda (x)
                         (syntax-case x ()
                           ((_ temp _)
-                           (let* ((spec (#,#'ensure-c-typedef rhs 'rhs)))
+                           (let ((spec (#,#'ensure-c-typedef rhs 'rhs)))
                              #`(define-syntax temp
                                  (lambda (x)
                                    (syntax-case x (temp)
@@ -443,13 +443,13 @@
                      (with-syntax (((compounds ...) lst))
                        #`(let-syntax
                            ((check-c-struct-fields
-                             (lambda (x)
-                               (syntax-case x ()
-                                 ((_ temp . _)
-                                  (with-syntax
-                                      (((compound-types (... ...))
-                                        (datum->syntax #'k (list (#,#'ensure-c-struct compounds 'compounds) ...))))
-                                    (c-struct-expand #'temp (datum (compound-types (... ...))) '(field-specs ...))))))))
+                            (lambda (x)
+                              (syntax-case x ()
+                                ((_ temp . _)
+                                 (with-syntax
+                                     (((compound-types (... ...))
+                                      (datum->syntax #'k (list (#,#'ensure-c-struct compounds 'compounds) ...))))
+                                   (c-struct-expand #'temp (datum (compound-types (... ...))) '(field-specs ...))))))))
                            (check-c-struct-fields lhs field-specs ...)))))
                (else
                 (c-struct-expand #'lhs '() (datum (field-specs ...)))))))))
@@ -467,7 +467,7 @@
                      (lambda (x)
                        (syntax-case x ()
                          ((_ temp)
-                          (let* ((spec (datum->syntax #'k (#,#'ensure-c-struct type 'type))))
+                          (let ((spec (datum->syntax #'k (#,#'ensure-c-struct type 'type))))
                             (syntax-case spec (struct)
                               ((_ _ _ (struct . field-specs))
                                #'(c-struct-methods-2 temp . field-specs))
