@@ -467,11 +467,10 @@
                      (lambda (x)
                        (syntax-case x ()
                          ((_ temp)
-                          (let* ((spec (#,#'ensure-c-struct type 'type)))
-                            (destructuring-match spec
-                              ((_ _ _ ('struct . field-specs))
-                               (with-syntax (((field-specs (... ...)) (datum->syntax #'temp field-specs)))
-                                 #'(c-struct-methods-2 temp field-specs (... ...))))
+                          (let* ((spec (datum->syntax #'k (#,#'ensure-c-struct type 'type))))
+                            (syntax-case spec (struct)
+                              ((_ _ _ (struct . field-specs))
+                               #'(c-struct-methods-2 temp . field-specs))
                               (_
                                (syntax-violation 'define-c-struct-methods "expected struct type, but got primitive type" 'form)))))))))
                    (check-c-struct type))))))))
