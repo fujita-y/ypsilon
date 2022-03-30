@@ -81,6 +81,8 @@ ypsilon --r6rs --top-level-program demo/widget-demo.scm # (OpenGL Core Profile, 
 ```
 
 ### Docker
+
+* [Container image](https://hub.docker.com/r/fujitay/ypsilon) is available on Docker Hub for amd64 and arm64.
 ```
 $ docker run --rm -it fujitay/ypsilon:latest ypsilon --r7rs
 ypsilon-2.0.5 (r7rs)
