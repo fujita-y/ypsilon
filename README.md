@@ -84,6 +84,15 @@ ypsilon --r6rs --top-level-program demo/freetype-demo.scm # (OpenGL Core Profile
 ypsilon --r6rs --top-level-program demo/widget-demo.scm # (OpenGL Core Profile, GLFW, freetype)
 ```
 
+### Docker
+```
+$ docker run --rm -it fujitay/ypsilon:latest ypsilon --r7rs
+ypsilon-2.0.5 (r7rs)
+> (magnitude 3/22+2/11i)
+5/22
+> (exit)
+```
+
 ### Notes
 
 * REPL start with ```(import (scheme base) (scheme process-context))``` or ```(import (rnrs base) (rnrs programs))``` depending on the command line options specified.
@@ -97,6 +106,5 @@ ypsilon --r6rs --top-level-program demo/widget-demo.scm # (OpenGL Core Profile, 
 * ```cd heap; make; cd ..; make; cd heap; make; cd ..```
 * Edit 'src/core.h' and set 'UNBOUND_GLOC_RETURN_UNSPEC' to '0'
 * ```make```
-
 
 *This project is migrated from code.google.com/p/ypsilon*
