@@ -31,10 +31,6 @@
 
 * [API Reference](https://fujita-y.github.io/ypsilon-api/)
 
-### Versions
-
-* Ypsilon version 2 have major design changes. Former version is available at [version-0.9](https://github.com/fujita-y/ypsilon/tree/version-0.9).
-
 ### Requirements
 
 * LLVM 10, 11, 12, or 13
@@ -107,4 +103,7 @@ ypsilon-2.0.5 (r7rs)
 * Edit 'src/core.h' and set 'UNBOUND_GLOC_RETURN_UNSPEC' to '0'
 * ```make```
 
-*This project is migrated from code.google.com/p/ypsilon*
+### Versions
+
+* Ypsilon version 2 have major design changes. Former version is available at [version-0.9](https://github.com/fujita-y/ypsilon/tree/version-0.9).
+* This project is migrated from code.google.com/p/ypsilon
