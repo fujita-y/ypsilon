@@ -444,17 +444,19 @@ void VM::display_subr_profile() {
   scm_hashtable_t ht = m_heap->m_system_environment->variable;
   hashtable_rec_t* ht_datum = ht->datum;
   int n = ht_datum->capacity;
-  printf("%36s: %12s %12s %12s %14s\n", "subr", "push", "load", "apply", "total");
+  printf("%36s: %12s %12s %12s %12s %14s\n", "subr", "push", "load", "ret", "apply", "total");
   for (int i = 0; i < n; i++) {
     if (SYMBOLP(ht_datum->elts[i])) {
       scm_symbol_t symbol = (scm_symbol_t)ht_datum->elts[i];
-      scm_gloc_t gloc = (scm_gloc_t)ht_datum->elts[n + i];
-      if (GLOCP(gloc)) {
-        scm_subr_t subr = (scm_subr_t)gloc->value;
-        if (SUBRP(subr)) {
-          if (subr->c_push + subr->c_load + subr->c_apply != 0) {
-            printf("%36s: %12lu %12lu %12lu %14lu\n", symbol->name, subr->c_push, subr->c_load, subr->c_apply,
-                   subr->c_push + subr->c_load + subr->c_apply);
+      if (symbol->name[0] == IDENTIFIER_PRIMITIVE_PREFIX) {
+        scm_gloc_t gloc = (scm_gloc_t)ht_datum->elts[n + i];
+        if (GLOCP(gloc)) {
+          scm_subr_t subr = (scm_subr_t)gloc->value;
+          if (SUBRP(subr)) {
+            long total = subr->c_push + subr->c_load + subr->c_ret + subr->c_apply;
+            if (total != 0) {
+              printf("%36s: %12lu %12lu %12lu %12lu %14lu\n", symbol->name, subr->c_push, subr->c_load, subr->c_ret, subr->c_apply, total);
+            }
           }
         }
       }

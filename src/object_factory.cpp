@@ -388,6 +388,7 @@ scm_subr_t make_subr(object_heap_t* heap, subr_proc_t adrs, scm_obj_t doc) {
 #if PROFILE_SUBR
   obj->c_push = 0;
   obj->c_load = 0;
+  obj->c_ret = 0;
   obj->c_apply = 0;
 #endif
   return obj;

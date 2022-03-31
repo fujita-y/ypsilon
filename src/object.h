@@ -254,6 +254,7 @@ OBJECT_ALIGNED(scm_subr_rec_t) {
 #if PROFILE_SUBR
   uint64_t c_push;
   uint64_t c_load;
+  uint64_t c_ret;
   uint64_t c_apply;
 #endif
 }

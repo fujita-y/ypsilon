@@ -404,6 +404,9 @@ apply : {
   }
   if (SUBRP(m_value)) {
     scm_subr_t subr = (scm_subr_t)m_value;
+#if PROFILE_SUBR
+    subr->c_apply++;
+#endif
     intptr_t argc = m_sp - m_fp;
     m_value = (*subr->adrs)(this, argc, m_fp);
     if (m_value == scm_undef) goto BACK_TO_TRACE_N_LOOP;
@@ -688,7 +691,7 @@ loop:
       assert(SUBRP(CAR(OPERANDS)));
       scm_subr_t subr = (scm_subr_t)CAR(OPERANDS);
 #if PROFILE_SUBR
-      subr->c_apply++;
+      subr->c_ret++;
 #endif
       intptr_t argc = m_sp - m_fp;
       m_value = (*subr->adrs)(this, argc, m_fp);
@@ -1396,9 +1399,6 @@ loop:
       scm_subr_t subr = (scm_subr_t)(((scm_gloc_t)CAR(OPERANDS))->value);
       if (SUBRP(subr)) {
 #if ENABLE_LLVM_JIT
-  #if PROFILE_SUBR
-        subr->c_load++;
-  #endif
         assert(SUBRP(subr));
         intptr_t argc = FIXNUM(CADR(OPERANDS));
         m_value = (*subr->adrs)(this, argc, m_sp - argc);
@@ -1421,9 +1421,6 @@ loop:
       scm_subr_t subr = (scm_subr_t)(((scm_gloc_t)CAR(OPERANDS))->value);
       if (SUBRP(subr)) {
 #if ENABLE_LLVM_JIT
-  #if PROFILE_SUBR
-        subr->c_push++;
-  #endif
         assert(SUBRP(subr));
         intptr_t argc = FIXNUM(CADR(OPERANDS));
         assert(argc > 0);
@@ -1451,9 +1448,6 @@ loop:
       scm_subr_t subr = (scm_subr_t)(((scm_gloc_t)CAR(OPERANDS))->value);
       if (SUBRP(subr)) {
 #if ENABLE_LLVM_JIT
-  #if PROFILE_SUBR
-        subr->c_apply++;
-  #endif
         operand_trace = CDR(OPERANDS);
         intptr_t argc = m_sp - m_fp;
         m_value = (*subr->adrs)(this, argc, m_fp);
