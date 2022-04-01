@@ -922,17 +922,7 @@ void digamma_t::transform(context_t& ctx, scm_obj_t inst, bool insert_stack_chec
         emit_if_false_call(ctx, inst);
       } break;
       case VMOP_CALL: {
-#if USE_CALL_INLINING
-        scm_obj_t operands = CDAR(inst);
-        if (!ctx.m_local_extended && ctx.m_argc == 0 && inlinable_call(operands)) {
-          emit_call_inline(ctx, inst);
-          m_usage.call_elimination++;
-        } else {
-          ctx.m_function = emit_call(ctx, inst);
-        }
-#else
         ctx.m_function = emit_call(ctx, inst);
-#endif
       } break;
       case VMOP_RET_GLOC: {
         emit_ret_gloc(ctx, inst);
@@ -999,33 +989,21 @@ void digamma_t::transform(context_t& ctx, scm_obj_t inst, bool insert_stack_chec
         emit_extend(ctx, inst);
         ctx.m_argc = 0;
         ctx.m_depth++;
-#if USE_CALL_INLINING
-        ctx.m_local_extended = true;
-#endif
       } break;
       case VMOP_EXTEND_ENCLOSE: {
         emit_extend_enclose(ctx, inst);
         ctx.m_argc = 0;
         ctx.m_depth++;
-#if USE_CALL_INLINING
-        ctx.m_local_extended = true;
-#endif
       } break;
       case VMOP_EXTEND_ENCLOSE_LOCAL: {
         emit_extend_enclose_local(ctx, inst);
         ctx.m_argc = 0;
         ctx.m_depth++;
-#if USE_CALL_INLINING
-        ctx.m_local_extended = true;
-#endif
       } break;
       case VMOP_EXTEND_UNBOUND: {
         emit_extend_unbound(ctx, inst);
         ctx.m_argc = 0;
         ctx.m_depth++;
-#if USE_CALL_INLINING
-        ctx.m_local_extended = true;
-#endif
       } break;
       case VMOP_PUSH_CLOSE: {
         emit_push_close(ctx, inst);
@@ -1233,7 +1211,6 @@ void digamma_t::display_codegen_statistics(scm_port_t port) {
   port_format(port, "local loop               : %d\n", m_usage.locals);
   port_format(port, "explicit                 : %d\n", m_usage.on_demand);
   port_format(port, "skipped                  : %d\n", m_usage.skipped);
-  port_format(port, "continuation elimination : %d\n", m_usage.call_elimination);
   port_format(port, "native code location     : %lx - %lx\n\n", m_usage.min_sym, m_usage.max_sym);
   port_flush_output(port);
 }
@@ -2302,10 +2279,6 @@ Function* digamma_t::emit_call(context_t& ctx, scm_obj_t inst) {
   context_t ctx2 = ctx;
   ctx2.m_argc = 0;
 
-#if USE_CALL_INLINING
-  ctx2.m_local_extended = false;
-#endif
-
   transform(ctx2, operands, false);
 
   IRB.SetInsertPoint(RETURN);
@@ -2452,8 +2425,9 @@ void digamma_t::emit_apply_iloc_local(context_t& ctx, scm_obj_t inst) {
 #endif
     if (m_debug) {
       if (ctx.m_depth - level - 1 < 0) {
-        printf("hazard: emit_apply_iloc_local: referencing free variable (%d - %d)\n", ctx.m_depth, level);
-      } else if (ctx.m_local_functions[function_index] == NULL) {
+        printf("hazard: emit_apply_iloc_local: referencing free variable depth:%d level:%d)\n", ctx.m_depth, level);
+      }
+      if (ctx.m_local_functions[function_index] == NULL) {
         printf("hazard: emit_apply_iloc_local: ctx.m_local_functions[%d] == NULL\n", function_index);
       }
     }

@@ -21,7 +21,6 @@
 #define USE_ILOC_CACHE            1
 #define USE_REG_CACHE             1
 #define USE_AOT_CODEGEN_REFERENCE 1
-#define USE_CALL_INLINING         0
 
 #define USE_TRACE_CODE            1
 #define USE_TAIL_CALL_TRACE       1
@@ -58,9 +57,6 @@ class digamma_t {
     std::vector<int> m_local_var_count;
     int m_argc;
     int m_depth;
-#if USE_CALL_INLINING
-    bool m_local_extended;
-#endif
     std::map<int, llvm::Value*> m_iloc_cache;
     reg_cache_t<offsetof(VM, m_sp)> reg_sp;
     reg_cache_t<offsetof(VM, m_fp)> reg_fp;
@@ -95,9 +91,6 @@ class digamma_t {
           m_irb(irb),
           m_argc(0),
           m_depth(0),
-#if USE_CALL_INLINING
-          m_local_extended(false),
-#endif
           m_continuation(nullptr),
           reg_sp(this),
           reg_fp(this),
@@ -152,10 +145,9 @@ class digamma_t {
     int refs;
     int on_demand;
     int skipped;
-    int call_elimination;
     uintptr_t min_sym;
     uintptr_t max_sym;
-    usage_t() : globals(0), locals(0), inners(0), templates(0), refs(0), on_demand(0), skipped(0), call_elimination(0), min_sym(0), max_sym(0) {}
+    usage_t() : globals(0), locals(0), inners(0), templates(0), refs(0), on_demand(0), skipped(0), min_sym(0), max_sym(0) {}
   } m_usage;
 
  private:
