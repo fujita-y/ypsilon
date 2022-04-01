@@ -905,6 +905,7 @@ bool digamma_t::inlinable_call(scm_obj_t code) {
       case VMOP_IF_TRUE_RET:
       case VMOP_IF_FALSE_RET:
       case VMOP_ENCLOSE:
+        break;
       default:
         return false;
     }
