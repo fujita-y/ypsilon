@@ -277,10 +277,20 @@ void VM::prebind_list(scm_obj_t code) {
       } break;
 
       case VMOP_PUSH_CLOSE_LOCAL:
-      case VMOP_EXTEND_ENCLOSE_LOCAL:
-        // if (SYMBOLP(CAAR(operands))) break;
+      case VMOP_EXTEND_ENCLOSE_LOCAL: {
+#if LOCAL_CLOSURE_CODEGEN
+        if (CLOSUREP(operands)) break;
         prebind_list(CDR(operands));
-        break;
+  #if PREBIND_CLOSE
+        scm_obj_t spec = CAR(operands);
+        scm_closure_t closure = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), NULL, CDR(operands), CDDR(spec));
+        m_heap->write_barrier(closure);
+        CDAR(code) = closure;
+  #endif
+#else
+        prebind_list(CDR(operands));
+#endif
+      } break;
 
       case VMOP_CLOSE:
       case VMOP_RET_CLOSE:

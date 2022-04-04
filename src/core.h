@@ -29,7 +29,9 @@
   #define DEFAULT_HEAP_LIMIT 32  // MB
 #endif
 
-#define ENABLE_LLVM_JIT 1
+#define ENABLE_LLVM_JIT       1
+
+#define LOCAL_CLOSURE_CODEGEN 1
 
 #if ENABLE_LLVM_JIT
   #define ENABLE_CODEGEN_GLOC      1

@@ -717,13 +717,19 @@ loop:
           level = level - 1;
         }
         vm_env_t env2 = (vm_env_t)((intptr_t)lnk - offsetof(vm_env_rec_t, up));
-        scm_obj_t obj = *((scm_obj_t*)env2 - env2->count + FIXNUM(CDAR(OPERANDS)));
         vm_env_t env = (vm_env_t)m_sp;
         env->count = m_sp - m_fp;
         env->up = &env2->up;
         m_env = &env->up;
         m_sp = m_fp = (scm_obj_t*)(env + 1);
+#if LOCAL_CLOSURE_CODEGEN
+        scm_closure_t closure = *((scm_closure_t*)env2 - env2->count + FIXNUM(CDAR(OPERANDS)));
+        assert(CLOSUREP(closure));
+        m_pc = closure->pc;
+#else
+        scm_obj_t obj = *((scm_obj_t*)env2 - env2->count + FIXNUM(CDAR(OPERANDS)));
         m_pc = obj;
+#endif
         goto trace_n_loop;
       }
       goto COLLECT_STACK_ENV_REC;
@@ -785,7 +791,12 @@ loop:
 
     CASE(VMOP_EXTEND_ENCLOSE_LOCAL) {
       if ((uintptr_t)m_sp + sizeof(scm_obj_t) + sizeof(vm_env_rec_t) < (uintptr_t)m_stack_limit) {
+#if LOCAL_CLOSURE_CODEGEN
+        assert(CLOSUREP(OPERANDS));
+        m_sp[0] = OPERANDS;
+#else
         m_sp[0] = CDR(OPERANDS);
+#endif
         m_sp++;
         vm_env_t env = (vm_env_t)m_sp;
         env->count = 1;
@@ -846,7 +857,12 @@ loop:
 
     CASE(VMOP_PUSH_CLOSE_LOCAL) {
       if (m_sp < m_stack_limit) {
+#if LOCAL_CLOSURE_CODEGEN
+        assert(CLOSUREP(OPERANDS));
+        m_sp[0] = OPERANDS;
+#else
         m_sp[0] = CDR(OPERANDS);
+#endif
         m_sp++;
         m_pc = CDR(m_pc);
         goto loop;
