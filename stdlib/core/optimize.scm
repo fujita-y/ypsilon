@@ -635,19 +635,25 @@
                         (update-callsites-each lst subst))))
                 (else lst))))
 
-      (define rename-freevars
+      (define rename-freevars-each
         (lambda (lst renames)
           (let loop ((lst lst))
             (cond ((pair? lst)
-                   (let ((a (loop (car lst))) (d (loop (cdr lst))))
+                   (let ((a (rename-freevars (car lst) renames)) (d (loop (cdr lst))))
                      (cond ((and (eq? a (car lst)) (eq? d (cdr lst))) lst)
                            (else ((annotate-hook) (cons a d) lst)))))
-                  ((vector? lst)
-                   (list->vector (loop (vector->list lst))))
+                  (else lst)))))
+
+      (define rename-freevars
+        (lambda (lst renames)
+            (cond ((pair? lst)
+                   (cond ((eq? (car lst) 'quote) lst)
+                         (else
+                          (rename-freevars-each lst renames))))
                   ((symbol? lst)
                    (cond ((assq lst renames) => cdr)
                          (else lst)))
-                  (else lst)))))
+                  (else lst))))
 
       (define any-var-assigned?
         (lambda (vars)
