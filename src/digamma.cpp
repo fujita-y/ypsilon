@@ -513,10 +513,12 @@ digamma_t::digamma_t() : m_debug(false) {}
 
 void digamma_t::init() {
   m_codegen_thread_terminating = false;
+  m_codegen_thread_ready = false;
   m_codegen_thread_lock.init();
   m_codegen_thread_wake.init();
   m_codegen_queue_lock.init();
   thread_start(codegen_thread, this);
+  while (!m_codegen_thread_ready) usleep(100);
 }
 
 void digamma_t::destroy() {
@@ -3547,6 +3549,8 @@ void digamma_t::emit_extend_enclose(context_t& ctx, scm_obj_t inst) {
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
+
+  if (maybe_codegen((scm_closure_t)operands)) m_usage.templates++;
 
   ctx.reg_cache_copy_except_value(vm);
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
