@@ -98,11 +98,11 @@ ypsilon-2.0.6 (r7rs)
 
 ### Rebuild heap files
 
-* Edit 'src/core.h' and set 'UNBOUND_GLOC_RETURN_UNSPEC' to '1'
+* Open 'src/core.h' and set 'UNBOUND_GLOC_RETURN_UNSPEC' to '1'
 * ```make```
 * Edit .scm files in 'heap/boot' directory
 * ```cd heap; make; cd ..; make; cd heap; make; cd ..```
-* Edit 'src/core.h' and set 'UNBOUND_GLOC_RETURN_UNSPEC' to '0'
+* Open 'src/core.h' and set 'UNBOUND_GLOC_RETURN_UNSPEC' to '0'
 * ```make```
 
 ### Versions
