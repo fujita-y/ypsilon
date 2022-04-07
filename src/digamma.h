@@ -154,7 +154,9 @@ class digamma_t {
   int calc_stack_size(scm_obj_t inst);
   int calc_iloc_index(context_t& ctx, scm_obj_t operand);
   int calc_iloc_index(context_t& ctx, intptr_t depth, intptr_t index);
+#if USE_AOT_CODEGEN_REFERENCE
   void precodegen_reference(scm_obj_t code);
+#endif
   bool maybe_codegen(scm_closure_t closure);
   void codegen(scm_closure_t closure);
   void emit_trace(context_t& ctx, scm_obj_t obj);

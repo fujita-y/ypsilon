@@ -617,6 +617,7 @@ void digamma_t::codegen_closure(scm_closure_t closure) {
   }
 }
 
+#if USE_AOT_CODEGEN_REFERENCE
 void digamma_t::precodegen_reference(scm_obj_t code) {
   while (PAIRP(code)) {
     scm_symbol_t symbol = (scm_symbol_t)CAAR(code);
@@ -625,13 +626,27 @@ void digamma_t::precodegen_reference(scm_obj_t code) {
     assert(opcode < VMOP_MNEMNIC_COUNT);
     scm_obj_t operands = (scm_obj_t)CDAR(code);
     switch (opcode) {
+      case VMOP_GLOC:
+      case VMOP_PUSH_GLOC:
+      case VMOP_RET_GLOC: {
+        scm_gloc_t gloc = (scm_gloc_t)operands;
+        if (CLOSUREP(gloc->value)) {
+          scm_closure_t closure = (scm_closure_t)gloc->value;
+          if (VM::closure_is_not_compiled(closure)) {
+            VM::mark_closure_compiling(closure);
+            scoped_lock lock(m_codegen_queue_lock);
+            m_codegen_queue.push_back(closure);
+            m_usage.refs++;
+          }
+        }
+      } break;
       case VMOP_APPLY_GLOC: {
         scm_gloc_t gloc = (scm_gloc_t)CAR(operands);
         if (CLOSUREP(gloc->value)) {
           scm_closure_t closure = (scm_closure_t)gloc->value;
           if (VM::closure_is_not_compiled(closure)) {
-            scoped_lock lock(m_codegen_queue_lock);
             VM::mark_closure_compiling(closure);
+            scoped_lock lock(m_codegen_queue_lock);
             m_codegen_queue.push_back(closure);
             m_usage.refs++;
           }
@@ -662,6 +677,7 @@ void digamma_t::precodegen_reference(scm_obj_t code) {
     code = CDR(code);
   }
 }
+#endif
 
 bool digamma_t::maybe_codegen(scm_closure_t closure) {
   if (VM::closure_is_not_compiled(closure)) {
@@ -3069,6 +3085,13 @@ void digamma_t::emit_ret_gloc(context_t& ctx, scm_obj_t inst) {
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
+
+#if ENABLE_CODEGEN_REFERENCE
+  scm_obj_t obj = ((scm_gloc_t)operands)->value;
+  if (CLOSUREP(obj)) {
+    if (maybe_codegen((scm_closure_t)obj)) m_usage.refs++;
+  }
+#endif
 
   auto gloc = IRB.CreateBitOrPointerCast(VALUE_INTPTR(operands), IntptrPtrTy);
   ctx.reg_value.store(vm, CREATE_LOAD_GLOC_REC(gloc, value));
