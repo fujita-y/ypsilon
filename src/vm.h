@@ -145,6 +145,10 @@ class VM {
   void display_subr_profile();
 #endif
 
+  static bool closure_is_not_compiled(scm_closure_t closure) { return closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr); }
+
+  static void mark_closure_compiling(scm_closure_t closure) { closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT); }
+
   static int instruction_to_opcode(scm_obj_t obj) {
     assert(OPCODESYMBOLP(obj));
     return HDR_SYMBOL_CODE(((scm_symbol_t)obj)->hdr);

@@ -99,8 +99,8 @@ scm_obj_t subr_codegen_queue_push(VM* vm, int argc, scm_obj_t argv[]) {
     if (CLOSUREP(argv[0])) {
       scm_closure_t closure = (scm_closure_t)argv[0];
       if (vm->m_digamma) {
-        if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
-          closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
+        if (VM::closure_is_not_compiled(closure)) {
+          VM::mark_closure_compiling(closure);
           vm->m_digamma->m_usage.on_demand++;
           vm->m_digamma->codegen_closure(closure);
         }

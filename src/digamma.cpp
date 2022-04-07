@@ -599,7 +599,7 @@ void digamma_t::optimizeModule(Module& M) {
   PB.registerFunctionAnalyses(FAM);
   PB.registerLoopAnalyses(LAM);
   PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
-  ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O3);
+  ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O2);
   if (m_debug) MPM.addPass(PrintModulePass(outs(), "; *** IR after optimize ***", false));
   MPM.run(M, MAM);
 }
@@ -629,38 +629,20 @@ void digamma_t::precodegen_reference(scm_obj_t code) {
         scm_gloc_t gloc = (scm_gloc_t)CAR(operands);
         if (CLOSUREP(gloc->value)) {
           scm_closure_t closure = (scm_closure_t)gloc->value;
-          if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
+          if (VM::closure_is_not_compiled(closure)) {
             scoped_lock lock(m_codegen_queue_lock);
-            closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
+            VM::mark_closure_compiling(closure);
             m_codegen_queue.push_back(closure);
             m_usage.refs++;
           }
         }
       } break;
-      case VMOP_PUSH_CLOSE_LOCAL:
-      case VMOP_EXTEND_ENCLOSE_LOCAL: {
-#if LOCAL_CLOSURE_CODEGEN
-        if (CLOSUREP(operands)) {
-          scm_closure_t closure = (scm_closure_t)operands;
-          if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
-            scoped_lock lock(m_codegen_queue_lock);
-            closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
-            m_codegen_queue.push_back(closure);
-            m_usage.templates++;
-          }
-          precodegen_reference(((scm_closure_t)operands)->pc);
-        } else {
-          precodegen_reference(CDR(operands));
-        }
-#else
-        precodegen_reference(CDR(operands));
-#endif
-        break;
-      }
       case VMOP_CLOSE:
       case VMOP_RET_CLOSE:
       case VMOP_PUSH_CLOSE:
-      case VMOP_EXTEND_ENCLOSE: {
+      case VMOP_EXTEND_ENCLOSE:
+      case VMOP_PUSH_CLOSE_LOCAL:
+      case VMOP_EXTEND_ENCLOSE_LOCAL: {
         if (CLOSUREP(operands)) {
           precodegen_reference(((scm_closure_t)operands)->pc);
         } else {
@@ -682,9 +664,9 @@ void digamma_t::precodegen_reference(scm_obj_t code) {
 }
 
 bool digamma_t::maybe_codegen(scm_closure_t closure) {
-  if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
+  if (VM::closure_is_not_compiled(closure)) {
     scoped_lock lock(m_codegen_queue_lock);
-    closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
+    VM::mark_closure_compiling(closure);
     m_codegen_queue.push_back(closure);
     return true;
   }
@@ -2468,6 +2450,8 @@ void digamma_t::emit_extend_enclose_local(context_t& ctx, scm_obj_t inst) {
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
 
+  if (maybe_codegen((scm_closure_t)operands)) m_usage.templates++;
+
 #if LOCAL_CLOSURE_CODEGEN
   emit_push_vm_stack(ctx, VALUE_INTPTR(operands));
 #else
@@ -3267,6 +3251,8 @@ void digamma_t::emit_push_close_local(context_t& ctx, scm_obj_t inst) {
   DECLEAR_CONTEXT_VARS;
   DECLEAR_COMMON_TYPES;
   scm_obj_t operands = CDAR(inst);
+
+  if (maybe_codegen((scm_closure_t)operands)) m_usage.templates++;
 
 #if LOCAL_CLOSURE_CODEGEN
   emit_push_vm_stack(ctx, VALUE_INTPTR(operands));

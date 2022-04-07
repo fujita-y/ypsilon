@@ -671,8 +671,8 @@ loop:
 #if ENABLE_CODEGEN_GLOC
       if (m_digamma && CLOSUREP(gloc->value)) {
         scm_closure_t closure = (scm_closure_t)gloc->value;
-        if (closure->code == NULL && !HDR_CLOSURE_CODEGEN(closure->hdr)) {
-          closure->hdr = closure->hdr | MAKEBITS(1, HDR_CLOSURE_CODEGEN_SHIFT);
+        if (closure_is_not_compiled(closure)) {
+          mark_closure_compiling(closure);
           if (self_modifying(gloc, closure->pc)) {
             m_digamma->m_usage.skipped++;
           } else {
