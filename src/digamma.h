@@ -8,6 +8,8 @@
 #include "object.h"
 #include "vm.h"
 
+#include <thread>
+
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
@@ -47,13 +49,13 @@ class digamma_t {
 
   struct context_t {
     llvm::LLVMContext& m_llvm_context;
+    llvm::IRBuilder<>& m_irb;
+    std::map<scm_closure_t, llvm::Function*>& m_lifted_functions;
+    std::map<int, llvm::Function*> m_local_functions;
     llvm::Module* m_module;
     llvm::Function* m_function;
-    llvm::BasicBlock* m_continuation;
-    llvm::IRBuilder<>& m_irb;
     llvm::Function* m_top_level_function;
     scm_closure_t m_top_level_closure;
-    std::map<int, llvm::Function*> m_local_functions;
     std::vector<int> m_local_var_count;
     int m_argc;
     int m_depth;
@@ -66,32 +68,18 @@ class digamma_t {
     llvm::MDNode* likely_true;
     llvm::MDNode* likely_false;
     void reg_cache_copy(llvm::Value* vm);
-    void reg_cache_copy_only_value(llvm::Value* vm);
-    void reg_cache_copy_only_value_and_env(llvm::Value* vm);
-    void reg_cache_copy_only_value_and_cont(llvm::Value* vm);
-    void reg_cache_copy_only_env_and_cont(llvm::Value* vm);
-    void reg_cache_copy_only_env_and_fp(llvm::Value* vm);
-    void reg_cache_copy_except_sp(llvm::Value* vm);
     void reg_cache_copy_except_value(llvm::Value* vm);
-    void reg_cache_copy_except_value_and_sp(llvm::Value* vm);
-    void reg_cache_copy_except_value_and_fp(llvm::Value* vm);
     void reg_cache_clear();
-    void reg_cache_clear_only_value();
-    void reg_cache_clear_only_env_and_value();
-    void reg_cache_clear_only_sp();
-    void reg_cache_clear_only_env_and_sp();
-    void reg_cache_clear_except_value();
-    void reg_cache_clear_except_value_and_cont();
     void set_local_var_count(int depth, int count);
     void set_local_var_count(int depth, scm_closure_t closure);
     int get_local_var_count(int depth);
     llvm::MDNode* get_branch_weight(int n, int m);
-    context_t(llvm::LLVMContext& llvm_context, llvm::IRBuilder<>& irb)
+    context_t(llvm::LLVMContext& llvm_context, llvm::IRBuilder<>& irb, std::map<scm_closure_t, llvm::Function*>& lifted_functions)
         : m_llvm_context(llvm_context),
           m_irb(irb),
+          m_lifted_functions(lifted_functions),
           m_argc(0),
           m_depth(0),
-          m_continuation(nullptr),
           reg_sp(this),
           reg_fp(this),
           reg_env(this),
@@ -116,14 +104,14 @@ class digamma_t {
   };
 
   std::unique_ptr<llvm::orc::LLJIT> m_jit;
-  std::map<scm_closure_t, llvm::Function*> m_lifted_functions;
+  std::thread* m_codegen_thread;
   mutex_t m_codegen_thread_lock;
   cond_t m_codegen_thread_wake;
   bool m_codegen_thread_ready;
   bool m_codegen_thread_terminating;
-  static thread_main_t codegen_thread(void* param);
+
+  static void codegen_thread(digamma_t* param);
   void optimizeModule(llvm::Module& M);
-  bool inlinable_call(scm_obj_t code);
   void transform(context_t& ctx, scm_obj_t inst, bool insert_stack_check);
   llvm::Value* get_function_address(context_t& ctx, scm_closure_t closure);
 

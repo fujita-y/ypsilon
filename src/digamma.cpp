@@ -392,38 +392,11 @@ digamma_t::reg_cache_t<byte_offset>::reg_cache_t(digamma_t::context_t* context)
 }
 
 void digamma_t::context_t::reg_cache_clear() {
-  reg_fp.clear();
   reg_env.clear();
   reg_cont.clear();
-  reg_sp.clear();
   reg_value.clear();
-}
-
-void digamma_t::context_t::reg_cache_clear_only_value() { reg_value.clear(); }
-
-void digamma_t::context_t::reg_cache_clear_only_sp() { reg_sp.clear(); }
-
-void digamma_t::context_t::reg_cache_clear_only_env_and_value() {
-  reg_env.clear();
-  reg_value.clear();
-}
-
-void digamma_t::context_t::reg_cache_clear_only_env_and_sp() {
-  reg_env.clear();
-  reg_sp.clear();
-}
-
-void digamma_t::context_t::reg_cache_clear_except_value() {
   reg_sp.clear();
   reg_fp.clear();
-  reg_env.clear();
-  reg_cont.clear();
-}
-
-void digamma_t::context_t::reg_cache_clear_except_value_and_cont() {
-  reg_sp.clear();
-  reg_fp.clear();
-  reg_env.clear();
 }
 
 void digamma_t::context_t::reg_cache_copy(llvm::Value* vm) {
@@ -434,52 +407,11 @@ void digamma_t::context_t::reg_cache_copy(llvm::Value* vm) {
   reg_value.copy(vm);
 }
 
-void digamma_t::context_t::reg_cache_copy_except_sp(llvm::Value* vm) {
-  reg_fp.copy(vm);
-  reg_env.copy(vm);
-  reg_cont.copy(vm);
-  reg_value.copy(vm);
-}
-
 void digamma_t::context_t::reg_cache_copy_except_value(llvm::Value* vm) {
   reg_fp.copy(vm);
   reg_env.copy(vm);
   reg_cont.copy(vm);
   reg_sp.copy(vm);
-}
-
-void digamma_t::context_t::reg_cache_copy_except_value_and_sp(llvm::Value* vm) {
-  reg_fp.copy(vm);
-  reg_env.copy(vm);
-  reg_cont.copy(vm);
-}
-
-void digamma_t::context_t::reg_cache_copy_except_value_and_fp(llvm::Value* vm) {
-  reg_sp.copy(vm);
-  reg_env.copy(vm);
-  reg_cont.copy(vm);
-}
-
-void digamma_t::context_t::reg_cache_copy_only_value(llvm::Value* vm) { reg_value.copy(vm); }
-
-void digamma_t::context_t::reg_cache_copy_only_value_and_env(llvm::Value* vm) {
-  reg_env.copy(vm);
-  reg_value.copy(vm);
-}
-
-void digamma_t::context_t::reg_cache_copy_only_value_and_cont(llvm::Value* vm) {
-  reg_cont.copy(vm);
-  reg_value.copy(vm);
-}
-
-void digamma_t::context_t::reg_cache_copy_only_env_and_cont(llvm::Value* vm) {
-  reg_cont.copy(vm);
-  reg_env.copy(vm);
-}
-
-void digamma_t::context_t::reg_cache_copy_only_env_and_fp(llvm::Value* vm) {
-  reg_fp.copy(vm);
-  reg_env.copy(vm);
 }
 
 int digamma_t::calc_iloc_index(context_t& ctx, intptr_t depth, intptr_t index) { return ((depth - (ctx.m_depth - 1)) << 16) | (index & 0xffff); }
@@ -517,176 +449,69 @@ void digamma_t::init() {
   m_codegen_thread_lock.init();
   m_codegen_thread_wake.init();
   m_codegen_queue_lock.init();
-  thread_start(codegen_thread, this);
-  while (!m_codegen_thread_ready) usleep(100);
+  m_codegen_thread = new std::thread(codegen_thread, this);
+  scoped_lock lock(m_codegen_thread_lock);
 }
 
 void digamma_t::destroy() {
   m_codegen_thread_terminating = true;
-  {
-    scoped_lock lock(m_codegen_thread_lock);
-    m_codegen_thread_wake.signal();
-  }
-  while (m_codegen_thread_terminating) usleep(100);
-  m_codegen_thread_lock.destroy();
-  m_codegen_thread_wake.destroy();
-  m_codegen_queue_lock.destroy();
-}
-
-thread_main_t digamma_t::codegen_thread(void* param) {
-  digamma_t& digamma = *(digamma_t*)param;
-  digamma.m_codegen_thread_lock.lock();
-  {
-    auto J = ExitOnErr(LLJITBuilder().create());
-    auto D = J->getDataLayout();
-    auto G = ExitOnErr(orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(D.getGlobalPrefix()));
-    J->getMainJITDylib().addGenerator(std::move(G));
-    digamma.m_jit = std::move(J);
-    digamma.m_codegen_thread_ready = true;
-    while (!digamma.m_codegen_thread_terminating) {
-      digamma.m_codegen_thread_wake.wait(digamma.m_codegen_thread_lock);
-      digamma.m_codegen_thread_ready = false;
-      while (!digamma.m_codegen_thread_terminating) {
-        scm_closure_t closure = NULL;
-        {
-          scoped_lock lock(digamma.m_codegen_queue_lock);
-          if (digamma.m_codegen_queue.size()) {
-            closure = digamma.m_codegen_queue.back();
-          } else {
-            digamma.m_codegen_thread_ready = true;
-            break;
-          }
-        }
-        if (closure->code != NULL) continue;
-#if ENABLE_CODEGEN_REFERENCE && USE_AOT_CODEGEN_REFERENCE
-        digamma.precodegen_reference(closure->pc);
-        {
-          scoped_lock lock(digamma.m_codegen_queue_lock);
-          if (digamma.m_codegen_queue.size()) {
-            closure = digamma.m_codegen_queue.back();
-          } else {
-            digamma.m_codegen_thread_ready = true;
-            break;
-          }
-        }
-#endif
-        digamma.codegen(closure);
-        {
-          scoped_lock lock(digamma.m_codegen_queue_lock);
-          digamma.m_codegen_queue.erase(std::remove(digamma.m_codegen_queue.begin(), digamma.m_codegen_queue.end(), closure),
-                                        digamma.m_codegen_queue.end());
-        }
-      }
-    }
-#if LLVM_VERSION_MAJOR >= 12
-    ExitOnErr(digamma.m_jit->getExecutionSession().endSession());
-#endif
-  }
-  digamma.m_codegen_thread_terminating = false;
-  digamma.m_codegen_thread_lock.unlock();
-  return NULL;
-}
-
-void digamma_t::optimizeModule(Module& M) {
-  LoopAnalysisManager LAM;
-  FunctionAnalysisManager FAM;
-  CGSCCAnalysisManager CGAM;
-  ModuleAnalysisManager MAM;
-  PassBuilder PB;
-  FAM.registerPass([&] { return PB.buildDefaultAAPipeline(); });
-  PB.registerModuleAnalyses(MAM);
-  PB.registerCGSCCAnalyses(CGAM);
-  PB.registerFunctionAnalyses(FAM);
-  PB.registerLoopAnalyses(LAM);
-  PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
-  ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O2);
-  if (m_debug) MPM.addPass(PrintModulePass(outs(), "; *** IR after optimize ***", false));
-  MPM.run(M, MAM);
-}
-
-void digamma_t::codegen_closure(scm_closure_t closure) {
-  if (m_codegen_thread_terminating) return;
-  {
-    scoped_lock lock(m_codegen_queue_lock);
-    if (std::find(m_codegen_queue.begin(), m_codegen_queue.end(), closure) != m_codegen_queue.end()) return;
-    m_codegen_queue.push_back(closure);
-  }
   if (m_codegen_thread_ready) {
     scoped_lock lock(m_codegen_thread_lock);
     m_codegen_thread_wake.signal();
   }
-}
+  m_codegen_thread->join();
+  m_codegen_thread_lock.destroy();
+  m_codegen_thread_wake.destroy();
+  m_codegen_queue_lock.destroy();
+  delete m_codegen_thread;
+  m_codegen_thread = NULL;
 
-#if USE_AOT_CODEGEN_REFERENCE
-void digamma_t::precodegen_reference(scm_obj_t code) {
-  while (PAIRP(code)) {
-    scm_symbol_t symbol = (scm_symbol_t)CAAR(code);
-    assert(INHERENTSYMBOLP(symbol));
-    int opcode = HDR_SYMBOL_CODE(symbol->hdr);
-    assert(opcode < VMOP_MNEMNIC_COUNT);
-    scm_obj_t operands = (scm_obj_t)CDAR(code);
-    switch (opcode) {
-      case VMOP_GLOC:
-      case VMOP_PUSH_GLOC:
-      case VMOP_RET_GLOC: {
-        scm_gloc_t gloc = (scm_gloc_t)operands;
-        if (CLOSUREP(gloc->value)) {
-          scm_closure_t closure = (scm_closure_t)gloc->value;
-          if (VM::closure_is_not_compiled(closure)) {
-            VM::mark_closure_compiling(closure);
-            scoped_lock lock(m_codegen_queue_lock);
-            m_codegen_queue.push_back(closure);
-            m_usage.refs++;
-          }
-        }
-      } break;
-      case VMOP_APPLY_GLOC: {
-        scm_gloc_t gloc = (scm_gloc_t)CAR(operands);
-        if (CLOSUREP(gloc->value)) {
-          scm_closure_t closure = (scm_closure_t)gloc->value;
-          if (VM::closure_is_not_compiled(closure)) {
-            VM::mark_closure_compiling(closure);
-            scoped_lock lock(m_codegen_queue_lock);
-            m_codegen_queue.push_back(closure);
-            m_usage.refs++;
-          }
-        }
-      } break;
-      case VMOP_CLOSE:
-      case VMOP_RET_CLOSE:
-      case VMOP_PUSH_CLOSE:
-      case VMOP_EXTEND_ENCLOSE:
-      case VMOP_PUSH_CLOSE_LOCAL:
-      case VMOP_EXTEND_ENCLOSE_LOCAL: {
-        if (CLOSUREP(operands)) {
-          precodegen_reference(((scm_closure_t)operands)->pc);
-        } else {
-          precodegen_reference(CDR(operands));
-        }
-      } break;
-      case VMOP_IF_TRUE:
-      case VMOP_IF_FALSE_CALL:
-      case VMOP_IF_NULLP:
-      case VMOP_IF_PAIRP:
-      case VMOP_IF_SYMBOLP:
-      case VMOP_IF_EQP:
-      case VMOP_CALL: {
-        precodegen_reference(operands);
-      } break;
-    }
-    code = CDR(code);
-  }
-}
+#if LLVM_VERSION_MAJOR >= 12
+  ExitOnErr(m_jit->getExecutionSession().endSession());
 #endif
+}
 
-bool digamma_t::maybe_codegen(scm_closure_t closure) {
-  if (VM::closure_is_not_compiled(closure)) {
-    scoped_lock lock(m_codegen_queue_lock);
-    VM::mark_closure_compiling(closure);
-    m_codegen_queue.push_back(closure);
-    return true;
+void digamma_t::codegen_thread(digamma_t* param) {
+  digamma_t& digamma = *(digamma_t*)param;
+  digamma.m_codegen_thread_lock.lock();
+
+  auto J = ExitOnErr(LLJITBuilder().create());
+  auto D = J->getDataLayout();
+  auto G = ExitOnErr(orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(D.getGlobalPrefix()));
+  J->getMainJITDylib().addGenerator(std::move(G));
+  digamma.m_jit = std::move(J);
+
+  while (!digamma.m_codegen_thread_terminating) {
+    digamma.m_codegen_thread_ready = true;
+    digamma.m_codegen_thread_wake.wait(digamma.m_codegen_thread_lock);
+    digamma.m_codegen_thread_ready = false;
+    while (!digamma.m_codegen_thread_terminating) {
+      scm_closure_t closure = NULL;
+      {
+        scoped_lock lock(digamma.m_codegen_queue_lock);
+        if (digamma.m_codegen_queue.size() == 0) break;
+        closure = digamma.m_codegen_queue.back();
+        if (closure->code != NULL) continue;
+      }
+#if ENABLE_CODEGEN_REFERENCE && USE_AOT_CODEGEN_REFERENCE
+      digamma.precodegen_reference(closure->pc);
+      {
+        scoped_lock lock(digamma.m_codegen_queue_lock);
+        if (digamma.m_codegen_queue.size() == 0) break;
+        closure = digamma.m_codegen_queue.back();
+        if (closure->code != NULL) continue;
+      }
+#endif
+      digamma.codegen(closure);
+      {
+        scoped_lock lock(digamma.m_codegen_queue_lock);
+        digamma.m_codegen_queue.erase(std::remove(digamma.m_codegen_queue.begin(), digamma.m_codegen_queue.end(), closure),
+                                      digamma.m_codegen_queue.end());
+      }
+    }
   }
-  return false;
+  digamma.m_codegen_thread_terminating = false;
+  digamma.m_codegen_thread_lock.unlock();
 }
 
 void digamma_t::codegen(scm_closure_t closure) {
@@ -720,8 +545,9 @@ void digamma_t::codegen(scm_closure_t closure) {
 #endif
   BasicBlock* ENTRY = BasicBlock::Create(C, "entry", F);
   IRBuilder<> IRB(ENTRY);
+  std::map<scm_closure_t, llvm::Function*> lifted_functions;
   {
-    context_t context(C, IRB);
+    context_t context(C, IRB, lifted_functions);
     context.m_module = M.get();
     context.m_function = F;
     context.m_top_level_closure = closure;
@@ -746,8 +572,97 @@ void digamma_t::codegen(scm_closure_t closure) {
   if (m_usage.max_sym < (uintptr_t)thunk) m_usage.max_sym = (uintptr_t)thunk;
 
   closure->code = (void*)thunk;
-  m_lifted_functions.clear();
 }
+
+void digamma_t::optimizeModule(Module& M) {
+  LoopAnalysisManager LAM;
+  FunctionAnalysisManager FAM;
+  CGSCCAnalysisManager CGAM;
+  ModuleAnalysisManager MAM;
+  PassBuilder PB;
+  FAM.registerPass([&] { return PB.buildDefaultAAPipeline(); });
+  PB.registerModuleAnalyses(MAM);
+  PB.registerCGSCCAnalyses(CGAM);
+  PB.registerFunctionAnalyses(FAM);
+  PB.registerLoopAnalyses(LAM);
+  PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
+  ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O2);
+  if (m_debug) MPM.addPass(PrintModulePass(outs(), "; *** IR after optimize ***", false));
+  MPM.run(M, MAM);
+}
+
+void digamma_t::codegen_closure(scm_closure_t closure) {
+  if (m_codegen_thread_terminating) return;
+  {
+    scoped_lock lock(m_codegen_queue_lock);
+    m_codegen_queue.push_back(closure);
+  }
+  if (m_codegen_thread_ready) {
+    scoped_lock lock(m_codegen_thread_lock);
+    m_codegen_thread_wake.signal();
+  }
+}
+
+bool digamma_t::maybe_codegen(scm_closure_t closure) {
+  if (VM::closure_is_not_compiled(closure)) {
+    VM::mark_closure_compiling(closure);
+    codegen_closure(closure);
+    return true;
+  }
+  return false;
+}
+
+#if USE_AOT_CODEGEN_REFERENCE
+void digamma_t::precodegen_reference(scm_obj_t code) {
+  while (PAIRP(code)) {
+    scm_symbol_t symbol = (scm_symbol_t)CAAR(code);
+    assert(INHERENTSYMBOLP(symbol));
+    int opcode = HDR_SYMBOL_CODE(symbol->hdr);
+    assert(opcode < VMOP_MNEMNIC_COUNT);
+    scm_obj_t operands = (scm_obj_t)CDAR(code);
+    switch (opcode) {
+      case VMOP_GLOC:
+      case VMOP_PUSH_GLOC:
+      case VMOP_RET_GLOC: {
+        scm_gloc_t gloc = (scm_gloc_t)operands;
+        if (CLOSUREP(gloc->value)) {
+          scm_closure_t closure = (scm_closure_t)gloc->value;
+          if (maybe_codegen(closure)) m_usage.refs++;
+        }
+      } break;
+      case VMOP_APPLY_GLOC: {
+        scm_gloc_t gloc = (scm_gloc_t)CAR(operands);
+        if (CLOSUREP(gloc->value)) {
+          scm_closure_t closure = (scm_closure_t)gloc->value;
+          if (maybe_codegen(closure)) m_usage.refs++;
+        }
+      } break;
+      case VMOP_CLOSE:
+      case VMOP_RET_CLOSE:
+      case VMOP_PUSH_CLOSE:
+      case VMOP_EXTEND_ENCLOSE:
+      case VMOP_PUSH_CLOSE_LOCAL:
+      case VMOP_EXTEND_ENCLOSE_LOCAL: {
+        if (CLOSUREP(operands)) {
+          precodegen_reference(((scm_closure_t)operands)->pc);
+        } else {
+          precodegen_reference(CDR(operands));
+        }
+      } break;
+      case VMOP_IF_TRUE:
+      case VMOP_IF_FALSE_CALL:
+      case VMOP_IF_NULLP:
+      case VMOP_IF_PAIRP:
+      case VMOP_IF_SYMBOLP:
+      case VMOP_IF_EQP:
+      case VMOP_CALL: {
+        precodegen_reference(operands);
+      } break;
+    }
+    code = CDR(code);
+  }
+}
+#endif
 
 Value* digamma_t::get_function_address(context_t& ctx, scm_closure_t closure) {
   DECLEAR_CONTEXT_VARS;
@@ -843,93 +758,6 @@ int digamma_t::calc_stack_size(scm_obj_t inst) {
     inst = CDR(inst);
   }
   return require;
-}
-
-bool digamma_t::inlinable_call(scm_obj_t code) {
-  while (PAIRP(code)) {
-    scm_symbol_t symbol = (scm_symbol_t)CAAR(code);
-    assert(INHERENTSYMBOLP(symbol));
-    int opcode = HDR_SYMBOL_CODE(symbol->hdr);
-    assert(opcode < VMOP_MNEMNIC_COUNT);
-    scm_obj_t operands = (scm_obj_t)CDAR(code);
-    switch (opcode) {
-      case VMOP_CALL:
-      case VMOP_IF_TRUE:
-      case VMOP_IF_EQP:
-      case VMOP_IF_NULLP:
-      case VMOP_IF_PAIRP:
-      case VMOP_IF_SYMBOLP:
-      case VMOP_IF_FALSE_CALL: {
-        if (inlinable_call(operands)) break;
-        return false;
-      }
-      case VMOP_SUBR:
-      case VMOP_CLOSE:
-      case VMOP_GLOC:
-      case VMOP_SET_GLOC:
-      case VMOP_SET_ILOC:
-      case VMOP_EQ_N_ILOC:
-      case VMOP_LT_N_ILOC:
-      case VMOP_GE_N_ILOC:
-      case VMOP_LE_N_ILOC:
-      case VMOP_GT_N_ILOC:
-      case VMOP_EQ_ILOC:
-      case VMOP_LT_ILOC:
-      case VMOP_LE_ILOC:
-      case VMOP_GT_ILOC:
-      case VMOP_GE_ILOC:
-      case VMOP_NADD_ILOC:
-      case VMOP_PUSH:
-      case VMOP_PUSH_CONST:
-      case VMOP_PUSH_ILOC:
-      case VMOP_PUSH_ILOC0:
-      case VMOP_PUSH_ILOC1:
-      case VMOP_PUSH_CAR_ILOC:
-      case VMOP_PUSH_CDR_ILOC:
-      case VMOP_PUSH_CADR_ILOC:
-      case VMOP_PUSH_CDDR_ILOC:
-      case VMOP_PUSH_CONS:
-      case VMOP_PUSH_GLOC:
-      case VMOP_PUSH_NADD_ILOC:
-      case VMOP_PUSH_CLOSE:
-      case VMOP_PUSH_CLOSE_LOCAL:
-      case VMOP_PUSH_SUBR:
-      case VMOP_CONST:
-      case VMOP_ILOC:
-      case VMOP_ILOC0:
-      case VMOP_ILOC1:
-      case VMOP_CAR_ILOC:
-      case VMOP_CDR_ILOC:
-      case VMOP_CADR_ILOC:
-      case VMOP_CDDR_ILOC:
-      case VMOP_RET_SUBR:
-      case VMOP_RET_CLOSE:
-      case VMOP_RET_CONST:
-      case VMOP_RET_ILOC:
-      case VMOP_RET_CONS:
-      case VMOP_RET_PAIRP:
-      case VMOP_RET_NULLP:
-      case VMOP_RET_EQP:
-      case VMOP_IF_NOT_PAIRP_RET_CONST:
-      case VMOP_IF_NOT_NULLP_RET_CONST:
-      case VMOP_IF_NOT_SYMBOLP_RET_CONST:
-      case VMOP_IF_NOT_EQP_RET_CONST:
-      case VMOP_IF_NULLP_RET_CONST:
-      case VMOP_IF_TRUE_RET_CONST:
-      case VMOP_IF_FALSE_RET_CONST:
-      case VMOP_IF_PAIRP_RET_CONST:
-      case VMOP_IF_SYMBOLP_RET_CONST:
-      case VMOP_IF_EQP_RET_CONST:
-      case VMOP_IF_TRUE_RET:
-      case VMOP_IF_FALSE_RET:
-      case VMOP_ENCLOSE:
-        break;
-      default:
-        return false;
-    }
-    code = CDR(code);
-  }
-  return true;
 }
 
 void digamma_t::transform(context_t& ctx, scm_obj_t inst, bool insert_stack_check) {
@@ -1290,9 +1118,9 @@ Function* digamma_t::emit_inner_function(context_t& ctx, scm_closure_t closure) 
   BasicBlock* ENTRY = BasicBlock::Create(C, "entry", F);
   IRBuilder<> IRB(ENTRY);
 
-  m_lifted_functions.insert({closure, F});
+  ctx.m_lifted_functions.insert({closure, F});
 
-  context_t context(C, IRB);
+  context_t context(C, IRB, ctx.m_lifted_functions);
   context.m_module = M;
   context.m_function = F;
   context.m_top_level_closure = closure;
@@ -1716,8 +1544,8 @@ void digamma_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
       printf("emit_apply_gloc: uninterned gloc: %s\n", symbol->name);
 #endif
       if (closure->env == NULL) {
-        auto found = m_lifted_functions.find(closure);
-        if (found != m_lifted_functions.end()) {
+        auto found = ctx.m_lifted_functions.find(closure);
+        if (found != ctx.m_lifted_functions.end()) {
 #if VERBOSE_CODEGEN
           puts("emit_apply_gloc: found in m_lifted_functions, reuse Function*");
 #endif
@@ -1853,12 +1681,8 @@ void digamma_t::emit_ret_const(context_t& ctx, scm_obj_t inst) {
 
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
 void digamma_t::emit_ret_iloc(context_t& ctx, scm_obj_t inst) {
@@ -1869,12 +1693,8 @@ void digamma_t::emit_ret_iloc(context_t& ctx, scm_obj_t inst) {
 
   ctx.reg_value.store(vm, IRB.CreateLoad(IntptrTy, emit_lookup_iloc(ctx, operands)));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
 void digamma_t::emit_ret_cons(context_t& ctx, scm_obj_t inst) {
@@ -1900,12 +1720,8 @@ void digamma_t::emit_ret_cons(context_t& ctx, scm_obj_t inst) {
 
   ctx.reg_value.store(vm, call);
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
 void digamma_t::emit_if_true(context_t& ctx, scm_obj_t inst) {
@@ -1995,12 +1811,8 @@ void digamma_t::emit_if_nullp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -2091,12 +1903,8 @@ void digamma_t::emit_if_true_ret(context_t& ctx, scm_obj_t inst) {
   // pop
   IRB.SetInsertPoint(value_nonfalse);
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // continue
   IRB.SetInsertPoint(value_false);
@@ -2117,12 +1925,8 @@ void digamma_t::emit_if_false_ret(context_t& ctx, scm_obj_t inst) {
   // pop
   IRB.SetInsertPoint(value_false);
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // continue
   IRB.SetInsertPoint(value_nonfalse);
@@ -2145,12 +1949,8 @@ void digamma_t::emit_if_true_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(value_nonfalse);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // continue
   IRB.SetInsertPoint(value_false);
@@ -2410,7 +2210,6 @@ void digamma_t::emit_call_inline(context_t& ctx, scm_obj_t inst) {
 
   BasicBlock* CONTINUE = BasicBlock::Create(C, "continue", F);
   context_t ctx2 = ctx;
-  ctx2.m_continuation = CONTINUE;
   ctx2.m_argc = 0;
   transform(ctx2, operands, false);
   IRB.SetInsertPoint(CONTINUE);
@@ -2755,7 +2554,7 @@ void digamma_t::emit_set_gloc(context_t& ctx, scm_obj_t inst) {
   scm_obj_t operands = CDAR(inst);
   auto vm = F->arg_begin();
 
-  ctx.reg_cache_copy_only_value(vm);
+  ctx.reg_value.copy(vm);
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_set_gloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
@@ -2821,12 +2620,8 @@ void digamma_t::emit_if_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -2949,12 +2744,8 @@ void digamma_t::emit_if_not_eqp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -2976,12 +2767,8 @@ void digamma_t::emit_if_not_pairp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(pair_false);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // pair
   IRB.SetInsertPoint(pair_true);
@@ -3004,12 +2791,8 @@ void digamma_t::emit_if_false_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(value_false);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // continue
   IRB.SetInsertPoint(value_nonfalse);
@@ -3039,12 +2822,9 @@ void digamma_t::emit_ret_nullp(context_t& ctx, scm_obj_t inst) {
   IRB.CreateBr(CONTINUE);
 
   IRB.SetInsertPoint(CONTINUE);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+
   ctx.reg_value.clear();
 }
 
@@ -3071,12 +2851,9 @@ void digamma_t::emit_ret_pairp(context_t& ctx, scm_obj_t inst) {
   IRB.CreateBr(CONTINUE);
 
   IRB.SetInsertPoint(CONTINUE);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+
   ctx.reg_value.clear();
 }
 
@@ -3095,7 +2872,8 @@ void digamma_t::emit_ret_gloc(context_t& ctx, scm_obj_t inst) {
 
   auto gloc = IRB.CreateBitOrPointerCast(VALUE_INTPTR(operands), IntptrPtrTy);
   ctx.reg_value.store(vm, CREATE_LOAD_GLOC_REC(gloc, value));
-  ctx.reg_cache_copy_only_value_and_cont(vm);
+  ctx.reg_cont.copy(vm);
+  ctx.reg_value.copy(vm);
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
@@ -3130,12 +2908,9 @@ void digamma_t::emit_ret_eqp(context_t& ctx, scm_obj_t inst) {
   IRB.CreateBr(CONTINUE);
 
   IRB.SetInsertPoint(CONTINUE);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
+
   ctx.reg_value.clear();
 }
 
@@ -3147,7 +2922,8 @@ void digamma_t::emit_set_iloc(context_t& ctx, scm_obj_t inst) {
 
   ctx.m_iloc_cache.erase(calc_iloc_index(ctx, operands));
 
-  ctx.reg_cache_copy_only_value_and_env(vm);
+  ctx.reg_env.copy(vm);
+  ctx.reg_value.copy(vm);
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_set_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
@@ -3190,7 +2966,8 @@ void digamma_t::emit_enclose(context_t& ctx, scm_obj_t inst) {
 
   int argc = FIXNUM(operands);
 
-  ctx.reg_cache_copy_only_env_and_fp(vm);
+  ctx.reg_env.copy(vm);
+  ctx.reg_fp.copy(vm);
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_enclose), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(argc)});
@@ -3201,7 +2978,7 @@ void digamma_t::emit_enclose(context_t& ctx, scm_obj_t inst) {
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
 #endif
-  ctx.reg_cache_clear_only_sp();
+  ctx.reg_sp.clear();
 }
 
 void digamma_t::emit_push_close(context_t& ctx, scm_obj_t inst) {
@@ -3212,11 +2989,14 @@ void digamma_t::emit_push_close(context_t& ctx, scm_obj_t inst) {
 
   if (maybe_codegen((scm_closure_t)operands)) m_usage.templates++;
 
-  ctx.reg_cache_copy_except_value_and_fp(vm);
+  ctx.reg_env.copy(vm);
+  ctx.reg_cont.copy(vm);
+  ctx.reg_sp.copy(vm);
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_push_close), thunkType->getPointerTo());
   IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
-  ctx.reg_cache_clear_only_env_and_sp();
+  ctx.reg_env.clear();
+  ctx.reg_sp.clear();
 }
 
 void digamma_t::emit_ret_close(context_t& ctx, scm_obj_t inst) {
@@ -3241,11 +3021,7 @@ void digamma_t::emit_ret_close(context_t& ctx, scm_obj_t inst) {
   call->addParamAttr(0, Attribute::NoFree);
 #endif
 
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 }
 
 void digamma_t::emit_close(context_t& ctx, scm_obj_t inst) {
@@ -3256,7 +3032,8 @@ void digamma_t::emit_close(context_t& ctx, scm_obj_t inst) {
 
   if (maybe_codegen((scm_closure_t)operands)) m_usage.templates++;
 
-  ctx.reg_cache_copy_only_env_and_cont(vm);
+  ctx.reg_env.copy(vm);
+  ctx.reg_cont.copy(vm);
   auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_close), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
@@ -3267,7 +3044,8 @@ void digamma_t::emit_close(context_t& ctx, scm_obj_t inst) {
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
 #endif
-  ctx.reg_cache_clear_only_env_and_value();
+  ctx.reg_env.clear();
+  ctx.reg_value.clear();
 }
 
 void digamma_t::emit_push_close_local(context_t& ctx, scm_obj_t inst) {
@@ -3397,12 +3175,8 @@ void digamma_t::emit_if_symbolp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(symbol_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // not taken
   IRB.SetInsertPoint(symbol_false);
@@ -3424,12 +3198,8 @@ void digamma_t::emit_if_pairp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(pair_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // not taken
   IRB.SetInsertPoint(pair_false);
@@ -3452,12 +3222,8 @@ void digamma_t::emit_if_not_nullp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(taken_true);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // not taken
   IRB.SetInsertPoint(taken_false);
@@ -3479,12 +3245,8 @@ void digamma_t::emit_if_not_symbolp_ret_const(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(symbol_false);
   ctx.reg_value.store(vm, VALUE_INTPTR(operands));
   ctx.reg_value.copy(vm);
-  if (ctx.m_continuation) {
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // not taken
   IRB.SetInsertPoint(symbol_true);
@@ -3573,7 +3335,9 @@ void digamma_t::emit_extend_enclose(context_t& ctx, scm_obj_t inst) {
   call->addParamAttr(0, Attribute::NoFree);
 #endif
   ctx.set_local_var_count(ctx.m_depth, 1);
-  ctx.reg_cache_clear_except_value_and_cont();
+  ctx.reg_env.clear();
+  ctx.reg_sp.clear();
+  ctx.reg_fp.clear();
 }
 
 void digamma_t::emit_if_symbolp(context_t& ctx, scm_obj_t inst) {
@@ -3766,14 +3530,8 @@ void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
 
   // valid
   IRB.SetInsertPoint(undef_false);
-  if (ctx.m_continuation) {
-    ctx.reg_sp.store(vm, fp);
-    ctx.reg_sp.copy(vm);
-    IRB.CreateBr(ctx.m_continuation);
-  } else {
-    ctx.reg_cont.copy(vm);
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
-  }
+  ctx.reg_cont.copy(vm);
+  IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_pop_cont));
 
   // invalid
   IRB.SetInsertPoint(undef_true);

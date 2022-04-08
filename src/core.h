@@ -25,13 +25,9 @@
 
 #define UNBOUND_GLOC_RETURN_UNSPEC 0  // default: 0
 
-#ifndef DEFAULT_HEAP_LIMIT
-  #define DEFAULT_HEAP_LIMIT 32  // MB
-#endif
+#define ENABLE_LLVM_JIT            1
 
-#define ENABLE_LLVM_JIT       1
-
-#define LOCAL_CLOSURE_CODEGEN 1
+#define COMPILE_THREAD_COUNT       4
 
 #if ENABLE_LLVM_JIT
   #define ENABLE_CODEGEN_GLOC      1
@@ -41,6 +37,12 @@
   #define ENABLE_CODEGEN_GLOC      0
   #define ENABLE_CODEGEN_REFERENCE 0
   #define ENABLE_BRANCH_WEIGHTS    0
+#endif
+
+#define LOCAL_CLOSURE_CODEGEN 1
+
+#ifndef DEFAULT_HEAP_LIMIT
+  #define DEFAULT_HEAP_LIMIT 32  // MB
 #endif
 
 #ifdef NDEBUG

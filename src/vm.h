@@ -75,7 +75,7 @@ class VM {
   scm_obj_t m_current_source_comments;
   int m_recursion_level;
 #if ENABLE_LLVM_JIT
-  digamma_t* m_digamma;
+  digamma_t* m_digamma[COMPILE_THREAD_COUNT];
 #endif
   scm_closure_t lookup_system_closure(const char* name);
   scm_obj_t lookup_current_environment(scm_symbol_t symbol);
@@ -96,6 +96,7 @@ class VM {
   void prebind_list(scm_obj_t code);
 
   bool self_modifying(scm_gloc_t gloc, scm_obj_t code);
+  int choose_codegen_thread();
 
   void backtrace_each(printer_t* prt, int n, scm_obj_t note);
   scm_obj_t backtrace_fetch(const char* name, int line, int column);

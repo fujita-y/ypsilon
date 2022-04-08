@@ -669,15 +669,16 @@ loop:
       if (m_value == scm_undef) goto ERROR_APPLY_GLOC;
 
 #if ENABLE_CODEGEN_GLOC
-      if (m_digamma && CLOSUREP(gloc->value)) {
+      if (CLOSUREP(gloc->value)) {
         scm_closure_t closure = (scm_closure_t)gloc->value;
         if (closure_is_not_compiled(closure)) {
           mark_closure_compiling(closure);
+          int i = choose_codegen_thread();
           if (self_modifying(gloc, closure->pc)) {
-            m_digamma->m_usage.skipped++;
+            m_digamma[i]->m_usage.skipped++;
           } else {
-            m_digamma->m_usage.globals++;
-            m_digamma->codegen_closure(closure);
+            m_digamma[i]->m_usage.globals++;
+            m_digamma[i]->codegen_closure(closure);
           }
         }
       }

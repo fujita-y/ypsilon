@@ -79,8 +79,10 @@ bool VM::init(object_heap_t* heap) {
     m_flags.record_print_nesting_limit = MAKEFIXNUM(2);
     m_flags.warning_level = scm_false;
 #if ENABLE_LLVM_JIT
-    m_digamma = new digamma_t();
-    m_digamma->init();
+    for (int i = 0; i < COMPILE_THREAD_COUNT; i++) {
+      m_digamma[i] = new digamma_t();
+      m_digamma[i]->init();
+    }
 #endif
     return true;
   } catch (io_exception_t& e) {
@@ -682,10 +684,12 @@ void VM::stop() {
     }
   }
 #if ENABLE_LLVM_JIT
-  if (m_digamma) {
-    scoped_lock lock(m_digamma->m_codegen_queue_lock);
-    for (scm_closure_t closure : m_digamma->m_codegen_queue) {
-      m_heap->enqueue_root(closure);
+  for (int i = 0; i < COMPILE_THREAD_COUNT; i++) {
+    if (m_digamma[i]) {
+      scoped_lock lock(m_digamma[i]->m_codegen_queue_lock);
+      for (scm_closure_t closure : m_digamma[i]->m_codegen_queue) {
+        m_heap->enqueue_root(closure);
+      }
     }
   }
 #endif

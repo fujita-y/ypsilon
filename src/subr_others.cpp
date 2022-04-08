@@ -725,9 +725,13 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
         usleep(100);
       } while (vm->m_heap->m_collector_kicked);
 #if ENABLE_LLVM_JIT
-      vm->m_digamma->destroy();
-      delete vm->m_digamma;
-      vm->m_digamma = NULL;
+      for (int i = 0; i < COMPILE_THREAD_COUNT; i++) {
+        if (vm->m_digamma[i]) {
+          vm->m_digamma[i]->destroy();
+          delete vm->m_digamma[i];
+          vm->m_digamma[i] = NULL;
+        }
+      }
 #endif
       relocate_info_t* info = vm->m_heap->relocate(false);
       vm->resolve();
@@ -738,8 +742,10 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
       vm->m_heap->resolve(info);
       vm->m_heap->compact_pool();
 #if ENABLE_LLVM_JIT
-      vm->m_digamma = new digamma_t();
-      vm->m_digamma->init();
+      for (int i = 0; i < COMPILE_THREAD_COUNT; i++) {
+        vm->m_digamma[i] = new digamma_t();
+        vm->m_digamma[i]->init();
+      }
 #endif
       return scm_unspecified;
     } else {
@@ -989,10 +995,12 @@ static void prepair_exit(VM* vm) {
     port_discard_buffer(vm->m_current_error);
   }
 #if ENABLE_LLVM_JIT
-  if (vm->m_digamma) {
-    vm->m_digamma->destroy();
-    delete vm->m_digamma;
-    vm->m_digamma = NULL;
+  for (int i = 0; i < COMPILE_THREAD_COUNT; i++) {
+    if (vm->m_digamma[i]) {
+      vm->m_digamma[i]->destroy();
+      delete vm->m_digamma[i];
+      vm->m_digamma[i] = NULL;
+    }
   }
 #endif
 }

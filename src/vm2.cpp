@@ -2,12 +2,29 @@
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
+#include "digamma.h"
 #include "hash.h"
 #include "list.h"
 #include "violation.h"
 #include "vm.h"
 
 #define CONS(a, d) make_pair(m_heap, (a), (d))
+
+int VM::choose_codegen_thread() {
+  int min = INT_MAX;
+  int result = 0;
+  for (int i = 0; i < COMPILE_THREAD_COUNT; i++) {
+    if (m_digamma[i]) {
+      int pending = m_digamma[i]->m_codegen_queue.size();
+      if (pending == 0) return i;
+      if (pending < min) {
+        min = pending;
+        result = i;
+      }
+    }
+  }
+  return result;
+}
 
 bool VM::self_modifying(scm_gloc_t gloc, scm_obj_t code) {
   while (PAIRP(code)) {
