@@ -8,13 +8,10 @@
 #include "violation.h"
 #include "vm.h"
 
-#define FOLD_TAIL_CALL_TRACE 1
-#define UNWRAP_BACKTRACE     1
-
-#define STACKP(p)            (((p) >= (void*)m_stack_top) & ((p) < (void*)m_stack_limit))
-#define FORWARDP(p)          ((*(uintptr_t*)(p)) & 1)
-#define FORWARD(from, to)    ((*(uintptr_t*)(from)) = ((uintptr_t)(to) | 1))
-#define RESOLVE(p)           ((void*)((*(uintptr_t*)(p)) & (~1)))
+#define STACKP(p)         (((p) >= (void*)m_stack_top) & ((p) < (void*)m_stack_limit))
+#define FORWARDP(p)       ((*(uintptr_t*)(p)) & 1)
+#define FORWARD(from, to) ((*(uintptr_t*)(from)) = ((uintptr_t)(to) | 1))
+#define RESOLVE(p)        ((void*)((*(uintptr_t*)(p)) & (~1)))
 
 #define NATIVE_THUNK_POST_DISPATCH(_N_)            \
   {                                                \
@@ -57,12 +54,32 @@ void* VM::save_cont(void* lnk) {
   return &heap_cont->up;
 }
 
+int VM::live_stack_size() {
+  int bsize = (m_sp - m_fp) * sizeof(intptr_t);
+  void* lnk_cont = m_cont;
+  while (STACKP(lnk_cont)) {
+    vm_cont_t cont = (vm_cont_t)((intptr_t)lnk_cont - offsetof(vm_cont_rec_t, up));
+    intptr_t asize = (intptr_t)cont - (intptr_t)cont->fp;
+    intptr_t fsize = asize + sizeof(vm_cont_rec_t);
+    bsize += fsize;
+    void* lnk_env = cont->env;
+    while (STACKP(lnk_env)) {
+      vm_env_t env = (vm_env_t)((intptr_t)lnk_env - offsetof(vm_env_rec_t, up));
+      int bytes = env->count * sizeof(scm_obj_t) + sizeof(vm_env_rec_t);
+      bsize += bytes;
+      lnk_env = env->up;
+    }
+    lnk_cont = cont->up;
+  }
+  return bsize;
+}
+
 void VM::save_stack() {
   intptr_t argc = m_sp - m_fp;
   m_cont = save_cont(m_cont);
   m_env = save_env(m_env);
   update_cont(m_cont);
-  memmove(m_stack_top, m_fp, sizeof(scm_obj_t) * argc);
+  object_copy(m_stack_top, m_fp, sizeof(scm_obj_t) * argc);
   m_fp = m_stack_top;
   m_sp = m_stack_top + argc;
 }
@@ -96,19 +113,18 @@ void* VM::gc_cont(void* lnk) {
 }
 
 void VM::collect_stack(intptr_t acquire) {
-  if (m_stack_busy) {
+  if (live_stack_size() > VM_STACK_SAVE_THRESHOLD) {
     save_stack();
     if (m_flags.collect_stack_notify != scm_false) {
       scoped_lock lock(m_current_output->lock);
       printer_t prt(this, m_current_output);
-      prt.format("~&;; [collect-stack: store*]~%~!");
+      prt.format("~&;; [collect-stack: store]~%~!");
     }
     if ((uintptr_t)m_sp + acquire > (uintptr_t)m_stack_limit) {
       backtrace(m_current_error);
       fatal("fatal: vm stack overflow: can not handle more than %ld arguments under current configuration",
             (m_stack_limit - m_stack_top) - sizeof(vm_env_rec_t) / sizeof(scm_obj_t));
     }
-    m_stack_busy = false;
 #if STDEBUG
     check_vm_state();
 #endif
@@ -128,24 +144,13 @@ void VM::collect_stack(intptr_t acquire) {
   tmp = m_stack_limit;
   m_stack_limit = m_to_stack_limit;
   m_to_stack_limit = tmp;
-  if ((uintptr_t)m_sp + acquire >= (uintptr_t)m_stack_limit) {
-    save_stack();
-    if (m_flags.collect_stack_notify != scm_false) {
-      scoped_lock lock(m_current_output->lock);
-      printer_t prt(this, m_current_output);
-      prt.format("~&;; [collect-stack: store**]~%~!");
-    }
-    m_stack_busy = true;
-  } else {
-    if (m_flags.collect_stack_notify != scm_false) {
-      char buf[16];
-      double rate = 1.0 - ((double)(m_sp - m_stack_top) / (double)(m_stack_limit - m_stack_top));
-      snprintf(buf, sizeof(buf), "%.1lf%%", rate * 100.0);
-      scoped_lock lock(m_current_output->lock);
-      printer_t prt(this, m_current_output);
-      prt.format("~&;; [collect-stack: %s free]~%~!", buf);
-    }
-    m_stack_busy = (m_sp - m_stack_top) > VM_STACK_BUSY_THRESHOLD(m_stack_limit - m_stack_top);
+  if (m_flags.collect_stack_notify != scm_false) {
+    char buf[16];
+    double rate = 1.0 - ((double)(m_sp - m_stack_top) / (double)(m_stack_limit - m_stack_top));
+    snprintf(buf, sizeof(buf), "%.1lf%%", rate * 100.0);
+    scoped_lock lock(m_current_output->lock);
+    printer_t prt(this, m_current_output);
+    prt.format("~&;; [collect-stack: %s free]~%~!", buf);
   }
 #ifndef NDEBUG
   if ((uintptr_t)m_sp + acquire > (uintptr_t)m_stack_limit) {

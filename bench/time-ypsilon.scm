@@ -161,6 +161,7 @@
 (format #t "\n\n;;  MISCELLANEOUS\n")
 (time-bench ack 3)
 (time-bench boyer 10)
+(time-bench nboyer 1)
 (time-bench conform 8)
 (time-bench earley 60)
 (time-bench graphs 20)

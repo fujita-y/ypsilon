@@ -557,17 +557,18 @@ struct vm_env_rec_t {
 #define HASH_BOUND_MAX           UINT32_MAX
 
 #if ARCH_LP64
-  #define OBJECT_SLAB_SIZE       (8192L)
-  #define OBJECT_SLAB_SIZE_SHIFT 13
-  #define OBJECT_SLAB_THRESHOLD  (OBJECT_SLAB_SIZE / 8)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
-  #define VM_STACK_BYTESIZE      (OBJECT_SLAB_SIZE * 64)
+  #define OBJECT_SLAB_SIZE        (8192L)
+  #define OBJECT_SLAB_SIZE_SHIFT  (12 + 1)
+  #define OBJECT_SLAB_THRESHOLD   (OBJECT_SLAB_SIZE / 8)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
+  #define VM_STACK_BYTESIZE       (OBJECT_SLAB_SIZE * 4)
+  #define VM_STACK_SAVE_THRESHOLD (VM_STACK_BYTESIZE - (VM_STACK_BYTESIZE >> 1))  // 50%
 #else
-  #define OBJECT_SLAB_SIZE       (4096L)
-  #define OBJECT_SLAB_SIZE_SHIFT 12
-  #define OBJECT_SLAB_THRESHOLD  (OBJECT_SLAB_SIZE / 4)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
-  #define VM_STACK_BYTESIZE      (OBJECT_SLAB_SIZE * 2)
+  #define OBJECT_SLAB_SIZE        (4096L)
+  #define OBJECT_SLAB_SIZE_SHIFT  (12)
+  #define OBJECT_SLAB_THRESHOLD   (OBJECT_SLAB_SIZE / 4)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
+  #define VM_STACK_BYTESIZE       (OBJECT_SLAB_SIZE * 4)
+  #define VM_STACK_SAVE_THRESHOLD (VM_STACK_BYTESIZE - (VM_STACK_BYTESIZE >> 1))  // 50%
 #endif
-#define VM_STACK_BUSY_THRESHOLD(n)     ((n) - ((n) >> 2))  // 75%
 
 #define IDENTIFIER_RENAME_DELIMITER    '`'
 #define IDENTIFIER_LIBRARY_SUFFIX      '\''

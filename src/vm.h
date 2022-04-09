@@ -28,7 +28,6 @@ class VM {
   scm_obj_t* m_to_stack_limit;
 
   int m_stack_size;
-  int m_stack_busy;
 
   bool init(object_heap_t* heap);
   void boot();
@@ -102,6 +101,7 @@ class VM {
   scm_obj_t backtrace_fetch(const char* name, int line, int column);
   void backtrace_seek_make_cont(scm_obj_t note);
 
+  int live_stack_size();
   void* save_cont(void* lnk);
   void save_stack();
 

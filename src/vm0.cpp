@@ -415,7 +415,6 @@ void VM::reset() {
   m_cont = NULL;
   m_env = NULL;
   m_sp = m_fp = m_stack_top;
-  m_stack_busy = false;
   m_value = scm_unspecified;
   m_trace = scm_unspecified;
   m_trace_tail = scm_unspecified;
