@@ -1204,17 +1204,17 @@
 ;;; pretty
 
   (define pretty-each
-    (lambda (form)
+    (lambda (form top-level)
       (let loop ((lst form))
         (cond ((null? lst) '())
               (else
-               (let ((ea (pretty (car lst))) (ed (loop (cdr lst))))
+               (let ((ea (pretty (car lst) top-level)) (ed (loop (cdr lst))))
                  (if (and (eq? ea (car lst)) (eq? ed (cdr lst)))
                      lst
                      (cons ea ed))))))))
 
   (define pretty
-    (lambda (form)
+    (lambda (form top-level)
 
       (define emit
         (lambda (new)
@@ -1252,26 +1252,26 @@
             (if (and (symbol? (car form))
                      (top-level-bound? (car form))
                      (eq? (top-level-value (car form)) (top-level-value '.list)))
-                (emit (pretty `(.append ,@(map (lambda (e) `(.list ,@e)) args))))
-                (emit (pretty `(.apply ,(car form) (.append ,@(map (lambda (e) `(.list ,@e)) args)))))))))
+                (emit (pretty `(.append ,@(map (lambda (e) `(.list ,@e)) args)) #f))
+                (emit (pretty `(.apply ,(car form) (.append ,@(map (lambda (e) `(.list ,@e)) args))) #f))))))
 
       (if (pair? form)
           (if (pair? (car form))
               (destructuring-match form
                 ((('lambda (vars ...) . body) . args)
                  (= (length vars) (length args))
-                 (let ((body (flatten-begin (pretty-each body))) (args (pretty-each args)))
+                 (let ((body (flatten-begin (pretty-each body #f))) (args (pretty-each args #f)))
                    (emit `(let ,(map list vars args) ,@body))))
                 (_
                  (if (> (length form) limit-arguments)
                      (divide form)
-                     (pretty-each form))))
+                     (pretty-each form #f))))
               (case (car form)
                 ((and)
                  (cond ((null? (cdr form)) #t)
                        ((null? (cddr form)) (emit (cadr form)))
                        (else
-                        (let ((new (pretty-each (cdr form))))
+                        (let ((new (pretty-each (cdr form) #f)))
                           (cond ((eq? new (cdr form))
                                  (emit (flatten-expression form 'and)))
                                 (else
@@ -1280,7 +1280,7 @@
                  (cond ((null? (cdr form)) #f)
                        ((null? (cddr form)) (emit (cadr form)))
                        (else
-                        (let ((new (pretty-each (cdr form))))
+                        (let ((new (pretty-each (cdr form) #f)))
                           (cond ((eq? new (cdr form))
                                  (emit (flatten-expression form 'or)))
                                 (else
@@ -1288,18 +1288,18 @@
                 ((if)
                  (destructuring-match (cdr form)
                    ((#t e1 . _)
-                    (emit (pretty e1)))
+                    (emit (pretty e1 #f)))
                    ((#f _ . e2)
                     (if (null? e2)
                         (emit '(.unspecified))
-                        (emit (pretty (car e2)))))
+                        (emit (pretty (car e2) #f))))
                    ((e1 e2 #f)
-                    (emit `(and ,(pretty e1) ,(pretty e2))))
+                    (emit `(and ,(pretty e1 #f) ,(pretty e2 #f))))
                    ((('not e1) e2 e3)
                     (primitive-function? 'not)
-                    (emit `(if ,(pretty e1) ,(pretty e3) ,(pretty e2))))
+                    (emit `(if ,(pretty e1 #f) ,(pretty e3 #f) ,(pretty e2 #f))))
                    (_
-                    (pretty-each form))))
+                    (pretty-each form #f))))
                 ((quote begin lambda let letrec*)
                  (destructuring-match form
                    (('quote e1)
@@ -1308,11 +1308,11 @@
                     (cond ((null? e1) form)
                           ((and (pair? e1) (null? (cdr e1))) (car e1))
                           (else
-                           (let ((new (flatten-begin (pretty-each e1))))
+                           (let ((new (flatten-begin (pretty-each e1 top-level))))
                              (cond ((eq? new e1) form)
                                    (else (emit `(begin ,@new))))))))
                    (('lambda e1 . e2)
-                    (let ((e2a (flatten-begin (pretty-each e2))))
+                    (let ((e2a (flatten-begin (pretty-each e2 #f))))
                       (if (eq? e2a e2)
                           form
                           (emit (annotate-closure `(lambda ,e1 ,@e2a) form)))))
@@ -1320,31 +1320,35 @@
                     (cond ((null? e1)
                            (emit `(begin ,@(flatten-begin e2))))
                           ((and (null? (cdr e1)) (null? (cdr e2)) (eq? (caar e1) (car e2)))
-                           (emit (pretty (cadar e1))))
+                           (emit (pretty (cadar e1) #f)))
                           (else
                            (let ((e1a (map cadr e1)))
-                             (let ((e1b (pretty-each e1a)) (e2a (flatten-begin (pretty-each e2))))
+                             (let ((e1b (pretty-each e1a #f)) (e2a (flatten-begin (pretty-each e2 #f))))
                                (cond ((and (eq? e2 e2a) (for-all eq? e1a e1b)) form)
                                      (else (emit `(let ,(map list (map car e1) e1b) ,@e2a)))))))))
                    (('letrec* e1 . e2)
                     (if (null? e1)
                         (emit `(begin ,@(flatten-begin e2)))
                         (let ((e1a (map cadr e1)))
-                          (let ((e1b (pretty-each e1a)) (e2a (flatten-begin (pretty-each e2))))
-                            (cond ((and (eq? e2 e2a) (for-all eq? e1a e1b)) form)
-                                  (else (emit `(letrec* ,(map list (map car e1) e1b) ,@e2a))))))))
+                          (let ((e1b (pretty-each e1a #f)) (e2a (flatten-begin (pretty-each e2 #f))))
+                            (if top-level
+                                (emit `(begin
+                                         ,@(map (lambda (var init) (emit `(define ,var ,init))) (map car e1) e1b)
+                                         ,@e2a))
+                                (cond ((and (eq? e2 e2a) (for-all eq? e1a e1b)) form)
+                                      (else (emit `(letrec* ,(map list (map car e1) e1b) ,@e2a)))))))))
                    (_
                     (assertion-violation "coreform-optimize" (format "internal inconsistency in ~s" pretty) form))))
                 (else
                  (if (> (length form) limit-arguments)
                      (divide form)
-                     (pretty-each form)))))
+                     (pretty-each form #f)))))
           form)))
 
   (define pretty-form
     (lambda (form)
       (let loop ((e form))
-        (let ((new (pretty e)))
+        (let ((new (pretty e #t)))
           (cond ((eq? new e) e)
                 (else (loop new)))))))
 
