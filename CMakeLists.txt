@@ -119,7 +119,7 @@ install(DIRECTORY sitelib/ DESTINATION ${YPSILON_SITELIB_DIRECTORY})
 install(TARGETS ypsilon DESTINATION bin)
 
 enable_testing()
-set(YPSILON_COMMON_TEST_OPTIONS --heap-limit=128 --clean-acc --sitelib=./test:./sitelib)
+set(YPSILON_COMMON_TEST_OPTIONS --sitelib=./test:./sitelib)
 add_test(
   NAME r4rstest
   COMMAND $<TARGET_FILE:ypsilon> ${YPSILON_COMMON_TEST_OPTIONS} ./test/r4rstest.scm
