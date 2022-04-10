@@ -27,6 +27,10 @@
 
 * See [LICENSE](https://github.com/fujita-y/ypsilon/blob/master/LICENSE) for terms and conditions of use.
 
+### Performance
+
+* Ypsilon 2.0.7 outperform Guile 3.0.8 in [r7rs-benchmarks](https://github.com/ecraven/r7rs-benchmarks) for 28 of 55 programs on WSL2, Ubuntu 20.04, Ryzen 3700X 3.6GHz. https://fujita-y.github.io/benchmarks/ubuntu-llvm12-ryzen3700x-guile-308.pdf
+
 ### Documents
 
 * [API Reference](https://fujita-y.github.io/ypsilon-api/)
