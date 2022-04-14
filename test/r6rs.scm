@@ -1313,3 +1313,5 @@ bc"
 (test-equal "mac 5" p.car => 15)
 (test-equal "mac 6" p => (15 . 5))
 (test-end)
+
+(apply collect #t '())

@@ -5,12 +5,12 @@
 (display "This program attempts to test a Scheme implementation's conformance\n\n")
 
 ;; r5rs_pitfalls.scm
-;; 
+;;
 ;; This program attempts to test a Scheme implementation's conformance
 ;; to various subtle edge-cases and consequences of the R5RS Scheme standard.
 ;; Code was collected from public forums, and is hereby placed in the public domain.
 ;;
-;; 
+;;
 (define-syntax should-be
   (syntax-rules ()
     ((_ test-id value expression)
@@ -29,7 +29,7 @@
 
 ;;Credits to Al Petrofsky
 ;; In thread:
-;; defines in letrec body 
+;; defines in letrec body
 ;; http://groups.google.com/groups?selm=87bsoq0wfk.fsf%40app.dial.idiom.com
 (should-be 1.1 0
  (let ((cont #f))
@@ -56,7 +56,7 @@
 
 ;;Credits to Alan Bawden
 ;; In thread:
-;; LETREC + CALL/CC = SET! even in a limited setting 
+;; LETREC + CALL/CC = SET! even in a limited setting
 ;; http://groups.google.com/groups?selm=19890302162742.4.ALAN%40PIGPEN.AI.MIT.EDU
 (should-be 1.3 #t
   (letrec ((x (call-with-current-continuation
@@ -70,14 +70,14 @@
 
 ;;Credits to Al Petrofsky, (and a wink to Matthias Blume)
 ;; In thread:
-;; Widespread bug in handling (call/cc (lambda (c) (0 (c 1)))) => 1 
+;; Widespread bug in handling (call/cc (lambda (c) (0 (c 1)))) => 1
 ;; http://groups.google.com/groups?selm=87g00y4b6l.fsf%40radish.petrofsky.org
 (should-be 2.1 1
  (call/cc (lambda (c) (0 (c 1)))))
 
 ;; Section 3: Hygienic macros
 
-;; Eli Barzilay 
+;; Eli Barzilay
 ;; In thread:
 ;; R5RS macros...
 ;; http://groups.google.com/groups?selm=skitsdqjq3.fsf%40tulare.cs.cornell.edu
@@ -91,14 +91,14 @@
 
 ;; Al Petrofsky again
 ;; In thread:
-;; Buggy use of begin in r5rs cond and case macros. 
+;; Buggy use of begin in r5rs cond and case macros.
 ;; http://groups.google.com/groups?selm=87bse3bznr.fsf%40radish.petrofsky.org
 (should-be 3.2 2
  (let-syntax ((foo (syntax-rules ()
                        ((_ var) (define var 1)))))
      (let ((x 2))
        (begin (define foo +))
-       (cond (else (foo x))) 
+       (cond (else (foo x)))
        x)))
 
 ;;Al Petrofsky
@@ -149,7 +149,7 @@
 
 ;; Jens Axel S?gaard
 ;; In thread:
-;; Symbols in DrScheme - bug? 
+;; Symbols in DrScheme - bug?
 ;; http://groups.google.com/groups?selm=3be55b4f%240%24358%24edfadb0f%40dspool01.news.tele.dk
 (should-be 6.1 #f
   (eq? (string->symbol "f") (string->symbol "F")))
@@ -158,10 +158,10 @@
 
 ;; Scott Miller
 ;; No newsgroup posting associated.  The gist of this test and 7.2
-;; is that once captured, a continuation should be unmodified by the 
-;; invocation of other continuations.  This test determines that this is 
+;; is that once captured, a continuation should be unmodified by the
+;; invocation of other continuations.  This test determines that this is
 ;; the case by capturing a continuation and setting it aside in a temporary
-;; variable while it invokes that and another continuation, trying to 
+;; variable while it invokes that and another continuation, trying to
 ;; side effect the first continuation.  This test case was developed when
 ;; testing SISC 1.7's lazy CallFrame unzipping code.
 (define r #f)
@@ -170,10 +170,10 @@
 (define c #f)
 (define i 0)
 (should-be 7.1 28
-  (let () 
+  (let ()
     (set! r (+ 1 (+ 2 (+ 3 (call/cc (lambda (k) (set! a k) 4))))
                (+ 5 (+ 6 (call/cc (lambda (k) (set! b k) 7))))))
-    (if (not c) 
+    (if (not c)
         (set! c a))
     (set! i (+ i 1))
     (case i
@@ -190,10 +190,10 @@
 (define c #f)
 (define i 0)
 (should-be 7.2 28
-  (let () 
+  (let ()
     (set! r (+ 1 (+ 2 (+ 3 (call/cc (lambda (k) (set! a k) 4))))
                (+ 5 (+ 6 (call/cc (lambda (k) (set! b k) 7))))))
-    (if (not c) 
+    (if (not c)
         (set! c a))
     (set! i (+ i 1))
     (case i
@@ -246,9 +246,9 @@
 (should-be 7.4 '(10 9 8 7 6 5 4 3 2 1 0)
   (let ((x '())
         (y 0))
-    (call/cc 
+    (call/cc
      (lambda (escape)
-       (let* ((yin ((lambda (foo) 
+       (let* ((yin ((lambda (foo)
                       (set! x (cons y x))
                       (if (= y 10)
                           (escape x)
@@ -256,13 +256,13 @@
                             (set! y 0)
                             foo)))
                     (call/cc (lambda (bar) bar))))
-              (yang ((lambda (foo) 
+              (yang ((lambda (foo)
                        (set! y (+ y 1))
                        foo)
                      (call/cc (lambda (baz) baz)))))
          (yin yang))))))
 
-;; Miscellaneous 
+;; Miscellaneous
 
 ;;Al Petrofsky
 ;; In thread:
@@ -278,11 +278,11 @@
 ;; This example actually illustrates a bug in R5RS.  If a Scheme system
 ;; follows the letter of the standard, 1 should be returned, but
 ;; the general agreement is that 2 should instead be returned.
-;; The reason is that in R5RS, let-syntax always introduces new scope, thus 
+;; The reason is that in R5RS, let-syntax always introduces new scope, thus
 ;; in the following test, the let-syntax breaks the definition section
-;; and begins the expression section of the let. 
+;; and begins the expression section of the let.
 ;;
-;; The general agreement by the implementors in 1998 was that the following 
+;; The general agreement by the implementors in 1998 was that the following
 ;; should be possible, but isn't:
 ;;
 ;;   (define ---)
@@ -324,7 +324,7 @@
 ;;Not really an error to fail this (Matthias Radestock)
 ;;If this returns (0 1 0), your map isn't call/cc safe, but is probably
 ;;tail-recursive.  If its (0 0 0), the opposite is true.
-#;(let ((result 
+#;(let ((result
        (let ()
          (define executed-k #f)
          (define cont #f)
@@ -335,8 +335,8 @@
                                (call/cc (lambda (k) (set! cont k) 0))
                                0))
                          '(1 0 2)))
-         (if (not executed-k)           
-             (begin (set! executed-k #t) 
+         (if (not executed-k)
+             (begin (set! executed-k #t)
                     (set! res2 res1)
                     (cont 1)))
          res2)))
@@ -347,3 +347,5 @@
   (newline))
 
  (newline)
+
+ (apply collect #t '())

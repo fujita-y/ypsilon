@@ -791,3 +791,5 @@
 ;; end from num-test.scm (kawa)
 
 (test-end)
+
+(apply collect #t '())

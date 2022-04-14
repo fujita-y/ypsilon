@@ -79,6 +79,7 @@ scm_obj_t subr_codegen_queue_count(VM* vm, int argc, scm_obj_t argv[]) {
     int count = 0;
     for (int i = 0; i < COMPILE_THREAD_COUNT; i++) {
       if (vm->m_digamma[i]) {
+        scoped_lock lock(vm->m_digamma[i]->m_codegen_queue_lock);
         count += vm->m_digamma[i]->m_codegen_queue.size();
       }
     }

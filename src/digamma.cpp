@@ -450,7 +450,11 @@ void digamma_t::init() {
   m_codegen_thread_wake.init();
   m_codegen_queue_lock.init();
   m_codegen_thread = new std::thread(codegen_thread, this);
-  scoped_lock lock(m_codegen_thread_lock);
+  while (true) {
+    std::this_thread::yield();
+    scoped_lock lock(m_codegen_thread_lock);
+    if (m_codegen_thread_ready == true) break;
+  }
 }
 
 void digamma_t::destroy() {
@@ -465,10 +469,6 @@ void digamma_t::destroy() {
   m_codegen_queue_lock.destroy();
   delete m_codegen_thread;
   m_codegen_thread = NULL;
-
-#if LLVM_VERSION_MAJOR >= 12
-  ExitOnErr(m_jit->getExecutionSession().endSession());
-#endif
 }
 
 void digamma_t::codegen_thread(digamma_t* param) {
@@ -512,6 +512,11 @@ void digamma_t::codegen_thread(digamma_t* param) {
   }
   digamma.m_codegen_thread_terminating = false;
   digamma.m_codegen_thread_lock.unlock();
+
+#if LLVM_VERSION_MAJOR >= 12
+  ExitOnErr(digamma.m_jit->getExecutionSession().endSession());
+#endif
+  digamma.m_jit.reset();
 }
 
 void digamma_t::codegen(scm_closure_t closure) {

@@ -1385,5 +1385,7 @@
 (test-cont) (test-sc4) (test-delay) ;;; +ypsilon
 (if (not (null? errs)) (exit #f))   ;;; +ypsilon
 
+(apply collect #t '())
+
 (newline)
 "last item in file"

@@ -716,14 +716,6 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
       }
     }
     if (pack) {
-      do {
-        vm->m_heap->collect();
-        usleep(100);
-      } while (!vm->m_heap->m_collector_kicked);
-      do {
-        if (vm->m_heap->m_stop_the_world) vm->stop();
-        usleep(100);
-      } while (vm->m_heap->m_collector_kicked);
 #if ENABLE_LLVM_JIT
       for (int i = 0; i < COMPILE_THREAD_COUNT; i++) {
         if (vm->m_digamma[i]) {
@@ -733,20 +725,29 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
         }
       }
 #endif
-      relocate_info_t* info = vm->m_heap->relocate(false);
+
+      do {
+        vm->m_heap->collect();
+        usleep(1000);
+      } while (!vm->m_heap->m_collector_kicked);
+      do {
+        if (vm->m_heap->m_stop_the_world) vm->stop();
+        usleep(1000);
+      } while (vm->m_heap->m_collector_kicked);
+
+      relocate_info_t* info = vm->m_heap->relocate(pack);
       vm->resolve();
       vm->m_heap->resolve(info);
       vm->m_heap->relocate_privates(pack);
-      info = vm->m_heap->relocate(true);
-      vm->resolve();
-      vm->m_heap->resolve(info);
       vm->m_heap->compact_pool();
+
 #if ENABLE_LLVM_JIT
       for (int i = 0; i < COMPILE_THREAD_COUNT; i++) {
         vm->m_digamma[i] = new digamma_t();
         vm->m_digamma[i]->init();
       }
 #endif
+
       return scm_unspecified;
     } else {
       vm->m_heap->collect();

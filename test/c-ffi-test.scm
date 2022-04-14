@@ -41,3 +41,5 @@
 (test-equal "snprintf" n  => 11)
 (test-equal "snprintf" s  => "246 123.400")
 (test-end)
+
+(apply collect #t '())
