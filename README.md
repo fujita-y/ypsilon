@@ -49,7 +49,7 @@ cmake --build .
 cmake --install .
 ```
 
-- On MacOS, you may want using [Homebrew](https://brew.sh/) to install LLVM.
+- On MacOS, you may want using [Homebrew](https://brew.sh/) to install LLVM 13.
 ```
 brew update
 brew install llvm
