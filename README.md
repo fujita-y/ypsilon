@@ -49,10 +49,10 @@ cmake --build .
 cmake --install .
 ```
 
-- On MacOS, you may want using [Homebrew](https://brew.sh/) to install llvm@13.
+- On MacOS, you may want using [Homebrew](https://brew.sh/) to install LLVM.
 ```
 brew update
-brew install llvm@13
+brew install llvm
 echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> ~/.zshrc
 ```
 
