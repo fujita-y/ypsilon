@@ -2,7 +2,7 @@
 
 * Conforms to R7RS/R6RS
 * Mostly concurrent garbage collector optimized for multi-core processor
-* Incremental native code generation with background compilation thread
+* Incremental native code generation with background compilation threads
 * On-the-fly FFI with native stub code generation
 * Full features of R6RS and R6RS standard libraries including:
   * arbitrary precision integer arithmetic
