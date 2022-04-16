@@ -162,17 +162,21 @@
               (current-temporaries (make-core-hashtable 'string=?))
               (current-rename-count 0)
               (cond ((or (null? env) (environment? (car env)))
-                     (let loop ()
-                       (current-source-comments (and (backtrace) (make-core-hashtable)))
+                     (let loop ((acc '()))
                        (let ((form (core-read port (current-source-comments) 'load)))
-                         (cond ((eof-object? form) (close-port port)) (else (interpret form) (loop))))))
+                         (cond ((eof-object? form)
+                                (close-port port)
+                                (interpret (cons 'begin (reverse acc))))
+                               (else
+                                (loop (cons form acc)))))))
                     (else
                       (let loop ((acc '()))
                         (let ((form (core-read port (current-source-comments) 'load)))
                           (cond ((eof-object? form)
                                  (close-port port)
                                  (eval (cons 'begin (reverse acc)) (car env)))
-                                (else (loop (cons form acc)))))))))))))))
+                                (else
+                                 (loop (cons form acc)))))))))))))))
 
 (define load-top-level-program
   (lambda (path)

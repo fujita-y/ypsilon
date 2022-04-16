@@ -481,15 +481,18 @@ void digamma_t::codegen_thread(digamma_t* param) {
   J->getMainJITDylib().addGenerator(std::move(G));
   digamma.m_jit = std::move(J);
 
+  digamma.m_codegen_thread_ready = true;
   while (!digamma.m_codegen_thread_terminating) {
-    digamma.m_codegen_thread_ready = true;
     digamma.m_codegen_thread_wake.wait(digamma.m_codegen_thread_lock);
     digamma.m_codegen_thread_ready = false;
     while (!digamma.m_codegen_thread_terminating) {
       scm_closure_t closure = NULL;
       {
         scoped_lock lock(digamma.m_codegen_queue_lock);
-        if (digamma.m_codegen_queue.size() == 0) break;
+        if (digamma.m_codegen_queue.size() == 0) {
+          digamma.m_codegen_thread_ready = true;
+          break;
+        }
         closure = digamma.m_codegen_queue.back();
         if (closure->code != NULL) continue;
       }
@@ -497,7 +500,10 @@ void digamma_t::codegen_thread(digamma_t* param) {
       digamma.precodegen_reference(closure->pc);
       {
         scoped_lock lock(digamma.m_codegen_queue_lock);
-        if (digamma.m_codegen_queue.size() == 0) break;
+        if (digamma.m_codegen_queue.size() == 0) {
+          digamma.m_codegen_thread_ready = true;
+          break;
+        }
         closure = digamma.m_codegen_queue.back();
         if (closure->code != NULL) continue;
       }

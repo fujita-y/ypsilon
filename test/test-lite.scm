@@ -17,54 +17,43 @@
      (mutable env)
      (mutable lib)))
 
+  (define test-helper
+    (lambda (res ans name)
+      (cond
+        ((not (equal? res ans))
+         (newline)
+         (display "FAIL: ")
+         (write name)
+         (newline)
+         (display "expected: ")
+         (write ans)
+         (newline)
+         (display "but got: ")
+         (write res)
+         (newline)
+         (exit 1))
+        (else
+         (section-pass-count-inc! (section-current))
+         (put-byte (current-output-port) #x0d)
+         (format #t "Passed ~a~!" (section-pass-count (section-current)))))))
+
   (define-syntax test
     (syntax-rules ()
       ((_ expected expr)
        (test expected expr 'expr))
-      ((_ expected expr arg)
-        (let ((res expr))
-          (cond
-           ((not (equal? expr expected))
-            (newline)
-            (display "FAIL: ")
-            (write arg)
-            (newline)
-            (display "expected: ")
-            (write expected)
-            (newline)
-            (display "but got: ")
-            (write res)
-            (newline)
-            (exit 1))
-           (else
-             (section-pass-count-inc! (section-current))
-             (put-byte (current-output-port) #x0d)
-             (format #t "Passed ~a~!" (section-pass-count (section-current)))))))))
-
-  (define-syntax test-assert
-    (syntax-rules ()
-      ((_ str expr) (test #t expr str))))
+      ((_ expected expr name)
+       (test-helper expected expr name))))
 
   (define-syntax test-values
     (syntax-rules ()
       ((_ expected expr)
-       (let ((res-expr (call-with-values (lambda () expr) list))
-             (res-expected (call-with-values (lambda () expected) list)))
-          (cond
-           ((not (equal? res-expr res-expected))
-            (display "FAIL: ")
-            (write 'expr)
-            (newline)
-            (display "expected: ")
-            (write expected)
-            (newline)
-            (display "but got: ")
-            (write expr)
-            (newline))
-           (else
-             (section-pass-count-inc! (section-current))
-             (put-byte (current-output-port) #x0d)
-             (format #t "Passed ~a~!" (section-pass-count (section-current)))))))))
+       (let ((expr-values (call-with-values (lambda () expr) list))
+             (expected-values (call-with-values (lambda () expected) list)))
+        (test-helper expected-values expr-values 'expr)))))
+
+  (define-syntax test-assert
+    (syntax-rules ()
+      ((_ str expr) (test #t expr str))))
 
   (define-syntax test-error
     (syntax-rules ()

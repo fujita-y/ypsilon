@@ -16,6 +16,10 @@
 
   (define max-lift-arguments 4)
 
+  (define max-inline-pass 10)
+
+  (define complexity-threshold-always-inline 4)
+
   (define max-transform-pass 12)
 
   (define limit-arguments 200)
@@ -371,24 +375,84 @@
                        (append lst ans))))))
        form)))
 
+  (define collect-lexical-vars
+    (lambda (form vars)
+
+      (define collect-lexical-vars-each
+        (lambda (form vars)
+          (let loop ((lst form) (vars vars))
+            (cond ((null? lst) vars)
+                  (else
+                   (loop (cdr lst) (collect-lexical-vars (car lst) vars)))))))
+
+      (cond ((pair? form)
+             (case (car form)
+                   ((quote define lambda let letrec*)
+                    (destructuring-match form
+                      (('quote _) vars)
+                      (('define e1 e2) (collect-lexical-vars e2 vars))
+                      (('lambda e1 . e2)
+                       (let ((formals (formals->list e1))) (append formals (collect-lexical-vars-each e2 '()) vars)))
+                      (('let e1 . e2)
+                       (append
+                         (map car e1)
+                         (collect-lexical-vars-each (map cadr e1) '())
+                         (collect-lexical-vars-each e2 '())
+                         vars))
+                      (('letrec* e1 . e2)
+                       (append
+                         (map car e1)
+                         (collect-lexical-vars-each (map cadr e1) '())
+                         (collect-lexical-vars-each e2 '())
+                         vars))
+                      (_
+                       (assertion-violation
+                         "coreform-optimize"
+                         (format "internal inconsistency in ~s" collect-lexical-vars)
+                         form))))
+                   ((if set! begin and or) (collect-lexical-vars-each (cdr form) vars))
+                   (else (collect-lexical-vars-each form vars))))
+            (else vars))))
+
+  (define rename-vars
+    (lambda (lst renames)
+
+      (define rename-vars-each
+        (lambda (lst renames)
+          (let loop ((lst lst))
+            (cond ((pair? lst)
+                   (let ((a (rename-vars (car lst) renames)) (d (loop (cdr lst))))
+                      (cond ((and (eq? a (car lst)) (eq? d (cdr lst))) lst)
+                            (else ((annotate-hook) (cons a d) lst)))))
+                  (else lst)))))
+
+      (cond ((pair? lst)
+             (cond ((eq? (car lst) 'quote) lst)
+                   (else
+                    (rename-vars-each lst renames))))
+            ((symbol? lst)
+              (cond ((assq lst renames) => cdr)
+                    (else lst)))
+            (else lst))))
+
 ;;; collect context
-
-  (define collect-context-each
-    (lambda (form bound free)
-      (let loop ((lst form) (free free) (oped #f))
-        (cond ((null? lst) free)
-              (else
-               (collect-context (car lst) bound (loop (cdr lst) free #t) oped))))))
-
-  (define collect-context-seq
-    (lambda (form bound free)
-      (let loop ((lst form) (free free))
-        (cond ((null? lst) free)
-              (else
-               (collect-context (car lst) bound (loop (cdr lst) free) (null? (cdr lst))))))))
 
   (define collect-context
     (lambda (form bound free oped)
+
+      (define collect-context-each
+        (lambda (form bound free)
+          (let loop ((lst form) (free free) (oped #f))
+            (cond ((null? lst) free)
+                  (else
+                   (collect-context (car lst) bound (loop (cdr lst) free #t) oped))))))
+
+      (define collect-context-seq
+        (lambda (form bound free)
+          (let loop ((lst form) (free free))
+            (cond ((null? lst) free)
+                  (else
+                   (collect-context (car lst) bound (loop (cdr lst) free) (null? (cdr lst))))))))
 
       (cond ((pair? form)
              (case (car form)
@@ -397,7 +461,9 @@
                   (('quote _) free)
                   (('define e1 e2)
                    (begin
-                     (core-hashtable-set! ht-variable-defined e1 #t)
+                     (if (core-hashtable-contains? ht-variable-defined e1)
+                         (core-hashtable-set! ht-variable-assigned e1 #t)
+                         (core-hashtable-set! ht-variable-defined e1 #t))
                      (and (variable-private? e1) (core-hashtable-set! ht-variable-privates e1 #t))
                      (core-hashtable-set! ht-variable-binding e1 (or e2 '(begin #f)))
                      (collect-context e2 bound free oped)))
@@ -449,7 +515,7 @@
                 (collect-context-each (cdr form) bound free))
                ((set!)
                 (core-hashtable-set! ht-variable-assigned (cadr form) #t)
-                (collect-context-each form bound free))
+                (collect-context-each (cdr form) bound free))
                ((begin and or)
                 (collect-context-seq (cdr form) bound free))
                (else
@@ -465,7 +531,6 @@
              (cond ((primitive-function? form) free)
                    ((memq form bound) free)
                    (else (cons form free))))
-
             (else free))))
 
 ;;; lambda lifting
@@ -594,7 +659,7 @@
                   (core-hashtable->alist ht-lambda-node))
         (for-each (lambda (b)
                     (cond ((core-hashtable-ref ht-lambda-node (cdr b) #f)
-                            => (lambda (e)
+                           => (lambda (e)
                                 (cond ((symbol? e)
                                        (core-hashtable-delete! ht (cdr b))
                                        (core-hashtable-set! ht (car b) (cdr b))))))))
@@ -614,45 +679,26 @@
         (lambda (free self)
           (filter (lambda (id) (not (or (eq? id self) (variable-top-level? id) (variable-functional? id)))) free)))
 
-      (define update-callsites-each
-        (lambda (lst subst)
-          (let loop ((lst lst))
-            (cond ((assq lst subst)
-                   => (lambda (e)
-                        #;(format #t "update-callsites rewrite ~r -> ~r ~%" lst (cdr e))
-                        ((annotate-hook) (loop (cdr e)) lst)))
-                  ((pair? lst)
-                   (let ((a (update-callsites (car lst) subst)) (d (loop (cdr lst))))
-                     (cond ((and (eq? a (car lst)) (eq? d (cdr lst))) lst)
-                           (else ((annotate-hook) (cons a d) lst)))))
-                  (else lst)))))
-
       (define update-callsites
         (lambda (lst subst)
-          (cond ((pair? lst)
-                 (cond ((eq? (car lst) 'quote) lst)
-                       (else
-                        (update-callsites-each lst subst))))
-                (else lst))))
 
-      (define rename-freevars-each
-        (lambda (lst renames)
-          (let loop ((lst lst))
-            (cond ((pair? lst)
-                   (let ((a (rename-freevars (car lst) renames)) (d (loop (cdr lst))))
-                     (cond ((and (eq? a (car lst)) (eq? d (cdr lst))) lst)
-                           (else ((annotate-hook) (cons a d) lst)))))
-                  (else lst)))))
+          (define update-callsites-each
+            (lambda (lst subst)
+              (let loop ((lst lst))
+                (cond ((assq lst subst)
+                       => (lambda (e)
+                            #;(format #t "update-callsites rewrite ~r -> ~r ~%" lst (cdr e))
+                            ((annotate-hook) (loop (cdr e)) lst)))
+                      ((pair? lst)
+                       (let ((a (update-callsites (car lst) subst)) (d (loop (cdr lst))))
+                         (cond ((and (eq? a (car lst)) (eq? d (cdr lst))) lst)
+                               (else ((annotate-hook) (cons a d) lst)))))
+                      (else lst)))))
 
-      (define rename-freevars
-        (lambda (lst renames)
             (cond ((pair? lst)
                    (cond ((eq? (car lst) 'quote) lst)
                          (else
-                          (rename-freevars-each lst renames))))
-                  ((symbol? lst)
-                   (cond ((assq lst renames) => cdr)
-                         (else lst)))
+                          (update-callsites-each lst subst))))
                   (else lst))))
 
       (define any-var-assigned?
@@ -699,7 +745,7 @@
                                                              (new (update-callsites
                                                                     `(lambda (,@args ,@free) ,@(cddr org))
                                                                     (core-hashtable->alist ht-this-callsite)))
-                                                             (new (rename-freevars new renames)))
+                                                             (new (rename-vars new renames)))
                                                         ((annotate-closure-hook) new org)
                                                         ((annotate-hook) new org)
                                                         (core-hashtable-set! ht-lambda org new)))))))))))))))))
@@ -748,9 +794,11 @@
           (lambda (b)
             (or (core-hashtable-contains? ht-lambda-node (cdr b))
                 (let ((refc (core-hashtable-ref ht-variable-refc (car b) #f)))
+                  #;(format #t "~%(car b):~s (cdr b):~s (core-hashtable-contains? ht-variable-pinned (car b):~s"
+                            (car b) (cdr b) (core-hashtable-contains? ht-variable-pinned (car b)))
                   (cond ((and refc
                               (or (= refc 1) (inlinable-expression? (cdr b)))
-                              (not (core-hashtable-contains? ht-variable-pinned (car b)))
+                              (or (symbol? (cdr b)) (not (core-hashtable-contains? ht-variable-pinned (car b))))
                               (core-hashtable-ref ht-binding-body-common (car b) #f))
                          => (lambda (lst)
                               (let* ((const (or (constant? (cdr b))
@@ -1115,6 +1163,188 @@
                              (core-hashtable-set! ht-variable-stackables (car b) (cdr b)))))
                     candidates)))))
 
+;;; inlining
+
+(define process-inlining
+  (lambda (form)
+
+    (define inline-callsites
+      (lambda (lst subst)
+        (define inline-callsites-each
+          (lambda (lst subst)
+            (let loop ((lst lst))
+              (cond ((assq lst subst)
+                     => (lambda (e)
+                          (let ((renames (map (lambda (e) (cons e (generate-temporary-symbol))) (collect-lexical-vars (cdr e) '()))))
+                            #;(format #t "~%form:~r" (cdr e))
+                            #;(format #t "~%renames:~r" renames)
+                            (rename-vars (cdr e) renames))))
+                    ((pair? lst)
+                     (let ((a (inline-callsites (car lst) subst)) (d (loop (cdr lst))))
+                       (cond ((and (eq? a (car lst)) (eq? d (cdr lst))) lst)
+                             (else ((annotate-hook) (cons a d) lst)))))
+                    (else lst)))))
+        (cond ((pair? lst)
+               (cond ((eq? (car lst) 'quote) lst)
+                     ((eq? (car lst) 'lambda)
+                      (let ((newbody (inline-callsites-each (cddr lst) subst)))
+                        (cond ((eq? newbody (cddr lst)) lst)
+                              (else
+                               (let ((new `(lambda ,(cadr lst) ,@newbody)))
+                                 ((annotate-closure-hook) new lst)
+                                 ((annotate-hook) new lst))))))
+                     (else
+                      (inline-callsites-each lst subst))))
+              (else lst))))
+
+    (define self-recursion?
+      (lambda (lst id)
+        (define self-recursion-each
+          (lambda (lst id)
+            (let loop ((lst lst))
+              (and (pair? lst)
+                   (or (self-recursion? (car lst) id) (loop (cdr lst)))))))
+        (and (pair? lst)
+             (cond ((eq? (car lst) 'quote) #f)
+                   ((eq? (car lst) id) #t)
+                   (else (self-recursion-each lst id))))))
+
+    (define contains-closure?
+      (lambda (lst)
+
+        (define contains-closure-each
+          (lambda (lst)
+            (let loop ((lst lst))
+              (and (pair? lst)
+                   (or (contains-closure? (car lst)) (loop (cdr lst)))))))
+
+        (and (pair? lst)
+             (cond ((eq? (car lst) 'quote) #f)
+                   ((eq? (car lst) 'lambda) #t)
+                   (else (contains-closure-each lst))))))
+
+    (define contains-literal-box?
+      (lambda (lst)
+
+        (define contains-literal-box-each
+          (lambda (lst)
+            (let loop ((lst lst))
+              (and (pair? lst)
+                   (or (contains-literal-box? (car lst)) (loop (cdr lst)))))))
+
+        (and (pair? lst)
+             (cond ((and (eq? (car lst) 'quote)
+                         (or (pair? (cadr lst))
+                             (vector? (cadr lst)))) #t)
+                   (else (contains-literal-box-each lst))))))
+
+    (define complexity
+      (lambda (lst)
+        (cond ((list? lst)
+               (if (and (pair? lst) (eq? (car lst) 'quote))
+                   0
+                   (+ (apply + (map complexity lst)) 1)))
+              (else 0))))
+
+    (let ((subst
+            (apply
+              append
+              (filter
+                values
+                (map (lambda (b)
+                       (destructuring-match (cdr b)
+                         (('lambda args . body)
+                          (list? args)
+                          (cond ((core-hashtable-contains? ht-variable-assigned (car b)) #f)
+                                ((self-recursion? body (car b)) #f)
+                                ((contains-closure? body) #f)
+                                (else
+                                 (let ((callsites (core-hashtable-ref ht-variable-callsites (car b) #f)))
+                                   (and (pair? callsites)
+                                        (<= (complexity body) complexity-threshold-always-inline)
+                                        (or (= (length callsites) 1) (not (contains-literal-box? body)))
+                                        (filter
+                                          values
+                                          (map (lambda (callsite)
+                                                 (and (= (- (length callsite) 1) (length args))
+                                                      (not (contains-closure? callsite))
+                                                      (let ((binding (map list args (cdr callsite))))
+                                                        (cons callsite `(let ,binding ,@body)))))
+                                               callsites)))))))
+                         (_ #f)))
+                     (core-hashtable->alist ht-variable-binding))))))
+      (cond ((> (length subst) 0)
+             (inline-callsites form subst))
+            (else form)))))
+
+;;; dead code elimination
+
+(define dead-code-elimination
+  (lambda (form)
+
+    (define emit
+      (lambda (new)
+        (cond ((eq? new form) new)
+              (else
+               ((annotate-hook) new form) new))))
+
+    (define annotate-closure
+      (lambda (new soruce)
+        (cond ((eq? new soruce) new)
+              (else
+               ((annotate-closure-hook) new soruce) new))))
+
+    (define dead-code-elimination-each
+      (lambda (form)
+        (let loop ((lst form))
+          (cond ((null? lst) '())
+                (else
+                 (let ((ea (dead-code-elimination (car lst))) (ed (loop (cdr lst))))
+                   (if (and (eq? ea (car lst)) (eq? ed (cdr lst)))
+                       lst
+                       (cons ea ed))))))))
+
+    (define eliminatable?
+      (lambda (var init)
+        (and (uninterned-symbol? var)
+             (= (core-hashtable-ref ht-variable-refc var 0) 0)
+             (pair? init)
+             (eq? (car init) 'lambda))))
+
+    (if (pair? form)
+        (destructuring-match form
+          (('quote e1) form)
+          (('lambda e1 . e2)
+           (let ((e2a (dead-code-elimination-each e2)))
+             (if (eq? e2a e2)
+                 form
+                 (emit (annotate-closure `(lambda ,e1 ,@e2a) form)))))
+          (('letrec* e1 . e2)
+           (if (null? e1)
+               (emit `(begin ,@(dead-code-elimination-each e2)))
+               (let ((e1a (map cadr e1)))
+                 (let ((e1b (dead-code-elimination-each e1a)) (e2a (dead-code-elimination-each e2)))
+                   (let ((new-e1 (filter
+                                      values
+                                      (map (lambda (var init)
+                                             (if (eliminatable? var init)
+                                                 #f
+                                                 (list var init)))
+                                           (map car e1)
+                                           e1b))))
+                      (if (and (= (length e1) (length new-e1)) (eq? e2 e2a) (for-all eq? e1a e1b))
+                          form
+                          (emit `(letrec* ,new-e1 ,@e2a))))))))
+          (('define e1 e2)
+           (if (eliminatable? e1 e2)
+               '(begin)
+               (let ((new (dead-code-elimination e2)))
+                 (if (eq? new e2)
+                     form
+                     (emit `(define ,e1 ,(dead-code-elimination e2)))))))
+          (_ (dead-code-elimination-each form)))
+        form)))
+
 ;;; transform
 
   (define transform
@@ -1122,6 +1352,7 @@
 
       (define post-transform
         (lambda (form)
+          #;(format #t "~%@@ post-transform:~r" form)
           (process-stackable form)
           (for-each (lambda (b) (closure-attribute-set! (cdr b) 'stack))
                     (core-hashtable->alist ht-variable-stackables))
@@ -1134,87 +1365,113 @@
 
           form))
 
+      (define inlining-pass
+        (lambda (form)
+          (let loop ((form (pretty-form form)) (pass 1))
+            #;(format #t "~%@@ pre-pass:~s" pass)
+            (cond ((<= pass max-inline-pass)
+                   (clear-context)
+                   (collect-context form '() '() #f)
+                   (let ((new (process-inlining form)))
+                     (cond ((eq? new form) form)
+                           (else (loop new (+ pass 1))))))
+                  (else form)))))
+
+      (define dead-code-elimination-pass
+        (lambda (form)
+          (clear-context)
+          (collect-context form '() '() #f)
+          (dead-code-elimination form)))
+
       (diagnostics (format #t "~&----------~%coreform-optimize:~%  ~r~%    ~n~%" form form))
 
-      (let loop ((form (pretty-form form)) (pass 1))
+      #;(format #t "~&----------~%coreform-optimize:~%  ~r~%    ~n~%" form form)
+      (let loop ((form (inlining-pass form)) (pass 1))
+        #;(format #t "~%@@ pass:~s form:~r" pass form)
+        #;(and (= pass 1) (format #t "~%@@ form:~r" form))
         (clear-context)
         (collect-context form '() '() #f)
         (crawl-lambda-lifting form pass)
         (let ((ht-lift-table (make-lambda-lift-table)) (ht-bata-subst-table (crawl-beta-subst form)))
 
-          (define no-simple-lift-nor-subst?
-            (and (= (core-hashtable-size ht-lift-table) 0)
-                 (= (core-hashtable-size ht-bata-subst-table) 0)))
-
           (diagnostics
             (let ((update-lambda-count (core-hashtable-size ht-update-lambda-table)) (update-callsite-count (core-hashtable-size ht-update-callsite-table)))
               (cond ((> update-lambda-count 0 )
-                     (format #t "~&  pass ~s update lambda (~s)~%" pass update-lambda-count)
-                     (for-each (lambda (b) (format #t "    ~r => ~r~%" (car b) (cdr b))) (core-hashtable->alist ht-update-lambda-table))))
+                      (format #t "~&  pass ~s update lambda (~s)~%" pass update-lambda-count)
+                      (for-each (lambda (b) (format #t "    ~r => ~r~%" (car b) (cdr b))) (core-hashtable->alist ht-update-lambda-table))))
               (cond ((> update-callsite-count 0 )
-                     (format #t "~&  pass ~s update callsite (~s)~%" pass update-callsite-count)
-                     (for-each (lambda (b) (format #t "    ~r => ~r~%" (car b) (cdr b))) (core-hashtable->alist ht-update-callsite-table))))))
+                      (format #t "~&  pass ~s update callsite (~s)~%" pass update-callsite-count)
+                      (for-each (lambda (b) (format #t "    ~r => ~r~%" (car b) (cdr b))) (core-hashtable->alist ht-update-callsite-table))))))
           (diagnostics
             (let ((lift-count (core-hashtable-size ht-lift-table)) (subst-count (core-hashtable-size ht-bata-subst-table)))
               (cond ((> lift-count 0 )
-                     (format #t "~&  pass ~s top-level lambda (~s)~%" pass lift-count)
-                     (for-each (lambda (b) (and (symbol? (car b)) (format #t "    ~s := ~r~%" (car b) (cdr b)))) (core-hashtable->alist ht-lift-table))
-                     (for-each (lambda (b) (and (symbol? (cdr b)) (format #t "    ~s := ~r~%" (cdr b) (car b)))) (core-hashtable->alist ht-lift-table))))
+                      (format #t "~&  pass ~s top-level lambda (~s)~%" pass lift-count)
+                      (for-each (lambda (b) (and (symbol? (car b)) (format #t "    ~s := ~r~%" (car b) (cdr b)))) (core-hashtable->alist ht-lift-table))
+                      (for-each (lambda (b) (and (symbol? (cdr b)) (format #t "    ~s := ~r~%" (cdr b) (car b)))) (core-hashtable->alist ht-lift-table))))
               (cond ((> subst-count 0 )
-                     (format #t "~&  pass ~s eliminate variable (~s)~%" pass subst-count)
-                     (for-each (lambda (b) (format #t "    ~s -> ~r~%" (car b) (cdr b))) (core-hashtable->alist ht-bata-subst-table))))))
+                      (format #t "~&  pass ~s eliminate variable (~s)~%" pass subst-count)
+                      (for-each (lambda (b) (format #t "    ~s -> ~r~%" (car b) (cdr b))) (core-hashtable->alist ht-bata-subst-table))))))
 
-          (and no-simple-lift-nor-subst? (process-stackable form))
+          (and (= (core-hashtable-size ht-lift-table) 0)
+                (= (core-hashtable-size ht-bata-subst-table) 0)
+                (process-stackable form))
           (let-values (((ht-update-lambda-table ht-update-callsite-table ht-callsite-to-lambda) (make-lambda-update-table)))
             (cond ((and (<= pass max-transform-pass)
-                        (or (not no-simple-lift-nor-subst?)
+                        (or (> (core-hashtable-size ht-lift-table) 0)
+                            (> (core-hashtable-size ht-bata-subst-table) 0)
                             (> (core-hashtable-size ht-update-lambda-table) 0)
                             (> (core-hashtable-size ht-update-callsite-table) 0)
                             (and (= pass 1)
-                                 (exists (lambda (b) (not (core-hashtable-contains? ht-variable-refc (car b))))
-                                         (core-hashtable->alist ht-variable-binding)))))
-                   (if no-simple-lift-nor-subst?
-                       (let* ((ht-rewrited (make-core-hashtable))
+                                  (exists (lambda (b) (not (core-hashtable-contains? ht-variable-refc (car b))))
+                                          (core-hashtable->alist ht-variable-binding)))))
+                    (if (and (= (core-hashtable-size ht-lift-table) 0)
+                            (= (core-hashtable-size ht-bata-subst-table) 0))
+                        (let* ((ht-rewrited (make-core-hashtable))
                               (new0 (rewrite-lambda-form form ht-update-lambda-table #f ht-rewrited ht-callsite-to-lambda))
                               (new1 (rewrite-lambda-form new0 #f ht-update-callsite-table ht-rewrited ht-callsite-to-lambda)))
-                         #;(format #t ">>> original~%~r~%<<< rewrited 0~%~r~%<<< rewrited 1~%~r~%" form new0 new1)
-                         (loop new1 (+ pass 1)))
-                       (let* ((top-level-defs
+                        #;(format #t ">>> original~%~r~%<<< rewrited 0~%~r~%<<< rewrited 1~%~r~%" form new0 new1)
+                          (loop new1 (+ pass 1)))
+                        (let* ((top-level-defs
                                 (cons 'begin
                                       (filter values
                                         (map (lambda (e)
-                                               (let ((lhs (car e)) (rhs (cdr e)))
-                                                 (if (symbol? lhs)
-                                                     (and (core-hashtable-contains? ht-variable-refc lhs) `(define ,lhs ,rhs))
-                                                     `(define ,rhs ,lhs))))
-                                             (core-hashtable->alist ht-lift-table)))))
+                                              (let ((lhs (car e)) (rhs (cdr e)))
+                                                (if (symbol? lhs)
+                                                    (and (core-hashtable-contains? ht-variable-refc lhs) `(define ,lhs ,rhs))
+                                                    `(define ,rhs ,lhs))))
+                                            (core-hashtable->alist ht-lift-table)))))
                               (form
                                 (cons 'begin
                                       (map (lambda (e)
-                                             (let loop ((e e))
-                                               #;(format #t ">>> TRANSCRIBE ~r~%" e)
-                                               (let ((new (transcribe e ht-lift-table ht-bata-subst-table)))
-                                                 (cond ((eq? new e) e)
-                                                       (else (loop new))))))
-                                           (flatten-begin `(,top-level-defs ,form))))))
-                             (loop form (+ pass 1)))))
+                                            (let loop ((e e))
+                                              #;(format #t ">>> TRANSCRIBE ~r~%" e)
+                                              (let ((new (transcribe e ht-lift-table ht-bata-subst-table)))
+                                                (cond ((eq? new e) e)
+                                                      (else (loop new))))))
+                                          (flatten-begin `(,top-level-defs ,form))))))
+                            (loop form (+ pass 1)))))
                   (else
-                   (post-transform form))))))))
+                   (if (< pass max-transform-pass)
+                       (let ((new (dead-code-elimination-pass (inlining-pass form))))
+                         (if (eq? new form)
+                             (post-transform form)
+                             (loop new (+ pass 1))))
+                       (post-transform form)))))))))
 
 ;;; pretty
 
-  (define pretty-each
-    (lambda (form top-level)
-      (let loop ((lst form))
-        (cond ((null? lst) '())
-              (else
-               (let ((ea (pretty (car lst) top-level)) (ed (loop (cdr lst))))
-                 (if (and (eq? ea (car lst)) (eq? ed (cdr lst)))
-                     lst
-                     (cons ea ed))))))))
-
   (define pretty
     (lambda (form top-level)
+
+      (define pretty-each
+        (lambda (form top-level)
+          (let loop ((lst form))
+            (cond ((null? lst) '())
+                   (else
+                    (let ((ea (pretty (car lst) top-level)) (ed (loop (cdr lst))))
+                      (if (and (eq? ea (car lst)) (eq? ed (cdr lst)))
+                          lst
+                          (cons ea ed))))))))
 
       (define emit
         (lambda (new)
