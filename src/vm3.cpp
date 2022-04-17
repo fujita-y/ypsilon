@@ -81,7 +81,7 @@ void VM::apply_scheme_argv(scm_obj_t proc, int argc, scm_obj_t argv[]) {
   if (CDR(m_pc) == scm_nil) {
     code = CONS(scm_unspecified, code);
   } else {
-    if (CAAR(m_pc) == INST_PUSH_SUBR) {
+    if (PAIRP(CAR(m_pc)) && CAAR(m_pc) == INST_PUSH_SUBR) {
       code = CONS(scm_unspecified, CONS(CONS(INST_CALL, code), CONS(LIST1(INST_PUSH), CDR(m_pc))));
     } else {
       code = CONS(scm_unspecified, CONS(CONS(INST_CALL, code), CDR(m_pc)));

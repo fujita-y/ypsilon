@@ -129,8 +129,6 @@ extern "C" {
     wrong_type_argument_violation(vm, "operator(+ -)", 0, "number", argv[0], 2, argv);
   }
 
-  void c_error_apply_gloc(VM* vm, scm_obj_t operands) { undefined_violation(vm, ((scm_gloc_t)operands)->variable, NULL); }
-
   void c_error_push_gloc(VM* vm, scm_obj_t operands) { undefined_violation(vm, ((scm_gloc_t)operands)->variable, NULL); }
 
   void c_error_gloc(VM* vm, scm_obj_t operands) { undefined_violation(vm, ((scm_gloc_t)operands)->variable, NULL); }
@@ -1655,30 +1653,10 @@ void digamma_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
   }
 #endif
 
-  auto val = CREATE_LOAD_GLOC_REC(IRB.CreateBitOrPointerCast(VALUE_INTPTR(gloc), IntptrPtrTy), value);
-  if (gloc->value == scm_undef) {
-    BasicBlock* undef_true = BasicBlock::Create(C, "undef_ture", F);
-    BasicBlock* CONTINUE = BasicBlock::Create(C, "continue", F);
-    auto undef_cond = IRB.CreateICmpEQ(val, VALUE_INTPTR(scm_undef));
-    IRB.CreateCondBr(undef_cond, undef_true, CONTINUE, ctx.likely_false);
-    IRB.SetInsertPoint(undef_true);
-    ctx.reg_cache_copy(vm);
 #if USE_TRACE_CODE
-    CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
+  CREATE_STORE_VM_REG(vm, m_pc, VALUE_INTPTR(inst));
 #endif
-    auto thunkType = FunctionType::get(VoidTy, {IntptrPtrTy, IntptrTy}, false);
-    auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_apply_gloc), thunkType->getPointerTo());
-    auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(gloc)});
-#if USE_LLVM_ATTRIBUTES
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
-    call->addParamAttr(0, Attribute::NoAlias);
-    call->addParamAttr(0, Attribute::NoCapture);
-    call->addParamAttr(0, Attribute::NoFree);
-#endif
-    IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_resume_loop));
-    IRB.SetInsertPoint(CONTINUE);
-  }
+  auto val = CREATE_LOAD_GLOC_REC(IRB.CreateBitOrPointerCast(VALUE_INTPTR(gloc), IntptrPtrTy), value);
   ctx.reg_value.store(vm, val);
   ctx.reg_cache_copy(vm);
   IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_apply));

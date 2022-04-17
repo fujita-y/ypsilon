@@ -193,14 +193,14 @@ scm_obj_t subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[]) {
     if (HASHTABLEP(argv[0])) {
       scm_hashtable_t ht = (scm_hashtable_t)argv[0];
       if (!HDR_HASHTABLE_IMMUTABLE(ht->hdr)) {
-        vm->m_heap->write_barrier(argv[1]);
-        vm->m_heap->write_barrier(argv[2]);
         scoped_lock lock(ht->lock);
         if (ht->handlers == scm_false) {
           if (ht->type == SCM_HASHTABLE_TYPE_STRING && !STRINGP(argv[1])) {
             wrong_type_argument_violation(vm, "core-hashtable-set!", 1, "string", argv[1], argc, argv);
             return scm_undef;
           }
+          vm->m_heap->write_barrier(argv[1]);
+          vm->m_heap->write_barrier(argv[2]);
           int nsize = put_hashtable(ht, argv[1], argv[2]);
           if (nsize) rehash_hashtable(vm->m_heap, ht, nsize);
           return scm_unspecified;

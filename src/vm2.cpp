@@ -10,6 +10,7 @@
 
 #define CONS(a, d) make_pair(m_heap, (a), (d))
 
+#if ENABLE_LLVM_JIT
 int VM::choose_codegen_thread() {
   int min = INT_MAX;
   int result = 0;
@@ -25,6 +26,7 @@ int VM::choose_codegen_thread() {
   }
   return result;
 }
+#endif
 
 bool VM::self_modifying(scm_gloc_t gloc, scm_obj_t code) {
   while (PAIRP(code)) {
