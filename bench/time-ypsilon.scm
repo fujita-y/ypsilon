@@ -21,7 +21,6 @@
 
 (define wait-codegen-idle
   (lambda ()
-    (collect)
     (let loop ()
       (usleep 100000)
       (cond ((= (codegen-queue-count) 0))
@@ -31,11 +30,11 @@
   (format #t "~%;;  ~a (x~a)~!" (pad-space name 7) count)
   (format output-port "~s" name)
   (let ((run (apply run-maker args)))
+      (collect #t)
       (if warmup
           (begin
             (run-bench name 1 ok? run)
             (wait-codegen-idle)))
-      (usleep 1000000)
       (let ((result (time (run-bench name count ok? run))))
         (and (not (ok? result)) (format #t "~%;; wrong result: ~s~%~!" result)))
       (format #t ";;  ----------------------------------------------------------------~!")

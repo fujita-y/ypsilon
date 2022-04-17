@@ -226,6 +226,7 @@
       (core-hashtable-clear! ht-binding-body-mutual)))
 
   (define denote-call/cc (top-level-value '.call-with-current-continuation))
+  (define denote-collect (top-level-value '.collect))
 
   (define dump-lambda-node
     (lambda ()
@@ -249,6 +250,11 @@
       (cond ((core-hashtable-ref ht-variable-binding x #f)
              => (lambda (e) (core-hashtable-ref ht-lambda-node e #f)))
             (else #f))))
+
+  (define interpret-function?
+    (lambda (x)
+      (and (top-level-bound? x)
+           (eq? (top-level-value x) denote-collect))))
 
   (define primitive-function?
     (lambda (x)
@@ -1597,9 +1603,12 @@
                    (_
                     (assertion-violation "coreform-optimize" (format "internal inconsistency in ~s" pretty) form))))
                 (else
-                 (if (> (length form) limit-arguments)
-                     (divide form)
-                     (pretty-each form #f)))))
+                 (cond ((and (symbol? (car form)) (interpret-function? (car form)))
+                        (emit `(.apply ,(car form) ,@(pretty-each (cdr form) #f) '())))
+                       ((> (length form) limit-arguments)
+                        (divide form))
+                       (else
+                        (pretty-each form #f))))))
           form)))
 
   (define pretty-form
