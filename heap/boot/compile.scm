@@ -54,13 +54,6 @@
          (top-level-bound? e)
          (top-level-value e))))
 
-(define formals->list
-  (lambda (lst)
-    (if (pair? lst)
-        (cons (car lst) (formals->list (cdr lst)))
-        (cond ((null? lst) '())
-              (else (list lst))))))
-
 (define make-formals-operand
   (lambda (vars formals)
     (cond ((list? formals) (list (length formals) 0))

@@ -33,7 +33,6 @@ endif
 
 ifneq (,$(findstring Linux, $(UNAME)))
   ifneq (,$(findstring aarch64, $(UNAME)))
-    CXXFLAGS += -march=armv8-a
     CPPFLAGS += -DDEFAULT_HEAP_LIMIT=2048
   endif
   ifneq (,$(findstring x86, $(UNAME)))
