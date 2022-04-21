@@ -501,13 +501,17 @@ loop:
   }
 #endif
   SWITCH() {
-    CASE(VMOP_IF_FALSE_CALL) {
-      if (m_value == scm_false) goto ENT_VMOP_CALL;
+    CASE(VMOP_IF_FALSE_TAILCALL) {
+      if (m_value == scm_false) {
+        m_fp = m_sp;
+        m_pc = OPERANDS;
+        goto loop;
+      }
       m_pc = CDR(m_pc);
       goto loop;
     }
 
-    CASE(VMOP_CALL) ENT_VMOP_CALL : {
+    CASE(VMOP_CALL) {
       if ((uintptr_t)m_sp + sizeof(vm_cont_rec_t) < (uintptr_t)m_stack_limit) {
 #if STDEBUG
         check_vm_state();

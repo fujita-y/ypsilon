@@ -54,7 +54,7 @@ bool VM::self_modifying(scm_gloc_t gloc, scm_obj_t code) {
         }
       } break;
       case VMOP_IF_TRUE:
-      case VMOP_IF_FALSE_CALL:
+      case VMOP_IF_FALSE_TAILCALL:
       case VMOP_IF_NULLP:
       case VMOP_IF_PAIRP:
       case VMOP_IF_SYMBOLP:
@@ -326,7 +326,7 @@ void VM::prebind_list(scm_obj_t code) {
       } break;
 
       case VMOP_IF_TRUE:
-      case VMOP_IF_FALSE_CALL:
+      case VMOP_IF_FALSE_TAILCALL:
       case VMOP_IF_NULLP:
       case VMOP_IF_PAIRP:
       case VMOP_IF_SYMBOLP:

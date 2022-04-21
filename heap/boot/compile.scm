@@ -559,7 +559,7 @@
                 (pair? (caddr form))
                 (eq? (top-level-value-or-false (caaddr form)) assertion-violation))
            `(,@(compile-expression (cadr form) cte #f #f)
-             (if.false.call ,@(compile-expression (caddr form) cte #f #t))))
+             (if.false.tailcall ,@(compile-expression (caddr form) cte #f #t))))
           (else (let ((code (compile-clause (cdr form) cte))) (if tail code (list (cons 'call code))))))))
 
 (define compile-expression-and

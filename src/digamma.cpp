@@ -659,7 +659,7 @@ void digamma_t::precodegen_reference(scm_obj_t code) {
         }
       } break;
       case VMOP_IF_TRUE:
-      case VMOP_IF_FALSE_CALL:
+      case VMOP_IF_FALSE_TAILCALL:
       case VMOP_IF_NULLP:
       case VMOP_IF_PAIRP:
       case VMOP_IF_SYMBOLP:
@@ -688,7 +688,7 @@ int digamma_t::calc_stack_size(scm_obj_t inst) {
   int n = 0;
   while (inst != scm_nil) {
     switch (VM::instruction_to_opcode(CAAR(inst))) {
-      case VMOP_IF_FALSE_CALL: {
+      case VMOP_IF_FALSE_TAILCALL: {
         scm_obj_t operands = CDAR(inst);
         int n2 = calc_stack_size(operands);
         if (n + n2 > require) require = n + n2;
@@ -773,7 +773,7 @@ void digamma_t::transform(context_t& ctx, scm_obj_t inst, bool insert_stack_chec
   if (insert_stack_check) emit_stack_overflow_check(ctx, calc_stack_size(inst));
   while (inst != scm_nil) {
     switch (VM::instruction_to_opcode(CAAR(inst))) {
-      case VMOP_IF_FALSE_CALL: {
+      case VMOP_IF_FALSE_TAILCALL: {
         emit_if_false_call(ctx, inst);
       } break;
       case VMOP_CALL: {
@@ -2224,6 +2224,7 @@ void digamma_t::emit_if_false_call(context_t& ctx, scm_obj_t inst) {
   IRB.SetInsertPoint(value_false);
   context_t ctx2 = ctx;
   ctx2.m_argc = 0;
+  ctx2.reg_fp.store(vm, ctx2.reg_sp.load(vm));
   transform(ctx2, operands, false);
 
   // no taken

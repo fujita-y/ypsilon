@@ -1247,7 +1247,7 @@ void object_heap_t::init_inherents() {
   make_symbol_inherent(this, "set.gloc", VMOP_SET_GLOC);
   make_symbol_inherent(this, "set.iloc", VMOP_SET_ILOC);
   make_symbol_inherent(this, "if.true", VMOP_IF_TRUE);
-  make_symbol_inherent(this, "if.false.call", VMOP_IF_FALSE_CALL);
+  make_symbol_inherent(this, "if.false.tailcall", VMOP_IF_FALSE_TAILCALL);
   make_symbol_inherent(this, "if.true.ret", VMOP_IF_TRUE_RET);
   make_symbol_inherent(this, "if.false.ret", VMOP_IF_FALSE_RET);
   make_symbol_inherent(this, "call", VMOP_CALL);
