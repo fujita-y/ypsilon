@@ -5,5 +5,6 @@
   (begin
     (define-syntax receive
       (syntax-rules ()
-        ((_ formals expr body ...)
-         (let-values ((formals expr)) body ...))))))
+        ((receive formals expression body ...)
+         (call-with-values (lambda () expression)
+           (lambda formals body ...)))))
