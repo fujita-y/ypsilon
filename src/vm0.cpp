@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "digamma.h"
+#include "exception.h"
 #include "hash.h"
 #include "port.h"
 #include "printer.h"

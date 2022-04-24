@@ -4,6 +4,7 @@
 #include "core.h"
 #include "reader.h"
 #include "arith.h"
+#include "exception.h"
 #include "fasl.h"
 #include "heap.h"
 #include "port.h"

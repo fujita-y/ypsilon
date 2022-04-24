@@ -2,6 +2,7 @@
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
+#include "exception.h"
 #include "heap.h"
 #include "ioerror.h"
 #include "socket.h"

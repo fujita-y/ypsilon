@@ -1022,7 +1022,7 @@ void object_heap_t::trace(scm_obj_t obj) {
     }
     case TC_GLOC: {
       scm_gloc_t gloc = (scm_gloc_t)obj;
-      shade(gloc->variable);
+      shade(gloc->name);
       shade(gloc->value);
       break;
     }

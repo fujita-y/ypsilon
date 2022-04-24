@@ -256,7 +256,7 @@ loop:
       }
       case TC_GLOC: {
         scm_gloc_t gloc = (scm_gloc_t)obj;
-        scan(gloc->variable);
+        scan(gloc->name);
         if (UNINTERNEDGLOCP(gloc)) {
           if (get_hashtable(m_tagged_datum, obj) != scm_undef) return;
           int nsize = put_hashtable(m_tagged_datum, obj, MAKEFIXNUM(m_tagged_datum->datum->live));
@@ -489,7 +489,7 @@ void serializer_t::put_datum(scm_obj_t obj) {
             put_hashtable(m_tagged_datum, obj, MAKEFIXNUM(-id - 1));
             emit_u8(BVO_TAG_UNINTERNED_GLOC);
             emit_u32(id);
-            put_datum(gloc->variable);
+            put_datum(gloc->name);
             put_datum(gloc->value);
             return;
           } else {
@@ -502,7 +502,7 @@ void serializer_t::put_datum(scm_obj_t obj) {
         fatal("%s:%u internal error: something wrong", __FILE__, __LINE__);
       }
       emit_u8(BVO_TAG_GLOC);
-      put_datum(gloc->variable);
+      put_datum(gloc->name);
       return;
     }
     case TC_SUBR: {
@@ -728,7 +728,7 @@ scm_obj_t deserializer_t::get_datum() {
       int id = fetch_u32();
       scm_gloc_t gloc = (scm_gloc_t)m_tagged_datum[id];
       assert(GLOCP(gloc));
-      gloc->variable = (scm_symbol_t)get_datum();
+      gloc->name = (scm_symbol_t)get_datum();
       gloc->value = get_datum();
       return gloc;
     }

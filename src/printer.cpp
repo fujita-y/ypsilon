@@ -1177,8 +1177,8 @@ void printer_t::write(scm_obj_t ht, scm_obj_t obj) {
     }
     case TC_GLOC: {
       scm_gloc_t gloc = (scm_gloc_t)obj;
-      if (SYMBOLP(gloc->variable))
-        format("#<gloc ~a>", gloc->variable);
+      if (SYMBOLP(gloc->name))
+        format("#<gloc ~a>", gloc->name);
       else
         format("#<gloc 0x%x>", obj);
       return;

@@ -281,7 +281,7 @@ static void resolve_collectible(void* obj, int size, void* desc) {
 
     case TC_GLOC: {
       scm_gloc_t gloc = (scm_gloc_t)obj;
-      gloc->variable = heap->forward(gloc->variable);
+      gloc->name = heap->forward(gloc->name);
       gloc->value = heap->forward(gloc->value);
     } break;
 

@@ -4,6 +4,7 @@
 #include "core.h"
 #include "arith.h"
 #include "digamma.h"
+#include "exception.h"
 #include "hash.h"
 #include "ioerror.h"
 #include "list.h"

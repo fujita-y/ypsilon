@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "arith.h"
+#include "exception.h"
 #include "fasl.h"
 #include "heap.h"
 #include "ioerror.h"

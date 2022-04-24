@@ -15,6 +15,7 @@
 #include "core.h"
 #include "port.h"
 #include "arith.h"
+#include "exception.h"
 #include "file.h"
 #include "ioerror.h"
 #include "socket.h"

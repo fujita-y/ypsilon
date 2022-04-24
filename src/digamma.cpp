@@ -129,9 +129,9 @@ extern "C" {
     wrong_type_argument_violation(vm, "operator(+ -)", 0, "number", argv[0], 2, argv);
   }
 
-  void c_error_push_gloc(VM* vm, scm_obj_t operands) { undefined_violation(vm, ((scm_gloc_t)operands)->variable, NULL); }
+  void c_error_push_gloc(VM* vm, scm_obj_t operands) { undefined_violation(vm, ((scm_gloc_t)operands)->name, NULL); }
 
-  void c_error_gloc(VM* vm, scm_obj_t operands) { undefined_violation(vm, ((scm_gloc_t)operands)->variable, NULL); }
+  void c_error_gloc(VM* vm, scm_obj_t operands) { undefined_violation(vm, ((scm_gloc_t)operands)->name, NULL); }
 
   scm_obj_t c_make_pair(VM* vm, scm_obj_t car, scm_obj_t cdr) { return make_pair(vm->m_heap, car, cdr); }
 
@@ -1532,7 +1532,7 @@ void digamma_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
 #endif
 
   scm_gloc_t gloc = (scm_gloc_t)CAR(operands);
-  scm_symbol_t symbol = (scm_symbol_t)gloc->variable;
+  scm_symbol_t symbol = (scm_symbol_t)gloc->name;
   scm_obj_t obj = gloc->value;
   if (obj == ctx.m_top_level_closure && HDR_CLOSURE_ARGS(ctx.m_top_level_closure->hdr) == ctx.m_argc) {
 #if VERBOSE_CODEGEN
@@ -1546,7 +1546,7 @@ void digamma_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
     IRB.CreateRet(call2);
     return;
   }
-  if (CLOSUREP(obj) && SYMBOLP(gloc->variable)) {
+  if (CLOSUREP(obj)) {
     scm_closure_t closure = (scm_closure_t)obj;
     if (strchr(symbol->name, IDENTIFIER_RENAME_DELIMITER)) {
 #if VERBOSE_CODEGEN

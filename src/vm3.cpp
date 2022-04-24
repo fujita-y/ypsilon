@@ -2,6 +2,7 @@
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
+#include "exception.h"
 #include "vm.h"
 
 #define CONS(a, d)      make_pair(m_heap, (a), (d))

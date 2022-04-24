@@ -104,10 +104,6 @@ extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
 #if !defined(NO_POSIX_SPAWN)
   #include <spawn.h>
 #endif
-#if defined(__sun__)
-  #include <alloca.h>
-  #include <ieeefp.h>
-#endif
 
 extern char** environ;
 
@@ -132,10 +128,6 @@ typedef unsigned int uint128_t __attribute__((__mode__(TI)));
   #define MEM_STORE_FENCE __asm__ __volatile__("dsb sy" ::: "memory")
 #else
   #define MEM_STORE_FENCE __asm__ __volatile__("sfence" ::: "memory")
-#endif
-
-#if defined(__sun__)
-inline int isinf(double x) { return (!finite(x) && !isnan(x)); }
 #endif
 
 #define INVALID_FD     (-1)

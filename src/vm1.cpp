@@ -4,6 +4,7 @@
 #include "core.h"
 #include "arith.h"
 #include "digamma.h"
+#include "exception.h"
 #include "printer.h"
 #include "violation.h"
 #include "vm.h"
@@ -1908,7 +1909,7 @@ ERROR_GLOC:
 ERROR_RET_GLOC:
 ERROR_PUSH_GLOC:
 ERROR_TOUCH_GLOC:
-  undefined_violation(this, ((scm_gloc_t)OPERANDS)->variable, NULL);
+  undefined_violation(this, ((scm_gloc_t)OPERANDS)->name, NULL);
   goto RESUME_LOOP;
 
 ERROR_RET_ILOC:
@@ -1948,7 +1949,7 @@ ERROR_LETREC_VIOLATION:
   goto RESUME_LOOP;
 
 ERROR_APPLY_GLOC:
-  undefined_violation(this, ((scm_gloc_t)CAR(OPERANDS))->variable, NULL);
+  undefined_violation(this, ((scm_gloc_t)CAR(OPERANDS))->name, NULL);
   goto BACK_TO_TRACE_N_LOOP;
 
 ERROR_APPLY_WRONG_NUMBER_ARGS : {

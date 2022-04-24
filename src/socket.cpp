@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "socket.h"
+#include "exception.h"
 #include "port.h"
 #include "vm.h"
 

@@ -38,7 +38,7 @@
     nnnn nnnn nnnn nnnn .... NZ-- ---- 1010 : scm_hdr_bignum        NZ: (01 positive) (11 negative) (00 zero)
     .... .... .... .... .... P.-- ---- 1010 : scm_hdr_flonum        P: precision (0 64bit) (1 32bit)
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_cont
-    nnnn nnnn nnnn nnnn .... C.-- ---- 1010 : scm_hdr_closure       I: compiled, n == (- 1 - <required argc>) if there are rest arguments
+    nnnn nnnn nnnn nnnn .... C.-- ---- 1010 : scm_hdr_closure       C: compiled, n == (- 1 - <required argc>) if there are rest arguments
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_subr
     .... .... .... .... .... L.-- ---- 1010 : scm_hdr_vector        L: literal
     .... .... .... .... .... ..-- ---- 1010 : scm_hdr_port
@@ -60,7 +60,7 @@
 #define OBJECT_DATUM_ALIGN      8
 #define OBJECT_DATUM_ALIGN_MASK (OBJECT_DATUM_ALIGN - 1)
 
-#define PORT_LOOKAHEAD_SIZE     6
+#define PORT_LOOKAHEAD_SIZE     8
 
 typedef void* scm_obj_t;
 typedef uintptr_t scm_hdr_t;
@@ -203,51 +203,42 @@ typedef scm_obj_t (*subr_proc_t)(VM*, int argc, scm_obj_t argv[]);
 typedef uint32_t (*hash_proc_t)(scm_obj_t obj, uint32_t bound);
 typedef bool (*equiv_proc_t)(scm_obj_t obj1, scm_obj_t obj2);
 
-#define OBJECT_ALIGNED(x) struct DECLSPEC(align(OBJECT_DATUM_ALIGN)) x
-#define END               ATTRIBUTE(aligned(OBJECT_DATUM_ALIGN))
-
-OBJECT_ALIGNED(scm_pair_rec_t) {
+struct scm_pair_rec_t {
   scm_obj_t car;
   scm_obj_t cdr;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_symbol_rec_t) {
+struct scm_symbol_rec_t {
   scm_hdr_t hdr;
   char* name;  // uninterned symbol contains <prefix-size> after '\0'
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_string_rec_t) {
+struct scm_string_rec_t {
   scm_hdr_t hdr;
-  int size;
   char* name;
-}
-END;
+  int size;
+};
 
-OBJECT_ALIGNED(scm_flonum_rec_t) {
+struct scm_flonum_rec_t {
   scm_hdr_t hdr;
   double value;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_cont_rec_t) {
+struct scm_cont_rec_t {
   scm_hdr_t hdr;
   scm_obj_t wind_rec;
   void* cont;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_closure_rec_t) {
+struct scm_closure_rec_t {
   scm_hdr_t hdr;
-  scm_obj_t doc;
   void* env;
   void* code;
   scm_obj_t pc;
-}
-END;
+  scm_obj_t doc;
+};
 
-OBJECT_ALIGNED(scm_subr_rec_t) {
+struct scm_subr_rec_t {
   scm_hdr_t hdr;
   subr_proc_t adrs;
   scm_obj_t doc;
@@ -257,60 +248,54 @@ OBJECT_ALIGNED(scm_subr_rec_t) {
   uint64_t c_ret;
   uint64_t c_apply;
 #endif
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_vector_rec_t) {
+struct scm_vector_rec_t {
   scm_hdr_t hdr;
+  scm_obj_t* elts;
   int count;
-  scm_obj_t* elts;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_values_rec_t) {
+struct scm_values_rec_t {
   scm_hdr_t hdr;
   scm_obj_t* elts;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_tuple_rec_t) {
+struct scm_tuple_rec_t {
   scm_hdr_t hdr;
   scm_obj_t* elts;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_bvector_rec_t) {
+struct scm_bvector_rec_t {
   scm_hdr_t hdr;
-  int count;
   uint8_t* elts;
-}
-END;
+  int count;
+};
 
-OBJECT_ALIGNED(scm_weakmapping_rec_t) {
+struct scm_weakmapping_rec_t {
   scm_hdr_t hdr;
   scm_obj_t key;
   scm_obj_t value;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_port_rec_t) {
+struct scm_port_rec_t {
   scm_hdr_t hdr;
   mutex_t lock;
   scm_obj_t handlers;
   scm_obj_t bytes;
   uint8_t lookahead[PORT_LOOKAHEAD_SIZE];
-  int lookahead_size;
   uint8_t* buf;
   uint8_t* buf_head;
   uint8_t* buf_tail;
-  int buf_size;
-  int buf_state;
-  off64_t mark;
-  int line;
-  int column;
-  fd_t fd;
   scm_obj_t name;
   scm_obj_t transcoder;
+  off64_t mark;
+  fd_t fd;
+  int lookahead_size;
+  int buf_size;
+  int buf_state;
+  int line;
+  int column;
   uint8_t codec;
   uint8_t eol_style;
   uint8_t error_handling_mode;
@@ -324,105 +309,91 @@ OBJECT_ALIGNED(scm_port_rec_t) {
   bool bom_be;
   bool track_line_column;
   bool opened;
-}
-END;
+};
 
-OBJECT_ALIGNED(hashtable_rec_t) {
+struct hashtable_rec_t {
   int capacity;
   int used;
   int live;
   scm_obj_t elts[1];  // [ key ... val ... ]
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_hashtable_rec_t) {
+struct scm_hashtable_rec_t {
   scm_hdr_t hdr;
   mutex_t lock;
-  int type;
   hash_proc_t hash;
   equiv_proc_t equiv;
   hashtable_rec_t* datum;  // [ key ... val ... ]
   scm_obj_t handlers;
-}
-END;
+  int type;
+};
 
-OBJECT_ALIGNED(weakhashtable_rec_t) {
+struct weakhashtable_rec_t {
   int capacity;
   int used;
   int live;
   scm_obj_t elts[1];  // [ key ... val ... ]
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_weakhashtable_rec_t) {
+struct scm_weakhashtable_rec_t {
   scm_hdr_t hdr;
   mutex_t lock;
   weakhashtable_rec_t* datum;  // [ weak-mapping ... ]
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_bignum_rec_t) {
+struct scm_bignum_rec_t {
   scm_hdr_t hdr;
   digit_t* elts;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_complex_rec_t) {
+struct scm_complex_rec_t {
   scm_hdr_t hdr;
   scm_obj_t imag;
   scm_obj_t real;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_rational_rec_t) {
+struct scm_rational_rec_t {
   scm_hdr_t hdr;
   scm_obj_t nume;
   scm_obj_t deno;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_environment_rec_t) {
+struct scm_environment_rec_t {
   scm_hdr_t hdr;
   scm_hashtable_t variable;  // key:symbol value:gloc
   scm_hashtable_t macro;
   scm_string_t name;
-}
-END;
+};
 
-OBJECT_ALIGNED(scm_gloc_rec_t) {
+struct scm_gloc_rec_t {
   scm_hdr_t hdr;
   scm_obj_t value;
-  scm_obj_t variable;  // for error message
-}
-END;
+  scm_obj_t name;
+};
 
-OBJECT_ALIGNED(scm_socket_rec_t) {
+struct scm_socket_rec_t {
   scm_hdr_t hdr;
+  struct sockaddr_storage addr;
   int mode;
   int fd;
   int family;
   int socktype;
   int protocol;
   int addrlen;
-  struct sockaddr_storage addr;
-}
-END;
-
-#undef OBJECT_ALIGNED
-#undef END
+};
 
 struct vm_cont_rec_t {
-  // scm_obj_t args[argc];
+  // ... scm_obj_t args[argc];
+  scm_obj_t* fp;
   scm_obj_t pc;
   scm_obj_t trace;
-  scm_obj_t* fp;
-  void* env;
   void* code;
+  void* env;
   void* up;  // 'm_cont' and 'up' point here
 };
 
 struct vm_env_rec_t {
-  // scm_obj_t vars[count];
+  // ... scm_obj_t vars[count];
   intptr_t count;
   void* up;  // 'm_env' and 'up' point here
 };
@@ -580,50 +551,6 @@ struct vm_env_rec_t {
 #define READ_STRING_SMALL_BUFFER_SIZE  2048
 #define MAX_READ_SYMBOL_LENGTH         256
 #define MAX_SOURCE_COLUMN              1024
-
-struct reader_exception_t {
-  scm_string_t m_message;
-  reader_exception_t(scm_string_t message) { m_message = message; }
-};
-
-struct io_exception_t {
-  int m_operation;
-  int m_err;
-  const char* m_message;
-  io_exception_t(int opration, int err) {
-    m_operation = opration;
-    m_err = err;
-    m_message = strerror(err);
-  }
-  io_exception_t(int opration, const char* message) {
-    m_operation = opration;
-    m_err = 0;
-    m_message = message;
-  }
-};
-
-struct io_codec_exception_t {
-  int m_operation;
-  scm_obj_t m_ch;
-  const char* m_message;
-  io_codec_exception_t(int opration, const char* message, scm_obj_t ch) {
-    m_operation = opration;
-    m_ch = ch;
-    m_message = message;
-  }
-};
-
-struct vm_exception_t {
-  vm_exception_t() {}
-};
-
-struct vm_escape_t {
-  vm_escape_t() {}
-};
-
-struct vm_continue_t {
-  vm_continue_t() {}
-};
 
 inline const char* get_tuple_type_name(scm_obj_t obj) {
   if (TUPLEP(obj)) {

@@ -518,7 +518,7 @@ scm_rational_t make_rational(object_heap_t* heap, scm_obj_t numerator, scm_obj_t
 scm_gloc_t make_gloc(object_heap_t* heap, scm_symbol_t symbol) {
   scm_gloc_t obj = (scm_gloc_t)heap->allocate_collectible(sizeof(scm_gloc_rec_t));
   obj->hdr = scm_hdr_gloc;
-  obj->variable = symbol;
+  obj->name = symbol;
   obj->value = scm_undef;
   return obj;
 }
@@ -526,7 +526,7 @@ scm_gloc_t make_gloc(object_heap_t* heap, scm_symbol_t symbol) {
 scm_gloc_t make_gloc_uninterned(object_heap_t* heap, scm_symbol_t symbol) {
   scm_gloc_t obj = (scm_gloc_t)heap->allocate_collectible(sizeof(scm_gloc_rec_t));
   obj->hdr = scm_hdr_gloc | MAKEBITS(1, HDR_GLOC_UNINTERNED_SHIFT);
-  obj->variable = symbol;
+  obj->name = symbol;
   obj->value = scm_undef;
   return obj;
 }
