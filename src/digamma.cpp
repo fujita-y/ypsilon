@@ -595,7 +595,7 @@ void digamma_t::optimizeModule(Module& M) {
   PB.registerFunctionAnalyses(FAM);
   PB.registerLoopAnalyses(LAM);
   PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
-  ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O2);
+  ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(OptimizationLevel::O2);
   if (m_debug) MPM.addPass(PrintModulePass(outs(), "; *** IR after optimize ***", false));
   MPM.run(M, MAM);
 }
@@ -1161,8 +1161,8 @@ void digamma_t::emit_stack_overflow_check(context_t& ctx, int nbytes) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_collect_stack), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(nbytes)});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -1228,8 +1228,8 @@ Value* digamma_t::emit_lookup_iloc(context_t& ctx, intptr_t depth, intptr_t inde
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_lookup_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(depth), VALUE_INTPTR(index)});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -1331,8 +1331,8 @@ void digamma_t::emit_push_gloc(context_t& ctx, scm_obj_t inst) {
     auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_push_gloc), thunkType->getPointerTo());
     auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+    call->addFnAttr(Attribute::NoUnwind);
+    call->addFnAttr(Attribute::ArgMemOnly);
     call->addParamAttr(0, Attribute::NoAlias);
     call->addParamAttr(0, Attribute::NoCapture);
     call->addParamAttr(0, Attribute::NoFree);
@@ -1366,8 +1366,8 @@ void digamma_t::emit_push_car_iloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_push_car_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -1402,8 +1402,8 @@ void digamma_t::emit_push_cdr_iloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_push_cdr_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -1438,8 +1438,8 @@ void digamma_t::emit_push_cddr_iloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_push_cddr_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -1480,8 +1480,8 @@ void digamma_t::emit_push_cadr_iloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_push_cadr_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -1581,9 +1581,9 @@ void digamma_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
           auto call2 = IRB.CreateCall(FunctionType::get(IntptrTy, {IntptrPtrTy}, false), F2, {vm});
           call2->setTailCallKind(CallInst::TCK_MustTail);
   #if USE_LLVM_ATTRIBUTES
-          call2->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-          call2->addAttribute(AttributeList::FunctionIndex, Attribute::NoReturn);
-          call2->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+          call2->addFnAttr(Attribute::NoUnwind);
+          call2->addFnAttr(Attribute::NoReturn);
+          call2->addFnAttr(Attribute::ArgMemOnly);
           call2->addParamAttr(0, Attribute::NoAlias);
           call2->addParamAttr(0, Attribute::NoCapture);
           call2->addParamAttr(0, Attribute::NoFree);
@@ -1625,9 +1625,9 @@ void digamma_t::emit_apply_gloc(context_t& ctx, scm_obj_t inst) {
           auto call = IRB.CreateCall(procType, proc, {vm});
           call->setTailCallKind(CallInst::TCK_MustTail);
 #if USE_LLVM_ATTRIBUTES
-          call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-          call->addAttribute(AttributeList::FunctionIndex, Attribute::NoReturn);
-          call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+          call->addFnAttr(Attribute::NoUnwind);
+          call->addFnAttr(Attribute::NoReturn);
+          call->addFnAttr(Attribute::ArgMemOnly);
           call->addParamAttr(0, Attribute::NoAlias);
           call->addParamAttr(0, Attribute::NoCapture);
           call->addParamAttr(0, Attribute::NoFree);
@@ -1700,8 +1700,8 @@ void digamma_t::emit_ret_cons(context_t& ctx, scm_obj_t inst) {
 
   auto call = IRB.CreateCall(thunkType, thunk, {vm, sp_minus_1, val});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -2010,8 +2010,8 @@ void digamma_t::emit_cc_n_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_func), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, lhs, rhs});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -2090,8 +2090,8 @@ void digamma_t::emit_cc_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_fu
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_func), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, lhs, rhs});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -2398,9 +2398,9 @@ void digamma_t::emit_apply_iloc_local(context_t& ctx, scm_obj_t inst) {
     auto call = IRB.CreateCall(procType, IRB.CreateBitOrPointerCast(code, procType->getPointerTo()), {vm});
     call->setTailCallKind(CallInst::TCK_MustTail);
   #if USE_LLVM_ATTRIBUTES
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoReturn);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+    call->addFnAttr(Attribute::NoUnwind);
+    call->addFnAttr(Attribute::NoReturn);
+    call->addFnAttr(Attribute::ArgMemOnly);
     call->addParamAttr(0, Attribute::NoAlias);
     call->addParamAttr(0, Attribute::NoCapture);
     call->addParamAttr(0, Attribute::NoFree);
@@ -2449,8 +2449,8 @@ void digamma_t::emit_push_cons(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_make_pair), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, sp_minus_1, val});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -2485,8 +2485,8 @@ void digamma_t::emit_car_iloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_car_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -2525,8 +2525,8 @@ void digamma_t::emit_cdr_iloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_cdr_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -2549,8 +2549,8 @@ void digamma_t::emit_set_gloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_set_gloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -2644,8 +2644,8 @@ void digamma_t::emit_cadr_iloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_cadr_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -2690,8 +2690,8 @@ void digamma_t::emit_cddr_iloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_cadr_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -2918,8 +2918,8 @@ void digamma_t::emit_set_iloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_set_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -2962,8 +2962,8 @@ void digamma_t::emit_enclose(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_enclose), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(argc)});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -3004,8 +3004,8 @@ void digamma_t::emit_ret_close(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_ret_close), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -3028,8 +3028,8 @@ void digamma_t::emit_close(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_close), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -3137,8 +3137,8 @@ void digamma_t::emit_gloc(context_t& ctx, scm_obj_t inst) {
     auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_error_gloc), thunkType->getPointerTo());
     auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+    call->addFnAttr(Attribute::NoUnwind);
+    call->addFnAttr(Attribute::ArgMemOnly);
     call->addParamAttr(0, Attribute::NoAlias);
     call->addParamAttr(0, Attribute::NoCapture);
     call->addParamAttr(0, Attribute::NoFree);
@@ -3282,8 +3282,8 @@ void digamma_t::emit_nadd_iloc(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_nadd_iloc), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -3318,8 +3318,8 @@ void digamma_t::emit_extend_enclose(context_t& ctx, scm_obj_t inst) {
   auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_extend_enclose), thunkType->getPointerTo());
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -3396,8 +3396,8 @@ void digamma_t::emit_push_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) 
   auto proc = ConstantExpr::getIntToPtr(VALUE_INTPTR(subr->adrs), procType->getPointerTo());
   auto call = IRB.CreateCall(procType, proc, {vm, VALUE_INTPTR(argc), argv});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -3453,8 +3453,8 @@ void digamma_t::emit_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   auto proc = ConstantExpr::getIntToPtr(VALUE_INTPTR(subr->adrs), procType->getPointerTo());
   auto call = IRB.CreateCall(procType, proc, {vm, VALUE_INTPTR(argc), argv});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
@@ -3503,8 +3503,8 @@ void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   auto proc = ConstantExpr::getIntToPtr(VALUE_INTPTR(subr->adrs), procType->getPointerTo());
   auto call = IRB.CreateCall(procType, proc, {vm, argc, fp});
 #if USE_LLVM_ATTRIBUTES
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::ArgMemOnly);
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
   call->addParamAttr(0, Attribute::NoFree);
