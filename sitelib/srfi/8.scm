@@ -7,4 +7,4 @@
       (syntax-rules ()
         ((receive formals expression body ...)
          (call-with-values (lambda () expression)
-           (lambda formals body ...)))))
+           (lambda formals body ...)))))))
