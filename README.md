@@ -39,7 +39,11 @@
 
 * LLVM 10, 11, 12, 13, or 14
 
-### Build and Install
+### Installation
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/ypsilon.svg)](https://repology.org/project/ypsilon/versions)
+
+Ypsilon packaged by distros may not be up-to-date. You can build and install Ypsilon from source:
 
 ```
 mkdir build
