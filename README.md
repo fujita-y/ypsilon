@@ -37,7 +37,7 @@
 
 ### Requirements
 
-* LLVM 10, 11, 12, 13, or 14
+* LLVM 10, 11, 12, 13, 14, or 15
 
 ### Installation
 
@@ -53,7 +53,7 @@ cmake --build .
 cmake --install .
 ```
 
-- On MacOS, you may want using [Homebrew](https://brew.sh/) to install LLVM 14.
+- On MacOS, you may want using [Homebrew](https://brew.sh/) to install LLVM 15.
 ```
 brew update
 brew install llvm
