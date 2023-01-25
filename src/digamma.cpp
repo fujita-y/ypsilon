@@ -575,7 +575,11 @@ void digamma_t::codegen(scm_closure_t closure) {
   // m_jit->getMainJITDylib().dump(llvm::outs());
 
   auto symbol = ExitOnErr(m_jit->lookup(function_id));
+#if LLVM_VERSION_MAJOR >= 15
+  intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))symbol.getValue();
+#else
   intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))symbol.getAddress();
+#endif
 
   if (m_usage.min_sym == 0 || m_usage.min_sym > (uintptr_t)thunk) m_usage.min_sym = (uintptr_t)thunk;
   if (m_usage.max_sym < (uintptr_t)thunk) m_usage.max_sym = (uintptr_t)thunk;

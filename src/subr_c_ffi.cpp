@@ -307,7 +307,7 @@ static void* compile_callout_thunk(uintptr_t adrs, const char* caller_signature,
   if (verifyModule(*M, &outs())) fatal("%s:%u verify module failed", __FILE__, __LINE__);
   ExitOnErr(s_c_ffi->addIRModule(std::move(ThreadSafeModule(std::move(M), std::move(Context)))));
   auto symbol = ExitOnErr(s_c_ffi->lookup(function_id));
-  void* ptr = (void*)symbol.getAddress();
+  void* ptr = (void*)symbol.getValue();
   s_callout_cache[cache_key] = ptr;
   return ptr;
 }
@@ -361,7 +361,11 @@ static void* compile_callback_thunk(VM* vm, uintptr_t trampoline_uid, const char
 
   ExitOnErr(s_c_ffi->addIRModule(std::move(ThreadSafeModule(std::move(M), std::move(Context)))));
   auto symbol = ExitOnErr(s_c_ffi->lookup(function_id));
+#if LLVM_VERSION_MAJOR >= 15
+  return (void*)symbol.getValue();
+#else
   return (void*)symbol.getAddress();
+#endif
 }
 
 // codegen-cdecl-callout
