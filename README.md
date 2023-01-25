@@ -37,13 +37,9 @@
 
 ### Requirements
 
-* LLVM 10, 11, 12, 13, or 14
+* LLVM 10, 11, 12, 13, 14, or 15
 
 ### Installation
-
-[![Packaging status](https://repology.org/badge/vertical-allrepos/ypsilon.svg)](https://repology.org/project/ypsilon/versions)
-
-Ypsilon packaged by distros may not be up-to-date. You can build and install Ypsilon from source:
 
 ```
 mkdir build
@@ -53,7 +49,7 @@ cmake --build .
 cmake --install .
 ```
 
-- On MacOS, you may want using [Homebrew](https://brew.sh/) to install LLVM 14.
+- On MacOS, you may want using [Homebrew](https://brew.sh/) to install LLVM 15.
 ```
 brew update
 brew install llvm
@@ -98,6 +94,10 @@ ypsilon-2.0.8 (r7rs)
 5/22
 > (exit)
 ```
+
+### Packages
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/ypsilon.svg)](https://repology.org/project/ypsilon/versions)
 
 ### Notes
 
