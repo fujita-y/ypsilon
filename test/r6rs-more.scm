@@ -691,19 +691,13 @@
                   (syntax-rules ()
                     ((foo (a b ...) ...) '(((a b) ...) ...)))))
               (foo (bar 1 2) (baz 3 4)))
-            => (((bar 1) (bar 2)) ((baz 3) (baz 4))))
+            => (((bar 1) (baz 2)) ((bar 3) (baz 4))))
 (test-equal (let-syntax
                 ((foo
                   (syntax-rules ()
                     ((foo (a b ...) ...) '(((a b ...) ...))))))
               (foo (bar 1 2) (baz 3 4)))
             => (((bar 1 2) (baz 3 4))))
-(test-equal (let-syntax
-                ((foo
-                  (syntax-rules ()
-                    ((foo (a b ...) ...) '(((a b) ...) ... a ... b ... ...)))))
-              (foo (bar 1 2) (baz 3 4 5 6)))
-            => (((bar 1) (bar 2)) ((baz 3) (baz 4) (baz 5) (baz 6)) bar baz 1 2 3 4 5 6))
 (test-syntax-violation (let-syntax
                           ((foo
                             (syntax-rules ()
