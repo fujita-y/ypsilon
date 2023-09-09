@@ -64,7 +64,7 @@
   (define temp-port (transcoded-port (open-temporary-file-port) (native-transcoder)))
 
   (format #t ";; build ~a/~a~!" (current-directory) target-file-name)
-  (parameterize ((backtrace #f) (pretty-print-unwrap-syntax #f) (coreform-optimize #t))
+  (parameterize ((backtrace #f) (pretty-print-unwrap-syntax #f) #;(coreform-optimize #t))
     (call-with-port
       (open-file-output-port target-file-name (file-options no-fail) (buffer-mode block) (native-transcoder))
       (lambda (output)

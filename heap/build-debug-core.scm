@@ -168,7 +168,7 @@
   (assert (string-contains (current-directory) (home-directory)))
 
   (format #t ";; build ~a/~a~!" (current-directory) target-file-name)
-  (parameterize ((backtrace #t) (pretty-print-unwrap-syntax #f) (coreform-optimize #t))
+  (parameterize ((backtrace #t) (pretty-print-unwrap-syntax #f) #;(coreform-optimize #t))
     (call-with-port
      (open-file-output-port target-file-name (file-options no-fail) (buffer-mode block) (native-transcoder))
      (lambda (out)
