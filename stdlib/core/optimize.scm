@@ -14,7 +14,7 @@
   ;;; (define-syntax diagnostics (syntax-rules () ((_ form) form)))
   (define-syntax diagnostics (syntax-rules () ((_ _) #f)))
 
-  (define max-lift-arguments 4)
+  (define max-lift-arguments 0)
 
   (define max-inline-pass 10)
 
@@ -781,6 +781,15 @@
                         ((eq? (caar lst) id) (loop (cdr lst)))
                         ((memq id (cdar lst)) #t)
                         (else (loop (cdr lst)))))))
+
+      (define unique?
+        (lambda (lst)
+          (and (list? lst)
+              (not (let loop ((lst lst))
+                      (and (pair? lst)
+                          (or (memq (car lst) (cdr lst))
+                              (loop (cdr lst)))))))))
+
       (for-each
         (lambda (b)
           (or (core-hashtable-contains? ht-variable-stackables (car b))
@@ -791,7 +800,7 @@
                 (('lambda args . _)
                  (list? args)
                  (let ((callsites (core-hashtable-ref ht-variable-callsites (car b) #f)))
-                   (cond ((and callsites (for-all (lambda (e) (= (- (length e) 1) (length args))) callsites))
+                   (cond ((and callsites (unique? callsites) (for-all (lambda (e) (= (- (length e) 1) (length args))) callsites))
                           (cond ((core-hashtable-ref ht-lambda-node (cdr b) #f)
                                  => (lambda (lst)
                                       (cond ((pair? lst)

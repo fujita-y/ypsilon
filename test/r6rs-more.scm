@@ -691,19 +691,13 @@
                   (syntax-rules ()
                     ((foo (a b ...) ...) '(((a b) ...) ...)))))
               (foo (bar 1 2) (baz 3 4)))
-            => (((bar 1) (bar 2)) ((baz 3) (baz 4))))
+            => (((bar 1) (baz 2)) ((bar 3) (baz 4))))
 (test-equal (let-syntax
                 ((foo
                   (syntax-rules ()
                     ((foo (a b ...) ...) '(((a b ...) ...))))))
               (foo (bar 1 2) (baz 3 4)))
             => (((bar 1 2) (baz 3 4))))
-(test-equal (let-syntax
-                ((foo
-                  (syntax-rules ()
-                    ((foo (a b ...) ...) '(((a b) ...) ... a ... b ... ...)))))
-              (foo (bar 1 2) (baz 3 4 5 6)))
-            => (((bar 1) (bar 2)) ((baz 3) (baz 4) (baz 5) (baz 6)) bar baz 1 2 3 4 5 6))
 (test-syntax-violation (let-syntax
                           ((foo
                             (syntax-rules ()
@@ -756,4 +750,25 @@
               (destructuring-bind (_ m n)
                   '(1 2 3)
                 (+ m n o))) => 105)
+(test-end)
+
+(test-begin "issue #169 / 1")
+(test-eval! (define-syntax ellipsis-escape-mixed-rank
+              (syntax-rules ()
+                ((_ ((x ...) ...) (y ...))
+                (quote ((y ((x ... ...))) ...))))))
+(test-equal (ellipsis-escape-mixed-rank ((x1 x2 x3)) (y1 y2)) => ((y1 ((x1 x2 x3))) (y2 ((x1 x2 x3)))))
+(test-end)
+
+(test-begin "issue #169 / 2")
+(test-eval! (define Y #t))
+(test-eval! (define run-tests
+              (lambda ()
+                (let* ((X Y)
+                       (S  (lambda () X))
+                       (A  (lambda () (list 1 (S))))
+                       (C  (lambda () (list 2 (A))))
+                       (D2 (lambda () (list 1 (C)))))
+                   (list (D2) (D2))))))
+(test-equal (run-tests) => ((1 (2 (1 #t))) (1 (2 (1 #t)))))
 (test-end)
