@@ -14,7 +14,7 @@
   ;;; (define-syntax diagnostics (syntax-rules () ((_ form) form)))
   (define-syntax diagnostics (syntax-rules () ((_ _) #f)))
 
-  (define max-lift-arguments 4)
+  (define max-lift-arguments 0)
 
   (define max-inline-pass 10)
 
