@@ -751,3 +751,24 @@
                   '(1 2 3)
                 (+ m n o))) => 105)
 (test-end)
+
+(test-begin "issue #169 / 1")
+(test-eval! (define-syntax ellipsis-escape-mixed-rank
+              (syntax-rules ()
+                ((_ ((x ...) ...) (y ...))
+                (quote ((y ((x ... ...))) ...))))))
+(test-equal (ellipsis-escape-mixed-rank ((x1 x2 x3)) (y1 y2)) => ((y1 ((x1 x2 x3))) (y2 ((x1 x2 x3)))))
+(test-end)
+
+(test-begin "issue #169 / 2")
+(test-eval! (define Y #t))
+(test-eval! (define run-tests
+              (lambda ()
+                (let* ((X Y)
+                       (S  (lambda () X))
+                       (A  (lambda () (list 1 (S))))
+                       (C  (lambda () (list 2 (A))))
+                       (D2 (lambda () (list 1 (C)))))
+                   (list (D2) (D2))))))
+(test-equal (run-tests) => ((1 (2 (1 #t))) (1 (2 (1 #t)))))
+(test-end)
