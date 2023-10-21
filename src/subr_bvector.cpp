@@ -671,7 +671,7 @@ scm_obj_t subr_bytevector_s64_set(VM* vm, int argc, scm_obj_t argv[]) {
     if (param.little)
       LE64((uint64_t)s64, param.bytes);
     else
-      BE32((uint64_t)s64, param.bytes);
+      BE64((uint64_t)s64, param.bytes);
     return scm_unspecified;
   }
   if (exact_integer_pred(argv[2])) {
