@@ -62,6 +62,7 @@
           reduce-right
           append-map
           (rename append-map append-map!)
+          map
           map!
           pair-for-each
           filter-map
