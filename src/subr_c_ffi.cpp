@@ -17,7 +17,11 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/Error.h>
-#include <llvm/Support/Host.h>
+#if LLVM_VERSION_MAJOR >= 18
+  #include <llvm/TargetParser/Host.h>
+#else
+  #include <llvm/Support/Host.h>
+#endif
 #include <llvm/Support/InitLLVM.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/raw_ostream.h>
@@ -272,7 +276,7 @@ static void* compile_callout_thunk(uintptr_t adrs, const char* caller_signature,
   M->setDataLayout(s_c_ffi->getDataLayout());
 
   auto IntptrTy = (sizeof(intptr_t) == 4 ? Type::getInt32Ty(C) : Type::getInt64Ty(C));
-  auto IntptrPtrTy = sizeof(intptr_t) == 4 ? Type::getInt32PtrTy(C) : Type::getInt64PtrTy(C);
+  auto IntptrPtrTy = sizeof(intptr_t) == 4 ? Type::getInt32Ty(C)->getPointerTo(0) : Type::getInt64Ty(C)->getPointerTo(0);
 
   Function* F =
       Function::Create(FunctionType::get(IntptrTy, {IntptrTy, IntptrTy, IntptrTy}, false), Function::ExternalLinkage, function_id, M.get());
@@ -326,7 +330,7 @@ static void* compile_callback_thunk(VM* vm, uintptr_t trampoline_uid, const char
   LLVMContext& C = *Context;
   auto M = std::make_unique<Module>(module_id, C);
   auto IntptrTy = (sizeof(intptr_t) == 4 ? Type::getInt32Ty(C) : Type::getInt64Ty(C));
-  auto IntptrPtrTy = sizeof(intptr_t) == 4 ? Type::getInt32PtrTy(C) : Type::getInt64PtrTy(C);
+  auto IntptrPtrTy = sizeof(intptr_t) == 4 ? Type::getInt32Ty(C)->getPointerTo(0) : Type::getInt64Ty(C)->getPointerTo(0);
 
   auto callbackFunctionType = function_type(C, signature, false);
   Function* F = Function::Create(callbackFunctionType, Function::ExternalLinkage, function_id, M.get());
