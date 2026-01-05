@@ -37,7 +37,7 @@
 
 ### Requirements
 
-* LLVM 10, 11, 12, 13, 14, or 15
+* LLVM 10, 11, 12, 13, 14, 15 or 19
 
 ### Installation
 
