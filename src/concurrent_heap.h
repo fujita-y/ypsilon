@@ -62,9 +62,7 @@ class concurrent_heap_t {
   bool is_immutable_cons_slab_cache(slab_cache_t* cache);
   void finalize(void* obj);
 
-  bool m_collector_ready;
   bool m_collector_kicked;
-  bool m_collector_terminating;
   bool m_mutator_stopped;
   bool m_stop_the_world;
   bool m_read_barrier;
@@ -73,18 +71,20 @@ class concurrent_heap_t {
   mutex_t m_collector_lock;
   cond_t m_mutator_wake;
   cond_t m_collector_wake;
+  int m_root_snapshot;
+  uint8_t* m_sweep_wavefront;
+  collector_usage_t m_usage;
   concurrent_queue_t<scm_obj_t> m_shade_queue;
   scm_obj_t* m_mark_sp;
   scm_obj_t* m_mark_stack;
   int m_mark_stack_size;
-  int m_root_snapshot;
-  uint8_t* m_sweep_wavefront;
-  collector_usage_t m_usage;
 
  private:
-  object_heap_t* m_heap;
   void concurrent_collect();
   void synchronized_collect();
+  object_heap_t* m_heap;
+  bool m_collector_ready;
+  bool m_collector_terminating;
 };
 
 #endif
