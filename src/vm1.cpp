@@ -129,7 +129,7 @@ void VM::collect_stack(intptr_t acquire) {
 #if STDEBUG
     check_vm_state();
 #endif
-    if (m_heap->m_stop_the_world) stop();
+    if (m_heap->m_concurrent_heap.m_stop_the_world) stop();
     return;
   }
   intptr_t argc = m_sp - m_fp;
@@ -162,7 +162,7 @@ void VM::collect_stack(intptr_t acquire) {
 #if STDEBUG
   check_vm_state();
 #endif
-  if (m_heap->m_stop_the_world) stop();
+  if (m_heap->m_concurrent_heap.m_stop_the_world) stop();
 }
 
 void* VM::save_env(void* root) {
@@ -380,7 +380,7 @@ void VM::loop(bool resume) {
 
 apply : {
   if (CLOSUREP(m_value)) {
-    if (m_heap->m_stop_the_world) stop();
+    if (m_heap->m_concurrent_heap.m_stop_the_world) stop();
     if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) < (uintptr_t)m_stack_limit) {
       scm_closure_t closure = (scm_closure_t)m_value;
       intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
@@ -440,7 +440,7 @@ pop_cont : {
     m_sp = m_fp + nargs;
   }
   m_trace_tail = scm_unspecified;
-  if (m_heap->m_stop_the_world) stop();
+  if (m_heap->m_concurrent_heap.m_stop_the_world) stop();
   if (cont->code != NULL) {
     intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))cont->code;
     intptr_t n = (*thunk)((intptr_t)this);

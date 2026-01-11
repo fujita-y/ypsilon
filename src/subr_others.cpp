@@ -730,11 +730,11 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
       do {
         vm->m_heap->collect();
         usleep(1000);
-      } while (!vm->m_heap->m_collector_kicked);
+      } while (!vm->m_heap->m_concurrent_heap.m_collector_kicked);
       do {
-        if (vm->m_heap->m_stop_the_world) vm->stop();
+        if (vm->m_heap->m_concurrent_heap.m_stop_the_world) vm->stop();
         usleep(1000);
-      } while (vm->m_heap->m_collector_kicked);
+      } while (vm->m_heap->m_concurrent_heap.m_collector_kicked);
 
       relocate_info_t* info = vm->m_heap->relocate(pack);
       vm->resolve();

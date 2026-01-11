@@ -62,7 +62,7 @@ scm_obj_t object_set_t::get(const char* name, int len) {
       assert(SYMBOLP(entry) || STRINGP(entry));
       if (get_len(entry) == len) {
         if (string_equiv(name, get_name(entry), len)) {
-          if (m_heap->m_read_barrier) {
+          if (m_heap->m_concurrent_heap.m_read_barrier) {
             if (DETAILED_STATISTIC) m_heap->m_usage.m_barriered_read++;
             OBJECT_SLAB_TRAITS_OF(entry)->cache->mark(entry);
           }

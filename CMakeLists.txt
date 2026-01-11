@@ -58,6 +58,7 @@ add_executable(
   ypsilon
   src/arith.cpp
   src/bit.cpp
+  src/concurrent_heap.cpp
   src/digamma.cpp
   src/equiv.cpp
   src/fasl.cpp

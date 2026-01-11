@@ -12,6 +12,7 @@
 #include "object_set.h"
 #include "slab_cache.h"
 #include "queue.h"
+#include "concurrent_heap.h"
 
 #define STRING_TABLE_SIZE_INIT   1021
 #define GLOC_TABLE_SIZE_INIT     8191
@@ -70,6 +71,7 @@ class collector_usage_t {
 struct relocate_info_t;
 
 class object_heap_t {
+  friend class concurrent_heap_t;
  public:
   mutex_t m_lock;
 #if ARCH_LP64
@@ -86,20 +88,7 @@ class object_heap_t {
   slab_cache_t m_immutable_cons;
 #endif
 
-  concurrent_queue_t<scm_obj_t> m_shade_queue;
   uint8_t* m_sweep_wavefront;
-  scm_obj_t* m_mark_sp;
-  scm_obj_t* m_mark_stack;
-  int m_mark_stack_size;
-  int m_root_snapshot;
-  int m_collector_ready;
-  int m_collector_kicked;
-  int m_collector_terminating;
-  int m_mutator_stopped;
-  int m_stop_the_world;
-  int m_read_barrier;
-  int m_write_barrier;
-  int m_alloc_barrier;
   int m_trip_bytes;
   int m_collect_trip_bytes;
   uint8_t* m_map;
@@ -110,9 +99,7 @@ class object_heap_t {
   int m_pool_memo;
   int m_pool_usage;
   int m_pool_threshold;
-  mutex_t m_collector_lock;
-  cond_t m_mutator_wake;
-  cond_t m_collector_wake;
+  concurrent_heap_t m_concurrent_heap;
   object_set_t m_symbol;
   object_set_t m_string;
   scm_obj_t* m_inherents;
@@ -206,9 +193,6 @@ class object_heap_t {
   void trace(scm_obj_t obj);
   void dequeue_root();
   void enqueue_root(scm_obj_t obj);
-  static thread_main_t collector_thread(void* param);
-  static void concurrent_collect(object_heap_t& heap);
-  static void synchronized_collect(object_heap_t& heap);
   // debug
   void display_object_statistics(scm_port_t port);
   void display_heap_statistics(scm_port_t port);

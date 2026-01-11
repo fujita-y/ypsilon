@@ -98,7 +98,7 @@ void slab_cache_t::unload_filled(object_slab_traits_t* traits) {
 void* slab_cache_t::new_collectible_object() {
   assert(m_heap);
   assert(m_bitmap_size != 0);
-  bool synchronize = (m_heap->m_alloc_barrier != 0);
+  bool synchronize = (m_heap->m_concurrent_heap.m_alloc_barrier != 0);
   if (synchronize) {
 #if LOCKFREE_ALLOC && THREAD_LOCAL_SLAB_CACHE
     object_slab_traits_t* traits = m_vacant;

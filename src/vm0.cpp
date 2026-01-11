@@ -643,10 +643,10 @@ void VM::stop() {
   if (last_usage.m_recorded) m_heap->m_usage.clear();
   double t1 = msec();
 #if HPDEBUG
-  if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_CONSISTENCY_CHECK) save_stack();
+  if (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_CONSISTENCY_CHECK) save_stack();
 #endif
-  if ((m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) || (m_heap->m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
-      (m_heap->m_root_snapshot == ROOT_SNAPSHOT_GLOBALS)) {
+  if ((m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) || (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
+      (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_GLOBALS)) {
     m_heap->enqueue_root(m_bootport);
     m_heap->enqueue_root(m_current_input);
     m_heap->enqueue_root(m_current_output);
@@ -657,8 +657,8 @@ void VM::stop() {
     m_heap->enqueue_root(m_current_dynamic_wind_record);
     m_heap->enqueue_root(m_current_source_comments);
   }
-  if ((m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) || (m_heap->m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
-      (m_heap->m_root_snapshot == ROOT_SNAPSHOT_LOCALS)) {
+  if ((m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) || (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
+      (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_LOCALS)) {
     save_stack();
     m_heap->enqueue_root(m_pc);
     m_heap->enqueue_root(m_value);
@@ -693,17 +693,17 @@ void VM::stop() {
     }
   }
 #endif
-  m_heap->m_collector_lock.lock();
-  while (m_heap->m_stop_the_world) {
-    m_heap->m_mutator_stopped = true;
-    m_heap->m_collector_wake.signal();
-    m_heap->m_mutator_wake.wait(m_heap->m_collector_lock);
-    m_heap->m_mutator_stopped = false;
+  m_heap->m_concurrent_heap.m_collector_lock.lock();
+  while (m_heap->m_concurrent_heap.m_stop_the_world) {
+    m_heap->m_concurrent_heap.m_mutator_stopped = true;
+    m_heap->m_concurrent_heap.m_collector_wake.signal();
+    m_heap->m_concurrent_heap.m_mutator_wake.wait(m_heap->m_concurrent_heap.m_collector_lock);
+    m_heap->m_concurrent_heap.m_mutator_stopped = false;
   }
-  m_heap->m_collector_wake.signal();
-  m_heap->m_collector_lock.unlock();
+  m_heap->m_concurrent_heap.m_collector_wake.signal();
+  m_heap->m_concurrent_heap.m_collector_lock.unlock();
   double t2 = msec();
-  switch (m_heap->m_root_snapshot) {
+  switch (m_heap->m_concurrent_heap.m_root_snapshot) {
     case ROOT_SNAPSHOT_GLOBALS:
       m_heap->m_usage.m_pause1 = t2 - t1;
       break;

@@ -25,10 +25,7 @@
   #define DEFALUT_COLLECT_TRIP_BYTES (2 * 1024 * 1024)
 #endif
 
-#define DEBUG_CONCURRENT_COLLECT 0
 #define SYNCHRONIZE_THRESHOLD(x) ((x) - (x) / 4)
-#define ENSURE_REALTIME          (5.0)  // in msec (1.0 == 0.001sec)
-#define TIMEOUT_CHECK_EACH       (500)
 
 #if GCDEBUG
   #define GC_TRACE(fmt) \
@@ -76,7 +73,8 @@ inline int bytes_to_bucket(uint32_t x)  // see bit.cpp
 }
 #endif
 
-object_heap_t::object_heap_t() : m_map(NULL), m_map_size(0), m_pool(NULL), m_pool_size(0), m_mark_stack(NULL), m_inherents(NULL) {
+object_heap_t::object_heap_t()
+    : m_map(NULL), m_map_size(0), m_pool(NULL), m_pool_size(0), m_inherents(NULL), m_concurrent_heap(this) {
   m_lock.init();
   m_gensym_lock.init();
 }
@@ -358,12 +356,12 @@ void object_heap_t::destroy() {
   }
   m_lock.destroy();
   m_gensym_lock.destroy();
-  m_collector_lock.destroy();
-  m_collector_wake.destroy();
-  m_mutator_wake.destroy();
-  m_shade_queue.destroy();
-  if (m_mark_stack) free(m_mark_stack);
-  m_mark_stack = NULL;
+  m_concurrent_heap.m_collector_lock.destroy();
+  m_concurrent_heap.m_collector_wake.destroy();
+  m_concurrent_heap.m_mutator_wake.destroy();
+  m_concurrent_heap.m_shade_queue.destroy();
+  if (m_concurrent_heap.m_mark_stack) free(m_concurrent_heap.m_mark_stack);
+  m_concurrent_heap.m_mark_stack = NULL;
   if (m_map) {
     heap_unmap(m_map, m_map_size);
     m_map = NULL;
@@ -461,19 +459,19 @@ void object_heap_t::shade(scm_obj_t obj) {
   if (CELLP(obj)) {
     assert(obj);
     if (OBJECT_SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
-      if (m_mark_sp < m_mark_stack + m_mark_stack_size) {
-        *m_mark_sp++ = obj;
+      if (m_concurrent_heap.m_mark_sp < m_concurrent_heap.m_mark_stack + m_concurrent_heap.m_mark_stack_size) {
+        *m_concurrent_heap.m_mark_sp++ = obj;
         return;
       }
       m_usage.m_expand_mark_stack++;
-      int newsize = m_mark_stack_size + MARK_STACK_SIZE_GROW;
-      m_mark_stack = (scm_obj_t*)realloc(m_mark_stack, sizeof(scm_obj_t) * newsize);
-      if (m_mark_stack == NULL) {
+      int newsize = m_concurrent_heap.m_mark_stack_size + MARK_STACK_SIZE_GROW;
+      m_concurrent_heap.m_mark_stack = (scm_obj_t*)realloc(m_concurrent_heap.m_mark_stack, sizeof(scm_obj_t) * newsize);
+      if (m_concurrent_heap.m_mark_stack == NULL) {
         fatal("%s:%u memory overflow on realloc mark stack", __FILE__, __LINE__);
       }
-      m_mark_sp = m_mark_stack + m_mark_stack_size;
-      m_mark_stack_size = newsize;
-      *m_mark_sp++ = obj;
+      m_concurrent_heap.m_mark_sp = m_concurrent_heap.m_mark_stack + m_concurrent_heap.m_mark_stack_size;
+      m_concurrent_heap.m_mark_stack_size = newsize;
+      *m_concurrent_heap.m_mark_sp++ = obj;
     }
   }
 }
@@ -510,16 +508,16 @@ void object_heap_t::break_weakmapping(object_slab_traits_t* traits) {
 
 void object_heap_t::write_barrier(scm_obj_t rhs) {
   // simple (Dijkstra)
-  if (m_write_barrier) {
+  if (m_concurrent_heap.m_write_barrier) {
     if (CELLP(rhs)) {
       if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
-        while (m_shade_queue.wait_lock_try_put(rhs) == false) {
+        while (m_concurrent_heap.m_shade_queue.wait_lock_try_put(rhs) == false) {
           if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
-          if (m_stop_the_world) {
-            m_collector_lock.lock();
-            m_collector_wake.signal();
-            m_mutator_wake.wait(m_collector_lock);
-            m_collector_lock.unlock();
+          if (m_concurrent_heap.m_stop_the_world) {
+            m_concurrent_heap.m_collector_lock.lock();
+            m_concurrent_heap.m_collector_wake.signal();
+            m_concurrent_heap.m_mutator_wake.wait(m_concurrent_heap.m_collector_lock);
+            m_concurrent_heap.m_collector_lock.unlock();
           } else {
             thread_yield();
           }
@@ -538,358 +536,39 @@ void object_heap_t::write_barrier(scm_obj_t rhs) {
 }
 
 void object_heap_t::collect() {
-  if (m_collector_kicked == false) {
-    m_collector_lock.lock();
-    if (m_collector_kicked == false && m_collector_ready) {
-      m_collector_kicked = true;
-      m_collector_wake.signal();
-      GC_TRACE(";; [collector: running]\n");
-    }
-    m_collector_lock.unlock();
-  }
+  m_concurrent_heap.collect();
 }
 
 void object_heap_t::collector_init() {
-  m_mark_stack_size = MARK_STACK_SIZE_INIT;
-  m_mark_stack = m_mark_sp = (scm_obj_t*)malloc(sizeof(scm_obj_t) * m_mark_stack_size);
-  assert(m_mark_stack);
   m_usage.clear();
-  m_shade_queue.init(SHADE_QUEUE_SIZE);
-  m_collector_lock.init();
-  m_mutator_wake.init();
-  m_collector_wake.init();
-  m_write_barrier = false;
-  m_read_barrier = false;
-  m_alloc_barrier = false;
-  m_collector_kicked = false;
-  m_collector_ready = false;
-  m_collector_terminating = false;
-  m_stop_the_world = false;
-  m_mutator_stopped = false;
   m_sweep_wavefront = (uint8_t*)m_pool + m_pool_size;
-  thread_start(collector_thread, this);
+  m_concurrent_heap.init();
 }
 
 void object_heap_t::dequeue_root() {
   scm_obj_t obj;
-  while (m_shade_queue.count()) {
-    m_shade_queue.get(&obj);
+  while (m_concurrent_heap.m_shade_queue.count()) {
+    m_concurrent_heap.m_shade_queue.get(&obj);
     shade(obj);
   }
 }
 
 void object_heap_t::enqueue_root(scm_obj_t obj) {
-  assert(m_stop_the_world);
+  assert(m_concurrent_heap.m_stop_the_world);
   if (CELLP(obj)) {
     if (in_heap(obj)) {
-      if (m_shade_queue.wait_lock_try_put(obj) == false) {
-        m_collector_lock.lock();
-        m_collector_wake.signal();  // kick now
-        m_mutator_wake.wait(m_collector_lock);
-        m_collector_lock.unlock();
+      if (m_concurrent_heap.m_shade_queue.wait_lock_try_put(obj) == false) {
+        m_concurrent_heap.m_collector_lock.lock();
+        m_concurrent_heap.m_collector_wake.signal();  // kick now
+        m_concurrent_heap.m_mutator_wake.wait(m_concurrent_heap.m_collector_lock);
+        m_concurrent_heap.m_collector_lock.unlock();
         GC_TRACE(";; [shade queue overflow while queueing root set]\n");
-        m_shade_queue.put(obj);
+        m_concurrent_heap.m_shade_queue.put(obj);
       }
     }
   }
 }
 
-void object_heap_t::synchronized_collect(object_heap_t& heap) {
-  heap.m_trip_bytes = 0;
-  heap.shade(heap.m_system_environment);
-  heap.shade(heap.m_interaction_environment);
-  heap.shade(heap.m_hidden_variables);
-  heap.shade(heap.m_architecture_feature);
-  heap.shade(heap.m_native_transcoder);
-  heap.shade(heap.m_trampolines);
-  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) heap.shade(heap.m_inherents[i]);
-
-  // mark
-  assert(heap.m_mutator_stopped == false);
-  heap.m_root_snapshot = ROOT_SNAPSHOT_EVERYTHING;
-  heap.m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world phase 1]\n");
-  while (!heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-    if (!heap.m_mutator_stopped) {
-      heap.dequeue_root();
-      heap.m_mutator_wake.signal();
-    }
-  }
-  double t1 = msec();
-  GC_TRACE(";; [collector: mark]\n");
-  heap.dequeue_root();
-  while (heap.serial_marking()) continue;
-
-    // sweep
-#if DEBUG_CONCURRENT_COLLECT
-  double t2 = msec();
-#endif
-  GC_TRACE(";; [collector: sweep]\n");
-  heap.m_sweep_wavefront = (uint8_t*)heap.m_pool;
-  heap.m_symbol.sweep();
-  heap.m_string.sweep();
-  heap.m_weakmappings.m_lock.lock();
-  if (heap.m_weakmappings.m_vacant) {
-    object_slab_traits_t* traits = heap.m_weakmappings.m_vacant;
-    do heap.break_weakmapping(traits);
-    while ((traits = traits->next) != heap.m_weakmappings.m_vacant);
-  }
-  if (heap.m_weakmappings.m_occupied) {
-    object_slab_traits_t* traits = heap.m_weakmappings.m_occupied;
-    do heap.break_weakmapping(traits);
-    while ((traits = traits->next) != heap.m_weakmappings.m_occupied);
-  }
-  heap.m_weakmappings.m_lock.unlock();
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(heap.m_pool);
-  for (int i = 0; i < heap.m_pool_watermark; i++) {
-    if (GCSLABP(heap.m_pool[i])) {
-      uint8_t* slab = heap.m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT);
-      traits->cache->sweep(slab);
-    }
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
-  }
-
-  GC_TRACE(";; [collector: start-the-world]\n");
-  heap.m_stop_the_world = false;
-  heap.m_sweep_wavefront = (uint8_t*)heap.m_pool + heap.m_pool_size;
-  heap.m_mutator_wake.signal();
-  while (heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-  }
-
-  // end
-  heap.m_collector_kicked = false;
-  GC_TRACE(";; [collector: waiting]\n");
-  double t3 = msec();
-
-  heap.m_usage.m_duration = t3 - t1;
-  heap.m_usage.m_sync1 = 0;
-  heap.m_usage.m_sync2 = 0;
-  heap.m_usage.m_recorded = true;
-  heap.m_usage.m_synchronized = true;
-}
-
-void object_heap_t::concurrent_collect(object_heap_t& heap) {
-  assert(heap.m_mutator_stopped == false);
-
-  // mark phase 1
-  heap.m_root_snapshot = ROOT_SNAPSHOT_GLOBALS;
-  heap.m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world]\n");
-  while (!heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-    if (!heap.m_mutator_stopped) {
-      heap.dequeue_root();
-      heap.m_mutator_wake.signal();
-    }
-  }
-  double t1 = msec();
-  heap.m_trip_bytes = 0;
-  heap.m_write_barrier = true;
-  heap.m_stop_the_world = false;
-  heap.m_mutator_wake.signal();
-  GC_TRACE(";; [collector: start-the-world phase 1]\n");
-  while (heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-  }
-  double t2 = msec();
-  GC_TRACE(";; [collector: concurrent-marking phase 1]\n");
-  heap.concurrent_marking();
-
-  // mark phase 1+
-  heap.shade(heap.m_system_environment);
-  heap.shade(heap.m_interaction_environment);
-  heap.shade(heap.m_hidden_variables);
-  heap.shade(heap.m_architecture_feature);
-  heap.shade(heap.m_native_transcoder);
-  heap.shade(heap.m_trampolines);
-
-  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) heap.shade(heap.m_inherents[i]);
-  heap.concurrent_marking();
-
-  // mark phase 2
-  heap.m_root_snapshot = ROOT_SNAPSHOT_LOCALS;
-  heap.m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world phase 2]\n");
-  while (!heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-    if (!heap.m_mutator_stopped) {
-      heap.dequeue_root();
-      heap.m_mutator_wake.signal();
-    }
-  }
-
-  heap.m_root_snapshot = ROOT_SNAPSHOT_EVERYTHING;
-fallback:
-  heap.m_stop_the_world = false;
-  heap.m_mutator_wake.signal();
-  GC_TRACE(";; [collector: start-the-world phase 2]\n");
-  while (heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-  }
-  GC_TRACE(";; [collector: concurrent-marking phase 2]\n");
-  heap.concurrent_marking();
-#if DEBUG_CONCURRENT_COLLECT
-  double t3 = msec();
-#endif
-
-  // final mark
-  assert(heap.m_mutator_stopped == false);
-  heap.m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world final]\n");
-
-  while (!heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-    if (!heap.m_mutator_stopped) {
-      heap.dequeue_root();
-      heap.m_mutator_wake.signal();
-    }
-  }
-  double t4 = msec();
-  heap.m_write_barrier = false;
-  GC_TRACE(";; [collector: serial-marking]\n");
-  heap.dequeue_root();
-
-#ifdef ENSURE_REALTIME
-  if (heap.serial_marking()) {
-  #if DEBUG_CONCURRENT_COLLECT
-    puts("serial_marking() timeout, resume mutator and restart concurrent_marking");
-  #endif
-    heap.m_write_barrier = true;
-    heap.m_root_snapshot = ROOT_SNAPSHOT_RETRY;
-    goto fallback;
-  }
-#else
-  while (heap.serial_marking()) continue;
-#endif
-
-  // sweep
-  heap.m_sweep_wavefront = (uint8_t*)heap.m_pool;
-  heap.m_alloc_barrier = true;
-  heap.m_read_barrier = true;
-  heap.m_stop_the_world = false;
-  heap.m_mutator_wake.signal();
-  while (heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);  // to make mutator run now
-  }
-  GC_TRACE(";; [collector: start-the-world]\n");
-  GC_TRACE(";; [collector: concurrent-sweeping]\n");
-  double t5 = msec();
-  heap.m_symbol.sweep();
-  heap.m_string.sweep();
-  heap.m_read_barrier = false;
-  heap.m_weakmappings.m_lock.lock();
-  if (heap.m_weakmappings.m_vacant) {
-    object_slab_traits_t* traits = heap.m_weakmappings.m_vacant;
-    do heap.break_weakmapping(traits);
-    while ((traits = traits->next) != heap.m_weakmappings.m_vacant);
-  }
-  if (heap.m_weakmappings.m_occupied) {
-    object_slab_traits_t* traits = heap.m_weakmappings.m_occupied;
-    do heap.break_weakmapping(traits);
-    while ((traits = traits->next) != heap.m_weakmappings.m_occupied);
-  }
-  heap.m_weakmappings.m_lock.unlock();
-  int capacity = (heap.m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
-  uint8_t* slab = heap.m_pool;
-  int i = 0;
-  while (i < capacity) {
-    int memo = heap.m_pool_usage;
-    if (GCSLABP(heap.m_pool[i])) {
-      if (OBJECT_SLAB_TRAITS_OF(slab)->cache == NULL) {
-#if HPDEBUG
-        printf(";; [collector: wait for mutator complete slab init]\n");
-        fflush(stdout);
-#endif
-        thread_yield();
-        continue;
-      }
-#if HPDEBUG
-      {
-        slab_cache_t* ca = OBJECT_SLAB_TRAITS_OF(slab)->cache;
-        bool hit = false;
-        for (int u = 0; u < array_sizeof(heap.m_collectibles); u++) hit |= (&heap.m_collectibles[u] == ca);
-        hit |= (&heap.m_weakmappings == ca);
-        hit |= (&heap.m_flonums == ca);
-        hit |= (&heap.m_cons == ca);
-  #if USE_CONST_LITERAL
-        hit |= (&heap.m_immutable_cons == ca);
-  #endif
-        if (!hit) fatal("%s:%u concurrent_collect(): bad cache reference 0x%x in slab 0x%x", __FILE__, __LINE__, ca, slab);
-      }
-#endif
-      OBJECT_SLAB_TRAITS_OF(slab)->cache->sweep(slab);
-      slab += OBJECT_SLAB_SIZE;
-      i++;
-    } else {
-      scoped_lock lock(heap.m_lock);
-      if (memo != heap.m_pool_usage) continue;
-      do {
-        if (i == heap.m_pool_watermark) {
-          heap.m_sweep_wavefront = (uint8_t*)heap.m_pool + heap.m_pool_size;
-          heap.m_alloc_barrier = false;
-          goto finish;
-        }
-        slab += OBJECT_SLAB_SIZE;
-        heap.m_sweep_wavefront = slab;
-        i++;
-      } while (!GCSLABP(heap.m_pool[i]));
-    }
-  }
-
-finish:
-  heap.m_collector_kicked = false;
-  GC_TRACE(";; [collector: waiting]\n");
-  double t6 = msec();
-  heap.m_usage.m_duration = t6 - t1;
-  heap.m_usage.m_sync1 = t2 - t1;
-  heap.m_usage.m_sync2 = t5 - t4;
-  heap.m_usage.m_recorded = true;
-  heap.m_usage.m_synchronized = false;
-#if DEBUG_CONCURRENT_COLLECT
-  printf(
-      ";; [        first-lock:%.2fms second-lock:%.2fms overlap:%.2fms]\n"
-      ";; [        stw:%.2fms concurrent-marking:%.2fms]\n"
-      ";; [        stw:%.2fms serial-marking:%.2fms]\n"
-      ";; [        concurrent-sweeping:%.2fms]\n",
-      (t2 - t1), (t4 - t3) + (t5 - t4), (t3 - t2) + (t6 - t5), t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5);
-  fflush(stdout);
-#endif
-#if HPDEBUG
-  heap.consistency_check();
-#endif
-}
-
-thread_main_t object_heap_t::collector_thread(void* param) {
-  object_heap_t& heap = *(object_heap_t*)param;
-  heap.m_collector_lock.lock();
-  heap.m_collector_ready = true;
-  GC_TRACE(";; [collector: ready]\n");
-  while (!heap.m_collector_terminating) {
-    if (heap.m_collector_kicked == false) {
-      heap.m_collector_wake.wait(heap.m_collector_lock);
-      continue;
-    }
-    assert(heap.m_mark_sp == heap.m_mark_stack);
-    if (heap.m_mark_stack_size != MARK_STACK_SIZE_INIT) {
-      heap.m_mark_stack_size = MARK_STACK_SIZE_INIT;
-      heap.m_mark_stack = heap.m_mark_sp = (scm_obj_t*)realloc(heap.m_mark_stack, sizeof(scm_obj_t) * heap.m_mark_stack_size);
-    }
-    if (CONCURRENT_COLLECT) {
-      if (heap.m_pool_usage > heap.m_pool_threshold) {
-        synchronized_collect(heap);
-      } else {
-        concurrent_collect(heap);
-      }
-    } else {
-      synchronized_collect(heap);
-    }
-  }
-  heap.m_collector_terminating = false;
-  heap.m_collector_lock.unlock();
-  return NULL;
-}
 
 void object_heap_t::trace(scm_obj_t obj) {
   assert(is_collectible(obj));
@@ -1043,12 +722,12 @@ void object_heap_t::concurrent_marking() {
   scm_obj_t obj;
   do {
     while (true) {
-      if (m_shade_queue.try_get(&obj)) shade(obj);
-      if (m_mark_sp == m_mark_stack) break;
-      obj = *--m_mark_sp;
+      if (m_concurrent_heap.m_shade_queue.try_get(&obj)) shade(obj);
+      if (m_concurrent_heap.m_mark_sp == m_concurrent_heap.m_mark_stack) break;
+      obj = *--m_concurrent_heap.m_mark_sp;
       trace(obj);
     }
-  } while (m_shade_queue.count());
+  } while (m_concurrent_heap.m_shade_queue.count());
 }
 
 bool object_heap_t::serial_marking() {
@@ -1056,8 +735,8 @@ bool object_heap_t::serial_marking() {
   double timeout = msec() + ENSURE_REALTIME;
   int i = 0;
   scm_obj_t obj;
-  while (m_mark_sp != m_mark_stack) {
-    obj = *--m_mark_sp;
+  while (m_concurrent_heap.m_mark_sp != m_concurrent_heap.m_mark_stack) {
+    obj = *--m_concurrent_heap.m_mark_sp;
     trace(obj);
     if (++i > TIMEOUT_CHECK_EACH) {
       i = 0;
@@ -1067,8 +746,8 @@ bool object_heap_t::serial_marking() {
   return false;
 #else
   scm_obj_t obj;
-  while (m_mark_sp != m_mark_stack) {
-    obj = *--m_mark_sp;
+  while (m_concurrent_heap.m_mark_sp != m_concurrent_heap.m_mark_stack) {
+    obj = *--m_concurrent_heap.m_mark_sp;
     trace(obj);
   }
   return false;
@@ -1577,11 +1256,11 @@ static void check_collectible(void* obj, int size, void* refcon) {
 
 void object_heap_t::consistency_check() {
   //    puts(";; [collector: heap check]");
-  m_root_snapshot = ROOT_SNAPSHOT_CONSISTENCY_CHECK;
-  m_stop_the_world = true;
-  while (!m_mutator_stopped) {
-    m_collector_wake.wait(m_collector_lock);
-    if (!m_mutator_stopped) m_mutator_wake.signal();
+  m_concurrent_heap.m_root_snapshot = ROOT_SNAPSHOT_CONSISTENCY_CHECK;
+  m_concurrent_heap.m_stop_the_world = true;
+  while (!m_concurrent_heap.m_mutator_stopped) {
+    m_concurrent_heap.m_collector_wake.wait(m_concurrent_heap.m_collector_lock);
+    if (!m_concurrent_heap.m_mutator_stopped) m_concurrent_heap.m_mutator_wake.signal();
   }
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_pool);
   for (int i = 0; i < m_pool_watermark; i++) {
@@ -1590,10 +1269,10 @@ void object_heap_t::consistency_check() {
     }
     traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
   }
-  m_stop_the_world = false;
-  m_mutator_wake.signal();
-  while (m_mutator_stopped) {
-    m_collector_wake.wait(m_collector_lock);
+  m_concurrent_heap.m_stop_the_world = false;
+  m_concurrent_heap.m_mutator_wake.signal();
+  while (m_concurrent_heap.m_mutator_stopped) {
+    m_concurrent_heap.m_collector_wake.wait(m_concurrent_heap.m_collector_lock);
   }
 }
 
