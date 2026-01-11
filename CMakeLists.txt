@@ -70,7 +70,7 @@ add_executable(
   src/object_heap_compact.cpp
   src/object_heap.cpp
   src/object_set.cpp
-  src/object_slab.cpp
+  src/slab_cache.cpp
   src/port.cpp
   src/printer.cpp
   src/reader.cpp

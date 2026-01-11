@@ -8,6 +8,6 @@
 #include "object.h"
 #include "object_factory.h"
 #include "object_heap.h"
-#include "object_slab.h"
+#include "slab_cache.h"
 
 #endif

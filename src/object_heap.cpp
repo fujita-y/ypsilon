@@ -176,7 +176,7 @@ void object_heap_t::deallocate_private(void* obj) {
     assert(in_heap(obj));
     assert(!is_collectible(obj));
     if (in_slab(obj)) {
-      object_slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
+      slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
       cache->delete_object(obj);
     } else {
       assert(!is_collectible(obj));
@@ -188,7 +188,7 @@ void object_heap_t::deallocate_private(void* obj) {
 int object_heap_t::allocated_size(void* obj) {
   assert(in_heap(obj));
   if (in_slab(obj)) {
-    object_slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
+    slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
     return cache->m_object_size;
   } else {
     assert(((intptr_t)obj & (OBJECT_SLAB_SIZE - 1)) == 0);
@@ -807,7 +807,7 @@ fallback:
       }
 #if HPDEBUG
       {
-        object_slab_cache_t* ca = OBJECT_SLAB_TRAITS_OF(slab)->cache;
+        slab_cache_t* ca = OBJECT_SLAB_TRAITS_OF(slab)->cache;
         bool hit = false;
         for (int u = 0; u < array_sizeof(heap.m_collectibles); u++) hit |= (&heap.m_collectibles[u] == ca);
         hit |= (&heap.m_weakmappings == ca);

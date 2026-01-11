@@ -10,7 +10,7 @@
 #include "inherent.h"
 #include "mutex.h"
 #include "object_set.h"
-#include "object_slab.h"
+#include "slab_cache.h"
 #include "queue.h"
 
 #define STRING_TABLE_SIZE_INIT   1021
@@ -73,18 +73,19 @@ class object_heap_t {
  public:
   mutex_t m_lock;
 #if ARCH_LP64
-  object_slab_cache_t m_collectibles[8];  // 16-32-64-128-256-512-1024-2048
-  object_slab_cache_t m_privates[8];      // 16-32-64-128-256-512-1024-2048
+  slab_cache_t m_collectibles[8];  // 16-32-64-128-256-512-1024-2048
+  slab_cache_t m_privates[8];      // 16-32-64-128-256-512-1024-2048
 #else
-  object_slab_cache_t m_collectibles[8];  // 8-16-32-64-128-256-512-1024
-  object_slab_cache_t m_privates[8];      // 8-16-32-64-128-256-512-1024
+  slab_cache_t m_collectibles[8];  // 8-16-32-64-128-256-512-1024
+  slab_cache_t m_privates[8];      // 8-16-32-64-128-256-512-1024
 #endif
-  object_slab_cache_t m_cons;
-  object_slab_cache_t m_flonums;
-  object_slab_cache_t m_weakmappings;
+  slab_cache_t m_cons;
+  slab_cache_t m_flonums;
+  slab_cache_t m_weakmappings;
 #if USE_CONST_LITERAL
-  object_slab_cache_t m_immutable_cons;
+  slab_cache_t m_immutable_cons;
 #endif
+
   concurrent_queue_t<scm_obj_t> m_shade_queue;
   uint8_t* m_sweep_wavefront;
   scm_obj_t* m_mark_sp;

@@ -13,16 +13,16 @@
 
 #define SLAB_CACHE_COUNT_MAX 1024
 
-object_slab_cache_t::object_slab_cache_t() {
+slab_cache_t::slab_cache_t() {
   m_vacant = NULL;
   m_occupied = NULL;
   m_heap = NULL;
   m_lock.init();
 }
 
-object_slab_cache_t::~object_slab_cache_t() { m_lock.destroy(); }
+slab_cache_t::~slab_cache_t() { m_lock.destroy(); }
 
-bool object_slab_cache_t::init(object_heap_t* object_heap, int object_size, bool gc) {
+bool slab_cache_t::init(object_heap_t* object_heap, int object_size, bool gc) {
   assert(object_heap);
   assert(object_size >= (int)sizeof(object_freelist_t));
   if (object_size & (object_size - 1)) {
@@ -42,7 +42,7 @@ bool object_slab_cache_t::init(object_heap_t* object_heap, int object_size, bool
   return true;
 }
 
-void object_slab_cache_t::destroy() {
+void slab_cache_t::destroy() {
   if (m_vacant) {
     object_slab_traits_t* traits = m_vacant;
     do {
@@ -64,7 +64,7 @@ void object_slab_cache_t::destroy() {
   m_heap = NULL;
 }
 
-void object_slab_cache_t::init_freelist(uint8_t* slab, uint8_t* bottom, object_slab_traits_t* traits) {
+void slab_cache_t::init_freelist(uint8_t* slab, uint8_t* bottom, object_slab_traits_t* traits) {
   int step = (m_object_size + OBJECT_DATUM_ALIGN_MASK) & ~OBJECT_DATUM_ALIGN_MASK;
   uint8_t* obj = slab + step;
   traits->free = (object_freelist_t*)obj;
@@ -77,7 +77,7 @@ void object_slab_cache_t::init_freelist(uint8_t* slab, uint8_t* bottom, object_s
   ((object_freelist_t*)obj)->next = NULL;
 }
 
-void object_slab_cache_t::unload_filled(object_slab_traits_t* traits) {
+void slab_cache_t::unload_filled(object_slab_traits_t* traits) {
   if (traits != traits->next) {
     traits->prev->next = traits->next;
     traits->next->prev = traits->prev;
@@ -95,7 +95,7 @@ void object_slab_cache_t::unload_filled(object_slab_traits_t* traits) {
   }
 }
 
-void* object_slab_cache_t::new_collectible_object() {
+void* slab_cache_t::new_collectible_object() {
   assert(m_heap);
   assert(m_bitmap_size != 0);
   bool synchronize = (m_heap->m_alloc_barrier != 0);
@@ -155,7 +155,7 @@ void* object_slab_cache_t::new_collectible_object() {
   }
 }
 
-void* object_slab_cache_t::new_object() {
+void* slab_cache_t::new_object() {
   assert(m_heap);
   assert(m_bitmap_size == 0);
   m_lock.lock();
@@ -182,7 +182,7 @@ void* object_slab_cache_t::new_object() {
   }
 }
 
-void object_slab_cache_t::delete_object(void* obj) {
+void slab_cache_t::delete_object(void* obj) {
   if (obj == NULL) return;
   assert(m_heap);
   assert(m_bitmap_size == 0);
@@ -225,7 +225,7 @@ void object_slab_cache_t::delete_object(void* obj) {
   }
 }
 
-void object_slab_cache_t::attach(void* slab) {
+void slab_cache_t::attach(void* slab) {
   m_lock.lock();
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
   if (traits->free == NULL) {
@@ -249,7 +249,7 @@ void object_slab_cache_t::attach(void* slab) {
   m_lock.unlock();
 }
 
-void object_slab_cache_t::detach(void* slab) {
+void slab_cache_t::detach(void* slab) {
   m_lock.lock();
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
   traits->prev->next = traits->next;
@@ -267,7 +267,7 @@ void object_slab_cache_t::detach(void* slab) {
   m_lock.unlock();
 }
 
-void object_slab_cache_t::sweep(void* slab) {
+void slab_cache_t::sweep(void* slab) {
   assert(m_bitmap_size);
   assert(slab == OBJECT_SLAB_TOP_OF(slab));
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
@@ -304,7 +304,7 @@ void object_slab_cache_t::sweep(void* slab) {
   uint8_t* p = bitmap;
   int refc = traits->refc;
   object_freelist_t* freelist = traits->free;
-  object_slab_cache_t* cache = traits->cache;
+  slab_cache_t* cache = traits->cache;
 #if USE_CONST_LITERAL
   if ((cache == &m_heap->m_cons) || (cache == &m_heap->m_flonums) || (cache == &m_heap->m_immutable_cons)) {
 #else
@@ -355,7 +355,7 @@ done:
   attach(slab);
 }
 
-void object_slab_cache_t::iterate(void* slab, object_iter_proc_t proc, void* desc) {
+void slab_cache_t::iterate(void* slab, object_iter_proc_t proc, void* desc) {
   assert(m_bitmap_size);
   assert(slab == OBJECT_SLAB_TOP_OF(slab));
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
@@ -366,3 +366,4 @@ void object_slab_cache_t::iterate(void* slab, object_iter_proc_t proc, void* des
     if (((object_freelist_t*)obj)->null != NULL) proc(obj, m_object_size, desc);
   }
 }
+

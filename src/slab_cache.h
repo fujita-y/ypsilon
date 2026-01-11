@@ -1,8 +1,8 @@
 // Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
-#ifndef OBJECT_SLAB_H_INCLUDED
-#define OBJECT_SLAB_H_INCLUDED
+#ifndef SLAB_CACHE_H_INCLUDED
+#define SLAB_CACHE_H_INCLUDED
 
 #include "core.h"
 #include "object.h"
@@ -12,12 +12,12 @@ class object_heap_t;
 #define OBJECT_SLAB_TOP_OF(obj)    ((uint8_t*)(((uintptr_t)(obj)) & ~(OBJECT_SLAB_SIZE - 1)))
 #define OBJECT_SLAB_TRAITS_OF(obj) ((object_slab_traits_t*)(OBJECT_SLAB_TOP_OF(obj) + OBJECT_SLAB_SIZE - sizeof(object_slab_traits_t)))
 
-struct object_slab_cache_t;
+struct slab_cache_t;
 struct object_slab_traits_t;
 struct object_freelist_t;
 
 struct object_freelist_t {
-  void* null;  // <- object_slab_t::deallocate(...) assign NULL to detect free cell during sweep phase
+  void* null;  // <- slab_cache_t::delete_object(...) assign NULL to detect free cell during sweep phase
   object_freelist_t* next;
 };
 
@@ -26,12 +26,12 @@ struct object_slab_traits_t {  // <- locate to bottom of each slab
   object_freelist_t* free;
   object_slab_traits_t* next;
   object_slab_traits_t* prev;
-  object_slab_cache_t* cache;
+  slab_cache_t* cache;
 };
 
 typedef void (*object_iter_proc_t)(void* obj, int size, void* refcon);
 
-struct object_slab_cache_t {
+struct slab_cache_t {
   mutex_t m_lock;
   int m_object_size;
   int m_object_size_shift;
@@ -41,8 +41,8 @@ struct object_slab_cache_t {
   object_slab_traits_t* m_vacant;
   object_slab_traits_t* m_occupied;
   object_heap_t* m_heap;
-  object_slab_cache_t();
-  ~object_slab_cache_t();
+  slab_cache_t();
+  ~slab_cache_t();
   bool init(object_heap_t* object_heap, int object_size, bool gc);
   void destroy();
   void* new_collectible_object();
@@ -91,3 +91,4 @@ struct object_slab_cache_t {
 };
 
 #endif
+
