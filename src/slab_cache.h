@@ -31,16 +31,19 @@ struct object_slab_traits_t {  // <- locate to bottom of each slab
 
 typedef void (*object_iter_proc_t)(void* obj, int size, void* refcon);
 
-struct slab_cache_t {
-  mutex_t m_lock;
-  int m_object_size;
+class slab_cache_t {
+ private:
   int m_object_size_shift;
   int m_bitmap_size;
-  int m_cache_limit;
   int m_cache_count;
+  concurrent_heap_t* m_concurrent_heap;
+
+ public:
+  mutex_t m_lock;
+  int m_object_size;
+  int m_cache_limit;
   object_slab_traits_t* m_vacant;
   object_slab_traits_t* m_occupied;
-  concurrent_heap_t* m_concurrent_heap;
   slab_cache_t();
   ~slab_cache_t();
   bool init(concurrent_heap_t* concurrent_heap, int object_size, bool gc);
