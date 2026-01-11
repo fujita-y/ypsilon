@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef SLAB_CACHE_H_INCLUDED
@@ -94,4 +94,3 @@ class slab_cache_t {
 };
 
 #endif
-

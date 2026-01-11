@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 /*
@@ -306,7 +306,8 @@ void slab_cache_t::sweep(void* slab) {
   object_freelist_t* freelist = traits->free;
   slab_cache_t* cache = traits->cache;
 #if USE_CONST_LITERAL
-  if (m_concurrent_heap->is_cons_slab_cache(cache) || m_concurrent_heap->is_flonums_slab_cache(cache) || m_concurrent_heap->is_immutable_cons_slab_cache(cache)) {
+  if (m_concurrent_heap->is_cons_slab_cache(cache) || m_concurrent_heap->is_flonums_slab_cache(cache) ||
+      m_concurrent_heap->is_immutable_cons_slab_cache(cache)) {
 #else
   if (m_concurrent_heap->is_cons_slab_cache(cache) || m_concurrent_heap->is_flonums_slab_cache(cache)) {
 #endif
@@ -366,4 +367,3 @@ void slab_cache_t::iterate(void* slab, object_iter_proc_t proc, void* desc) {
     if (((object_freelist_t*)obj)->null != NULL) proc(obj, m_object_size, desc);
   }
 }
-
