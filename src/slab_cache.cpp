@@ -102,7 +102,7 @@ void* slab_cache_t::new_collectible_object() {
   if (synchronize) {
 #if LOCKFREE_ALLOC && THREAD_LOCAL_SLAB_CACHE
     object_slab_traits_t* traits = m_vacant;
-    if ((uintptr_t)traits < (uintptr_t)m_heap->m_sweep_wavefront) {
+    if ((uintptr_t)traits < (uintptr_t)m_heap->m_concurrent_heap.m_sweep_wavefront) {
       if (traits && traits->free) {
         object_freelist_t* obj = traits->free;
         traits->free = obj->next;
@@ -125,7 +125,7 @@ void* slab_cache_t::new_collectible_object() {
     traits->refc++;
     if (traits->free == NULL) unload_filled(traits);
     if (synchronize) {
-      if ((uintptr_t)obj >= (uintptr_t)m_heap->m_sweep_wavefront) {
+      if ((uintptr_t)obj >= (uintptr_t)m_heap->m_concurrent_heap.m_sweep_wavefront) {
         mark(obj);
         if (DETAILED_STATISTIC) m_heap->m_usage.m_barriered_alloc++;
       }
@@ -145,7 +145,7 @@ void* slab_cache_t::new_collectible_object() {
       m_vacant = traits;
     }
     if (synchronize) {
-      if ((uintptr_t)slab >= (uintptr_t)m_heap->m_sweep_wavefront) {
+      if ((uintptr_t)slab >= (uintptr_t)m_heap->m_concurrent_heap.m_sweep_wavefront) {
         mark(slab);
         if (DETAILED_STATISTIC) m_heap->m_usage.m_barriered_alloc++;
       }
@@ -274,7 +274,7 @@ void slab_cache_t::sweep(void* slab) {
 
   m_lock.lock();
   if (traits->refc == 0 && m_cache_count < m_cache_limit) {
-    m_heap->m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
+    m_heap->m_concurrent_heap.m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
     m_lock.unlock();
     return;
   }
@@ -293,7 +293,7 @@ void slab_cache_t::sweep(void* slab) {
   if (traits->refc == 0) {
     if (m_cache_count > m_cache_limit) {
       m_heap->deallocate(slab);
-      m_heap->m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
+      m_heap->m_concurrent_heap.m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
       return;
     }
   }
@@ -351,7 +351,7 @@ done:
   for (int i = 0; i < m_bitmap_size; i++) bitmap[i] = 0;
   traits->refc = refc;
   traits->free = freelist;
-  m_heap->m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
+  m_heap->m_concurrent_heap.m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
   attach(slab);
 }
 

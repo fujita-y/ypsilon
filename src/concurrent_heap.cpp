@@ -38,7 +38,8 @@ concurrent_heap_t::concurrent_heap_t(object_heap_t* heap) : m_heap(heap) {
   m_mutator_stopped = false;
 }
 
-void concurrent_heap_t::init() {
+void concurrent_heap_t::init(uint8_t* sweep_wavefront) {
+  m_sweep_wavefront = sweep_wavefront;
   thread_start(collector_thread, this);
 }
 
@@ -90,7 +91,7 @@ void concurrent_heap_t::synchronized_collect() {
 
   // sweep
   GC_TRACE(";; [collector: sweep]\n");
-  m_heap->m_sweep_wavefront = (uint8_t*)m_heap->m_pool;
+  m_sweep_wavefront = (uint8_t*)m_heap->m_pool;
   m_heap->m_symbol.sweep();
   m_heap->m_string.sweep();
   m_heap->m_weakmappings.m_lock.lock();
@@ -116,7 +117,7 @@ void concurrent_heap_t::synchronized_collect() {
 
   GC_TRACE(";; [collector: start-the-world]\n");
   m_stop_the_world = false;
-  m_heap->m_sweep_wavefront = (uint8_t*)m_heap->m_pool + m_heap->m_pool_size;
+  m_sweep_wavefront = (uint8_t*)m_heap->m_pool + m_heap->m_pool_size;
   m_mutator_wake.signal();
   while (m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
@@ -229,7 +230,7 @@ fallback:
 #endif
 
   // sweep
-  m_heap->m_sweep_wavefront = (uint8_t*)m_heap->m_pool;
+  m_sweep_wavefront = (uint8_t*)m_heap->m_pool;
   m_alloc_barrier = true;
   m_read_barrier = true;
   m_stop_the_world = false;
@@ -291,12 +292,12 @@ fallback:
       if (memo != m_heap->m_pool_usage) continue;
       do {
         if (i == m_heap->m_pool_watermark) {
-          m_heap->m_sweep_wavefront = (uint8_t*)m_heap->m_pool + m_heap->m_pool_size;
+          m_sweep_wavefront = (uint8_t*)m_heap->m_pool + m_heap->m_pool_size;
           m_alloc_barrier = false;
           goto finish;
         }
         slab += OBJECT_SLAB_SIZE;
-        m_heap->m_sweep_wavefront = slab;
+        m_sweep_wavefront = slab;
         i++;
       } while (!GCSLABP(m_heap->m_pool[i]));
     }

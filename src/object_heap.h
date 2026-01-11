@@ -88,7 +88,6 @@ class object_heap_t {
   slab_cache_t m_immutable_cons;
 #endif
 
-  uint8_t* m_sweep_wavefront;
   int m_trip_bytes;
   int m_collect_trip_bytes;
   uint8_t* m_map;

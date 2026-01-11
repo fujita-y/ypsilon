@@ -15,7 +15,7 @@ class object_heap_t;
 class concurrent_heap_t {
  public:
   concurrent_heap_t(object_heap_t* heap);
-  void init();
+  void init(uint8_t* sweep_wavefront);
   void terminate();
   void collect();
   static thread_main_t collector_thread(void* param);
@@ -36,6 +36,7 @@ class concurrent_heap_t {
   scm_obj_t* m_mark_stack;
   int m_mark_stack_size;
   int m_root_snapshot;
+  uint8_t* m_sweep_wavefront;
 
  private:
   object_heap_t* m_heap;

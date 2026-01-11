@@ -541,8 +541,7 @@ void object_heap_t::collect() {
 
 void object_heap_t::collector_init() {
   m_usage.clear();
-  m_sweep_wavefront = (uint8_t*)m_pool + m_pool_size;
-  m_concurrent_heap.init();
+  m_concurrent_heap.init((uint8_t*)m_pool + m_pool_size);
 }
 
 void object_heap_t::dequeue_root() {
