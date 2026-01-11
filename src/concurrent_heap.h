@@ -52,10 +52,6 @@ class concurrent_heap_t {
   void init(uint8_t* sweep_wavefront);
   void terminate();
   void collect();
-  void concurrent_marking();
-  bool serial_marking();
-  static thread_main_t collector_thread(void* param);
-
   // Bridge methods for slab_cache_t to avoid direct object_heap_t access
   void* allocate(size_t size, bool slab, bool gc);
   void deallocate(void* p);
@@ -82,8 +78,11 @@ class concurrent_heap_t {
   int m_mark_stack_size;
 
  private:
+  static thread_main_t collector_thread(void* param);
   void concurrent_collect();
   void synchronized_collect();
+  void concurrent_mark();
+  bool synchronized_mark();
   object_heap_t* m_heap;
   bool m_collector_ready;
   bool m_collector_terminating;

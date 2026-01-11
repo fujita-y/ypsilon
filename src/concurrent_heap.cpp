@@ -3,10 +3,10 @@
 
 #include "core.h"
 #include "concurrent_heap.h"
-#include "object_heap.h"
 #include "object_factory.h"
-#include "slab_cache.h"
+#include "object_heap.h"
 #include "port.h"
+#include "slab_cache.h"
 
 #define DEBUG_CONCURRENT_COLLECT 0
 #define ENSURE_REALTIME          (5.0)  // in msec (1.0 == 0.001sec)
@@ -45,21 +45,13 @@ void concurrent_heap_t::init(uint8_t* sweep_wavefront) {
   thread_start(collector_thread, this);
 }
 
-void* concurrent_heap_t::allocate(size_t size, bool slab, bool gc) {
-  return m_heap->allocate(size, slab, gc);
-}
+void* concurrent_heap_t::allocate(size_t size, bool slab, bool gc) { return m_heap->allocate(size, slab, gc); }
 
-void concurrent_heap_t::deallocate(void* p) {
-  m_heap->deallocate(p);
-}
+void concurrent_heap_t::deallocate(void* p) { m_heap->deallocate(p); }
 
-bool concurrent_heap_t::is_cons_slab_cache(slab_cache_t* cache) {
-  return cache == &m_heap->m_cons;
-}
+bool concurrent_heap_t::is_cons_slab_cache(slab_cache_t* cache) { return cache == &m_heap->m_cons; }
 
-bool concurrent_heap_t::is_flonums_slab_cache(slab_cache_t* cache) {
-  return cache == &m_heap->m_flonums;
-}
+bool concurrent_heap_t::is_flonums_slab_cache(slab_cache_t* cache) { return cache == &m_heap->m_flonums; }
 
 bool concurrent_heap_t::is_immutable_cons_slab_cache(slab_cache_t* cache) {
 #if USE_CONST_LITERAL
@@ -69,9 +61,7 @@ bool concurrent_heap_t::is_immutable_cons_slab_cache(slab_cache_t* cache) {
 #endif
 }
 
-void concurrent_heap_t::finalize(void* obj) {
-  ::finalize(m_heap, obj);
-}
+void concurrent_heap_t::finalize(void* obj) { ::finalize(m_heap, obj); }
 
 void concurrent_heap_t::terminate() {
   m_collector_lock.lock();
@@ -117,8 +107,7 @@ void concurrent_heap_t::synchronized_collect() {
   double t1 = msec();
   GC_TRACE(";; [collector: mark]\n");
   m_heap->dequeue_root();
-  while (serial_marking()) continue;
-
+  while (synchronized_mark()) continue;
 
   // sweep
   GC_TRACE(";; [collector: sweep]\n");
@@ -190,9 +179,8 @@ void concurrent_heap_t::concurrent_collect() {
     m_collector_wake.wait(m_collector_lock);
   }
   double t2 = msec();
-  GC_TRACE(";; [collector: concurrent-marking phase 1]\n");
-  concurrent_marking();
-
+  GC_TRACE(";; [collector: concurrent-mark phase 1]\n");
+  concurrent_mark();
 
   // mark phase 1+
   m_heap->shade(m_heap->m_system_environment);
@@ -203,8 +191,7 @@ void concurrent_heap_t::concurrent_collect() {
   m_heap->shade(m_heap->m_trampolines);
 
   for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) m_heap->shade(m_heap->m_inherents[i]);
-  concurrent_marking();
-
+  concurrent_mark();
 
   // mark phase 2
   m_root_snapshot = ROOT_SNAPSHOT_LOCALS;
@@ -226,8 +213,8 @@ fallback:
   while (m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
   }
-  GC_TRACE(";; [collector: concurrent-marking phase 2]\n");
-  concurrent_marking();
+  GC_TRACE(";; [collector: concurrent-mark phase 2]\n");
+  concurrent_mark();
 
 #if DEBUG_CONCURRENT_COLLECT
   double t3 = msec();
@@ -247,21 +234,20 @@ fallback:
   }
   double t4 = msec();
   m_write_barrier = false;
-  GC_TRACE(";; [collector: serial-marking]\n");
+  GC_TRACE(";; [collector: synchronized-mark]\n");
   m_heap->dequeue_root();
 
 #ifdef ENSURE_REALTIME
-  if (serial_marking()) {
-
+  if (synchronized_mark()) {
   #if DEBUG_CONCURRENT_COLLECT
-    puts("serial_marking() timeout, resume mutator and restart concurrent_marking");
+    puts("synchronized_mark() timeout, resume mutator and restart concurrent_mark");
   #endif
     m_write_barrier = true;
     m_root_snapshot = ROOT_SNAPSHOT_RETRY;
     goto fallback;
   }
 #else
-  while (serial_marking()) continue;
+  while (synchronized_mark()) continue;
 
 #endif
 
@@ -351,8 +337,8 @@ finish:
 #if DEBUG_CONCURRENT_COLLECT
   printf(
       ";; [        first-lock:%.2fms second-lock:%.2fms overlap:%.2fms]\n"
-      ";; [        stw:%.2fms concurrent-marking:%.2fms]\n"
-      ";; [        stw:%.2fms serial-marking:%.2fms]\n"
+      ";; [        stw:%.2fms concurrent-mark:%.2fms]\n"
+      ";; [        stw:%.2fms synchronized-mark:%.2fms]\n"
       ";; [        concurrent-sweeping:%.2fms]\n",
       (t2 - t1), (t4 - t3) + (t5 - t4), (t3 - t2) + (t6 - t5), t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5);
   fflush(stdout);
@@ -375,7 +361,8 @@ thread_main_t concurrent_heap_t::collector_thread(void* param) {
     assert(concurrent_heap.m_mark_sp == concurrent_heap.m_mark_stack);
     if (concurrent_heap.m_mark_stack_size != MARK_STACK_SIZE_INIT) {
       concurrent_heap.m_mark_stack_size = MARK_STACK_SIZE_INIT;
-      concurrent_heap.m_mark_stack = concurrent_heap.m_mark_sp = (scm_obj_t*)realloc(concurrent_heap.m_mark_stack, sizeof(scm_obj_t) * concurrent_heap.m_mark_stack_size);
+      concurrent_heap.m_mark_stack = concurrent_heap.m_mark_sp =
+          (scm_obj_t*)realloc(concurrent_heap.m_mark_stack, sizeof(scm_obj_t) * concurrent_heap.m_mark_stack_size);
     }
     if (CONCURRENT_COLLECT) {
       if (concurrent_heap.m_heap->m_pool_usage > concurrent_heap.m_heap->m_pool_threshold) {
@@ -392,7 +379,7 @@ thread_main_t concurrent_heap_t::collector_thread(void* param) {
   return NULL;
 }
 
-void concurrent_heap_t::concurrent_marking() {
+void concurrent_heap_t::concurrent_mark() {
   scm_obj_t obj;
   do {
     while (true) {
@@ -404,7 +391,7 @@ void concurrent_heap_t::concurrent_marking() {
   } while (m_shade_queue.count());
 }
 
-bool concurrent_heap_t::serial_marking() {
+bool concurrent_heap_t::synchronized_mark() {
 #ifdef ENSURE_REALTIME
   double timeout = msec() + ENSURE_REALTIME;
   int i = 0;
