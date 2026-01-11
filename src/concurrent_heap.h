@@ -52,6 +52,8 @@ class concurrent_heap_t {
   void init(uint8_t* sweep_wavefront);
   void terminate();
   void collect();
+  void concurrent_marking();
+  bool serial_marking();
   static thread_main_t collector_thread(void* param);
 
   // Bridge methods for slab_cache_t to avoid direct object_heap_t access

@@ -717,41 +717,7 @@ void object_heap_t::trace(scm_obj_t obj) {
   }
 }
 
-void object_heap_t::concurrent_marking() {
-  scm_obj_t obj;
-  do {
-    while (true) {
-      if (m_concurrent_heap.m_shade_queue.try_get(&obj)) shade(obj);
-      if (m_concurrent_heap.m_mark_sp == m_concurrent_heap.m_mark_stack) break;
-      obj = *--m_concurrent_heap.m_mark_sp;
-      trace(obj);
-    }
-  } while (m_concurrent_heap.m_shade_queue.count());
-}
 
-bool object_heap_t::serial_marking() {
-#ifdef ENSURE_REALTIME
-  double timeout = msec() + ENSURE_REALTIME;
-  int i = 0;
-  scm_obj_t obj;
-  while (m_concurrent_heap.m_mark_sp != m_concurrent_heap.m_mark_stack) {
-    obj = *--m_concurrent_heap.m_mark_sp;
-    trace(obj);
-    if (++i > TIMEOUT_CHECK_EACH) {
-      i = 0;
-      if (msec() > timeout) return true;
-    }
-  }
-  return false;
-#else
-  scm_obj_t obj;
-  while (m_concurrent_heap.m_mark_sp != m_concurrent_heap.m_mark_stack) {
-    obj = *--m_concurrent_heap.m_mark_sp;
-    trace(obj);
-  }
-  return false;
-#endif
-}
 
 typedef struct {
   int pair;

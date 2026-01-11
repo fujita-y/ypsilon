@@ -150,8 +150,7 @@ class object_heap_t {
   // collector
   void collect();
   void collector_init();
-  void concurrent_marking();
-  bool serial_marking();
+
   void write_barrier(scm_obj_t rhs);
   void break_weakmapping(object_slab_traits_t* traits);
   void interior_shade(void* obj);

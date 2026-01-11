@@ -117,7 +117,8 @@ void concurrent_heap_t::synchronized_collect() {
   double t1 = msec();
   GC_TRACE(";; [collector: mark]\n");
   m_heap->dequeue_root();
-  while (m_heap->serial_marking()) continue;
+  while (serial_marking()) continue;
+
 
   // sweep
   GC_TRACE(";; [collector: sweep]\n");
@@ -190,7 +191,8 @@ void concurrent_heap_t::concurrent_collect() {
   }
   double t2 = msec();
   GC_TRACE(";; [collector: concurrent-marking phase 1]\n");
-  m_heap->concurrent_marking();
+  concurrent_marking();
+
 
   // mark phase 1+
   m_heap->shade(m_heap->m_system_environment);
@@ -201,7 +203,8 @@ void concurrent_heap_t::concurrent_collect() {
   m_heap->shade(m_heap->m_trampolines);
 
   for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) m_heap->shade(m_heap->m_inherents[i]);
-  m_heap->concurrent_marking();
+  concurrent_marking();
+
 
   // mark phase 2
   m_root_snapshot = ROOT_SNAPSHOT_LOCALS;
@@ -224,7 +227,8 @@ fallback:
     m_collector_wake.wait(m_collector_lock);
   }
   GC_TRACE(";; [collector: concurrent-marking phase 2]\n");
-  m_heap->concurrent_marking();
+  concurrent_marking();
+
 #if DEBUG_CONCURRENT_COLLECT
   double t3 = msec();
 #endif
@@ -247,7 +251,8 @@ fallback:
   m_heap->dequeue_root();
 
 #ifdef ENSURE_REALTIME
-  if (m_heap->serial_marking()) {
+  if (serial_marking()) {
+
   #if DEBUG_CONCURRENT_COLLECT
     puts("serial_marking() timeout, resume mutator and restart concurrent_marking");
   #endif
@@ -256,7 +261,8 @@ fallback:
     goto fallback;
   }
 #else
-  while (m_heap->serial_marking()) continue;
+  while (serial_marking()) continue;
+
 #endif
 
   // sweep
@@ -384,4 +390,40 @@ thread_main_t concurrent_heap_t::collector_thread(void* param) {
   concurrent_heap.m_collector_terminating = false;
   concurrent_heap.m_collector_lock.unlock();
   return NULL;
+}
+
+void concurrent_heap_t::concurrent_marking() {
+  scm_obj_t obj;
+  do {
+    while (true) {
+      if (m_shade_queue.try_get(&obj)) m_heap->shade(obj);
+      if (m_mark_sp == m_mark_stack) break;
+      obj = *--m_mark_sp;
+      m_heap->trace(obj);
+    }
+  } while (m_shade_queue.count());
+}
+
+bool concurrent_heap_t::serial_marking() {
+#ifdef ENSURE_REALTIME
+  double timeout = msec() + ENSURE_REALTIME;
+  int i = 0;
+  scm_obj_t obj;
+  while (m_mark_sp != m_mark_stack) {
+    obj = *--m_mark_sp;
+    m_heap->trace(obj);
+    if (++i > TIMEOUT_CHECK_EACH) {
+      i = 0;
+      if (msec() > timeout) return true;
+    }
+  }
+  return false;
+#else
+  scm_obj_t obj;
+  while (m_mark_sp != m_mark_stack) {
+    obj = *--m_mark_sp;
+    m_heap->trace(obj);
+  }
+  return false;
+#endif
 }
