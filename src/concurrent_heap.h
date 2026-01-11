@@ -44,6 +44,8 @@ class collector_usage_t {
   }
 };
 
+class slab_cache_t;
+
 class concurrent_heap_t {
  public:
   concurrent_heap_t(object_heap_t* heap);
@@ -51,6 +53,14 @@ class concurrent_heap_t {
   void terminate();
   void collect();
   static thread_main_t collector_thread(void* param);
+
+  // Bridge methods for slab_cache_t to avoid direct object_heap_t access
+  void* allocate(size_t size, bool slab, bool gc);
+  void deallocate(void* p);
+  bool is_cons_slab_cache(slab_cache_t* cache);
+  bool is_flonums_slab_cache(slab_cache_t* cache);
+  bool is_immutable_cons_slab_cache(slab_cache_t* cache);
+  void finalize(void* obj);
 
   bool m_collector_ready;
   bool m_collector_kicked;
