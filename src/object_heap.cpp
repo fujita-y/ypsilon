@@ -237,18 +237,18 @@ void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
   // slab
 #if ARCH_LP64
   assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
-  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, 1 << (n + 4), true);
-  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, 1 << (n + 4), false);
+  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, &m_concurrent_heap, 1 << (n + 4), true);
+  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, &m_concurrent_heap, 1 << (n + 4), false);
 #else
   assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
-  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, 1 << (n + 3), true);
-  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, 1 << (n + 3), false);
+  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, &m_concurrent_heap, 1 << (n + 3), true);
+  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, &m_concurrent_heap, 1 << (n + 3), false);
 #endif
-  m_cons.init(this, clp2(sizeof(scm_pair_rec_t)), true);
-  m_flonums.init(this, clp2(sizeof(scm_flonum_rec_t)), true);
-  m_weakmappings.init(this, clp2(sizeof(scm_weakmapping_rec_t)), true);
+  m_cons.init(this, &m_concurrent_heap, clp2(sizeof(scm_pair_rec_t)), true);
+  m_flonums.init(this, &m_concurrent_heap, clp2(sizeof(scm_flonum_rec_t)), true);
+  m_weakmappings.init(this, &m_concurrent_heap, clp2(sizeof(scm_weakmapping_rec_t)), true);
 #if USE_CONST_LITERAL
-  m_immutable_cons.init(this, clp2(sizeof(scm_pair_rec_t)), true);
+  m_immutable_cons.init(this, &m_concurrent_heap, clp2(sizeof(scm_pair_rec_t)), true);
 #endif
   // cache
   int base_cache_limit = m_collect_trip_bytes / OBJECT_SLAB_SIZE;

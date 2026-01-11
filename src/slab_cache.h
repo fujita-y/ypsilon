@@ -8,6 +8,7 @@
 #include "object.h"
 
 class object_heap_t;
+class concurrent_heap_t;
 
 #define OBJECT_SLAB_TOP_OF(obj)    ((uint8_t*)(((uintptr_t)(obj)) & ~(OBJECT_SLAB_SIZE - 1)))
 #define OBJECT_SLAB_TRAITS_OF(obj) ((object_slab_traits_t*)(OBJECT_SLAB_TOP_OF(obj) + OBJECT_SLAB_SIZE - sizeof(object_slab_traits_t)))
@@ -41,9 +42,10 @@ struct slab_cache_t {
   object_slab_traits_t* m_vacant;
   object_slab_traits_t* m_occupied;
   object_heap_t* m_heap;
+  concurrent_heap_t* m_concurrent_heap;
   slab_cache_t();
   ~slab_cache_t();
-  bool init(object_heap_t* object_heap, int object_size, bool gc);
+  bool init(object_heap_t* object_heap, concurrent_heap_t* concurrent_heap, int object_size, bool gc);
   void destroy();
   void* new_collectible_object();
   void* new_object();

@@ -17,13 +17,15 @@ slab_cache_t::slab_cache_t() {
   m_vacant = NULL;
   m_occupied = NULL;
   m_heap = NULL;
+  m_concurrent_heap = NULL;
   m_lock.init();
 }
 
 slab_cache_t::~slab_cache_t() { m_lock.destroy(); }
 
-bool slab_cache_t::init(object_heap_t* object_heap, int object_size, bool gc) {
+bool slab_cache_t::init(object_heap_t* object_heap, concurrent_heap_t* concurrent_heap, int object_size, bool gc) {
   assert(object_heap);
+  assert(concurrent_heap);
   assert(object_size >= (int)sizeof(object_freelist_t));
   if (object_size & (object_size - 1)) {
     fatal("%s:%u object_size must be power of 2 but got %d", __FILE__, __LINE__, object_size);
@@ -31,6 +33,7 @@ bool slab_cache_t::init(object_heap_t* object_heap, int object_size, bool gc) {
   }
   destroy();
   m_heap = object_heap;
+  m_concurrent_heap = concurrent_heap;
   m_object_size = object_size;
   m_object_size_shift = 0;
   m_bitmap_size = 0;
@@ -98,11 +101,11 @@ void slab_cache_t::unload_filled(object_slab_traits_t* traits) {
 void* slab_cache_t::new_collectible_object() {
   assert(m_heap);
   assert(m_bitmap_size != 0);
-  bool synchronize = (m_heap->m_concurrent_heap.m_alloc_barrier != 0);
+  bool synchronize = (m_concurrent_heap->m_alloc_barrier != 0);
   if (synchronize) {
 #if LOCKFREE_ALLOC && THREAD_LOCAL_SLAB_CACHE
     object_slab_traits_t* traits = m_vacant;
-    if ((uintptr_t)traits < (uintptr_t)m_heap->m_concurrent_heap.m_sweep_wavefront) {
+    if ((uintptr_t)traits < (uintptr_t)m_concurrent_heap->m_sweep_wavefront) {
       if (traits && traits->free) {
         object_freelist_t* obj = traits->free;
         traits->free = obj->next;
@@ -125,9 +128,9 @@ void* slab_cache_t::new_collectible_object() {
     traits->refc++;
     if (traits->free == NULL) unload_filled(traits);
     if (synchronize) {
-      if ((uintptr_t)obj >= (uintptr_t)m_heap->m_concurrent_heap.m_sweep_wavefront) {
+      if ((uintptr_t)obj >= (uintptr_t)m_concurrent_heap->m_sweep_wavefront) {
         mark(obj);
-        if (DETAILED_STATISTIC) m_heap->m_concurrent_heap.m_usage.m_barriered_alloc++;
+        if (DETAILED_STATISTIC) m_concurrent_heap->m_usage.m_barriered_alloc++;
       }
       m_lock.unlock();
     }
@@ -145,9 +148,9 @@ void* slab_cache_t::new_collectible_object() {
       m_vacant = traits;
     }
     if (synchronize) {
-      if ((uintptr_t)slab >= (uintptr_t)m_heap->m_concurrent_heap.m_sweep_wavefront) {
+      if ((uintptr_t)slab >= (uintptr_t)m_concurrent_heap->m_sweep_wavefront) {
         mark(slab);
-        if (DETAILED_STATISTIC) m_heap->m_concurrent_heap.m_usage.m_barriered_alloc++;
+        if (DETAILED_STATISTIC) m_concurrent_heap->m_usage.m_barriered_alloc++;
       }
       m_lock.unlock();
     }
@@ -274,7 +277,7 @@ void slab_cache_t::sweep(void* slab) {
 
   m_lock.lock();
   if (traits->refc == 0 && m_cache_count < m_cache_limit) {
-    m_heap->m_concurrent_heap.m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
+    m_concurrent_heap->m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
     m_lock.unlock();
     return;
   }
@@ -293,7 +296,7 @@ void slab_cache_t::sweep(void* slab) {
   if (traits->refc == 0) {
     if (m_cache_count > m_cache_limit) {
       m_heap->deallocate(slab);
-      m_heap->m_concurrent_heap.m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
+      m_concurrent_heap->m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
       return;
     }
   }
@@ -351,7 +354,7 @@ done:
   for (int i = 0; i < m_bitmap_size; i++) bitmap[i] = 0;
   traits->refc = refc;
   traits->free = freelist;
-  m_heap->m_concurrent_heap.m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
+  m_concurrent_heap->m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
   attach(slab);
 }
 
