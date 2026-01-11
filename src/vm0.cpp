@@ -639,8 +639,8 @@ loop:
 
 void VM::stop() {
 #define ARGC_TH 8
-  collector_usage_t last_usage = m_heap->m_usage;
-  if (last_usage.m_recorded) m_heap->m_usage.clear();
+  collector_usage_t last_usage = m_heap->m_concurrent_heap.m_usage;
+  if (last_usage.m_recorded) m_heap->m_concurrent_heap.m_usage.clear();
   double t1 = msec();
 #if HPDEBUG
   if (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_CONSISTENCY_CHECK) save_stack();
@@ -705,15 +705,15 @@ void VM::stop() {
   double t2 = msec();
   switch (m_heap->m_concurrent_heap.m_root_snapshot) {
     case ROOT_SNAPSHOT_GLOBALS:
-      m_heap->m_usage.m_pause1 = t2 - t1;
+      m_heap->m_concurrent_heap.m_usage.m_pause1 = t2 - t1;
       break;
     case ROOT_SNAPSHOT_LOCALS:
-      m_heap->m_usage.m_pause2 = t2 - t1;
+      m_heap->m_concurrent_heap.m_usage.m_pause2 = t2 - t1;
       break;
     case ROOT_SNAPSHOT_RETRY:
     case ROOT_SNAPSHOT_EVERYTHING: {
       double d = t2 - t1;
-      if (d > m_heap->m_usage.m_pause3) m_heap->m_usage.m_pause3 = d;
+      if (d > m_heap->m_concurrent_heap.m_usage.m_pause3) m_heap->m_concurrent_heap.m_usage.m_pause3 = d;
     } break;
   }
 

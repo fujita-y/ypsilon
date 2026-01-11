@@ -463,7 +463,7 @@ void object_heap_t::shade(scm_obj_t obj) {
         *m_concurrent_heap.m_mark_sp++ = obj;
         return;
       }
-      m_usage.m_expand_mark_stack++;
+      m_concurrent_heap.m_usage.m_expand_mark_stack++;
       int newsize = m_concurrent_heap.m_mark_stack_size + MARK_STACK_SIZE_GROW;
       m_concurrent_heap.m_mark_stack = (scm_obj_t*)realloc(m_concurrent_heap.m_mark_stack, sizeof(scm_obj_t) * newsize);
       if (m_concurrent_heap.m_mark_stack == NULL) {
@@ -521,7 +521,7 @@ void object_heap_t::write_barrier(scm_obj_t rhs) {
           } else {
             thread_yield();
           }
-          m_usage.m_shade_queue_hazard++;
+          m_concurrent_heap.m_usage.m_shade_queue_hazard++;
           if (WBDEBUG) {
             printf(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
             fflush(stdout);
@@ -529,7 +529,7 @@ void object_heap_t::write_barrier(scm_obj_t rhs) {
             GC_TRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
           }
         }
-        if (DETAILED_STATISTIC) m_usage.m_barriered_write++;
+        if (DETAILED_STATISTIC) m_concurrent_heap.m_usage.m_barriered_write++;
       }
     }
   }
@@ -540,7 +540,7 @@ void object_heap_t::collect() {
 }
 
 void object_heap_t::collector_init() {
-  m_usage.clear();
+  m_concurrent_heap.m_usage.clear();
   m_concurrent_heap.init((uint8_t*)m_pool + m_pool_size);
 }
 

@@ -36,38 +36,6 @@
 
 #define GCSLABP(tag) (((tag) & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC))
 
-class collector_usage_t {
- public:
-  double m_duration;
-  double m_sync1;
-  double m_sync2;
-  double m_pause1;
-  double m_pause2;
-  double m_pause3;
-  int m_shade_queue_hazard;
-  int m_barriered_write;
-  int m_barriered_read;
-  int m_barriered_alloc;
-  int m_expand_mark_stack;
-  bool m_recorded;
-  bool m_synchronized;
-  void clear() {
-    m_duration = 0.0;
-    m_sync1 = 0.0;
-    m_sync2 = 0.0;
-    m_pause1 = 0.0;
-    m_pause2 = 0.0;
-    m_pause3 = 0.0;
-    m_expand_mark_stack = 0;
-    m_shade_queue_hazard = 0;
-    m_barriered_write = 0;
-    m_barriered_read = 0;
-    m_barriered_alloc = 0;
-    m_recorded = false;
-    m_synchronized = false;
-  }
-};
-
 struct relocate_info_t;
 
 class object_heap_t {
@@ -110,7 +78,6 @@ class object_heap_t {
   scm_bvector_t m_native_transcoder;
   int m_gensym_counter;
   mutex_t m_gensym_lock;
-  collector_usage_t m_usage;
   object_heap_t();
   void init(size_t pool_size, size_t initial_datum_size);
   void init_pool(size_t pool_size, size_t initial_datum_size);

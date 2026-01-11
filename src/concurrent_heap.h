@@ -12,6 +12,38 @@
 
 class object_heap_t;
 
+class collector_usage_t {
+ public:
+  double m_duration;
+  double m_sync1;
+  double m_sync2;
+  double m_pause1;
+  double m_pause2;
+  double m_pause3;
+  int m_shade_queue_hazard;
+  int m_barriered_write;
+  int m_barriered_read;
+  int m_barriered_alloc;
+  int m_expand_mark_stack;
+  bool m_recorded;
+  bool m_synchronized;
+  void clear() {
+    m_duration = 0.0;
+    m_sync1 = 0.0;
+    m_sync2 = 0.0;
+    m_pause1 = 0.0;
+    m_pause2 = 0.0;
+    m_pause3 = 0.0;
+    m_expand_mark_stack = 0;
+    m_shade_queue_hazard = 0;
+    m_barriered_write = 0;
+    m_barriered_read = 0;
+    m_barriered_alloc = 0;
+    m_recorded = false;
+    m_synchronized = false;
+  }
+};
+
 class concurrent_heap_t {
  public:
   concurrent_heap_t(object_heap_t* heap);
@@ -37,6 +69,7 @@ class concurrent_heap_t {
   int m_mark_stack_size;
   int m_root_snapshot;
   uint8_t* m_sweep_wavefront;
+  collector_usage_t m_usage;
 
  private:
   object_heap_t* m_heap;

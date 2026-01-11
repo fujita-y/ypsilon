@@ -128,11 +128,11 @@ void concurrent_heap_t::synchronized_collect() {
   GC_TRACE(";; [collector: waiting]\n");
   double t3 = msec();
 
-  m_heap->m_usage.m_duration = t3 - t1;
-  m_heap->m_usage.m_sync1 = 0;
-  m_heap->m_usage.m_sync2 = 0;
-  m_heap->m_usage.m_recorded = true;
-  m_heap->m_usage.m_synchronized = true;
+  m_usage.m_duration = t3 - t1;
+  m_usage.m_sync1 = 0;
+  m_usage.m_sync2 = 0;
+  m_usage.m_recorded = true;
+  m_usage.m_synchronized = true;
 }
 
 void concurrent_heap_t::concurrent_collect() {
@@ -307,11 +307,11 @@ finish:
   m_collector_kicked = false;
   GC_TRACE(";; [collector: waiting]\n");
   double t6 = msec();
-  m_heap->m_usage.m_duration = t6 - t1;
-  m_heap->m_usage.m_sync1 = t2 - t1;
-  m_heap->m_usage.m_sync2 = t5 - t4;
-  m_heap->m_usage.m_recorded = true;
-  m_heap->m_usage.m_synchronized = false;
+  m_usage.m_duration = t6 - t1;
+  m_usage.m_sync1 = t2 - t1;
+  m_usage.m_sync2 = t5 - t4;
+  m_usage.m_recorded = true;
+  m_usage.m_synchronized = false;
 #if DEBUG_CONCURRENT_COLLECT
   printf(
       ";; [        first-lock:%.2fms second-lock:%.2fms overlap:%.2fms]\n"

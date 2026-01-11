@@ -127,7 +127,7 @@ void* slab_cache_t::new_collectible_object() {
     if (synchronize) {
       if ((uintptr_t)obj >= (uintptr_t)m_heap->m_concurrent_heap.m_sweep_wavefront) {
         mark(obj);
-        if (DETAILED_STATISTIC) m_heap->m_usage.m_barriered_alloc++;
+        if (DETAILED_STATISTIC) m_heap->m_concurrent_heap.m_usage.m_barriered_alloc++;
       }
       m_lock.unlock();
     }
@@ -147,7 +147,7 @@ void* slab_cache_t::new_collectible_object() {
     if (synchronize) {
       if ((uintptr_t)slab >= (uintptr_t)m_heap->m_concurrent_heap.m_sweep_wavefront) {
         mark(slab);
-        if (DETAILED_STATISTIC) m_heap->m_usage.m_barriered_alloc++;
+        if (DETAILED_STATISTIC) m_heap->m_concurrent_heap.m_usage.m_barriered_alloc++;
       }
       m_lock.unlock();
     }
