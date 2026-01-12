@@ -81,7 +81,7 @@ scm_pair_t object_heap_t::allocate_cons() {
   do {
     scm_pair_t obj = (scm_pair_t)m_cons.new_collectible_object();
     if (obj) return obj;
-  } while (extend_pool(OBJECT_SLAB_SIZE));
+  } while (m_concurrent_pool.extend_pool(OBJECT_SLAB_SIZE));
   fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   return NULL;
 }
@@ -94,7 +94,7 @@ scm_pair_t object_heap_t::allocate_immutable_cons() {
   do {
     scm_pair_t obj = (scm_pair_t)m_immutable_cons.new_collectible_object();
     if (obj) return obj;
-  } while (extend_pool(OBJECT_SLAB_SIZE));
+  } while (m_concurrent_pool.extend_pool(OBJECT_SLAB_SIZE));
   fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   return NULL;
 }
@@ -107,7 +107,7 @@ scm_flonum_t object_heap_t::allocate_flonum() {
   do {
     scm_flonum_t obj = (scm_flonum_t)m_flonums.new_collectible_object();
     if (obj) return obj;
-  } while (extend_pool(OBJECT_SLAB_SIZE));
+  } while (m_concurrent_pool.extend_pool(OBJECT_SLAB_SIZE));
   fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   return NULL;
 }
@@ -120,7 +120,7 @@ scm_obj_t object_heap_t::allocate_collectible(size_t size) {
     do {
       scm_obj_t obj = (scm_obj_t)m_collectibles[bucket].new_collectible_object();
       if (obj) return obj;
-    } while (extend_pool(OBJECT_SLAB_SIZE));
+    } while (m_concurrent_pool.extend_pool(OBJECT_SLAB_SIZE));
     fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   } else {
     fatal("%s:%u collectible object over %d bytes not supported but %d bytes requested", __FILE__, __LINE__,
@@ -135,7 +135,7 @@ scm_weakmapping_t object_heap_t::allocate_weakmapping() {
   do {
     scm_weakmapping_t obj = (scm_weakmapping_t)m_weakmappings.new_collectible_object();
     if (obj) return obj;
-  } while (extend_pool(OBJECT_SLAB_SIZE));
+  } while (m_concurrent_pool.extend_pool(OBJECT_SLAB_SIZE));
   fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
 }
 
@@ -152,13 +152,13 @@ void* object_heap_t::allocate_private(size_t size) {
     do {
       void* obj = m_privates[bucket].new_object();
       if (obj) return obj;
-    } while (extend_pool(OBJECT_SLAB_SIZE));
+    } while (m_concurrent_pool.extend_pool(OBJECT_SLAB_SIZE));
     fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   } else {
     do {
-      void* obj = allocate(size, false, false);
+      void* obj = m_concurrent_pool.allocate(size, false, false);
       if (obj) return obj;
-    } while (extend_pool(size));
+    } while (m_concurrent_pool.extend_pool(size));
     fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   }
   return NULL;
@@ -173,7 +173,7 @@ void object_heap_t::deallocate_private(void* obj) {
       cache->delete_object(obj);
     } else {
       assert(!m_concurrent_heap.is_collectible(obj));
-      deallocate(obj);
+      m_concurrent_pool.deallocate(obj);
     }
   }
 }
@@ -336,12 +336,6 @@ void object_heap_t::destroy() {
   free(m_inherents);
   m_inherents = NULL;
 }
-
-void* object_heap_t::allocate(size_t size, bool slab, bool gc) { return m_concurrent_pool.allocate(size, slab, gc); }
-
-void object_heap_t::deallocate(void* p) { m_concurrent_pool.deallocate(p); }
-
-bool object_heap_t::extend_pool(size_t extend_size) { return m_concurrent_pool.extend_pool(extend_size); }
 
 void object_heap_t::break_weakmapping(object_slab_traits_t* traits) {
   int count = traits->refc;

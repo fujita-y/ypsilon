@@ -48,10 +48,10 @@ bool VM::init(object_heap_t* heap) {
   try {
     m_heap = heap;
     m_stack_size = VM_STACK_BYTESIZE;
-    m_stack_top = (scm_obj_t*)m_heap->allocate(m_stack_size, false, false);
+    m_stack_top = (scm_obj_t*)m_heap->m_concurrent_pool.allocate(m_stack_size, false, false);
     m_stack_limit = (scm_obj_t*)((intptr_t)m_stack_top + m_stack_size);
     memset(m_stack_top, 0, m_stack_size);
-    m_to_stack_top = (scm_obj_t*)m_heap->allocate(m_stack_size, false, false);
+    m_to_stack_top = (scm_obj_t*)m_heap->m_concurrent_pool.allocate(m_stack_size, false, false);
     m_to_stack_limit = (scm_obj_t*)((intptr_t)m_to_stack_top + m_stack_size);
     memset(m_to_stack_top, 0, m_stack_size);
     m_current_environment = m_heap->m_system_environment;

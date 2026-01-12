@@ -68,9 +68,6 @@ class object_heap_t {
   void init_inherents();
   void init_architecture_feature();
   void destroy();
-  void* allocate(size_t size, bool slab, bool gc);
-  void deallocate(void* p);
-  bool extend_pool(size_t extend_size);
   scm_obj_t allocate_collectible(size_t size);
   scm_pair_t allocate_cons();
   scm_flonum_t allocate_flonum();

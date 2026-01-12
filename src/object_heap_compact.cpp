@@ -410,7 +410,7 @@ void object_heap_t::resolve(relocate_info_t* info) {
   slab = first_slab;
   traits = first_traits;
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
-    if (info->relocated[i]) deallocate(slab);
+    if (info->relocated[i]) m_concurrent_pool.deallocate(slab);
     slab += OBJECT_SLAB_SIZE;
     traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
   }
@@ -572,7 +572,7 @@ void object_heap_t::relocate_privates(bool pack) {
   slab = first_slab;
   traits = first_traits;
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
-    if (info->relocated[i]) deallocate(slab);
+    if (info->relocated[i]) m_concurrent_pool.deallocate(slab);
     slab += OBJECT_SLAB_SIZE;
     traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
   }
