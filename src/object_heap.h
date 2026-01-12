@@ -87,32 +87,6 @@ class object_heap_t {
   void intern_system_subr(const char* name, subr_proc_t proc);
   scm_obj_t lookup_system_environment(scm_symbol_t symbol);
 
-  bool in_slab(void* obj) {
-    assert(obj);
-    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    assert(index >= 0 && index < m_concurrent_pool.m_pool_watermark);
-    return (m_concurrent_pool.m_pool[index] & PTAG_SLAB) != 0;
-  }
-
-  bool in_non_full_slab(void* obj) {
-    assert(obj);
-    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    assert(index >= 0 && index < m_concurrent_pool.m_pool_watermark);
-    return (m_concurrent_pool.m_pool[index] & PTAG_SLAB) && OBJECT_SLAB_TRAITS_OF(obj)->free != NULL;
-  }
-
-  bool in_heap(void* obj) {
-    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    return (index >= 0 && index < m_concurrent_pool.m_pool_watermark);
-  }
-
-  bool is_collectible(void* obj) {
-    assert(obj);
-    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    assert(index >= 0 && index < m_concurrent_pool.m_pool_watermark);
-    return (m_concurrent_pool.m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
-  }
-
 #if USE_CONST_LITERAL
   bool is_immutable_pair(void* obj) {
     assert(PAIRP(obj));

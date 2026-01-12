@@ -166,21 +166,21 @@ void* object_heap_t::allocate_private(size_t size) {
 
 void object_heap_t::deallocate_private(void* obj) {
   if (obj) {
-    assert(in_heap(obj));
-    assert(!is_collectible(obj));
-    if (in_slab(obj)) {
+    assert(m_concurrent_heap.in_heap(obj));
+    assert(!m_concurrent_heap.is_collectible(obj));
+    if (m_concurrent_heap.in_slab(obj)) {
       slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
       cache->delete_object(obj);
     } else {
-      assert(!is_collectible(obj));
+      assert(!m_concurrent_heap.is_collectible(obj));
       deallocate(obj);
     }
   }
 }
 
 int object_heap_t::allocated_size(void* obj) {
-  assert(in_heap(obj));
-  if (in_slab(obj)) {
+  assert(m_concurrent_heap.in_heap(obj));
+  if (m_concurrent_heap.in_slab(obj)) {
     slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
     return cache->m_object_size;
   } else {
@@ -396,7 +396,7 @@ void object_heap_t::collect() { m_concurrent_heap.collect(); }
 void object_heap_t::enqueue_root(scm_obj_t obj) {
   assert(m_concurrent_heap.m_stop_the_world);
   if (CELLP(obj)) {
-    if (in_heap(obj)) {
+    if (m_concurrent_heap.in_heap(obj)) {
       if (m_concurrent_heap.m_shade_queue.wait_lock_try_put(obj) == false) {
         m_concurrent_heap.m_collector_lock.lock();
         m_concurrent_heap.m_collector_wake.signal();  // kick now
@@ -410,7 +410,7 @@ void object_heap_t::enqueue_root(scm_obj_t obj) {
 }
 
 void object_heap_t::trace(scm_obj_t obj) {
-  assert(is_collectible(obj));
+  assert(m_concurrent_heap.is_collectible(obj));
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
   if (traits->cache->test_and_mark(obj)) {
 #if HPDEBUG
@@ -865,7 +865,7 @@ void object_heap_t::init_inherents() {
 static const char* verify_obj(void* obj, object_heap_t* heap) {
   static char msg[256];
   if (CELLP(obj)) {
-    if (heap->is_collectible(obj)) {
+    if (heap->m_concurrent_heap.is_collectible(obj)) {
       if (PAIRP(obj)) return NULL;
       int tc = HDR_TC(HDR(obj));
       if (tc >= 0 || tc <= TC_MASKBITS) return NULL;
@@ -903,9 +903,8 @@ static void check_collectible(void* obj, int size, void* refcon) {
     } while (false);
 
   object_heap_t* heap = (object_heap_t*)refcon;
-
   if (!CELLP(obj)) return;
-  if (!heap->is_collectible(obj)) {
+  if (!heap->m_concurrent_heap.is_collectible(obj)) {
     fatal("object 0x%x out of GCSLAB\n", obj);
   }
   if (PAIRP(obj)) {

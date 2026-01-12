@@ -10,8 +10,10 @@
 #include "mutex.h"
 #include "queue.h"
 
+#include "concurrent_pool.h"
+#include "slab_cache.h"
+
 class object_heap_t;
-class concurrent_pool_t;
 
 class collector_usage_t {
  public:
@@ -46,8 +48,6 @@ class collector_usage_t {
   }
 };
 
-class slab_cache_t;
-
 class concurrent_heap_t {
  public:
   concurrent_heap_t();
@@ -61,6 +61,32 @@ class concurrent_heap_t {
   void shade(scm_obj_t obj);
   void interior_shade(void* ref);
   void dequeue_root();
+
+  bool in_slab(void* obj) {
+    assert(obj);
+    int index = ((uint8_t*)obj - m_concurrent_pool->m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    assert(index >= 0 && index < m_concurrent_pool->m_pool_watermark);
+    return (m_concurrent_pool->m_pool[index] & PTAG_SLAB) != 0;
+  }
+
+  bool in_non_full_slab(void* obj) {
+    assert(obj);
+    int index = ((uint8_t*)obj - m_concurrent_pool->m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    assert(index >= 0 && index < m_concurrent_pool->m_pool_watermark);
+    return (m_concurrent_pool->m_pool[index] & PTAG_SLAB) && OBJECT_SLAB_TRAITS_OF(obj)->free != NULL;
+  }
+
+  bool in_heap(void* obj) {
+    int index = ((uint8_t*)obj - m_concurrent_pool->m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    return (index >= 0 && index < m_concurrent_pool->m_pool_watermark);
+  }
+
+  bool is_collectible(void* obj) {
+    assert(obj);
+    int index = ((uint8_t*)obj - m_concurrent_pool->m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    assert(index >= 0 && index < m_concurrent_pool->m_pool_watermark);
+    return (m_concurrent_pool->m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
+  }
 
   bool m_collector_kicked;
   bool m_mutator_stopped;

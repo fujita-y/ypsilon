@@ -645,7 +645,8 @@ void VM::stop() {
 #if HPDEBUG
   if (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_CONSISTENCY_CHECK) save_stack();
 #endif
-  if ((m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) || (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
+  if ((m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) ||
+      (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
       (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_GLOBALS)) {
     m_heap->enqueue_root(m_bootport);
     m_heap->enqueue_root(m_current_input);
@@ -657,7 +658,8 @@ void VM::stop() {
     m_heap->enqueue_root(m_current_dynamic_wind_record);
     m_heap->enqueue_root(m_current_source_comments);
   }
-  if ((m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) || (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
+  if ((m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) ||
+      (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
       (m_heap->m_concurrent_heap.m_root_snapshot == ROOT_SNAPSHOT_LOCALS)) {
     save_stack();
     m_heap->enqueue_root(m_pc);
@@ -675,11 +677,11 @@ void VM::stop() {
       }
     }
     if (m_cont) {
-      assert(m_heap->is_collectible(m_cont));
+      assert(m_heap->m_concurrent_heap.is_collectible(m_cont));
       m_heap->enqueue_root(OBJECT_SLAB_TRAITS_OF(m_cont)->cache->lookup(m_cont));
     }
     if (m_env) {
-      assert(m_heap->is_collectible(m_env));
+      assert(m_heap->m_concurrent_heap.is_collectible(m_env));
       m_heap->enqueue_root(OBJECT_SLAB_TRAITS_OF(m_env)->cache->lookup(m_env));
     }
   }
@@ -777,11 +779,11 @@ void VM::resolve() {
     for (int i = 0; i < argc; i++) m_fp[i] = m_heap->forward(m_fp[i]);
   }
   if (m_cont) {
-    assert(m_heap->is_collectible(m_cont));
+    assert(m_heap->m_concurrent_heap.is_collectible(m_cont));
     m_cont = m_heap->interior_forward(m_cont);
   }
   if (m_env) {
-    assert(m_heap->is_collectible(m_env));
+    assert(m_heap->m_concurrent_heap.is_collectible(m_env));
     m_env = m_heap->interior_forward(m_env);
   }
 }

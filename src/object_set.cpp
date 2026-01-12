@@ -205,7 +205,7 @@ void object_set_t::resolve() {
 
 void object_set_t::relocate(bool every) {
   if (every) {
-    if (m_heap->in_slab(m_elts)) {
+    if (m_heap->m_concurrent_heap.in_slab(m_elts)) {
       int nbytes = m_heap->allocated_size(m_elts);
       assert(nbytes);
       void* to = m_heap->allocate_private(nbytes);
@@ -213,7 +213,7 @@ void object_set_t::relocate(bool every) {
       m_elts = (scm_obj_t*)to;
       return;
     }
-    assert(m_heap->in_heap(m_elts));
+    assert(m_heap->m_concurrent_heap.in_heap(m_elts));
     int nbytes = m_heap->allocated_size(m_elts);
     assert(nbytes);
     void* to = m_heap->allocate_private(nbytes);
@@ -221,7 +221,7 @@ void object_set_t::relocate(bool every) {
     m_heap->deallocate_private(m_elts);
     m_elts = (scm_obj_t*)to;
   } else {
-    if (m_heap->in_non_full_slab(m_elts)) {
+    if (m_heap->m_concurrent_heap.in_non_full_slab(m_elts)) {
       int nbytes = m_heap->allocated_size(m_elts);
       assert(nbytes);
       void* to = m_heap->allocate_private(nbytes);

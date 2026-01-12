@@ -10,9 +10,9 @@
 
 #define INTERNAL_PRIVATE_THRESHOLD (OBJECT_SLAB_THRESHOLD / 2)
 
-#define VERIFY_DATUM(x)                           \
-  do {                                            \
-    assert(!CELLP(x) || heap->is_collectible(x)); \
+#define VERIFY_DATUM(x)                                             \
+  do {                                                              \
+    assert(!CELLP(x) || heap->m_concurrent_heap.is_collectible(x)); \
   } while (0)
 
 scm_symbol_t make_symbol(object_heap_t* heap, const char* name);

@@ -225,12 +225,12 @@ void VM::check_vm_env(void* lnk) {
     fatal("%s:%u check_state_env(): link is not valid pointer(maybe forwarded) 0x%x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, lnk, m_env,
           m_cont);
   }
-  if (!m_heap->in_heap(lnk)) {
+  if (!m_heap->m_concurrent_heap.in_heap(lnk)) {
     fatal("%s:%u check_state_env(): invalid link, out of range 0x%x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, lnk, m_env, m_cont);
   }
-  if (m_heap->in_heap(lnk)) {
+  if (m_heap->m_concurrent_heap.in_heap(lnk)) {
     if (!STACKP(lnk)) {
-      if (!m_heap->is_collectible(lnk)) {
+      if (!m_heap->m_concurrent_heap.is_collectible(lnk)) {
         fatal("%s:%u check_state_env(): env in bad container, 0x%x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, lnk, m_env, m_cont);
       }
       scm_obj_t obj = OBJECT_SLAB_TRAITS_OF(lnk)->cache->lookup(lnk);
@@ -246,7 +246,7 @@ void VM::check_vm_env(void* lnk) {
   scm_obj_t* top = (scm_obj_t*)((scm_obj_t*)env - env->count);
   for (int i = 0; i < env->count; i++) {
     if (CELLP(top[i])) {
-      if (!m_heap->is_collectible(top[i])) {
+      if (!m_heap->m_concurrent_heap.is_collectible(top[i])) {
         fatal("%s:%u check_state_env(): env contain bad object, 0x%x object:0x0x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, env, top[i],
               m_env, m_cont);
       }
@@ -260,12 +260,12 @@ void VM::check_vm_cont(void* lnk) {
     fatal("%s:%u check_state_cont(): link is not valid pointer(maybe forwarded) 0x%x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, lnk, m_env,
           m_cont);
   }
-  if (!(STACKP(lnk) || m_heap->in_heap(lnk))) {
+  if (!(STACKP(lnk) || m_heap->m_concurrent_heap.in_heap(lnk))) {
     fatal("%s:%u check_state_cont(): invalid link, out of range 0x%x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, lnk, m_env, m_cont);
   }
-  if (m_heap->in_heap(lnk)) {
+  if (m_heap->m_concurrent_heap.in_heap(lnk)) {
     if (!STACKP(lnk)) {
-      if (!m_heap->is_collectible(lnk)) {
+      if (!m_heap->m_concurrent_heap.is_collectible(lnk)) {
         fatal("%s:%u check_state_cont(): cont in bad container, 0x%x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, lnk, m_env, m_cont);
       }
       scm_obj_t obj = OBJECT_SLAB_TRAITS_OF(lnk)->cache->lookup(lnk);
