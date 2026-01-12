@@ -59,6 +59,7 @@ add_executable(
   src/arith.cpp
   src/bit.cpp
   src/concurrent_heap.cpp
+  src/concurrent_pool.cpp
   src/digamma.cpp
   src/equiv.cpp
   src/fasl.cpp

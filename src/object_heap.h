@@ -6,13 +6,14 @@
 
 #include "core.h"
 #include "object.h"
+#include "concurrent_heap.h"
+#include "concurrent_pool.h"
 #include "cond.h"
 #include "inherent.h"
 #include "mutex.h"
 #include "object_set.h"
-#include "slab_cache.h"
 #include "queue.h"
-#include "concurrent_heap.h"
+#include "slab_cache.h"
 
 #define STRING_TABLE_SIZE_INIT   1021
 #define GLOC_TABLE_SIZE_INIT     8191
@@ -28,20 +29,12 @@
   #define ROOT_SNAPSHOT_CONSISTENCY_CHECK 4
 #endif
 
-#define PTAG_FREE    0x00
-#define PTAG_USED    0x01
-#define PTAG_EXTENT  0x02
-#define PTAG_SLAB    0x04
-#define PTAG_GC      0x08
-
-#define GCSLABP(tag) (((tag) & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC))
-
 struct relocate_info_t;
 
 class object_heap_t {
   friend class concurrent_heap_t;
+
  public:
-  mutex_t m_lock;
 #if ARCH_LP64
   slab_cache_t m_collectibles[8];  // 16-32-64-128-256-512-1024-2048
   slab_cache_t m_privates[8];      // 16-32-64-128-256-512-1024-2048
@@ -58,14 +51,7 @@ class object_heap_t {
 
   int m_trip_bytes;
   int m_collect_trip_bytes;
-  uint8_t* m_map;
-  size_t m_map_size;
-  uint8_t* m_pool;
-  size_t m_pool_size;
-  int m_pool_watermark;
-  int m_pool_memo;
-  int m_pool_usage;
-  int m_pool_threshold;
+  concurrent_pool_t m_concurrent_pool;
   concurrent_heap_t m_concurrent_heap;
   object_set_t m_symbol;
   object_set_t m_string;
@@ -103,28 +89,28 @@ class object_heap_t {
 
   bool in_slab(void* obj) {
     assert(obj);
-    int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    assert(index >= 0 && index < m_pool_watermark);
-    return (m_pool[index] & PTAG_SLAB) != 0;
+    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    assert(index >= 0 && index < m_concurrent_pool.m_pool_watermark);
+    return (m_concurrent_pool.m_pool[index] & PTAG_SLAB) != 0;
   }
 
   bool in_non_full_slab(void* obj) {
     assert(obj);
-    int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    assert(index >= 0 && index < m_pool_watermark);
-    return (m_pool[index] & PTAG_SLAB) && OBJECT_SLAB_TRAITS_OF(obj)->free != NULL;
+    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    assert(index >= 0 && index < m_concurrent_pool.m_pool_watermark);
+    return (m_concurrent_pool.m_pool[index] & PTAG_SLAB) && OBJECT_SLAB_TRAITS_OF(obj)->free != NULL;
   }
 
   bool in_heap(void* obj) {
-    int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    return (index >= 0 && index < m_pool_watermark);
+    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    return (index >= 0 && index < m_concurrent_pool.m_pool_watermark);
   }
 
   bool is_collectible(void* obj) {
     assert(obj);
-    int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    assert(index >= 0 && index < m_pool_watermark);
-    return (m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
+    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    assert(index >= 0 && index < m_concurrent_pool.m_pool_watermark);
+    return (m_concurrent_pool.m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
   }
 
 #if USE_CONST_LITERAL
