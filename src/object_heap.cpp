@@ -201,6 +201,8 @@ int object_heap_t::allocated_size(void* obj) {
 void object_heap_t::init_heap(size_t pool_size, size_t init_size) {
   // pool
   m_concurrent_pool.init(pool_size, init_size);
+  // heap
+  m_concurrent_heap.init(this, &m_concurrent_pool);
   // slab
 #if ARCH_LP64
   assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
@@ -232,7 +234,7 @@ void object_heap_t::init_heap(size_t pool_size, size_t init_size) {
       ((m_concurrent_pool.m_pool_size / 16) < DEFALUT_COLLECT_TRIP_BYTES) ? (m_concurrent_pool.m_pool_size / 16) : DEFALUT_COLLECT_TRIP_BYTES;
 
   // heap
-  m_concurrent_heap.init(this, &m_concurrent_pool);
+  // m_concurrent_heap.init(this, &m_concurrent_pool);
 
   // hash
   m_symbol.init(this);
