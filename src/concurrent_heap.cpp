@@ -49,18 +49,6 @@ void* concurrent_heap_t::allocate(size_t size, bool slab, bool gc) { return m_he
 
 void concurrent_heap_t::deallocate(void* p) { m_heap->deallocate(p); }
 
-bool concurrent_heap_t::is_cons_slab_cache(slab_cache_t* cache) { return cache == &m_heap->m_cons; }
-
-bool concurrent_heap_t::is_flonums_slab_cache(slab_cache_t* cache) { return cache == &m_heap->m_flonums; }
-
-bool concurrent_heap_t::is_immutable_cons_slab_cache(slab_cache_t* cache) {
-#if USE_CONST_LITERAL
-  return cache == &m_heap->m_immutable_cons;
-#else
-  return false;
-#endif
-}
-
 void concurrent_heap_t::finalize(void* obj) { ::finalize(m_heap, obj); }
 
 void concurrent_heap_t::terminate() {

@@ -55,9 +55,6 @@ class concurrent_heap_t {
   // Bridge methods for slab_cache_t to avoid direct object_heap_t access
   void* allocate(size_t size, bool slab, bool gc);
   void deallocate(void* p);
-  bool is_cons_slab_cache(slab_cache_t* cache);
-  bool is_flonums_slab_cache(slab_cache_t* cache);
-  bool is_immutable_cons_slab_cache(slab_cache_t* cache);
   void finalize(void* obj);
 
   bool m_collector_kicked;

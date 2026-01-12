@@ -73,8 +73,7 @@ inline int bytes_to_bucket(uint32_t x)  // see bit.cpp
 }
 #endif
 
-object_heap_t::object_heap_t()
-    : m_map(NULL), m_map_size(0), m_pool(NULL), m_pool_size(0), m_inherents(NULL), m_concurrent_heap(this) {
+object_heap_t::object_heap_t() : m_map(NULL), m_map_size(0), m_pool(NULL), m_pool_size(0), m_inherents(NULL), m_concurrent_heap(this) {
   m_lock.init();
   m_gensym_lock.init();
 }
@@ -237,18 +236,18 @@ void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
   // slab
 #if ARCH_LP64
   assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
-  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(&m_concurrent_heap, 1 << (n + 4), true);
-  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(&m_concurrent_heap, 1 << (n + 4), false);
+  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(&m_concurrent_heap, 1 << (n + 4), true, true);
+  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(&m_concurrent_heap, 1 << (n + 4), false, false);
 #else
   assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
-  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(&m_concurrent_heap, 1 << (n + 3), true);
-  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(&m_concurrent_heap, 1 << (n + 3), false);
+  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(&m_concurrent_heap, 1 << (n + 3), true, true);
+  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(&m_concurrent_heap, 1 << (n + 3), false, false);
 #endif
-  m_cons.init(&m_concurrent_heap, clp2(sizeof(scm_pair_rec_t)), true);
-  m_flonums.init(&m_concurrent_heap, clp2(sizeof(scm_flonum_rec_t)), true);
-  m_weakmappings.init(&m_concurrent_heap, clp2(sizeof(scm_weakmapping_rec_t)), true);
+  m_cons.init(&m_concurrent_heap, clp2(sizeof(scm_pair_rec_t)), true, false);
+  m_flonums.init(&m_concurrent_heap, clp2(sizeof(scm_flonum_rec_t)), true, false);
+  m_weakmappings.init(&m_concurrent_heap, clp2(sizeof(scm_weakmapping_rec_t)), true, true);
 #if USE_CONST_LITERAL
-  m_immutable_cons.init(&m_concurrent_heap, clp2(sizeof(scm_pair_rec_t)), true);
+  m_immutable_cons.init(&m_concurrent_heap, clp2(sizeof(scm_pair_rec_t)), true, false);
 #endif
   // cache
   int base_cache_limit = m_collect_trip_bytes / OBJECT_SLAB_SIZE;
@@ -535,9 +534,7 @@ void object_heap_t::write_barrier(scm_obj_t rhs) {
   }
 }
 
-void object_heap_t::collect() {
-  m_concurrent_heap.collect();
-}
+void object_heap_t::collect() { m_concurrent_heap.collect(); }
 
 void object_heap_t::collector_init() {
   m_concurrent_heap.m_usage.clear();
@@ -567,7 +564,6 @@ void object_heap_t::enqueue_root(scm_obj_t obj) {
     }
   }
 }
-
 
 void object_heap_t::trace(scm_obj_t obj) {
   assert(is_collectible(obj));
@@ -716,8 +712,6 @@ void object_heap_t::trace(scm_obj_t obj) {
     }
   }
 }
-
-
 
 typedef struct {
   int pair;

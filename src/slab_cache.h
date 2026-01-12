@@ -33,20 +33,21 @@ typedef void (*object_iter_proc_t)(void* obj, int size, void* refcon);
 
 class slab_cache_t {
  private:
+  concurrent_heap_t* m_concurrent_heap;
   int m_object_size_shift;
   int m_bitmap_size;
   int m_cache_count;
-  concurrent_heap_t* m_concurrent_heap;
+  bool m_finalize;
 
  public:
   mutex_t m_lock;
-  int m_object_size;
-  int m_cache_limit;
   object_slab_traits_t* m_vacant;
   object_slab_traits_t* m_occupied;
+  int m_object_size;
+  int m_cache_limit;
   slab_cache_t();
   ~slab_cache_t();
-  bool init(concurrent_heap_t* concurrent_heap, int object_size, bool gc);
+  bool init(concurrent_heap_t* concurrent_heap, int object_size, bool gc, bool finalize);
   void destroy();
   void* new_collectible_object();
   void* new_object();

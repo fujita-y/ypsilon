@@ -9,7 +9,8 @@
 */
 
 #include "core.h"
-#include "heap.h"
+#include "slab_cache.h"
+#include "concurrent_heap.h"
 
 #define SLAB_CACHE_COUNT_MAX 1024
 
@@ -22,7 +23,7 @@ slab_cache_t::slab_cache_t() {
 
 slab_cache_t::~slab_cache_t() { m_lock.destroy(); }
 
-bool slab_cache_t::init(concurrent_heap_t* concurrent_heap, int object_size, bool gc) {
+bool slab_cache_t::init(concurrent_heap_t* concurrent_heap, int object_size, bool gc, bool finalize) {
   assert(concurrent_heap);
   assert(object_size >= (int)sizeof(object_freelist_t));
   if (object_size & (object_size - 1)) {
@@ -32,6 +33,7 @@ bool slab_cache_t::init(concurrent_heap_t* concurrent_heap, int object_size, boo
   destroy();
   m_concurrent_heap = concurrent_heap;
   m_object_size = object_size;
+  m_finalize = finalize;
   m_object_size_shift = 0;
   m_bitmap_size = 0;
   m_cache_count = 0;
@@ -305,47 +307,23 @@ void slab_cache_t::sweep(void* slab) {
   int refc = traits->refc;
   object_freelist_t* freelist = traits->free;
   slab_cache_t* cache = traits->cache;
-#if USE_CONST_LITERAL
-  if (m_concurrent_heap->is_cons_slab_cache(cache) || m_concurrent_heap->is_flonums_slab_cache(cache) ||
-      m_concurrent_heap->is_immutable_cons_slab_cache(cache)) {
-#else
-  if (m_concurrent_heap->is_cons_slab_cache(cache) || m_concurrent_heap->is_flonums_slab_cache(cache)) {
-#endif
+  do {
+    uint8_t bit = 1;
+    uint8_t bits = p[0];
     do {
-      uint8_t bit = 1;
-      uint8_t bits = p[0];
-      do {
-        if (((bits & bit) == 0) & (((object_freelist_t*)obj)->null != NULL)) {
-          ((object_freelist_t*)obj)->null = NULL;
-          ((object_freelist_t*)obj)->next = freelist;
-          freelist = ((object_freelist_t*)obj);
-          refc--;
-        }
-        obj += step;
-        if (obj > limit) goto done;
-        bit = bit + bit;
-      } while (bit);
-      p++;
-    } while (obj <= limit);
-  } else {
-    do {
-      uint8_t bit = 1;
-      uint8_t bits = p[0];
-      do {
-        if (((bits & bit) == 0) & (((object_freelist_t*)obj)->null != NULL)) {
-          m_concurrent_heap->finalize(obj);
-          ((object_freelist_t*)obj)->null = NULL;
-          ((object_freelist_t*)obj)->next = freelist;
-          freelist = ((object_freelist_t*)obj);
-          refc--;
-        }
-        obj += step;
-        if (obj > limit) goto done;
-        bit = bit + bit;
-      } while (bit);
-      p++;
-    } while (obj <= limit);
-  }
+      if (((bits & bit) == 0) & (((object_freelist_t*)obj)->null != NULL)) {
+        if (m_finalize) m_concurrent_heap->finalize(obj);
+        ((object_freelist_t*)obj)->null = NULL;
+        ((object_freelist_t*)obj)->next = freelist;
+        freelist = ((object_freelist_t*)obj);
+        refc--;
+      }
+      obj += step;
+      if (obj > limit) goto done;
+      bit = bit + bit;
+    } while (bit);
+    p++;
+  } while (obj <= limit);
 
 done:
   assert(refc >= 0);
