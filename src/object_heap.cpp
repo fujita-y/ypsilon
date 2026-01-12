@@ -199,9 +199,7 @@ int object_heap_t::allocated_size(void* obj) {
 }
 
 void object_heap_t::init_heap(size_t pool_size, size_t init_size) {
-  // pool
   m_concurrent_pool.init(pool_size, init_size);
-  // heap
   m_concurrent_heap.init(this, &m_concurrent_pool);
   // slab
 #if ARCH_LP64

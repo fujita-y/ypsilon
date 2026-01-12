@@ -12,7 +12,7 @@ CXX = clang++
 
 CXXFLAGS = `llvm-config --cxxflags` -fcxx-exceptions
 
-SRCS = concurrent_heap.cpp file.cpp main.cpp object_heap_compact.cpp subr_flonum.cpp vm0.cpp vm1.cpp vm2.cpp vm3.cpp object_set.cpp \
+SRCS = concurrent_pool.cpp concurrent_heap.cpp file.cpp main.cpp object_heap_compact.cpp subr_flonum.cpp vm0.cpp vm1.cpp vm2.cpp vm3.cpp object_set.cpp \
        slab_cache.cpp subr_list.cpp serialize.cpp vm3.cpp port.cpp subr_others.cpp arith.cpp printer.cpp \
        subr_port.cpp subr_r5rs_arith.cpp equiv.cpp reader.cpp subr_base.cpp uuid.cpp subr_socket.cpp subr_hash.cpp \
        subr_unicode.cpp hash.cpp subr_base_arith.cpp ucs4.cpp ioerror.cpp subr_bitwise.cpp utf8.cpp subr_bvector.cpp \
