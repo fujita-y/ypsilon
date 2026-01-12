@@ -203,7 +203,12 @@ int object_heap_t::allocated_size(void* obj) {
 }
 
 void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
-  assert((OBJECT_SLAB_SIZE % getpagesize()) == 0);  // for optimal performance
+#ifndef NDEBUG
+  printf("OBJECT_SLAB_SIZE:%ld\n", OBJECT_SLAB_SIZE);
+  printf("getpagesize():%d\n", getpagesize());
+#endif
+  assert(getpagesize() >= OBJECT_SLAB_SIZE);
+  assert((getpagesize() % OBJECT_SLAB_SIZE) == 0);  // for optimal performance
   assert(pool_size >= OBJECT_SLAB_SIZE * 2);        // check minimum (1 directory + 1 datum)
   pool_size = pool_size < 2 ? 2 : pool_size;
   init_size = init_size < pool_size ? init_size : pool_size;

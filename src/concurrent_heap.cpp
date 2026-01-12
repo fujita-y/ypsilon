@@ -249,7 +249,7 @@ fallback:
     m_collector_wake.wait(m_collector_lock);  // to make mutator run now
   }
   GC_TRACE(";; [collector: start-the-world]\n");
-  GC_TRACE(";; [collector: concurrent-sweeping]\n");
+  GC_TRACE(";; [collector: concurrent-sweep]\n");
   double t5 = msec();
   m_heap->m_symbol.sweep();
   m_heap->m_string.sweep();
@@ -327,7 +327,7 @@ finish:
       ";; [        first-lock:%.2fms second-lock:%.2fms overlap:%.2fms]\n"
       ";; [        stw:%.2fms concurrent-mark:%.2fms]\n"
       ";; [        stw:%.2fms synchronized-mark:%.2fms]\n"
-      ";; [        concurrent-sweeping:%.2fms]\n",
+      ";; [        concurrent-sweep:%.2fms]\n",
       (t2 - t1), (t4 - t3) + (t5 - t4), (t3 - t2) + (t6 - t5), t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5);
   fflush(stdout);
 #endif
