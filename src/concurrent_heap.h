@@ -58,6 +58,8 @@ class concurrent_heap_t {
   void* allocate(size_t size, bool slab, bool gc);
   void deallocate(void* p);
   void finalize(void* obj);
+  void shade(scm_obj_t obj);
+  void interior_shade(void* ref);
 
   bool m_collector_kicked;
   bool m_mutator_stopped;

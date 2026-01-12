@@ -343,38 +343,6 @@ void object_heap_t::deallocate(void* p) { m_concurrent_pool.deallocate(p); }
 
 bool object_heap_t::extend_pool(size_t extend_size) { return m_concurrent_pool.extend_pool(extend_size); }
 
-void object_heap_t::shade(scm_obj_t obj) {
-  if (CELLP(obj)) {
-    assert(obj);
-    if (OBJECT_SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
-      if (m_concurrent_heap.m_mark_sp < m_concurrent_heap.m_mark_stack + m_concurrent_heap.m_mark_stack_size) {
-        *m_concurrent_heap.m_mark_sp++ = obj;
-        return;
-      }
-      m_concurrent_heap.m_usage.m_expand_mark_stack++;
-      int newsize = m_concurrent_heap.m_mark_stack_size + MARK_STACK_SIZE_GROW;
-      m_concurrent_heap.m_mark_stack = (scm_obj_t*)realloc(m_concurrent_heap.m_mark_stack, sizeof(scm_obj_t) * newsize);
-      if (m_concurrent_heap.m_mark_stack == NULL) {
-        fatal("%s:%u memory overflow on realloc mark stack", __FILE__, __LINE__);
-      }
-      m_concurrent_heap.m_mark_sp = m_concurrent_heap.m_mark_stack + m_concurrent_heap.m_mark_stack_size;
-      m_concurrent_heap.m_mark_stack_size = newsize;
-      *m_concurrent_heap.m_mark_sp++ = obj;
-    }
-  }
-}
-
-void object_heap_t::interior_shade(void* ref) {
-  if (ref) {
-#ifndef NDEBUG
-    int i = ((uint8_t*)ref - m_concurrent_pool.m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    assert(i >= 0 && i < m_concurrent_pool.m_pool_watermark);
-    assert(GCSLABP(m_concurrent_pool.m_pool[i]));
-#endif
-    shade(OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref));
-  }
-}
-
 void object_heap_t::break_weakmapping(object_slab_traits_t* traits) {
   int count = traits->refc;
   int size = traits->cache->m_object_size;
@@ -429,7 +397,7 @@ void object_heap_t::dequeue_root() {
   scm_obj_t obj;
   while (m_concurrent_heap.m_shade_queue.count()) {
     m_concurrent_heap.m_shade_queue.get(&obj);
-    shade(obj);
+    m_concurrent_heap.shade(obj);
   }
 }
 
@@ -461,8 +429,8 @@ void object_heap_t::trace(scm_obj_t obj) {
   }
   if (PAIRP(obj)) {
     scm_pair_t pair = (scm_pair_t)obj;
-    shade(pair->cdr);
-    shade(pair->car);
+    m_concurrent_heap.shade(pair->cdr);
+    m_concurrent_heap.shade(pair->car);
     return;
   }
   int tc = HDR_TC(HDR(obj));
@@ -472,32 +440,32 @@ void object_heap_t::trace(scm_obj_t obj) {
     case TC_VECTOR: {
       scm_vector_t vector = (scm_vector_t)obj;
       int count = vector->count;
-      for (int i = 0; i < count; i++) shade(vector->elts[i]);
+      for (int i = 0; i < count; i++) m_concurrent_heap.shade(vector->elts[i]);
       break;
     }
     case TC_TUPLE: {
       scm_tuple_t tuple = (scm_tuple_t)obj;
       int count = HDR_TUPLE_COUNT(tuple->hdr);
-      for (int i = 0; i < count; i++) shade(tuple->elts[i]);
+      for (int i = 0; i < count; i++) m_concurrent_heap.shade(tuple->elts[i]);
       break;
     }
     case TC_VALUES: {
       scm_values_t values = (scm_values_t)obj;
       int count = HDR_VALUES_COUNT(values->hdr);
-      for (int i = 0; i < count; i++) shade(values->elts[i]);
+      for (int i = 0; i < count; i++) m_concurrent_heap.shade(values->elts[i]);
       break;
     }
     case TC_HASHTABLE: {
       scm_hashtable_t ht = (scm_hashtable_t)obj;
-      shade(ht->handlers);
+      m_concurrent_heap.shade(ht->handlers);
       hashtable_rec_t* ht_datum = ht->datum;
       if (ht_datum) {
         int nsize = ht_datum->capacity;
         for (int i = 0; i < nsize; i++) {
-          shade(ht_datum->elts[i]);
+          m_concurrent_heap.shade(ht_datum->elts[i]);
         }
         for (int i = 0; i < nsize; i++) {
-          shade(ht_datum->elts[i + nsize]);
+          m_concurrent_heap.shade(ht_datum->elts[i + nsize]);
         }
       }
       break;
@@ -513,7 +481,7 @@ void object_heap_t::trace(scm_obj_t obj) {
             ht_datum->elts[i] = scm_hash_deleted;
             ht_datum->live--;
           } else {
-            shade(wmap);
+            m_concurrent_heap.shade(wmap);
           }
         }
       }
@@ -521,77 +489,77 @@ void object_heap_t::trace(scm_obj_t obj) {
     }
     case TC_PORT: {
       scm_port_t port = (scm_port_t)obj;
-      shade(port->bytes);
-      shade(port->name);
-      shade(port->transcoder);
-      shade(port->handlers);
+      m_concurrent_heap.shade(port->bytes);
+      m_concurrent_heap.shade(port->name);
+      m_concurrent_heap.shade(port->transcoder);
+      m_concurrent_heap.shade(port->handlers);
       break;
     }
     case TC_COMPLEX: {
       scm_complex_t complex = (scm_complex_t)obj;
-      shade(complex->imag);
-      shade(complex->real);
+      m_concurrent_heap.shade(complex->imag);
+      m_concurrent_heap.shade(complex->real);
       break;
     }
     case TC_RATIONAL: {
       scm_rational_t rational = (scm_rational_t)obj;
-      shade(rational->nume);
-      shade(rational->deno);
+      m_concurrent_heap.shade(rational->nume);
+      m_concurrent_heap.shade(rational->deno);
       break;
     }
     case TC_CLOSURE: {
       scm_closure_t closure = (scm_closure_t)obj;
-      shade(closure->pc);
-      shade(closure->doc);
-      interior_shade(closure->env);
+      m_concurrent_heap.shade(closure->pc);
+      m_concurrent_heap.shade(closure->doc);
+      m_concurrent_heap.interior_shade(closure->env);
       break;
     }
     case TC_CONT: {
       scm_cont_t cont = (scm_cont_t)obj;
-      shade(cont->wind_rec);
-      interior_shade(cont->cont);
+      m_concurrent_heap.shade(cont->wind_rec);
+      m_concurrent_heap.interior_shade(cont->cont);
       break;
     }
     case TC_HEAPENV: {
       int nbytes = HDR_HEAPENV_SIZE(HDR(obj));
       uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
       vm_env_t env = (vm_env_t)(top + nbytes - sizeof(vm_env_rec_t));
-      interior_shade(env->up);
-      for (scm_obj_t* vars = (scm_obj_t*)top; vars < (scm_obj_t*)env; vars++) shade(*vars);
+      m_concurrent_heap.interior_shade(env->up);
+      for (scm_obj_t* vars = (scm_obj_t*)top; vars < (scm_obj_t*)env; vars++) m_concurrent_heap.shade(*vars);
       break;
     }
     case TC_HEAPCONT: {
       int nbytes = HDR_HEAPCONT_SIZE(HDR(obj));
       uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
       vm_cont_t cont = (vm_cont_t)(top + nbytes - sizeof(vm_cont_rec_t));
-      interior_shade(cont->up);
-      interior_shade(cont->env);
-      shade(cont->pc);
-      shade(cont->trace);
-      for (scm_obj_t* args = (scm_obj_t*)top; args < (scm_obj_t*)cont; args++) shade(*args);
+      m_concurrent_heap.interior_shade(cont->up);
+      m_concurrent_heap.interior_shade(cont->env);
+      m_concurrent_heap.shade(cont->pc);
+      m_concurrent_heap.shade(cont->trace);
+      for (scm_obj_t* args = (scm_obj_t*)top; args < (scm_obj_t*)cont; args++) m_concurrent_heap.shade(*args);
       break;
     }
     case TC_ENVIRONMENT: {
       scm_environment_t environment = (scm_environment_t)obj;
-      shade(environment->variable);
-      shade(environment->macro);
-      shade(environment->name);
+      m_concurrent_heap.shade(environment->variable);
+      m_concurrent_heap.shade(environment->macro);
+      m_concurrent_heap.shade(environment->name);
       break;
     }
     case TC_GLOC: {
       scm_gloc_t gloc = (scm_gloc_t)obj;
-      shade(gloc->name);
-      shade(gloc->value);
+      m_concurrent_heap.shade(gloc->name);
+      m_concurrent_heap.shade(gloc->value);
       break;
     }
     case TC_SUBR: {
       scm_subr_t subr = (scm_subr_t)obj;
-      shade(subr->doc);
+      m_concurrent_heap.shade(subr->doc);
       break;
     }
     case TC_WEAKMAPPING: {
       scm_weakmapping_t wmap = (scm_weakmapping_t)obj;
-      shade(wmap->value);
+      m_concurrent_heap.shade(wmap->value);
       break;
     }
   }

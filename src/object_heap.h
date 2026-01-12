@@ -138,8 +138,6 @@ class object_heap_t {
 
   void write_barrier(scm_obj_t rhs);
   void break_weakmapping(object_slab_traits_t* traits);
-  void interior_shade(void* obj);
-  void shade(scm_obj_t obj);
   void trace(scm_obj_t obj);
   void dequeue_root();
   void enqueue_root(scm_obj_t obj);

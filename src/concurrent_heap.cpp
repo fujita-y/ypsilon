@@ -78,13 +78,13 @@ void concurrent_heap_t::collect() {
 
 void concurrent_heap_t::synchronized_collect() {
   m_heap->m_trip_bytes = 0;
-  m_heap->shade(m_heap->m_system_environment);
-  m_heap->shade(m_heap->m_interaction_environment);
-  m_heap->shade(m_heap->m_hidden_variables);
-  m_heap->shade(m_heap->m_architecture_feature);
-  m_heap->shade(m_heap->m_native_transcoder);
-  m_heap->shade(m_heap->m_trampolines);
-  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) m_heap->shade(m_heap->m_inherents[i]);
+  shade(m_heap->m_system_environment);
+  shade(m_heap->m_interaction_environment);
+  shade(m_heap->m_hidden_variables);
+  shade(m_heap->m_architecture_feature);
+  shade(m_heap->m_native_transcoder);
+  shade(m_heap->m_trampolines);
+  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) shade(m_heap->m_inherents[i]);
 
   // mark
   assert(m_mutator_stopped == false);
@@ -177,14 +177,14 @@ void concurrent_heap_t::concurrent_collect() {
   concurrent_mark();
 
   // mark phase 1+
-  m_heap->shade(m_heap->m_system_environment);
-  m_heap->shade(m_heap->m_interaction_environment);
-  m_heap->shade(m_heap->m_hidden_variables);
-  m_heap->shade(m_heap->m_architecture_feature);
-  m_heap->shade(m_heap->m_native_transcoder);
-  m_heap->shade(m_heap->m_trampolines);
+  shade(m_heap->m_system_environment);
+  shade(m_heap->m_interaction_environment);
+  shade(m_heap->m_hidden_variables);
+  shade(m_heap->m_architecture_feature);
+  shade(m_heap->m_native_transcoder);
+  shade(m_heap->m_trampolines);
 
-  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) m_heap->shade(m_heap->m_inherents[i]);
+  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) shade(m_heap->m_inherents[i]);
   concurrent_mark();
 
   // mark phase 2
@@ -377,7 +377,7 @@ void concurrent_heap_t::concurrent_mark() {
   scm_obj_t obj;
   do {
     while (true) {
-      if (m_shade_queue.try_get(&obj)) m_heap->shade(obj);
+      if (m_shade_queue.try_get(&obj)) shade(obj);
       if (m_mark_sp == m_mark_stack) break;
       obj = *--m_mark_sp;
       m_heap->trace(obj);
@@ -407,4 +407,36 @@ bool concurrent_heap_t::synchronized_mark() {
   }
   return false;
 #endif
+}
+
+void concurrent_heap_t::shade(scm_obj_t obj) {
+  if (CELLP(obj)) {
+    assert(obj);
+    if (OBJECT_SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
+      if (m_mark_sp < m_mark_stack + m_mark_stack_size) {
+        *m_mark_sp++ = obj;
+        return;
+      }
+      m_usage.m_expand_mark_stack++;
+      int newsize = m_mark_stack_size + MARK_STACK_SIZE_GROW;
+      m_mark_stack = (scm_obj_t*)realloc(m_mark_stack, sizeof(scm_obj_t) * newsize);
+      if (m_mark_stack == NULL) {
+        fatal("%s:%u memory overflow on realloc mark stack", __FILE__, __LINE__);
+      }
+      m_mark_sp = m_mark_stack + m_mark_stack_size;
+      m_mark_stack_size = newsize;
+      *m_mark_sp++ = obj;
+    }
+  }
+}
+
+void concurrent_heap_t::interior_shade(void* ref) {
+  if (ref) {
+#ifndef NDEBUG
+    int i = ((uint8_t*)ref - m_concurrent_pool->m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    assert(i >= 0 && i < m_concurrent_pool->m_pool_watermark);
+    assert(GCSLABP(m_concurrent_pool->m_pool[i]));
+#endif
+    shade(OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref));
+  }
 }
