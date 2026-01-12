@@ -66,7 +66,7 @@ class object_heap_t {
   mutex_t m_gensym_lock;
   object_heap_t();
   void init(size_t pool_size, size_t initial_datum_size);
-  void init_pool(size_t pool_size, size_t initial_datum_size);
+  void init_heap(size_t pool_size, size_t initial_datum_size);
   void init_inherents();
   void init_architecture_feature();
   void destroy();

@@ -72,7 +72,7 @@ inline int bytes_to_bucket(uint32_t x)  // see bit.cpp
 }
 #endif
 
-object_heap_t::object_heap_t() : m_inherents(NULL), m_concurrent_heap(this) { m_gensym_lock.init(); }
+object_heap_t::object_heap_t() : m_inherents(NULL) { m_gensym_lock.init(); }
 
 scm_pair_t object_heap_t::allocate_cons() {
   assert(m_cons.m_object_size == sizeof(scm_pair_rec_t));
@@ -198,9 +198,9 @@ int object_heap_t::allocated_size(void* obj) {
   }
 }
 
-void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
+void object_heap_t::init_heap(size_t pool_size, size_t init_size) {
   m_concurrent_pool.init(pool_size, init_size);
-  m_concurrent_heap.init(m_concurrent_pool.m_pool + m_concurrent_pool.m_pool_size);
+  m_concurrent_heap.init(this, &m_concurrent_pool);
   // slab
 #if ARCH_LP64
   assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
@@ -236,8 +236,8 @@ void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
 }
 
 void object_heap_t::init(size_t pool_size, size_t init_size) {
-  // pool
-  init_pool(pool_size, init_size);
+  // heap
+  init_heap(pool_size, init_size);
   // inherents
   init_inherents();
   // global shared

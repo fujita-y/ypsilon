@@ -11,6 +11,7 @@
 #include "queue.h"
 
 class object_heap_t;
+class concurrent_pool_t;
 
 class collector_usage_t {
  public:
@@ -49,8 +50,8 @@ class slab_cache_t;
 
 class concurrent_heap_t {
  public:
-  concurrent_heap_t(object_heap_t* heap);
-  void init(uint8_t* sweep_wavefront);
+  concurrent_heap_t();
+  void init(object_heap_t* heap, concurrent_pool_t* pool);
   void terminate();
   void collect();
   // Bridge methods for slab_cache_t to avoid direct object_heap_t access
@@ -81,6 +82,7 @@ class concurrent_heap_t {
   void synchronized_collect();
   void concurrent_mark();
   bool synchronized_mark();
+  concurrent_pool_t* m_concurrent_pool;
   object_heap_t* m_heap;
   bool m_collector_ready;
   bool m_collector_terminating;
