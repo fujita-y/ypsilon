@@ -2,6 +2,7 @@
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
+#include "object.h"
 #include "arith.h"
 #include "hash.h"
 #include "heap.h"
@@ -19,6 +20,7 @@ scm_symbol_t make_symbol(object_heap_t* heap, const char* name, int len) {
   heap->m_symbol.lock();
   scm_symbol_t obj = (scm_symbol_t)heap->m_symbol.get(name, len);
   if (obj == scm_undef) {
+    heap->m_symbol.unlock();
     int bytes = sizeof(scm_symbol_rec_t) + len + 1;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
       obj = (scm_symbol_t)heap->allocate_collectible(bytes);
@@ -30,7 +32,13 @@ scm_symbol_t make_symbol(object_heap_t* heap, const char* name, int len) {
     obj->hdr = scm_hdr_symbol | MAKEBITS(len, HDR_SYMBOL_SIZE_SHIFT);
     memcpy(obj->name, name, len);
     obj->name[len] = 0;
-    heap->m_symbol.put(obj);
+    heap->m_symbol.lock();
+    scm_symbol_t latest = (scm_symbol_t)heap->m_symbol.get(name, len);
+    if (latest == scm_undef) {
+      heap->m_symbol.put(obj);
+    } else {
+      obj = latest;
+    }
   }
   heap->m_symbol.unlock();
   return obj;
@@ -113,6 +121,7 @@ scm_string_t make_string_literal(object_heap_t* heap, const char* name, int len)
   heap->m_string.lock();
   scm_string_t obj = (scm_string_t)heap->m_string.get(name, len);
   if (obj == scm_undef) {
+    heap->m_string.unlock();
     int bytes = sizeof(scm_string_rec_t) + len + 1;
     if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
       obj = (scm_string_t)heap->allocate_collectible(bytes);
@@ -125,7 +134,13 @@ scm_string_t make_string_literal(object_heap_t* heap, const char* name, int len)
     obj->size = len;
     memcpy(obj->name, name, len);
     obj->name[len] = 0;
-    heap->m_string.put(obj);
+    heap->m_string.lock();
+    scm_string_t latest = (scm_string_t)heap->m_string.get(name, len);
+    if (latest == scm_undef) {
+      heap->m_string.put(obj);
+    } else {
+      obj = latest;
+    }
   }
   heap->m_string.unlock();
   return obj;
