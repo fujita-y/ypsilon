@@ -1176,8 +1176,8 @@ static void check_collectible(void* obj, int size, void* refcon) {
     }
     case TC_GLOC: {
       scm_gloc_t gloc = (scm_gloc_t)obj;
-      VERIFY_OBJ(gloc, variable);
       VERIFY_OBJ(gloc, value);
+      VERIFY_OBJ(gloc, name);
       return;
     }
     case TC_SUBR: {
