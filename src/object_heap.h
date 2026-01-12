@@ -32,8 +32,6 @@
 struct relocate_info_t;
 
 class object_heap_t {
-  friend class concurrent_heap_t;
-
  public:
 #if ARCH_LP64
   slab_cache_t m_collectibles[8];  // 16-32-64-128-256-512-1024-2048
