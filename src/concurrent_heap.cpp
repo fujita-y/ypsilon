@@ -94,13 +94,13 @@ void concurrent_heap_t::synchronized_collect() {
   while (!m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
     if (!m_mutator_stopped) {
-      m_heap->dequeue_root();
+      dequeue_root();
       m_mutator_wake.signal();
     }
   }
   double t1 = msec();
   GC_TRACE(";; [collector: mark]\n");
-  m_heap->dequeue_root();
+  dequeue_root();
   while (synchronized_mark()) continue;
 
   // sweep
@@ -159,7 +159,7 @@ void concurrent_heap_t::concurrent_collect() {
   while (!m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
     if (!m_mutator_stopped) {
-      m_heap->dequeue_root();
+      dequeue_root();
       m_mutator_wake.signal();
     }
   }
@@ -194,7 +194,7 @@ void concurrent_heap_t::concurrent_collect() {
   while (!m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
     if (!m_mutator_stopped) {
-      m_heap->dequeue_root();
+      dequeue_root();
       m_mutator_wake.signal();
     }
   }
@@ -222,14 +222,14 @@ fallback:
   while (!m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
     if (!m_mutator_stopped) {
-      m_heap->dequeue_root();
+      dequeue_root();
       m_mutator_wake.signal();
     }
   }
   double t4 = msec();
   m_write_barrier = false;
   GC_TRACE(";; [collector: synchronized-mark]\n");
-  m_heap->dequeue_root();
+  dequeue_root();
 
 #ifdef ENSURE_REALTIME
   if (synchronized_mark()) {
@@ -438,5 +438,13 @@ void concurrent_heap_t::interior_shade(void* ref) {
     assert(GCSLABP(m_concurrent_pool->m_pool[i]));
 #endif
     shade(OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref));
+  }
+}
+
+void concurrent_heap_t::dequeue_root() {
+  scm_obj_t obj;
+  while (m_shade_queue.count()) {
+    m_shade_queue.get(&obj);
+    shade(obj);
   }
 }

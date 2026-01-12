@@ -60,6 +60,7 @@ class concurrent_heap_t {
   void finalize(void* obj);
   void shade(scm_obj_t obj);
   void interior_shade(void* ref);
+  void dequeue_root();
 
   bool m_collector_kicked;
   bool m_mutator_stopped;

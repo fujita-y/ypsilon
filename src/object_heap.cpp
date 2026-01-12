@@ -393,14 +393,6 @@ void object_heap_t::write_barrier(scm_obj_t rhs) {
 
 void object_heap_t::collect() { m_concurrent_heap.collect(); }
 
-void object_heap_t::dequeue_root() {
-  scm_obj_t obj;
-  while (m_concurrent_heap.m_shade_queue.count()) {
-    m_concurrent_heap.m_shade_queue.get(&obj);
-    m_concurrent_heap.shade(obj);
-  }
-}
-
 void object_heap_t::enqueue_root(scm_obj_t obj) {
   assert(m_concurrent_heap.m_stop_the_world);
   if (CELLP(obj)) {
