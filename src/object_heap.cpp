@@ -200,6 +200,7 @@ int object_heap_t::allocated_size(void* obj) {
 
 void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
   m_concurrent_pool.init(pool_size, init_size);
+  m_concurrent_heap.init(m_concurrent_pool.m_pool + m_concurrent_pool.m_pool_size);
   // slab
 #if ARCH_LP64
   assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
@@ -216,7 +217,7 @@ void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
 #if USE_CONST_LITERAL
   m_immutable_cons.init(&m_concurrent_heap, clp2(sizeof(scm_pair_rec_t)), true, false);
 #endif
-  // cache
+  // cache configuration
   int base_cache_limit = m_collect_trip_bytes / OBJECT_SLAB_SIZE;
   m_cons.m_cache_limit = base_cache_limit;
   m_flonums.m_cache_limit = base_cache_limit / 2;
@@ -225,11 +226,10 @@ void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
   m_immutable_cons.m_cache_limit = base_cache_limit / 8;
 #endif
   for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].m_cache_limit = base_cache_limit / 8;
-  // collector
+  // trip bytes setup
   m_trip_bytes = 0;
   m_collect_trip_bytes =
       ((m_concurrent_pool.m_pool_size / 16) < DEFALUT_COLLECT_TRIP_BYTES) ? (m_concurrent_pool.m_pool_size / 16) : DEFALUT_COLLECT_TRIP_BYTES;
-  collector_init();
   // hash
   m_symbol.init(this);
   m_string.init(this);
@@ -420,11 +420,6 @@ void object_heap_t::write_barrier(scm_obj_t rhs) {
 }
 
 void object_heap_t::collect() { m_concurrent_heap.collect(); }
-
-void object_heap_t::collector_init() {
-  m_concurrent_heap.m_usage.clear();
-  m_concurrent_heap.init(m_concurrent_pool.m_pool + m_concurrent_pool.m_pool_size);
-}
 
 void object_heap_t::dequeue_root() {
   scm_obj_t obj;

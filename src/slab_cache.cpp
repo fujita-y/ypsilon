@@ -68,6 +68,7 @@ void slab_cache_t::destroy() {
 
 void slab_cache_t::init_freelist(uint8_t* slab, uint8_t* bottom, object_slab_traits_t* traits) {
   int step = (m_object_size + OBJECT_DATUM_ALIGN_MASK) & ~OBJECT_DATUM_ALIGN_MASK;
+  assert(step >= sizeof(object_freelist_t));
   uint8_t* obj = slab + step;
   traits->free = (object_freelist_t*)obj;
   while (obj + step <= bottom - step) {

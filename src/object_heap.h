@@ -135,7 +135,6 @@ class object_heap_t {
   void compact_pool();
   // collector
   void collect();
-  void collector_init();
 
   void write_barrier(scm_obj_t rhs);
   void break_weakmapping(object_slab_traits_t* traits);

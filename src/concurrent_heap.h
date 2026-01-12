@@ -14,6 +14,7 @@ class object_heap_t;
 
 class collector_usage_t {
  public:
+  collector_usage_t() { clear(); }
   double m_duration;
   double m_sync1;
   double m_sync2;
