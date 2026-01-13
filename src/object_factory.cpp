@@ -806,6 +806,7 @@ void clear_volatile_weakhashtable(scm_weakhashtable_t ht) {
 
 void finalize(object_heap_t* heap, void* obj) {
   // do not access shared object during finalize, it may collected.
+  // do not allocate memory during finalize, it may cause deadlock with collector.
   assert(heap->m_concurrent_heap.is_collectible(obj));
   if (PAIRP(obj)) {
     assert(false);
