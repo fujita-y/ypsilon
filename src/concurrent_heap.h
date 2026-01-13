@@ -6,6 +6,7 @@
 
 #include "core.h"
 #include "object.h"
+#include <functional>
 #include "cond.h"
 #include "mutex.h"
 #include "queue.h"
@@ -62,6 +63,10 @@ class concurrent_heap_t {
   void interior_shade(void* ref);
   void dequeue_root();
 
+  void set_snapshot_root_proc(std::function<void()> callback) { m_snapshot_root_proc = callback; }
+  void set_trace_proc(std::function<void(void* obj)> callback) { m_trace_proc = callback; }
+  void set_clear_trip_bytes_proc(std::function<void(void)> callback) { m_clear_trip_bytes_proc = callback; }
+
   bool in_slab(void* obj) {
     assert(obj);
     int index = ((uint8_t*)obj - m_concurrent_pool->m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
@@ -116,6 +121,28 @@ class concurrent_heap_t {
   pthread_t m_collector_thread;
   bool m_collector_ready;
   bool m_collector_terminating;
+
+  std::function<void(void* obj)> m_trace_proc;
+  std::function<void(void)> m_clear_trip_bytes_proc;
+  std::function<void(void)> m_snapshot_root_proc;
+  void snapshot_root() {
+    if (!m_snapshot_root_proc) {
+      fatal("%s:%u m_snapshot_root_proc undefined", __FILE__, __LINE__);
+    }
+    m_snapshot_root_proc();
+  }
+  void trace(void* obj) {
+    if (!m_trace_proc) {
+      fatal("%s:%u m_trace_proc undefined", __FILE__, __LINE__);
+    }
+    m_trace_proc(obj);
+  }
+  void clear_trip_bytes() {
+    if (!m_clear_trip_bytes_proc) {
+      fatal("%s:%u m_clear_trip_bytes_proc undefined", __FILE__, __LINE__);
+    }
+    m_clear_trip_bytes_proc();
+  }
 };
 
 #endif

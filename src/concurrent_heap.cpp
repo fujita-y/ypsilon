@@ -78,14 +78,8 @@ void concurrent_heap_t::collect() {
 }
 
 void concurrent_heap_t::synchronized_collect() {
-  m_heap->m_trip_bytes = 0;
-  shade(m_heap->m_system_environment);
-  shade(m_heap->m_interaction_environment);
-  shade(m_heap->m_hidden_variables);
-  shade(m_heap->m_architecture_feature);
-  shade(m_heap->m_native_transcoder);
-  shade(m_heap->m_trampolines);
-  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) shade(m_heap->m_inherents[i]);
+  clear_trip_bytes();
+  snapshot_root();
 
   // mark
   assert(m_mutator_stopped == false);
@@ -165,7 +159,7 @@ void concurrent_heap_t::concurrent_collect() {
     }
   }
   double t1 = msec();
-  m_heap->m_trip_bytes = 0;
+  clear_trip_bytes();
   m_write_barrier = true;
   m_stop_the_world = false;
   m_mutator_wake.signal();
@@ -179,15 +173,7 @@ void concurrent_heap_t::concurrent_collect() {
   concurrent_mark();
 
   // mark phase 1+
-  shade(m_heap->m_system_environment);
-  shade(m_heap->m_interaction_environment);
-  shade(m_heap->m_hidden_variables);
-  shade(m_heap->m_architecture_feature);
-  shade(m_heap->m_native_transcoder);
-  shade(m_heap->m_trampolines);
-
-  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) shade(m_heap->m_inherents[i]);
-
+  snapshot_root();
   concurrent_mark();
 
   // mark phase 2
@@ -385,7 +371,7 @@ void concurrent_heap_t::concurrent_mark() {
       if (m_shade_queue.try_get(&obj)) shade(obj);
       if (m_mark_sp == m_mark_stack) break;
       obj = *--m_mark_sp;
-      m_heap->trace(obj);
+      trace(obj);
     }
   } while (m_shade_queue.count());
   m_collector_lock.lock();
@@ -397,7 +383,7 @@ bool concurrent_heap_t::synchronized_mark() {
   int i = 0;
   while (m_mark_sp != m_mark_stack) {
     scm_obj_t obj = *--m_mark_sp;
-    m_heap->trace(obj);
+    trace(obj);
     if (++i > TIMEOUT_CHECK_EACH) {
       i = 0;
       if (msec() > timeout) return true;
@@ -407,7 +393,7 @@ bool concurrent_heap_t::synchronized_mark() {
 #else
   while (m_mark_sp != m_mark_stack) {
     scm_obj_t obj = *--m_mark_sp;
-    m_heap->trace(obj);
+    trace(obj);
   }
   return false;
 #endif

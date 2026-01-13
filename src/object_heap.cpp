@@ -201,6 +201,9 @@ int object_heap_t::allocated_size(void* obj) {
 void object_heap_t::init_heap(size_t pool_size, size_t init_size) {
   m_concurrent_pool.init(pool_size, init_size);
   m_concurrent_heap.init(this, &m_concurrent_pool);
+  m_concurrent_heap.set_trace_proc([this](void* obj) { this->trace(obj); });
+  m_concurrent_heap.set_snapshot_root_proc([this]() { this->snapshot_root(); });
+  m_concurrent_heap.set_clear_trip_bytes_proc([this]() { this->m_trip_bytes = 0; });
   // slab
 #if ARCH_LP64
   assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
@@ -384,6 +387,7 @@ void object_heap_t::write_barrier(scm_obj_t rhs) {
 
 void object_heap_t::collect() { m_concurrent_heap.collect(); }
 
+// Run on mutator thread
 void object_heap_t::enqueue_root(scm_obj_t obj) {
   assert(m_concurrent_heap.m_stop_the_world);
   if (CELLP(obj)) {
@@ -398,6 +402,17 @@ void object_heap_t::enqueue_root(scm_obj_t obj) {
       }
     }
   }
+}
+
+// Run on collector thread
+void object_heap_t::snapshot_root() {
+  m_concurrent_heap.shade(m_system_environment);
+  m_concurrent_heap.shade(m_interaction_environment);
+  m_concurrent_heap.shade(m_hidden_variables);
+  m_concurrent_heap.shade(m_architecture_feature);
+  m_concurrent_heap.shade(m_native_transcoder);
+  m_concurrent_heap.shade(m_trampolines);
+  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) m_concurrent_heap.shade(m_inherents[i]);
 }
 
 // Run on collector thread

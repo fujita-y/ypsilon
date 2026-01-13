@@ -108,6 +108,7 @@ class object_heap_t {
   void write_barrier(scm_obj_t rhs);
   void break_weakmapping(object_slab_traits_t* traits);
   void trace(scm_obj_t obj);
+  void snapshot_root();
   void enqueue_root(scm_obj_t obj);
   // debug
   void display_object_statistics(scm_port_t port);
