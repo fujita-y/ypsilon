@@ -70,6 +70,7 @@ class concurrent_heap_t {
   void set_clear_trip_bytes_proc(std::function<void(void)> callback) { m_clear_trip_bytes_proc = callback; }
   void set_update_weak_reference_proc(std::function<void(void)> callback) { m_update_weak_reference_proc = callback; }
   void set_debug_post_completation_proc(std::function<void(void)> callback) { m_debug_post_completation_proc = callback; }
+  void set_debug_check_slab_proc(std::function<void(void* slab)> callback) { m_debug_check_slab_proc = callback; }
 
   bool in_slab(void* obj) {
     assert(obj);
@@ -131,6 +132,7 @@ class concurrent_heap_t {
   std::function<void(void)> m_snapshot_root_proc;
   std::function<void(void)> m_update_weak_reference_proc;
   std::function<void(void)> m_debug_post_completation_proc;
+  std::function<void(void* slab)> m_debug_check_slab_proc;
 
   void snapshot_root() {
     if (!m_snapshot_root_proc) {
@@ -158,6 +160,9 @@ class concurrent_heap_t {
   }
   void debug_post_completation() {
     if (m_debug_post_completation_proc) m_debug_post_completation_proc();
+  }
+  void debug_check_slab(void* slab) {
+    if (m_debug_check_slab_proc) m_debug_check_slab_proc(slab);
   }
 };
 

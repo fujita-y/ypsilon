@@ -255,20 +255,7 @@ fallback:
         thread_yield();
         continue;
       }
-#if HPDEBUG
-      {
-        slab_cache_t* ca = OBJECT_SLAB_TRAITS_OF(slab)->cache;
-        bool hit = false;
-        for (int u = 0; u < array_sizeof(m_heap->m_collectibles); u++) hit |= (&m_heap->m_collectibles[u] == ca);
-        hit |= (&m_heap->m_weakmappings == ca);
-        hit |= (&m_heap->m_flonums == ca);
-        hit |= (&m_heap->m_cons == ca);
-  #if USE_CONST_LITERAL
-        hit |= (&m_heap->m_immutable_cons == ca);
-  #endif
-        if (!hit) fatal("%s:%u concurrent_collect(): bad cache reference %p in slab %p", __FILE__, __LINE__, ca, slab);
-      }
-#endif
+      debug_check_slab(slab);
       OBJECT_SLAB_TRAITS_OF(slab)->cache->sweep(slab);
       slab += OBJECT_SLAB_SIZE;
       i++;

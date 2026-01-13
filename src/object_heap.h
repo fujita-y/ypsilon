@@ -112,6 +112,7 @@ class object_heap_t {
   void display_object_statistics(scm_port_t port);
   void display_heap_statistics(scm_port_t port);
 #if HPDEBUG
+  void validate_slab_cache(void* slab);
   void consistency_check();
 #endif
 };

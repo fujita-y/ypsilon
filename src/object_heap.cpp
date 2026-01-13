@@ -207,6 +207,7 @@ void object_heap_t::init_heap(size_t pool_size, size_t init_size) {
   m_concurrent_heap.set_update_weak_reference_proc([this]() { this->update_weak_reference(); });
 #if HPDEBUG
   m_concurrent_heap.set_debug_post_completation_proc([this]() { this->consistency_check(); });
+  m_concurrent_heap.set_debug_check_slab_proc([this](void* slab) { this->validate_slab_cache(slab); });
 #endif
   // slab
 #if ARCH_LP64
@@ -1042,6 +1043,21 @@ static void check_collectible(void* obj, int size, void* refcon) {
   }
 }
 
+// Run on collector thread
+void object_heap_t::validate_slab_cache(void* slab) {
+  slab_cache_t* ca = OBJECT_SLAB_TRAITS_OF(slab)->cache;
+  bool hit = false;
+  for (int u = 0; u < array_sizeof(m_collectibles); u++) hit |= (&m_collectibles[u] == ca);
+  hit |= (&m_weakmappings == ca);
+  hit |= (&m_flonums == ca);
+  hit |= (&m_cons == ca);
+  #if USE_CONST_LITERAL
+  hit |= (&m_immutable_cons == ca);
+  #endif
+  if (!hit) fatal("%s:%u validate_slab_cache(): bad cache reference %p in slab %p", __FILE__, __LINE__, ca, slab);
+}
+
+// Run on collector thread
 void object_heap_t::consistency_check() {
   //    puts(";; [collector: heap check]");
   m_concurrent_heap.m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_CONSISTENCY_CHECK;
