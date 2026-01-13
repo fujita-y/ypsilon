@@ -565,13 +565,13 @@ void printer_t::scan(scm_hashtable_t ht, scm_obj_t obj) {
   scm_obj_t value = get_hashtable(ht, obj);
   if (value == scm_true) return;
   if (value == scm_false) {
-    m_vm->m_heap->write_barrier(obj);
+    m_vm->m_heap->m_concurrent_heap.write_barrier(obj);
     int nsize = put_hashtable(ht, obj, scm_true);
     if (nsize) rehash_hashtable(m_vm->m_heap, ht, nsize);
     return;
   }
   if (PAIRP(obj)) {
-    m_vm->m_heap->write_barrier(obj);
+    m_vm->m_heap->m_concurrent_heap.write_barrier(obj);
     int nsize = put_hashtable(ht, obj, scm_false);
     if (nsize) rehash_hashtable(m_vm->m_heap, ht, nsize);
     scan(ht, CAR(obj));
@@ -582,7 +582,7 @@ void printer_t::scan(scm_hashtable_t ht, scm_obj_t obj) {
     scm_vector_t vector = (scm_vector_t)obj;
     int n = vector->count;
     if (n == 0) return;
-    m_vm->m_heap->write_barrier(obj);
+    m_vm->m_heap->m_concurrent_heap.write_barrier(obj);
     int nsize = put_hashtable(ht, obj, scm_false);
     if (nsize) rehash_hashtable(m_vm->m_heap, ht, nsize);
     scm_obj_t* elts = vector->elts;
@@ -593,7 +593,7 @@ void printer_t::scan(scm_hashtable_t ht, scm_obj_t obj) {
     scm_tuple_t tuple = (scm_tuple_t)obj;
     int n = HDR_TUPLE_COUNT(tuple->hdr);
     if (n == 0) return;
-    m_vm->m_heap->write_barrier(obj);
+    m_vm->m_heap->m_concurrent_heap.write_barrier(obj);
     int nsize = put_hashtable(ht, obj, scm_false);
     if (nsize) rehash_hashtable(m_vm->m_heap, ht, nsize);
     scm_obj_t* elts = tuple->elts;
@@ -640,7 +640,7 @@ void printer_t::write(scm_obj_t ht, scm_obj_t obj) {
     if (value == scm_true) {
       snprintf(buf, sizeof(buf), "#%d=", m_shared_tag);
       port_puts(m_port, buf);
-      m_vm->m_heap->write_barrier(obj);
+      m_vm->m_heap->m_concurrent_heap.write_barrier(obj);
       put_hashtable((scm_hashtable_t)ht, obj, MAKEFIXNUM(m_shared_tag));
       m_shared_tag++;
     }

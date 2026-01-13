@@ -1121,7 +1121,7 @@ scm_obj_t subr_tuple_set(VM* vm, int argc, scm_obj_t argv[]) {
         scm_tuple_t tuple = (scm_tuple_t)argv[0];
         intptr_t n = FIXNUM(argv[1]);
         if (n >= 0 && n < HDR_TUPLE_COUNT(tuple->hdr)) {
-          vm->m_heap->write_barrier(argv[2]);
+          vm->m_heap->m_concurrent_heap.write_barrier(argv[2]);
           tuple->elts[n] = argv[2];
           return scm_unspecified;
         }
@@ -1520,8 +1520,8 @@ scm_obj_t subr_copy_environment_variables(VM* vm, int argc, scm_obj_t argv[]) {
             scm_gloc_t from_gloc = (scm_gloc_t)obj;
             scm_gloc_t to_gloc = make_gloc(vm->m_heap, to_symbol);
             to_gloc->value = from_gloc->value;
-            vm->m_heap->write_barrier(to_symbol);
-            vm->m_heap->write_barrier(to_gloc);
+            vm->m_heap->m_concurrent_heap.write_barrier(to_symbol);
+            vm->m_heap->m_concurrent_heap.write_barrier(to_gloc);
             int nsize = put_hashtable(to->variable, to_symbol, to_gloc);
             if (nsize) rehash_hashtable(vm->m_heap, to->variable, nsize);
             lst = CDR(lst);
@@ -1573,8 +1573,8 @@ scm_obj_t subr_copy_environment_macros(VM* vm, int argc, scm_obj_t argv[]) {
             obj = get_hashtable(from->macro, from_symbol);
           }
           if (obj != scm_undef) {
-            vm->m_heap->write_barrier(to_symbol);
-            vm->m_heap->write_barrier(obj);
+            vm->m_heap->m_concurrent_heap.write_barrier(to_symbol);
+            vm->m_heap->m_concurrent_heap.write_barrier(obj);
             int nsize = put_hashtable(to->macro, to_symbol, obj);
             if (nsize) rehash_hashtable(vm->m_heap, to->macro, nsize);
             lst = CDR(lst);
@@ -1950,7 +1950,7 @@ scm_obj_t subr_vector_copy(VM* vm, int argc, scm_obj_t argv[]) {
       if (start <= len && end <= len && start <= end) {
         scm_vector_t dst = make_vector(vm->m_heap, end - start, scm_unspecified);
         for (int i = start; i < end; i++) {
-          vm->m_heap->write_barrier(src->elts[i]);
+          vm->m_heap->m_concurrent_heap.write_barrier(src->elts[i]);
           dst->elts[i - start] = src->elts[i];
         }
         return dst;

@@ -423,7 +423,7 @@ scm_obj_t subr_codegen_cdecl_callback(VM* vm, int argc, scm_obj_t argv[]) {
         uintptr_t uid = s_trampoline_uid++;
         const char* signature = ((scm_string_t)argv[1])->name;
         void* thunk = compile_callback_thunk(vm, uid, signature);
-        vm->m_heap->write_barrier(closure);
+        vm->m_heap->m_concurrent_heap.write_barrier(closure);
         {
           scoped_lock lock(vm->m_heap->m_trampolines->lock);
           int nsize = put_hashtable(vm->m_heap->m_trampolines, MAKEFIXNUM(uid), closure);

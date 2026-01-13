@@ -189,7 +189,7 @@ scm_obj_t subr_set_car(VM* vm, int argc, scm_obj_t argv[]) {
         return scm_undef;
       }
 #endif
-      vm->m_heap->write_barrier(argv[1]);
+      vm->m_heap->m_concurrent_heap.write_barrier(argv[1]);
       CAR(argv[0]) = argv[1];
       return scm_unspecified;
     }
@@ -210,7 +210,7 @@ scm_obj_t subr_set_cdr(VM* vm, int argc, scm_obj_t argv[]) {
         return scm_undef;
       }
 #endif
-      vm->m_heap->write_barrier(argv[1]);
+      vm->m_heap->m_concurrent_heap.write_barrier(argv[1]);
       CDR(argv[0]) = argv[1];
       return scm_unspecified;
     }

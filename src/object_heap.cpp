@@ -302,14 +302,14 @@ void object_heap_t::intern_system_environment(scm_symbol_t symbol, scm_obj_t val
   scm_obj_t obj = get_hashtable(ht, symbol);
   if (obj != scm_undef) {
     assert(GLOCP(obj));
-    write_barrier(value);
+    m_concurrent_heap.write_barrier(value);
     ((scm_gloc_t)obj)->value = value;
     return;
   }
   scm_gloc_t gloc = make_gloc(this, symbol);
   gloc->value = value;
-  write_barrier(symbol);
-  write_barrier(gloc);
+  m_concurrent_heap.write_barrier(symbol);
+  m_concurrent_heap.write_barrier(gloc);
   int nsize = put_hashtable(ht, symbol, gloc);
   if (nsize) rehash_hashtable(this, ht, nsize);
 }
@@ -357,31 +357,6 @@ void object_heap_t::break_weakmapping(object_slab_traits_t* traits) {
     }
     p += size;
     assert(p < (uint8_t*)traits);
-  }
-}
-
-void object_heap_t::write_barrier(scm_obj_t rhs) {
-  // simple (Dijkstra)
-  if (m_concurrent_heap.m_write_barrier) {
-    if (CELLP(rhs)) {
-      if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
-        while (m_concurrent_heap.m_shade_queue.wait_lock_try_put(rhs) == false) {
-          if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
-          if (m_concurrent_heap.m_stop_the_world) {
-            GC_TRACE(";; [write-barrier: m_shade_queue overflow, during stop-the-world]\n");
-            m_concurrent_heap.m_collector_lock.lock();
-            m_concurrent_heap.m_collector_wake.signal();
-            m_concurrent_heap.m_mutator_wake.wait(m_concurrent_heap.m_collector_lock);
-            m_concurrent_heap.m_collector_lock.unlock();
-          } else {
-            GC_TRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
-            thread_yield();
-          }
-          m_concurrent_heap.m_usage.m_shade_queue_hazard++;
-        }
-        if (DETAILED_STATISTIC) m_concurrent_heap.m_usage.m_barriered_write++;
-      }
-    }
   }
 }
 
@@ -1046,7 +1021,7 @@ static void check_collectible(void* obj, int size, void* refcon) {
 
 void object_heap_t::consistency_check() {
   //    puts(";; [collector: heap check]");
-  m_concurrent_heap.m_root_snapshot_mode = ROOT_SNAPSHOT_CONSISTENCY_CHECK;
+  m_concurrent_heap.m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_CONSISTENCY_CHECK;
   m_concurrent_heap.m_stop_the_world = true;
   while (!m_concurrent_heap.m_mutator_stopped) {
     m_concurrent_heap.m_collector_wake.wait(m_concurrent_heap.m_collector_lock);

@@ -63,6 +63,7 @@ class concurrent_heap_t {
   void interior_shade(void* ref);
   void dequeue_root();
   void enqueue_root(scm_obj_t obj);
+  void write_barrier(scm_obj_t rhs);
 
   void set_snapshot_root_proc(std::function<void()> callback) { m_snapshot_root_proc = callback; }
   void set_trace_proc(std::function<void(void* obj)> callback) { m_trace_proc = callback; }

@@ -289,7 +289,7 @@ extern "C" {
   void c_set_gloc(VM* vm, scm_closure_t operands) {
     scm_gloc_t gloc = (scm_gloc_t)CAR(operands);
     assert(GLOCP(gloc));
-    vm->m_heap->write_barrier(vm->m_value);
+    vm->m_heap->m_concurrent_heap.write_barrier(vm->m_value);
     gloc->value = vm->m_value;
   }
 
@@ -297,7 +297,7 @@ extern "C" {
     scm_obj_t loc = CAR(operands);
     scm_obj_t* slot = c_lookup_iloc(vm, FIXNUM(CAR(loc)), FIXNUM(CDR(loc)));
     if (!STACKP(slot)) {
-      vm->m_heap->write_barrier(vm->m_value);
+      vm->m_heap->m_concurrent_heap.write_barrier(vm->m_value);
     }
     *slot = vm->m_value;
   }
@@ -309,7 +309,7 @@ extern "C" {
       for (intptr_t i = 0; i < argc; i++) dst[i] = vm->m_fp[i];
     } else {
       for (intptr_t i = 0; i < argc; i++) {
-        vm->m_heap->write_barrier(vm->m_fp[i]);
+        vm->m_heap->m_concurrent_heap.write_barrier(vm->m_fp[i]);
         dst[i] = vm->m_fp[i];
       }
     }
@@ -329,7 +329,7 @@ extern "C" {
     env = (vm_env_t)((intptr_t)vm->m_env - offsetof(vm_env_rec_t, up));
     scm_obj_t* slot = (scm_obj_t*)env - 1;
     scm_closure_t closure = make_closure(vm->m_heap, (scm_closure_t)operands, vm->m_env);
-    vm->m_heap->write_barrier(closure);
+    vm->m_heap->m_concurrent_heap.write_barrier(closure);
     *slot = closure;
   }
 

@@ -199,8 +199,8 @@ scm_obj_t subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[]) {
             wrong_type_argument_violation(vm, "core-hashtable-set!", 1, "string", argv[1], argc, argv);
             return scm_undef;
           }
-          vm->m_heap->write_barrier(argv[1]);
-          vm->m_heap->write_barrier(argv[2]);
+          vm->m_heap->m_concurrent_heap.write_barrier(argv[1]);
+          vm->m_heap->m_concurrent_heap.write_barrier(argv[2]);
           int nsize = put_hashtable(ht, argv[1], argv[2]);
           if (nsize) rehash_hashtable(vm->m_heap, ht, nsize);
           return scm_unspecified;
@@ -220,12 +220,12 @@ scm_obj_t subr_core_hashtable_set(VM* vm, int argc, scm_obj_t argv[]) {
         scm_obj_t ref = lookup_weakhashtable(ht, argv[1]);
         if (ref == scm_undef) {
           scm_weakmapping_t wmap = make_weakmapping(vm->m_heap, argv[1], argv[2]);
-          vm->m_heap->write_barrier(wmap);
+          vm->m_heap->m_concurrent_heap.write_barrier(wmap);
           int nsize = put_weakhashtable(ht, wmap);
           if (nsize) rehash_weakhashtable(vm->m_heap, ht, nsize);
         } else {
           assert(WEAKMAPPINGP(ref));
-          vm->m_heap->write_barrier(argv[2]);
+          vm->m_heap->m_concurrent_heap.write_barrier(argv[2]);
           ((scm_weakmapping_t)ref)->value = argv[2];
         }
         return scm_unspecified;

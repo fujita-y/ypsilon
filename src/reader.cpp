@@ -972,8 +972,8 @@ void reader_t::put_note(scm_obj_t key, scm_obj_t value) {
   assert(HASHTABLEP(m_note));
   scm_hashtable_t ht = (scm_hashtable_t)m_note;
   scoped_lock lock(ht->lock);
-  m_vm->m_heap->write_barrier(key);
-  m_vm->m_heap->write_barrier(value);
+  m_vm->m_heap->m_concurrent_heap.write_barrier(key);
+  m_vm->m_heap->m_concurrent_heap.write_barrier(value);
   int nsize = put_hashtable(ht, key, value);
   if (nsize) rehash_hashtable(m_vm->m_heap, ht, nsize);
 }

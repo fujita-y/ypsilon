@@ -891,7 +891,7 @@ loop:
         for (intptr_t i = 0; i < argc; i++) dst[i] = m_fp[i];
       } else {
         for (intptr_t i = 0; i < argc; i++) {
-          m_heap->write_barrier(m_fp[i]);
+          m_heap->m_concurrent_heap.write_barrier(m_fp[i]);
           dst[i] = m_fp[i];
         }
       }
@@ -1150,7 +1150,7 @@ loop:
     CASE(VMOP_SET_GLOC) {
       scm_gloc_t gloc = (scm_gloc_t)CAR(OPERANDS);
       assert(GLOCP(gloc));
-      m_heap->write_barrier(m_value);
+      m_heap->m_concurrent_heap.write_barrier(m_value);
       gloc->value = m_value;
       m_pc = CDR(m_pc);
       goto loop;
@@ -1159,7 +1159,7 @@ loop:
     CASE(VMOP_SET_ILOC) {
       scm_obj_t* slot = lookup_iloc(CAR(OPERANDS));
       if (!STACKP(slot)) {
-        m_heap->write_barrier(m_value);
+        m_heap->m_concurrent_heap.write_barrier(m_value);
       }
       *slot = m_value;
       m_pc = CDR(m_pc);
@@ -1411,8 +1411,8 @@ loop:
         m_pc = CDR(m_pc);
         goto loop;
 #else
-        m_heap->write_barrier(CADR(m_pc));
-        m_heap->write_barrier(CDDR(m_pc));
+        m_heap->m_concurrent_heap.write_barrier(CADR(m_pc));
+        m_heap->m_concurrent_heap.write_barrier(CDDR(m_pc));
         CAR(m_pc) = CADR(m_pc);
         CDR(m_pc) = CDDR(m_pc);
         goto loop;
@@ -1434,7 +1434,7 @@ loop:
         m_pc = CDR(m_pc);
         goto loop;
 #else
-        m_heap->write_barrier(subr);
+        m_heap->m_concurrent_heap.write_barrier(subr);
         CAAR(m_pc) = opcode_to_instruction(VMOP_SUBR);
         CAR(OPERANDS) = subr;
         goto loop;
@@ -1461,7 +1461,7 @@ loop:
         m_pc = CDR(m_pc);
         goto loop;
 #else
-        m_heap->write_barrier(subr);
+        m_heap->m_concurrent_heap.write_barrier(subr);
         CAAR(m_pc) = opcode_to_instruction(VMOP_PUSH_SUBR);
         CAR(OPERANDS) = subr;
         goto loop;
@@ -1482,7 +1482,7 @@ loop:
         if (m_value == scm_undef) goto BACK_TO_TRACE_N_LOOP;
         goto pop_cont;
 #else
-        m_heap->write_barrier(subr);
+        m_heap->m_concurrent_heap.write_barrier(subr);
         CAAR(m_pc) = opcode_to_instruction(VMOP_RET_SUBR);
         CAR(OPERANDS) = subr;
         goto loop;

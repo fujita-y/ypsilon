@@ -718,8 +718,8 @@ scm_obj_t deserializer_t::get_datum() {
       if (obj != scm_undef) return obj;
       scm_gloc_t gloc = make_gloc(m_heap, symbol);
       gloc->value = scm_undef;
-      m_heap->write_barrier(symbol);
-      m_heap->write_barrier(gloc);
+      m_heap->m_concurrent_heap.write_barrier(symbol);
+      m_heap->m_concurrent_heap.write_barrier(gloc);
       int nsize = put_hashtable(ht, symbol, gloc);
       if (nsize) rehash_hashtable(m_heap, ht, nsize);
       return gloc;

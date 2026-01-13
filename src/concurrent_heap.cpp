@@ -447,13 +447,38 @@ void concurrent_heap_t::enqueue_root(scm_obj_t obj) {
   assert(m_stop_the_world);
   if (CELLP(obj)) {
     if (in_heap(obj)) {
-      if (m_shade_queue.wait_lock_try_put(obj) == false) {
+      while (m_shade_queue.wait_lock_try_put(obj) == false) {
         m_collector_lock.lock();
-        m_collector_wake.signal();  // kick now
+        m_collector_wake.signal();
         m_mutator_wake.wait(m_collector_lock);
         m_collector_lock.unlock();
         GC_TRACE(";; [shade queue overflow while queueing root set]\n");
-        m_shade_queue.put(obj);
+      }
+    }
+  }
+}
+
+// Run on mutator thread
+void concurrent_heap_t::write_barrier(scm_obj_t rhs) {
+  // simple (Dijkstra)
+  if (m_write_barrier) {
+    if (CELLP(rhs)) {
+      if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
+        while (m_shade_queue.wait_lock_try_put(rhs) == false) {
+          if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
+          if (m_stop_the_world) {
+            GC_TRACE(";; [write-barrier: m_shade_queue overflow, during stop-the-world]\n");
+            m_collector_lock.lock();
+            m_collector_wake.signal();
+            m_mutator_wake.wait(m_collector_lock);
+            m_collector_lock.unlock();
+          } else {
+            GC_TRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
+            thread_yield();
+          }
+          m_usage.m_shade_queue_hazard++;
+        }
+        if (DETAILED_STATISTIC) m_usage.m_barriered_write++;
       }
     }
   }

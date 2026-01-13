@@ -1217,7 +1217,7 @@ scm_obj_t subr_vector_set(VM* vm, int argc, scm_obj_t argv[]) {
             return scm_undef;
           }
 #endif
-          vm->m_heap->write_barrier(argv[2]);
+          vm->m_heap->m_concurrent_heap.write_barrier(argv[2]);
           vector->elts[n] = argv[2];
           return scm_unspecified;
         }
@@ -1287,7 +1287,7 @@ scm_obj_t subr_vector_fill(VM* vm, int argc, scm_obj_t argv[]) {
         return scm_undef;
       }
 #endif
-      vm->m_heap->write_barrier(argv[1]);
+      vm->m_heap->m_concurrent_heap.write_barrier(argv[1]);
       for (int i = 0; i < n; i++) vector->elts[i] = argv[1];
       return scm_unspecified;
     }
