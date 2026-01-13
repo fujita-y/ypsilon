@@ -400,6 +400,7 @@ void object_heap_t::enqueue_root(scm_obj_t obj) {
   }
 }
 
+// Run on collector thread
 void object_heap_t::trace(scm_obj_t obj) {
   assert(m_concurrent_heap.is_collectible(obj));
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);

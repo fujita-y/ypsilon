@@ -175,6 +175,7 @@ void concurrent_heap_t::concurrent_collect() {
   }
   double t2 = msec();
   GC_TRACE(";; [collector: concurrent-mark phase 1]\n");
+
   concurrent_mark();
 
   // mark phase 1+
@@ -186,6 +187,7 @@ void concurrent_heap_t::concurrent_collect() {
   shade(m_heap->m_trampolines);
 
   for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) shade(m_heap->m_inherents[i]);
+
   concurrent_mark();
 
   // mark phase 2
@@ -209,6 +211,7 @@ fallback:
     m_collector_wake.wait(m_collector_lock);
   }
   GC_TRACE(";; [collector: concurrent-mark phase 2]\n");
+
   concurrent_mark();
 
 #if DEBUG_CONCURRENT_COLLECT
@@ -375,24 +378,25 @@ thread_main_t concurrent_heap_t::collector_thread(void* param) {
 }
 
 void concurrent_heap_t::concurrent_mark() {
-  scm_obj_t obj;
+  m_collector_lock.unlock();
   do {
     while (true) {
+      scm_obj_t obj;
       if (m_shade_queue.try_get(&obj)) shade(obj);
       if (m_mark_sp == m_mark_stack) break;
       obj = *--m_mark_sp;
       m_heap->trace(obj);
     }
   } while (m_shade_queue.count());
+  m_collector_lock.lock();
 }
 
 bool concurrent_heap_t::synchronized_mark() {
 #ifdef ENSURE_REALTIME
   double timeout = msec() + ENSURE_REALTIME;
   int i = 0;
-  scm_obj_t obj;
   while (m_mark_sp != m_mark_stack) {
-    obj = *--m_mark_sp;
+    scm_obj_t obj = *--m_mark_sp;
     m_heap->trace(obj);
     if (++i > TIMEOUT_CHECK_EACH) {
       i = 0;
@@ -401,9 +405,8 @@ bool concurrent_heap_t::synchronized_mark() {
   }
   return false;
 #else
-  scm_obj_t obj;
   while (m_mark_sp != m_mark_stack) {
-    obj = *--m_mark_sp;
+    scm_obj_t obj = *--m_mark_sp;
     m_heap->trace(obj);
   }
   return false;
