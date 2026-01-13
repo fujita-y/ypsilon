@@ -83,7 +83,7 @@ void concurrent_heap_t::synchronized_collect() {
 
   // mark
   assert(m_mutator_stopped == false);
-  m_root_snapshot = ROOT_SNAPSHOT_EVERYTHING;
+  m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_EVERYTHING;
   m_stop_the_world = true;
   GC_TRACE(";; [collector: stop-the-world phase 1]\n");
   while (!m_mutator_stopped) {
@@ -148,7 +148,7 @@ void concurrent_heap_t::concurrent_collect() {
   assert(m_mutator_stopped == false);
 
   // mark phase 1
-  m_root_snapshot = ROOT_SNAPSHOT_GLOBALS;
+  m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_GLOBALS;
   m_stop_the_world = true;
   GC_TRACE(";; [collector: stop-the-world]\n");
   while (!m_mutator_stopped) {
@@ -177,7 +177,7 @@ void concurrent_heap_t::concurrent_collect() {
   concurrent_mark();
 
   // mark phase 2
-  m_root_snapshot = ROOT_SNAPSHOT_LOCALS;
+  m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_LOCALS;
   m_stop_the_world = true;
   GC_TRACE(";; [collector: stop-the-world phase 2]\n");
   while (!m_mutator_stopped) {
@@ -188,7 +188,7 @@ void concurrent_heap_t::concurrent_collect() {
     }
   }
 
-  m_root_snapshot = ROOT_SNAPSHOT_EVERYTHING;
+  m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_EVERYTHING;
 fallback:
   m_stop_the_world = false;
   m_mutator_wake.signal();
@@ -227,7 +227,7 @@ fallback:
     puts("synchronized_mark() timeout, resume mutator and restart concurrent_mark");
   #endif
     m_write_barrier = true;
-    m_root_snapshot = ROOT_SNAPSHOT_RETRY;
+    m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_RETRY;
     goto fallback;
   }
 #else
@@ -399,6 +399,7 @@ bool concurrent_heap_t::synchronized_mark() {
 #endif
 }
 
+// Run on collector thread
 void concurrent_heap_t::shade(scm_obj_t obj) {
   if (CELLP(obj)) {
     assert(obj);
@@ -420,6 +421,7 @@ void concurrent_heap_t::shade(scm_obj_t obj) {
   }
 }
 
+// Run on collector thread
 void concurrent_heap_t::interior_shade(void* ref) {
   if (ref) {
 #ifndef NDEBUG
@@ -431,10 +433,28 @@ void concurrent_heap_t::interior_shade(void* ref) {
   }
 }
 
+// Run on collector thread
 void concurrent_heap_t::dequeue_root() {
   scm_obj_t obj;
   while (m_shade_queue.count()) {
     m_shade_queue.get(&obj);
     shade(obj);
+  }
+}
+
+// Run on mutator thread
+void concurrent_heap_t::enqueue_root(scm_obj_t obj) {
+  assert(m_stop_the_world);
+  if (CELLP(obj)) {
+    if (in_heap(obj)) {
+      if (m_shade_queue.wait_lock_try_put(obj) == false) {
+        m_collector_lock.lock();
+        m_collector_wake.signal();  // kick now
+        m_mutator_wake.wait(m_collector_lock);
+        m_collector_lock.unlock();
+        GC_TRACE(";; [shade queue overflow while queueing root set]\n");
+        m_shade_queue.put(obj);
+      }
+    }
   }
 }

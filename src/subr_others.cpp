@@ -728,7 +728,7 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
 #endif
 
       do {
-        vm->m_heap->collect();
+        vm->m_heap->m_concurrent_heap.collect();
         usleep(1000);
       } while (!vm->m_heap->m_concurrent_heap.m_collector_kicked);
       do {
@@ -751,7 +751,7 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
 
       return scm_unspecified;
     } else {
-      vm->m_heap->collect();
+      vm->m_heap->m_concurrent_heap.collect();
       return scm_unspecified;
     }
   }

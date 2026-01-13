@@ -15,18 +15,18 @@
 #include "queue.h"
 #include "slab_cache.h"
 
-#define STRING_TABLE_SIZE_INIT   1021
-#define GLOC_TABLE_SIZE_INIT     8191
-#define MARK_STACK_SIZE_INIT     16384  // 16K object, 64K/128K bytes
-#define MARK_STACK_SIZE_GROW     4096   // 4K object, 16K/32K bytes
-#define SHADE_QUEUE_SIZE         4096   // 4K object, 16K/32K bytes
+#define STRING_TABLE_SIZE_INIT        1021
+#define GLOC_TABLE_SIZE_INIT          8191
+#define MARK_STACK_SIZE_INIT          16384  // 16K object, 64K/128K bytes
+#define MARK_STACK_SIZE_GROW          4096   // 4K object, 16K/32K bytes
+#define SHADE_QUEUE_SIZE              4096   // 4K object, 16K/32K bytes
 
-#define ROOT_SNAPSHOT_GLOBALS    0
-#define ROOT_SNAPSHOT_LOCALS     1
-#define ROOT_SNAPSHOT_EVERYTHING 2
-#define ROOT_SNAPSHOT_RETRY      3
+#define ROOT_SNAPSHOT_MODE_GLOBALS    0
+#define ROOT_SNAPSHOT_MODE_LOCALS     1
+#define ROOT_SNAPSHOT_MODE_EVERYTHING 2
+#define ROOT_SNAPSHOT_MODE_RETRY      3
 #if HPDEBUG
-  #define ROOT_SNAPSHOT_CONSISTENCY_CHECK 4
+  #define ROOT_SNAPSHOT_MODE_CONSISTENCY_CHECK 4
 #endif
 
 struct relocate_info_t;
@@ -103,13 +103,11 @@ class object_heap_t {
   void* interior_forward(void* ref);
   void compact_pool();
   // collector
-  void collect();
 
   void write_barrier(scm_obj_t rhs);
   void break_weakmapping(object_slab_traits_t* traits);
   void trace(scm_obj_t obj);
   void snapshot_root();
-  void enqueue_root(scm_obj_t obj);
   // debug
   void display_object_statistics(scm_port_t port);
   void display_heap_statistics(scm_port_t port);

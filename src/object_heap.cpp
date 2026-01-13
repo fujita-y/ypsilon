@@ -77,7 +77,7 @@ object_heap_t::object_heap_t() : m_inherents(NULL) { m_gensym_lock.init(); }
 scm_pair_t object_heap_t::allocate_cons() {
   assert(m_cons.m_object_size == sizeof(scm_pair_rec_t));
   m_trip_bytes += sizeof(scm_pair_rec_t);
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   do {
     scm_pair_t obj = (scm_pair_t)m_cons.new_collectible_object();
     if (obj) return obj;
@@ -90,7 +90,7 @@ scm_pair_t object_heap_t::allocate_cons() {
 scm_pair_t object_heap_t::allocate_immutable_cons() {
   assert(m_immutable_cons.m_object_size == sizeof(scm_pair_rec_t));
   m_trip_bytes += sizeof(scm_pair_rec_t);
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   do {
     scm_pair_t obj = (scm_pair_t)m_immutable_cons.new_collectible_object();
     if (obj) return obj;
@@ -103,7 +103,7 @@ scm_pair_t object_heap_t::allocate_immutable_cons() {
 scm_flonum_t object_heap_t::allocate_flonum() {
   assert(m_flonums.m_object_size == sizeof(scm_flonum_rec_t));
   m_trip_bytes += sizeof(scm_flonum_rec_t);
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   do {
     scm_flonum_t obj = (scm_flonum_t)m_flonums.new_collectible_object();
     if (obj) return obj;
@@ -114,7 +114,7 @@ scm_flonum_t object_heap_t::allocate_flonum() {
 
 scm_obj_t object_heap_t::allocate_collectible(size_t size) {
   m_trip_bytes += size;
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   int bucket = bytes_to_bucket(size);
   if (bucket < array_sizeof(m_collectibles)) {
     do {
@@ -131,7 +131,7 @@ scm_obj_t object_heap_t::allocate_collectible(size_t size) {
 
 scm_weakmapping_t object_heap_t::allocate_weakmapping() {
   m_trip_bytes += m_weakmappings.m_object_size;
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   do {
     scm_weakmapping_t obj = (scm_weakmapping_t)m_weakmappings.new_collectible_object();
     if (obj) return obj;
@@ -141,7 +141,7 @@ scm_weakmapping_t object_heap_t::allocate_weakmapping() {
 
 void* object_heap_t::allocate_private(size_t size) {
   m_trip_bytes += size;
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   int bucket = 0;
 #if ARCH_LP64
   if (size > 16) bucket = bytes_to_bucket(size);
@@ -380,25 +380,6 @@ void object_heap_t::write_barrier(scm_obj_t rhs) {
           m_concurrent_heap.m_usage.m_shade_queue_hazard++;
         }
         if (DETAILED_STATISTIC) m_concurrent_heap.m_usage.m_barriered_write++;
-      }
-    }
-  }
-}
-
-void object_heap_t::collect() { m_concurrent_heap.collect(); }
-
-// Run on mutator thread
-void object_heap_t::enqueue_root(scm_obj_t obj) {
-  assert(m_concurrent_heap.m_stop_the_world);
-  if (CELLP(obj)) {
-    if (m_concurrent_heap.in_heap(obj)) {
-      if (m_concurrent_heap.m_shade_queue.wait_lock_try_put(obj) == false) {
-        m_concurrent_heap.m_collector_lock.lock();
-        m_concurrent_heap.m_collector_wake.signal();  // kick now
-        m_concurrent_heap.m_mutator_wake.wait(m_concurrent_heap.m_collector_lock);
-        m_concurrent_heap.m_collector_lock.unlock();
-        GC_TRACE(";; [shade queue overflow while queueing root set]\n");
-        m_concurrent_heap.m_shade_queue.put(obj);
       }
     }
   }
@@ -1065,7 +1046,7 @@ static void check_collectible(void* obj, int size, void* refcon) {
 
 void object_heap_t::consistency_check() {
   //    puts(";; [collector: heap check]");
-  m_concurrent_heap.m_root_snapshot = ROOT_SNAPSHOT_CONSISTENCY_CHECK;
+  m_concurrent_heap.m_root_snapshot_mode = ROOT_SNAPSHOT_CONSISTENCY_CHECK;
   m_concurrent_heap.m_stop_the_world = true;
   while (!m_concurrent_heap.m_mutator_stopped) {
     m_concurrent_heap.m_collector_wake.wait(m_concurrent_heap.m_collector_lock);
