@@ -101,20 +101,10 @@ void concurrent_heap_t::synchronized_collect() {
   // sweep
   GC_TRACE(";; [collector: sweep]\n");
   m_sweep_wavefront = (uint8_t*)m_concurrent_pool->m_pool;
-  m_heap->m_symbol.sweep();
-  m_heap->m_string.sweep();
-  m_heap->m_weakmappings.m_lock.lock();
-  if (m_heap->m_weakmappings.m_vacant) {
-    object_slab_traits_t* traits = m_heap->m_weakmappings.m_vacant;
-    do m_heap->break_weakmapping(traits);
-    while ((traits = traits->next) != m_heap->m_weakmappings.m_vacant);
-  }
-  if (m_heap->m_weakmappings.m_occupied) {
-    object_slab_traits_t* traits = m_heap->m_weakmappings.m_occupied;
-    do m_heap->break_weakmapping(traits);
-    while ((traits = traits->next) != m_heap->m_weakmappings.m_occupied);
-  }
-  m_heap->m_weakmappings.m_lock.unlock();
+
+  update_weak_reference();
+  m_read_barrier = false;
+
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool->m_pool);
   for (int i = 0; i < m_concurrent_pool->m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool->m_pool[i])) {
@@ -247,21 +237,10 @@ fallback:
   GC_TRACE(";; [collector: start-the-world]\n");
   GC_TRACE(";; [collector: concurrent-sweep]\n");
   double t5 = msec();
-  m_heap->m_symbol.sweep();
-  m_heap->m_string.sweep();
+
+  update_weak_reference();
   m_read_barrier = false;
-  m_heap->m_weakmappings.m_lock.lock();
-  if (m_heap->m_weakmappings.m_vacant) {
-    object_slab_traits_t* traits = m_heap->m_weakmappings.m_vacant;
-    do m_heap->break_weakmapping(traits);
-    while ((traits = traits->next) != m_heap->m_weakmappings.m_vacant);
-  }
-  if (m_heap->m_weakmappings.m_occupied) {
-    object_slab_traits_t* traits = m_heap->m_weakmappings.m_occupied;
-    do m_heap->break_weakmapping(traits);
-    while ((traits = traits->next) != m_heap->m_weakmappings.m_occupied);
-  }
-  m_heap->m_weakmappings.m_lock.unlock();
+
   int capacity = (m_concurrent_pool->m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
   uint8_t* slab = m_concurrent_pool->m_pool;
   int i = 0;
@@ -327,9 +306,7 @@ finish:
       (t2 - t1), (t4 - t3) + (t5 - t4), (t3 - t2) + (t6 - t5), t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5);
   fflush(stdout);
 #endif
-#if HPDEBUG
-  m_heap->consistency_check();
-#endif
+  debug_post_completation();
 }
 
 thread_main_t concurrent_heap_t::collector_thread(void* param) {

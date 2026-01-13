@@ -204,6 +204,10 @@ void object_heap_t::init_heap(size_t pool_size, size_t init_size) {
   m_concurrent_heap.set_trace_proc([this](void* obj) { this->trace(obj); });
   m_concurrent_heap.set_snapshot_root_proc([this]() { this->snapshot_root(); });
   m_concurrent_heap.set_clear_trip_bytes_proc([this]() { this->m_trip_bytes = 0; });
+  m_concurrent_heap.set_update_weak_reference_proc([this]() { this->update_weak_reference(); });
+#if HPDEBUG
+  m_concurrent_heap.set_debug_post_completation_proc([this]() { this->consistency_check(); });
+#endif
   // slab
 #if ARCH_LP64
   assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
@@ -341,6 +345,7 @@ void object_heap_t::destroy() {
   m_inherents = NULL;
 }
 
+// Run on collector thread
 void object_heap_t::break_weakmapping(object_slab_traits_t* traits) {
   int count = traits->refc;
   int size = traits->cache->m_object_size;
@@ -358,6 +363,24 @@ void object_heap_t::break_weakmapping(object_slab_traits_t* traits) {
     p += size;
     assert(p < (uint8_t*)traits);
   }
+}
+
+// Run on collector thread
+void object_heap_t::update_weak_reference() {
+  m_symbol.sweep();
+  m_string.sweep();
+  m_weakmappings.m_lock.lock();
+  if (m_weakmappings.m_vacant) {
+    object_slab_traits_t* traits = m_weakmappings.m_vacant;
+    do break_weakmapping(traits);
+    while ((traits = traits->next) != m_weakmappings.m_vacant);
+  }
+  if (m_weakmappings.m_occupied) {
+    object_slab_traits_t* traits = m_weakmappings.m_occupied;
+    do break_weakmapping(traits);
+    while ((traits = traits->next) != m_weakmappings.m_occupied);
+  }
+  m_weakmappings.m_lock.unlock();
 }
 
 // Run on collector thread

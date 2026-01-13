@@ -107,6 +107,7 @@ class object_heap_t {
   void break_weakmapping(object_slab_traits_t* traits);
   void trace(scm_obj_t obj);
   void snapshot_root();
+  void update_weak_reference();
   // debug
   void display_object_statistics(scm_port_t port);
   void display_heap_statistics(scm_port_t port);
