@@ -398,8 +398,12 @@ void object_heap_t::resolve(relocate_info_t* info) {
     slab += OBJECT_SLAB_SIZE;
     traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
   }
+  m_symbol.lock();
   m_symbol.inplace_rehash();
+  m_symbol.unlock();
+  m_string.lock();
   m_string.inplace_rehash();
+  m_string.unlock();
   for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) m_inherents[i] = forward(m_inherents[i]);
   m_architecture_feature = (scm_hashtable_t)forward(m_architecture_feature);
   m_native_transcoder = (scm_bvector_t)forward(m_native_transcoder);

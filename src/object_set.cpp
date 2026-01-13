@@ -153,7 +153,7 @@ void object_set_t::rehash(int ncount) {
 
 void object_set_t::inplace_rehash() {
   assert(m_heap);
-  scoped_lock lock(m_lock);
+  m_lock.verify_locked();
   scm_obj_t* save_elts = (scm_obj_t*)malloc(sizeof(scm_obj_t*) * m_count);
   memcpy(save_elts, m_elts, sizeof(scm_obj_t*) * m_count);
   for (int i = 0; i < m_count; i++) m_elts[i] = scm_hash_free;
@@ -193,7 +193,7 @@ void object_set_t::sweep() {
     m_live--;
   }
   if (m_count > 7 && m_live < HASH_SPARSE_THRESHOLD(m_count)) {
-    rehash(lookup_mutable_hashtable_size(HASH_MUTABLE_SIZE(m_live)));
+    inplace_rehash();
   }
 }
 
