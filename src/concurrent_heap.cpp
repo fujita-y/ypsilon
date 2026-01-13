@@ -48,7 +48,7 @@ void concurrent_heap_t::init(object_heap_t* heap, concurrent_pool_t* pool) {
   m_concurrent_pool = pool;
   m_sweep_wavefront = (uint8_t*)m_concurrent_pool->m_pool + m_concurrent_pool->m_pool_size;
   assert(m_sweep_wavefront);
-  thread_start(collector_thread, this);
+  MTVERIFY(pthread_create(&m_collector_thread, NULL, (void* (*)(void*))collector_thread, this));
 }
 
 void* concurrent_heap_t::allocate(size_t size, bool slab, bool gc) { return m_concurrent_pool->allocate(size, slab, gc); }
@@ -62,6 +62,7 @@ void concurrent_heap_t::terminate() {
   m_collector_terminating = true;
   m_collector_wake.signal();
   m_collector_lock.unlock();
+  MTVERIFY(pthread_join(m_collector_thread, NULL));
 }
 
 void concurrent_heap_t::collect() {

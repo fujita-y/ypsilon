@@ -113,6 +113,7 @@ class concurrent_heap_t {
   bool synchronized_mark();
   concurrent_pool_t* m_concurrent_pool;
   object_heap_t* m_heap;
+  pthread_t m_collector_thread;
   bool m_collector_ready;
   bool m_collector_terminating;
 };

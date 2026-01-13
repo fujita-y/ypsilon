@@ -318,6 +318,7 @@ void object_heap_t::intern_system_subr(const char* name, subr_proc_t proc) {
 }
 
 void object_heap_t::destroy() {
+  m_concurrent_heap.terminate();
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i])) {
