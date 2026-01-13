@@ -364,20 +364,16 @@ void object_heap_t::write_barrier(scm_obj_t rhs) {
         while (m_concurrent_heap.m_shade_queue.wait_lock_try_put(rhs) == false) {
           if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
           if (m_concurrent_heap.m_stop_the_world) {
+            GC_TRACE(";; [write-barrier: m_shade_queue overflow, during stop-the-world]\n");
             m_concurrent_heap.m_collector_lock.lock();
             m_concurrent_heap.m_collector_wake.signal();
             m_concurrent_heap.m_mutator_wake.wait(m_concurrent_heap.m_collector_lock);
             m_concurrent_heap.m_collector_lock.unlock();
           } else {
+            GC_TRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
             thread_yield();
           }
           m_concurrent_heap.m_usage.m_shade_queue_hazard++;
-          if (WBDEBUG) {
-            printf(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
-            fflush(stdout);
-          } else {
-            GC_TRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
-          }
         }
         if (DETAILED_STATISTIC) m_concurrent_heap.m_usage.m_barriered_write++;
       }
