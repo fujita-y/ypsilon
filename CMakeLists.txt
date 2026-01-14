@@ -60,6 +60,7 @@ add_executable(
   src/bit.cpp
   src/concurrent_heap.cpp
   src/concurrent_pool.cpp
+  src/concurrent_slab.cpp
   src/digamma.cpp
   src/equiv.cpp
   src/fasl.cpp
@@ -72,7 +73,6 @@ add_executable(
   src/object_heap_compact.cpp
   src/object_heap.cpp
   src/object_set.cpp
-  src/slab_cache.cpp
   src/port.cpp
   src/printer.cpp
   src/reader.cpp

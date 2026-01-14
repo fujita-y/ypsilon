@@ -7,7 +7,7 @@
 #include "object_factory.h"
 #include "object_heap.h"
 #include "port.h"
-#include "slab_cache.h"
+#include "concurrent_slab.h"
 
 #define DEBUG_CONCURRENT_COLLECT 0
 #define ENSURE_REALTIME          (5.0)  // in msec (1.0 == 0.001sec)

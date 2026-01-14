@@ -9,21 +9,21 @@
 */
 
 #include "core.h"
-#include "slab_cache.h"
+#include "concurrent_slab.h"
 #include "concurrent_heap.h"
 
 #define SLAB_CACHE_COUNT_MAX 1024
 
-slab_cache_t::slab_cache_t() {
+concurrent_slab_t::concurrent_slab_t() {
   m_vacant = NULL;
   m_occupied = NULL;
   m_concurrent_heap = NULL;
   m_lock.init();
 }
 
-slab_cache_t::~slab_cache_t() { m_lock.destroy(); }
+concurrent_slab_t::~concurrent_slab_t() { m_lock.destroy(); }
 
-bool slab_cache_t::init(concurrent_heap_t* concurrent_heap, int object_size, bool gc, bool finalize) {
+bool concurrent_slab_t::init(concurrent_heap_t* concurrent_heap, int object_size, bool gc, bool finalize) {
   assert(concurrent_heap);
   assert(object_size >= (int)sizeof(object_freelist_t));
   if (object_size & (object_size - 1)) {
@@ -44,7 +44,7 @@ bool slab_cache_t::init(concurrent_heap_t* concurrent_heap, int object_size, boo
   return true;
 }
 
-void slab_cache_t::destroy() {
+void concurrent_slab_t::destroy() {
   if (m_vacant) {
     object_slab_traits_t* traits = m_vacant;
     do {
@@ -66,7 +66,7 @@ void slab_cache_t::destroy() {
   m_concurrent_heap = NULL;
 }
 
-void slab_cache_t::init_freelist(uint8_t* slab, uint8_t* bottom, object_slab_traits_t* traits) {
+void concurrent_slab_t::init_freelist(uint8_t* slab, uint8_t* bottom, object_slab_traits_t* traits) {
   int step = (m_object_size + OBJECT_DATUM_ALIGN_MASK) & ~OBJECT_DATUM_ALIGN_MASK;
   assert(step >= sizeof(object_freelist_t));
   uint8_t* obj = slab + step;
@@ -80,7 +80,7 @@ void slab_cache_t::init_freelist(uint8_t* slab, uint8_t* bottom, object_slab_tra
   ((object_freelist_t*)obj)->next = NULL;
 }
 
-void slab_cache_t::unload_filled(object_slab_traits_t* traits) {
+void concurrent_slab_t::unload_filled(object_slab_traits_t* traits) {
   if (traits != traits->next) {
     traits->prev->next = traits->next;
     traits->next->prev = traits->prev;
@@ -98,7 +98,7 @@ void slab_cache_t::unload_filled(object_slab_traits_t* traits) {
   }
 }
 
-void* slab_cache_t::new_collectible_object() {
+void* concurrent_slab_t::new_collectible_object() {
   assert(m_concurrent_heap);
   assert(m_bitmap_size != 0);
   bool synchronize = (m_concurrent_heap->m_alloc_barrier != 0);
@@ -158,7 +158,7 @@ void* slab_cache_t::new_collectible_object() {
   }
 }
 
-void* slab_cache_t::new_object() {
+void* concurrent_slab_t::new_object() {
   assert(m_concurrent_heap);
   assert(m_bitmap_size == 0);
   m_lock.lock();
@@ -185,7 +185,7 @@ void* slab_cache_t::new_object() {
   }
 }
 
-void slab_cache_t::delete_object(void* obj) {
+void concurrent_slab_t::delete_object(void* obj) {
   if (obj == NULL) return;
   assert(m_concurrent_heap);
   assert(m_bitmap_size == 0);
@@ -228,7 +228,7 @@ void slab_cache_t::delete_object(void* obj) {
   }
 }
 
-void slab_cache_t::attach(void* slab) {
+void concurrent_slab_t::attach(void* slab) {
   m_lock.lock();
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
   if (traits->free == NULL) {
@@ -252,7 +252,7 @@ void slab_cache_t::attach(void* slab) {
   m_lock.unlock();
 }
 
-void slab_cache_t::detach(void* slab) {
+void concurrent_slab_t::detach(void* slab) {
   m_lock.lock();
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
   traits->prev->next = traits->next;
@@ -270,7 +270,7 @@ void slab_cache_t::detach(void* slab) {
   m_lock.unlock();
 }
 
-void slab_cache_t::sweep(void* slab) {
+void concurrent_slab_t::sweep(void* slab) {
   assert(m_bitmap_size);
   assert(slab == OBJECT_SLAB_TOP_OF(slab));
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
@@ -307,7 +307,7 @@ void slab_cache_t::sweep(void* slab) {
   uint8_t* p = bitmap;
   int refc = traits->refc;
   object_freelist_t* freelist = traits->free;
-  slab_cache_t* cache = traits->cache;
+  concurrent_slab_t* cache = traits->cache;
   do {
     uint8_t bit = 1;
     uint8_t bits = p[0];
@@ -335,7 +335,7 @@ done:
   attach(slab);
 }
 
-void slab_cache_t::iterate(void* slab, object_iter_proc_t proc, void* desc) {
+void concurrent_slab_t::iterate(void* slab, object_iter_proc_t proc, void* desc) {
   assert(m_bitmap_size);
   assert(slab == OBJECT_SLAB_TOP_OF(slab));
   object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);

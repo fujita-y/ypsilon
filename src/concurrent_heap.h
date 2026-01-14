@@ -12,7 +12,7 @@
 #include "queue.h"
 
 #include "concurrent_pool.h"
-#include "slab_cache.h"
+#include "concurrent_slab.h"
 
 class object_heap_t;
 
@@ -55,7 +55,7 @@ class concurrent_heap_t {
   void init(concurrent_pool_t* pool);
   void terminate();
   void collect();
-  // Bridge methods for slab_cache_t to avoid direct object_heap_t access
+  // Bridge methods for concurrent_slab_t to avoid direct object_heap_t access
   void* allocate(size_t size, bool slab, bool gc);
   void deallocate(void* p);
   void shade(scm_obj_t obj);

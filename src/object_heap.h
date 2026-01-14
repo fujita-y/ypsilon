@@ -8,12 +8,12 @@
 #include "object.h"
 #include "concurrent_heap.h"
 #include "concurrent_pool.h"
+#include "concurrent_slab.h"
 #include "cond.h"
 #include "inherent.h"
 #include "mutex.h"
 #include "object_set.h"
 #include "queue.h"
-#include "slab_cache.h"
 
 #define STRING_TABLE_SIZE_INIT        1021
 #define GLOC_TABLE_SIZE_INIT          8191
@@ -34,17 +34,17 @@ struct relocate_info_t;
 class object_heap_t {
  public:
 #if ARCH_LP64
-  slab_cache_t m_collectibles[8];  // 16-32-64-128-256-512-1024-2048
-  slab_cache_t m_privates[8];      // 16-32-64-128-256-512-1024-2048
+  concurrent_slab_t m_collectibles[8];  // 16-32-64-128-256-512-1024-2048
+  concurrent_slab_t m_privates[8];      // 16-32-64-128-256-512-1024-2048
 #else
-  slab_cache_t m_collectibles[8];  // 8-16-32-64-128-256-512-1024
-  slab_cache_t m_privates[8];      // 8-16-32-64-128-256-512-1024
+  concurrent_slab_t m_collectibles[8];  // 8-16-32-64-128-256-512-1024
+  concurrent_slab_t m_privates[8];      // 8-16-32-64-128-256-512-1024
 #endif
-  slab_cache_t m_cons;
-  slab_cache_t m_flonums;
-  slab_cache_t m_weakmappings;
+  concurrent_slab_t m_cons;
+  concurrent_slab_t m_flonums;
+  concurrent_slab_t m_weakmappings;
 #if USE_CONST_LITERAL
-  slab_cache_t m_immutable_cons;
+  concurrent_slab_t m_immutable_cons;
 #endif
 
   int m_trip_bytes;
@@ -112,7 +112,7 @@ class object_heap_t {
   void display_object_statistics(scm_port_t port);
   void display_heap_statistics(scm_port_t port);
 #if HPDEBUG
-  void validate_slab_cache(void* slab);
+  void validate_concurrent_slab(void* slab);
   void consistency_check();
 #endif
 };

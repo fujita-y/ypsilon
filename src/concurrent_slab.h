@@ -1,8 +1,8 @@
 // Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
-#ifndef SLAB_CACHE_H_INCLUDED
-#define SLAB_CACHE_H_INCLUDED
+#ifndef CONCURRENT_SLAB_H_INCLUDED
+#define CONCURRENT_SLAB_H_INCLUDED
 
 #include "core.h"
 #include "object.h"
@@ -12,12 +12,12 @@ class concurrent_heap_t;
 #define OBJECT_SLAB_TOP_OF(obj)    ((uint8_t*)(((uintptr_t)(obj)) & ~(OBJECT_SLAB_SIZE - 1)))
 #define OBJECT_SLAB_TRAITS_OF(obj) ((object_slab_traits_t*)(OBJECT_SLAB_TOP_OF(obj) + OBJECT_SLAB_SIZE - sizeof(object_slab_traits_t)))
 
-struct slab_cache_t;
+struct concurrent_slab_t;
 struct object_slab_traits_t;
 struct object_freelist_t;
 
 struct object_freelist_t {
-  void* null;  // <- slab_cache_t::delete_object(...) assign NULL to detect free cell during sweep phase
+  void* null;  // <- concurrent_slab_t::delete_object(...) assign NULL to detect free cell during sweep phase
   object_freelist_t* next;
 };
 
@@ -26,12 +26,12 @@ struct object_slab_traits_t {  // <- locate to bottom of each slab
   object_freelist_t* free;
   object_slab_traits_t* next;
   object_slab_traits_t* prev;
-  slab_cache_t* cache;
+  concurrent_slab_t* cache;
 };
 
 typedef void (*object_iter_proc_t)(void* obj, int size, void* refcon);
 
-class slab_cache_t {
+class concurrent_slab_t {
  private:
   concurrent_heap_t* m_concurrent_heap;
   int m_object_size_shift;
@@ -45,8 +45,8 @@ class slab_cache_t {
   object_slab_traits_t* m_occupied;
   int m_object_size;
   int m_cache_limit;
-  slab_cache_t();
-  ~slab_cache_t();
+  concurrent_slab_t();
+  ~concurrent_slab_t();
   bool init(concurrent_heap_t* concurrent_heap, int object_size, bool gc, bool finalize);
   void destroy();
   void* new_collectible_object();

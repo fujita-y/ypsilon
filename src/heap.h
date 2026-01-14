@@ -6,8 +6,8 @@
 
 #include "core.h"
 #include "object.h"
+#include "concurrent_slab.h"
 #include "object_factory.h"
 #include "object_heap.h"
-#include "slab_cache.h"
 
 #endif

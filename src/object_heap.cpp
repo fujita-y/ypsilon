@@ -169,7 +169,7 @@ void object_heap_t::deallocate_private(void* obj) {
     assert(m_concurrent_heap.in_heap(obj));
     assert(!m_concurrent_heap.is_collectible(obj));
     if (m_concurrent_heap.in_slab(obj)) {
-      slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
+      concurrent_slab_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
       cache->delete_object(obj);
     } else {
       assert(!m_concurrent_heap.is_collectible(obj));
@@ -181,7 +181,7 @@ void object_heap_t::deallocate_private(void* obj) {
 int object_heap_t::allocated_size(void* obj) {
   assert(m_concurrent_heap.in_heap(obj));
   if (m_concurrent_heap.in_slab(obj)) {
-    slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
+    concurrent_slab_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
     return cache->m_object_size;
   } else {
     assert(((intptr_t)obj & (OBJECT_SLAB_SIZE - 1)) == 0);
@@ -208,7 +208,7 @@ void object_heap_t::init_heap(size_t pool_size, size_t init_size) {
   m_concurrent_heap.set_update_weak_reference_proc([this]() { this->update_weak_reference(); });
 #if HPDEBUG
   m_concurrent_heap.set_debug_post_completation_proc([this]() { this->consistency_check(); });
-  m_concurrent_heap.set_debug_check_slab_proc([this](void* slab) { this->validate_slab_cache(slab); });
+  m_concurrent_heap.set_debug_check_slab_proc([this](void* slab) { this->validate_concurrent_slab(slab); });
 #endif
   // slab
 #if ARCH_LP64
@@ -1045,8 +1045,8 @@ static void check_collectible(void* obj, int size, void* refcon) {
 }
 
 // Run on collector thread
-void object_heap_t::validate_slab_cache(void* slab) {
-  slab_cache_t* ca = OBJECT_SLAB_TRAITS_OF(slab)->cache;
+void object_heap_t::validate_concurrent_slab(void* slab) {
+  concurrent_slab_t* ca = OBJECT_SLAB_TRAITS_OF(slab)->cache;
   bool hit = false;
   for (int u = 0; u < array_sizeof(m_collectibles); u++) hit |= (&m_collectibles[u] == ca);
   hit |= (&m_weakmappings == ca);
@@ -1055,7 +1055,7 @@ void object_heap_t::validate_slab_cache(void* slab) {
   #if USE_CONST_LITERAL
   hit |= (&m_immutable_cons == ca);
   #endif
-  if (!hit) fatal("%s:%u validate_slab_cache(): bad cache reference %p in slab %p", __FILE__, __LINE__, ca, slab);
+  if (!hit) fatal("%s:%u validate_concurrent_slab(): bad cache reference %p in slab %p", __FILE__, __LINE__, ca, slab);
 }
 
 // Run on collector thread
