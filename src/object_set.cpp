@@ -187,7 +187,7 @@ void object_set_t::sweep() {
     if (obj == scm_hash_free) continue;
     if (obj == scm_hash_deleted) continue;
     assert(SYMBOLP(obj) || STRINGP(obj));
-    object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
+    slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
     if (traits->cache->state(obj)) continue;
     m_elts[i] = scm_hash_deleted;
     m_live--;

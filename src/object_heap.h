@@ -104,7 +104,7 @@ class object_heap_t {
   void compact_pool();
   // collector
 
-  void break_weakmapping(object_slab_traits_t* traits);
+  void break_weakmapping(slab_traits_t* traits);
   void trace(scm_obj_t obj);
   void snapshot_root();
   void update_weak_reference();

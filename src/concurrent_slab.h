@@ -10,22 +10,22 @@
 class concurrent_heap_t;
 
 #define OBJECT_SLAB_TOP_OF(obj)    ((uint8_t*)(((uintptr_t)(obj)) & ~(OBJECT_SLAB_SIZE - 1)))
-#define OBJECT_SLAB_TRAITS_OF(obj) ((object_slab_traits_t*)(OBJECT_SLAB_TOP_OF(obj) + OBJECT_SLAB_SIZE - sizeof(object_slab_traits_t)))
+#define OBJECT_SLAB_TRAITS_OF(obj) ((slab_traits_t*)(OBJECT_SLAB_TOP_OF(obj) + OBJECT_SLAB_SIZE - sizeof(slab_traits_t)))
 
 struct concurrent_slab_t;
-struct object_slab_traits_t;
-struct object_freelist_t;
+struct slab_traits_t;
+struct freelist_t;
 
-struct object_freelist_t {
+struct freelist_t {
   void* null;  // <- concurrent_slab_t::delete_object(...) assign NULL to detect free cell during sweep phase
-  object_freelist_t* next;
+  freelist_t* next;
 };
 
-struct object_slab_traits_t {  // <- locate to bottom of each slab
+struct slab_traits_t {  // <- locate to bottom of each slab
   intptr_t refc;
-  object_freelist_t* free;
-  object_slab_traits_t* next;
-  object_slab_traits_t* prev;
+  freelist_t* free;
+  slab_traits_t* next;
+  slab_traits_t* prev;
   concurrent_slab_t* cache;
 };
 
@@ -41,8 +41,8 @@ class concurrent_slab_t {
 
  public:
   mutex_t m_lock;
-  object_slab_traits_t* m_vacant;
-  object_slab_traits_t* m_occupied;
+  slab_traits_t* m_vacant;
+  slab_traits_t* m_occupied;
   int m_object_size;
   int m_cache_limit;
   concurrent_slab_t();
@@ -56,8 +56,8 @@ class concurrent_slab_t {
   void detach(void* slab);
   void sweep(void* slab);
   void iterate(void* slab, object_iter_proc_t proc, void* desc);
-  void init_freelist(uint8_t* top, uint8_t* bottom, object_slab_traits_t* traits);
-  void unload_filled(object_slab_traits_t* traits);
+  void init_freelist(uint8_t* top, uint8_t* bottom, slab_traits_t* traits);
+  void unload_filled(slab_traits_t* traits);
 
   void* lookup(void* ref) {
     assert((uint8_t*)ref < (uint8_t*)OBJECT_SLAB_TRAITS_OF(ref) - m_bitmap_size);

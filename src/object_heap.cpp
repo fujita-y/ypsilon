@@ -169,7 +169,8 @@ void object_heap_t::deallocate_private(void* obj) {
     assert(m_concurrent_heap.in_heap(obj));
     assert(!m_concurrent_heap.is_collectible(obj));
     if (m_concurrent_heap.in_slab(obj)) {
-      concurrent_slab_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
+      slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
+      concurrent_slab_t* cache = traits->cache;
       cache->delete_object(obj);
     } else {
       assert(!m_concurrent_heap.is_collectible(obj));
@@ -181,7 +182,8 @@ void object_heap_t::deallocate_private(void* obj) {
 int object_heap_t::allocated_size(void* obj) {
   assert(m_concurrent_heap.in_heap(obj));
   if (m_concurrent_heap.in_slab(obj)) {
-    concurrent_slab_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
+    slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
+    concurrent_slab_t* cache = traits->cache;
     return cache->m_object_size;
   } else {
     assert(((intptr_t)obj & (OBJECT_SLAB_SIZE - 1)) == 0);
@@ -328,12 +330,12 @@ void object_heap_t::intern_system_subr(const char* name, subr_proc_t proc) {
 
 void object_heap_t::destroy() {
   m_concurrent_heap.terminate();
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i])) {
       traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), renounce, NULL);
     }
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
   }
   m_concurrent_pool.destroy();
   m_gensym_lock.destroy();
@@ -348,7 +350,7 @@ void object_heap_t::destroy() {
 }
 
 // Run on collector thread
-void object_heap_t::break_weakmapping(object_slab_traits_t* traits) {
+void object_heap_t::break_weakmapping(slab_traits_t* traits) {
   int count = traits->refc;
   int size = traits->cache->m_object_size;
   uint8_t* p = OBJECT_SLAB_TOP_OF(traits);
@@ -373,12 +375,12 @@ void object_heap_t::update_weak_reference() {
   m_string.sweep();
   m_weakmappings.m_lock.lock();
   if (m_weakmappings.m_vacant) {
-    object_slab_traits_t* traits = m_weakmappings.m_vacant;
+    slab_traits_t* traits = m_weakmappings.m_vacant;
     do break_weakmapping(traits);
     while ((traits = traits->next) != m_weakmappings.m_vacant);
   }
   if (m_weakmappings.m_occupied) {
-    object_slab_traits_t* traits = m_weakmappings.m_occupied;
+    slab_traits_t* traits = m_weakmappings.m_occupied;
     do break_weakmapping(traits);
     while ((traits = traits->next) != m_weakmappings.m_occupied);
   }
@@ -399,7 +401,7 @@ void object_heap_t::snapshot_root() {
 // Run on collector thread
 void object_heap_t::trace(scm_obj_t obj) {
   assert(m_concurrent_heap.is_collectible(obj));
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
+  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
   if (traits->cache->test_and_mark(obj)) {
 #if HPDEBUG
 //        printf(";; [collector: duplicate objects in mark stack]\n");
@@ -565,12 +567,12 @@ static void accumulate_object_count(void* obj, int size, void* refcon) {
 void object_heap_t::display_object_statistics(scm_port_t port) {
   object_count_t count;
   memset(&count, 0, sizeof(count));
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i])) {
       traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), accumulate_object_count, &count);
     }
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
   }
   scoped_lock lock(port->lock);
 
@@ -612,7 +614,7 @@ void object_heap_t::display_heap_statistics(scm_port_t port) {
 
   scoped_lock lock(port->lock);
   port_put_byte(port, '\n');
-  object_slab_traits_t* traits;
+  slab_traits_t* traits;
   for (int n = 0; n < m_concurrent_pool.m_pool_watermark; n++) {
     if ((n & 63) == 0) port_puts(port, "  |");
     switch (m_concurrent_pool.m_pool[n]) {
@@ -1067,12 +1069,12 @@ void object_heap_t::consistency_check() {
     m_concurrent_heap.m_collector_wake.wait(m_concurrent_heap.m_collector_lock);
     if (!m_concurrent_heap.m_mutator_stopped) m_concurrent_heap.m_mutator_wake.signal();
   }
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i])) {
       traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), check_collectible, this);
     }
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
   }
   m_concurrent_heap.m_stop_the_world = false;
   m_concurrent_heap.m_mutator_wake.signal();

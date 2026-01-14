@@ -4,10 +4,10 @@
 #include "core.h"
 #include "concurrent_heap.h"
 #include "concurrent_pool.h"
+#include "concurrent_slab.h"
 #include "object_factory.h"
 #include "object_heap.h"
 #include "port.h"
-#include "concurrent_slab.h"
 
 #define DEBUG_CONCURRENT_COLLECT 0
 #define ENSURE_REALTIME          (5.0)  // in msec (1.0 == 0.001sec)
@@ -101,13 +101,13 @@ void concurrent_heap_t::synchronized_collect() {
   update_weak_reference();
   m_read_barrier = false;
 
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool->m_pool);
+  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool->m_pool);
   for (int i = 0; i < m_concurrent_pool->m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool->m_pool[i])) {
       uint8_t* slab = m_concurrent_pool->m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT);
       traits->cache->sweep(slab);
     }
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
   }
 
   GC_TRACE(";; [collector: start-the-world]\n");
