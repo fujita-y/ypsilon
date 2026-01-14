@@ -38,6 +38,8 @@ class concurrent_slab_t {
   int m_bitmap_size;
   int m_cache_count;
   bool m_finalize;
+  void init_freelist(uint8_t* top, uint8_t* bottom, slab_traits_t* traits);
+  void unload_filled(slab_traits_t* traits);
 
  public:
   mutex_t m_lock;
@@ -56,8 +58,6 @@ class concurrent_slab_t {
   void detach(void* slab);
   void sweep(void* slab);
   void iterate(void* slab, object_iter_proc_t proc, void* desc);
-  void init_freelist(uint8_t* top, uint8_t* bottom, slab_traits_t* traits);
-  void unload_filled(slab_traits_t* traits);
 
   void* lookup(void* ref) {
     assert((uint8_t*)ref < (uint8_t*)SLAB_TRAITS_OF(ref) - m_bitmap_size);
