@@ -57,8 +57,6 @@ class concurrent_heap_t {
   void init(concurrent_pool_t* pool);
   void terminate();
   void collect();
-  void* allocate(size_t size, bool slab, bool gc);
-  void deallocate(void* p);
   void shade(scm_obj_t obj);
   void interior_shade(void* ref);
   void dequeue_root();
@@ -91,7 +89,6 @@ class concurrent_heap_t {
     return (m_concurrent_pool->m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
   }
 
-  uint8_t* m_sweep_wavefront;
   scm_obj_t* m_mark_stack;
   mutex_t m_collector_lock;
   cond_t m_mutator_wake;
@@ -104,7 +101,6 @@ class concurrent_heap_t {
   bool m_stop_the_world;
   bool m_read_barrier;
   bool m_write_barrier;
-  bool m_alloc_barrier;
 
   void set_snapshot_root_proc(std::function<void()> callback) { m_snapshot_root_proc = callback; }
   void set_trace_proc(std::function<void(void* obj)> callback) { m_trace_proc = callback; }
@@ -171,6 +167,10 @@ class concurrent_heap_t {
   int m_mark_stack_size;
   bool m_collector_ready;
   bool m_collector_terminating;
+  uint8_t* m_sweep_wavefront;
+  bool m_alloc_barrier;
+  void* allocate(size_t size, bool slab, bool gc);
+  void deallocate(void* p);
 };
 
 #endif

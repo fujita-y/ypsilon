@@ -32,6 +32,8 @@ struct slab_traits_t {  // <- locate to bottom of each slab
 typedef void (*object_iter_proc_t)(void* obj, int size, void* refcon);
 
 class concurrent_slab_t {
+  friend class concurrent_heap_t;
+
  private:
   concurrent_heap_t* m_concurrent_heap;
   int m_object_size_shift;
@@ -40,6 +42,8 @@ class concurrent_slab_t {
   bool m_finalize;
   void init_freelist(uint8_t* top, uint8_t* bottom, slab_traits_t* traits);
   void unload_filled(slab_traits_t* traits);
+  void attach(void* slab);
+  void sweep(void* slab);
 
  public:
   slab_traits_t* m_vacant;
@@ -54,9 +58,7 @@ class concurrent_slab_t {
   void* new_collectible_object();
   void* new_object();
   void delete_object(void* obj);
-  void attach(void* slab);
   void detach(void* slab);
-  void sweep(void* slab);
   void iterate(void* slab, object_iter_proc_t proc, void* desc);
 
   void* lookup(void* ref) {
