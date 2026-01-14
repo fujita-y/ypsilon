@@ -46,9 +46,9 @@ class concurrent_slab_t {
   void sweep(void* slab);
 
  public:
+  mutex_t m_lock;
   slab_traits_t* m_vacant;
   slab_traits_t* m_occupied;
-  mutex_t m_lock;
   int m_object_size;
   int m_cache_limit;
   concurrent_slab_t();

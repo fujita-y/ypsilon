@@ -89,18 +89,18 @@ class concurrent_heap_t {
     return (m_concurrent_pool->m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
   }
 
-  scm_obj_t* m_mark_stack;
-  mutex_t m_collector_lock;
-  cond_t m_mutator_wake;
-  cond_t m_collector_wake;
   concurrent_queue_t<scm_obj_t> m_shade_queue;
   collector_usage_t m_usage;
+  cond_t m_mutator_wake;
+  cond_t m_collector_wake;
+  mutex_t m_collector_lock;
+  scm_obj_t* m_mark_stack;
   int m_root_snapshot_mode;
+  bool m_read_barrier;
+  bool m_write_barrier;
   bool m_collector_kicked;
   bool m_mutator_stopped;
   bool m_stop_the_world;
-  bool m_read_barrier;
-  bool m_write_barrier;
 
   void set_snapshot_root_proc(std::function<void()> callback) { m_snapshot_root_proc = callback; }
   void set_trace_proc(std::function<void(void* obj)> callback) { m_trace_proc = callback; }
@@ -154,9 +154,6 @@ class concurrent_heap_t {
   void concurrent_mark();
   bool synchronized_mark();
 
-  concurrent_pool_t* m_concurrent_pool;
-  scm_obj_t* m_mark_sp;
-  pthread_t m_collector_thread;
   std::function<void(void* obj)> m_trace_proc;
   std::function<void(void* obj)> m_finalize_proc;
   std::function<void(void)> m_clear_trip_bytes_proc;
@@ -164,10 +161,13 @@ class concurrent_heap_t {
   std::function<void(void)> m_update_weak_reference_proc;
   std::function<void(void)> m_debug_post_completation_proc;
   std::function<void(void* slab)> m_debug_check_slab_proc;
+  concurrent_pool_t* m_concurrent_pool;
+  scm_obj_t* m_mark_sp;
+  uint8_t* m_sweep_wavefront;
+  pthread_t m_collector_thread;
   int m_mark_stack_size;
   bool m_collector_ready;
   bool m_collector_terminating;
-  uint8_t* m_sweep_wavefront;
   bool m_alloc_barrier;
   void* allocate(size_t size, bool slab, bool gc);
   void deallocate(void* p);
