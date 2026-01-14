@@ -41,10 +41,8 @@ concurrent_heap_t::concurrent_heap_t() {
   m_mutator_stopped = false;
 }
 
-void concurrent_heap_t::init(object_heap_t* heap, concurrent_pool_t* pool) {
-  assert(heap);
+void concurrent_heap_t::init(concurrent_pool_t* pool) {
   assert(pool);
-  m_heap = heap;
   m_concurrent_pool = pool;
   m_sweep_wavefront = (uint8_t*)m_concurrent_pool->m_pool + m_concurrent_pool->m_pool_size;
   assert(m_sweep_wavefront);
@@ -54,8 +52,6 @@ void concurrent_heap_t::init(object_heap_t* heap, concurrent_pool_t* pool) {
 void* concurrent_heap_t::allocate(size_t size, bool slab, bool gc) { return m_concurrent_pool->allocate(size, slab, gc); }
 
 void concurrent_heap_t::deallocate(void* p) { m_concurrent_pool->deallocate(p); }
-
-void concurrent_heap_t::finalize(void* obj) { ::finalize(m_heap, obj); }
 
 void concurrent_heap_t::terminate() {
   m_collector_lock.lock();

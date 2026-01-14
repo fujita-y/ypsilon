@@ -52,25 +52,17 @@ class collector_usage_t {
 class concurrent_heap_t {
  public:
   concurrent_heap_t();
-  void init(object_heap_t* heap, concurrent_pool_t* pool);
+  void init(concurrent_pool_t* pool);
   void terminate();
   void collect();
   // Bridge methods for slab_cache_t to avoid direct object_heap_t access
   void* allocate(size_t size, bool slab, bool gc);
   void deallocate(void* p);
-  void finalize(void* obj);
   void shade(scm_obj_t obj);
   void interior_shade(void* ref);
   void dequeue_root();
   void enqueue_root(scm_obj_t obj);
   void write_barrier(scm_obj_t rhs);
-
-  void set_snapshot_root_proc(std::function<void()> callback) { m_snapshot_root_proc = callback; }
-  void set_trace_proc(std::function<void(void* obj)> callback) { m_trace_proc = callback; }
-  void set_clear_trip_bytes_proc(std::function<void(void)> callback) { m_clear_trip_bytes_proc = callback; }
-  void set_update_weak_reference_proc(std::function<void(void)> callback) { m_update_weak_reference_proc = callback; }
-  void set_debug_post_completation_proc(std::function<void(void)> callback) { m_debug_post_completation_proc = callback; }
-  void set_debug_check_slab_proc(std::function<void(void* slab)> callback) { m_debug_check_slab_proc = callback; }
 
   bool in_slab(void* obj) {
     assert(obj);
@@ -115,24 +107,31 @@ class concurrent_heap_t {
   scm_obj_t* m_mark_stack;
   int m_mark_stack_size;
 
- private:
   static thread_main_t collector_thread(void* param);
   void concurrent_collect();
   void synchronized_collect();
   void concurrent_mark();
   bool synchronized_mark();
   concurrent_pool_t* m_concurrent_pool;
-  object_heap_t* m_heap;
   pthread_t m_collector_thread;
   bool m_collector_ready;
   bool m_collector_terminating;
 
   std::function<void(void* obj)> m_trace_proc;
+  std::function<void(void* obj)> m_finalize_proc;
   std::function<void(void)> m_clear_trip_bytes_proc;
   std::function<void(void)> m_snapshot_root_proc;
   std::function<void(void)> m_update_weak_reference_proc;
   std::function<void(void)> m_debug_post_completation_proc;
   std::function<void(void* slab)> m_debug_check_slab_proc;
+
+  void set_snapshot_root_proc(std::function<void()> callback) { m_snapshot_root_proc = callback; }
+  void set_trace_proc(std::function<void(void* obj)> callback) { m_trace_proc = callback; }
+  void set_finalize_proc(std::function<void(void* obj)> callback) { m_finalize_proc = callback; }
+  void set_clear_trip_bytes_proc(std::function<void(void)> callback) { m_clear_trip_bytes_proc = callback; }
+  void set_update_weak_reference_proc(std::function<void(void)> callback) { m_update_weak_reference_proc = callback; }
+  void set_debug_post_completation_proc(std::function<void(void)> callback) { m_debug_post_completation_proc = callback; }
+  void set_debug_check_slab_proc(std::function<void(void* slab)> callback) { m_debug_check_slab_proc = callback; }
 
   void snapshot_root() {
     if (!m_snapshot_root_proc) {
@@ -145,6 +144,12 @@ class concurrent_heap_t {
       fatal("%s:%u m_trace_proc undefined", __FILE__, __LINE__);
     }
     m_trace_proc(obj);
+  }
+  void finalize(void* obj) {
+    if (!m_finalize_proc) {
+      fatal("%s:%u m_finalize_proc undefined", __FILE__, __LINE__);
+    }
+    m_finalize_proc(obj);
   }
   void clear_trip_bytes() {
     if (!m_clear_trip_bytes_proc) {
