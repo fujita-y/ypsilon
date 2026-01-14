@@ -64,7 +64,7 @@ scm_obj_t object_set_t::get(const char* name, int len) {
         if (string_equiv(name, get_name(entry), len)) {
           if (m_heap->m_concurrent_heap.m_read_barrier) {
             if (DETAILED_STATISTIC) m_heap->m_concurrent_heap.m_usage.m_barriered_read++;
-            SLAB_TRAITS_OF(entry)->cache->mark(entry);
+            SLAB_TRAITS_OF(entry)->cache->unconditional_mark(entry);
           }
           return entry;
         }

@@ -402,7 +402,7 @@ void object_heap_t::snapshot_root() {
 void object_heap_t::trace(scm_obj_t obj) {
   assert(m_concurrent_heap.is_collectible(obj));
   slab_traits_t* traits = SLAB_TRAITS_OF(obj);
-  if (traits->cache->test_and_mark(obj)) {
+  if (traits->cache->test_and_set_mark(obj)) {
 #if HPDEBUG
 //        printf(";; [collector: duplicate objects in mark stack]\n");
 //        fflush(stdout);

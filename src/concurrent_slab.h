@@ -75,7 +75,7 @@ class concurrent_slab_t {
     return (bitmap[bit_n >> 3] & (1 << (bit_n & 7))) != 0;
   }
 
-  void mark(void* obj) {
+  void unconditional_mark(void* obj) {
     assert(m_bitmap_size);
     uint8_t* bitmap = (uint8_t*)SLAB_TRAITS_OF(obj) - m_bitmap_size;
     int bit_n = ((intptr_t)obj & (SLAB_SIZE - 1)) >> m_object_size_shift;
@@ -83,7 +83,7 @@ class concurrent_slab_t {
     bitmap[bit_n >> 3] |= (1 << (bit_n & 7));
   }
 
-  bool test_and_mark(void* obj) {
+  bool test_and_set_mark(void* obj) {
     assert(m_bitmap_size);
     uint8_t* bitmap = (uint8_t*)SLAB_TRAITS_OF(obj) - m_bitmap_size;
     int bit_n = ((intptr_t)obj & (SLAB_SIZE - 1)) >> m_object_size_shift;

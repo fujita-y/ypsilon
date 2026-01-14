@@ -129,7 +129,7 @@ void* concurrent_slab_t::new_collectible_object() {
     if (traits->free == NULL) unload_filled(traits);
     if (synchronize) {
       if ((uintptr_t)obj >= (uintptr_t)m_concurrent_heap->m_sweep_wavefront) {
-        mark(obj);
+        unconditional_mark(obj);
         if (DETAILED_STATISTIC) m_concurrent_heap->m_usage.m_barriered_alloc++;
       }
       m_lock.unlock();
@@ -149,7 +149,7 @@ void* concurrent_slab_t::new_collectible_object() {
     }
     if (synchronize) {
       if ((uintptr_t)slab >= (uintptr_t)m_concurrent_heap->m_sweep_wavefront) {
-        mark(slab);
+        unconditional_mark(slab);
         if (DETAILED_STATISTIC) m_concurrent_heap->m_usage.m_barriered_alloc++;
       }
       m_lock.unlock();
