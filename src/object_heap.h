@@ -85,7 +85,7 @@ class object_heap_t {
 #if USE_CONST_LITERAL
   bool is_immutable_pair(void* obj) {
     assert(PAIRP(obj));
-    return (OBJECT_SLAB_TRAITS_OF(obj)->cache == &m_immutable_cons);
+    return (SLAB_TRAITS_OF(obj)->cache == &m_immutable_cons);
   }
 #endif
 

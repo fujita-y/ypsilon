@@ -75,7 +75,7 @@ class concurrent_heap_t {
     assert(obj);
     int index = ((uint8_t*)obj - m_concurrent_pool->m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
     assert(index >= 0 && index < m_concurrent_pool->m_pool_watermark);
-    return (m_concurrent_pool->m_pool[index] & PTAG_SLAB) && OBJECT_SLAB_TRAITS_OF(obj)->free != NULL;
+    return (m_concurrent_pool->m_pool[index] & PTAG_SLAB) && SLAB_TRAITS_OF(obj)->free != NULL;
   }
 
   bool in_heap(void* obj) {

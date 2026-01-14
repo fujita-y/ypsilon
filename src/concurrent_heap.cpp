@@ -101,13 +101,13 @@ void concurrent_heap_t::synchronized_collect() {
   update_weak_reference();
   m_read_barrier = false;
 
-  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool->m_pool);
+  slab_traits_t* traits = SLAB_TRAITS_OF(m_concurrent_pool->m_pool);
   for (int i = 0; i < m_concurrent_pool->m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool->m_pool[i])) {
       uint8_t* slab = m_concurrent_pool->m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT);
       traits->cache->sweep(slab);
     }
-    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
 
   GC_TRACE(";; [collector: start-the-world]\n");
@@ -243,7 +243,7 @@ fallback:
   while (i < capacity) {
     int memo = m_concurrent_pool->m_pool_usage;
     if (GCSLABP(m_concurrent_pool->m_pool[i])) {
-      if (OBJECT_SLAB_TRAITS_OF(slab)->cache == NULL) {
+      if (SLAB_TRAITS_OF(slab)->cache == NULL) {
 #if HPDEBUG
         printf(";; [collector: wait for mutator complete slab init]\n");
         fflush(stdout);
@@ -252,8 +252,8 @@ fallback:
         continue;
       }
       debug_check_slab(slab);
-      OBJECT_SLAB_TRAITS_OF(slab)->cache->sweep(slab);
-      slab += OBJECT_SLAB_SIZE;
+      SLAB_TRAITS_OF(slab)->cache->sweep(slab);
+      slab += SLAB_SIZE;
       i++;
     } else {
       scoped_lock lock(m_concurrent_pool->m_lock);
@@ -264,7 +264,7 @@ fallback:
           m_alloc_barrier = false;
           goto finish;
         }
-        slab += OBJECT_SLAB_SIZE;
+        slab += SLAB_SIZE;
         m_sweep_wavefront = slab;
         i++;
       } while (!GCSLABP(m_concurrent_pool->m_pool[i]));
@@ -363,7 +363,7 @@ bool concurrent_heap_t::synchronized_mark() {
 void concurrent_heap_t::shade(scm_obj_t obj) {
   if (CELLP(obj)) {
     assert(obj);
-    if (OBJECT_SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
+    if (SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
       if (m_mark_sp < m_mark_stack + m_mark_stack_size) {
         *m_mark_sp++ = obj;
         return;
@@ -389,7 +389,7 @@ void concurrent_heap_t::interior_shade(void* ref) {
     assert(i >= 0 && i < m_concurrent_pool->m_pool_watermark);
     assert(GCSLABP(m_concurrent_pool->m_pool[i]));
 #endif
-    shade(OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref));
+    shade(SLAB_TRAITS_OF(ref)->cache->lookup(ref));
   }
 }
 
@@ -423,9 +423,9 @@ void concurrent_heap_t::write_barrier(scm_obj_t rhs) {
   // simple (Dijkstra)
   if (m_write_barrier) {
     if (CELLP(rhs)) {
-      if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
+      if (SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
         while (m_shade_queue.wait_lock_try_put(rhs) == false) {
-          if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
+          if (SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
           if (m_stop_the_world) {
             GC_TRACE(";; [write-barrier: m_shade_queue overflow, during stop-the-world]\n");
             m_collector_lock.lock();

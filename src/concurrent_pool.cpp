@@ -16,18 +16,18 @@ concurrent_pool_t::concurrent_pool_t() {
 
 void concurrent_pool_t::init(size_t pool_size, size_t init_size) {
 #ifndef NDEBUG
-  printf("OBJECT_SLAB_SIZE:%ld\n", OBJECT_SLAB_SIZE);
+  printf("SLAB_SIZE:%ld\n", SLAB_SIZE);
   printf("getpagesize():%d\n", getpagesize());
 #endif
-  assert(getpagesize() >= OBJECT_SLAB_SIZE);
-  assert((getpagesize() % OBJECT_SLAB_SIZE) == 0);  // for optimal performance
-  assert(pool_size >= OBJECT_SLAB_SIZE * 2);        // check minimum (1 directory + 1 datum)
+  assert(getpagesize() >= SLAB_SIZE);
+  assert((getpagesize() % SLAB_SIZE) == 0);  // for optimal performance
+  assert(pool_size >= SLAB_SIZE * 2);        // check minimum (1 directory + 1 datum)
   pool_size = pool_size < 2 ? 2 : pool_size;
   init_size = init_size < pool_size ? init_size : pool_size;
   // pool
   assert(m_pool == NULL);
-  m_pool_size = (pool_size + OBJECT_SLAB_SIZE - 1) & ~(OBJECT_SLAB_SIZE - 1);
-  m_map_size = m_pool_size + OBJECT_SLAB_SIZE;
+  m_pool_size = (pool_size + SLAB_SIZE - 1) & ~(SLAB_SIZE - 1);
+  m_map_size = m_pool_size + SLAB_SIZE;
   m_map = (uint8_t*)heap_map(PREFERRED_MMAP_ADDRESS, m_map_size);
   if (m_map == HEAP_MAP_FAILED) {
     m_map = NULL;
@@ -36,12 +36,12 @@ void concurrent_pool_t::init(size_t pool_size, size_t init_size) {
 #ifndef NDEBUG
   printf("mmap address:0x%lx\n", (uintptr_t)m_map);
 #endif
-  m_pool = (uint8_t*)(((uintptr_t)m_map + OBJECT_SLAB_SIZE - 1) & ~(OBJECT_SLAB_SIZE - 1));
-  assert(((uintptr_t)m_pool & (OBJECT_SLAB_SIZE - 1)) == 0);
+  m_pool = (uint8_t*)(((uintptr_t)m_map + SLAB_SIZE - 1) & ~(SLAB_SIZE - 1));
+  assert(((uintptr_t)m_pool & (SLAB_SIZE - 1)) == 0);
   // ptag
-  int n_tag = m_pool_size / OBJECT_SLAB_SIZE;
-  int n_slab = (n_tag + OBJECT_SLAB_SIZE - 1) / OBJECT_SLAB_SIZE;
-  memset(m_pool, PTAG_FREE, n_slab * OBJECT_SLAB_SIZE);
+  int n_tag = m_pool_size / SLAB_SIZE;
+  int n_slab = (n_tag + SLAB_SIZE - 1) / SLAB_SIZE;
+  memset(m_pool, PTAG_FREE, n_slab * SLAB_SIZE);
   for (int i = 0; i < n_slab; i++) m_pool[i] = PTAG_USED;
   m_pool_watermark = (init_size >> OBJECT_SLAB_SIZE_SHIFT);
   if (m_pool_watermark <= n_slab || m_pool_watermark >= (m_pool_size >> OBJECT_SLAB_SIZE_SHIFT)) {
@@ -73,7 +73,7 @@ void* concurrent_pool_t::allocate(size_t size, bool for_slab, bool for_collectib
       attr = PTAG_SLAB;
   }
   assert(m_pool);
-  int npage = (size + OBJECT_SLAB_SIZE - 1) >> OBJECT_SLAB_SIZE_SHIFT;
+  int npage = (size + SLAB_SIZE - 1) >> OBJECT_SLAB_SIZE_SHIFT;
   scoped_lock lock(m_lock);
   if (npage == 1) {
     for (int i = m_pool_memo; i < m_pool_watermark; i++) {
@@ -115,7 +115,7 @@ void concurrent_pool_t::deallocate(void* p) {
   scoped_lock lock(m_lock);
   assert(p);
   assert(m_pool);
-  assert(((intptr_t)p & (OBJECT_SLAB_SIZE - 1)) == 0);
+  assert(((intptr_t)p & (SLAB_SIZE - 1)) == 0);
   int i = ((uint8_t*)p - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
   if (i < m_pool_memo) m_pool_memo = i;
   assert(i >= 0 && i < m_pool_watermark);
@@ -131,7 +131,7 @@ void concurrent_pool_t::deallocate(void* p) {
     }
   }
 #if !defined(NDEBUG) || HPDEBUG
-  memset(p, 0xBD, OBJECT_SLAB_SIZE);
+  memset(p, 0xBD, SLAB_SIZE);
 #endif
 }
 
@@ -139,7 +139,7 @@ bool concurrent_pool_t::extend_pool(size_t extend_size) {
   scoped_lock lock(m_lock);
   int capacity = (m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
   if (m_pool_watermark == capacity) return false;
-  m_pool_watermark += ((extend_size + OBJECT_SLAB_SIZE - 1) >> OBJECT_SLAB_SIZE_SHIFT);
+  m_pool_watermark += ((extend_size + SLAB_SIZE - 1) >> OBJECT_SLAB_SIZE_SHIFT);
   if (m_pool_watermark > capacity) m_pool_watermark = capacity;
   return true;
 }

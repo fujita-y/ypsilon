@@ -399,7 +399,7 @@ struct vm_env_rec_t {
 };
 
 #define HEAPFORWARDPTR(obj)     ((intptr_t)(obj) & (~0x7))
-#define HEAPFORWARDPTRP(obj)    (((intptr_t)(obj)&0x7) == 0x6)
+#define HEAPFORWARDPTRP(obj)    (((intptr_t)(obj) & 0x7) == 0x6)
 #define MAKEHEAPFORWARDPTR(obj) ((intptr_t)(obj) | 0x6)
 
 #define FIXNUM_MAX              (INTPTR_MAX / 2)
@@ -528,16 +528,16 @@ struct vm_env_rec_t {
 #define HASH_BOUND_MAX           UINT32_MAX
 
 #if ARCH_LP64
-  #define OBJECT_SLAB_SIZE        (8192L)
+  #define SLAB_SIZE               (8192L)
   #define OBJECT_SLAB_SIZE_SHIFT  (12 + 1)
-  #define OBJECT_SLAB_THRESHOLD   (OBJECT_SLAB_SIZE / 8)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
-  #define VM_STACK_BYTESIZE       (OBJECT_SLAB_SIZE * 4)
+  #define OBJECT_SLAB_THRESHOLD   (SLAB_SIZE / 8)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
+  #define VM_STACK_BYTESIZE       (SLAB_SIZE * 4)
   #define VM_STACK_SAVE_THRESHOLD (VM_STACK_BYTESIZE - (VM_STACK_BYTESIZE >> 1))  // 50%
 #else
-  #define OBJECT_SLAB_SIZE        (4096L)
+  #define SLAB_SIZE               (4096L)
   #define OBJECT_SLAB_SIZE_SHIFT  (12)
-  #define OBJECT_SLAB_THRESHOLD   (OBJECT_SLAB_SIZE / 4)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
-  #define VM_STACK_BYTESIZE       (OBJECT_SLAB_SIZE * 4)
+  #define OBJECT_SLAB_THRESHOLD   (SLAB_SIZE / 4)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
+  #define VM_STACK_BYTESIZE       (SLAB_SIZE * 4)
   #define VM_STACK_SAVE_THRESHOLD (VM_STACK_BYTESIZE - (VM_STACK_BYTESIZE >> 1))  // 50%
 #endif
 

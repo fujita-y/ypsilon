@@ -64,7 +64,7 @@ scm_obj_t object_set_t::get(const char* name, int len) {
         if (string_equiv(name, get_name(entry), len)) {
           if (m_heap->m_concurrent_heap.m_read_barrier) {
             if (DETAILED_STATISTIC) m_heap->m_concurrent_heap.m_usage.m_barriered_read++;
-            OBJECT_SLAB_TRAITS_OF(entry)->cache->mark(entry);
+            SLAB_TRAITS_OF(entry)->cache->mark(entry);
           }
           return entry;
         }
@@ -187,7 +187,7 @@ void object_set_t::sweep() {
     if (obj == scm_hash_free) continue;
     if (obj == scm_hash_deleted) continue;
     assert(SYMBOLP(obj) || STRINGP(obj));
-    slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
+    slab_traits_t* traits = SLAB_TRAITS_OF(obj);
     if (traits->cache->state(obj)) continue;
     m_elts[i] = scm_hash_deleted;
     m_live--;

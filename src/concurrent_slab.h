@@ -9,8 +9,8 @@
 
 class concurrent_heap_t;
 
-#define OBJECT_SLAB_TOP_OF(obj)    ((uint8_t*)(((uintptr_t)(obj)) & ~(OBJECT_SLAB_SIZE - 1)))
-#define OBJECT_SLAB_TRAITS_OF(obj) ((slab_traits_t*)(OBJECT_SLAB_TOP_OF(obj) + OBJECT_SLAB_SIZE - sizeof(slab_traits_t)))
+#define SLAB_TOP_OF(obj)    ((uint8_t*)(((uintptr_t)(obj)) & ~(SLAB_SIZE - 1)))
+#define SLAB_TRAITS_OF(obj) ((slab_traits_t*)(SLAB_TOP_OF(obj) + SLAB_SIZE - sizeof(slab_traits_t)))
 
 struct concurrent_slab_t;
 struct slab_traits_t;
@@ -60,31 +60,31 @@ class concurrent_slab_t {
   void unload_filled(slab_traits_t* traits);
 
   void* lookup(void* ref) {
-    assert((uint8_t*)ref < (uint8_t*)OBJECT_SLAB_TRAITS_OF(ref) - m_bitmap_size);
-    assert((uint8_t*)ref >= (uint8_t*)OBJECT_SLAB_TOP_OF(ref));
+    assert((uint8_t*)ref < (uint8_t*)SLAB_TRAITS_OF(ref) - m_bitmap_size);
+    assert((uint8_t*)ref >= (uint8_t*)SLAB_TOP_OF(ref));
     return (void*)((intptr_t)ref & ~(m_object_size - 1));
   }
 
   bool state(void* obj) {
     assert(m_bitmap_size);
-    uint8_t* bitmap = (uint8_t*)OBJECT_SLAB_TRAITS_OF(obj) - m_bitmap_size;
-    int bit_n = ((intptr_t)obj & (OBJECT_SLAB_SIZE - 1)) >> m_object_size_shift;
+    uint8_t* bitmap = (uint8_t*)SLAB_TRAITS_OF(obj) - m_bitmap_size;
+    int bit_n = ((intptr_t)obj & (SLAB_SIZE - 1)) >> m_object_size_shift;
     assert(bit_n < m_bitmap_size * 8);
     return (bitmap[bit_n >> 3] & (1 << (bit_n & 7))) != 0;
   }
 
   void mark(void* obj) {
     assert(m_bitmap_size);
-    uint8_t* bitmap = (uint8_t*)OBJECT_SLAB_TRAITS_OF(obj) - m_bitmap_size;
-    int bit_n = ((intptr_t)obj & (OBJECT_SLAB_SIZE - 1)) >> m_object_size_shift;
+    uint8_t* bitmap = (uint8_t*)SLAB_TRAITS_OF(obj) - m_bitmap_size;
+    int bit_n = ((intptr_t)obj & (SLAB_SIZE - 1)) >> m_object_size_shift;
     assert(bit_n < m_bitmap_size * 8);
     bitmap[bit_n >> 3] |= (1 << (bit_n & 7));
   }
 
   bool test_and_mark(void* obj) {
     assert(m_bitmap_size);
-    uint8_t* bitmap = (uint8_t*)OBJECT_SLAB_TRAITS_OF(obj) - m_bitmap_size;
-    int bit_n = ((intptr_t)obj & (OBJECT_SLAB_SIZE - 1)) >> m_object_size_shift;
+    uint8_t* bitmap = (uint8_t*)SLAB_TRAITS_OF(obj) - m_bitmap_size;
+    int bit_n = ((intptr_t)obj & (SLAB_SIZE - 1)) >> m_object_size_shift;
     assert(bit_n < m_bitmap_size * 8);
     uint8_t bit = (1 << (bit_n & 7));
     uint8_t* p = bitmap + (bit_n >> 3);

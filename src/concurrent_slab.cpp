@@ -40,7 +40,7 @@ bool concurrent_slab_t::init(concurrent_heap_t* concurrent_heap, int object_size
   m_cache_limit = 0;
   int bits = m_object_size;
   while (bits >>= 1) m_object_size_shift++;
-  if (gc) m_bitmap_size = ((OBJECT_SLAB_SIZE >> m_object_size_shift) + 7) / 8;
+  if (gc) m_bitmap_size = ((SLAB_SIZE >> m_object_size_shift) + 7) / 8;
   return true;
 }
 
@@ -50,7 +50,7 @@ void concurrent_slab_t::destroy() {
     do {
       slab_traits_t* elt = traits;
       traits = traits->next;
-      m_concurrent_heap->deallocate(OBJECT_SLAB_TOP_OF(elt));
+      m_concurrent_heap->deallocate(SLAB_TOP_OF(elt));
     } while (traits != m_vacant);
     m_vacant = NULL;
   }
@@ -59,7 +59,7 @@ void concurrent_slab_t::destroy() {
     do {
       slab_traits_t* elt = traits;
       traits = traits->next;
-      m_concurrent_heap->deallocate(OBJECT_SLAB_TOP_OF(elt));
+      m_concurrent_heap->deallocate(SLAB_TOP_OF(elt));
     } while (traits != m_occupied);
     m_occupied = NULL;
   }
@@ -136,9 +136,9 @@ void* concurrent_slab_t::new_collectible_object() {
     }
     return obj;
   } else {
-    uint8_t* slab = (uint8_t*)m_concurrent_heap->allocate(OBJECT_SLAB_SIZE, true, true);
+    uint8_t* slab = (uint8_t*)m_concurrent_heap->allocate(SLAB_SIZE, true, true);
     if (slab) {
-      slab_traits_t* traits = (slab_traits_t*)(slab + OBJECT_SLAB_SIZE - sizeof(slab_traits_t));
+      slab_traits_t* traits = (slab_traits_t*)(slab + SLAB_SIZE - sizeof(slab_traits_t));
       traits->next = traits->prev = traits;
       traits->refc = 1;
       traits->cache = this;
@@ -171,9 +171,9 @@ void* concurrent_slab_t::new_object() {
     m_lock.unlock();
     return obj;
   } else {
-    uint8_t* slab = (uint8_t*)m_concurrent_heap->allocate(OBJECT_SLAB_SIZE, true, m_bitmap_size != 0);
+    uint8_t* slab = (uint8_t*)m_concurrent_heap->allocate(SLAB_SIZE, true, m_bitmap_size != 0);
     if (slab) {
-      slab_traits_t* traits = (slab_traits_t*)(slab + OBJECT_SLAB_SIZE - sizeof(slab_traits_t));
+      slab_traits_t* traits = (slab_traits_t*)(slab + SLAB_SIZE - sizeof(slab_traits_t));
       traits->next = traits->prev = traits;
       traits->refc = 1;
       traits->cache = this;
@@ -190,7 +190,7 @@ void concurrent_slab_t::delete_object(void* obj) {
   assert(m_concurrent_heap);
   assert(m_bitmap_size == 0);
   m_lock.lock();
-  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
+  slab_traits_t* traits = SLAB_TRAITS_OF(obj);
   assert(traits->refc > 0);
   freelist_t* first = traits->free;
   ((freelist_t*)obj)->null = NULL;
@@ -208,7 +208,7 @@ void concurrent_slab_t::delete_object(void* obj) {
     traits->next->prev = traits->prev;
     if (traits == m_vacant) m_vacant = (traits == traits->next) ? NULL : traits->next;
     m_lock.unlock();
-    m_concurrent_heap->deallocate(OBJECT_SLAB_TOP_OF(traits));
+    m_concurrent_heap->deallocate(SLAB_TOP_OF(traits));
     return;
   } else {
     assert(m_occupied);
@@ -230,7 +230,7 @@ void concurrent_slab_t::delete_object(void* obj) {
 
 void concurrent_slab_t::attach(void* slab) {
   m_lock.lock();
-  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
+  slab_traits_t* traits = SLAB_TRAITS_OF(slab);
   if (traits->free == NULL) {
     if (m_occupied) {
       traits->prev = m_occupied;
@@ -254,7 +254,7 @@ void concurrent_slab_t::attach(void* slab) {
 
 void concurrent_slab_t::detach(void* slab) {
   m_lock.lock();
-  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
+  slab_traits_t* traits = SLAB_TRAITS_OF(slab);
   traits->prev->next = traits->next;
   traits->next->prev = traits->prev;
   if (traits == m_occupied) {
@@ -272,12 +272,12 @@ void concurrent_slab_t::detach(void* slab) {
 
 void concurrent_slab_t::sweep(void* slab) {
   assert(m_bitmap_size);
-  assert(slab == OBJECT_SLAB_TOP_OF(slab));
-  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
+  assert(slab == SLAB_TOP_OF(slab));
+  slab_traits_t* traits = SLAB_TRAITS_OF(slab);
 
   m_lock.lock();
   if (traits->refc == 0 && m_cache_count < m_cache_limit) {
-    m_concurrent_heap->m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
+    m_concurrent_heap->m_sweep_wavefront = (uint8_t*)slab + SLAB_SIZE;
     m_lock.unlock();
     return;
   }
@@ -296,7 +296,7 @@ void concurrent_slab_t::sweep(void* slab) {
   if (traits->refc == 0) {
     if (m_cache_count > m_cache_limit) {
       m_concurrent_heap->deallocate(slab);
-      m_concurrent_heap->m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
+      m_concurrent_heap->m_sweep_wavefront = (uint8_t*)slab + SLAB_SIZE;
       return;
     }
   }
@@ -331,14 +331,14 @@ done:
   for (int i = 0; i < m_bitmap_size; i++) bitmap[i] = 0;
   traits->refc = refc;
   traits->free = freelist;
-  m_concurrent_heap->m_sweep_wavefront = (uint8_t*)slab + OBJECT_SLAB_SIZE;
+  m_concurrent_heap->m_sweep_wavefront = (uint8_t*)slab + SLAB_SIZE;
   attach(slab);
 }
 
 void concurrent_slab_t::iterate(void* slab, object_iter_proc_t proc, void* desc) {
   assert(m_bitmap_size);
-  assert(slab == OBJECT_SLAB_TOP_OF(slab));
-  slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(slab);
+  assert(slab == SLAB_TOP_OF(slab));
+  slab_traits_t* traits = SLAB_TRAITS_OF(slab);
   size_t step = (m_object_size + OBJECT_DATUM_ALIGN_MASK) & ~OBJECT_DATUM_ALIGN_MASK;
   uint8_t* bitmap = (uint8_t*)traits - m_bitmap_size;
   uint8_t* limit = bitmap - step;

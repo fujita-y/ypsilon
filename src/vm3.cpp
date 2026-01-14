@@ -233,7 +233,7 @@ void VM::check_vm_env(void* lnk) {
       if (!m_heap->m_concurrent_heap.is_collectible(lnk)) {
         fatal("%s:%u check_state_env(): env in bad container, 0x%x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, lnk, m_env, m_cont);
       }
-      scm_obj_t obj = OBJECT_SLAB_TRAITS_OF(lnk)->cache->lookup(lnk);
+      scm_obj_t obj = SLAB_TRAITS_OF(lnk)->cache->lookup(lnk);
       if (!HEAPENVP(obj)) {
         fatal("%s:%u check_state_env(): env in improper object, 0x%x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, lnk, m_env, m_cont);
       }
@@ -268,7 +268,7 @@ void VM::check_vm_cont(void* lnk) {
       if (!m_heap->m_concurrent_heap.is_collectible(lnk)) {
         fatal("%s:%u check_state_cont(): cont in bad container, 0x%x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, lnk, m_env, m_cont);
       }
-      scm_obj_t obj = OBJECT_SLAB_TRAITS_OF(lnk)->cache->lookup(lnk);
+      scm_obj_t obj = SLAB_TRAITS_OF(lnk)->cache->lookup(lnk);
       if (!HEAPCONTP(obj)) {
         fatal("%s:%u check_state_cont(): cont in improper object, 0x%x, m_env 0x%x, m_cont 0x%x", __FILE__, __LINE__, lnk, m_env, m_cont);
       }

@@ -678,11 +678,11 @@ void VM::stop() {
     }
     if (m_cont) {
       assert(m_heap->m_concurrent_heap.is_collectible(m_cont));
-      m_heap->m_concurrent_heap.enqueue_root(OBJECT_SLAB_TRAITS_OF(m_cont)->cache->lookup(m_cont));
+      m_heap->m_concurrent_heap.enqueue_root(SLAB_TRAITS_OF(m_cont)->cache->lookup(m_cont));
     }
     if (m_env) {
       assert(m_heap->m_concurrent_heap.is_collectible(m_env));
-      m_heap->m_concurrent_heap.enqueue_root(OBJECT_SLAB_TRAITS_OF(m_env)->cache->lookup(m_env));
+      m_heap->m_concurrent_heap.enqueue_root(SLAB_TRAITS_OF(m_env)->cache->lookup(m_env));
     }
   }
 #if ENABLE_LLVM_JIT

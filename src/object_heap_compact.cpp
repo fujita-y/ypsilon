@@ -45,7 +45,7 @@ scm_obj_t object_heap_t::forward(scm_obj_t obj) {
 
 void* object_heap_t::interior_forward(void* ref) {
   if (ref) {
-    scm_obj_t from = OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref);
+    scm_obj_t from = SLAB_TRAITS_OF(ref)->cache->lookup(ref);
     scm_obj_t to = forward(from);
     intptr_t offset = (intptr_t)to - (intptr_t)from;
     return (void*)((intptr_t)ref + offset);
@@ -62,7 +62,7 @@ static void relocate_collectible(void* obj, int size, void* desc) {
     assert(size >= sizeof(scm_pair_rec_t));
 
 #if USE_CONST_LITERAL
-    slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
+    slab_traits_t* traits = SLAB_TRAITS_OF(obj);
     if (traits->cache == &heap->m_immutable_cons) {
       to = heap->allocate_immutable_cons();
     } else {
@@ -326,7 +326,7 @@ static void rehash_collectible(void* obj, int size, void* desc) {
 
 relocate_info_t* object_heap_t::relocate(bool pack) {
   relocate_info_t* info = new relocate_info_t(m_concurrent_pool.m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
-  slab_traits_t* first_traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  slab_traits_t* first_traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   slab_traits_t* traits;
   uint8_t* first_slab = m_concurrent_pool.m_pool;
   uint8_t* slab;
@@ -352,8 +352,8 @@ relocate_info_t* object_heap_t::relocate(bool pack) {
         traits->cache->detach(slab);
         info->relocated[i] = true;
       }
-      slab += OBJECT_SLAB_SIZE;
-      traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+      slab += SLAB_SIZE;
+      traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
     }
   } else {
     slab = first_slab;
@@ -363,22 +363,22 @@ relocate_info_t* object_heap_t::relocate(bool pack) {
         traits->cache->detach(slab);
         info->relocated[i] = true;
       }
-      slab += OBJECT_SLAB_SIZE;
-      traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+      slab += SLAB_SIZE;
+      traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
     }
   }
   slab = first_slab;
   traits = first_traits;
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i]) && info->relocated[i]) traits->cache->iterate(slab, relocate_collectible, this);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   return info;
 }
 
 void object_heap_t::resolve(relocate_info_t* info) {
-  slab_traits_t* first_traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  slab_traits_t* first_traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   slab_traits_t* traits;
   uint8_t* first_slab = m_concurrent_pool.m_pool;
   uint8_t* slab;
@@ -386,8 +386,8 @@ void object_heap_t::resolve(relocate_info_t* info) {
   traits = first_traits;
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i]) && info->relocated[i] == false) traits->cache->iterate(slab, resolve_collectible, this);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   m_symbol.resolve();
   m_string.resolve();
@@ -395,8 +395,8 @@ void object_heap_t::resolve(relocate_info_t* info) {
   traits = first_traits;
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i]) && info->relocated[i] == false) traits->cache->iterate(slab, rehash_collectible, this);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   m_symbol.lock();
   m_symbol.inplace_rehash();
@@ -415,8 +415,8 @@ void object_heap_t::resolve(relocate_info_t* info) {
   traits = first_traits;
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (info->relocated[i]) m_concurrent_pool.deallocate(slab);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   delete info;
 }
@@ -534,7 +534,7 @@ static void relocate_private(void* obj, int size, void* desc) {
 
 void object_heap_t::relocate_privates(bool pack) {
   relocate_info_t* info = new relocate_info_t(m_concurrent_pool.m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
-  slab_traits_t* first_traits = OBJECT_SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  slab_traits_t* first_traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   slab_traits_t* traits;
   uint8_t* first_slab = m_concurrent_pool.m_pool;
   uint8_t* slab;
@@ -546,8 +546,8 @@ void object_heap_t::relocate_privates(bool pack) {
         traits->cache->detach(slab);
         info->relocated[i] = true;
       }
-      slab += OBJECT_SLAB_SIZE;
-      traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+      slab += SLAB_SIZE;
+      traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
     }
   } else {
     slab = first_slab;
@@ -557,8 +557,8 @@ void object_heap_t::relocate_privates(bool pack) {
         traits->cache->detach(slab);
         info->relocated[i] = true;
       }
-      slab += OBJECT_SLAB_SIZE;
-      traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+      slab += SLAB_SIZE;
+      traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
     }
   }
   relocate_desc_t desc;
@@ -568,8 +568,8 @@ void object_heap_t::relocate_privates(bool pack) {
   traits = first_traits;
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i])) traits->cache->iterate(slab, relocate_private, &desc);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   m_symbol.relocate(pack);
   m_string.relocate(pack);
@@ -577,8 +577,8 @@ void object_heap_t::relocate_privates(bool pack) {
   traits = first_traits;
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (info->relocated[i]) m_concurrent_pool.deallocate(slab);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   delete info;
 }
