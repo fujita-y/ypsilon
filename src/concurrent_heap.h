@@ -114,6 +114,7 @@ class concurrent_heap_t {
   void set_debug_post_completation_proc(std::function<void(void)> callback) { m_debug_post_completation_proc = callback; }
   void set_debug_check_slab_proc(std::function<void(void* slab)> callback) { m_debug_check_slab_proc = callback; }
 
+ private:
   void snapshot_root() {
     if (!m_snapshot_root_proc) {
       fatal("%s:%u m_snapshot_root_proc undefined", __FILE__, __LINE__);
@@ -151,7 +152,6 @@ class concurrent_heap_t {
     if (m_debug_check_slab_proc) m_debug_check_slab_proc(slab);
   }
 
- private:
   static void* collector_thread(void* param);
   void concurrent_collect();
   void synchronized_collect();
