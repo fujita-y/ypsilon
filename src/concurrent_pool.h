@@ -19,9 +19,9 @@ class concurrent_pool_t {
   friend class concurrent_heap_t;
 
  private:
-  mutex_t m_lock;
   uint8_t* m_map;
   size_t m_map_size;
+  mutex_t m_lock;
   int m_pool_memo;
   int m_pool_usage;
   int m_pool_threshold;
