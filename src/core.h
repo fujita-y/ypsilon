@@ -101,8 +101,6 @@
 
 #define array_sizeof(a) ((int)(sizeof(a) / sizeof(a[0])))
 
-class VM;
-
 #include "sysdep.h"
 
 extern int main_command_line_argc;

@@ -167,41 +167,4 @@ inline double msec() {
     } while (0)
 #endif
 
-#if defined(NO_TLS)
-
-inline VM* current_vm() {
-  extern pthread_key_t s_current_vm;
-  return (VM*)pthread_getspecific(s_current_vm);
-}
-
-inline void set_current_vm(VM* vm) {
-  extern pthread_key_t s_current_vm;
-  MTVERIFY(pthread_setspecific(s_current_vm, vm));
-}
-
-#else
-
-inline VM* current_vm() {
-  extern __thread VM* s_current_vm;
-  return s_current_vm;
-}
-
-inline void set_current_vm(VM* vm) {
-  extern __thread VM* s_current_vm;
-  s_current_vm = vm;
-}
-
-#endif
-
-typedef pthread_t thread_t;
-typedef void* thread_main_t;
-
-inline void thread_start(void* (*func)(void*), void* param) {
-  pthread_t th;
-  MTVERIFY(pthread_create(&th, NULL, func, param));
-  MTVERIFY(pthread_detach(th));
-}
-
-inline void thread_yield() { sched_yield(); }
-
 #endif  // SYSDEP_H_INCLUDED

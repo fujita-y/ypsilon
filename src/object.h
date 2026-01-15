@@ -62,6 +62,8 @@
 
 #define PORT_LOOKAHEAD_SIZE     8
 
+class VM;
+
 typedef void* scm_obj_t;
 typedef uintptr_t scm_hdr_t;
 typedef scm_obj_t scm_cell_t;

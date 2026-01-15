@@ -244,11 +244,8 @@ fallback:
     int memo = m_concurrent_pool->m_pool_usage;
     if (GCSLABP(m_concurrent_pool->m_pool[i])) {
       if (SLAB_TRAITS_OF(slab)->cache == NULL) {
-#if HPDEBUG
-        printf(";; [collector: wait for mutator complete slab init]\n");
-        fflush(stdout);
-#endif
-        thread_yield();
+        GC_TRACE(";; [collector: wait for mutator complete slab init]\n");
+        sched_yield();
         continue;
       }
       debug_check_slab(slab);
@@ -292,7 +289,7 @@ finish:
   debug_post_completation();
 }
 
-thread_main_t concurrent_heap_t::collector_thread(void* param) {
+void* concurrent_heap_t::collector_thread(void* param) {
   concurrent_heap_t& concurrent_heap = *(concurrent_heap_t*)param;
   concurrent_heap.m_collector_lock.lock();
   concurrent_heap.m_collector_ready = true;
@@ -430,7 +427,7 @@ void concurrent_heap_t::write_barrier(scm_obj_t rhs) {
             m_collector_lock.unlock();
           } else {
             GC_TRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
-            thread_yield();
+            sched_yield();
           }
           m_usage.m_shade_queue_hazard++;
         }
