@@ -4,21 +4,68 @@
 #ifndef SYSDEP_H_INCLUDED
 #define SYSDEP_H_INCLUDED
 
+#include <assert.h>
+#include <ctype.h>
+#include <dirent.h>
+#include <dlfcn.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <float.h>
+#include <limits.h>
+#include <math.h>
+#include <netdb.h>
+#include <pthread.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/file.h>
+#include <sys/mman.h>
+#include <sys/param.h>
+#include <sys/poll.h>
+#include <sys/resource.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/types.h>
+#include <sys/utsname.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
+#include <wctype.h>
+#if !defined(NO_POSIX_SPAWN)
+  #include <spawn.h>
+#endif
+#include <functional>
+
 #if defined(NO_TLS)
   #undef NO_TLS
   #define NO_TLS 1
 #endif
+
 #if defined(NO_POSIX_SPAWN)
   #undef NO_POSIX_SPAWN
   #define NO_POSIX_SPAWN 1
 #endif
+
 #if defined(__DARWIN_64_BIT_INO_T)
   #undef __DARWIN_64_BIT_INO_T
   #define __DARWIN_64_BIT_INO_T 1
 #endif
 
+#if defined(FD_CLOEXEC)
+  #define USE_CLOEXEC 1
+#else
+  #define USE_CLOEXEC 0
+#endif
+
 #define DECLSPEC(x)
 #define ATTRIBUTE(x) __attribute__((x))
+
 #if defined(__LITTLE_ENDIAN__)
   #define ARCH_LITTLE_ENDIAN 1
   #define ARCH_BIG_ENDIAN    0
@@ -41,6 +88,7 @@
 #else
   #error unknown __BYTE_ORDER
 #endif
+
 #if defined(__x86_64__)
   #define ARCH_IA32  0
   #define ARCH_AMD64 1
@@ -74,6 +122,7 @@
 #else
   #error unknown processor
 #endif
+
 #if defined(__LP64__)
   #define ARCH_ILP32 0
   #define ARCH_LP64  1
@@ -84,34 +133,10 @@
   #define ARCH_LLP64 0
 #endif
 
-extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
-
-#include <dirent.h>
-#include <dlfcn.h>
-#include <errno.h>
-#include <netdb.h>
-#include <pthread.h>
-#include <stdint.h>
-#include <sys/file.h>
-#include <sys/mman.h>
-#include <sys/param.h>
-#include <sys/poll.h>
-#include <sys/resource.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/times.h>
-#include <sys/types.h>
-#include <sys/utsname.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#if !defined(NO_POSIX_SPAWN)
-  #include <spawn.h>
-#endif
-
 extern char** environ;
 
 typedef int fd_t;
+
 #if !defined(_LARGEFILE64_SOURCE) && !defined(__off64_t_defined)
 typedef off_t off64_t;
 #endif

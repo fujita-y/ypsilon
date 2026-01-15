@@ -5,8 +5,6 @@
 #define CONCURRENT_HEAP_H_INCLUDED
 
 #include "core.h"
-#include "object.h"
-#include <functional>
 #include "cond.h"
 #include "mutex.h"
 #include "queue.h"

@@ -5,22 +5,20 @@
 #include "concurrent_heap.h"
 #include "concurrent_pool.h"
 #include "concurrent_slab.h"
-#include "object_factory.h"
 #include "object_heap.h"
-#include "port.h"
 
 #define DEBUG_CONCURRENT_COLLECT 0
 #define ENSURE_REALTIME          (5.0)  // in msec (1.0 == 0.001sec)
 #define TIMEOUT_CHECK_EACH       (500)
 
 #if GCDEBUG
-  #define GC_TRACE(fmt) \
-    do {                \
-      printf(fmt);      \
-      fflush(stdout);   \
+  #define GCTRACE(fmt) \
+    do {               \
+      printf(fmt);     \
+      fflush(stdout);  \
     } while (0)
 #else
-  #define GC_TRACE(fmt) ((void)0)
+  #define GCTRACE(fmt) ((void)0)
 #endif
 
 concurrent_heap_t::concurrent_heap_t() {
@@ -67,7 +65,7 @@ void concurrent_heap_t::collect() {
     if (m_collector_kicked == false && m_collector_ready) {
       m_collector_kicked = true;
       m_collector_wake.signal();
-      GC_TRACE(";; [collector: running]\n");
+      GCTRACE(";; [collector: running]\n");
     }
     m_collector_lock.unlock();
   }
@@ -81,7 +79,7 @@ void concurrent_heap_t::synchronized_collect() {
   assert(m_mutator_stopped == false);
   m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_EVERYTHING;
   m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world phase 1]\n");
+  GCTRACE(";; [collector: stop-the-world phase 1]\n");
   while (!m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
     if (!m_mutator_stopped) {
@@ -90,12 +88,12 @@ void concurrent_heap_t::synchronized_collect() {
     }
   }
   double t1 = msec();
-  GC_TRACE(";; [collector: mark]\n");
+  GCTRACE(";; [collector: mark]\n");
   dequeue_root();
   while (synchronized_mark()) continue;
 
   // sweep
-  GC_TRACE(";; [collector: sweep]\n");
+  GCTRACE(";; [collector: sweep]\n");
   m_sweep_wavefront = (uint8_t*)m_concurrent_pool->m_pool;
 
   update_weak_reference();
@@ -110,7 +108,7 @@ void concurrent_heap_t::synchronized_collect() {
     traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
 
-  GC_TRACE(";; [collector: start-the-world]\n");
+  GCTRACE(";; [collector: start-the-world]\n");
   m_stop_the_world = false;
   m_sweep_wavefront = (uint8_t*)m_concurrent_pool->m_pool + m_concurrent_pool->m_pool_size;
   m_mutator_wake.signal();
@@ -120,7 +118,7 @@ void concurrent_heap_t::synchronized_collect() {
 
   // end
   m_collector_kicked = false;
-  GC_TRACE(";; [collector: waiting]\n");
+  GCTRACE(";; [collector: waiting]\n");
   double t3 = msec();
 
   m_usage.m_duration = t3 - t1;
@@ -136,7 +134,7 @@ void concurrent_heap_t::concurrent_collect() {
   // mark phase 1
   m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_GLOBALS;
   m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world]\n");
+  GCTRACE(";; [collector: stop-the-world]\n");
   while (!m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
     if (!m_mutator_stopped) {
@@ -149,12 +147,12 @@ void concurrent_heap_t::concurrent_collect() {
   m_write_barrier = true;
   m_stop_the_world = false;
   m_mutator_wake.signal();
-  GC_TRACE(";; [collector: start-the-world phase 1]\n");
+  GCTRACE(";; [collector: start-the-world phase 1]\n");
   while (m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
   }
   double t2 = msec();
-  GC_TRACE(";; [collector: concurrent-mark phase 1]\n");
+  GCTRACE(";; [collector: concurrent-mark phase 1]\n");
 
   concurrent_mark();
 
@@ -165,7 +163,7 @@ void concurrent_heap_t::concurrent_collect() {
   // mark phase 2
   m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_LOCALS;
   m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world phase 2]\n");
+  GCTRACE(";; [collector: stop-the-world phase 2]\n");
   while (!m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
     if (!m_mutator_stopped) {
@@ -178,11 +176,11 @@ void concurrent_heap_t::concurrent_collect() {
 fallback:
   m_stop_the_world = false;
   m_mutator_wake.signal();
-  GC_TRACE(";; [collector: start-the-world phase 2]\n");
+  GCTRACE(";; [collector: start-the-world phase 2]\n");
   while (m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
   }
-  GC_TRACE(";; [collector: concurrent-mark phase 2]\n");
+  GCTRACE(";; [collector: concurrent-mark phase 2]\n");
 
   concurrent_mark();
 
@@ -193,7 +191,7 @@ fallback:
   // final mark
   assert(m_mutator_stopped == false);
   m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world final]\n");
+  GCTRACE(";; [collector: stop-the-world final]\n");
 
   while (!m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);
@@ -204,7 +202,7 @@ fallback:
   }
   double t4 = msec();
   m_write_barrier = false;
-  GC_TRACE(";; [collector: synchronized-mark]\n");
+  GCTRACE(";; [collector: synchronized-mark]\n");
   dequeue_root();
 
 #ifdef ENSURE_REALTIME
@@ -230,8 +228,8 @@ fallback:
   while (m_mutator_stopped) {
     m_collector_wake.wait(m_collector_lock);  // to make mutator run now
   }
-  GC_TRACE(";; [collector: start-the-world]\n");
-  GC_TRACE(";; [collector: concurrent-sweep]\n");
+  GCTRACE(";; [collector: start-the-world]\n");
+  GCTRACE(";; [collector: concurrent-sweep]\n");
   double t5 = msec();
 
   update_weak_reference();
@@ -244,7 +242,7 @@ fallback:
     int memo = m_concurrent_pool->m_pool_usage;
     if (GCSLABP(m_concurrent_pool->m_pool[i])) {
       if (SLAB_TRAITS_OF(slab)->cache == NULL) {
-        GC_TRACE(";; [collector: wait for mutator complete slab init]\n");
+        GCTRACE(";; [collector: wait for mutator complete slab init]\n");
         sched_yield();
         continue;
       }
@@ -270,7 +268,7 @@ fallback:
 
 finish:
   m_collector_kicked = false;
-  GC_TRACE(";; [collector: waiting]\n");
+  GCTRACE(";; [collector: waiting]\n");
   double t6 = msec();
   m_usage.m_duration = t6 - t1;
   m_usage.m_sync1 = t2 - t1;
@@ -293,7 +291,7 @@ void* concurrent_heap_t::collector_thread(void* param) {
   concurrent_heap_t& concurrent_heap = *(concurrent_heap_t*)param;
   concurrent_heap.m_collector_lock.lock();
   concurrent_heap.m_collector_ready = true;
-  GC_TRACE(";; [collector: ready]\n");
+  GCTRACE(";; [collector: ready]\n");
   while (!concurrent_heap.m_collector_terminating) {
     if (concurrent_heap.m_collector_kicked == false) {
       concurrent_heap.m_collector_wake.wait(concurrent_heap.m_collector_lock);
@@ -405,7 +403,7 @@ void concurrent_heap_t::enqueue_root(void* obj) {
         m_collector_wake.signal();
         m_mutator_wake.wait(m_collector_lock);
         m_collector_lock.unlock();
-        GC_TRACE(";; [shade queue overflow while queueing root set]\n");
+        GCTRACE(";; [shade queue overflow while queueing root set]\n");
       }
     }
   }
@@ -420,13 +418,13 @@ void concurrent_heap_t::write_barrier(void* rhs) {
         while (m_shade_queue.wait_lock_try_put(rhs) == false) {
           if (SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
           if (m_stop_the_world) {
-            GC_TRACE(";; [write-barrier: m_shade_queue overflow, during stop-the-world]\n");
+            GCTRACE(";; [write-barrier: m_shade_queue overflow, during stop-the-world]\n");
             m_collector_lock.lock();
             m_collector_wake.signal();
             m_mutator_wake.wait(m_collector_lock);
             m_collector_lock.unlock();
           } else {
-            GC_TRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
+            GCTRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
             sched_yield();
           }
           m_usage.m_shade_queue_hazard++;

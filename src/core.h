@@ -8,21 +8,6 @@
   #define __STDC_LIMIT_MACROS
 #endif
 
-#include <assert.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <float.h>
-#include <limits.h>
-#include <math.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <wctype.h>
-
 #define UNBOUND_GLOC_RETURN_UNSPEC 0  // default: 0
 
 #define ENABLE_LLVM_JIT            1
@@ -84,12 +69,6 @@
 #define USE_CONST_LITERAL           1
 #define USE_MULTIBYTE_READ          1
 #define USE_MULTIBYTE_WRITE         1
-
-#if defined(FD_CLOEXEC)
-  #define USE_CLOEXEC 1
-#else
-  #define USE_CLOEXEC 0
-#endif
 
 #ifndef SYSTEM_SHARE_PATH
   #define SYSTEM_SHARE_PATH "/usr/local/share/ypsilon"

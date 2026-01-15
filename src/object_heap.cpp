@@ -27,13 +27,13 @@
 #define SYNCHRONIZE_THRESHOLD(x) ((x) - (x) / 4)
 
 #if GCDEBUG
-  #define GC_TRACE(fmt) \
-    do {                \
-      printf(fmt);      \
-      fflush(stdout);   \
+  #define GCTRACE(fmt) \
+    do {               \
+      printf(fmt);     \
+      fflush(stdout);  \
     } while (0)
 #else
-  #define GC_TRACE(fmt) ((void)0)
+  #define GCTRACE(fmt) ((void)0)
 #endif
 
 #if ARCH_LP64
