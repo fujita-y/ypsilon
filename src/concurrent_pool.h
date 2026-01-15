@@ -2,7 +2,6 @@
 #define CONCURRENT_POOL_H_INCLUDED
 
 #include "core.h"
-#include "object.h"
 #include "mutex.h"
 
 #include "concurrent_slab.h"

@@ -355,22 +355,25 @@ bool concurrent_heap_t::synchronized_mark() {
 
 // Run on collector thread
 void concurrent_heap_t::shade(void* obj) {
-  if (CELLP(obj)) {
-    assert(obj);
-    if (SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
-      if (m_mark_sp < m_mark_stack + m_mark_stack_size) {
+  if (SLAB_DATUM_BITS_TEST(obj)) {
+    if (m_concurrent_pool->in_pool(obj)) {
+      if (SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
+        if (m_mark_sp < m_mark_stack + m_mark_stack_size) {
+          *m_mark_sp++ = obj;
+          return;
+        }
+        m_usage.m_expand_mark_stack++;
+        int newsize = m_mark_stack_size + MARK_STACK_SIZE_GROW;
+        m_mark_stack = (void**)realloc(m_mark_stack, sizeof(void*) * newsize);
+        if (m_mark_stack == NULL) {
+          fatal("%s:%u memory overflow on realloc mark stack", __FILE__, __LINE__);
+        }
+        m_mark_sp = m_mark_stack + m_mark_stack_size;
+        m_mark_stack_size = newsize;
         *m_mark_sp++ = obj;
-        return;
       }
-      m_usage.m_expand_mark_stack++;
-      int newsize = m_mark_stack_size + MARK_STACK_SIZE_GROW;
-      m_mark_stack = (void**)realloc(m_mark_stack, sizeof(void*) * newsize);
-      if (m_mark_stack == NULL) {
-        fatal("%s:%u memory overflow on realloc mark stack", __FILE__, __LINE__);
-      }
-      m_mark_sp = m_mark_stack + m_mark_stack_size;
-      m_mark_stack_size = newsize;
-      *m_mark_sp++ = obj;
+    } else {
+      fatal("%s:%u object not in pool %p", __FILE__, __LINE__, obj);
     }
   }
 }
@@ -395,7 +398,7 @@ void concurrent_heap_t::dequeue_root() {
 // Run on mutator thread
 void concurrent_heap_t::enqueue_root(void* obj) {
   assert(m_stop_the_world);
-  if (CELLP(obj)) {
+  if (SLAB_DATUM_BITS_TEST(obj)) {
     if (m_concurrent_pool->in_pool(obj)) {
       while (m_shade_queue.wait_lock_try_put(obj) == false) {
         m_collector_lock.lock();
@@ -404,6 +407,8 @@ void concurrent_heap_t::enqueue_root(void* obj) {
         m_collector_lock.unlock();
         GCTRACE(";; [shade queue overflow while queueing root set]\n");
       }
+    } else {
+      fatal("%s:%u object not in pool %p", __FILE__, __LINE__, obj);
     }
   }
 }
@@ -412,23 +417,27 @@ void concurrent_heap_t::enqueue_root(void* obj) {
 void concurrent_heap_t::write_barrier(void* rhs) {
   // simple (Dijkstra)
   if (m_write_barrier) {
-    if (CELLP(rhs)) {
-      if (SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
-        while (m_shade_queue.wait_lock_try_put(rhs) == false) {
-          if (SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
-          if (m_stop_the_world) {
-            GCTRACE(";; [write-barrier: m_shade_queue overflow, during stop-the-world]\n");
-            m_collector_lock.lock();
-            m_collector_wake.signal();
-            m_mutator_wake.wait(m_collector_lock);
-            m_collector_lock.unlock();
-          } else {
-            GCTRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
-            sched_yield();
+    if (SLAB_DATUM_BITS_TEST(rhs)) {
+      if (m_concurrent_pool->in_pool(rhs)) {
+        if (SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
+          while (m_shade_queue.wait_lock_try_put(rhs) == false) {
+            if (SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
+            if (m_stop_the_world) {
+              GCTRACE(";; [write-barrier: m_shade_queue overflow, during stop-the-world]\n");
+              m_collector_lock.lock();
+              m_collector_wake.signal();
+              m_mutator_wake.wait(m_collector_lock);
+              m_collector_lock.unlock();
+            } else {
+              GCTRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
+              sched_yield();
+            }
+            m_usage.m_shade_queue_hazard++;
           }
-          m_usage.m_shade_queue_hazard++;
+          if (DETAILED_STATISTIC) m_usage.m_barriered_write++;
         }
-        if (DETAILED_STATISTIC) m_usage.m_barriered_write++;
+      } else {
+        fatal("%s:%u object not in pool %p", __FILE__, __LINE__, rhs);
       }
     }
   }

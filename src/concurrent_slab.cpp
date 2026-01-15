@@ -67,7 +67,7 @@ void concurrent_slab_t::destroy() {
 }
 
 void concurrent_slab_t::init_freelist(uint8_t* slab, uint8_t* bottom, slab_traits_t* traits) {
-  int step = (m_object_size + OBJECT_DATUM_ALIGN_MASK) & ~OBJECT_DATUM_ALIGN_MASK;
+  int step = (m_object_size + SLAB_DATUM_ALIGN_MASK) & ~SLAB_DATUM_ALIGN_MASK;
   assert(step >= sizeof(freelist_t));
   uint8_t* obj = slab + step;
   traits->free = (freelist_t*)obj;
@@ -300,7 +300,7 @@ void concurrent_slab_t::sweep(void* slab) {
       return;
     }
   }
-  size_t step = (m_object_size + OBJECT_DATUM_ALIGN_MASK) & ~OBJECT_DATUM_ALIGN_MASK;
+  size_t step = (m_object_size + SLAB_DATUM_ALIGN_MASK) & ~SLAB_DATUM_ALIGN_MASK;
   uint8_t* bitmap = (uint8_t*)traits - m_bitmap_size;
   uint8_t* limit = bitmap - step;
   uint8_t* obj = (uint8_t*)slab;
@@ -339,7 +339,7 @@ void concurrent_slab_t::iterate(void* slab, object_iter_proc_t proc, void* desc)
   assert(m_bitmap_size);
   assert(slab == SLAB_TOP_OF(slab));
   slab_traits_t* traits = SLAB_TRAITS_OF(slab);
-  size_t step = (m_object_size + OBJECT_DATUM_ALIGN_MASK) & ~OBJECT_DATUM_ALIGN_MASK;
+  size_t step = (m_object_size + SLAB_DATUM_ALIGN_MASK) & ~SLAB_DATUM_ALIGN_MASK;
   uint8_t* bitmap = (uint8_t*)traits - m_bitmap_size;
   uint8_t* limit = bitmap - step;
   for (uint8_t* obj = (uint8_t*)slab; obj <= limit; obj += step) {
