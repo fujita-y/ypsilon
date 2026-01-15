@@ -78,8 +78,6 @@
   #define SYSTEM_EXTENSION_PATH "/usr/local/lib/ypsilon"
 #endif
 
-#define array_sizeof(a) ((int)(sizeof(a) / sizeof(a[0])))
-
 #include "sysdep.h"
 
 extern int main_command_line_argc;
@@ -87,5 +85,7 @@ extern const char** main_command_line_argv;
 extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
 extern void warning(const char* fmt, ...);
 extern void trace(const char* fmt, ...);
+
+template <typename T, size_t N> constexpr size_t array_sizeof(T (&a)[N]) { return N; }
 
 #endif

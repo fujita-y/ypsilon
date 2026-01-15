@@ -40,6 +40,7 @@
 #if !defined(NO_POSIX_SPAWN)
   #include <spawn.h>
 #endif
+
 #include <functional>
 
 #if defined(NO_TLS)
