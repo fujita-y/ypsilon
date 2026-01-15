@@ -5,9 +5,10 @@
 #include "arith.h"
 #include "digamma.h"
 #include "exception.h"
+#include "list.h"
+#include "object_factory.h"
 #include "printer.h"
 #include "violation.h"
-#include "object_factory.h"
 #include "vm.h"
 
 #define STACKP(p)         (((p) >= (void*)m_stack_top) & ((p) < (void*)m_stack_limit))

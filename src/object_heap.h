@@ -9,11 +9,9 @@
 #include "concurrent_heap.h"
 #include "concurrent_pool.h"
 #include "concurrent_slab.h"
-#include "cond.h"
 #include "inherent.h"
 #include "mutex.h"
 #include "object_set.h"
-#include "queue.h"
 
 #define STRING_TABLE_SIZE_INIT 1021
 #define GLOC_TABLE_SIZE_INIT   8191

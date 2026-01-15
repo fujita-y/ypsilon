@@ -4,9 +4,9 @@
 #include "core.h"
 #include "socket.h"
 #include "exception.h"
-#include "port.h"
+#include "ioerror.h"
 #include "object_factory.h"
-#include "vm.h"
+#include "port.h"
 
 #define CLOSE_SOCKET close
 

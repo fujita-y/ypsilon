@@ -5,6 +5,7 @@
 #include "printer.h"
 #include "arith.h"
 #include "hash.h"
+#include "list.h"
 #include "object_factory.h"
 #include "port.h"
 #include "socket.h"

@@ -5,12 +5,11 @@
 #define CONCURRENT_HEAP_H_INCLUDED
 
 #include "core.h"
+#include "concurrent_pool.h"
+#include "concurrent_slab.h"
 #include "cond.h"
 #include "mutex.h"
 #include "queue.h"
-
-#include "concurrent_pool.h"
-#include "concurrent_slab.h"
 
 #define MARK_STACK_SIZE_INIT          16384  // 16K object, 64K/128K bytes
 #define MARK_STACK_SIZE_GROW          4096   // 4K object, 16K/32K bytes

@@ -5,7 +5,6 @@
 #include "digamma.h"
 #include "hash.h"
 #include "list.h"
-#include "violation.h"
 #include "object_factory.h"
 #include "vm.h"
 

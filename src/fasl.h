@@ -5,7 +5,6 @@
 #define FASL_H_INCLUDED
 
 #include "core.h"
-#include "hash.h"
 #include "port.h"
 
 #define FASL_DEBUG                 0

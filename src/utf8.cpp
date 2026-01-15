@@ -3,7 +3,7 @@
 
 #include "core.h"
 #include "utf8.h"
-#include "object_factory.h"
+#include "object_heap.h"
 
 int ascii_cstring_pred(const char* s) {
   uint8_t c;

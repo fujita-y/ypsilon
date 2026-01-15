@@ -6,7 +6,6 @@
 #include "arith.h"
 #include "object_factory.h"
 #include "port.h"
-#include "printer.h"
 #include "uuid.h"
 #include "violation.h"
 

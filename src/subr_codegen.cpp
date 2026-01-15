@@ -3,7 +3,6 @@
 
 #include "core.h"
 #include "digamma.h"
-#include "printer.h"
 #include "violation.h"
 #include "vm.h"
 

@@ -3,10 +3,8 @@
 
 #include "core.h"
 #include "arith.h"
-#include "object_factory.h"
 #include "port.h"
 #include "subr.h"
-#include "ucs4.h"
 #include "violation.h"
 #include "vm.h"
 

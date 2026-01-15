@@ -5,7 +5,6 @@
 #include "ioerror.h"
 #include "arith.h"
 #include "object_factory.h"
-#include "port.h"
 #include "vm.h"
 
 void raise_io_codec_error(VM* vm, const char* who, int operation, const char* message, scm_obj_t io, scm_obj_t ch) {

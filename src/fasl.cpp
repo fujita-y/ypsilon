@@ -4,7 +4,7 @@
 #include "core.h"
 #include "fasl.h"
 #include "arith.h"
-#include "ucs4.h"
+#include "hash.h"
 #include "object_factory.h"
 #include "vm.h"
 

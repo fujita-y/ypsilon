@@ -3,7 +3,6 @@
 
 #include "core.h"
 #include "list.h"
-#include "hash.h"
 #include "object_factory.h"
 
 scm_obj_t list_ref(scm_obj_t lst, int n) {

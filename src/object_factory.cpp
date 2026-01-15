@@ -3,9 +3,9 @@
 
 #include "core.h"
 #include "object.h"
+#include "object_factory.h"
 #include "arith.h"
 #include "hash.h"
-#include "object_factory.h"
 #include "list.h"
 #include "port.h"
 #include "socket.h"

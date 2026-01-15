@@ -6,7 +6,6 @@
 
 #include "core.h"
 #include "object.h"
-#include "list.h"
 
 class printer_t {
   enum { escape_mode_string, escape_mode_symbol };

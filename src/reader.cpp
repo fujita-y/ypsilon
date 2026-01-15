@@ -6,6 +6,8 @@
 #include "arith.h"
 #include "exception.h"
 #include "fasl.h"
+#include "hash.h"
+#include "list.h"
 #include "object_factory.h"
 #include "port.h"
 #include "printer.h"

@@ -6,7 +6,6 @@
 
 #include "core.h"
 #include "object.h"
-#include "hash.h"
 
 class object_heap_t;
 

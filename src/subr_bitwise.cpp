@@ -3,7 +3,6 @@
 
 #include "core.h"
 #include "arith.h"
-#include "object_factory.h"
 #include "subr.h"
 #include "violation.h"
 #include "vm.h"

@@ -5,8 +5,6 @@
 #include "file.h"
 #include "arith.h"
 #include "ioerror.h"
-#include "port.h"
-#include "violation.h"
 #include "object_factory.h"
 #include "vm.h"
 

@@ -3,8 +3,8 @@
 
 #include "core.h"
 #include "exception.h"
-#include "object_factory.h"
 #include "ioerror.h"
+#include "object_factory.h"
 #include "socket.h"
 #include "subr.h"
 #include "violation.h"

@@ -4,6 +4,7 @@
 #include "core.h"
 #include "serialize.h"
 #include "arith.h"
+#include "hash.h"
 #include "list.h"
 #include "object_factory.h"
 #include "object_heap.h"

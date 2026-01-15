@@ -2,9 +2,8 @@
 #define CONCURRENT_POOL_H_INCLUDED
 
 #include "core.h"
-#include "mutex.h"
-
 #include "concurrent_slab.h"
+#include "mutex.h"
 
 #define PTAG_FREE    0x00
 #define PTAG_USED    0x01

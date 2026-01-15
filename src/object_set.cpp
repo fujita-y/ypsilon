@@ -2,9 +2,10 @@
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
+#include "object_set.h"
 #include "hash.h"
-#include "object_factory.h"
 #include "list.h"
+#include "object_heap.h"
 
 static inline bool string_equiv(const char* s1, const char* s2, int len) {
   for (int i = 0; i < len; i++) {
