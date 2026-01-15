@@ -101,7 +101,7 @@ void concurrent_heap_t::synchronized_collect() {
   slab_traits_t* traits = SLAB_TRAITS_OF(m_concurrent_pool->m_pool);
   for (int i = 0; i < m_concurrent_pool->m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool->m_pool[i])) {
-      uint8_t* slab = m_concurrent_pool->m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT);
+      uint8_t* slab = m_concurrent_pool->m_pool + ((intptr_t)i << SLAB_SIZE_SHIFT);
       traits->cache->sweep(slab);
     }
     traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
@@ -234,7 +234,7 @@ fallback:
   update_weak_reference();
   m_read_barrier = false;
 
-  int capacity = (m_concurrent_pool->m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
+  int capacity = (m_concurrent_pool->m_pool_size >> SLAB_SIZE_SHIFT);
   uint8_t* slab = m_concurrent_pool->m_pool;
   int i = 0;
   while (i < capacity) {

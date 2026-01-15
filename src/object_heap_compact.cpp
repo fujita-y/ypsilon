@@ -325,7 +325,7 @@ static void rehash_collectible(void* obj, int size, void* desc) {
 }
 
 relocate_info_t* object_heap_t::relocate(bool pack) {
-  relocate_info_t* info = new relocate_info_t(m_concurrent_pool.m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
+  relocate_info_t* info = new relocate_info_t(m_concurrent_pool.m_pool_size >> SLAB_SIZE_SHIFT);
   slab_traits_t* first_traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   slab_traits_t* traits;
   uint8_t* first_slab = m_concurrent_pool.m_pool;
@@ -533,7 +533,7 @@ static void relocate_private(void* obj, int size, void* desc) {
 }
 
 void object_heap_t::relocate_privates(bool pack) {
-  relocate_info_t* info = new relocate_info_t(m_concurrent_pool.m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
+  relocate_info_t* info = new relocate_info_t(m_concurrent_pool.m_pool_size >> SLAB_SIZE_SHIFT);
   slab_traits_t* first_traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   slab_traits_t* traits;
   uint8_t* first_slab = m_concurrent_pool.m_pool;

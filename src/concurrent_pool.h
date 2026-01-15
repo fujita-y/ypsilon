@@ -39,23 +39,23 @@ class concurrent_pool_t {
   bool extend_pool(size_t extend_size);
   bool in_slab(void* obj) {
     assert(obj);
-    int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    int index = ((uint8_t*)obj - m_pool) >> SLAB_SIZE_SHIFT;
     assert(index >= 0 && index < m_pool_watermark);
     return (m_pool[index] & PTAG_SLAB) != 0;
   }
   bool in_non_full_slab(void* obj) {
     assert(obj);
-    int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    int index = ((uint8_t*)obj - m_pool) >> SLAB_SIZE_SHIFT;
     assert(index >= 0 && index < m_pool_watermark);
     return (m_pool[index] & PTAG_SLAB) && SLAB_TRAITS_OF(obj)->free != NULL;
   }
   bool in_pool(void* obj) {
-    int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    int index = ((uint8_t*)obj - m_pool) >> SLAB_SIZE_SHIFT;
     return (index >= 0 && index < m_pool_watermark);
   }
   bool is_collectible(void* obj) {
     assert(obj);
-    int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    int index = ((uint8_t*)obj - m_pool) >> SLAB_SIZE_SHIFT;
     assert(index >= 0 && index < m_pool_watermark);
     return (m_pool[index] & (PTAG_SLAB | PTAG_GC)) == (PTAG_SLAB | PTAG_GC);
   }

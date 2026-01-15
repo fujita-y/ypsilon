@@ -8,13 +8,13 @@
 #include "mutex.h"
 
 #if ARCH_LP64
-  #define SLAB_SIZE              (8192L)
-  #define OBJECT_SLAB_SIZE_SHIFT (12 + 1)
-  #define OBJECT_SLAB_THRESHOLD  (SLAB_SIZE / 8)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
+  #define SLAB_SIZE             (8192L)
+  #define SLAB_SIZE_SHIFT       (12 + 1)
+  #define OBJECT_SLAB_THRESHOLD (SLAB_SIZE / 8)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
 #else
-  #define SLAB_SIZE              (4096L)
-  #define OBJECT_SLAB_SIZE_SHIFT (12)
-  #define OBJECT_SLAB_THRESHOLD  (SLAB_SIZE / 4)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
+  #define SLAB_SIZE             (4096L)
+  #define SLAB_SIZE_SHIFT       (12)
+  #define OBJECT_SLAB_THRESHOLD (SLAB_SIZE / 4)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
 #endif
 
 class concurrent_heap_t;

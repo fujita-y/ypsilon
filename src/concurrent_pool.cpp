@@ -44,8 +44,8 @@ void concurrent_pool_t::init(size_t pool_size, size_t init_size) {
   int n_slab = (n_tag + SLAB_SIZE - 1) / SLAB_SIZE;
   memset(m_pool, PTAG_FREE, n_slab * SLAB_SIZE);
   for (int i = 0; i < n_slab; i++) m_pool[i] = PTAG_USED;
-  m_pool_watermark = (init_size >> OBJECT_SLAB_SIZE_SHIFT);
-  if (m_pool_watermark <= n_slab || m_pool_watermark >= (m_pool_size >> OBJECT_SLAB_SIZE_SHIFT)) {
+  m_pool_watermark = (init_size >> SLAB_SIZE_SHIFT);
+  if (m_pool_watermark <= n_slab || m_pool_watermark >= (m_pool_size >> SLAB_SIZE_SHIFT)) {
     fatal("%s:%u concurrent_pool_t::init() bad parameter, pool_size:%d init_datum_size:%d", __FILE__, __LINE__, pool_size, init_size);
   }
   m_pool_memo = 0;
@@ -74,12 +74,12 @@ void* concurrent_pool_t::allocate(size_t size, bool for_slab, bool for_collectib
       attr = PTAG_SLAB;
   }
   assert(m_pool);
-  int npage = (size + SLAB_SIZE - 1) >> OBJECT_SLAB_SIZE_SHIFT;
+  int npage = (size + SLAB_SIZE - 1) >> SLAB_SIZE_SHIFT;
   scoped_lock lock(m_lock);
   if (npage == 1) {
     for (int i = m_pool_memo; i < m_pool_watermark; i++) {
       if (m_pool[i] == PTAG_FREE) {
-        void* slab = m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT);
+        void* slab = m_pool + ((intptr_t)i << SLAB_SIZE_SHIFT);
         m_pool[i] = PTAG_USED | attr;
         m_pool_memo = i + 1;
         m_pool_usage = m_pool_usage + 1;
@@ -98,7 +98,7 @@ void* concurrent_pool_t::allocate(size_t size, bool for_slab, bool for_collectib
               m_pool[head] = PTAG_USED | attr;
               for (int n = head + 1; n <= tail; n++) m_pool[n] = PTAG_EXTENT | attr;
               m_pool_usage = m_pool_usage + npage;
-              return m_pool + ((intptr_t)head << OBJECT_SLAB_SIZE_SHIFT);
+              return m_pool + ((intptr_t)head << SLAB_SIZE_SHIFT);
             }
           } else {
             head = tail;
@@ -117,7 +117,7 @@ void concurrent_pool_t::deallocate(void* p) {
   assert(p);
   assert(m_pool);
   assert(((intptr_t)p & (SLAB_SIZE - 1)) == 0);
-  int i = ((uint8_t*)p - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+  int i = ((uint8_t*)p - m_pool) >> SLAB_SIZE_SHIFT;
   if (i < m_pool_memo) m_pool_memo = i;
   assert(i >= 0 && i < m_pool_watermark);
   assert(m_pool[i] & PTAG_USED);
@@ -138,9 +138,9 @@ void concurrent_pool_t::deallocate(void* p) {
 
 bool concurrent_pool_t::extend_pool(size_t extend_size) {
   scoped_lock lock(m_lock);
-  int capacity = (m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
+  int capacity = (m_pool_size >> SLAB_SIZE_SHIFT);
   if (m_pool_watermark == capacity) return false;
-  m_pool_watermark += ((extend_size + SLAB_SIZE - 1) >> OBJECT_SLAB_SIZE_SHIFT);
+  m_pool_watermark += ((extend_size + SLAB_SIZE - 1) >> SLAB_SIZE_SHIFT);
   if (m_pool_watermark > capacity) m_pool_watermark = capacity;
   return true;
 }

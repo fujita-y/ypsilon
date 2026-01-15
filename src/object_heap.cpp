@@ -187,7 +187,7 @@ int object_heap_t::allocated_size(void* obj) {
     return cache->m_object_size;
   } else {
     assert(((intptr_t)obj & (SLAB_SIZE - 1)) == 0);
-    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
+    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> SLAB_SIZE_SHIFT;
     assert(m_concurrent_pool.m_pool[index] & PTAG_USED);
     int n_page = 1;
     while (++index < m_concurrent_pool.m_pool_watermark) {
@@ -333,7 +333,7 @@ void object_heap_t::destroy() {
   slab_traits_t* traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i])) {
-      traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), renounce, NULL);
+      traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << SLAB_SIZE_SHIFT), renounce, NULL);
     }
     traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
@@ -570,7 +570,7 @@ void object_heap_t::display_object_statistics(scm_port_t port) {
   slab_traits_t* traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i])) {
-      traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), accumulate_object_count, &count);
+      traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << SLAB_SIZE_SHIFT), accumulate_object_count, &count);
     }
     traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
@@ -627,7 +627,7 @@ void object_heap_t::display_heap_statistics(scm_port_t port) {
         n_general++;
         break;
       case PTAG_USED | PTAG_SLAB:
-        traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool + ((intptr_t)n << OBJECT_SLAB_SIZE_SHIFT));
+        traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool + ((intptr_t)n << SLAB_SIZE_SHIFT));
         if (traits->free)
           port_put_byte(port, 's');
         else
@@ -635,7 +635,7 @@ void object_heap_t::display_heap_statistics(scm_port_t port) {
         n_slab++;
         break;
       case PTAG_USED | PTAG_SLAB | PTAG_GC:
-        traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool + ((intptr_t)n << OBJECT_SLAB_SIZE_SHIFT));
+        traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool + ((intptr_t)n << SLAB_SIZE_SHIFT));
         if (traits->refc == 0) {
           port_put_byte(port, '.');
         } else {
@@ -677,7 +677,7 @@ void object_heap_t::display_heap_statistics(scm_port_t port) {
   }
   if ((m_concurrent_pool.m_pool_watermark & 63) != 0) port_puts(port, "|\n");
   port_format(port, "  object:%d static:%d page:%d free:%d", n_gcslab, n_slab, n_general, n_free);
-  port_format(port, " watermark:%d limit:%d\n\n", m_concurrent_pool.m_pool_watermark, (m_concurrent_pool.m_pool_size >> OBJECT_SLAB_SIZE_SHIFT));
+  port_format(port, " watermark:%d limit:%d\n\n", m_concurrent_pool.m_pool_watermark, (m_concurrent_pool.m_pool_size >> SLAB_SIZE_SHIFT));
   port_flush_output(port);
 }
 
@@ -1072,7 +1072,7 @@ void object_heap_t::consistency_check() {
   slab_traits_t* traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
   for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
     if (GCSLABP(m_concurrent_pool.m_pool[i])) {
-      traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), check_collectible, this);
+      traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << SLAB_SIZE_SHIFT), check_collectible, this);
     }
     traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
