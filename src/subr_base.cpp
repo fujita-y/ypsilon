@@ -1357,10 +1357,8 @@ scm_obj_t subr_values(VM* vm, int argc, scm_obj_t argv[]) {
       return scm_undef;                                                                                 \
     }
 
-  #define MCODE3(M1, M2, M3) \
-    { M3, M2, M1 }
-  #define MCODE4(M1, M2, M3, M4) \
-    { M4, M3, M2, M1 }
+  #define MCODE3(M1, M2, M3)     {M3, M2, M1}
+  #define MCODE4(M1, M2, M3, M4) {M4, M3, M2, M1}
 
 DEF_CARS_N_CDRS3(caaar, MCODE3(0, 0, 0))
 DEF_CARS_N_CDRS3(caadr, MCODE3(0, 0, 1))
@@ -1418,10 +1416,8 @@ static scm_obj_t n_car_n_cdr(scm_obj_t obj, const int n, const int mc[]) {
       return scm_undef;                                                                                 \
     }
 
-  #define MCODE3(M1, M2, M3) \
-    { M3, M2, M1 }
-  #define MCODE4(M1, M2, M3, M4) \
-    { M4, M3, M2, M1 }
+  #define MCODE3(M1, M2, M3)     {M3, M2, M1}
+  #define MCODE4(M1, M2, M3, M4) {M4, M3, M2, M1}
 
 DEF_CARS_N_CDRS(caaar, MCODE3(0, 0, 0))
 DEF_CARS_N_CDRS(caadr, MCODE3(0, 0, 1))

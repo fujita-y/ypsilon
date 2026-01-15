@@ -552,9 +552,9 @@ void digamma_t::codegen(scm_closure_t closure) {
   Function* F = Function::Create(FunctionType::get(IntptrTy, {IntptrPtrTy}, false), Function::ExternalLinkage, function_id, M.get());
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 16
-    F->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  F->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
   #else
-    F->addFnAttr(Attribute::ArgMemOnly);
+  F->addFnAttr(Attribute::ArgMemOnly);
   #endif
   F->addFnAttr(Attribute::NoUnwind);
   F->addFnAttr(Attribute::NoReturn);
@@ -588,9 +588,9 @@ void digamma_t::codegen(scm_closure_t closure) {
 
   auto symbol = ExitOnErr(m_jit->lookup(function_id));
 #if LLVM_VERSION_MAJOR >= 15
-  intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))symbol.getValue();
+  intptr_t (*thunk)(intptr_t) = (intptr_t (*)(intptr_t))symbol.getValue();
 #else
-  intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))symbol.getAddress();
+  intptr_t (*thunk)(intptr_t) = (intptr_t (*)(intptr_t))symbol.getAddress();
 #endif
 
   if (m_usage.min_sym == 0 || m_usage.min_sym > (uintptr_t)thunk) m_usage.min_sym = (uintptr_t)thunk;
@@ -698,7 +698,7 @@ Value* digamma_t::get_function_address(context_t& ctx, scm_closure_t closure) {
   DECLEAR_COMMON_TYPES;
 
   if (closure->code == NULL) fatal("%s:%u closure is not codegend", __FILE__, __LINE__);
-  intptr_t (*adrs)(intptr_t) = (intptr_t(*)(intptr_t))(closure->code);
+  intptr_t (*adrs)(intptr_t) = (intptr_t (*)(intptr_t))(closure->code);
   auto subrType = FunctionType::get(IntptrTy, {IntptrPtrTy}, false);
   return ConstantExpr::getIntToPtr(VALUE_INTPTR(adrs), subrType->getPointerTo());
 }
@@ -1135,9 +1135,9 @@ Function* digamma_t::emit_inner_function(context_t& ctx, scm_closure_t closure) 
   Function* F = Function::Create(FunctionType::get(IntptrTy, {IntptrPtrTy}, false), Function::PrivateLinkage, function_id, M);
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 16
-    F->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  F->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
   #else
-    F->addFnAttr(Attribute::ArgMemOnly);
+  F->addFnAttr(Attribute::ArgMemOnly);
   #endif
   F->addFnAttr(Attribute::NoUnwind);
   F->addFnAttr(Attribute::NoReturn);
@@ -1186,15 +1186,15 @@ void digamma_t::emit_stack_overflow_check(context_t& ctx, int nbytes) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(nbytes)});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -1262,15 +1262,15 @@ Value* digamma_t::emit_lookup_iloc(context_t& ctx, intptr_t depth, intptr_t inde
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(depth), VALUE_INTPTR(index)});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -1376,17 +1376,17 @@ void digamma_t::emit_push_gloc(context_t& ctx, scm_obj_t inst) {
   #if LLVM_VERSION_MAJOR >= 14
     call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+    call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+    call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
     call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
     call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
-  call->addParamAttr(0, Attribute::NoAlias);
-  call->addParamAttr(0, Attribute::NoCapture);
-  call->addParamAttr(0, Attribute::NoFree);
+    call->addParamAttr(0, Attribute::NoAlias);
+    call->addParamAttr(0, Attribute::NoCapture);
+    call->addParamAttr(0, Attribute::NoFree);
 #endif
     IRB.CreateRet(VALUE_INTPTR(VM::native_thunk_resume_loop));
     IRB.SetInsertPoint(CONTINUE);
@@ -1418,15 +1418,15 @@ void digamma_t::emit_push_car_iloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -1463,15 +1463,15 @@ void digamma_t::emit_push_cdr_iloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -1508,15 +1508,15 @@ void digamma_t::emit_push_cddr_iloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -1559,15 +1559,15 @@ void digamma_t::emit_push_cadr_iloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -1808,15 +1808,15 @@ void digamma_t::emit_ret_cons(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, sp_minus_1, val});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -2127,15 +2127,15 @@ void digamma_t::emit_cc_n_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_
   auto call = IRB.CreateCall(thunkType, thunk, {vm, lhs, rhs});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -2216,15 +2216,15 @@ void digamma_t::emit_cc_iloc(context_t& ctx, scm_obj_t inst, cc_t cc, void* c_fu
   auto call = IRB.CreateCall(thunkType, thunk, {vm, lhs, rhs});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -2269,9 +2269,9 @@ Function* digamma_t::emit_call(context_t& ctx, scm_obj_t inst) {
   Function* K = Function::Create(FunctionType::get(IntptrTy, {IntptrPtrTy}, false), Function::PrivateLinkage, cont_id, M);
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 16
-    K->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  K->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
   #else
-    K->addFnAttr(Attribute::ArgMemOnly);
+  K->addFnAttr(Attribute::ArgMemOnly);
   #endif
   K->addFnAttr(Attribute::NoUnwind);
   K->addFnAttr(Attribute::NoReturn);
@@ -2419,9 +2419,9 @@ void digamma_t::emit_extend_enclose_local(context_t& ctx, scm_obj_t inst) {
   Function* L = Function::Create(FunctionType::get(IntptrTy, {IntptrPtrTy}, false), Function::PrivateLinkage, local_id, M);
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 16
-    L->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  L->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
   #else
-    L->addFnAttr(Attribute::ArgMemOnly);
+  L->addFnAttr(Attribute::ArgMemOnly);
   #endif
   L->addFnAttr(Attribute::NoUnwind);
   L->addFnAttr(Attribute::NoReturn);
@@ -2544,9 +2544,9 @@ void digamma_t::emit_apply_iloc_local(context_t& ctx, scm_obj_t inst) {
     call->addFnAttr(Attribute::NoUnwind);
     call->addFnAttr(Attribute::NoReturn);
       #if LLVM_VERSION_MAJOR >= 16
-        call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+    call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
       #else
-        call->addFnAttr(Attribute::ArgMemOnly);
+    call->addFnAttr(Attribute::ArgMemOnly);
       #endif
     #else
     call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
@@ -2603,15 +2603,15 @@ void digamma_t::emit_push_cons(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, sp_minus_1, val});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -2648,15 +2648,15 @@ void digamma_t::emit_car_iloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -2697,15 +2697,15 @@ void digamma_t::emit_cdr_iloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -2730,15 +2730,15 @@ void digamma_t::emit_set_gloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -2834,15 +2834,15 @@ void digamma_t::emit_cadr_iloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -2889,15 +2889,15 @@ void digamma_t::emit_cddr_iloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, pair});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -3126,15 +3126,15 @@ void digamma_t::emit_set_iloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -3179,15 +3179,15 @@ void digamma_t::emit_enclose(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(argc)});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -3230,15 +3230,15 @@ void digamma_t::emit_ret_close(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -3263,15 +3263,15 @@ void digamma_t::emit_close(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -3303,9 +3303,9 @@ void digamma_t::emit_push_close_local(context_t& ctx, scm_obj_t inst) {
   Function* L = Function::Create(FunctionType::get(IntptrTy, {IntptrPtrTy}, false), Function::PrivateLinkage, local_id, M);
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 16
-    L->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  L->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
   #else
-    L->addFnAttr(Attribute::ArgMemOnly);
+  L->addFnAttr(Attribute::ArgMemOnly);
   #endif
   L->addFnAttr(Attribute::NoUnwind);
   L->addFnAttr(Attribute::NoReturn);
@@ -3539,15 +3539,15 @@ void digamma_t::emit_nadd_iloc(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -3584,15 +3584,15 @@ void digamma_t::emit_extend_enclose(context_t& ctx, scm_obj_t inst) {
   auto call = IRB.CreateCall(thunkType, thunk, {vm, VALUE_INTPTR(operands)});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -3671,15 +3671,15 @@ void digamma_t::emit_push_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) 
   auto call = IRB.CreateCall(procType, proc, {vm, VALUE_INTPTR(argc), argv});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -3737,15 +3737,15 @@ void digamma_t::emit_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   auto call = IRB.CreateCall(procType, proc, {vm, VALUE_INTPTR(argc), argv});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);
@@ -3796,15 +3796,15 @@ void digamma_t::emit_ret_subr(context_t& ctx, scm_obj_t inst, scm_subr_t subr) {
   auto call = IRB.CreateCall(procType, proc, {vm, argc, fp});
 #if USE_LLVM_ATTRIBUTES
   #if LLVM_VERSION_MAJOR >= 14
-    call->addFnAttr(Attribute::NoUnwind);
+  call->addFnAttr(Attribute::NoUnwind);
     #if LLVM_VERSION_MAJOR >= 16
-      call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
+  call->addFnAttr(Attribute::get(C, "memory", "argmem: readwrite"));
     #else
-      call->addFnAttr(Attribute::ArgMemOnly);
+  call->addFnAttr(Attribute::ArgMemOnly);
     #endif
   #else
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
-    call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::NoUnwind);
+  call->addAttribute(AttributeList::FunctionIndex, Attribute::ArgMemOnly);
   #endif
   call->addParamAttr(0, Attribute::NoAlias);
   call->addParamAttr(0, Attribute::NoCapture);

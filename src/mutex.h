@@ -16,8 +16,7 @@ class mutex_t {
   int lock_count;
 #endif
 
-  mutex_t() { /* should be blank */
-  }
+  mutex_t() { /* should be blank */ }
 
   void init(bool recursive = false) {
 #if MTDEBUG

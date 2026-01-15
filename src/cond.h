@@ -14,8 +14,7 @@ class cond_t {
  public:
   pthread_cond_t cv;
 
-  cond_t() { /* should be blank */
-  }
+  cond_t() { /* should be blank */ }
 
   void init() { MTVERIFY(pthread_cond_init(&cv, NULL)); }
 
