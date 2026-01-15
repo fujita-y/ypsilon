@@ -7,6 +7,7 @@
 #include "ioerror.h"
 #include "port.h"
 #include "violation.h"
+#include "object_factory.h"
 #include "vm.h"
 
 scm_obj_t file_stat_atime(VM* vm, scm_string_t path) {

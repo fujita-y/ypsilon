@@ -3,7 +3,7 @@
 
 #include "core.h"
 #include "arith.h"
-#include "heap.h"
+#include "object_factory.h"
 #include "port.h"
 #include "subr.h"
 #include "ucs4.h"

@@ -4,7 +4,7 @@
 #include "core.h"
 #include "arith.h"
 #include "bit.h"
-#include "heap.h"
+#include "object_factory.h"
 #include "port.h"
 
 #if USE_DIGIT32

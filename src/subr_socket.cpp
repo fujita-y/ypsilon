@@ -3,7 +3,7 @@
 
 #include "core.h"
 #include "exception.h"
-#include "heap.h"
+#include "object_factory.h"
 #include "ioerror.h"
 #include "socket.h"
 #include "subr.h"

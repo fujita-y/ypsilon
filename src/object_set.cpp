@@ -3,7 +3,7 @@
 
 #include "core.h"
 #include "hash.h"
-#include "heap.h"
+#include "object_factory.h"
 #include "list.h"
 
 static inline bool string_equiv(const char* s1, const char* s2, int len) {

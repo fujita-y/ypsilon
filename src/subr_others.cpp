@@ -14,6 +14,7 @@
 #include "utf8.h"
 #include "uuid.h"
 #include "violation.h"
+#include "object_factory.h"
 #include "vm.h"
 
 #define DEFAULT_GENSYM_PREFIX ".G"

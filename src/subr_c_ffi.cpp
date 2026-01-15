@@ -5,7 +5,7 @@
 #include "arith.h"
 #include "file.h"
 #include "hash.h"
-#include "heap.h"
+#include "object_factory.h"
 #include "subr.h"
 #include "uuid.h"
 #include "violation.h"

@@ -5,6 +5,7 @@
 #include "arith.h"
 #include "file.h"
 #include "violation.h"
+#include "object_factory.h"
 #include "vm.h"
 
 // current-directory

@@ -5,7 +5,7 @@
 #include "object.h"
 #include "arith.h"
 #include "hash.h"
-#include "heap.h"
+#include "object_factory.h"
 #include "list.h"
 #include "port.h"
 #include "socket.h"

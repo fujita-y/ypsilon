@@ -5,6 +5,7 @@
 #include "socket.h"
 #include "exception.h"
 #include "port.h"
+#include "object_factory.h"
 #include "vm.h"
 
 #define CLOSE_SOCKET close

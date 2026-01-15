@@ -8,6 +8,7 @@
 #include "port.h"
 #include "printer.h"
 #include "reader.h"
+#include "object_factory.h"
 #include "vm.h"
 
 scm_obj_t VM::lookup_current_environment(scm_symbol_t symbol) {

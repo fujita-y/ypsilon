@@ -6,6 +6,7 @@
 #include "hash.h"
 #include "list.h"
 #include "violation.h"
+#include "object_factory.h"
 #include "vm.h"
 
 #define CONS(a, d) make_pair(m_heap, (a), (d))

@@ -5,6 +5,7 @@
 #include "fasl.h"
 #include "arith.h"
 #include "ucs4.h"
+#include "object_factory.h"
 #include "vm.h"
 
 fasl_printer_t::fasl_printer_t(VM* vm, scm_port_t port) {

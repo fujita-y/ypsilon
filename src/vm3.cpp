@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "exception.h"
+#include "object_factory.h"
 #include "vm.h"
 
 #define CONS(a, d)      make_pair(m_heap, (a), (d))

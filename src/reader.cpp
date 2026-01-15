@@ -6,7 +6,7 @@
 #include "arith.h"
 #include "exception.h"
 #include "fasl.h"
-#include "heap.h"
+#include "object_factory.h"
 #include "port.h"
 #include "printer.h"
 #include "ucs4.h"

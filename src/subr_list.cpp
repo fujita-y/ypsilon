@@ -6,7 +6,7 @@
 #include "equiv.h"
 #include "fasl.h"
 #include "file.h"
-#include "heap.h"
+#include "object_factory.h"
 #include "ioerror.h"
 #include "port.h"
 #include "printer.h"

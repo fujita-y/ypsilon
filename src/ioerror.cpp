@@ -4,7 +4,7 @@
 #include "core.h"
 #include "ioerror.h"
 #include "arith.h"
-#include "heap.h"
+#include "object_factory.h"
 #include "port.h"
 #include "vm.h"
 

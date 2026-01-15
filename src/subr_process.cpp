@@ -6,6 +6,7 @@
 #include "list.h"
 #include "port.h"
 #include "violation.h"
+#include "object_factory.h"
 #include "vm.h"
 
 #include <cstring>

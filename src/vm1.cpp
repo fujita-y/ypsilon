@@ -7,6 +7,7 @@
 #include "exception.h"
 #include "printer.h"
 #include "violation.h"
+#include "object_factory.h"
 #include "vm.h"
 
 #define STACKP(p)         (((p) >= (void*)m_stack_top) & ((p) < (void*)m_stack_limit))

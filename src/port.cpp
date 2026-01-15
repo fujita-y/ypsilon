@@ -20,6 +20,7 @@
 #include "ioerror.h"
 #include "socket.h"
 #include "utf8.h"
+#include "object_factory.h"
 #include "vm.h"
 
 #define SCM_CHAR_LF            MAKECHAR(SCM_PORT_UCS4_LF)

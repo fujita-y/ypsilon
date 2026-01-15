@@ -5,7 +5,7 @@
 #define VM_H_INCLUDED
 
 #include "core.h"
-#include "heap.h"
+#include "object_heap.h"
 
 class printer_t;
 class digamma_t;
