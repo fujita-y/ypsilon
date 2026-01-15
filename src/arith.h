@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef ARITH_H_INCLUDED

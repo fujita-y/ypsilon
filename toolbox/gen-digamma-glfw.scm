@@ -1,4 +1,4 @@
-;;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+;;; Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 ;;; See LICENSE file for terms and conditions of use.
 
 (import (core)
@@ -181,7 +181,7 @@
   (open-file-output-port "toolbox/output/glfw.scm" (file-options no-fail) (buffer-mode block) (native-transcoder))
   (lambda (port)
     (format port "#!nobacktrace~%")
-    (format port ";;; Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.~%")
+    (format port ";;; Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.~%")
     (format port ";;; See LICENSE file for terms and conditions of use.~%~%")
     (format port "(library (ypsilon glfw)~%")
     (output-exports port exports)
