@@ -1076,9 +1076,10 @@ void digamma_t::transform(context_t& ctx, scm_obj_t inst, bool insert_stack_chec
   }
 }
 
-void digamma_t::display_codegen_statistics(scm_port_t port) {
+void digamma_t::display_codegen_statistics(int nth, scm_port_t port) {
   scoped_lock lock(port->lock);
   port_put_byte(port, '\n');
+  port_format(port, "codegen thread #%d\n", nth);
   port_format(port, "top-level apply interned : %d\n", m_usage.globals);
   port_format(port, "top-level apply lifted   : %d\n", m_usage.inners);
   port_format(port, "top-level reference      : %d\n", m_usage.refs);

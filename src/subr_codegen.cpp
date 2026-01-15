@@ -58,7 +58,7 @@ scm_obj_t subr_display_codegen_statistics(VM* vm, int argc, scm_obj_t argv[]) {
   if (argc == 0) {
     for (int i = 0; i < COMPILE_THREAD_COUNT; i++) {
       if (vm->m_digamma[i]) {
-        vm->m_digamma[i]->display_codegen_statistics(vm->m_current_output);
+        vm->m_digamma[i]->display_codegen_statistics(i, vm->m_current_output);
       }
     }
     return scm_unspecified;
