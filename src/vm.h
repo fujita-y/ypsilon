@@ -1,11 +1,11 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef VM_H_INCLUDED
 #define VM_H_INCLUDED
 
 #include "core.h"
-#include "heap.h"
+#include "object_heap.h"
 
 class printer_t;
 class digamma_t;
@@ -160,5 +160,31 @@ class VM {
     return m_heap->inherent_symbol(opcode);
   }
 } ATTRIBUTE(aligned(64));
+
+#if defined(NO_TLS)
+
+inline VM* current_vm() {
+  extern pthread_key_t s_current_vm;
+  return (VM*)pthread_getspecific(s_current_vm);
+}
+
+inline void set_current_vm(VM* vm) {
+  extern pthread_key_t s_current_vm;
+  MTVERIFY(pthread_setspecific(s_current_vm, vm));
+}
+
+#else
+
+inline VM* current_vm() {
+  extern __thread VM* s_current_vm;
+  return s_current_vm;
+}
+
+inline void set_current_vm(VM* vm) {
+  extern __thread VM* s_current_vm;
+  s_current_vm = vm;
+}
+
+#endif
 
 #endif

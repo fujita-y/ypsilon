@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef DIGAMMA_H_INCLUDED
@@ -120,7 +120,7 @@ class digamma_t {
   void init();
   void destroy();
   void codegen_closure(scm_closure_t closure);
-  void display_codegen_statistics(scm_port_t port);
+  void display_codegen_statistics(int nth, scm_port_t port);
   bool m_debug;
   std::vector<scm_closure_t> m_codegen_queue;
   mutex_t m_codegen_queue_lock;

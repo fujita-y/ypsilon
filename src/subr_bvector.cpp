@@ -1,19 +1,14 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
 #include "arith.h"
 #include "equiv.h"
-#include "fasl.h"
 #include "file.h"
-#include "hash.h"
-#include "heap.h"
-#include "ioerror.h"
+#include "list.h"
+#include "object_factory.h"
 #include "port.h"
-#include "printer.h"
-#include "reader.h"
 #include "subr.h"
-#include "ucs4.h"
 #include "utf8.h"
 #include "violation.h"
 #include "vm.h"

@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef MUTEX_H_INCLUDED
@@ -16,8 +16,7 @@ class mutex_t {
   int lock_count;
 #endif
 
-  mutex_t() { /* should be blank */
-  }
+  mutex_t() { /* should be blank */ }
 
   void init(bool recursive = false) {
 #if MTDEBUG

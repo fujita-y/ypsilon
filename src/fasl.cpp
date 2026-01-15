@@ -1,10 +1,11 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
 #include "fasl.h"
 #include "arith.h"
-#include "ucs4.h"
+#include "hash.h"
+#include "object_factory.h"
 #include "vm.h"
 
 fasl_printer_t::fasl_printer_t(VM* vm, scm_port_t port) {

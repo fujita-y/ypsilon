@@ -1,11 +1,10 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
 #include "ioerror.h"
 #include "arith.h"
-#include "heap.h"
-#include "port.h"
+#include "object_factory.h"
 #include "vm.h"
 
 void raise_io_codec_error(VM* vm, const char* who, int operation, const char* message, scm_obj_t io, scm_obj_t ch) {

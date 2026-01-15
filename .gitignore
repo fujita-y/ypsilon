@@ -33,6 +33,7 @@ build/
 # Misc
 .DS_Store
 .vscode
+.cache
 *.d
 *.sublime-project
 *.sublime-workspace

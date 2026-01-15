@@ -1,5 +1,7 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
+
+// IWYU pragma: always_keep
 
 #ifndef CORE_H_INCLUDED
 #define CORE_H_INCLUDED
@@ -7,21 +9,6 @@
 #ifndef __STDC_LIMIT_MACROS
   #define __STDC_LIMIT_MACROS
 #endif
-
-#include <assert.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <float.h>
-#include <limits.h>
-#include <math.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <wctype.h>
 
 #define UNBOUND_GLOC_RETURN_UNSPEC 0  // default: 0
 
@@ -85,12 +72,6 @@
 #define USE_MULTIBYTE_READ          1
 #define USE_MULTIBYTE_WRITE         1
 
-#if defined(FD_CLOEXEC)
-  #define USE_CLOEXEC 1
-#else
-  #define USE_CLOEXEC 0
-#endif
-
 #ifndef SYSTEM_SHARE_PATH
   #define SYSTEM_SHARE_PATH "/usr/local/share/ypsilon"
 #endif
@@ -99,10 +80,6 @@
   #define SYSTEM_EXTENSION_PATH "/usr/local/lib/ypsilon"
 #endif
 
-#define array_sizeof(a) ((int)(sizeof(a) / sizeof(a[0])))
-
-class VM;
-
 #include "sysdep.h"
 
 extern int main_command_line_argc;
@@ -110,5 +87,7 @@ extern const char** main_command_line_argv;
 extern void fatal(const char* fmt, ...) ATTRIBUTE(noreturn);
 extern void warning(const char* fmt, ...);
 extern void trace(const char* fmt, ...);
+
+template <typename T, size_t N> constexpr size_t array_sizeof(T (&a)[N]) { return N; }
 
 #endif

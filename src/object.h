@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef OBJECT_H_INCLUDED
@@ -61,6 +61,8 @@
 #define OBJECT_DATUM_ALIGN_MASK (OBJECT_DATUM_ALIGN - 1)
 
 #define PORT_LOOKAHEAD_SIZE     8
+
+class VM;
 
 typedef void* scm_obj_t;
 typedef uintptr_t scm_hdr_t;
@@ -399,7 +401,7 @@ struct vm_env_rec_t {
 };
 
 #define HEAPFORWARDPTR(obj)     ((intptr_t)(obj) & (~0x7))
-#define HEAPFORWARDPTRP(obj)    (((intptr_t)(obj)&0x7) == 0x6)
+#define HEAPFORWARDPTRP(obj)    (((intptr_t)(obj) & 0x7) == 0x6)
 #define MAKEHEAPFORWARDPTR(obj) ((intptr_t)(obj) | 0x6)
 
 #define FIXNUM_MAX              (INTPTR_MAX / 2)
@@ -500,46 +502,35 @@ struct vm_env_rec_t {
 #define OPCODESYMBOLP(obj)                (INHERENTSYMBOLP(obj) && (HDR_SYMBOL_CODE(HDR(obj)) < VMOP_INSTRUCTION_COUNT))
 #define BOTHFLONUMP(x, y) \
   (CELLP((intptr_t)(x) | (intptr_t)(y)) && ((((scm_flonum_t)(x))->hdr == scm_hdr_flonum) & (((scm_flonum_t)(y))->hdr == scm_hdr_flonum)))
-#define BVECTORMAPPINGP(obj)     (BVECTORP(obj) && HDR_BVECTOR_MAPPING(HDR(obj)))
+#define BVECTORMAPPINGP(obj)           (BVECTORP(obj) && HDR_BVECTOR_MAPPING(HDR(obj)))
 
-#define STRING_TYPE_UNKNOWN      0x0
-#define STRING_TYPE_ASCII        0x1
-#define STRING_TYPE_UTF8         0x2
+#define STRING_TYPE_UNKNOWN            0x0
+#define STRING_TYPE_ASCII              0x1
+#define STRING_TYPE_UTF8               0x2
 
-#define CAR(obj)                 (((scm_pair_t)(obj))->car)
-#define CDR(obj)                 (((scm_pair_t)(obj))->cdr)
-#define CAAR(obj)                (CAR(CAR(obj)))
-#define CADR(obj)                (CAR(CDR(obj)))
-#define CDAR(obj)                (CDR(CAR(obj)))
-#define CDDR(obj)                (CDR(CDR(obj)))
-#define CADDR(obj)               (CAR(CDR(CDR(obj))))
-#define CADAR(obj)               (CAR(CDR(CAR(obj))))
-#define CDDDR(obj)               (CDR(CDR(CDR(obj))))
+#define CAR(obj)                       (((scm_pair_t)(obj))->car)
+#define CDR(obj)                       (((scm_pair_t)(obj))->cdr)
+#define CAAR(obj)                      (CAR(CAR(obj)))
+#define CADR(obj)                      (CAR(CDR(obj)))
+#define CDAR(obj)                      (CDR(CAR(obj)))
+#define CDDR(obj)                      (CDR(CDR(obj)))
+#define CADDR(obj)                     (CAR(CDR(CDR(obj))))
+#define CADAR(obj)                     (CAR(CDR(CAR(obj))))
+#define CDDDR(obj)                     (CDR(CDR(CDR(obj))))
 
-#define MAKEFIXNUM(n)            ((scm_fixnum_t)(((uintptr_t)(n) << 1) + 1))
-#define MAKECHAR(n)              ((scm_char_t)(((uintptr_t)(n) << 8) + 0x02))
-#define MAKEBITS(n, shift)       (((uintptr_t)(n)) << shift)
+#define MAKEFIXNUM(n)                  ((scm_fixnum_t)(((uintptr_t)(n) << 1) + 1))
+#define MAKECHAR(n)                    ((scm_char_t)(((uintptr_t)(n) << 8) + 0x02))
+#define MAKEBITS(n, shift)             (((uintptr_t)(n)) << shift)
 
-#define HASH_BUSY_THRESHOLD(n)   ((n) - ((n) >> 3))               // 87.5%
-#define HASH_DENSE_THRESHOLD(n)  ((n) - ((n) >> 2))               // 75%
-#define HASH_SPARSE_THRESHOLD(n) ((n) >> 2)                       // 25%
-#define HASH_IMMUTABLE_SIZE(n)   ((n) + ((n) >> 3))               // 112.5%
-#define HASH_MUTABLE_SIZE(n)     ((n) + ((n) >> 1) + ((n) >> 2))  // 175%
-#define HASH_BOUND_MAX           UINT32_MAX
+#define HASH_BUSY_THRESHOLD(n)         ((n) - ((n) >> 3))               // 87.5%
+#define HASH_DENSE_THRESHOLD(n)        ((n) - ((n) >> 2))               // 75%
+#define HASH_SPARSE_THRESHOLD(n)       ((n) >> 2)                       // 25%
+#define HASH_IMMUTABLE_SIZE(n)         ((n) + ((n) >> 3))               // 112.5%
+#define HASH_MUTABLE_SIZE(n)           ((n) + ((n) >> 1) + ((n) >> 2))  // 175%
+#define HASH_BOUND_MAX                 UINT32_MAX
 
-#if ARCH_LP64
-  #define OBJECT_SLAB_SIZE        (8192L)
-  #define OBJECT_SLAB_SIZE_SHIFT  (12 + 1)
-  #define OBJECT_SLAB_THRESHOLD   (OBJECT_SLAB_SIZE / 8)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
-  #define VM_STACK_BYTESIZE       (OBJECT_SLAB_SIZE * 4)
-  #define VM_STACK_SAVE_THRESHOLD (VM_STACK_BYTESIZE - (VM_STACK_BYTESIZE >> 1))  // 50%
-#else
-  #define OBJECT_SLAB_SIZE        (4096L)
-  #define OBJECT_SLAB_SIZE_SHIFT  (12)
-  #define OBJECT_SLAB_THRESHOLD   (OBJECT_SLAB_SIZE / 4)  // m_collectibles[] and m_privates[] in ObjectFactory in effect this value
-  #define VM_STACK_BYTESIZE       (OBJECT_SLAB_SIZE * 4)
-  #define VM_STACK_SAVE_THRESHOLD (VM_STACK_BYTESIZE - (VM_STACK_BYTESIZE >> 1))  // 50%
-#endif
+#define VM_STACK_BYTESIZE              (SLAB_SIZE * 4)
+#define VM_STACK_SAVE_THRESHOLD        (VM_STACK_BYTESIZE - (VM_STACK_BYTESIZE >> 1))  // 50%
 
 #define IDENTIFIER_RENAME_DELIMITER    '`'
 #define IDENTIFIER_LIBRARY_SUFFIX      '\''

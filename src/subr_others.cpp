@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
@@ -14,6 +14,7 @@
 #include "utf8.h"
 #include "uuid.h"
 #include "violation.h"
+#include "object_factory.h"
 #include "vm.h"
 
 #define DEFAULT_GENSYM_PREFIX ".G"
@@ -728,13 +729,13 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
 #endif
 
       do {
-        vm->m_heap->collect();
+        vm->m_heap->m_concurrent_heap.collect();
         usleep(1000);
-      } while (!vm->m_heap->m_collector_kicked);
+      } while (!vm->m_heap->m_concurrent_heap.m_collector_kicked);
       do {
-        if (vm->m_heap->m_stop_the_world) vm->stop();
+        if (vm->m_heap->m_concurrent_heap.m_stop_the_world) vm->stop();
         usleep(1000);
-      } while (vm->m_heap->m_collector_kicked);
+      } while (vm->m_heap->m_concurrent_heap.m_collector_kicked);
 
       relocate_info_t* info = vm->m_heap->relocate(pack);
       vm->resolve();
@@ -751,7 +752,7 @@ scm_obj_t subr_collect(VM* vm, int argc, scm_obj_t argv[]) {
 
       return scm_unspecified;
     } else {
-      vm->m_heap->collect();
+      vm->m_heap->m_concurrent_heap.collect();
       return scm_unspecified;
     }
   }
@@ -1121,7 +1122,7 @@ scm_obj_t subr_tuple_set(VM* vm, int argc, scm_obj_t argv[]) {
         scm_tuple_t tuple = (scm_tuple_t)argv[0];
         intptr_t n = FIXNUM(argv[1]);
         if (n >= 0 && n < HDR_TUPLE_COUNT(tuple->hdr)) {
-          vm->m_heap->write_barrier(argv[2]);
+          vm->m_heap->m_concurrent_heap.write_barrier(argv[2]);
           tuple->elts[n] = argv[2];
           return scm_unspecified;
         }
@@ -1520,8 +1521,8 @@ scm_obj_t subr_copy_environment_variables(VM* vm, int argc, scm_obj_t argv[]) {
             scm_gloc_t from_gloc = (scm_gloc_t)obj;
             scm_gloc_t to_gloc = make_gloc(vm->m_heap, to_symbol);
             to_gloc->value = from_gloc->value;
-            vm->m_heap->write_barrier(to_symbol);
-            vm->m_heap->write_barrier(to_gloc);
+            vm->m_heap->m_concurrent_heap.write_barrier(to_symbol);
+            vm->m_heap->m_concurrent_heap.write_barrier(to_gloc);
             int nsize = put_hashtable(to->variable, to_symbol, to_gloc);
             if (nsize) rehash_hashtable(vm->m_heap, to->variable, nsize);
             lst = CDR(lst);
@@ -1573,8 +1574,8 @@ scm_obj_t subr_copy_environment_macros(VM* vm, int argc, scm_obj_t argv[]) {
             obj = get_hashtable(from->macro, from_symbol);
           }
           if (obj != scm_undef) {
-            vm->m_heap->write_barrier(to_symbol);
-            vm->m_heap->write_barrier(obj);
+            vm->m_heap->m_concurrent_heap.write_barrier(to_symbol);
+            vm->m_heap->m_concurrent_heap.write_barrier(obj);
             int nsize = put_hashtable(to->macro, to_symbol, obj);
             if (nsize) rehash_hashtable(vm->m_heap, to->macro, nsize);
             lst = CDR(lst);
@@ -1950,7 +1951,7 @@ scm_obj_t subr_vector_copy(VM* vm, int argc, scm_obj_t argv[]) {
       if (start <= len && end <= len && start <= end) {
         scm_vector_t dst = make_vector(vm->m_heap, end - start, scm_unspecified);
         for (int i = start; i < end; i++) {
-          vm->m_heap->write_barrier(src->elts[i]);
+          vm->m_heap->m_concurrent_heap.write_barrier(src->elts[i]);
           dst->elts[i - start] = src->elts[i];
         }
         return dst;

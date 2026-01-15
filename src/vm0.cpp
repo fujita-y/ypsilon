@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
@@ -8,6 +8,7 @@
 #include "port.h"
 #include "printer.h"
 #include "reader.h"
+#include "object_factory.h"
 #include "vm.h"
 
 scm_obj_t VM::lookup_current_environment(scm_symbol_t symbol) {
@@ -32,14 +33,14 @@ void VM::intern_current_environment(scm_symbol_t symbol, scm_obj_t value) {
   scm_obj_t obj = get_hashtable(ht, symbol);
   if (obj != scm_undef) {
     assert(GLOCP(obj));
-    m_heap->write_barrier(value);
+    m_heap->m_concurrent_heap.write_barrier(value);
     ((scm_gloc_t)obj)->value = value;
     return;
   }
   scm_gloc_t gloc = make_gloc(m_heap, symbol);
   gloc->value = value;
-  m_heap->write_barrier(symbol);
-  m_heap->write_barrier(gloc);
+  m_heap->m_concurrent_heap.write_barrier(symbol);
+  m_heap->m_concurrent_heap.write_barrier(gloc);
   int nsize = put_hashtable(ht, symbol, gloc);
   if (nsize) rehash_hashtable(m_heap, ht, nsize);
 }
@@ -48,10 +49,10 @@ bool VM::init(object_heap_t* heap) {
   try {
     m_heap = heap;
     m_stack_size = VM_STACK_BYTESIZE;
-    m_stack_top = (scm_obj_t*)m_heap->allocate(m_stack_size, false, false);
+    m_stack_top = (scm_obj_t*)m_heap->m_concurrent_pool.allocate(m_stack_size, false, false);
     m_stack_limit = (scm_obj_t*)((intptr_t)m_stack_top + m_stack_size);
     memset(m_stack_top, 0, m_stack_size);
-    m_to_stack_top = (scm_obj_t*)m_heap->allocate(m_stack_size, false, false);
+    m_to_stack_top = (scm_obj_t*)m_heap->m_concurrent_pool.allocate(m_stack_size, false, false);
     m_to_stack_limit = (scm_obj_t*)((intptr_t)m_to_stack_top + m_stack_size);
     memset(m_to_stack_top, 0, m_stack_size);
     m_current_environment = m_heap->m_system_environment;
@@ -639,48 +640,50 @@ loop:
 
 void VM::stop() {
 #define ARGC_TH 8
-  collector_usage_t last_usage = m_heap->m_usage;
-  if (last_usage.m_recorded) m_heap->m_usage.clear();
+  collector_usage_t last_usage = m_heap->m_concurrent_heap.m_usage;
+  if (last_usage.m_recorded) m_heap->m_concurrent_heap.m_usage.clear();
   double t1 = msec();
 #if HPDEBUG
-  if (m_heap->m_root_snapshot == ROOT_SNAPSHOT_CONSISTENCY_CHECK) save_stack();
+  if (m_heap->m_concurrent_heap.m_root_snapshot_mode == ROOT_SNAPSHOT_MODE_CONSISTENCY_CHECK) save_stack();
 #endif
-  if ((m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) || (m_heap->m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
-      (m_heap->m_root_snapshot == ROOT_SNAPSHOT_GLOBALS)) {
-    m_heap->enqueue_root(m_bootport);
-    m_heap->enqueue_root(m_current_input);
-    m_heap->enqueue_root(m_current_output);
-    m_heap->enqueue_root(m_current_error);
-    m_heap->enqueue_root(m_current_exception_handler);
-    m_heap->enqueue_root(m_current_environment);
-    m_heap->enqueue_root(m_current_dynamic_environment);
-    m_heap->enqueue_root(m_current_dynamic_wind_record);
-    m_heap->enqueue_root(m_current_source_comments);
+  if ((m_heap->m_concurrent_heap.m_root_snapshot_mode == ROOT_SNAPSHOT_MODE_EVERYTHING) ||
+      (m_heap->m_concurrent_heap.m_root_snapshot_mode == ROOT_SNAPSHOT_MODE_RETRY) ||
+      (m_heap->m_concurrent_heap.m_root_snapshot_mode == ROOT_SNAPSHOT_MODE_GLOBALS)) {
+    m_heap->m_concurrent_heap.enqueue_root(m_bootport);
+    m_heap->m_concurrent_heap.enqueue_root(m_current_input);
+    m_heap->m_concurrent_heap.enqueue_root(m_current_output);
+    m_heap->m_concurrent_heap.enqueue_root(m_current_error);
+    m_heap->m_concurrent_heap.enqueue_root(m_current_exception_handler);
+    m_heap->m_concurrent_heap.enqueue_root(m_current_environment);
+    m_heap->m_concurrent_heap.enqueue_root(m_current_dynamic_environment);
+    m_heap->m_concurrent_heap.enqueue_root(m_current_dynamic_wind_record);
+    m_heap->m_concurrent_heap.enqueue_root(m_current_source_comments);
   }
-  if ((m_heap->m_root_snapshot == ROOT_SNAPSHOT_EVERYTHING) || (m_heap->m_root_snapshot == ROOT_SNAPSHOT_RETRY) ||
-      (m_heap->m_root_snapshot == ROOT_SNAPSHOT_LOCALS)) {
+  if ((m_heap->m_concurrent_heap.m_root_snapshot_mode == ROOT_SNAPSHOT_MODE_EVERYTHING) ||
+      (m_heap->m_concurrent_heap.m_root_snapshot_mode == ROOT_SNAPSHOT_MODE_RETRY) ||
+      (m_heap->m_concurrent_heap.m_root_snapshot_mode == ROOT_SNAPSHOT_MODE_LOCALS)) {
     save_stack();
-    m_heap->enqueue_root(m_pc);
-    m_heap->enqueue_root(m_value);
-    m_heap->enqueue_root(m_trace);
-    m_heap->enqueue_root(m_trace_tail);
+    m_heap->m_concurrent_heap.enqueue_root(m_pc);
+    m_heap->m_concurrent_heap.enqueue_root(m_value);
+    m_heap->m_concurrent_heap.enqueue_root(m_trace);
+    m_heap->m_concurrent_heap.enqueue_root(m_trace_tail);
     if (m_fp != m_sp) {
       int argc = m_sp - m_fp;
       if (argc > ARGC_TH) {
         scm_vector_t vector = make_vector(m_heap, argc, scm_nil);
         for (int i = 0; i < argc; i++) vector->elts[i] = m_fp[i];
-        m_heap->enqueue_root(vector);
+        m_heap->m_concurrent_heap.enqueue_root(vector);
       } else {
-        for (int i = 0; i < argc; i++) m_heap->enqueue_root(m_fp[i]);
+        for (int i = 0; i < argc; i++) m_heap->m_concurrent_heap.enqueue_root(m_fp[i]);
       }
     }
     if (m_cont) {
-      assert(m_heap->is_collectible(m_cont));
-      m_heap->enqueue_root(OBJECT_SLAB_TRAITS_OF(m_cont)->cache->lookup(m_cont));
+      assert(m_heap->m_concurrent_pool.is_collectible(m_cont));
+      m_heap->m_concurrent_heap.enqueue_root(SLAB_TRAITS_OF(m_cont)->cache->lookup(m_cont));
     }
     if (m_env) {
-      assert(m_heap->is_collectible(m_env));
-      m_heap->enqueue_root(OBJECT_SLAB_TRAITS_OF(m_env)->cache->lookup(m_env));
+      assert(m_heap->m_concurrent_pool.is_collectible(m_env));
+      m_heap->m_concurrent_heap.enqueue_root(SLAB_TRAITS_OF(m_env)->cache->lookup(m_env));
     }
   }
 #if ENABLE_LLVM_JIT
@@ -688,32 +691,32 @@ void VM::stop() {
     if (m_digamma[i]) {
       scoped_lock lock(m_digamma[i]->m_codegen_queue_lock);
       for (scm_closure_t closure : m_digamma[i]->m_codegen_queue) {
-        m_heap->enqueue_root(closure);
+        m_heap->m_concurrent_heap.enqueue_root(closure);
       }
     }
   }
 #endif
-  m_heap->m_collector_lock.lock();
-  while (m_heap->m_stop_the_world) {
-    m_heap->m_mutator_stopped = true;
-    m_heap->m_collector_wake.signal();
-    m_heap->m_mutator_wake.wait(m_heap->m_collector_lock);
-    m_heap->m_mutator_stopped = false;
+  m_heap->m_concurrent_heap.m_collector_lock.lock();
+  while (m_heap->m_concurrent_heap.m_stop_the_world) {
+    m_heap->m_concurrent_heap.m_mutator_stopped = true;
+    m_heap->m_concurrent_heap.m_collector_wake.signal();
+    m_heap->m_concurrent_heap.m_mutator_wake.wait(m_heap->m_concurrent_heap.m_collector_lock);
+    m_heap->m_concurrent_heap.m_mutator_stopped = false;
   }
-  m_heap->m_collector_wake.signal();
-  m_heap->m_collector_lock.unlock();
+  m_heap->m_concurrent_heap.m_collector_wake.signal();
+  m_heap->m_concurrent_heap.m_collector_lock.unlock();
   double t2 = msec();
-  switch (m_heap->m_root_snapshot) {
-    case ROOT_SNAPSHOT_GLOBALS:
-      m_heap->m_usage.m_pause1 = t2 - t1;
+  switch (m_heap->m_concurrent_heap.m_root_snapshot_mode) {
+    case ROOT_SNAPSHOT_MODE_GLOBALS:
+      m_heap->m_concurrent_heap.m_usage.m_pause1 = t2 - t1;
       break;
-    case ROOT_SNAPSHOT_LOCALS:
-      m_heap->m_usage.m_pause2 = t2 - t1;
+    case ROOT_SNAPSHOT_MODE_LOCALS:
+      m_heap->m_concurrent_heap.m_usage.m_pause2 = t2 - t1;
       break;
-    case ROOT_SNAPSHOT_RETRY:
-    case ROOT_SNAPSHOT_EVERYTHING: {
+    case ROOT_SNAPSHOT_MODE_RETRY:
+    case ROOT_SNAPSHOT_MODE_EVERYTHING: {
       double d = t2 - t1;
-      if (d > m_heap->m_usage.m_pause3) m_heap->m_usage.m_pause3 = d;
+      if (d > m_heap->m_concurrent_heap.m_usage.m_pause3) m_heap->m_concurrent_heap.m_usage.m_pause3 = d;
     } break;
   }
 
@@ -777,11 +780,11 @@ void VM::resolve() {
     for (int i = 0; i < argc; i++) m_fp[i] = m_heap->forward(m_fp[i]);
   }
   if (m_cont) {
-    assert(m_heap->is_collectible(m_cont));
+    assert(m_heap->m_concurrent_pool.is_collectible(m_cont));
     m_cont = m_heap->interior_forward(m_cont);
   }
   if (m_env) {
-    assert(m_heap->is_collectible(m_env));
+    assert(m_heap->m_concurrent_pool.is_collectible(m_env));
     m_env = m_heap->interior_forward(m_env);
   }
 }

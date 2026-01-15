@@ -1,11 +1,10 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef FASL_H_INCLUDED
 #define FASL_H_INCLUDED
 
 #include "core.h"
-#include "hash.h"
 #include "port.h"
 
 #define FASL_DEBUG                 0

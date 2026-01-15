@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
@@ -6,7 +6,9 @@
 #include "arith.h"
 #include "exception.h"
 #include "fasl.h"
-#include "heap.h"
+#include "hash.h"
+#include "list.h"
+#include "object_factory.h"
 #include "port.h"
 #include "printer.h"
 #include "ucs4.h"
@@ -972,8 +974,8 @@ void reader_t::put_note(scm_obj_t key, scm_obj_t value) {
   assert(HASHTABLEP(m_note));
   scm_hashtable_t ht = (scm_hashtable_t)m_note;
   scoped_lock lock(ht->lock);
-  m_vm->m_heap->write_barrier(key);
-  m_vm->m_heap->write_barrier(value);
+  m_vm->m_heap->m_concurrent_heap.write_barrier(key);
+  m_vm->m_heap->m_concurrent_heap.write_barrier(value);
   int nsize = put_hashtable(ht, key, value);
   if (nsize) rehash_hashtable(m_vm->m_heap, ht, nsize);
 }

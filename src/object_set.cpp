@@ -1,10 +1,11 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
+#include "object_set.h"
 #include "hash.h"
-#include "heap.h"
 #include "list.h"
+#include "object_heap.h"
 
 static inline bool string_equiv(const char* s1, const char* s2, int len) {
   for (int i = 0; i < len; i++) {
@@ -62,9 +63,9 @@ scm_obj_t object_set_t::get(const char* name, int len) {
       assert(SYMBOLP(entry) || STRINGP(entry));
       if (get_len(entry) == len) {
         if (string_equiv(name, get_name(entry), len)) {
-          if (m_heap->m_read_barrier) {
-            if (DETAILED_STATISTIC) m_heap->m_usage.m_barriered_read++;
-            OBJECT_SLAB_TRAITS_OF(entry)->cache->mark(entry);
+          if (m_heap->m_concurrent_heap.m_read_barrier) {
+            if (DETAILED_STATISTIC) m_heap->m_concurrent_heap.m_usage.m_barriered_read++;
+            SLAB_TRAITS_OF(entry)->cache->unconditional_mark(entry);
           }
           return entry;
         }
@@ -153,7 +154,7 @@ void object_set_t::rehash(int ncount) {
 
 void object_set_t::inplace_rehash() {
   assert(m_heap);
-  scoped_lock lock(m_lock);
+  m_lock.verify_locked();
   scm_obj_t* save_elts = (scm_obj_t*)malloc(sizeof(scm_obj_t*) * m_count);
   memcpy(save_elts, m_elts, sizeof(scm_obj_t*) * m_count);
   for (int i = 0; i < m_count; i++) m_elts[i] = scm_hash_free;
@@ -187,13 +188,13 @@ void object_set_t::sweep() {
     if (obj == scm_hash_free) continue;
     if (obj == scm_hash_deleted) continue;
     assert(SYMBOLP(obj) || STRINGP(obj));
-    object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
+    slab_traits_t* traits = SLAB_TRAITS_OF(obj);
     if (traits->cache->state(obj)) continue;
     m_elts[i] = scm_hash_deleted;
     m_live--;
   }
   if (m_count > 7 && m_live < HASH_SPARSE_THRESHOLD(m_count)) {
-    rehash(lookup_mutable_hashtable_size(HASH_MUTABLE_SIZE(m_live)));
+    inplace_rehash();
   }
 }
 
@@ -205,7 +206,7 @@ void object_set_t::resolve() {
 
 void object_set_t::relocate(bool every) {
   if (every) {
-    if (m_heap->in_slab(m_elts)) {
+    if (m_heap->m_concurrent_pool.in_slab(m_elts)) {
       int nbytes = m_heap->allocated_size(m_elts);
       assert(nbytes);
       void* to = m_heap->allocate_private(nbytes);
@@ -213,7 +214,7 @@ void object_set_t::relocate(bool every) {
       m_elts = (scm_obj_t*)to;
       return;
     }
-    assert(m_heap->in_heap(m_elts));
+    assert(m_heap->m_concurrent_pool.in_pool(m_elts));
     int nbytes = m_heap->allocated_size(m_elts);
     assert(nbytes);
     void* to = m_heap->allocate_private(nbytes);
@@ -221,7 +222,7 @@ void object_set_t::relocate(bool every) {
     m_heap->deallocate_private(m_elts);
     m_elts = (scm_obj_t*)to;
   } else {
-    if (m_heap->in_non_full_slab(m_elts)) {
+    if (m_heap->m_concurrent_pool.in_non_full_slab(m_elts)) {
       int nbytes = m_heap->allocated_size(m_elts);
       assert(nbytes);
       void* to = m_heap->allocate_private(nbytes);

@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef COND_H_INCLUDED
@@ -14,8 +14,7 @@ class cond_t {
  public:
   pthread_cond_t cv;
 
-  cond_t() { /* should be blank */
-  }
+  cond_t() { /* should be blank */ }
 
   void init() { MTVERIFY(pthread_cond_init(&cv, NULL)); }
 

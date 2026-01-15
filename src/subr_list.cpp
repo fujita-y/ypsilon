@@ -1,18 +1,14 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
 #include "arith.h"
 #include "equiv.h"
-#include "fasl.h"
-#include "file.h"
-#include "heap.h"
-#include "ioerror.h"
+#include "hash.h"
+#include "list.h"
+#include "object_factory.h"
 #include "port.h"
-#include "printer.h"
-#include "reader.h"
 #include "subr.h"
-#include "ucs4.h"
 #include "utf8.h"
 #include "violation.h"
 #include "vm.h"
@@ -189,7 +185,7 @@ scm_obj_t subr_set_car(VM* vm, int argc, scm_obj_t argv[]) {
         return scm_undef;
       }
 #endif
-      vm->m_heap->write_barrier(argv[1]);
+      vm->m_heap->m_concurrent_heap.write_barrier(argv[1]);
       CAR(argv[0]) = argv[1];
       return scm_unspecified;
     }
@@ -210,7 +206,7 @@ scm_obj_t subr_set_cdr(VM* vm, int argc, scm_obj_t argv[]) {
         return scm_undef;
       }
 #endif
-      vm->m_heap->write_barrier(argv[1]);
+      vm->m_heap->m_concurrent_heap.write_barrier(argv[1]);
       CDR(argv[0]) = argv[1];
       return scm_unspecified;
     }

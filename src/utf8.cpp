@@ -1,9 +1,9 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
 #include "utf8.h"
-#include "heap.h"
+#include "object_heap.h"
 
 int ascii_cstring_pred(const char* s) {
   uint8_t c;
@@ -23,20 +23,20 @@ int cnvt_ucs4_to_utf8(uint32_t ucs4, uint8_t utf8[4]) {
   }
   if (ucs4 < 0x800) {
     utf8[0] = ((ucs4 >> 6) & 0x1f) | 0xc0;
-    utf8[1] = ((ucs4)&0x3f) | 0x80;
+    utf8[1] = ((ucs4) & 0x3f) | 0x80;
     return 2;
   }
   if (ucs4 < 0x10000) {
     utf8[0] = ((ucs4 >> 12) & 0x0f) | 0xe0;
     utf8[1] = ((ucs4 >> 6) & 0x3f) | 0x80;
-    utf8[2] = ((ucs4)&0x3f) | 0x80;
+    utf8[2] = ((ucs4) & 0x3f) | 0x80;
     return 3;
   }
   if (ucs4 < 0x200000) {
     utf8[0] = ((ucs4 >> 18) & 0x07) | 0xf0;
     utf8[1] = ((ucs4 >> 12) & 0x3f) | 0x80;
     utf8[2] = ((ucs4 >> 6) & 0x3f) | 0x80;
-    utf8[3] = ((ucs4)&0x3f) | 0x80;
+    utf8[3] = ((ucs4) & 0x3f) | 0x80;
     return 4;
   }
   fatal("cnvt_ucs4_to_utf8() out of range: %x", ucs4);

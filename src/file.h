@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef FILE_H_INCLUDED
@@ -6,6 +6,8 @@
 
 #include "core.h"
 #include "object.h"
+
+class VM;
 
 scm_obj_t file_size_in_bytes(VM* vm, scm_string_t path);
 scm_obj_t file_regular(VM* vm, scm_string_t path);

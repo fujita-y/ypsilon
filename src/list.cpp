@@ -1,10 +1,9 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
 #include "list.h"
-#include "hash.h"
-#include "heap.h"
+#include "object_factory.h"
 
 scm_obj_t list_ref(scm_obj_t lst, int n) {
   scm_obj_t obj = lst;

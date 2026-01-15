@@ -1,11 +1,11 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
 #include "digamma.h"
 #include "hash.h"
 #include "list.h"
-#include "violation.h"
+#include "object_factory.h"
 #include "vm.h"
 
 #define CONS(a, d) make_pair(m_heap, (a), (d))
@@ -82,7 +82,7 @@ scm_obj_t VM::prebind_literal(scm_obj_t datum) {
     for (int i = 0; i < vector->count; i++) {
       scm_obj_t obj = prebind_literal(vector->elts[i]);
       if (obj != vector->elts[i]) {
-        m_heap->write_barrier(obj);
+        m_heap->m_concurrent_heap.write_barrier(obj);
         vector->elts[i] = obj;
       }
     }
@@ -112,7 +112,7 @@ scm_gloc_t VM::prebind_gloc(scm_obj_t variable) {
       scm_gloc_t gloc = make_gloc_uninterned(m_heap, make_symbol(m_heap, symbol->name));
       gloc->value = scm_undef;
       scm_weakmapping_t wmap = make_weakmapping(m_heap, symbol, gloc);
-      m_heap->write_barrier(wmap);
+      m_heap->m_concurrent_heap.write_barrier(wmap);
       int nsize = put_weakhashtable(m_heap->m_hidden_variables, wmap);
       if (nsize) rehash_weakhashtable(m_heap, m_heap->m_hidden_variables, nsize);
       return gloc;
@@ -129,8 +129,8 @@ scm_gloc_t VM::prebind_gloc(scm_obj_t variable) {
     if (gloc == scm_undef) {
       gloc = make_gloc(m_heap, symbol);
       gloc->value = scm_undef;
-      m_heap->write_barrier(symbol);
-      m_heap->write_barrier(gloc);
+      m_heap->m_concurrent_heap.write_barrier(symbol);
+      m_heap->m_concurrent_heap.write_barrier(gloc);
       int nsize = put_hashtable(m_current_environment->variable, symbol, gloc);
       if (nsize) rehash_hashtable(m_heap, m_current_environment->variable, nsize);
     }
@@ -172,7 +172,7 @@ void VM::prebind_list(scm_obj_t code) {
           }
           scm_obj_t lite = prebind_literal(datum);
           if (lite != datum) {
-            m_heap->write_barrier(lite);
+            m_heap->m_concurrent_heap.write_barrier(lite);
             CDAR(code) = lite;
           }
         }
@@ -181,49 +181,49 @@ void VM::prebind_list(scm_obj_t code) {
       case VMOP_GLOC_OF: {
         scm_gloc_t gloc = prebind_gloc(CAR(operands));
         CAAR(code) = m_heap->inherent_symbol(VMOP_GLOC);
-        m_heap->write_barrier(gloc);
+        m_heap->m_concurrent_heap.write_barrier(gloc);
         CDAR(code) = gloc;
       } break;
 
       case VMOP_RET_GLOC_OF: {
         scm_gloc_t gloc = prebind_gloc(CAR(operands));
         CAAR(code) = m_heap->inherent_symbol(VMOP_RET_GLOC);
-        m_heap->write_barrier(gloc);
+        m_heap->m_concurrent_heap.write_barrier(gloc);
         CDAR(code) = gloc;
       } break;
 
       case VMOP_PUSH_GLOC_OF: {
         scm_gloc_t gloc = prebind_gloc(CAR(operands));
         CAAR(code) = m_heap->inherent_symbol(VMOP_PUSH_GLOC);
-        m_heap->write_barrier(gloc);
+        m_heap->m_concurrent_heap.write_barrier(gloc);
         CDAR(code) = gloc;
       } break;
 
       case VMOP_SET_GLOC_OF: {
         scm_gloc_t gloc = prebind_gloc(CAR(operands));
         CAAR(code) = m_heap->inherent_symbol(VMOP_SET_GLOC);
-        m_heap->write_barrier(gloc);
+        m_heap->m_concurrent_heap.write_barrier(gloc);
         CADAR(code) = gloc;
       } break;
 
       case VMOP_APPLY_GLOC_OF: {
         scm_gloc_t gloc = prebind_gloc(CAR(operands));
         CAAR(code) = m_heap->inherent_symbol(VMOP_APPLY_GLOC);
-        m_heap->write_barrier(gloc);
+        m_heap->m_concurrent_heap.write_barrier(gloc);
         CAR(operands) = gloc;
       } break;
 
       case VMOP_TOUCH_GLOC_OF: {
         scm_gloc_t gloc = prebind_gloc(CAR(operands));
         if (gloc->value != scm_undef) {
-          m_heap->write_barrier(CADR(code));
-          m_heap->write_barrier(CDDR(code));
+          m_heap->m_concurrent_heap.write_barrier(CADR(code));
+          m_heap->m_concurrent_heap.write_barrier(CDDR(code));
           CAR(code) = CADR(code);
           CDR(code) = CDDR(code);
           continue;
         }
         CAAR(code) = m_heap->inherent_symbol(VMOP_TOUCH_GLOC);
-        m_heap->write_barrier(gloc);
+        m_heap->m_concurrent_heap.write_barrier(gloc);
         CDAR(code) = gloc;
       } break;
 
@@ -231,20 +231,20 @@ void VM::prebind_list(scm_obj_t code) {
         scm_gloc_t gloc = prebind_gloc(CAR(operands));
 #ifndef NDEBUG
         if (!SUBRP(gloc->value)) {
-          if (SYMBOLP(gloc->variable))
+          if (SYMBOLP(gloc->name))
             printf("** warning: VMOP_PUSH_SUBR_GLOC_OF expect gloc(%s) contain SUBR but got %p, maybe forward reference\n",
-                   ((scm_symbol_t)gloc->variable)->name, gloc->value);
+                   ((scm_symbol_t)gloc->name)->name, gloc->value);
           else
             printf("** warning: VMOP_PUSH_SUBR_GLOC_OF expect gloc(%p) contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
         }
 #endif
         if (SUBRP(gloc->value)) {
           CAAR(code) = m_heap->inherent_symbol(VMOP_PUSH_SUBR);
-          m_heap->write_barrier(gloc->value);
+          m_heap->m_concurrent_heap.write_barrier(gloc->value);
           CAR(operands) = gloc->value;
         } else {
           CAAR(code) = m_heap->inherent_symbol(VMOP_PUSH_SUBR_GLOC);
-          m_heap->write_barrier(gloc);
+          m_heap->m_concurrent_heap.write_barrier(gloc);
           CAR(operands) = gloc;
         }
       } break;
@@ -253,20 +253,20 @@ void VM::prebind_list(scm_obj_t code) {
         scm_gloc_t gloc = prebind_gloc(CAR(operands));
 #ifndef NDEBUG
         if (!SUBRP(gloc->value)) {
-          if (SYMBOLP(gloc->variable))
+          if (SYMBOLP(gloc->name))
             printf("** warning: VMOP_SUBR_GLOC_OF expect gloc(%s) contain SUBR but got %p, maybe forward reference\n",
-                   ((scm_symbol_t)gloc->variable)->name, gloc->value);
+                   ((scm_symbol_t)gloc->name)->name, gloc->value);
           else
             printf("** warning: VMOP_SUBR_GLOC_OF expect gloc(%p) contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
         }
 #endif
         if (SUBRP(gloc->value)) {
           CAAR(code) = m_heap->inherent_symbol(VMOP_SUBR);
-          m_heap->write_barrier(gloc->value);
+          m_heap->m_concurrent_heap.write_barrier(gloc->value);
           CAR(operands) = gloc->value;
         } else {
           CAAR(code) = m_heap->inherent_symbol(VMOP_SUBR_GLOC);
-          m_heap->write_barrier(gloc);
+          m_heap->m_concurrent_heap.write_barrier(gloc);
           CAR(operands) = gloc;
         }
       } break;
@@ -275,20 +275,20 @@ void VM::prebind_list(scm_obj_t code) {
         scm_gloc_t gloc = prebind_gloc(CAR(operands));
 #ifndef NDEBUG
         if (!SUBRP(gloc->value)) {
-          if (SYMBOLP(gloc->variable))
+          if (SYMBOLP(gloc->name))
             printf("** warning: VMOP_RET_SUBR_GLOC_OF expect gloc(%s) contain SUBR but got %p, maybe forward reference\n",
-                   ((scm_symbol_t)gloc->variable)->name, gloc->value);
+                   ((scm_symbol_t)gloc->name)->name, gloc->value);
           else
             printf("** warning: VMOP_RET_SUBR_GLOC_OF expect gloc(%p) contain SUBR but got %p, maybe forward reference\n", gloc, gloc->value);
         }
 #endif
         if (SUBRP(gloc->value)) {
           CAAR(code) = m_heap->inherent_symbol(VMOP_RET_SUBR);
-          m_heap->write_barrier(gloc->value);
+          m_heap->m_concurrent_heap.write_barrier(gloc->value);
           CAR(operands) = gloc->value;
         } else {
           CAAR(code) = m_heap->inherent_symbol(VMOP_RET_SUBR_GLOC);
-          m_heap->write_barrier(gloc);
+          m_heap->m_concurrent_heap.write_barrier(gloc);
           CAR(operands) = gloc;
         }
       } break;
@@ -301,7 +301,7 @@ void VM::prebind_list(scm_obj_t code) {
   #if PREBIND_CLOSE
         scm_obj_t spec = CAR(operands);
         scm_closure_t closure = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), NULL, CDR(operands), CDDR(spec));
-        m_heap->write_barrier(closure);
+        m_heap->m_concurrent_heap.write_barrier(closure);
         CDAR(code) = closure;
   #endif
 #else
@@ -318,7 +318,7 @@ void VM::prebind_list(scm_obj_t code) {
 #if PREBIND_CLOSE
         scm_obj_t spec = CAR(operands);
         scm_closure_t closure = make_closure(m_heap, FIXNUM(CAR(spec)), FIXNUM(CADR(spec)), NULL, CDR(operands), CDDR(spec));
-        m_heap->write_barrier(closure);
+        m_heap->m_concurrent_heap.write_barrier(closure);
         CDAR(code) = closure;
 #endif
       } break;

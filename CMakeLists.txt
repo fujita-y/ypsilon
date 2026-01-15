@@ -36,12 +36,12 @@ if(NOT APPLE)
   add_link_options("-fuse-ld=lld")
 endif(NOT APPLE)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
-set(CMAKE_LINKER_FLAGS_RELEASE "${CMAKE_LINKER_FLAGS_RELEASE} -flto")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address")
-set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fsanitize=address")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address")
-set(CMAKE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_LINKER_FLAGS_RELWITHDEBINFO} -fsanitize=address")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wundef -Werror -flto")
+set(CMAKE_LINKER_FLAGS_RELEASE "${CMAKE_LINKER_FLAGS_RELEASE} -Wundef -Werror -flto")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wundef -Werror -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address")
+set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -Wundef -Werror -fsanitize=address")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wundef -Werror -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address")
+set(CMAKE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_LINKER_FLAGS_RELWITHDEBINFO} -Wundef -Werror -fsanitize=address")
 
 set(YPSILON_SHARE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/share/ypsilon)
 set(YPSILON_EXTENSION_DIRECTORY ${CMAKE_INSTALL_PREFIX}/lib/ypsilon)
@@ -58,6 +58,9 @@ add_executable(
   ypsilon
   src/arith.cpp
   src/bit.cpp
+  src/concurrent_heap.cpp
+  src/concurrent_pool.cpp
+  src/concurrent_slab.cpp
   src/digamma.cpp
   src/equiv.cpp
   src/fasl.cpp
@@ -70,7 +73,6 @@ add_executable(
   src/object_heap_compact.cpp
   src/object_heap.cpp
   src/object_set.cpp
-  src/object_slab.cpp
   src/port.cpp
   src/printer.cpp
   src/reader.cpp

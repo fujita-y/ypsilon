@@ -1,9 +1,10 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
 #include "serialize.h"
 #include "arith.h"
+#include "hash.h"
 #include "list.h"
 #include "object_factory.h"
 #include "object_heap.h"
@@ -718,8 +719,8 @@ scm_obj_t deserializer_t::get_datum() {
       if (obj != scm_undef) return obj;
       scm_gloc_t gloc = make_gloc(m_heap, symbol);
       gloc->value = scm_undef;
-      m_heap->write_barrier(symbol);
-      m_heap->write_barrier(gloc);
+      m_heap->m_concurrent_heap.write_barrier(symbol);
+      m_heap->m_concurrent_heap.write_barrier(gloc);
       int nsize = put_hashtable(ht, symbol, gloc);
       if (nsize) rehash_hashtable(m_heap, ht, nsize);
       return gloc;

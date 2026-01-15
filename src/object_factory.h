@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef OBJECT_FACTORY_H_INCLUDED
@@ -8,11 +8,12 @@
 #include "object.h"
 #include "object_heap.h"
 
-#define INTERNAL_PRIVATE_THRESHOLD (OBJECT_SLAB_THRESHOLD / 2)
+// object_heap_t::m_collectibles[] must have large enough slab to hold this size of private data plus metadata
+#define INTERN_PRIVATE_THRESHOLD (SLAB_SIZE / 16)
 
-#define VERIFY_DATUM(x)                           \
-  do {                                            \
-    assert(!CELLP(x) || heap->is_collectible(x)); \
+#define VERIFY_DATUM(x)                                             \
+  do {                                                              \
+    assert(!CELLP(x) || heap->m_concurrent_pool.is_collectible(x)); \
   } while (0)
 
 scm_symbol_t make_symbol(object_heap_t* heap, const char* name);

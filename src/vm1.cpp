@@ -1,10 +1,12 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
 #include "arith.h"
 #include "digamma.h"
 #include "exception.h"
+#include "list.h"
+#include "object_factory.h"
 #include "printer.h"
 #include "violation.h"
 #include "vm.h"
@@ -129,7 +131,7 @@ void VM::collect_stack(intptr_t acquire) {
 #if STDEBUG
     check_vm_state();
 #endif
-    if (m_heap->m_stop_the_world) stop();
+    if (m_heap->m_concurrent_heap.m_stop_the_world) stop();
     return;
   }
   intptr_t argc = m_sp - m_fp;
@@ -162,7 +164,7 @@ void VM::collect_stack(intptr_t acquire) {
 #if STDEBUG
   check_vm_state();
 #endif
-  if (m_heap->m_stop_the_world) stop();
+  if (m_heap->m_concurrent_heap.m_stop_the_world) stop();
 }
 
 void* VM::save_env(void* root) {
@@ -378,9 +380,9 @@ void VM::loop(bool resume) {
   if (resume) goto pop_cont;
   goto loop;
 
-apply : {
+apply: {
   if (CLOSUREP(m_value)) {
-    if (m_heap->m_stop_the_world) stop();
+    if (m_heap->m_concurrent_heap.m_stop_the_world) stop();
     if ((uintptr_t)m_sp + sizeof(vm_env_rec_t) < (uintptr_t)m_stack_limit) {
       scm_closure_t closure = (scm_closure_t)m_value;
       intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
@@ -400,7 +402,7 @@ apply : {
           }
           operand_trace = scm_unspecified;
         }
-        intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))closure->code;
+        intptr_t (*thunk)(intptr_t) = (intptr_t (*)(intptr_t))closure->code;
         intptr_t n = (*thunk)((intptr_t)this);
         NATIVE_THUNK_POST_DISPATCH(n);
       }
@@ -421,7 +423,7 @@ apply : {
 }
   goto APPLY_SPECIAL;
 
-pop_cont : {
+pop_cont: {
   if (m_cont == NULL) return;
   vm_cont_t cont = (vm_cont_t)((intptr_t)m_cont - offsetof(vm_cont_rec_t, up));
   m_trace = cont->trace;
@@ -440,9 +442,9 @@ pop_cont : {
     m_sp = m_fp + nargs;
   }
   m_trace_tail = scm_unspecified;
-  if (m_heap->m_stop_the_world) stop();
+  if (m_heap->m_concurrent_heap.m_stop_the_world) stop();
   if (cont->code != NULL) {
-    intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))cont->code;
+    intptr_t (*thunk)(intptr_t) = (intptr_t (*)(intptr_t))cont->code;
     intptr_t n = (*thunk)((intptr_t)this);
     NATIVE_THUNK_POST_DISPATCH(n);
   }
@@ -891,7 +893,7 @@ loop:
         for (intptr_t i = 0; i < argc; i++) dst[i] = m_fp[i];
       } else {
         for (intptr_t i = 0; i < argc; i++) {
-          m_heap->write_barrier(m_fp[i]);
+          m_heap->m_concurrent_heap.write_barrier(m_fp[i]);
           dst[i] = m_fp[i];
         }
       }
@@ -1150,7 +1152,7 @@ loop:
     CASE(VMOP_SET_GLOC) {
       scm_gloc_t gloc = (scm_gloc_t)CAR(OPERANDS);
       assert(GLOCP(gloc));
-      m_heap->write_barrier(m_value);
+      m_heap->m_concurrent_heap.write_barrier(m_value);
       gloc->value = m_value;
       m_pc = CDR(m_pc);
       goto loop;
@@ -1159,7 +1161,7 @@ loop:
     CASE(VMOP_SET_ILOC) {
       scm_obj_t* slot = lookup_iloc(CAR(OPERANDS));
       if (!STACKP(slot)) {
-        m_heap->write_barrier(m_value);
+        m_heap->m_concurrent_heap.write_barrier(m_value);
       }
       *slot = m_value;
       m_pc = CDR(m_pc);
@@ -1411,8 +1413,8 @@ loop:
         m_pc = CDR(m_pc);
         goto loop;
 #else
-        m_heap->write_barrier(CADR(m_pc));
-        m_heap->write_barrier(CDDR(m_pc));
+        m_heap->m_concurrent_heap.write_barrier(CADR(m_pc));
+        m_heap->m_concurrent_heap.write_barrier(CDDR(m_pc));
         CAR(m_pc) = CADR(m_pc);
         CDR(m_pc) = CDDR(m_pc);
         goto loop;
@@ -1434,7 +1436,7 @@ loop:
         m_pc = CDR(m_pc);
         goto loop;
 #else
-        m_heap->write_barrier(subr);
+        m_heap->m_concurrent_heap.write_barrier(subr);
         CAAR(m_pc) = opcode_to_instruction(VMOP_SUBR);
         CAR(OPERANDS) = subr;
         goto loop;
@@ -1461,7 +1463,7 @@ loop:
         m_pc = CDR(m_pc);
         goto loop;
 #else
-        m_heap->write_barrier(subr);
+        m_heap->m_concurrent_heap.write_barrier(subr);
         CAAR(m_pc) = opcode_to_instruction(VMOP_PUSH_SUBR);
         CAR(OPERANDS) = subr;
         goto loop;
@@ -1482,7 +1484,7 @@ loop:
         if (m_value == scm_undef) goto BACK_TO_TRACE_N_LOOP;
         goto pop_cont;
 #else
-        m_heap->write_barrier(subr);
+        m_heap->m_concurrent_heap.write_barrier(subr);
         CAAR(m_pc) = opcode_to_instruction(VMOP_RET_SUBR);
         CAR(OPERANDS) = subr;
         goto loop;
@@ -1515,7 +1517,7 @@ APPLY_APPLY:
             }
             operand_trace = scm_unspecified;
           }
-          intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))closure->code;
+          intptr_t (*thunk)(intptr_t) = (intptr_t (*)(intptr_t))closure->code;
           intptr_t n = (*thunk)((intptr_t)this);
           NATIVE_THUNK_POST_DISPATCH(n);
         }
@@ -1565,7 +1567,7 @@ APPLY_VALUES:
   goto ERROR_APPLY_VALUES_WRONG_NUMBER_ARGS;
 
 #if USE_FAST_DYNAMIC_WIND
-APPLY_CONT : {
+APPLY_CONT: {
   scm_cont_t cont = (scm_cont_t)m_value;
   if (cont->wind_rec == scm_unspecified || cont->wind_rec == m_current_dynamic_wind_record) {
     intptr_t argc = m_sp - m_fp;
@@ -1590,7 +1592,7 @@ APPLY_CONT : {
   }
 }
 #else
-APPLY_CONT : {
+APPLY_CONT: {
   intptr_t argc = m_sp - m_fp;
   scm_cont_t cont = (scm_cont_t)m_value;
   m_cont = cont->cont;
@@ -1629,7 +1631,7 @@ APPLY_SPECIAL:
   if (CONTP(m_value)) goto APPLY_CONT;
   goto ERROR_INVALID_APPLICATION;
 
-APPLY_VARIADIC : {
+APPLY_VARIADIC: {
   scm_closure_t closure = (scm_closure_t)m_value;
   intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
   int rest = 0;
@@ -1661,7 +1663,7 @@ APPLY_VARIADIC : {
         }
         operand_trace = scm_unspecified;
       }
-      intptr_t (*thunk)(intptr_t) = (intptr_t(*)(intptr_t))closure->code;
+      intptr_t (*thunk)(intptr_t) = (intptr_t (*)(intptr_t))closure->code;
       intptr_t n = (*thunk)((intptr_t)this);
       NATIVE_THUNK_POST_DISPATCH(n);
     }
@@ -1751,7 +1753,7 @@ FALLBACK_GE_N_ILOC:
   }
   goto ERROR_GE_N_ILOC;
 
-FALLBACK_EQ_ILOC : {
+FALLBACK_EQ_ILOC: {
   int bad;
   if (number_pred(m_value)) {
     if (number_pred(obj)) {
@@ -1769,7 +1771,7 @@ FALLBACK_EQ_ILOC : {
   goto RESUME_LOOP;
 }
 
-FALLBACK_LT_ILOC : {
+FALLBACK_LT_ILOC: {
   int bad;
   if (real_pred(m_value)) {
     if (real_pred(obj)) {
@@ -1787,7 +1789,7 @@ FALLBACK_LT_ILOC : {
   goto RESUME_LOOP;
 }
 
-FALLBACK_LE_ILOC : {
+FALLBACK_LE_ILOC: {
   int bad;
   if (real_pred(m_value)) {
     if (real_pred(obj)) {
@@ -1805,7 +1807,7 @@ FALLBACK_LE_ILOC : {
   goto RESUME_LOOP;
 }
 
-FALLBACK_GT_ILOC : {
+FALLBACK_GT_ILOC: {
   int bad;
   if (real_pred(m_value)) {
     if (real_pred(obj)) {
@@ -1823,7 +1825,7 @@ FALLBACK_GT_ILOC : {
   goto RESUME_LOOP;
 }
 
-FALLBACK_GE_ILOC : {
+FALLBACK_GE_ILOC: {
   int bad;
   if (real_pred(m_value)) {
     if (real_pred(obj)) {
@@ -1842,42 +1844,42 @@ FALLBACK_GE_ILOC : {
 }
 
 ERROR_NADD_ILOC:
-ERROR_PUSH_NADD_ILOC : {
+ERROR_PUSH_NADD_ILOC: {
   if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
   scm_obj_t argv[2] = {obj, CADR(OPERANDS)};
   wrong_type_argument_violation(this, "operator(+ -)", 0, "number", argv[0], 2, argv);
   goto RESUME_LOOP;
 }
 
-ERROR_EQ_N_ILOC : {
+ERROR_EQ_N_ILOC: {
   if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
   scm_obj_t argv[2] = {obj, CADR(OPERANDS)};
   wrong_type_argument_violation(this, "=", 0, "number", argv[0], 2, argv);
   goto RESUME_LOOP;
 }
 
-ERROR_LT_N_ILOC : {
+ERROR_LT_N_ILOC: {
   if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
   scm_obj_t argv[2] = {obj, CADR(OPERANDS)};
   wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "real", argv[0], 2, argv);
   goto RESUME_LOOP;
 }
 
-ERROR_LE_N_ILOC : {
+ERROR_LE_N_ILOC: {
   if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
   scm_obj_t argv[2] = {obj, CADR(OPERANDS)};
   wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "real", argv[0], 2, argv);
   goto RESUME_LOOP;
 }
 
-ERROR_GT_N_ILOC : {
+ERROR_GT_N_ILOC: {
   if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
   scm_obj_t argv[2] = {obj, CADR(OPERANDS)};
   wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "real", argv[0], 2, argv);
   goto RESUME_LOOP;
 }
 
-ERROR_GE_N_ILOC : {
+ERROR_GE_N_ILOC: {
   if (obj == scm_undef) goto ERROR_LETREC_VIOLATION;
   scm_obj_t argv[2] = {obj, CADR(OPERANDS)};
   wrong_type_argument_violation(this, "comparison(< > <= >=)", 0, "real", argv[0], 2, argv);
@@ -1917,7 +1919,7 @@ ERROR_APPLY_ILOC:
   letrec_violation(this);
   goto RESUME_LOOP;
 
-ERROR_PUSH_VECTREF_ILOC : {
+ERROR_PUSH_VECTREF_ILOC: {
   scm_obj_t argv[2] = {obj, m_sp[-1]};
   if (VECTORP(argv[0])) {
     if (exact_non_negative_integer_pred(argv[1])) {
@@ -1930,7 +1932,7 @@ ERROR_PUSH_VECTREF_ILOC : {
   wrong_type_argument_violation(this, "vector-ref", 0, "vector", argv[0], 2, argv);
   goto RESUME_LOOP;
 }
-ERROR_VECTREF_ILOC : {
+ERROR_VECTREF_ILOC: {
   scm_obj_t argv[2] = {obj, m_value};
   if (VECTORP(argv[0])) {
     if (exact_non_negative_integer_pred(argv[1])) {
@@ -1952,7 +1954,7 @@ ERROR_APPLY_GLOC:
   undefined_violation(this, ((scm_gloc_t)CAR(OPERANDS))->name, NULL);
   goto BACK_TO_TRACE_N_LOOP;
 
-ERROR_APPLY_WRONG_NUMBER_ARGS : {
+ERROR_APPLY_WRONG_NUMBER_ARGS: {
   scm_closure_t closure = (scm_closure_t)m_value;
   intptr_t args = HDR_CLOSURE_ARGS(closure->hdr);
   int rest = 0;

@@ -1,17 +1,14 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
 #include "arith.h"
 #include "equiv.h"
-#include "fasl.h"
-#include "heap.h"
-#include "ioerror.h"
+#include "hash.h"
+#include "list.h"
+#include "object_factory.h"
 #include "port.h"
-#include "printer.h"
-#include "reader.h"
 #include "subr.h"
-#include "ucs4.h"
 #include "utf8.h"
 #include "violation.h"
 #include "vm.h"
@@ -1217,7 +1214,7 @@ scm_obj_t subr_vector_set(VM* vm, int argc, scm_obj_t argv[]) {
             return scm_undef;
           }
 #endif
-          vm->m_heap->write_barrier(argv[2]);
+          vm->m_heap->m_concurrent_heap.write_barrier(argv[2]);
           vector->elts[n] = argv[2];
           return scm_unspecified;
         }
@@ -1287,7 +1284,7 @@ scm_obj_t subr_vector_fill(VM* vm, int argc, scm_obj_t argv[]) {
         return scm_undef;
       }
 #endif
-      vm->m_heap->write_barrier(argv[1]);
+      vm->m_heap->m_concurrent_heap.write_barrier(argv[1]);
       for (int i = 0; i < n; i++) vector->elts[i] = argv[1];
       return scm_unspecified;
     }
@@ -1357,10 +1354,8 @@ scm_obj_t subr_values(VM* vm, int argc, scm_obj_t argv[]) {
       return scm_undef;                                                                                 \
     }
 
-  #define MCODE3(M1, M2, M3) \
-    { M3, M2, M1 }
-  #define MCODE4(M1, M2, M3, M4) \
-    { M4, M3, M2, M1 }
+  #define MCODE3(M1, M2, M3)     {M3, M2, M1}
+  #define MCODE4(M1, M2, M3, M4) {M4, M3, M2, M1}
 
 DEF_CARS_N_CDRS3(caaar, MCODE3(0, 0, 0))
 DEF_CARS_N_CDRS3(caadr, MCODE3(0, 0, 1))
@@ -1418,10 +1413,8 @@ static scm_obj_t n_car_n_cdr(scm_obj_t obj, const int n, const int mc[]) {
       return scm_undef;                                                                                 \
     }
 
-  #define MCODE3(M1, M2, M3) \
-    { M3, M2, M1 }
-  #define MCODE4(M1, M2, M3, M4) \
-    { M4, M3, M2, M1 }
+  #define MCODE3(M1, M2, M3)     {M3, M2, M1}
+  #define MCODE4(M1, M2, M3, M4) {M4, M3, M2, M1}
 
 DEF_CARS_N_CDRS(caaar, MCODE3(0, 0, 0))
 DEF_CARS_N_CDRS(caadr, MCODE3(0, 0, 1))

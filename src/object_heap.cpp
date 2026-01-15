@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 /*
@@ -11,7 +11,6 @@
 #include "core.h"
 #include "bit.h"
 #include "hash.h"
-#include "heap.h"
 #include "object_factory.h"
 #include "port.h"
 #include "subr.h"
@@ -25,19 +24,16 @@
   #define DEFALUT_COLLECT_TRIP_BYTES (2 * 1024 * 1024)
 #endif
 
-#define DEBUG_CONCURRENT_COLLECT 0
 #define SYNCHRONIZE_THRESHOLD(x) ((x) - (x) / 4)
-#define ENSURE_REALTIME          (5.0)  // in msec (1.0 == 0.001sec)
-#define TIMEOUT_CHECK_EACH       (500)
 
 #if GCDEBUG
-  #define GC_TRACE(fmt) \
-    do {                \
-      printf(fmt);      \
-      fflush(stdout);   \
+  #define GCTRACE(fmt) \
+    do {               \
+      printf(fmt);     \
+      fflush(stdout);  \
     } while (0)
 #else
-  #define GC_TRACE(fmt) ((void)0)
+  #define GCTRACE(fmt) ((void)0)
 #endif
 
 #if ARCH_LP64
@@ -76,20 +72,17 @@ inline int bytes_to_bucket(uint32_t x)  // see bit.cpp
 }
 #endif
 
-object_heap_t::object_heap_t() : m_map(NULL), m_map_size(0), m_pool(NULL), m_pool_size(0), m_mark_stack(NULL), m_inherents(NULL) {
-  m_lock.init();
-  m_gensym_lock.init();
-}
+object_heap_t::object_heap_t() : m_inherents(NULL) { m_gensym_lock.init(); }
 
 scm_pair_t object_heap_t::allocate_cons() {
   assert(m_cons.m_object_size == sizeof(scm_pair_rec_t));
   m_trip_bytes += sizeof(scm_pair_rec_t);
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   do {
     scm_pair_t obj = (scm_pair_t)m_cons.new_collectible_object();
     if (obj) return obj;
-  } while (extend_pool(OBJECT_SLAB_SIZE));
-  fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_pool_size / (1024 * 1024));
+  } while (m_concurrent_pool.extend_pool(SLAB_SIZE));
+  fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   return NULL;
 }
 
@@ -97,12 +90,12 @@ scm_pair_t object_heap_t::allocate_cons() {
 scm_pair_t object_heap_t::allocate_immutable_cons() {
   assert(m_immutable_cons.m_object_size == sizeof(scm_pair_rec_t));
   m_trip_bytes += sizeof(scm_pair_rec_t);
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   do {
     scm_pair_t obj = (scm_pair_t)m_immutable_cons.new_collectible_object();
     if (obj) return obj;
-  } while (extend_pool(OBJECT_SLAB_SIZE));
-  fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_pool_size / (1024 * 1024));
+  } while (m_concurrent_pool.extend_pool(SLAB_SIZE));
+  fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   return NULL;
 }
 #endif
@@ -110,25 +103,25 @@ scm_pair_t object_heap_t::allocate_immutable_cons() {
 scm_flonum_t object_heap_t::allocate_flonum() {
   assert(m_flonums.m_object_size == sizeof(scm_flonum_rec_t));
   m_trip_bytes += sizeof(scm_flonum_rec_t);
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   do {
     scm_flonum_t obj = (scm_flonum_t)m_flonums.new_collectible_object();
     if (obj) return obj;
-  } while (extend_pool(OBJECT_SLAB_SIZE));
-  fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_pool_size / (1024 * 1024));
+  } while (m_concurrent_pool.extend_pool(SLAB_SIZE));
+  fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   return NULL;
 }
 
 scm_obj_t object_heap_t::allocate_collectible(size_t size) {
   m_trip_bytes += size;
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   int bucket = bytes_to_bucket(size);
   if (bucket < array_sizeof(m_collectibles)) {
     do {
       scm_obj_t obj = (scm_obj_t)m_collectibles[bucket].new_collectible_object();
       if (obj) return obj;
-    } while (extend_pool(OBJECT_SLAB_SIZE));
-    fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_pool_size / (1024 * 1024));
+    } while (m_concurrent_pool.extend_pool(SLAB_SIZE));
+    fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   } else {
     fatal("%s:%u collectible object over %d bytes not supported but %d bytes requested", __FILE__, __LINE__,
           1 << (array_sizeof(m_collectibles) + 2), size);
@@ -138,17 +131,17 @@ scm_obj_t object_heap_t::allocate_collectible(size_t size) {
 
 scm_weakmapping_t object_heap_t::allocate_weakmapping() {
   m_trip_bytes += m_weakmappings.m_object_size;
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   do {
     scm_weakmapping_t obj = (scm_weakmapping_t)m_weakmappings.new_collectible_object();
     if (obj) return obj;
-  } while (extend_pool(OBJECT_SLAB_SIZE));
-  fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_pool_size / (1024 * 1024));
+  } while (m_concurrent_pool.extend_pool(SLAB_SIZE));
+  fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
 }
 
 void* object_heap_t::allocate_private(size_t size) {
   m_trip_bytes += size;
-  if (m_trip_bytes >= m_collect_trip_bytes) collect();
+  if (m_trip_bytes >= m_collect_trip_bytes) m_concurrent_heap.collect();
   int bucket = 0;
 #if ARCH_LP64
   if (size > 16) bucket = bytes_to_bucket(size);
@@ -159,101 +152,82 @@ void* object_heap_t::allocate_private(size_t size) {
     do {
       void* obj = m_privates[bucket].new_object();
       if (obj) return obj;
-    } while (extend_pool(OBJECT_SLAB_SIZE));
-    fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_pool_size / (1024 * 1024));
+    } while (m_concurrent_pool.extend_pool(SLAB_SIZE));
+    fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   } else {
     do {
-      void* obj = allocate(size, false, false);
+      void* obj = m_concurrent_pool.allocate(size, false, false);
       if (obj) return obj;
-    } while (extend_pool(size));
-    fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_pool_size / (1024 * 1024));
+    } while (m_concurrent_pool.extend_pool(size));
+    fatal("fatal: heap memory overflow (%dMB)\n[exit]\n", m_concurrent_pool.m_pool_size / (1024 * 1024));
   }
   return NULL;
 }
 
 void object_heap_t::deallocate_private(void* obj) {
   if (obj) {
-    assert(in_heap(obj));
-    assert(!is_collectible(obj));
-    if (in_slab(obj)) {
-      object_slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
+    assert(m_concurrent_pool.in_pool(obj));
+    assert(!m_concurrent_pool.is_collectible(obj));
+    if (m_concurrent_pool.in_slab(obj)) {
+      slab_traits_t* traits = SLAB_TRAITS_OF(obj);
+      concurrent_slab_t* cache = traits->cache;
       cache->delete_object(obj);
     } else {
-      assert(!is_collectible(obj));
-      deallocate(obj);
+      assert(!m_concurrent_pool.is_collectible(obj));
+      m_concurrent_pool.deallocate(obj);
     }
   }
 }
 
 int object_heap_t::allocated_size(void* obj) {
-  assert(in_heap(obj));
-  if (in_slab(obj)) {
-    object_slab_cache_t* cache = OBJECT_SLAB_TRAITS_OF(obj)->cache;
+  assert(m_concurrent_pool.in_pool(obj));
+  if (m_concurrent_pool.in_slab(obj)) {
+    slab_traits_t* traits = SLAB_TRAITS_OF(obj);
+    concurrent_slab_t* cache = traits->cache;
     return cache->m_object_size;
   } else {
-    assert(((intptr_t)obj & (OBJECT_SLAB_SIZE - 1)) == 0);
-    int index = ((uint8_t*)obj - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    assert(m_pool[index] & PTAG_USED);
+    assert(((intptr_t)obj & (SLAB_SIZE - 1)) == 0);
+    int index = ((uint8_t*)obj - m_concurrent_pool.m_pool) >> SLAB_SIZE_SHIFT;
+    assert(m_concurrent_pool.m_pool[index] & PTAG_USED);
     int n_page = 1;
-    while (++index < m_pool_watermark) {
-      if (m_pool[index] & PTAG_EXTENT)
+    while (++index < m_concurrent_pool.m_pool_watermark) {
+      if (m_concurrent_pool.m_pool[index] & PTAG_EXTENT)
         n_page++;
       else
         break;
     }
-    return n_page * OBJECT_SLAB_SIZE;
+    return n_page * SLAB_SIZE;
   }
 }
 
-void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
-  assert((OBJECT_SLAB_SIZE % getpagesize()) == 0);  // for optimal performance
-  assert(pool_size >= OBJECT_SLAB_SIZE * 2);        // check minimum (1 directory + 1 datum)
-  pool_size = pool_size < 2 ? 2 : pool_size;
-  init_size = init_size < pool_size ? init_size : pool_size;
-  // pool
-  assert(m_pool == NULL);
-  m_pool_size = (pool_size + OBJECT_SLAB_SIZE - 1) & ~(OBJECT_SLAB_SIZE - 1);
-  m_map_size = m_pool_size + OBJECT_SLAB_SIZE;
-  m_map = (uint8_t*)heap_map(PREFERRED_MMAP_ADDRESS, m_map_size);
-  if (m_map == HEAP_MAP_FAILED) {
-    m_map = NULL;
-    fatal("%s:%u mmap() failed: %s", __FILE__, __LINE__, strerror(errno));
-  }
-#ifndef NDEBUG
-  printf("mmap address:0x%lx\n", (uintptr_t)m_map);
+void object_heap_t::init_heap(size_t pool_size, size_t init_size) {
+  m_concurrent_pool.init(pool_size, init_size);
+  m_concurrent_heap.init(&m_concurrent_pool);
+  m_concurrent_heap.set_trace_proc([this](void* obj) { this->trace(obj); });
+  m_concurrent_heap.set_finalize_proc([this](void* obj) { ::finalize(this, obj); });
+  m_concurrent_heap.set_snapshot_root_proc([this]() { this->snapshot_root(); });
+  m_concurrent_heap.set_clear_trip_bytes_proc([this]() { this->m_trip_bytes = 0; });
+  m_concurrent_heap.set_update_weak_reference_proc([this]() { this->update_weak_reference(); });
+#if HPDEBUG
+  m_concurrent_heap.set_debug_post_completation_proc([this]() { this->consistency_check(); });
+  m_concurrent_heap.set_debug_check_slab_proc([this](void* slab) { this->validate_concurrent_slab(slab); });
 #endif
-  m_pool = (uint8_t*)(((uintptr_t)m_map + OBJECT_SLAB_SIZE - 1) & ~(OBJECT_SLAB_SIZE - 1));
-  assert(((uintptr_t)m_pool & (OBJECT_SLAB_SIZE - 1)) == 0);
-  // ptag
-  int n_tag = m_pool_size / OBJECT_SLAB_SIZE;
-  int n_slab = (n_tag + OBJECT_SLAB_SIZE - 1) / OBJECT_SLAB_SIZE;
-  memset(m_pool, PTAG_FREE, n_slab * OBJECT_SLAB_SIZE);
-  for (int i = 0; i < n_slab; i++) m_pool[i] = PTAG_USED;
-  m_pool_watermark = (init_size >> OBJECT_SLAB_SIZE_SHIFT);
-  if (m_pool_watermark <= n_slab || m_pool_watermark >= (m_pool_size >> OBJECT_SLAB_SIZE_SHIFT)) {
-    fatal("%s:%u object_heap_t::init() bad parameter, pool_size:%d init_datum_size:%d", __FILE__, __LINE__, pool_size, init_size);
-  }
-  m_pool_memo = 0;
-  m_pool_usage = 0;
-  m_pool_threshold = SYNCHRONIZE_THRESHOLD(n_tag);
   // slab
 #if ARCH_LP64
-  assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
-  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, 1 << (n + 4), true);
-  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, 1 << (n + 4), false);
+  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(&m_concurrent_heap, 1 << (n + 4), true, true);
+  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(&m_concurrent_heap, 1 << (n + 4), false, false);
 #else
-  assert((1 << (array_sizeof(m_collectibles) + 2)) == OBJECT_SLAB_THRESHOLD);
-  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(this, 1 << (n + 3), true);
-  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(this, 1 << (n + 3), false);
+  for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].init(&m_concurrent_heap, 1 << (n + 3), true, true);
+  for (int n = 0; n < array_sizeof(m_privates); n++) m_privates[n].init(&m_concurrent_heap, 1 << (n + 3), false, false);
 #endif
-  m_cons.init(this, clp2(sizeof(scm_pair_rec_t)), true);
-  m_flonums.init(this, clp2(sizeof(scm_flonum_rec_t)), true);
-  m_weakmappings.init(this, clp2(sizeof(scm_weakmapping_rec_t)), true);
+  m_cons.init(&m_concurrent_heap, clp2(sizeof(scm_pair_rec_t)), true, false);
+  m_flonums.init(&m_concurrent_heap, clp2(sizeof(scm_flonum_rec_t)), true, false);
+  m_weakmappings.init(&m_concurrent_heap, clp2(sizeof(scm_weakmapping_rec_t)), true, true);
 #if USE_CONST_LITERAL
-  m_immutable_cons.init(this, clp2(sizeof(scm_pair_rec_t)), true);
+  m_immutable_cons.init(&m_concurrent_heap, clp2(sizeof(scm_pair_rec_t)), true, false);
 #endif
-  // cache
-  int base_cache_limit = m_collect_trip_bytes / OBJECT_SLAB_SIZE;
+  // cache configuration
+  int base_cache_limit = m_collect_trip_bytes / SLAB_SIZE;
   m_cons.m_cache_limit = base_cache_limit;
   m_flonums.m_cache_limit = base_cache_limit / 2;
   m_weakmappings.m_cache_limit = base_cache_limit / 8;
@@ -261,18 +235,22 @@ void object_heap_t::init_pool(size_t pool_size, size_t init_size) {
   m_immutable_cons.m_cache_limit = base_cache_limit / 8;
 #endif
   for (int n = 0; n < array_sizeof(m_collectibles); n++) m_collectibles[n].m_cache_limit = base_cache_limit / 8;
-  // collector
+  // trip bytes setup
   m_trip_bytes = 0;
-  m_collect_trip_bytes = ((m_pool_size / 16) < DEFALUT_COLLECT_TRIP_BYTES) ? (m_pool_size / 16) : DEFALUT_COLLECT_TRIP_BYTES;
-  collector_init();
+  m_collect_trip_bytes =
+      ((m_concurrent_pool.m_pool_size / 16) < DEFALUT_COLLECT_TRIP_BYTES) ? (m_concurrent_pool.m_pool_size / 16) : DEFALUT_COLLECT_TRIP_BYTES;
+
+  // heap
+  // m_concurrent_heap.init(this, &m_concurrent_pool);
+
   // hash
   m_symbol.init(this);
   m_string.init(this);
 }
 
 void object_heap_t::init(size_t pool_size, size_t init_size) {
-  // pool
-  init_pool(pool_size, init_size);
+  // heap
+  init_heap(pool_size, init_size);
   // inherents
   init_inherents();
   // global shared
@@ -330,14 +308,14 @@ void object_heap_t::intern_system_environment(scm_symbol_t symbol, scm_obj_t val
   scm_obj_t obj = get_hashtable(ht, symbol);
   if (obj != scm_undef) {
     assert(GLOCP(obj));
-    write_barrier(value);
+    m_concurrent_heap.write_barrier(value);
     ((scm_gloc_t)obj)->value = value;
     return;
   }
   scm_gloc_t gloc = make_gloc(this, symbol);
   gloc->value = value;
-  write_barrier(symbol);
-  write_barrier(gloc);
+  m_concurrent_heap.write_barrier(symbol);
+  m_concurrent_heap.write_barrier(gloc);
   int nsize = put_hashtable(ht, symbol, gloc);
   if (nsize) rehash_hashtable(this, ht, nsize);
 }
@@ -349,157 +327,38 @@ void object_heap_t::intern_system_subr(const char* name, subr_proc_t proc) {
 }
 
 void object_heap_t::destroy() {
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_pool);
-  for (int i = 0; i < m_pool_watermark; i++) {
-    if (GCSLABP(m_pool[i])) {
-      traits->cache->iterate(m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), renounce, NULL);
+  m_concurrent_heap.terminate();
+  slab_traits_t* traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+    if (GCSLABP(m_concurrent_pool.m_pool[i])) {
+      traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << SLAB_SIZE_SHIFT), renounce, NULL);
     }
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
-  m_lock.destroy();
+  m_concurrent_pool.destroy();
   m_gensym_lock.destroy();
-  m_collector_lock.destroy();
-  m_collector_wake.destroy();
-  m_mutator_wake.destroy();
-  m_shade_queue.destroy();
-  if (m_mark_stack) free(m_mark_stack);
-  m_mark_stack = NULL;
-  if (m_map) {
-    heap_unmap(m_map, m_map_size);
-    m_map = NULL;
-    m_pool = NULL;
-    m_map_size = 0;
-    m_pool_size = 0;
-  }
+  m_concurrent_heap.m_collector_lock.destroy();
+  m_concurrent_heap.m_collector_wake.destroy();
+  m_concurrent_heap.m_mutator_wake.destroy();
+  m_concurrent_heap.m_shade_queue.destroy();
+  if (m_concurrent_heap.m_mark_stack) free(m_concurrent_heap.m_mark_stack);
+  m_concurrent_heap.m_mark_stack = NULL;
   free(m_inherents);
   m_inherents = NULL;
 }
 
-void* object_heap_t::allocate(size_t size, bool for_slab, bool for_collectible) {
-  assert(for_slab || (for_collectible == false));
-  uint8_t attr = 0;
-  if (for_slab) {
-    if (for_collectible)
-      attr = PTAG_SLAB | PTAG_GC;
-    else
-      attr = PTAG_SLAB;
-  }
-  assert(m_pool);
-  int npage = (size + OBJECT_SLAB_SIZE - 1) >> OBJECT_SLAB_SIZE_SHIFT;
-  scoped_lock lock(m_lock);
-  if (npage == 1) {
-    for (int i = m_pool_memo; i < m_pool_watermark; i++) {
-      if (m_pool[i] == PTAG_FREE) {
-        void* slab = m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT);
-        if (for_collectible) OBJECT_SLAB_TRAITS_OF(slab)->cache = NULL;
-        m_pool[i] = PTAG_USED | attr;
-        m_pool_memo = i + 1;
-        m_pool_usage = m_pool_usage + 1;
-        return slab;
-      }
-    }
-  } else {
-    assert(for_collectible == false);
-    int head = m_pool_memo;
-    while (head < m_pool_watermark) {
-      if (m_pool[head] == PTAG_FREE) {
-        int found = 1;
-        for (int tail = head + 1; tail < m_pool_watermark; tail++) {
-          if (m_pool[tail] == PTAG_FREE) {
-            if (++found == npage) {
-              m_pool[head] = PTAG_USED | attr;
-              for (int n = head + 1; n <= tail; n++) m_pool[n] = PTAG_EXTENT | attr;
-              m_pool_usage = m_pool_usage + npage;
-              return m_pool + ((intptr_t)head << OBJECT_SLAB_SIZE_SHIFT);
-            }
-          } else {
-            head = tail;
-            break;
-          }
-        }
-      }
-      head++;
-    }
-  }
-  return NULL;
-}
-
-void object_heap_t::deallocate(void* p) {
-  scoped_lock lock(m_lock);
-  assert(p);
-  assert(m_pool);
-  assert(((intptr_t)p & (OBJECT_SLAB_SIZE - 1)) == 0);
-  int i = ((uint8_t*)p - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-  if (i < m_pool_memo) m_pool_memo = i;
-  assert(i >= 0 && i < m_pool_watermark);
-  assert(m_pool[i] & PTAG_USED);
-  m_pool[i] = PTAG_FREE;
-  m_pool_usage = m_pool_usage - 1;
-  while (++i < m_pool_watermark) {
-    if (m_pool[i] & PTAG_EXTENT) {
-      m_pool[i] = PTAG_FREE;
-      m_pool_usage = m_pool_usage - 1;
-    } else {
-      break;
-    }
-  }
-#if !defined(NDEBUG) || HPDEBUG
-  memset(p, 0xBD, OBJECT_SLAB_SIZE);
-#endif
-}
-
-bool object_heap_t::extend_pool(size_t extend_size) {
-  scoped_lock lock(m_lock);
-  int capacity = (m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
-  if (m_pool_watermark == capacity) return false;
-  m_pool_watermark += ((extend_size + OBJECT_SLAB_SIZE - 1) >> OBJECT_SLAB_SIZE_SHIFT);
-  if (m_pool_watermark > capacity) m_pool_watermark = capacity;
-  return true;
-}
-
-void object_heap_t::shade(scm_obj_t obj) {
-  if (CELLP(obj)) {
-    assert(obj);
-    if (OBJECT_SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
-      if (m_mark_sp < m_mark_stack + m_mark_stack_size) {
-        *m_mark_sp++ = obj;
-        return;
-      }
-      m_usage.m_expand_mark_stack++;
-      int newsize = m_mark_stack_size + MARK_STACK_SIZE_GROW;
-      m_mark_stack = (scm_obj_t*)realloc(m_mark_stack, sizeof(scm_obj_t) * newsize);
-      if (m_mark_stack == NULL) {
-        fatal("%s:%u memory overflow on realloc mark stack", __FILE__, __LINE__);
-      }
-      m_mark_sp = m_mark_stack + m_mark_stack_size;
-      m_mark_stack_size = newsize;
-      *m_mark_sp++ = obj;
-    }
-  }
-}
-
-void object_heap_t::interior_shade(void* ref) {
-  if (ref) {
-#ifndef NDEBUG
-    int i = ((uint8_t*)ref - m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    assert(i >= 0 && i < m_pool_watermark);
-    assert(GCSLABP(m_pool[i]));
-#endif
-    shade(OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref));
-  }
-}
-
-void object_heap_t::break_weakmapping(object_slab_traits_t* traits) {
+// Run on collector thread
+void object_heap_t::break_weakmapping(slab_traits_t* traits) {
   int count = traits->refc;
   int size = traits->cache->m_object_size;
-  uint8_t* p = OBJECT_SLAB_TOP_OF(traits);
+  uint8_t* p = SLAB_TOP_OF(traits);
   while (count) {
     scm_obj_t obj = p;
     if (WEAKMAPPINGP(obj)) {
       if (traits->cache->state(obj)) {
         scm_weakmapping_t wp = (scm_weakmapping_t)obj;
         scm_obj_t key = wp->key;
-        if (CELLP(key) && OBJECT_SLAB_TRAITS_OF(key)->cache->state(key) == false) wp->key = wp->value = scm_false;
+        if (CELLP(key) && SLAB_TRAITS_OF(key)->cache->state(key) == false) wp->key = wp->value = scm_false;
       }
       count--;
     }
@@ -508,393 +367,40 @@ void object_heap_t::break_weakmapping(object_slab_traits_t* traits) {
   }
 }
 
-void object_heap_t::write_barrier(scm_obj_t rhs) {
-  // simple (Dijkstra)
-  if (m_write_barrier) {
-    if (CELLP(rhs)) {
-      if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs) == false) {
-        while (m_shade_queue.wait_lock_try_put(rhs) == false) {
-          if (OBJECT_SLAB_TRAITS_OF(rhs)->cache->state(rhs)) break;
-          if (m_stop_the_world) {
-            m_collector_lock.lock();
-            m_collector_wake.signal();
-            m_mutator_wake.wait(m_collector_lock);
-            m_collector_lock.unlock();
-          } else {
-            thread_yield();
-          }
-          m_usage.m_shade_queue_hazard++;
-          if (WBDEBUG) {
-            printf(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
-            fflush(stdout);
-          } else {
-            GC_TRACE(";; [write-barrier: m_shade_queue overflow, mutator sched_yield]\n");
-          }
-        }
-        if (DETAILED_STATISTIC) m_usage.m_barriered_write++;
-      }
-    }
+// Run on collector thread
+void object_heap_t::update_weak_reference() {
+  m_symbol.sweep();
+  m_string.sweep();
+  m_weakmappings.m_lock.lock();
+  if (m_weakmappings.m_vacant) {
+    slab_traits_t* traits = m_weakmappings.m_vacant;
+    do break_weakmapping(traits);
+    while ((traits = traits->next) != m_weakmappings.m_vacant);
   }
+  if (m_weakmappings.m_occupied) {
+    slab_traits_t* traits = m_weakmappings.m_occupied;
+    do break_weakmapping(traits);
+    while ((traits = traits->next) != m_weakmappings.m_occupied);
+  }
+  m_weakmappings.m_lock.unlock();
 }
 
-void object_heap_t::collect() {
-  if (m_collector_kicked == false) {
-    m_collector_lock.lock();
-    if (m_collector_kicked == false && m_collector_ready) {
-      m_collector_kicked = true;
-      m_collector_wake.signal();
-      GC_TRACE(";; [collector: running]\n");
-    }
-    m_collector_lock.unlock();
-  }
+// Run on collector thread
+void object_heap_t::snapshot_root() {
+  m_concurrent_heap.shade(m_system_environment);
+  m_concurrent_heap.shade(m_interaction_environment);
+  m_concurrent_heap.shade(m_hidden_variables);
+  m_concurrent_heap.shade(m_architecture_feature);
+  m_concurrent_heap.shade(m_native_transcoder);
+  m_concurrent_heap.shade(m_trampolines);
+  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) m_concurrent_heap.shade(m_inherents[i]);
 }
 
-void object_heap_t::collector_init() {
-  m_mark_stack_size = MARK_STACK_SIZE_INIT;
-  m_mark_stack = m_mark_sp = (scm_obj_t*)malloc(sizeof(scm_obj_t) * m_mark_stack_size);
-  assert(m_mark_stack);
-  m_usage.clear();
-  m_shade_queue.init(SHADE_QUEUE_SIZE);
-  m_collector_lock.init();
-  m_mutator_wake.init();
-  m_collector_wake.init();
-  m_write_barrier = false;
-  m_read_barrier = false;
-  m_alloc_barrier = false;
-  m_collector_kicked = false;
-  m_collector_ready = false;
-  m_collector_terminating = false;
-  m_stop_the_world = false;
-  m_mutator_stopped = false;
-  m_sweep_wavefront = (uint8_t*)m_pool + m_pool_size;
-  thread_start(collector_thread, this);
-}
-
-void object_heap_t::dequeue_root() {
-  scm_obj_t obj;
-  while (m_shade_queue.count()) {
-    m_shade_queue.get(&obj);
-    shade(obj);
-  }
-}
-
-void object_heap_t::enqueue_root(scm_obj_t obj) {
-  assert(m_stop_the_world);
-  if (CELLP(obj)) {
-    if (in_heap(obj)) {
-      if (m_shade_queue.wait_lock_try_put(obj) == false) {
-        m_collector_lock.lock();
-        m_collector_wake.signal();  // kick now
-        m_mutator_wake.wait(m_collector_lock);
-        m_collector_lock.unlock();
-        GC_TRACE(";; [shade queue overflow while queueing root set]\n");
-        m_shade_queue.put(obj);
-      }
-    }
-  }
-}
-
-void object_heap_t::synchronized_collect(object_heap_t& heap) {
-  heap.m_trip_bytes = 0;
-  heap.shade(heap.m_system_environment);
-  heap.shade(heap.m_interaction_environment);
-  heap.shade(heap.m_hidden_variables);
-  heap.shade(heap.m_architecture_feature);
-  heap.shade(heap.m_native_transcoder);
-  heap.shade(heap.m_trampolines);
-  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) heap.shade(heap.m_inherents[i]);
-
-  // mark
-  assert(heap.m_mutator_stopped == false);
-  heap.m_root_snapshot = ROOT_SNAPSHOT_EVERYTHING;
-  heap.m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world phase 1]\n");
-  while (!heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-    if (!heap.m_mutator_stopped) {
-      heap.dequeue_root();
-      heap.m_mutator_wake.signal();
-    }
-  }
-  double t1 = msec();
-  GC_TRACE(";; [collector: mark]\n");
-  heap.dequeue_root();
-  while (heap.serial_marking()) continue;
-
-    // sweep
-#if DEBUG_CONCURRENT_COLLECT
-  double t2 = msec();
-#endif
-  GC_TRACE(";; [collector: sweep]\n");
-  heap.m_sweep_wavefront = (uint8_t*)heap.m_pool;
-  heap.m_symbol.sweep();
-  heap.m_string.sweep();
-  heap.m_weakmappings.m_lock.lock();
-  if (heap.m_weakmappings.m_vacant) {
-    object_slab_traits_t* traits = heap.m_weakmappings.m_vacant;
-    do heap.break_weakmapping(traits);
-    while ((traits = traits->next) != heap.m_weakmappings.m_vacant);
-  }
-  if (heap.m_weakmappings.m_occupied) {
-    object_slab_traits_t* traits = heap.m_weakmappings.m_occupied;
-    do heap.break_weakmapping(traits);
-    while ((traits = traits->next) != heap.m_weakmappings.m_occupied);
-  }
-  heap.m_weakmappings.m_lock.unlock();
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(heap.m_pool);
-  for (int i = 0; i < heap.m_pool_watermark; i++) {
-    if (GCSLABP(heap.m_pool[i])) {
-      uint8_t* slab = heap.m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT);
-      traits->cache->sweep(slab);
-    }
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
-  }
-
-  GC_TRACE(";; [collector: start-the-world]\n");
-  heap.m_stop_the_world = false;
-  heap.m_sweep_wavefront = (uint8_t*)heap.m_pool + heap.m_pool_size;
-  heap.m_mutator_wake.signal();
-  while (heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-  }
-
-  // end
-  heap.m_collector_kicked = false;
-  GC_TRACE(";; [collector: waiting]\n");
-  double t3 = msec();
-
-  heap.m_usage.m_duration = t3 - t1;
-  heap.m_usage.m_sync1 = 0;
-  heap.m_usage.m_sync2 = 0;
-  heap.m_usage.m_recorded = true;
-  heap.m_usage.m_synchronized = true;
-}
-
-void object_heap_t::concurrent_collect(object_heap_t& heap) {
-  assert(heap.m_mutator_stopped == false);
-
-  // mark phase 1
-  heap.m_root_snapshot = ROOT_SNAPSHOT_GLOBALS;
-  heap.m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world]\n");
-  while (!heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-    if (!heap.m_mutator_stopped) {
-      heap.dequeue_root();
-      heap.m_mutator_wake.signal();
-    }
-  }
-  double t1 = msec();
-  heap.m_trip_bytes = 0;
-  heap.m_write_barrier = true;
-  heap.m_stop_the_world = false;
-  heap.m_mutator_wake.signal();
-  GC_TRACE(";; [collector: start-the-world phase 1]\n");
-  while (heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-  }
-  double t2 = msec();
-  GC_TRACE(";; [collector: concurrent-marking phase 1]\n");
-  heap.concurrent_marking();
-
-  // mark phase 1+
-  heap.shade(heap.m_system_environment);
-  heap.shade(heap.m_interaction_environment);
-  heap.shade(heap.m_hidden_variables);
-  heap.shade(heap.m_architecture_feature);
-  heap.shade(heap.m_native_transcoder);
-  heap.shade(heap.m_trampolines);
-
-  for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) heap.shade(heap.m_inherents[i]);
-  heap.concurrent_marking();
-
-  // mark phase 2
-  heap.m_root_snapshot = ROOT_SNAPSHOT_LOCALS;
-  heap.m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world phase 2]\n");
-  while (!heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-    if (!heap.m_mutator_stopped) {
-      heap.dequeue_root();
-      heap.m_mutator_wake.signal();
-    }
-  }
-
-  heap.m_root_snapshot = ROOT_SNAPSHOT_EVERYTHING;
-fallback:
-  heap.m_stop_the_world = false;
-  heap.m_mutator_wake.signal();
-  GC_TRACE(";; [collector: start-the-world phase 2]\n");
-  while (heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-  }
-  GC_TRACE(";; [collector: concurrent-marking phase 2]\n");
-  heap.concurrent_marking();
-#if DEBUG_CONCURRENT_COLLECT
-  double t3 = msec();
-#endif
-
-  // final mark
-  assert(heap.m_mutator_stopped == false);
-  heap.m_stop_the_world = true;
-  GC_TRACE(";; [collector: stop-the-world final]\n");
-
-  while (!heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);
-    if (!heap.m_mutator_stopped) {
-      heap.dequeue_root();
-      heap.m_mutator_wake.signal();
-    }
-  }
-  double t4 = msec();
-  heap.m_write_barrier = false;
-  GC_TRACE(";; [collector: serial-marking]\n");
-  heap.dequeue_root();
-
-#ifdef ENSURE_REALTIME
-  if (heap.serial_marking()) {
-  #if DEBUG_CONCURRENT_COLLECT
-    puts("serial_marking() timeout, resume mutator and restart concurrent_marking");
-  #endif
-    heap.m_write_barrier = true;
-    heap.m_root_snapshot = ROOT_SNAPSHOT_RETRY;
-    goto fallback;
-  }
-#else
-  while (heap.serial_marking()) continue;
-#endif
-
-  // sweep
-  heap.m_sweep_wavefront = (uint8_t*)heap.m_pool;
-  heap.m_alloc_barrier = true;
-  heap.m_read_barrier = true;
-  heap.m_stop_the_world = false;
-  heap.m_mutator_wake.signal();
-  while (heap.m_mutator_stopped) {
-    heap.m_collector_wake.wait(heap.m_collector_lock);  // to make mutator run now
-  }
-  GC_TRACE(";; [collector: start-the-world]\n");
-  GC_TRACE(";; [collector: concurrent-sweeping]\n");
-  double t5 = msec();
-  heap.m_symbol.sweep();
-  heap.m_string.sweep();
-  heap.m_read_barrier = false;
-  heap.m_weakmappings.m_lock.lock();
-  if (heap.m_weakmappings.m_vacant) {
-    object_slab_traits_t* traits = heap.m_weakmappings.m_vacant;
-    do heap.break_weakmapping(traits);
-    while ((traits = traits->next) != heap.m_weakmappings.m_vacant);
-  }
-  if (heap.m_weakmappings.m_occupied) {
-    object_slab_traits_t* traits = heap.m_weakmappings.m_occupied;
-    do heap.break_weakmapping(traits);
-    while ((traits = traits->next) != heap.m_weakmappings.m_occupied);
-  }
-  heap.m_weakmappings.m_lock.unlock();
-  int capacity = (heap.m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
-  uint8_t* slab = heap.m_pool;
-  int i = 0;
-  while (i < capacity) {
-    int memo = heap.m_pool_usage;
-    if (GCSLABP(heap.m_pool[i])) {
-      if (OBJECT_SLAB_TRAITS_OF(slab)->cache == NULL) {
-#if HPDEBUG
-        printf(";; [collector: wait for mutator complete slab init]\n");
-        fflush(stdout);
-#endif
-        thread_yield();
-        continue;
-      }
-#if HPDEBUG
-      {
-        object_slab_cache_t* ca = OBJECT_SLAB_TRAITS_OF(slab)->cache;
-        bool hit = false;
-        for (int u = 0; u < array_sizeof(heap.m_collectibles); u++) hit |= (&heap.m_collectibles[u] == ca);
-        hit |= (&heap.m_weakmappings == ca);
-        hit |= (&heap.m_flonums == ca);
-        hit |= (&heap.m_cons == ca);
-  #if USE_CONST_LITERAL
-        hit |= (&heap.m_immutable_cons == ca);
-  #endif
-        if (!hit) fatal("%s:%u concurrent_collect(): bad cache reference 0x%x in slab 0x%x", __FILE__, __LINE__, ca, slab);
-      }
-#endif
-      OBJECT_SLAB_TRAITS_OF(slab)->cache->sweep(slab);
-      slab += OBJECT_SLAB_SIZE;
-      i++;
-    } else {
-      scoped_lock lock(heap.m_lock);
-      if (memo != heap.m_pool_usage) continue;
-      do {
-        if (i == heap.m_pool_watermark) {
-          heap.m_sweep_wavefront = (uint8_t*)heap.m_pool + heap.m_pool_size;
-          heap.m_alloc_barrier = false;
-          goto finish;
-        }
-        slab += OBJECT_SLAB_SIZE;
-        heap.m_sweep_wavefront = slab;
-        i++;
-      } while (!GCSLABP(heap.m_pool[i]));
-    }
-  }
-
-finish:
-  heap.m_collector_kicked = false;
-  GC_TRACE(";; [collector: waiting]\n");
-  double t6 = msec();
-  heap.m_usage.m_duration = t6 - t1;
-  heap.m_usage.m_sync1 = t2 - t1;
-  heap.m_usage.m_sync2 = t5 - t4;
-  heap.m_usage.m_recorded = true;
-  heap.m_usage.m_synchronized = false;
-#if DEBUG_CONCURRENT_COLLECT
-  printf(
-      ";; [        first-lock:%.2fms second-lock:%.2fms overlap:%.2fms]\n"
-      ";; [        stw:%.2fms concurrent-marking:%.2fms]\n"
-      ";; [        stw:%.2fms serial-marking:%.2fms]\n"
-      ";; [        concurrent-sweeping:%.2fms]\n",
-      (t2 - t1), (t4 - t3) + (t5 - t4), (t3 - t2) + (t6 - t5), t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5);
-  fflush(stdout);
-#endif
-#if HPDEBUG
-  heap.consistency_check();
-#endif
-}
-
-thread_main_t object_heap_t::collector_thread(void* param) {
-  object_heap_t& heap = *(object_heap_t*)param;
-  heap.m_collector_lock.lock();
-  heap.m_collector_ready = true;
-  GC_TRACE(";; [collector: ready]\n");
-  while (!heap.m_collector_terminating) {
-    if (heap.m_collector_kicked == false) {
-      heap.m_collector_wake.wait(heap.m_collector_lock);
-      continue;
-    }
-    assert(heap.m_mark_sp == heap.m_mark_stack);
-    if (heap.m_mark_stack_size != MARK_STACK_SIZE_INIT) {
-      heap.m_mark_stack_size = MARK_STACK_SIZE_INIT;
-      heap.m_mark_stack = heap.m_mark_sp = (scm_obj_t*)realloc(heap.m_mark_stack, sizeof(scm_obj_t) * heap.m_mark_stack_size);
-    }
-    if (CONCURRENT_COLLECT) {
-      if (heap.m_pool_usage > heap.m_pool_threshold) {
-        synchronized_collect(heap);
-      } else {
-        concurrent_collect(heap);
-      }
-    } else {
-      synchronized_collect(heap);
-    }
-  }
-  heap.m_collector_terminating = false;
-  heap.m_collector_lock.unlock();
-  return NULL;
-}
-
+// Run on collector thread
 void object_heap_t::trace(scm_obj_t obj) {
-  assert(is_collectible(obj));
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
-  if (traits->cache->test_and_mark(obj)) {
+  assert(m_concurrent_pool.is_collectible(obj));
+  slab_traits_t* traits = SLAB_TRAITS_OF(obj);
+  if (traits->cache->test_and_set_mark(obj)) {
 #if HPDEBUG
 //        printf(";; [collector: duplicate objects in mark stack]\n");
 //        fflush(stdout);
@@ -903,8 +409,8 @@ void object_heap_t::trace(scm_obj_t obj) {
   }
   if (PAIRP(obj)) {
     scm_pair_t pair = (scm_pair_t)obj;
-    shade(pair->cdr);
-    shade(pair->car);
+    m_concurrent_heap.shade(pair->cdr);
+    m_concurrent_heap.shade(pair->car);
     return;
   }
   int tc = HDR_TC(HDR(obj));
@@ -914,32 +420,32 @@ void object_heap_t::trace(scm_obj_t obj) {
     case TC_VECTOR: {
       scm_vector_t vector = (scm_vector_t)obj;
       int count = vector->count;
-      for (int i = 0; i < count; i++) shade(vector->elts[i]);
+      for (int i = 0; i < count; i++) m_concurrent_heap.shade(vector->elts[i]);
       break;
     }
     case TC_TUPLE: {
       scm_tuple_t tuple = (scm_tuple_t)obj;
       int count = HDR_TUPLE_COUNT(tuple->hdr);
-      for (int i = 0; i < count; i++) shade(tuple->elts[i]);
+      for (int i = 0; i < count; i++) m_concurrent_heap.shade(tuple->elts[i]);
       break;
     }
     case TC_VALUES: {
       scm_values_t values = (scm_values_t)obj;
       int count = HDR_VALUES_COUNT(values->hdr);
-      for (int i = 0; i < count; i++) shade(values->elts[i]);
+      for (int i = 0; i < count; i++) m_concurrent_heap.shade(values->elts[i]);
       break;
     }
     case TC_HASHTABLE: {
       scm_hashtable_t ht = (scm_hashtable_t)obj;
-      shade(ht->handlers);
+      m_concurrent_heap.shade(ht->handlers);
       hashtable_rec_t* ht_datum = ht->datum;
       if (ht_datum) {
         int nsize = ht_datum->capacity;
         for (int i = 0; i < nsize; i++) {
-          shade(ht_datum->elts[i]);
+          m_concurrent_heap.shade(ht_datum->elts[i]);
         }
         for (int i = 0; i < nsize; i++) {
-          shade(ht_datum->elts[i + nsize]);
+          m_concurrent_heap.shade(ht_datum->elts[i + nsize]);
         }
       }
       break;
@@ -955,7 +461,7 @@ void object_heap_t::trace(scm_obj_t obj) {
             ht_datum->elts[i] = scm_hash_deleted;
             ht_datum->live--;
           } else {
-            shade(wmap);
+            m_concurrent_heap.shade(wmap);
           }
         }
       }
@@ -963,116 +469,80 @@ void object_heap_t::trace(scm_obj_t obj) {
     }
     case TC_PORT: {
       scm_port_t port = (scm_port_t)obj;
-      shade(port->bytes);
-      shade(port->name);
-      shade(port->transcoder);
-      shade(port->handlers);
+      m_concurrent_heap.shade(port->bytes);
+      m_concurrent_heap.shade(port->name);
+      m_concurrent_heap.shade(port->transcoder);
+      m_concurrent_heap.shade(port->handlers);
       break;
     }
     case TC_COMPLEX: {
       scm_complex_t complex = (scm_complex_t)obj;
-      shade(complex->imag);
-      shade(complex->real);
+      m_concurrent_heap.shade(complex->imag);
+      m_concurrent_heap.shade(complex->real);
       break;
     }
     case TC_RATIONAL: {
       scm_rational_t rational = (scm_rational_t)obj;
-      shade(rational->nume);
-      shade(rational->deno);
+      m_concurrent_heap.shade(rational->nume);
+      m_concurrent_heap.shade(rational->deno);
       break;
     }
     case TC_CLOSURE: {
       scm_closure_t closure = (scm_closure_t)obj;
-      shade(closure->pc);
-      shade(closure->doc);
-      interior_shade(closure->env);
+      m_concurrent_heap.shade(closure->pc);
+      m_concurrent_heap.shade(closure->doc);
+      m_concurrent_heap.interior_shade(closure->env);
       break;
     }
     case TC_CONT: {
       scm_cont_t cont = (scm_cont_t)obj;
-      shade(cont->wind_rec);
-      interior_shade(cont->cont);
+      m_concurrent_heap.shade(cont->wind_rec);
+      m_concurrent_heap.interior_shade(cont->cont);
       break;
     }
     case TC_HEAPENV: {
       int nbytes = HDR_HEAPENV_SIZE(HDR(obj));
       uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
       vm_env_t env = (vm_env_t)(top + nbytes - sizeof(vm_env_rec_t));
-      interior_shade(env->up);
-      for (scm_obj_t* vars = (scm_obj_t*)top; vars < (scm_obj_t*)env; vars++) shade(*vars);
+      m_concurrent_heap.interior_shade(env->up);
+      for (scm_obj_t* vars = (scm_obj_t*)top; vars < (scm_obj_t*)env; vars++) m_concurrent_heap.shade(*vars);
       break;
     }
     case TC_HEAPCONT: {
       int nbytes = HDR_HEAPCONT_SIZE(HDR(obj));
       uint8_t* top = (uint8_t*)((intptr_t)obj + sizeof(scm_hdr_t));
       vm_cont_t cont = (vm_cont_t)(top + nbytes - sizeof(vm_cont_rec_t));
-      interior_shade(cont->up);
-      interior_shade(cont->env);
-      shade(cont->pc);
-      shade(cont->trace);
-      for (scm_obj_t* args = (scm_obj_t*)top; args < (scm_obj_t*)cont; args++) shade(*args);
+      m_concurrent_heap.interior_shade(cont->up);
+      m_concurrent_heap.interior_shade(cont->env);
+      m_concurrent_heap.shade(cont->pc);
+      m_concurrent_heap.shade(cont->trace);
+      for (scm_obj_t* args = (scm_obj_t*)top; args < (scm_obj_t*)cont; args++) m_concurrent_heap.shade(*args);
       break;
     }
     case TC_ENVIRONMENT: {
       scm_environment_t environment = (scm_environment_t)obj;
-      shade(environment->variable);
-      shade(environment->macro);
-      shade(environment->name);
+      m_concurrent_heap.shade(environment->variable);
+      m_concurrent_heap.shade(environment->macro);
+      m_concurrent_heap.shade(environment->name);
       break;
     }
     case TC_GLOC: {
       scm_gloc_t gloc = (scm_gloc_t)obj;
-      shade(gloc->name);
-      shade(gloc->value);
+      m_concurrent_heap.shade(gloc->name);
+      m_concurrent_heap.shade(gloc->value);
       break;
     }
     case TC_SUBR: {
       scm_subr_t subr = (scm_subr_t)obj;
-      shade(subr->doc);
+      m_concurrent_heap.shade(subr->doc);
       break;
     }
     case TC_WEAKMAPPING: {
       scm_weakmapping_t wmap = (scm_weakmapping_t)obj;
-      shade(wmap->value);
+      m_concurrent_heap.shade(wmap->value);
       break;
     }
   }
-}
-
-void object_heap_t::concurrent_marking() {
-  scm_obj_t obj;
-  do {
-    while (true) {
-      if (m_shade_queue.try_get(&obj)) shade(obj);
-      if (m_mark_sp == m_mark_stack) break;
-      obj = *--m_mark_sp;
-      trace(obj);
-    }
-  } while (m_shade_queue.count());
-}
-
-bool object_heap_t::serial_marking() {
-#ifdef ENSURE_REALTIME
-  double timeout = msec() + ENSURE_REALTIME;
-  int i = 0;
-  scm_obj_t obj;
-  while (m_mark_sp != m_mark_stack) {
-    obj = *--m_mark_sp;
-    trace(obj);
-    if (++i > TIMEOUT_CHECK_EACH) {
-      i = 0;
-      if (msec() > timeout) return true;
-    }
-  }
-  return false;
-#else
-  scm_obj_t obj;
-  while (m_mark_sp != m_mark_stack) {
-    obj = *--m_mark_sp;
-    trace(obj);
-  }
-  return false;
-#endif
 }
 
 typedef struct {
@@ -1095,12 +565,12 @@ static void accumulate_object_count(void* obj, int size, void* refcon) {
 void object_heap_t::display_object_statistics(scm_port_t port) {
   object_count_t count;
   memset(&count, 0, sizeof(count));
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_pool);
-  for (int i = 0; i < m_pool_watermark; i++) {
-    if (GCSLABP(m_pool[i])) {
-      traits->cache->iterate(m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), accumulate_object_count, &count);
+  slab_traits_t* traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+    if (GCSLABP(m_concurrent_pool.m_pool[i])) {
+      traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << SLAB_SIZE_SHIFT), accumulate_object_count, &count);
     }
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   scoped_lock lock(port->lock);
 
@@ -1142,10 +612,10 @@ void object_heap_t::display_heap_statistics(scm_port_t port) {
 
   scoped_lock lock(port->lock);
   port_put_byte(port, '\n');
-  object_slab_traits_t* traits;
-  for (int n = 0; n < m_pool_watermark; n++) {
+  slab_traits_t* traits;
+  for (int n = 0; n < m_concurrent_pool.m_pool_watermark; n++) {
     if ((n & 63) == 0) port_puts(port, "  |");
-    switch (m_pool[n]) {
+    switch (m_concurrent_pool.m_pool[n]) {
       case PTAG_FREE:
         port_put_byte(port, ' ');
         n_free++;
@@ -1155,7 +625,7 @@ void object_heap_t::display_heap_statistics(scm_port_t port) {
         n_general++;
         break;
       case PTAG_USED | PTAG_SLAB:
-        traits = OBJECT_SLAB_TRAITS_OF(m_pool + ((intptr_t)n << OBJECT_SLAB_SIZE_SHIFT));
+        traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool + ((intptr_t)n << SLAB_SIZE_SHIFT));
         if (traits->free)
           port_put_byte(port, 's');
         else
@@ -1163,7 +633,7 @@ void object_heap_t::display_heap_statistics(scm_port_t port) {
         n_slab++;
         break;
       case PTAG_USED | PTAG_SLAB | PTAG_GC:
-        traits = OBJECT_SLAB_TRAITS_OF(m_pool + ((intptr_t)n << OBJECT_SLAB_SIZE_SHIFT));
+        traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool + ((intptr_t)n << SLAB_SIZE_SHIFT));
         if (traits->refc == 0) {
           port_put_byte(port, '.');
         } else {
@@ -1203,9 +673,9 @@ void object_heap_t::display_heap_statistics(scm_port_t port) {
     }
     if ((n & 63) == 63) port_puts(port, "|\n");
   }
-  if ((m_pool_watermark & 63) != 0) port_puts(port, "|\n");
+  if ((m_concurrent_pool.m_pool_watermark & 63) != 0) port_puts(port, "|\n");
   port_format(port, "  object:%d static:%d page:%d free:%d", n_gcslab, n_slab, n_general, n_free);
-  port_format(port, " watermark:%d limit:%d\n\n", m_pool_watermark, (m_pool_size >> OBJECT_SLAB_SIZE_SHIFT));
+  port_format(port, " watermark:%d limit:%d\n\n", m_concurrent_pool.m_pool_watermark, (m_concurrent_pool.m_pool_size >> SLAB_SIZE_SHIFT));
   port_flush_output(port);
 }
 
@@ -1332,7 +802,7 @@ void object_heap_t::init_inherents() {
     m_inherents[NIL_STRING] = obj;
   }
   {
-    assert(INTERNAL_PRIVATE_THRESHOLD >= sizeof(scm_vector_rec_t) + sizeof(scm_obj_t));
+    assert(INTERN_PRIVATE_THRESHOLD >= sizeof(scm_vector_rec_t) + sizeof(scm_obj_t));
     scm_vector_t obj = (scm_vector_t)allocate_collectible(sizeof(scm_vector_rec_t) + sizeof(scm_obj_t));
     obj->hdr = scm_hdr_vector;
     obj->count = 0;
@@ -1349,7 +819,7 @@ void object_heap_t::init_inherents() {
     m_inherents[NIL_BVECTOR] = obj;
   }
   {
-    assert(INTERNAL_PRIVATE_THRESHOLD >= sizeof(scm_tuple_rec_t) + sizeof(scm_obj_t));
+    assert(INTERN_PRIVATE_THRESHOLD >= sizeof(scm_tuple_rec_t) + sizeof(scm_obj_t));
     scm_tuple_t obj = (scm_tuple_t)allocate_collectible(sizeof(scm_tuple_rec_t) + sizeof(scm_obj_t));
     obj->hdr = scm_hdr_tuple;
     obj->elts = (scm_obj_t*)((uintptr_t)obj + sizeof(scm_tuple_rec_t));
@@ -1383,7 +853,7 @@ void object_heap_t::init_inherents() {
 static const char* verify_obj(void* obj, object_heap_t* heap) {
   static char msg[256];
   if (CELLP(obj)) {
-    if (heap->is_collectible(obj)) {
+    if (heap->m_concurrent_pool.is_collectible(obj)) {
       if (PAIRP(obj)) return NULL;
       int tc = HDR_TC(HDR(obj));
       if (tc >= 0 || tc <= TC_MASKBITS) return NULL;
@@ -1398,7 +868,7 @@ static const char* verify_obj(void* obj, object_heap_t* heap) {
 
 static const char* verify_interior_obj(void* ref, object_heap_t* heap) {
   if (ref == NULL) return NULL;
-  return verify_obj(OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref), heap);
+  return verify_obj(SLAB_TRAITS_OF(ref)->cache->lookup(ref), heap);
 }
 
 static void check_collectible(void* obj, int size, void* refcon) {
@@ -1421,9 +891,8 @@ static void check_collectible(void* obj, int size, void* refcon) {
     } while (false);
 
   object_heap_t* heap = (object_heap_t*)refcon;
-
   if (!CELLP(obj)) return;
-  if (!heap->is_collectible(obj)) {
+  if (!heap->m_concurrent_pool.is_collectible(obj)) {
     fatal("object 0x%x out of GCSLAB\n", obj);
   }
   if (PAIRP(obj)) {
@@ -1538,8 +1007,8 @@ static void check_collectible(void* obj, int size, void* refcon) {
     }
     case TC_GLOC: {
       scm_gloc_t gloc = (scm_gloc_t)obj;
-      VERIFY_OBJ(gloc, variable);
       VERIFY_OBJ(gloc, value);
+      VERIFY_OBJ(gloc, name);
       return;
     }
     case TC_SUBR: {
@@ -1575,25 +1044,40 @@ static void check_collectible(void* obj, int size, void* refcon) {
   }
 }
 
+// Run on collector thread
+void object_heap_t::validate_concurrent_slab(void* slab) {
+  concurrent_slab_t* ca = SLAB_TRAITS_OF(slab)->cache;
+  bool hit = false;
+  for (int u = 0; u < array_sizeof(m_collectibles); u++) hit |= (&m_collectibles[u] == ca);
+  hit |= (&m_weakmappings == ca);
+  hit |= (&m_flonums == ca);
+  hit |= (&m_cons == ca);
+  #if USE_CONST_LITERAL
+  hit |= (&m_immutable_cons == ca);
+  #endif
+  if (!hit) fatal("%s:%u validate_concurrent_slab(): bad cache reference %p in slab %p", __FILE__, __LINE__, ca, slab);
+}
+
+// Run on collector thread
 void object_heap_t::consistency_check() {
   //    puts(";; [collector: heap check]");
-  m_root_snapshot = ROOT_SNAPSHOT_CONSISTENCY_CHECK;
-  m_stop_the_world = true;
-  while (!m_mutator_stopped) {
-    m_collector_wake.wait(m_collector_lock);
-    if (!m_mutator_stopped) m_mutator_wake.signal();
+  m_concurrent_heap.m_root_snapshot_mode = ROOT_SNAPSHOT_MODE_CONSISTENCY_CHECK;
+  m_concurrent_heap.m_stop_the_world = true;
+  while (!m_concurrent_heap.m_mutator_stopped) {
+    m_concurrent_heap.m_collector_wake.wait(m_concurrent_heap.m_collector_lock);
+    if (!m_concurrent_heap.m_mutator_stopped) m_concurrent_heap.m_mutator_wake.signal();
   }
-  object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(m_pool);
-  for (int i = 0; i < m_pool_watermark; i++) {
-    if (GCSLABP(m_pool[i])) {
-      traits->cache->iterate(m_pool + ((intptr_t)i << OBJECT_SLAB_SIZE_SHIFT), check_collectible, this);
+  slab_traits_t* traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+    if (GCSLABP(m_concurrent_pool.m_pool[i])) {
+      traits->cache->iterate(m_concurrent_pool.m_pool + ((intptr_t)i << SLAB_SIZE_SHIFT), check_collectible, this);
     }
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
-  m_stop_the_world = false;
-  m_mutator_wake.signal();
-  while (m_mutator_stopped) {
-    m_collector_wake.wait(m_collector_lock);
+  m_concurrent_heap.m_stop_the_world = false;
+  m_concurrent_heap.m_mutator_wake.signal();
+  while (m_concurrent_heap.m_mutator_stopped) {
+    m_concurrent_heap.m_collector_wake.wait(m_concurrent_heap.m_collector_lock);
   }
 }
 

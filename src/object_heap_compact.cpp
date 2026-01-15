@@ -1,9 +1,10 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #include "core.h"
-#include "heap.h"
 #include "list.h"
+#include "object_factory.h"
+#include "object_heap.h"
 
 #define PLACE_FORWARD_PTR(from, to) ((*(intptr_t*)(from)) = MAKEHEAPFORWARDPTR(to))
 #define HAVE_FORWARD_PTR(p)         HEAPFORWARDPTRP(*(intptr_t*)(p))
@@ -44,7 +45,7 @@ scm_obj_t object_heap_t::forward(scm_obj_t obj) {
 
 void* object_heap_t::interior_forward(void* ref) {
   if (ref) {
-    scm_obj_t from = OBJECT_SLAB_TRAITS_OF(ref)->cache->lookup(ref);
+    scm_obj_t from = SLAB_TRAITS_OF(ref)->cache->lookup(ref);
     scm_obj_t to = forward(from);
     intptr_t offset = (intptr_t)to - (intptr_t)from;
     return (void*)((intptr_t)ref + offset);
@@ -54,14 +55,14 @@ void* object_heap_t::interior_forward(void* ref) {
 
 static void relocate_collectible(void* obj, int size, void* desc) {
   object_heap_t* heap = (object_heap_t*)desc;
-  assert(heap->is_collectible(obj));
+  assert(heap->m_concurrent_pool.is_collectible(obj));
   scm_obj_t from = (scm_obj_t)obj;
   scm_obj_t to;
   if (PAIRP(obj)) {
     assert(size >= sizeof(scm_pair_rec_t));
 
 #if USE_CONST_LITERAL
-    object_slab_traits_t* traits = OBJECT_SLAB_TRAITS_OF(obj);
+    slab_traits_t* traits = SLAB_TRAITS_OF(obj);
     if (traits->cache == &heap->m_immutable_cons) {
       to = heap->allocate_immutable_cons();
     } else {
@@ -150,7 +151,7 @@ static void relocate_collectible(void* obj, int size, void* desc) {
 
 static void resolve_collectible(void* obj, int size, void* desc) {
   object_heap_t* heap = (object_heap_t*)desc;
-  assert(heap->is_collectible(obj));
+  assert(heap->m_concurrent_pool.is_collectible(obj));
   if (PAIRP(obj)) {
     scm_pair_t pair = (scm_pair_t)obj;
     pair->car = heap->forward(pair->car);
@@ -300,7 +301,7 @@ static void resolve_collectible(void* obj, int size, void* desc) {
 
 static void rehash_collectible(void* obj, int size, void* desc) {
   object_heap_t* heap = (object_heap_t*)desc;
-  assert(heap->is_collectible(obj));
+  assert(heap->m_concurrent_pool.is_collectible(obj));
   if (!PAIRP(obj)) {
     int tc = HDR_TC(HDR(obj));
     assert(tc >= 0);
@@ -324,20 +325,20 @@ static void rehash_collectible(void* obj, int size, void* desc) {
 }
 
 relocate_info_t* object_heap_t::relocate(bool pack) {
-  relocate_info_t* info = new relocate_info_t(m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
-  object_slab_traits_t* first_traits = OBJECT_SLAB_TRAITS_OF(m_pool);
-  object_slab_traits_t* traits;
-  uint8_t* first_slab = m_pool;
+  relocate_info_t* info = new relocate_info_t(m_concurrent_pool.m_pool_size >> SLAB_SIZE_SHIFT);
+  slab_traits_t* first_traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  slab_traits_t* traits;
+  uint8_t* first_slab = m_concurrent_pool.m_pool;
   uint8_t* slab;
   if (pack) {
     int used_count = 0;
-    for (int i = 0; i < m_pool_watermark; i++) {
-      if (m_pool[i] != PTAG_FREE) used_count++;
+    for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+      if (m_concurrent_pool.m_pool[i] != PTAG_FREE) used_count++;
     }
     int bound = 0;
     int hole_count = 0;
-    for (int i = 0; i < m_pool_watermark; i++) {
-      if (m_pool[i] == PTAG_FREE)
+    for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+      if (m_concurrent_pool.m_pool[i] == PTAG_FREE)
         hole_count++;
       else
         used_count--;
@@ -346,59 +347,63 @@ relocate_info_t* object_heap_t::relocate(bool pack) {
     }
     slab = first_slab;
     traits = first_traits;
-    for (int i = 0; i < m_pool_watermark; i++) {
-      if (i >= bound && GCSLABP(m_pool[i])) {
+    for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+      if (i >= bound && GCSLABP(m_concurrent_pool.m_pool[i])) {
         traits->cache->detach(slab);
         info->relocated[i] = true;
       }
-      slab += OBJECT_SLAB_SIZE;
-      traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+      slab += SLAB_SIZE;
+      traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
     }
   } else {
     slab = first_slab;
     traits = first_traits;
-    for (int i = 0; i < m_pool_watermark; i++) {
-      if (GCSLABP(m_pool[i]) && traits->free) {
+    for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+      if (GCSLABP(m_concurrent_pool.m_pool[i]) && traits->free) {
         traits->cache->detach(slab);
         info->relocated[i] = true;
       }
-      slab += OBJECT_SLAB_SIZE;
-      traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+      slab += SLAB_SIZE;
+      traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
     }
   }
   slab = first_slab;
   traits = first_traits;
-  for (int i = 0; i < m_pool_watermark; i++) {
-    if (GCSLABP(m_pool[i]) && info->relocated[i]) traits->cache->iterate(slab, relocate_collectible, this);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+  for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+    if (GCSLABP(m_concurrent_pool.m_pool[i]) && info->relocated[i]) traits->cache->iterate(slab, relocate_collectible, this);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   return info;
 }
 
 void object_heap_t::resolve(relocate_info_t* info) {
-  object_slab_traits_t* first_traits = OBJECT_SLAB_TRAITS_OF(m_pool);
-  object_slab_traits_t* traits;
-  uint8_t* first_slab = m_pool;
+  slab_traits_t* first_traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  slab_traits_t* traits;
+  uint8_t* first_slab = m_concurrent_pool.m_pool;
   uint8_t* slab;
   slab = first_slab;
   traits = first_traits;
-  for (int i = 0; i < m_pool_watermark; i++) {
-    if (GCSLABP(m_pool[i]) && info->relocated[i] == false) traits->cache->iterate(slab, resolve_collectible, this);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+  for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+    if (GCSLABP(m_concurrent_pool.m_pool[i]) && info->relocated[i] == false) traits->cache->iterate(slab, resolve_collectible, this);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   m_symbol.resolve();
   m_string.resolve();
   slab = first_slab;
   traits = first_traits;
-  for (int i = 0; i < m_pool_watermark; i++) {
-    if (GCSLABP(m_pool[i]) && info->relocated[i] == false) traits->cache->iterate(slab, rehash_collectible, this);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+  for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+    if (GCSLABP(m_concurrent_pool.m_pool[i]) && info->relocated[i] == false) traits->cache->iterate(slab, rehash_collectible, this);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
+  m_symbol.lock();
   m_symbol.inplace_rehash();
+  m_symbol.unlock();
+  m_string.lock();
   m_string.inplace_rehash();
+  m_string.unlock();
   for (int i = 0; i < INHERENT_TOTAL_COUNT; i++) m_inherents[i] = forward(m_inherents[i]);
   m_architecture_feature = (scm_hashtable_t)forward(m_architecture_feature);
   m_native_transcoder = (scm_bvector_t)forward(m_native_transcoder);
@@ -408,10 +413,10 @@ void object_heap_t::resolve(relocate_info_t* info) {
   m_hidden_variables = (scm_weakhashtable_t)forward(m_hidden_variables);
   slab = first_slab;
   traits = first_traits;
-  for (int i = 0; i < m_pool_watermark; i++) {
-    if (info->relocated[i]) deallocate(slab);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+  for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+    if (info->relocated[i]) m_concurrent_pool.deallocate(slab);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   delete info;
 }
@@ -424,8 +429,8 @@ typedef struct {
 } relocate_desc_t;
 
 static void* copy_slab_private(object_heap_t* heap, void* datum) {
-  assert(!heap->is_collectible(datum));
-  if (heap->in_non_full_slab(datum)) {
+  assert(!heap->m_concurrent_pool.is_collectible(datum));
+  if (heap->m_concurrent_pool.in_non_full_slab(datum)) {
     int nbytes = heap->allocated_size(datum);
     assert(nbytes);
     void* to = heap->allocate_private(nbytes);
@@ -436,15 +441,15 @@ static void* copy_slab_private(object_heap_t* heap, void* datum) {
 }
 
 static void* copy_every_private(object_heap_t* heap, void* datum) {
-  assert(!heap->is_collectible(datum));
-  if (heap->in_slab(datum)) {
+  assert(!heap->m_concurrent_pool.is_collectible(datum));
+  if (heap->m_concurrent_pool.in_slab(datum)) {
     int nbytes = heap->allocated_size(datum);
     assert(nbytes);
     void* to = heap->allocate_private(nbytes);
     memcpy(to, datum, nbytes);
     return to;
   }
-  assert(heap->in_heap(datum));
+  assert(heap->m_concurrent_pool.in_pool(datum));
   int nbytes = heap->allocated_size(datum);
   assert(nbytes);
   void* to = heap->allocate_private(nbytes);
@@ -457,7 +462,7 @@ static void relocate_private(void* obj, int size, void* desc) {
   relocate_desc_t* ctx = (relocate_desc_t*)desc;
   object_heap_t* heap = ctx->heap;
   copy_proc_t copy_proc = ctx->proc;
-  assert(heap->is_collectible(obj));
+  assert(heap->m_concurrent_pool.is_collectible(obj));
   if (!PAIRP(obj)) {
     int tc = HDR_TC(HDR(obj));
     assert(tc >= 0);
@@ -528,32 +533,32 @@ static void relocate_private(void* obj, int size, void* desc) {
 }
 
 void object_heap_t::relocate_privates(bool pack) {
-  relocate_info_t* info = new relocate_info_t(m_pool_size >> OBJECT_SLAB_SIZE_SHIFT);
-  object_slab_traits_t* first_traits = OBJECT_SLAB_TRAITS_OF(m_pool);
-  object_slab_traits_t* traits;
-  uint8_t* first_slab = m_pool;
+  relocate_info_t* info = new relocate_info_t(m_concurrent_pool.m_pool_size >> SLAB_SIZE_SHIFT);
+  slab_traits_t* first_traits = SLAB_TRAITS_OF(m_concurrent_pool.m_pool);
+  slab_traits_t* traits;
+  uint8_t* first_slab = m_concurrent_pool.m_pool;
   uint8_t* slab;
   if (pack) {
     slab = first_slab;
     traits = first_traits;
-    for (int i = 0; i < m_pool_watermark; i++) {
-      if (m_pool[i] == (PTAG_USED | PTAG_SLAB)) {
+    for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+      if (m_concurrent_pool.m_pool[i] == (PTAG_USED | PTAG_SLAB)) {
         traits->cache->detach(slab);
         info->relocated[i] = true;
       }
-      slab += OBJECT_SLAB_SIZE;
-      traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+      slab += SLAB_SIZE;
+      traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
     }
   } else {
     slab = first_slab;
     traits = first_traits;
-    for (int i = 0; i < m_pool_watermark; i++) {
-      if (m_pool[i] == PTAG_SLAB && traits->free) {
+    for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+      if (m_concurrent_pool.m_pool[i] == PTAG_SLAB && traits->free) {
         traits->cache->detach(slab);
         info->relocated[i] = true;
       }
-      slab += OBJECT_SLAB_SIZE;
-      traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+      slab += SLAB_SIZE;
+      traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
     }
   }
   relocate_desc_t desc;
@@ -561,27 +566,27 @@ void object_heap_t::relocate_privates(bool pack) {
   desc.proc = (pack ? copy_every_private : copy_slab_private);
   slab = first_slab;
   traits = first_traits;
-  for (int i = 0; i < m_pool_watermark; i++) {
-    if (GCSLABP(m_pool[i])) traits->cache->iterate(slab, relocate_private, &desc);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+  for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+    if (GCSLABP(m_concurrent_pool.m_pool[i])) traits->cache->iterate(slab, relocate_private, &desc);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   m_symbol.relocate(pack);
   m_string.relocate(pack);
   slab = first_slab;
   traits = first_traits;
-  for (int i = 0; i < m_pool_watermark; i++) {
-    if (info->relocated[i]) deallocate(slab);
-    slab += OBJECT_SLAB_SIZE;
-    traits = (object_slab_traits_t*)((intptr_t)traits + OBJECT_SLAB_SIZE);
+  for (int i = 0; i < m_concurrent_pool.m_pool_watermark; i++) {
+    if (info->relocated[i]) m_concurrent_pool.deallocate(slab);
+    slab += SLAB_SIZE;
+    traits = (slab_traits_t*)((intptr_t)traits + SLAB_SIZE);
   }
   delete info;
 }
 
 void object_heap_t::compact_pool() {
-  for (int i = m_pool_watermark - 1; i >= 0; i--) {
-    if (m_pool[i] == PTAG_FREE)
-      m_pool_watermark = i;
+  for (int i = m_concurrent_pool.m_pool_watermark - 1; i >= 0; i--) {
+    if (m_concurrent_pool.m_pool[i] == PTAG_FREE)
+      m_concurrent_pool.m_pool_watermark = i;
     else
       break;
   }

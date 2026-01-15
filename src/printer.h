@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
+// Copyright (c) 2004-2026 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
 #ifndef PRINTER_H_INCLUDED
@@ -6,7 +6,6 @@
 
 #include "core.h"
 #include "object.h"
-#include "list.h"
 
 class printer_t {
   enum { escape_mode_string, escape_mode_symbol };
