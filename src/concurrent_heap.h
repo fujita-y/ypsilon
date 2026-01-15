@@ -55,18 +55,18 @@ class concurrent_heap_t {
   void init(concurrent_pool_t* pool);
   void terminate();
   void collect();
-  void shade(scm_obj_t obj);
+  void shade(void* obj);
   void interior_shade(void* ref);
   void dequeue_root();
-  void enqueue_root(scm_obj_t obj);
-  void write_barrier(scm_obj_t rhs);
+  void enqueue_root(void* obj);
+  void write_barrier(void* rhs);
 
-  concurrent_queue_t<scm_obj_t> m_shade_queue;
+  concurrent_queue_t<void*> m_shade_queue;
   collector_usage_t m_usage;
   cond_t m_mutator_wake;
   cond_t m_collector_wake;
   mutex_t m_collector_lock;
-  scm_obj_t* m_mark_stack;
+  void** m_mark_stack;
   int m_root_snapshot_mode;
   bool m_read_barrier;
   bool m_write_barrier;
@@ -134,7 +134,7 @@ class concurrent_heap_t {
   std::function<void(void)> m_debug_post_completation_proc;
   std::function<void(void* slab)> m_debug_check_slab_proc;
   concurrent_pool_t* m_concurrent_pool;
-  scm_obj_t* m_mark_sp;
+  void** m_mark_sp;
   uint8_t* m_sweep_wavefront;
   pthread_t m_collector_thread;
   int m_mark_stack_size;

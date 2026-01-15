@@ -12,6 +12,10 @@
   #undef NO_POSIX_SPAWN
   #define NO_POSIX_SPAWN 1
 #endif
+#if defined(__DARWIN_64_BIT_INO_T)
+  #undef __DARWIN_64_BIT_INO_T
+  #define __DARWIN_64_BIT_INO_T 1
+#endif
 
 #define DECLSPEC(x)
 #define ATTRIBUTE(x) __attribute__((x))

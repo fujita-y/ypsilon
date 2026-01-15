@@ -52,7 +52,7 @@ static scm_bvector_t make_posix_env(VM* vm, scm_obj_t env) {
 
 // process-spawn
 scm_obj_t subr_process_spawn(VM* vm, int argc, scm_obj_t argv[]) {
-#if NO_POSIX_SPAWN
+#if defined(NO_POSIX_SPAWN)
   return process_spawn_fallback_to_execvp(vm, argc, argv);
 #else
   fd_t fd0 = INVALID_FD;
@@ -236,7 +236,7 @@ adddup2_fail:
 #endif
 }
 
-#if NO_POSIX_SPAWN
+#if defined(NO_POSIX_SPAWN)
 static process_spawn_fallback_to_execvp(VM* vm, int argc, scm_obj_t argv[]) {
   int pipe0[2] = {-1, -1};
   int pipe1[2] = {-1, -1};

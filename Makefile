@@ -10,7 +10,7 @@ CPPFLAGS = -DNDEBUG -DSYSTEM_SHARE_PATH='"$(DESTDIR)$(PREFIX)/share/$(PROG)"' -D
 
 CXX = clang++
 
-CXXFLAGS = `llvm-config --cxxflags` -fcxx-exceptions
+CXXFLAGS = `llvm-config --cxxflags` -fcxx-exceptions -Wundef -Werror
 
 SRCS = concurrent_pool.cpp concurrent_heap.cpp file.cpp main.cpp object_heap_compact.cpp subr_flonum.cpp vm0.cpp vm1.cpp vm2.cpp vm3.cpp object_set.cpp \
        concurrent_slab.cpp subr_list.cpp serialize.cpp vm3.cpp port.cpp subr_others.cpp arith.cpp printer.cpp \

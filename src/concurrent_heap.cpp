@@ -25,7 +25,7 @@
 
 concurrent_heap_t::concurrent_heap_t() {
   m_mark_stack_size = MARK_STACK_SIZE_INIT;
-  m_mark_stack = m_mark_sp = (scm_obj_t*)malloc(sizeof(scm_obj_t) * m_mark_stack_size);
+  m_mark_stack = m_mark_sp = (void**)malloc(sizeof(void*) * m_mark_stack_size);
   assert(m_mark_stack);
   m_shade_queue.init(SHADE_QUEUE_SIZE);
   m_collector_lock.init();
@@ -303,7 +303,7 @@ void* concurrent_heap_t::collector_thread(void* param) {
     if (concurrent_heap.m_mark_stack_size != MARK_STACK_SIZE_INIT) {
       concurrent_heap.m_mark_stack_size = MARK_STACK_SIZE_INIT;
       concurrent_heap.m_mark_stack = concurrent_heap.m_mark_sp =
-          (scm_obj_t*)realloc(concurrent_heap.m_mark_stack, sizeof(scm_obj_t) * concurrent_heap.m_mark_stack_size);
+          (void**)realloc(concurrent_heap.m_mark_stack, sizeof(void*) * concurrent_heap.m_mark_stack_size);
     }
     if (CONCURRENT_COLLECT) {
       if (concurrent_heap.m_concurrent_pool->m_pool_usage > concurrent_heap.m_concurrent_pool->m_pool_threshold) {
@@ -324,7 +324,7 @@ void concurrent_heap_t::concurrent_mark() {
   m_collector_lock.unlock();
   do {
     while (true) {
-      scm_obj_t obj;
+      void* obj;
       if (m_shade_queue.try_get(&obj)) shade(obj);
       if (m_mark_sp == m_mark_stack) break;
       obj = *--m_mark_sp;
@@ -339,7 +339,7 @@ bool concurrent_heap_t::synchronized_mark() {
   double timeout = msec() + ENSURE_REALTIME;
   int i = 0;
   while (m_mark_sp != m_mark_stack) {
-    scm_obj_t obj = *--m_mark_sp;
+    void* obj = *--m_mark_sp;
     trace(obj);
     if (++i > TIMEOUT_CHECK_EACH) {
       i = 0;
@@ -349,7 +349,7 @@ bool concurrent_heap_t::synchronized_mark() {
   return false;
 #else
   while (m_mark_sp != m_mark_stack) {
-    scm_obj_t obj = *--m_mark_sp;
+    void* obj = *--m_mark_sp;
     trace(obj);
   }
   return false;
@@ -357,7 +357,7 @@ bool concurrent_heap_t::synchronized_mark() {
 }
 
 // Run on collector thread
-void concurrent_heap_t::shade(scm_obj_t obj) {
+void concurrent_heap_t::shade(void* obj) {
   if (CELLP(obj)) {
     assert(obj);
     if (SLAB_TRAITS_OF(obj)->cache->state(obj) == false) {
@@ -367,7 +367,7 @@ void concurrent_heap_t::shade(scm_obj_t obj) {
       }
       m_usage.m_expand_mark_stack++;
       int newsize = m_mark_stack_size + MARK_STACK_SIZE_GROW;
-      m_mark_stack = (scm_obj_t*)realloc(m_mark_stack, sizeof(scm_obj_t) * newsize);
+      m_mark_stack = (void**)realloc(m_mark_stack, sizeof(void*) * newsize);
       if (m_mark_stack == NULL) {
         fatal("%s:%u memory overflow on realloc mark stack", __FILE__, __LINE__);
       }
@@ -388,7 +388,7 @@ void concurrent_heap_t::interior_shade(void* ref) {
 
 // Run on collector thread
 void concurrent_heap_t::dequeue_root() {
-  scm_obj_t obj;
+  void* obj;
   while (m_shade_queue.count()) {
     m_shade_queue.get(&obj);
     shade(obj);
@@ -396,7 +396,7 @@ void concurrent_heap_t::dequeue_root() {
 }
 
 // Run on mutator thread
-void concurrent_heap_t::enqueue_root(scm_obj_t obj) {
+void concurrent_heap_t::enqueue_root(void* obj) {
   assert(m_stop_the_world);
   if (CELLP(obj)) {
     if (m_concurrent_pool->in_pool(obj)) {
@@ -412,7 +412,7 @@ void concurrent_heap_t::enqueue_root(scm_obj_t obj) {
 }
 
 // Run on mutator thread
-void concurrent_heap_t::write_barrier(scm_obj_t rhs) {
+void concurrent_heap_t::write_barrier(void* rhs) {
   // simple (Dijkstra)
   if (m_write_barrier) {
     if (CELLP(rhs)) {

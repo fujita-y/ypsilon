@@ -12,7 +12,7 @@
 scm_obj_t file_stat_atime(VM* vm, scm_string_t path) {
   struct stat st;
   if (stat(path->name, &st) == 0) {
-#if __DARWIN_64_BIT_INO_T
+#if defined(__DARWIN_64_BIT_INO_T)
     return arith_add(vm->m_heap, int32_to_integer(vm->m_heap, st.st_atimespec.tv_nsec),
                      arith_mul(vm->m_heap, MAKEFIXNUM(1000000000), int32_to_integer(vm->m_heap, st.st_atimespec.tv_sec)));
 #elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
@@ -29,7 +29,7 @@ scm_obj_t file_stat_atime(VM* vm, scm_string_t path) {
 scm_obj_t file_stat_mtime(VM* vm, scm_string_t path) {
   struct stat st;
   if (stat(path->name, &st) == 0) {
-#if __DARWIN_64_BIT_INO_T
+#if defined(__DARWIN_64_BIT_INO_T)
     return arith_add(vm->m_heap, int32_to_integer(vm->m_heap, st.st_mtimespec.tv_nsec),
                      arith_mul(vm->m_heap, MAKEFIXNUM(1000000000), int32_to_integer(vm->m_heap, st.st_mtimespec.tv_sec)));
 #elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
@@ -46,7 +46,7 @@ scm_obj_t file_stat_mtime(VM* vm, scm_string_t path) {
 scm_obj_t file_stat_ctime(VM* vm, scm_string_t path) {
   struct stat st;
   if (stat(path->name, &st) == 0) {
-#if __DARWIN_64_BIT_INO_T
+#if defined(__DARWIN_64_BIT_INO_T)
     return arith_add(vm->m_heap, int32_to_integer(vm->m_heap, st.st_ctimespec.tv_nsec),
                      arith_mul(vm->m_heap, MAKEFIXNUM(1000000000), int32_to_integer(vm->m_heap, st.st_ctimespec.tv_sec)));
 #elif defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
