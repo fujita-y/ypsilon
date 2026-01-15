@@ -12,6 +12,18 @@
 #include "concurrent_pool.h"
 #include "concurrent_slab.h"
 
+#define MARK_STACK_SIZE_INIT          16384  // 16K object, 64K/128K bytes
+#define MARK_STACK_SIZE_GROW          4096   // 4K object, 16K/32K bytes
+#define SHADE_QUEUE_SIZE              4096   // 4K object, 16K/32K bytes
+
+#define ROOT_SNAPSHOT_MODE_GLOBALS    0
+#define ROOT_SNAPSHOT_MODE_LOCALS     1
+#define ROOT_SNAPSHOT_MODE_EVERYTHING 2
+#define ROOT_SNAPSHOT_MODE_RETRY      3
+#if HPDEBUG
+  #define ROOT_SNAPSHOT_MODE_CONSISTENCY_CHECK 4
+#endif
+
 class collector_usage_t {
  public:
   double m_duration;
