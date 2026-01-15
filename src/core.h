@@ -1,6 +1,8 @@
 // Copyright (c) 2004-2022 Yoshikatsu Fujita / LittleWing Company Limited.
 // See LICENSE file for terms and conditions of use.
 
+// IWYU pragma: always_keep
+
 #ifndef CORE_H_INCLUDED
 #define CORE_H_INCLUDED
 
