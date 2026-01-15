@@ -9,7 +9,7 @@
 #include "object_heap.h"
 
 // object_heap_t::m_collectibles[] must have large enough slab to hold this size of private data plus metadata
-#define INTERNAL_PRIVATE_THRESHOLD (SLAB_SIZE / 16)
+#define INTERN_PRIVATE_THRESHOLD (SLAB_SIZE / 16)
 
 #define VERIFY_DATUM(x)                                             \
   do {                                                              \

@@ -802,7 +802,7 @@ void object_heap_t::init_inherents() {
     m_inherents[NIL_STRING] = obj;
   }
   {
-    assert(INTERNAL_PRIVATE_THRESHOLD >= sizeof(scm_vector_rec_t) + sizeof(scm_obj_t));
+    assert(INTERN_PRIVATE_THRESHOLD >= sizeof(scm_vector_rec_t) + sizeof(scm_obj_t));
     scm_vector_t obj = (scm_vector_t)allocate_collectible(sizeof(scm_vector_rec_t) + sizeof(scm_obj_t));
     obj->hdr = scm_hdr_vector;
     obj->count = 0;
@@ -819,7 +819,7 @@ void object_heap_t::init_inherents() {
     m_inherents[NIL_BVECTOR] = obj;
   }
   {
-    assert(INTERNAL_PRIVATE_THRESHOLD >= sizeof(scm_tuple_rec_t) + sizeof(scm_obj_t));
+    assert(INTERN_PRIVATE_THRESHOLD >= sizeof(scm_tuple_rec_t) + sizeof(scm_obj_t));
     scm_tuple_t obj = (scm_tuple_t)allocate_collectible(sizeof(scm_tuple_rec_t) + sizeof(scm_obj_t));
     obj->hdr = scm_hdr_tuple;
     obj->elts = (scm_obj_t*)((uintptr_t)obj + sizeof(scm_tuple_rec_t));

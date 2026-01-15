@@ -22,7 +22,7 @@ scm_symbol_t make_symbol(object_heap_t* heap, const char* name, int len) {
   if (obj == scm_undef) {
     heap->m_symbol.unlock();
     int bytes = sizeof(scm_symbol_rec_t) + len + 1;
-    if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+    if (bytes <= INTERN_PRIVATE_THRESHOLD) {
       obj = (scm_symbol_t)heap->allocate_collectible(bytes);
       obj->name = (char*)((uintptr_t)obj + sizeof(scm_symbol_rec_t));
     } else {
@@ -47,7 +47,7 @@ scm_symbol_t make_symbol(object_heap_t* heap, const char* name, int len) {
 scm_symbol_t make_symbol_uninterned(object_heap_t* heap, const char* name, int len) {
   scm_symbol_t obj;
   int bytes = sizeof(scm_symbol_rec_t) + len + 2;
-  if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+  if (bytes <= INTERN_PRIVATE_THRESHOLD) {
     obj = (scm_symbol_t)heap->allocate_collectible(bytes);
     obj->name = (char*)((uintptr_t)obj + sizeof(scm_symbol_rec_t));
   } else {
@@ -64,7 +64,7 @@ scm_symbol_t make_symbol_uninterned(object_heap_t* heap, const char* name, int l
 scm_symbol_t make_symbol_uninterned(object_heap_t* heap, const char* name, int len, int prefix) {
   scm_symbol_t obj;
   int bytes = sizeof(scm_symbol_rec_t) + len + 2;
-  if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+  if (bytes <= INTERN_PRIVATE_THRESHOLD) {
     obj = (scm_symbol_t)heap->allocate_collectible(bytes);
     obj->name = (char*)((uintptr_t)obj + sizeof(scm_symbol_rec_t));
   } else {
@@ -101,7 +101,7 @@ scm_string_t make_string(object_heap_t* heap, const char* name, int len) {
   if (len == 0) return (scm_string_t)heap->m_inherents[NIL_STRING];
   scm_string_t obj;
   int bytes = sizeof(scm_string_rec_t) + len + 1;
-  if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+  if (bytes <= INTERN_PRIVATE_THRESHOLD) {
     obj = (scm_string_t)heap->allocate_collectible(bytes);
     obj->name = (char*)((uintptr_t)obj + sizeof(scm_string_rec_t));
   } else {
@@ -123,7 +123,7 @@ scm_string_t make_string_literal(object_heap_t* heap, const char* name, int len)
   if (obj == scm_undef) {
     heap->m_string.unlock();
     int bytes = sizeof(scm_string_rec_t) + len + 1;
-    if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+    if (bytes <= INTERN_PRIVATE_THRESHOLD) {
       obj = (scm_string_t)heap->allocate_collectible(bytes);
       obj->name = (char*)((uintptr_t)obj + sizeof(scm_string_rec_t));
     } else {
@@ -164,7 +164,7 @@ scm_vector_t make_vector(object_heap_t* heap, scm_obj_t lst) {
   int n = list_length(lst);
   int bytes = sizeof(scm_vector_rec_t) + sizeof(scm_obj_t) * n;
   scm_vector_t obj;
-  if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+  if (bytes <= INTERN_PRIVATE_THRESHOLD) {
     obj = (scm_vector_t)heap->allocate_collectible(bytes);
     obj->hdr = scm_hdr_vector;
     obj->count = n;
@@ -186,7 +186,7 @@ scm_vector_t make_vector(object_heap_t* heap, int n, scm_obj_t elt) {
   if (n == 0) return (scm_vector_t)heap->m_inherents[NIL_VECTOR];
   int bytes = sizeof(scm_vector_rec_t) + sizeof(scm_obj_t) * n;
   scm_vector_t obj;
-  if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+  if (bytes <= INTERN_PRIVATE_THRESHOLD) {
     obj = (scm_vector_t)heap->allocate_collectible(bytes);
     obj->hdr = scm_hdr_vector;
     obj->count = n;
@@ -205,7 +205,7 @@ scm_bvector_t make_bvector(object_heap_t* heap, int n) {
   if (n == 0) return (scm_bvector_t)heap->m_inherents[NIL_BVECTOR];
   int bytes = sizeof(scm_bvector_rec_t) + n;
   scm_bvector_t obj;
-  if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+  if (bytes <= INTERN_PRIVATE_THRESHOLD) {
     obj = (scm_bvector_t)heap->allocate_collectible(sizeof(scm_bvector_rec_t) + n);
     obj->hdr = scm_hdr_bvector;
     obj->count = n;
@@ -303,7 +303,7 @@ scm_port_t make_transcoded_port(object_heap_t* heap, scm_obj_t name, scm_port_t 
 scm_values_t make_values(object_heap_t* heap, int n) {
   int bytes = sizeof(scm_values_rec_t) + sizeof(scm_obj_t) * n;
   scm_values_t obj;
-  if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+  if (bytes <= INTERN_PRIVATE_THRESHOLD) {
     obj = (scm_values_t)heap->allocate_collectible(bytes);
     obj->hdr = scm_hdr_values | MAKEBITS(n, HDR_VALUES_COUNT_SHIFT);
     obj->elts = (scm_obj_t*)((uintptr_t)obj + sizeof(scm_values_rec_t));
@@ -483,7 +483,7 @@ scm_bignum_t make_bignum(object_heap_t* heap, scm_bignum_t bn) {
 scm_bignum_t make_bignum(object_heap_t* heap, int n) {
   int bytes = sizeof(scm_bignum_rec_t) + sizeof(digit_t) * n;
   scm_bignum_t obj;
-  if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+  if (bytes <= INTERN_PRIVATE_THRESHOLD) {
     obj = (scm_bignum_t)heap->allocate_collectible(bytes);
     obj->hdr = scm_hdr_bignum | MAKEBITS(n, HDR_BIGNUM_COUNT_SHIFT);
     if (n)
@@ -550,7 +550,7 @@ scm_tuple_t make_tuple(object_heap_t* heap, int n, scm_obj_t elt) {
   if (n == 0) return (scm_tuple_t)heap->m_inherents[NIL_TUPLE];
   int bytes = sizeof(scm_tuple_rec_t) + sizeof(scm_obj_t) * n;
   scm_tuple_t obj;
-  if (bytes <= INTERNAL_PRIVATE_THRESHOLD) {
+  if (bytes <= INTERN_PRIVATE_THRESHOLD) {
     obj = (scm_tuple_t)heap->allocate_collectible(bytes);
     obj->hdr = scm_hdr_tuple | MAKEBITS(n, HDR_TUPLE_COUNT_SHIFT);
     obj->elts = (scm_obj_t*)((uintptr_t)obj + sizeof(scm_tuple_rec_t));
