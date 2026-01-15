@@ -37,6 +37,7 @@ build/
 *.d
 *.sublime-project
 *.sublime-workspace
+*.code-workspace
 spheres.pgm
 /ypsilon
 /heap/debug-*.vmi
