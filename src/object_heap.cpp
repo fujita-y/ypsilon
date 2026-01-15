@@ -166,22 +166,22 @@ void* object_heap_t::allocate_private(size_t size) {
 
 void object_heap_t::deallocate_private(void* obj) {
   if (obj) {
-    assert(m_concurrent_heap.in_heap(obj));
-    assert(!m_concurrent_heap.is_collectible(obj));
-    if (m_concurrent_heap.in_slab(obj)) {
+    assert(m_concurrent_pool.in_pool(obj));
+    assert(!m_concurrent_pool.is_collectible(obj));
+    if (m_concurrent_pool.in_slab(obj)) {
       slab_traits_t* traits = SLAB_TRAITS_OF(obj);
       concurrent_slab_t* cache = traits->cache;
       cache->delete_object(obj);
     } else {
-      assert(!m_concurrent_heap.is_collectible(obj));
+      assert(!m_concurrent_pool.is_collectible(obj));
       m_concurrent_pool.deallocate(obj);
     }
   }
 }
 
 int object_heap_t::allocated_size(void* obj) {
-  assert(m_concurrent_heap.in_heap(obj));
-  if (m_concurrent_heap.in_slab(obj)) {
+  assert(m_concurrent_pool.in_pool(obj));
+  if (m_concurrent_pool.in_slab(obj)) {
     slab_traits_t* traits = SLAB_TRAITS_OF(obj);
     concurrent_slab_t* cache = traits->cache;
     return cache->m_object_size;
@@ -400,7 +400,7 @@ void object_heap_t::snapshot_root() {
 
 // Run on collector thread
 void object_heap_t::trace(scm_obj_t obj) {
-  assert(m_concurrent_heap.is_collectible(obj));
+  assert(m_concurrent_pool.is_collectible(obj));
   slab_traits_t* traits = SLAB_TRAITS_OF(obj);
   if (traits->cache->test_and_set_mark(obj)) {
 #if HPDEBUG
@@ -855,7 +855,7 @@ void object_heap_t::init_inherents() {
 static const char* verify_obj(void* obj, object_heap_t* heap) {
   static char msg[256];
   if (CELLP(obj)) {
-    if (heap->m_concurrent_heap.is_collectible(obj)) {
+    if (heap->m_concurrent_pool.is_collectible(obj)) {
       if (PAIRP(obj)) return NULL;
       int tc = HDR_TC(HDR(obj));
       if (tc >= 0 || tc <= TC_MASKBITS) return NULL;
@@ -894,7 +894,7 @@ static void check_collectible(void* obj, int size, void* refcon) {
 
   object_heap_t* heap = (object_heap_t*)refcon;
   if (!CELLP(obj)) return;
-  if (!heap->m_concurrent_heap.is_collectible(obj)) {
+  if (!heap->m_concurrent_pool.is_collectible(obj)) {
     fatal("object 0x%x out of GCSLAB\n", obj);
   }
   if (PAIRP(obj)) {

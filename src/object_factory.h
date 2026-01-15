@@ -12,7 +12,7 @@
 
 #define VERIFY_DATUM(x)                                             \
   do {                                                              \
-    assert(!CELLP(x) || heap->m_concurrent_heap.is_collectible(x)); \
+    assert(!CELLP(x) || heap->m_concurrent_pool.is_collectible(x)); \
   } while (0)
 
 scm_symbol_t make_symbol(object_heap_t* heap, const char* name);

@@ -12,9 +12,9 @@ class concurrent_heap_t;
 #define SLAB_TOP_OF(obj)    ((uint8_t*)(((uintptr_t)(obj)) & ~(SLAB_SIZE - 1)))
 #define SLAB_TRAITS_OF(obj) ((slab_traits_t*)(SLAB_TOP_OF(obj) + SLAB_SIZE - sizeof(slab_traits_t)))
 
-struct concurrent_slab_t;
 struct slab_traits_t;
 struct freelist_t;
+class concurrent_slab_t;
 
 struct freelist_t {
   void* null;  // <- concurrent_slab_t::delete_object(...) assign NULL to detect free cell during sweep phase

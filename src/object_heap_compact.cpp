@@ -55,7 +55,7 @@ void* object_heap_t::interior_forward(void* ref) {
 
 static void relocate_collectible(void* obj, int size, void* desc) {
   object_heap_t* heap = (object_heap_t*)desc;
-  assert(heap->m_concurrent_heap.is_collectible(obj));
+  assert(heap->m_concurrent_pool.is_collectible(obj));
   scm_obj_t from = (scm_obj_t)obj;
   scm_obj_t to;
   if (PAIRP(obj)) {
@@ -151,7 +151,7 @@ static void relocate_collectible(void* obj, int size, void* desc) {
 
 static void resolve_collectible(void* obj, int size, void* desc) {
   object_heap_t* heap = (object_heap_t*)desc;
-  assert(heap->m_concurrent_heap.is_collectible(obj));
+  assert(heap->m_concurrent_pool.is_collectible(obj));
   if (PAIRP(obj)) {
     scm_pair_t pair = (scm_pair_t)obj;
     pair->car = heap->forward(pair->car);
@@ -301,7 +301,7 @@ static void resolve_collectible(void* obj, int size, void* desc) {
 
 static void rehash_collectible(void* obj, int size, void* desc) {
   object_heap_t* heap = (object_heap_t*)desc;
-  assert(heap->m_concurrent_heap.is_collectible(obj));
+  assert(heap->m_concurrent_pool.is_collectible(obj));
   if (!PAIRP(obj)) {
     int tc = HDR_TC(HDR(obj));
     assert(tc >= 0);
@@ -429,8 +429,8 @@ typedef struct {
 } relocate_desc_t;
 
 static void* copy_slab_private(object_heap_t* heap, void* datum) {
-  assert(!heap->m_concurrent_heap.is_collectible(datum));
-  if (heap->m_concurrent_heap.in_non_full_slab(datum)) {
+  assert(!heap->m_concurrent_pool.is_collectible(datum));
+  if (heap->m_concurrent_pool.in_non_full_slab(datum)) {
     int nbytes = heap->allocated_size(datum);
     assert(nbytes);
     void* to = heap->allocate_private(nbytes);
@@ -441,15 +441,15 @@ static void* copy_slab_private(object_heap_t* heap, void* datum) {
 }
 
 static void* copy_every_private(object_heap_t* heap, void* datum) {
-  assert(!heap->m_concurrent_heap.is_collectible(datum));
-  if (heap->m_concurrent_heap.in_slab(datum)) {
+  assert(!heap->m_concurrent_pool.is_collectible(datum));
+  if (heap->m_concurrent_pool.in_slab(datum)) {
     int nbytes = heap->allocated_size(datum);
     assert(nbytes);
     void* to = heap->allocate_private(nbytes);
     memcpy(to, datum, nbytes);
     return to;
   }
-  assert(heap->m_concurrent_heap.in_heap(datum));
+  assert(heap->m_concurrent_pool.in_pool(datum));
   int nbytes = heap->allocated_size(datum);
   assert(nbytes);
   void* to = heap->allocate_private(nbytes);
@@ -462,7 +462,7 @@ static void relocate_private(void* obj, int size, void* desc) {
   relocate_desc_t* ctx = (relocate_desc_t*)desc;
   object_heap_t* heap = ctx->heap;
   copy_proc_t copy_proc = ctx->proc;
-  assert(heap->m_concurrent_heap.is_collectible(obj));
+  assert(heap->m_concurrent_pool.is_collectible(obj));
   if (!PAIRP(obj)) {
     int tc = HDR_TC(HDR(obj));
     assert(tc >= 0);

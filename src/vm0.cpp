@@ -677,11 +677,11 @@ void VM::stop() {
       }
     }
     if (m_cont) {
-      assert(m_heap->m_concurrent_heap.is_collectible(m_cont));
+      assert(m_heap->m_concurrent_pool.is_collectible(m_cont));
       m_heap->m_concurrent_heap.enqueue_root(SLAB_TRAITS_OF(m_cont)->cache->lookup(m_cont));
     }
     if (m_env) {
-      assert(m_heap->m_concurrent_heap.is_collectible(m_env));
+      assert(m_heap->m_concurrent_pool.is_collectible(m_env));
       m_heap->m_concurrent_heap.enqueue_root(SLAB_TRAITS_OF(m_env)->cache->lookup(m_env));
     }
   }
@@ -779,11 +779,11 @@ void VM::resolve() {
     for (int i = 0; i < argc; i++) m_fp[i] = m_heap->forward(m_fp[i]);
   }
   if (m_cont) {
-    assert(m_heap->m_concurrent_heap.is_collectible(m_cont));
+    assert(m_heap->m_concurrent_pool.is_collectible(m_cont));
     m_cont = m_heap->interior_forward(m_cont);
   }
   if (m_env) {
-    assert(m_heap->m_concurrent_heap.is_collectible(m_env));
+    assert(m_heap->m_concurrent_pool.is_collectible(m_env));
     m_env = m_heap->interior_forward(m_env);
   }
 }

@@ -2,6 +2,7 @@
 // See LICENSE file for terms and conditions of use.
 
 #include "concurrent_pool.h"
+#include "concurrent_slab.h"
 
 #define PREFERRED_MMAP_ADDRESS   ((void*)0x10000000)
 #define SYNCHRONIZE_THRESHOLD(x) ((x) - (x) / 4)

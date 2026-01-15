@@ -384,11 +384,7 @@ void concurrent_heap_t::shade(scm_obj_t obj) {
 // Run on collector thread
 void concurrent_heap_t::interior_shade(void* ref) {
   if (ref) {
-#ifndef NDEBUG
-    int i = ((uint8_t*)ref - m_concurrent_pool->m_pool) >> OBJECT_SLAB_SIZE_SHIFT;
-    assert(i >= 0 && i < m_concurrent_pool->m_pool_watermark);
-    assert(GCSLABP(m_concurrent_pool->m_pool[i]));
-#endif
+    assert(m_concurrent_pool->is_collectible(ref));
     shade(SLAB_TRAITS_OF(ref)->cache->lookup(ref));
   }
 }
@@ -406,7 +402,7 @@ void concurrent_heap_t::dequeue_root() {
 void concurrent_heap_t::enqueue_root(scm_obj_t obj) {
   assert(m_stop_the_world);
   if (CELLP(obj)) {
-    if (in_heap(obj)) {
+    if (m_concurrent_pool->in_pool(obj)) {
       while (m_shade_queue.wait_lock_try_put(obj) == false) {
         m_collector_lock.lock();
         m_collector_wake.signal();
