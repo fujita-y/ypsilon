@@ -186,17 +186,17 @@ Once marking is complete, the GC begins reclaiming memory.
 Objects of type `TC_WEAKMAPPING` are handled specially. The collector only marks the value if the key is already marked. If the key is not marked by the end of the marking phase, the mapping is broken.
 
 ### Finalization
-The GC supports object finalization. Objects requiring finalization are traced and, if found unreachable, are added to a finalization queue instead of being immediately swept.
+The GC supports object finalization. Objects requiring finalization are traced and, if found unreachable, custom finalizers are called.
 
 ### Compaction
-While the primary GC is mark-sweep, Ypsilon also includes a **compactor** (`object_heap_compact.cpp`) that can relocate objects to reduce fragmentation. This is typically used during heap expansion or as a fallback when fragmentation becomes high.
+While the primary GC is mark-sweep, Ypsilon also includes a **compactor** (`object_heap_compact.cpp`) that can relocate objects to reduce fragmentation. This is used as needed during heap expansion or as a fallback when fragmentation becomes high.
 
 ---
 
 ## Concurrency Control
 
 The GC and mutator interact via highly optimized primitives:
-- **Shade Queue**: A lock-free-style queue used by the write barrier to communicate new roots found by the mutator to the collector.
+- **Shade Queue**: A concurrent queue used by the write barrier to communicate new roots found by the mutator to the collector.
 - **Slab Locks**: Each `concurrent_slab_t` has its own mutex to synchronize allocation and sweeping.
 - **Condition Variables**: Used for coordination between the collector thread and mutator threads during STW phases.
 
@@ -285,8 +285,8 @@ Ypsilon supports various C types via signature strings:
 - `b`: bool (bool in C, `#t`/`#f` in Scheme)
 - `u`: int8_t
 - `d`: int16_t
-- `q`: int32_t
-- `o`: int64_t
+- `q`: int32_t (use for pointer in ILP32)
+- `o`: int64_t (use for pointer in LP64)
 - `s`: float
 - `x`: double
 - `i`: void (only as a return type)
