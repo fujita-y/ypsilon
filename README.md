@@ -285,8 +285,8 @@ Ypsilon supports various C types via signature strings:
 - `b`: bool (bool in C, `#t`/`#f` in Scheme)
 - `u`: int8_t
 - `d`: int16_t
-- `q`: int32_t (use for pointer in ILP32)
-- `o`: int64_t (use for pointer in LP64)
+- `q`: int32_t, pointer in ILP32
+- `o`: int64_t, pointer in LP64
 - `s`: float
 - `x`: double
 - `i`: void (only as a return type)
