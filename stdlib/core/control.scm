@@ -4,11 +4,11 @@
 
 (library (core control)
 
-  (export when unless do case-lambda)
+  (export when unless do case-lambda cond-expand)
 
   (import (core intrinsics)
-          (only (core primitives) do define-syntax)
-          (only (core syntax-case) syntax-case syntax with-syntax datum->syntax))
+          (only (core primitives) do define-syntax fulfill-feature-requirements?)
+          (only (core syntax-case) syntax-case syntax with-syntax datum->syntax syntax->datum syntax-violation))
 
   (define-syntax when
     (syntax-rules ()
@@ -50,4 +50,18 @@
                    clauses ...
                    (else
                     (assertion-violation #f "wrong number of arguments" args))))))))))
+
+  (define-syntax cond-expand
+    (lambda (x)
+      (syntax-case x (else)
+        ((_)
+          #'(begin #f))
+        ((_ (else body ...))
+          #'(begin #f body ...))
+        ((_ (else body ...) more ...)
+          (syntax-violation 'cond-expand "misplaced else" x))
+        ((_ (conditions body ...) more ...)
+          (if (fulfill-feature-requirements? x (syntax->datum #'conditions))
+              #'(begin #f body ...)
+              #'(cond-expand more ...))))))
   ) ;[end]

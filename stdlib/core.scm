@@ -260,6 +260,7 @@
     compile-coreform
     complex?
     cond
+    cond-expand
     condition
     condition-accessor
     condition-irritants

@@ -649,20 +649,6 @@
         (let-optionals options ((port (current-output-port)))
           (r6rs:flush-output-port port))))
 
-    (define-syntax cond-expand
-      (lambda (x)
-        (syntax-case x (else)
-          ((_)
-           #'(begin #f))
-          ((_ (else body ...))
-           #'(begin #f body ...))
-          ((_ (else body ...) more ...)
-           (syntax-violation 'cond-expand "misplaced else" x))
-          ((_ (conditions body ...) more ...)
-           (if (fulfill-feature-requirements? x (syntax->datum #'conditions))
-               #'(begin #f body ...)
-               #'(cond-expand more ...))))))
-
     (define-syntax define-values
       (lambda (x)
         (syntax-case x ()
