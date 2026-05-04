@@ -309,3 +309,41 @@ The primary internal procedures for FFI (found in `subr_c_ffi.cpp`) include:
 - **Error Handling**: The FFI includes `try-catch` blocks around callback execution to prevent unhandled Scheme exceptions from corrupting the C caller's stack.
 - **JIT Efficiency**: By generating native code specific to the function's signature, Ypsilon avoids the overhead of interpreted marshalling found in many other FFI implementations.
 - **GC Integration**: The FFI correctly interacts with Ypsilon's concurrent GC. For example, when pointers are stored or retrieved, appropriate write barriers are applied where necessary.
+
+## Relationship to Digamma
+
+**Ypsilon** and **Digamma** are two distinct Scheme implementations by the same author, designed for different purposes:
+
+### Ypsilon: Standards Compliance & Comprehensive Features
+- **Design Focus**: Full R6RS and R7RS-small/large compliance with rich standard library support
+- **Target Use**: General-purpose Scheme programming, educational purposes, and standards-compliant development
+- **Key Strengths**:
+  - Complete conformance to R6RS and R7RS specifications
+  - Extensive standard library (comparators, hash-tables, lists, sorting, etc.)
+  - Robust garbage collector with multi-phase STW pauses
+  - Mature, production-ready implementation
+  - FFI with dynamic C function wrapping
+
+### Digamma: Lightweight AI Automation & Efficiency
+- **Design Focus**: Lightweight Scheme dialect optimized for AI workflow automation and execution efficiency over strict RnRS compliance
+- **Target Use**: AI/ML integration, asynchronous programming, and performance-critical applications
+- **Key Strengths**:
+  - Fiber-based concurrency with async I/O and networking (Boost.Asio integrated)
+  - Native **Google Cloud AI integration** (Vertex AI/Gemini, Dialogflow CX)
+  - Self-hosted compiler with on-demand LLVM JIT
+  - ARM64 TBI tagged-pointer system with zero-cost tag operations
+  - Asynchronous networking primitives (HTTPS GET, async port reads)
+  - Hygienic macros (syntax-case, syntax-rules) without full RnRS compliance
+
+### Technical Commonalities
+Both implementations share:
+- LLVM-based JIT for native code generation
+- Concurrent, mark-sweep garbage collectors
+- C Foreign Function Interface (FFI)
+- Self-hosted or Scheme-based compilation pipelines
+
+### Choosing Between Them
+- Choose **Ypsilon** if you need strict R6RS/R7RS compliance, comprehensive standard library support, or a mature, well-tested Scheme implementation
+- Choose **Digamma** (nanos VM) if you prioritize lightweight concurrency, AI/ML cloud integration, or performance on modern architectures
+
+For more information, see [Digamma on GitHub](https://github.com/fujita-y/digamma).
