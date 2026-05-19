@@ -230,7 +230,7 @@ scm_bvector_t make_bvector_mapping(object_heap_t* heap, void* p, int n) {
 
 scm_port_t make_temp_file_port(object_heap_t* heap, scm_obj_t name, int buffer_mode, scm_obj_t transcoder) {
   scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
-  memset(obj, 0, sizeof(scm_port_rec_t));
+  memset((void*)obj, 0, sizeof(scm_port_rec_t));
   obj->hdr = scm_hdr_port;
   obj->lock.init(true);
   scoped_lock lock(obj->lock);
@@ -240,7 +240,7 @@ scm_port_t make_temp_file_port(object_heap_t* heap, scm_obj_t name, int buffer_m
 
 scm_port_t make_std_port(object_heap_t* heap, fd_t fd, scm_obj_t name, int direction, int file_options, int buffer_mode, scm_obj_t transcoder) {
   scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
-  memset(obj, 0, sizeof(scm_port_rec_t));
+  memset((void*)obj, 0, sizeof(scm_port_rec_t));
   obj->hdr = scm_hdr_port;
   obj->lock.init(true);
   scoped_lock lock(obj->lock);
@@ -250,7 +250,7 @@ scm_port_t make_std_port(object_heap_t* heap, fd_t fd, scm_obj_t name, int direc
 
 scm_port_t make_file_port(object_heap_t* heap, scm_obj_t name, int direction, int file_options, int buffer_mode, scm_obj_t transcoder) {
   scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
-  memset(obj, 0, sizeof(scm_port_rec_t));
+  memset((void*)obj, 0, sizeof(scm_port_rec_t));
   obj->hdr = scm_hdr_port;
   obj->lock.init(true);
   scoped_lock lock(obj->lock);
@@ -261,7 +261,7 @@ scm_port_t make_file_port(object_heap_t* heap, scm_obj_t name, int direction, in
 scm_port_t make_bytevector_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj_t bytes, scm_obj_t transcoder) {
   assert(SYMBOLP(name));
   scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
-  memset(obj, 0, sizeof(scm_port_rec_t));
+  memset((void*)obj, 0, sizeof(scm_port_rec_t));
   obj->hdr = scm_hdr_port;
   obj->lock.init(true);
   scoped_lock lock(obj->lock);
@@ -271,7 +271,7 @@ scm_port_t make_bytevector_port(object_heap_t* heap, scm_obj_t name, int directi
 
 scm_port_t make_custom_port(object_heap_t* heap, scm_obj_t name, int direction, scm_obj_t handlers, scm_obj_t transcoder) {
   scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
-  memset(obj, 0, sizeof(scm_port_rec_t));
+  memset((void*)obj, 0, sizeof(scm_port_rec_t));
   obj->hdr = scm_hdr_port;
   obj->lock.init(true);
   scoped_lock lock(obj->lock);
@@ -281,7 +281,7 @@ scm_port_t make_custom_port(object_heap_t* heap, scm_obj_t name, int direction, 
 
 scm_port_t make_socket_port(object_heap_t* heap, scm_socket_t socket, scm_obj_t transcoder) {
   scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
-  memset(obj, 0, sizeof(scm_port_rec_t));
+  memset((void*)obj, 0, sizeof(scm_port_rec_t));
   obj->hdr = scm_hdr_port;
   obj->lock.init(true);
   scoped_lock lock(obj->lock);
@@ -292,7 +292,7 @@ scm_port_t make_socket_port(object_heap_t* heap, scm_socket_t socket, scm_obj_t 
 scm_port_t make_transcoded_port(object_heap_t* heap, scm_obj_t name, scm_port_t port, scm_bvector_t transcoder) {
   port->lock.verify_locked();
   scm_port_t obj = (scm_port_t)heap->allocate_collectible(sizeof(scm_port_rec_t));
-  memset(obj, 0, sizeof(scm_port_rec_t));
+  memset((void*)obj, 0, sizeof(scm_port_rec_t));
   obj->hdr = scm_hdr_port;
   obj->lock.init(true);
   scoped_lock lock(obj->lock);

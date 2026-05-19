@@ -210,7 +210,7 @@ static FunctionType* function_type(LLVMContext& C, const char* signature, bool v
 }
 
 static llvm::FunctionCallee make_callee(IRBuilder<>& IRB, FunctionType* funcType, void* adrs) {
-  return FunctionCallee(funcType, ConstantExpr::getIntToPtr(VALUE_INTPTR(adrs), funcType->getPointerTo()));
+  return FunctionCallee(funcType, ConstantExpr::getIntToPtr(VALUE_INTPTR(adrs), PointerType::getUnqual(funcType->getContext())));
 }
 
 #define THUNK_FROM_LLVM(_NAME_, _TYPE_) make_callee(IRB, FunctionType::get(IntptrTy, {IntptrTy, Type::get##_TYPE_(C)}, false), (void*)_NAME_)
@@ -272,11 +272,11 @@ static void* compile_callout_thunk(uintptr_t adrs, const char* caller_signature,
   auto Context = std::make_unique<LLVMContext>();
   LLVMContext& C = *Context;
   auto M = std::make_unique<Module>(module_id, C);
-  M->setTargetTriple(getDefaultTargetTriple());
+  M->setTargetTriple(llvm::Triple(sys::getDefaultTargetTriple()));
   M->setDataLayout(s_c_ffi->getDataLayout());
 
   auto IntptrTy = (sizeof(intptr_t) == 4 ? Type::getInt32Ty(C) : Type::getInt64Ty(C));
-  auto IntptrPtrTy = sizeof(intptr_t) == 4 ? Type::getInt32Ty(C)->getPointerTo(0) : Type::getInt64Ty(C)->getPointerTo(0);
+  auto IntptrPtrTy = PointerType::getUnqual(C);
 
   Function* F =
       Function::Create(FunctionType::get(IntptrTy, {IntptrTy, IntptrTy, IntptrTy}, false), Function::ExternalLinkage, function_id, M.get());
@@ -298,7 +298,7 @@ static void* compile_callout_thunk(uintptr_t adrs, const char* caller_signature,
   }
 
   auto procType = function_type(C, callee_signature, strcmp(caller_signature, callee_signature) != 0);
-  auto proc = ConstantExpr::getIntToPtr(VALUE_INTPTR(adrs), procType->getPointerTo());
+  auto proc = ConstantExpr::getIntToPtr(VALUE_INTPTR(adrs), PointerType::getUnqual(procType->getContext()));
   auto retval = IRB.CreateCall(procType, proc, args);
   if (callee_signature[0] == 'i') {
     IRB.CreateRet(VALUE_INTPTR(scm_unspecified));
@@ -330,7 +330,7 @@ static void* compile_callback_thunk(VM* vm, uintptr_t trampoline_uid, const char
   LLVMContext& C = *Context;
   auto M = std::make_unique<Module>(module_id, C);
   auto IntptrTy = (sizeof(intptr_t) == 4 ? Type::getInt32Ty(C) : Type::getInt64Ty(C));
-  auto IntptrPtrTy = sizeof(intptr_t) == 4 ? Type::getInt32Ty(C)->getPointerTo(0) : Type::getInt64Ty(C)->getPointerTo(0);
+  auto IntptrPtrTy = PointerType::getUnqual(C);
 
   auto callbackFunctionType = function_type(C, signature, false);
   Function* F = Function::Create(callbackFunctionType, Function::ExternalLinkage, function_id, M.get());
@@ -352,7 +352,7 @@ static void* compile_callback_thunk(VM* vm, uintptr_t trampoline_uid, const char
   }
 
   auto thunkType = FunctionType::get(IntptrTy, {IntptrTy, IntptrTy, IntptrTy}, true);
-  auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_call_scheme), thunkType->getPointerTo());
+  auto thunk = ConstantExpr::getIntToPtr(VALUE_INTPTR(c_call_scheme), PointerType::getUnqual(thunkType->getContext()));
   Value* retval = IRB.CreateCall(thunkType, thunk, args);
 
   if (signature[0] == 'i') {
